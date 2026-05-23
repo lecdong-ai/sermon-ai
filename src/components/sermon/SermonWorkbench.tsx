@@ -624,8 +624,9 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4" onClick={() => setShowCoreInput(false)}>
           <div className="w-full max-w-md glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-slate-200/60 flex items-center justify-between">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-[16px] font-extrabold text-slate-800">핵심 메시지 추천</h2>
+                {sermon.title && <p className="text-[12px] font-medium text-indigo-600 mt-0.5 truncate">📌 {sermon.title}</p>}
                 <p className="text-[12px] text-slate-400 mt-0.5">아래 정보를 입력하면 AI가 핵심 메시지를 추천합니다</p>
               </div>
               <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all">
