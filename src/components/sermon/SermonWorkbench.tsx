@@ -624,12 +624,6 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
           <div className="w-full max-w-md glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-slate-200/60">
-              {sermon.title && (
-                <div className="mb-3 p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
-                  <p className="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">설교 제목</p>
-                  <p className="text-[16px] font-extrabold text-indigo-700 leading-tight">{sermon.title}</p>
-                </div>
-              )}
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-[16px] font-extrabold text-slate-800">핵심 메시지 추천</h2>
@@ -641,6 +635,12 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
             </div>
             </div>
             <div className="p-5 space-y-4">
+              {sermon.title && (
+                <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
+                  <p className="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">설교 제목</p>
+                  <p className="text-[16px] font-extrabold text-indigo-700 leading-tight">{sermon.title}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">성경본문 *</label>
                 <input
