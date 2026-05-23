@@ -33,6 +33,8 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiType, setAiType] = useState<string>("")
   const [showCoreInput, setShowCoreInput] = useState(false)
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftLength, setDraftLength] = useState<'short' | 'medium' | 'long'>('medium')
   const [corePassage, setCorePassage] = useState("")
   const [coreTopic, setCoreTopic] = useState("")
   const [coreStep, setCoreStep] = useState<'input' | 'suggest'>('input')
@@ -225,6 +227,24 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
       if (data?.full_text) handleFieldChange('manuscript', data.full_text)
     })
   }
+  const runDraft = () => {
+    setShowDraftModal(false)
+    if (advanced) {
+      setAiLoading('generate-draft')
+      fetch(`/api/sermons/${sermon.id}/ai/advanced-draft`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_length: draftLength }),
+      })
+        .then(r => r.json()).then(json => {
+          if (json.success && json.data?.full_text) handleFieldChange('manuscript', json.data.full_text)
+        }).catch(() => {}).finally(() => setAiLoading(null))
+      return
+    }
+    callAI('generate-draft', (data: DraftResult) => {
+      if (data?.full_text) handleFieldChange('manuscript', data.full_text)
+    })
+  }
+
   const handleApplication = () => callAI('generate-application', () => {})
 
   const handleComplete = async () => {
@@ -251,7 +271,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
     { id: 5, label: '개요 작성', done: !!(sermon.outline?.main_points?.length), ai: 'generate-outline', action: handleOutline, label2: 'AI 생성' },
     { id: 6, label: '적용 정리', done: !!sermon.application_points, ai: 'generate-application', action: handleApplication, label2: 'AI 생성' },
     { id: 7, label: '예화 추가', done: !!sermon.illustration_notes },
-    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: handleDraft, label2: advanced ? 'GPT-4o 초안' : 'AI 초안' },
+    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: () => setShowDraftModal(true), label2: advanced ? 'GPT-4o 초안' : 'AI 초안' },
   ]
 
   const doneCount = steps.filter(s => s.done).length
@@ -464,7 +484,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                         {aiLoading === 'generate-application' ? '생성 중...' : '적용 질문'}
                       </button>
                       <button
-                        onClick={handleDraft}
+                        onClick={() => setShowDraftModal(true)}
                         disabled={aiLoading !== null}
                         className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white text-[13px] font-bold hover:from-indigo-700 hover:to-blue-700 transition-all hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] disabled:opacity-50 border border-indigo-400/20"
                       >
@@ -614,6 +634,44 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                   이 내용으로 생성하기
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draft length modal */}
+      {showDraftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4" onClick={() => setShowDraftModal(false)}>
+          <div className="w-full max-w-sm glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-slate-200/60">
+              <h2 className="text-[16px] font-extrabold text-slate-800">초안 분량 선택</h2>
+              <p className="text-[12px] text-slate-400 mt-0.5">원하는 설교 분량을 선택하세요</p>
+            </div>
+            <div className="p-5 space-y-2">
+              {([['short', '짧게 (약 3분)'],
+                ['medium', '보통 (약 5분)'],
+                ['long', '길게 (약 7분)']] as const).map(([key, label]) => (
+                <button key={key} type="button" onClick={() => setDraftLength(key)}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left text-[14px] font-medium transition-all ${
+                    draftLength === key
+                      ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/30'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    draftLength === key ? 'border-indigo-500' : 'border-slate-300'
+                  }`}>
+                    {draftLength === key && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+                  </div>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="px-5 pb-5 flex gap-2">
+              <button onClick={() => setShowDraftModal(false)} className="flex-1 py-2.5 rounded-xl bg-slate-100 text-[14px] font-bold text-slate-600 hover:bg-slate-200 transition-all">취소</button>
+              <button onClick={runDraft} disabled={aiLoading !== null} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-[14px] font-bold text-white hover:shadow-lg transition-all disabled:opacity-50">
+                {aiLoading === 'generate-draft' ? '생성 중...' : '생성하기'}
+              </button>
             </div>
           </div>
         </div>
