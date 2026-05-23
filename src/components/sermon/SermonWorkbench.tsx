@@ -37,6 +37,8 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
   const [coreTopic, setCoreTopic] = useState("")
   const [coreStep, setCoreStep] = useState<'input' | 'suggest'>('input')
   const [coreSuggestion, setCoreSuggestion] = useState("")
+  const [topicSuggestions, setTopicSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [suggestingTopic, setSuggestingTopic] = useState(false)
   const [completing, setCompleting] = useState(false)
   const isCompleted = sermon.status === 'completed'
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -159,7 +161,21 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
     setCoreTopic("")
     setCoreStep('input')
     setCoreSuggestion("")
+    setTopicSuggestions([])
     setShowCoreInput(true)
+  }
+
+  const suggestTopics = async () => {
+    if (!corePassage.trim()) return
+    setSuggestingTopic(true)
+    try {
+      const res = await fetch('/api/suggest', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passage: corePassage.trim() }),
+      })
+      const json = await res.json()
+      if (json.success && json.suggestions?.length) setTopicSuggestions(json.suggestions)
+    } catch {} finally { setSuggestingTopic(false) }
   }
 
   const runCoreMessage = () => callAIWithBody('generate-core-message', { passage: corePassage, topic: coreTopic }, (data: CoreMessageResult) => {
@@ -628,13 +644,37 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                 />
               </div>
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">주제 *</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[13px] font-bold text-slate-700">주제 *</label>
+                  {corePassage.trim() && (
+                    <button type="button" onClick={suggestTopics} disabled={suggestingTopic}
+                      className="flex items-center gap-1 text-[11px] text-indigo-500 font-semibold hover:text-indigo-600 transition-colors disabled:opacity-50"
+                    >
+                      <Sparkles className="w-3 h-3" />{suggestingTopic ? '추천 중...' : '주제 추천'}
+                    </button>
+                  )}
+                </div>
                 <textarea
                   value={coreTopic}
-                  onChange={e => setCoreTopic(e.target.value)}
+                  onChange={e => { setCoreTopic(e.target.value); setTopicSuggestions([]) }}
                   placeholder="설교의 주제나 내용을 간략히 입력하세요"
                   className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[14px] text-slate-700 placeholder-slate-300 resize-y focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
                 />
+                {topicSuggestions.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {topicSuggestions.map((s, i) => (
+                      <button key={i} type="button" onClick={() => { setCoreTopic(s.value); setTopicSuggestions([]) }}
+                        className="w-full flex items-start gap-2 px-3 py-2 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 text-left text-[13px] text-indigo-700 font-medium transition-all"
+                      >
+                        <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="block">{s.value}</span>
+                          <span className="block text-[11px] text-indigo-400 font-normal mt-0.5">{s.reason}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <button
