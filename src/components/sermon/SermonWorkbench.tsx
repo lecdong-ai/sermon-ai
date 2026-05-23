@@ -231,13 +231,23 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
     setShowDraftModal(false)
     if (advanced) {
       setAiLoading('generate-draft')
+      setAiType('generate-draft')
+      setShowAiResult(false)
+      setAiError(null)
       fetch(`/api/sermons/${sermon.id}/ai/advanced-draft`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_length: draftLength }),
       })
         .then(r => r.json()).then(json => {
-          if (json.success && json.data?.full_text) handleFieldChange('manuscript', json.data.full_text)
-        }).catch(() => {}).finally(() => setAiLoading(null))
+          if (json.success && json.data?.full_text) {
+            const data: DraftResult = { full_text: json.data.full_text, estimated_duration_minutes: 0, sections: [] }
+            setAiResult(data)
+            setShowAiResult(true)
+            handleFieldChange('manuscript', json.data.full_text)
+          } else {
+            setAiError(json.error || '생성 실패')
+          }
+        }).catch(() => setAiError('네트워크 오류')).finally(() => setAiLoading(null))
       return
     }
     callAI('generate-draft', (data: DraftResult) => {
