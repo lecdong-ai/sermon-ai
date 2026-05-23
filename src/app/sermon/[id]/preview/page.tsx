@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, FileText, Sparkles, Download } from 'lucide-react'
+import { ArrowLeft, FileText, Sparkles, Download, Loader2 } from 'lucide-react'
 import type { SermonWorkspace } from '@/types'
 
 export default function SermonPreviewPage() {
@@ -13,6 +13,8 @@ export default function SermonPreviewPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState('')
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [bibleText, setBibleText] = useState('')
+  const [bibleLoading, setBibleLoading] = useState(false)
 
   useEffect(() => {
     fetch(`/api/sermons/${params.id}`)
@@ -23,6 +25,16 @@ export default function SermonPreviewPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [params.id])
+
+  useEffect(() => {
+    if (!sermon?.passage) return
+    setBibleLoading(true)
+    fetch('/api/bible', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passage: sermon.passage }),
+    }).then(r => r.json()).then(json => { if (json.success) setBibleText(json.text) })
+      .catch(() => {}).finally(() => setBibleLoading(false))
+  }, [sermon?.passage])
 
   if (loading) {
     return (
