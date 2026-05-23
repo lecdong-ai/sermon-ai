@@ -3,6 +3,7 @@ import * as CoreMessagePrompt from './prompts/core-message'
 import * as OutlinePrompt from './prompts/outline'
 import * as ApplicationPrompt from './prompts/application'
 import * as DraftPrompt from './prompts/draft'
+import * as AdvancedDraftPrompt from './prompts/draft-advanced'
 import type { CoreMessageResult, OutlineResult, DraftResult } from '@/types'
 
 const openai = new OpenAI({
@@ -275,6 +276,61 @@ export async function generateApplication(input: ApplicationInput) {
   ].join('\n')
 
   return callAI(ApplicationPrompt.SYSTEM_PROMPT, userText, APPLICATION_SCHEMA)
+}
+
+export async function generateAdvancedDraft(input: DraftInput): Promise<string> {
+  const outlineText = input.outline ? [
+    '[설교 개요]',
+    '서론: ' + (input.outline.introduction || '(미작성)'),
+    ...(input.outline.main_points || []).map((p: any, i: number) => '본론 ' + (i + 1) + ': ' + p.title + ' - ' + p.key_idea),
+    '결론: ' + (input.outline.conclusion || '(미작성)'),
+  ].join('\n') : '(개요 미작성)'
+
+  const userText = [
+    '[설교 제목]',
+    input.title || '(미입력)',
+    '',
+    '[성경본문]',
+    input.passage,
+    '',
+    '[핵심 메시지]',
+    input.core_message || '(미입력)',
+    '',
+    outlineText,
+    '',
+    '[본문 관찰 노트]',
+    input.observation_notes || '(없음)',
+    '',
+    '[배경 연구 노트]',
+    input.background_notes || '(없음)',
+    '',
+    '[해석 메모]',
+    input.interpretation_notes || '(없음)',
+    '',
+    '[예화/일러스트 메모]',
+    input.illustration_notes || '(없음)',
+    '',
+    '[적용 포인트]',
+    input.application_points || '(없음)',
+    '',
+    '[설교 정보]',
+    '- 설교 날짜: ' + (input.sermon_date || '(미지정)'),
+    '- 시리즈: ' + (input.series || '(없음)'),
+    '- 설교 대상: ' + (input.audience.length ? input.audience.join(', ') : '(미지정)'),
+    '- 교회 상황: ' + (input.church_context || '(미입력)'),
+  ].join('\n')
+
+  const res = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: AdvancedDraftPrompt.SYSTEM_PROMPT },
+      { role: 'user', content: userText },
+    ],
+    temperature: 0.7,
+    max_tokens: 16000,
+  })
+
+  return res.choices[0]?.message?.content || ''
 }
 
 export async function generateDraft(input: DraftInput): Promise<DraftResult> {

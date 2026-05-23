@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Plus, AlertCircle, Clock, ChevronRight, Trash2, BookOpen } from 'lucide-react'
+import { FileText, Plus, AlertCircle, Clock, ChevronRight, Trash2, BookOpen, Sparkles } from 'lucide-react'
 import type { SermonListItem } from '@/types'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -62,13 +62,22 @@ export default function SermonListPage() {
               <p className="text-[14px] text-[#8b95a1] mt-0.5">설교를 준비하고 관리합니다</p>
             </div>
           </div>
-          <button
-            onClick={() => router.push('/sermon/new')}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-blue-600 text-white text-[14px] font-bold shadow-md hover:shadow-lg transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            새 설교
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/sermon/advanced')}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[14px] font-bold shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <Sparkles className="w-4 h-4" />
+              실전형
+            </button>
+            <button
+              onClick={() => router.push('/sermon/new')}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-blue-600 text-white text-[14px] font-bold shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <Plus className="w-4 h-4" />
+              새 설교
+            </button>
+          </div>
         </div>
 
         {error && (
