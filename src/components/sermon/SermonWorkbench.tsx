@@ -623,12 +623,18 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
       {showCoreInput && coreStep !== 'suggest' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4" onClick={() => setShowCoreInput(false)}>
           <div className="w-full max-w-md glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-slate-200/60 flex items-center justify-between">
-              <div className="min-w-0">
-                <h2 className="text-[16px] font-extrabold text-slate-800">핵심 메시지 추천</h2>
-                {sermon.title && <p className="text-[12px] font-medium text-indigo-600 mt-0.5 truncate">📌 {sermon.title}</p>}
-                <p className="text-[12px] text-slate-400 mt-0.5">아래 정보를 입력하면 AI가 핵심 메시지를 추천합니다</p>
-              </div>
+            <div className="px-5 py-4 border-b border-slate-200/60">
+              {sermon.title && (
+                <div className="mb-3 p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
+                  <p className="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">설교 제목</p>
+                  <p className="text-[16px] font-extrabold text-indigo-700 leading-tight">{sermon.title}</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-[16px] font-extrabold text-slate-800">핵심 메시지 추천</h2>
+                  <p className="text-[12px] text-slate-400 mt-0.5">아래 정보를 입력하면 AI가 핵심 메시지를 추천합니다</p>
+                </div>
               <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
