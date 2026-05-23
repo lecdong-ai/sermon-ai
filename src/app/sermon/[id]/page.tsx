@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { AlertCircle, RefreshCw, Lock, Crown, Sparkles } from 'lucide-react'
@@ -11,6 +11,8 @@ const SermonWorkbench = dynamic(() => import('@/components/sermon/SermonWorkbenc
 
 export default function SermonWorkbenchPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
+  const isAdvanced = searchParams.get('advanced') === 'true'
   const router = useRouter()
   const [sermon, setSermon] = useState<SermonWorkspace | null>(null)
   const [loading, setLoading] = useState(true)
@@ -145,5 +147,5 @@ export default function SermonWorkbenchPage() {
     )
   }
 
-  return <SermonWorkbench sermon={sermon} />
+  return <SermonWorkbench sermon={sermon} advanced={isAdvanced} />
 }

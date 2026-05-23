@@ -18,9 +18,10 @@ type TabType = 'input' | 'outline' | 'manuscript'
 
 interface SermonWorkbenchProps {
   sermon: SermonWorkspace
+  advanced?: boolean
 }
 
-export default function SermonWorkbench({ sermon: initial }: SermonWorkbenchProps) {
+export default function SermonWorkbench({ sermon: initial, advanced }: SermonWorkbenchProps) {
   const router = useRouter()
   const [sermon, setSermon] = useState<SermonWorkspace>(initial)
   const [activeTab, setActiveTab] = useState<TabType>('input')
@@ -195,11 +196,19 @@ export default function SermonWorkbench({ sermon: initial }: SermonWorkbenchProp
   }
 
   const handleOutline = () => callAI('generate-outline', () => {})
-  const handleDraft = () => callAI('generate-draft', (data: DraftResult) => {
-    if (data?.full_text) {
-      handleFieldChange('manuscript', data.full_text)
+  const handleDraft = () => {
+    if (advanced) {
+      setAiLoading('generate-draft')
+      fetch(`/api/sermons/${sermon.id}/ai/advanced-draft`, { method: 'POST' })
+        .then(r => r.json()).then(json => {
+          if (json.success && json.data?.full_text) handleFieldChange('manuscript', json.data.full_text)
+        }).catch(() => {}).finally(() => setAiLoading(null))
+      return
     }
-  })
+    callAI('generate-draft', (data: DraftResult) => {
+      if (data?.full_text) handleFieldChange('manuscript', data.full_text)
+    })
+  }
   const handleApplication = () => callAI('generate-application', () => {})
 
   const handleComplete = async () => {
@@ -226,7 +235,7 @@ export default function SermonWorkbench({ sermon: initial }: SermonWorkbenchProp
     { id: 5, label: '개요 작성', done: !!(sermon.outline?.main_points?.length), ai: 'generate-outline', action: handleOutline, label2: 'AI 생성' },
     { id: 6, label: '적용 정리', done: !!sermon.application_points, ai: 'generate-application', action: handleApplication, label2: 'AI 생성' },
     { id: 7, label: '예화 추가', done: !!sermon.illustration_notes },
-    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: handleDraft, label2: 'AI 초안' },
+    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: handleDraft, label2: advanced ? 'GPT-4o 초안' : 'AI 초안' },
   ]
 
   const doneCount = steps.filter(s => s.done).length
@@ -265,6 +274,7 @@ export default function SermonWorkbench({ sermon: initial }: SermonWorkbenchProp
                   placeholder="설교 제목을 입력하세요"
                   className="text-[18px] font-extrabold text-slate-800 bg-transparent border-none focus:outline-none placeholder-slate-300 min-w-[200px]"
                 />
+                {advanced && <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-bold shrink-0">GPT-4o</span>}
                 {isCompleted ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
                     <Trophy className="w-3 h-3" />
