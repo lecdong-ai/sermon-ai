@@ -18,7 +18,7 @@ export default function NewSermonPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [suggesting, setSuggesting] = useState<'title' | 'passage' | null>(null)
-  const [suggestions, setSuggestions] = useState<{ field: 'title' | 'passage'; items: string[] } | null>(null)
+  const [suggestions, setSuggestions] = useState<{ field: 'title' | 'passage'; items: { value: string; reason: string }[] } | null>(null)
 
   const handleSuggest = async (field: 'title' | 'passage') => {
     setSuggesting(field)
@@ -51,6 +51,20 @@ export default function NewSermonPage() {
     else setPassage(value)
     setSuggestions(null)
   }
+
+  const SuggItem = ({ item }: { item: { value: string; reason: string } }) => (
+    <button type="button" onClick={() => pickSuggestion(item.value)}
+      className="w-full flex items-start gap-2.5 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-200 text-left transition-all group"
+    >
+      <span className="w-5 h-5 rounded-full border-2 border-indigo-300 flex items-center justify-center shrink-0 mt-0.5 group-hover:border-indigo-500 transition-colors">
+        <Check className="w-3 h-3 text-transparent group-hover:text-indigo-400" />
+      </span>
+      <div>
+        <span className="block text-[14px] font-medium text-indigo-700">{item.value}</span>
+        <span className="block text-[12px] text-indigo-400 mt-0.5">{item.reason}</span>
+      </div>
+    </button>
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,16 +132,7 @@ export default function NewSermonPage() {
             />
             {suggestions?.field === 'title' && (
               <div className="mt-2 space-y-1.5">
-                {suggestions.items.map((item, i) => (
-                  <button key={i} type="button" onClick={() => pickSuggestion(item)}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-200 text-left text-[14px] text-indigo-700 font-medium transition-all group"
-                  >
-                    <span className="w-5 h-5 rounded-full border-2 border-indigo-300 flex items-center justify-center group-hover:border-indigo-500 transition-colors">
-                      <Check className="w-3 h-3 text-transparent group-hover:text-indigo-400" />
-                    </span>
-                    {item}
-                  </button>
-                ))}
+                {suggestions.items.map((item, i) => <SuggItem key={i} item={item} />)}
               </div>
             )}
           </div>
@@ -152,16 +157,7 @@ export default function NewSermonPage() {
             />
             {suggestions?.field === 'passage' && (
               <div className="mt-2 space-y-1.5">
-                {suggestions.items.map((item, i) => (
-                  <button key={i} type="button" onClick={() => pickSuggestion(item)}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-200 text-left text-[14px] text-indigo-700 font-medium transition-all group"
-                  >
-                    <span className="w-5 h-5 rounded-full border-2 border-indigo-300 flex items-center justify-center group-hover:border-indigo-500 transition-colors">
-                      <Check className="w-3 h-3 text-transparent group-hover:text-indigo-400" />
-                    </span>
-                    {item}
-                  </button>
-                ))}
+                {suggestions.items.map((item, i) => <SuggItem key={i} item={item} />)}
               </div>
             )}
           </div>
