@@ -639,6 +639,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
+            </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">성경본문 *</label>
