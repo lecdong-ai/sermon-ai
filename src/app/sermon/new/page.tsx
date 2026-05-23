@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BookOpen } from 'lucide-react'
+import { ArrowLeft, BookOpen, Sparkles, Loader2, Check } from 'lucide-react'
 
 export default function NewSermonPage() {
   const router = useRouter()
@@ -17,6 +17,40 @@ export default function NewSermonPage() {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [suggesting, setSuggesting] = useState<'title' | 'passage' | null>(null)
+  const [suggestions, setSuggestions] = useState<{ field: 'title' | 'passage'; items: string[] } | null>(null)
+
+  const handleSuggest = async (field: 'title' | 'passage') => {
+    setSuggesting(field)
+    setError('')
+    const body = field === 'title'
+      ? { passage: passage.trim() }
+      : { title: title.trim() }
+    try {
+      const res = await fetch('/api/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const json = await res.json()
+      if (json.success && json.suggestions?.length) {
+        setSuggestions({ field, items: json.suggestions })
+      } else {
+        setError(json.error || '추천 실패')
+      }
+    } catch {
+      setError('네트워크 오류')
+    } finally {
+      setSuggesting(null)
+    }
+  }
+
+  const pickSuggestion = (value: string) => {
+    if (!suggestions) return
+    if (suggestions.field === 'title') setTitle(value)
+    else setPassage(value)
+    setSuggestions(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,7 +98,17 @@ export default function NewSermonPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-[14px] font-bold text-[#191f28] mb-1.5">설교 제목 *</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[14px] font-bold text-[#191f28]">설교 제목 *</label>
+              {passage.trim() && (
+                <button type="button" onClick={() => handleSuggest('title')} disabled={suggesting !== null}
+                  className="flex items-center gap-1 text-[12px] text-primary-500 font-semibold hover:text-primary-600 transition-colors disabled:opacity-50"
+                >
+                  {suggesting === 'title' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI 제목 추천
+                </button>
+              )}
+            </div>
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -72,16 +116,54 @@ export default function NewSermonPage() {
               className="w-full p-3 rounded-xl border border-[#e5e8eb] text-[14px] text-[#191f28] placeholder-[#b0b8c1] focus:outline-none focus:border-primary-300 focus:ring-2 focus:ring-primary-100 transition-all"
               autoFocus
             />
+            {suggestions?.field === 'title' && (
+              <div className="mt-2 space-y-1.5">
+                {suggestions.items.map((item, i) => (
+                  <button key={i} type="button" onClick={() => pickSuggestion(item)}
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-200 text-left text-[14px] text-indigo-700 font-medium transition-all group"
+                  >
+                    <span className="w-5 h-5 rounded-full border-2 border-indigo-300 flex items-center justify-center group-hover:border-indigo-500 transition-colors">
+                      <Check className="w-3 h-3 text-transparent group-hover:text-indigo-400" />
+                    </span>
+                    {item}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
-            <label className="block text-[14px] font-bold text-[#191f28] mb-1.5">성경 본문 *</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[14px] font-bold text-[#191f28]">성경 본문 *</label>
+              {title.trim() && (
+                <button type="button" onClick={() => handleSuggest('passage')} disabled={suggesting !== null}
+                  className="flex items-center gap-1 text-[12px] text-primary-500 font-semibold hover:text-primary-600 transition-colors disabled:opacity-50"
+                >
+                  {suggesting === 'passage' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI 본문 추천
+                </button>
+              )}
+            </div>
             <input
               value={passage}
               onChange={e => setPassage(e.target.value)}
               placeholder="예: 에베소서 2:1-10"
               className="w-full p-3 rounded-xl border border-[#e5e8eb] text-[14px] text-[#191f28] placeholder-[#b0b8c1] focus:outline-none focus:border-primary-300 focus:ring-2 focus:ring-primary-100 transition-all"
             />
+            {suggestions?.field === 'passage' && (
+              <div className="mt-2 space-y-1.5">
+                {suggestions.items.map((item, i) => (
+                  <button key={i} type="button" onClick={() => pickSuggestion(item)}
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-200 text-left text-[14px] text-indigo-700 font-medium transition-all group"
+                  >
+                    <span className="w-5 h-5 rounded-full border-2 border-indigo-300 flex items-center justify-center group-hover:border-indigo-500 transition-colors">
+                      <Check className="w-3 h-3 text-transparent group-hover:text-indigo-400" />
+                    </span>
+                    {item}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
