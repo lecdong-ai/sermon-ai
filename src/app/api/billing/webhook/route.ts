@@ -1,26 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabase'
+import { createHmac } from 'crypto'
 
-// Toss Payments 웹훅 처리
-// 결제 상태 변경, 구독 갱신, 결제 실패 등을 처리
+const TOSS_API_URL = 'https://api.tosspayments.com'
+
+function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  const computed = createHmac('sha256', secret)
+    .update(payload)
+    .digest('base64')
+  return computed === signature
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    const body = JSON.parse(rawBody)
     const event = body.eventType
     const data = body.data
 
     console.log('[Toss Webhook]', event, data?.orderId)
 
-    // 웹훅 서명 검증 (보안)
-    // Toss는 Webhook Secret 검증을 지원합니다.
-    // 토스페이먼츠 대시보드 → 웹훅 설정에서 Webhook Secret 발급 가능
     const webhookSecret = process.env.TOSS_WEBHOOK_SECRET
     if (webhookSecret) {
       const signature = request.headers.get('tosspayments-webhook-signature')
       if (!signature) {
         return NextResponse.json({ error: '서명이 없습니다.' }, { status: 401 })
       }
-      // TODO: 서명 검증 로직 (토스 문서 참고)
+      if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+        return NextResponse.json({ error: '서명 검증 실패.' }, { status: 401 })
+      }
     }
 
     switch (event) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getUserFromRequest } from '@/lib/auth'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -134,6 +135,11 @@ const FINAL_INTEGRATION_PROMPT = `당신은 30년 이상 강단을 지켜온 정
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request)
+    if (!user) {
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { step, ...data } = body
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import PptxGenJS from 'pptxgenjs'
 import { PPT_THEME as T } from '@/lib/pptTheme'
@@ -50,7 +51,7 @@ function addSlideNumber(s: any, num: number, total: number) {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -62,6 +63,21 @@ export async function GET(
 
     if (error || !data) {
       return NextResponse.json({ error: '설교를 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    const { data: { user } } = await createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll() },
+          setAll() {},
+        },
+      },
+    ).auth.getUser()
+
+    if (!user || !data.user_id || data.user_id !== user.id) {
+      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 })
     }
 
     const title = data.title || '설교'

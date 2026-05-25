@@ -103,7 +103,7 @@ function WorkspacePage() {
     try {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 15000)
-      const res = await fetch(`/api/sermon/${sermonId}`, { signal: controller.signal })
+      const res = await fetch(`/api/sermons/${sermonId}`, { signal: controller.signal })
       clearTimeout(timeout)
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))

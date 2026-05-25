@@ -127,12 +127,10 @@ export async function POST(request: NextRequest) {
       }
     } catch (err: any) {
       console.error('AI generation error:', err)
+      await supabaseAdmin.from('sermons').delete().eq('id', sermonId)
       return NextResponse.json({
-        success: true,
-        sermonId,
-        preview: parsed.text.substring(0, 2000),
-      fullText: parsed.text,
-        generationError: err.message || 'AI 생성 중 오류가 발생했습니다.',
+        success: false,
+        error: err.message || 'AI 생성 중 오류가 발생했습니다.',
       })
     }
 

@@ -56,7 +56,7 @@ function NewStudyGuideForm() {
 
   useEffect(() => {
     if (!sermonId) return
-    fetch(`/api/sermon/${sermonId}`)
+    fetch(`/api/sermons/${sermonId}`)
       .then(r => r.json())
       .then(data => {
         if (data?.id) {

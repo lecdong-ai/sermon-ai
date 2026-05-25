@@ -1,31 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { getUserFromRequest } from '@/lib/auth'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-async function getUser(request: NextRequest) {
-  const sb = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll() {},
-      },
-    },
-  )
-  const { data } = await sb.auth.getUser()
-  return data?.user ?? null
-}
-
 const SUGGEST_SYSTEM_PROMPT = '당신은 설교 준비를 돕는 AI입니다. 간결하고 명확하게 제안하세요.'
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser(request)
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }

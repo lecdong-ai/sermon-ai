@@ -129,10 +129,15 @@ export async function generateAll(text: string, useMock?: boolean): Promise<Serm
   return result
 }
 
+const VALID_ITEMS: GenerationItem[] = ['summary', 'groupDiscussion', 'cardNews', 'sermonScript', 'shortsScript', 'pptData']
+
 export async function generateSingleItem(
   text: string,
   item: GenerationItem,
 ): Promise<Partial<SermonResultData>> {
+  if (!VALID_ITEMS.includes(item)) {
+    throw new Error(`유효하지 않은 생성 항목입니다: ${item}`)
+  }
   const configs: Record<GenerationItem, {
     prompt: string
     schema: any

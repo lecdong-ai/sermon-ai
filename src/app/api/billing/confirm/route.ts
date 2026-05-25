@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { confirmPayment, activateSubscription } from '@/lib/billing'
 
-function getUser(request: NextRequest) {
+function getUser(request: NextRequest): Promise<string | null> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -13,13 +13,18 @@ function getUser(request: NextRequest) {
       },
     },
   )
-  return supabase.auth.getUser().then(r => r.data.user)
+  return supabase.auth.getUser().then(r => r.data.user?.id ?? null)
+}
+
+const PLAN_PRICES: Record<string, number> = {
+  basic: 9900,
+  pro: 19800,
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser(request)
-    if (!user) {
+    const userId = await getUser(request)
+    if (!userId) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
@@ -34,7 +39,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '유효하지 않은 플랜입니다.' }, { status: 400 })
     }
 
-    // 1. Toss 결제 승인 (서버에서)
+    const expectedAmount = PLAN_PRICES[plan]
+    if (amount !== expectedAmount) {
+      return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 })
+    }
+
     const payment = await confirmPayment({ paymentKey, orderId, amount })
 
     if (payment.status !== 'DONE') {
@@ -47,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // 2. 구독 활성화
     const subscription = await activateSubscription({
-      userId: user.id,
+      userId,
       plan,
       paymentKey,
       amount,

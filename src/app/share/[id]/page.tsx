@@ -43,7 +43,7 @@ export default function SharePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/sermon/${id}`)
+        const res = await fetch(`/api/shared-sermon/${id}`)
         if (!res.ok) throw new Error('데이터를 불러올 수 없습니다.')
         const data = await res.json()
         setSermon(data)
