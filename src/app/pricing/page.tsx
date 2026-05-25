@@ -96,6 +96,7 @@ export default function PricingPage() {
         { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
         { text: '결과 공유 및 다운로드', ok: true },
         { text: '설교원고제작 월 20회', ok: true },
+        { text: '실전형 설교제작 월 15회', ok: true, highlight: true },
         { text: '매월 초기화', ok: true },
       ],
       cta: currentPlan === 'pro' ? '현재 이용 중' : currentPlan === 'basic' ? '업그레이드' : '월간 구독',
@@ -151,13 +152,13 @@ export default function PricingPage() {
 
               <ul className="space-y-2.5 mb-6">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-[13px]">
+                  <li key={i} className={`flex items-start gap-2.5 text-[13px] ${f.highlight ? 'bg-gradient-to-r from-indigo-50 to-purple-50 -mx-2 px-2 py-1.5 rounded-lg border border-indigo-100' : ''}`}>
                     {f.ok ? (
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <Check className={`w-4 h-4 shrink-0 mt-0.5 ${f.highlight ? 'text-indigo-600' : 'text-emerald-500'}`} />
                     ) : (
                       <X className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
                     )}
-                    <span className={f.ok ? 'text-slate-700' : 'text-slate-400'}>{f.text}</span>
+                    <span className={`font-medium ${f.highlight ? 'text-indigo-700' : f.ok ? 'text-slate-700' : 'text-slate-400'}`}>{f.text}</span>
                   </li>
                 ))}
               </ul>
