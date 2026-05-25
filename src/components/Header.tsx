@@ -45,7 +45,7 @@ export default memo(function Header() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* SermonAI 신설 로고 브랜딩 */}
-        <Link href="/" className="flex items-center gap-2.5 group ml-2 sm:ml-4">
+        <Link href="/" className="flex items-center gap-2.5 group ml-0 sm:ml-1">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:rotate-6 transition-all duration-300">
             <Cross className="w-5 h-5 text-white" />
           </div>
