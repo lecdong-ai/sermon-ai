@@ -194,9 +194,10 @@ export default function NewSermonPage() {
               </div>
 
               <div className="max-w-2xl">
-                <h1 className="text-balance font-outfit text-[clamp(1.5rem,3.5vw,2.6rem)] font-extrabold leading-[1.1] text-slate-900">
+                <h1 className="text-balance font-outfit text-[clamp(1.7rem,4vw,3rem)] font-extrabold leading-[1.15] text-slate-900">
                   설교 한 편을
-                  <span className="text-gradient"> 가장 빠르게 시작하는 화면</span>
+                  <br />가장
+                  <br /><span className="text-gradient">빠르게 시작하는 화면</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-500 sm:text-[16px]">
                   제목과 성경 본문, 설교 날짜만 정리하면 바로 일반 설교 워크스페이스로 이어집니다.
