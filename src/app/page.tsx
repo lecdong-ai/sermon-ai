@@ -216,8 +216,8 @@ export default function HomePage() {
             {!loading && (
               <>
                 {user ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-5 items-stretch">
-                    <div className="sm:col-span-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-5 items-stretch">
+                    <div className="sm:col-span-3">
                       <div className="rounded-2xl sm:rounded-3xl bg-white/60 backdrop-blur-xl border border-slate-200/40 shadow-lg shadow-indigo-500/3 p-1 h-full">
                         <FileUpload onSuccess={handleUploadSuccess} />
                       </div>
