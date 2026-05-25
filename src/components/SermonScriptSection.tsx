@@ -1,6 +1,10 @@
 'use client'
 
+import { useRef } from 'react'
 import SectionCard from './SectionCard'
+import { FileDown } from 'lucide-react'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 interface Props {
   data: string
@@ -19,14 +23,36 @@ function splitSubtitle(text: string): { subtitle: string; body: string } | null 
   }
 }
 
+async function downloadPdf(element: HTMLElement | null) {
+  if (!element) return
+  const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+  const imgData = canvas.toDataURL('image/png')
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const pdfWidth = pdf.internal.pageSize.getWidth()
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+  pdf.save('유튜브_설교대본.pdf')
+}
+
 export default function SermonScriptSection({ data }: Props) {
+  const contentRef = useRef<HTMLDivElement>(null)
   const paragraphs = data.split('\n\n').filter(Boolean)
   const labels = ['서론', '본론', '결론/적용']
   const colors = ['bg-blue-100 text-blue-700', 'bg-primary-100 text-primary-700', 'bg-purple-100 text-purple-700']
 
+  const pdfAction = (
+    <button
+      onClick={() => downloadPdf(contentRef.current)}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-rose-500 hover:bg-rose-50 transition-all duration-200"
+    >
+      <FileDown className="w-3.5 h-3.5" />
+      <span className="font-medium">PDF</span>
+    </button>
+  )
+
   return (
-    <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data}>
-      <div className="space-y-5">
+    <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data} action={pdfAction}>
+      <div ref={contentRef} className="space-y-5">
         {paragraphs.map((p, i) => {
           const split = splitSubtitle(p)
           const lines = p.split('\n').filter(Boolean)
