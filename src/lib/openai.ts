@@ -20,15 +20,8 @@ import * as PptOutlinePrompt from './prompts/pptOutline'
 import * as StudyGuidePrompt from './prompts/studyGuide'
 import { STUDY_GUIDE_SCHEMA, StudyGuideInput, StudyGuideOutput } from '@/types'
 
-const useOpenRouter = !!process.env.OPENROUTER_API_KEY
-
 const openai = new OpenAI({
-  apiKey: useOpenRouter ? process.env.OPENROUTER_API_KEY : process.env.OPENAI_API_KEY,
-  baseURL: useOpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
-  defaultHeaders: useOpenRouter ? {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://bunker.ai.kr',
-    'X-Title': 'SermonAI',
-  } : undefined,
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 function truncate(text: string, maxChars = 20000): string {
