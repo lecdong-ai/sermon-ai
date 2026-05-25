@@ -282,7 +282,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
     { id: 5, label: '개요 작성', done: !!(sermon.outline?.main_points?.length), ai: 'generate-outline', action: handleOutline, label2: 'AI 생성' },
     { id: 6, label: '적용 정리', done: !!sermon.application_points, ai: 'generate-application', action: handleApplication, label2: 'AI 생성' },
     { id: 7, label: '예화 추가', done: !!sermon.illustration_notes },
-    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: () => setShowDraftModal(true), label2: advanced ? 'GPT-4o 초안' : 'AI 초안' },
+    { id: 8, label: '초안 생성', done: !!sermon.manuscript, ai: 'generate-draft', action: () => setShowDraftModal(true), label2: 'AI 초안' },
   ]
 
   const doneCount = steps.filter(s => s.done).length
@@ -321,11 +321,6 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                   placeholder="설교 제목을 입력하세요"
                   className="text-[18px] font-extrabold text-white bg-transparent border-none focus:outline-none placeholder-white/20 w-full tracking-tight"
                 />
-                {advanced && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 font-bold border border-amber-500/20 shrink-0">
-                    GPT-4o
-                  </span>
-                )}
                 {isCompleted ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                     <Trophy className="w-3 h-3" />
