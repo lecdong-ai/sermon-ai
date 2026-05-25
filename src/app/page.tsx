@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
-import { Upload, Sparkles, FileText, Share2, Cross, LogIn, LayoutDashboard, ArrowRight, CheckCircle, ChevronRight, Star, Shield, Zap, Globe } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Upload, Sparkles, FileText, Share2, Cross, LogIn, LayoutDashboard, ArrowRight, CheckCircle, Star, Shield, Zap, Globe } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import UsageBadge from '@/components/UsageBadge'
 import { useAuth } from '@/components/AuthProvider'
@@ -16,7 +16,7 @@ const STEPS = [
 ]
 
 const FEATURES = [
-  { icon: FileText, title: '설교 요약', desc: '서론/본론/결론/적용 포인트까지 자동 정리' },
+  { icon: FileText, title: '설교 요약', desc: '서론/본론/결론/적용 포인트 자동 정리' },
   { icon: Share2, title: '소그룹 나눔', desc: '연령대별 맞춤 나눔 질문 자동 생성' },
   { icon: Sparkles, title: '카드뉴스', desc: '5장 슬라이드 + 이미지 저장' },
   { icon: Zap, title: '설교 대본', desc: '구어체 10분 설교 대본 생성' },
@@ -33,22 +33,28 @@ const TRUST_BADGES = [
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const [mounted, setMounted] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
-    setMounted(true)
+    const els = document.querySelectorAll('.reveal')
+    els.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight) {
+        el.classList.add('visible')
+      }
+    })
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('visible')
+            observerRef.current?.unobserve(entry.target)
           }
         })
       },
-      { threshold: 0.1 }
+      { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
     )
-    document.querySelectorAll('.reveal').forEach((el) => observerRef.current?.observe(el))
+    els.forEach((el) => observerRef.current?.observe(el))
     return () => observerRef.current?.disconnect()
   }, [])
 
@@ -56,19 +62,16 @@ export default function HomePage() {
     router.push(`/workspace?id=${sermonId}`)
   }
 
-  if (!mounted) return null
-
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* ─── 배경 ─── */}
+      {/* 배경 */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[#fafbfc]" />
-        <div className="absolute top-[-20%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-gradient-to-br from-blue-400/8 via-indigo-300/6 to-transparent blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-tr from-purple-400/8 via-indigo-300/6 to-transparent blur-3xl" />
-        <div className="absolute top-[40%] left-[50%] w-[600px] h-[600px] rounded-full bg-gradient-to-r from-blue-300/5 via-indigo-200/4 to-transparent blur-3xl -translate-x-1/2" />
+        <div className="absolute top-[-20%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-gradient-to-br from-blue-400/10 via-indigo-300/8 to-transparent blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-tr from-purple-400/10 via-indigo-300/6 to-transparent blur-3xl" />
       </div>
 
-      {/* ─── 히어로 ─── */}
+      {/* 히어로 */}
       <section className="relative pt-20 pb-12 sm:pt-28 sm:pb-20">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <div className="text-center max-w-3xl mx-auto">
@@ -92,7 +95,7 @@ export default function HomePage() {
               {!loading && !user && (
                 <Link
                   href="/login?redirect=/"
-                  className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                  className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto justify-center"
                 >
                   <LogIn className="w-5 h-5" />
                   지금 시작하기
@@ -103,7 +106,7 @@ export default function HomePage() {
                 <>
                   <Link
                     href="/dashboard"
-                    className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                    className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto justify-center"
                   >
                     <LayoutDashboard className="w-5 h-5" />
                     대시보드로 이동
@@ -111,7 +114,7 @@ export default function HomePage() {
                   </Link>
                   <Link
                     href="/sermon/new"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 font-bold text-[16px] shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 font-bold text-[16px] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto justify-center"
                   >
                     <Upload className="w-5 h-5 text-indigo-500" />
                     새 설교 만들기
@@ -120,7 +123,7 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* ─── 신뢰 배지 ─── */}
+            {/* 신뢰 배지 */}
             <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-5 sm:gap-8">
               {TRUST_BADGES.map((badge) => (
                 <div key={badge.text} className="flex items-center gap-1.5 text-[13px] text-slate-400 font-medium">
@@ -133,11 +136,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── 4-Step 워크플로우 ─── */}
-      <section className="relative py-12 sm:py-20">
+      {/* 4-Step 워크플로우 */}
+      <section className="relative py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-10 sm:mb-14">
-            <h2 className="reveal text-[clamp(1.5rem,4vw,2.25rem)] font-extrabold text-slate-900 font-outfit mb-3">
+            <h2 className="reveal text-[clamp(1.5rem,4vw,2rem)] font-extrabold text-slate-900 font-outfit mb-3">
               설교 준비, 이제 4단계로
             </h2>
             <p className="reveal text-[15px] sm:text-[17px] text-slate-500 font-medium">
@@ -149,12 +152,10 @@ export default function HomePage() {
             {STEPS.map((step, i) => (
               <div
                 key={step.title}
-                className="reveal group relative"
+                className="reveal group"
                 style={{ transitionDelay: `${i * 100}ms` }}
               >
                 <div className="relative h-full p-6 sm:p-7 rounded-2xl bg-white/70 backdrop-blur-xl border border-slate-200/50 hover:border-indigo-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-500">
-                  <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-indigo-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
                   <div className="flex items-center gap-3 sm:flex-col sm:items-center sm:text-center">
                     <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg shadow-indigo-500/10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
                       <step.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -170,23 +171,17 @@ export default function HomePage() {
                     {step.desc}
                   </p>
                 </div>
-
-                {i < STEPS.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 -translate-y-1/2 z-10">
-                    <ChevronRight className="w-5 h-5 text-indigo-300/60" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── 주요 기능 ─── */}
-      <section className="relative py-12 sm:py-20">
+      {/* 주요 기능 */}
+      <section className="relative py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-10 sm:mb-14">
-            <h2 className="reveal text-[clamp(1.5rem,4vw,2.25rem)] font-extrabold text-slate-900 font-outfit mb-3">
+          <div className="text-center mb-10 sm:mb-12">
+            <h2 className="reveal text-[clamp(1.5rem,4vw,2rem)] font-extrabold text-slate-900 font-outfit mb-3">
               하나의 원고로 여섯 가지 결과
             </h2>
             <p className="reveal text-[15px] sm:text-[17px] text-slate-500 font-medium">
@@ -201,9 +196,9 @@ export default function HomePage() {
                 className="reveal group"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
-                <div className="h-full p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-200/40 hover:border-indigo-200/50 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-400 text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:from-indigo-100 group-hover:to-blue-100 transition-all duration-400">
-                    <feature.icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-indigo-500" />
+                <div className="h-full p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-200/40 hover:border-indigo-200/50 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-300 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:from-indigo-100 group-hover:to-blue-100 transition-all duration-300">
+                    <feature.icon className="w-5 h-5 text-indigo-500" />
                   </div>
                   <p className="text-[13px] sm:text-[15px] font-bold text-slate-800 mb-1">{feature.title}</p>
                   <p className="text-[11px] sm:text-[12px] text-slate-400 leading-snug">{feature.desc}</p>
@@ -214,8 +209,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── 업로드 섹션 ─── */}
-      <section className="relative py-12 sm:py-20">
+      {/* 업로드 섹션 */}
+      <section className="relative py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <div className="reveal">
             {!loading && (
@@ -235,7 +230,6 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/60 backdrop-blur-xl border border-slate-200/40 shadow-lg p-8 sm:p-12 text-center">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-transparent to-purple-50/30 pointer-events-none" />
                     <div className="relative">
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mx-auto mb-5">
                         <Upload className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-400" />
@@ -248,9 +242,9 @@ export default function HomePage() {
                       </p>
                       <Link
                         href="/login?redirect=/"
-                        className="group inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                        className="group inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200"
                       >
-                        <LogIn className="w-4.5 h-4.5" />
+                        <LogIn className="w-4 h-4" />
                         로그인하기
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </Link>
@@ -263,7 +257,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── 팁 박스 ─── */}
+      {/* 팁 */}
       <section className="relative pb-16 sm:pb-24">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <div className="reveal rounded-2xl bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-transparent border border-indigo-200/30 p-5 sm:p-6">
@@ -296,13 +290,14 @@ export default function HomePage() {
 
       <style jsx>{`
         .reveal {
-          opacity: 0;
-          transform: translateY(24px);
-          transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+          opacity: 1;
         }
         .reveal.visible {
-          opacity: 1;
-          transform: translateY(0);
+          animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
