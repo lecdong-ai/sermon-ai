@@ -306,20 +306,20 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
       {/* Sticky header */}
       <header className="sticky top-0 z-30 bg-[#0d0f1a]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={() => router.push('/sermon')}
               className="w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.06] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shrink-0"
             >
               <ArrowLeft className="w-4.5 h-4.5 text-white/60" />
             </button>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2.5">
                 <input
                   value={sermon.title}
                   onChange={e => handleFieldChange('title', e.target.value)}
                   placeholder="설교 제목을 입력하세요"
-                  className="text-[18px] font-extrabold text-white bg-transparent border-none focus:outline-none placeholder-white/20 min-w-[200px] tracking-tight"
+                  className="text-[18px] font-extrabold text-white bg-transparent border-none focus:outline-none placeholder-white/20 w-full tracking-tight"
                 />
                 {advanced && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 font-bold border border-amber-500/20 shrink-0">
