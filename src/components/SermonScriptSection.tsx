@@ -53,7 +53,7 @@ export default function SermonScriptSection({ data }: Props) {
   return (
     <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data} action={pdfAction}>
       <div ref={contentRef} className="space-y-5">
-        {paragraphs.map((p, i) => {
+        {paragraphs.slice(0, 3).map((p, i) => {
           const split = splitSubtitle(p)
           const lines = p.split('\n').filter(Boolean)
           return (
