@@ -15,6 +15,17 @@ const cspHeader = `
 const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.kakaocdn.net',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+    minimumCacheTTL: 86400,
   },
   compress: true,
   async headers() {

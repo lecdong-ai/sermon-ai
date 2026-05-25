@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, type DragEvent } from 'react'
+import { useState, useRef, memo, type DragEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, FileText, AlertCircle, CheckCircle, ChevronDown, ChevronUp, X, Loader2, Pencil } from 'lucide-react'
 
@@ -8,7 +8,7 @@ interface Props {
   onSuccess?: (sermonId: string) => void
 }
 
-export default function FileUpload({ onSuccess }: Props) {
+export default memo(function FileUpload({ onSuccess }: Props) {
   const router = useRouter()
   const [isDragging, setIsDragging] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'uploading' | 'parsing' | 'done' | 'error'>('idle')
@@ -224,4 +224,4 @@ export default function FileUpload({ onSuccess }: Props) {
       )}
     </div>
   )
-}
+})

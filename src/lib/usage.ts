@@ -2,6 +2,14 @@ import { supabaseAdmin as supabase } from './supabase'
 import type { PlanType, UserUsage, UsageInfo, FeatureAccess } from '@/types'
 import { PLAN_LIMITS } from '@/types'
 
+const UNLIMITED_EMAILS = ['lecdong@gmail.com']
+
+async function isUnlimitedUser(userId: string): Promise<boolean> {
+  const { data, error } = await supabase.auth.admin.getUserById(userId)
+  if (error || !data?.user?.email) return false
+  return UNLIMITED_EMAILS.includes(data.user.email.toLowerCase())
+}
+
 function currentMonth(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -126,11 +134,23 @@ function computeUsage(usage: UserUsage): UsageInfo {
 }
 
 export async function checkUsage(userId: string): Promise<UsageInfo> {
+  if (await isUnlimitedUser(userId)) {
+    return {
+      plan: 'pro',
+      user_status: 'active',
+      trial: { used: 0, limit: 999999, remaining: 999999, ends_at: null, expired: false },
+      monthly: { used: 0, limit: 0, remaining: 0, period_start: monthDate(0), period_end: monthDate(1) },
+      can_generate: true,
+    }
+  }
   const usage = await ensureUsage(userId)
   return computeUsage(usage)
 }
 
 export async function checkFeatureAccess(userId: string, feature: string): Promise<FeatureAccess> {
+  if (await isUnlimitedUser(userId)) {
+    return { key: feature, name: feature, available: true, remaining: 999999 } as FeatureAccess
+  }
   const usage = await ensureUsage(userId)
   const planLimits = PLAN_LIMITS[usage.plan] || PLAN_LIMITS.none
   const info = computeUsage(usage)
@@ -157,6 +177,16 @@ export async function checkFeatureAccess(userId: string, feature: string): Promi
 }
 
 export async function consumeUsage(userId: string): Promise<{ success: boolean; error?: string; usage?: UsageInfo }> {
+  if (await isUnlimitedUser(userId)) {
+    return { success: true, usage: {
+      plan: 'pro',
+      user_status: 'active',
+      trial: { used: 0, limit: 999999, remaining: 999999, ends_at: null, expired: false },
+      monthly: { used: 0, limit: 0, remaining: 0, period_start: monthDate(0), period_end: monthDate(1) },
+      can_generate: true,
+    }}
+  }
+
   const usage = await ensureUsage(userId)
   const month = currentMonth()
   const needsReset = usage.last_reset_month !== month

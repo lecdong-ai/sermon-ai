@@ -10,6 +10,8 @@ const notoSansKr = Noto_Sans_KR({
   weight: ['400', '500', '700'],
   display: 'swap',
   variable: '--font-noto-sans-kr',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
 })
 
 const outfit = Outfit({
@@ -17,6 +19,8 @@ const outfit = Outfit({
   weight: ['500', '700', '800'],
   display: 'swap',
   variable: '--font-outfit',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
 })
 
 export const viewport: Viewport = {
@@ -66,7 +70,7 @@ export default function RootLayout({
           {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
             <Script
               src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-              strategy="lazyOnload"
+              strategy="afterInteractive"
               crossOrigin="anonymous"
               onLoad={() => {
                 if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {

@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { Bug, LogIn, User, LogOut, LayoutDashboard, Cross, BookOpen, FileText, CreditCard } from 'lucide-react'
 import { useAuth } from './AuthProvider'
 
@@ -16,7 +17,7 @@ function setCookie(name: string, value: string) {
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=None; Secure`
 }
 
-export default function Header() {
+export default memo(function Header() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const [mockOn, setMockOn] = useState(false)
@@ -166,4 +167,4 @@ export default function Header() {
       </div>
     </header>
   )
-}
+})

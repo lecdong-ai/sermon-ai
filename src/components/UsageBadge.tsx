@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
-import { Gauge, AlertTriangle, Sparkles, Clock, Crown } from 'lucide-react'
+import { Gauge, AlertTriangle, Sparkles, Clock, Crown, Infinity, Zap } from 'lucide-react'
 import type { UsageInfo } from '@/types'
 
-export default function UsageBadge() {
+export default memo(function UsageBadge() {
   const { user, loading: authLoading } = useAuth()
   const [usage, setUsage] = useState<UsageInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,77 +30,127 @@ export default function UsageBadge() {
   const isTrial = plan === 'none'
   const trialEndDate = trial.ends_at ? new Date(trial.ends_at) : null
   const daysLeft = trialEndDate ? Math.ceil((trialEndDate.getTime() - Date.now()) / 86400000) : 0
+  const isUnlimited = trial.remaining >= 999999 || (monthly.limit === 0 && monthly.remaining === 0 && !isTrial)
+
+  const planColors = {
+    none: { bg: 'from-amber-500 to-orange-500', light: 'from-amber-50 to-orange-50', text: 'text-amber-600', border: 'border-amber-200/50' },
+    basic: { bg: 'from-blue-500 to-indigo-500', light: 'from-blue-50 to-indigo-50', text: 'text-blue-600', border: 'border-blue-200/50' },
+    pro: { bg: 'from-purple-500 to-indigo-600', light: 'from-purple-50 to-indigo-50', text: 'text-purple-600', border: 'border-purple-200/50' },
+  }
+  const colors = planColors[plan] || planColors.none
 
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50/30 rounded-2xl border border-indigo-100/60 px-4 py-3 w-full text-center">
-      <div className="flex items-center justify-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-sm">
-          <Gauge className="w-4 h-4 text-white" />
+    <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl border border-slate-200/40 shadow-lg shadow-indigo-500/3 w-full">
+      {/* 상단 플래너 바 */}
+      <div className={`bg-gradient-to-r ${colors.bg} px-4 py-2.5`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              {isUnlimited ? (
+                <Infinity className="w-4 h-4 text-white" />
+              ) : (
+                <Gauge className="w-4 h-4 text-white" />
+              )}
+            </div>
+            <span className="text-[14px] font-bold text-white">
+              {isUnlimited ? '무제한' : plan === 'none' ? '무료체험' : plan === 'basic' ? 'Basic' : 'Pro'}
+            </span>
+          </div>
+          {!isUnlimited && !isTrial && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm">
+              <Crown className="w-3 h-3 text-white" />
+              <span className="text-[11px] font-semibold text-white">Premium</span>
+            </div>
+          )}
         </div>
-        <span className="text-[15px] font-bold text-slate-800">
-          {plan === 'none' ? '무료체험' : plan === 'basic' ? 'Basic' : 'Pro'}
-        </span>
       </div>
 
-      <div className="space-y-1.5">
-        {isTrial && trial.remaining > 0 && !trial.expired && (
-          <>
-            <div className="flex items-center justify-between text-[13px] bg-white/80 rounded-lg px-2.5 py-1.5 border border-indigo-100/40">
-              <span className="text-slate-500 font-medium flex items-center gap-1 truncate">
-                <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-                남은 분석
-              </span>
-              <span className="font-bold text-slate-800 text-[14px] shrink-0 ml-1.5">
-                {trial.remaining}회
-              </span>
+      {/* 본문 */}
+      <div className="p-4 space-y-3">
+        {isUnlimited ? (
+          <div className="text-center py-2">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/50">
+              <Zap className="w-4 h-4 text-purple-500" />
+              <span className="text-[14px] font-bold text-purple-700">무제한 사용 가능</span>
             </div>
-            <div className="flex items-center justify-between text-[12px] bg-white/80 rounded-lg px-2.5 py-1 border border-indigo-100/40">
-              <span className="text-slate-400 flex items-center gap-1 truncate">
-                <Clock className="w-3 h-3 shrink-0" />
+          </div>
+        ) : isTrial && trial.remaining > 0 && !trial.expired ? (
+          <>
+            {/* 사용량 프로그레스 바 */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  남은 분석
+                </span>
+                <span className="text-[16px] font-extrabold text-slate-800">
+                  {trial.remaining}<span className="text-[12px] font-medium text-slate-400 ml-0.5">/ {trial.limit}</span>
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                  style={{ width: `${(trial.remaining / trial.limit) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* 남은 기간 */}
+            <div className="flex items-center justify-between text-[12px] bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
                 남은 기간
               </span>
-              <span className={`font-semibold shrink-0 ml-1.5 ${daysLeft <= 3 ? 'text-amber-600' : 'text-slate-500'}`}>
+              <span className={`font-bold ${daysLeft <= 3 ? 'text-amber-600' : 'text-slate-600'}`}>
                 {daysLeft}일
               </span>
             </div>
           </>
-        )}
-
-        {isTrial && trial.expired && (
-          <div className="flex items-center justify-center gap-1.5 text-[12px] text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg">
-            <Clock className="w-3 h-3 shrink-0" />
-            체험 기간 만료
+        ) : isTrial && trial.expired ? (
+          <div className="flex items-center justify-center gap-2 py-3 text-[13px] text-amber-600 bg-amber-50 border border-amber-200 rounded-xl">
+            <Clock className="w-4 h-4 shrink-0" />
+            <span className="font-semibold">체험 기간이 만료되었습니다</span>
           </div>
-        )}
-
-        {trial.remaining <= 0 && isTrial && (
-          <div className="flex items-center justify-center gap-1.5 text-[12px] text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-lg">
-            <AlertTriangle className="w-3 h-3 shrink-0" />
-            횟수 소진
+        ) : trial.remaining <= 0 && isTrial ? (
+          <div className="flex items-center justify-center gap-2 py-3 text-[13px] text-rose-600 bg-rose-50 border border-rose-200 rounded-xl">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span className="font-semibold">사용 횟수가 모두 소진되었습니다</span>
           </div>
+        ) : (
+          <>
+            {/* 유료 사용자 - 월간 사용량 */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-indigo-500" />
+                  이번 달 사용량
+                </span>
+                <span className="text-[16px] font-extrabold text-slate-800">
+                  {monthly.remaining === 0 ? '무제한' : `${monthly.remaining}회`}
+                </span>
+              </div>
+              {monthly.limit > 0 && (
+                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-500"
+                    style={{ width: `${(monthly.remaining / monthly.limit) * 100}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
 
-        {!isTrial && (
-          <div className="flex items-center justify-between text-[13px] bg-white/80 rounded-lg px-2.5 py-1.5 border border-indigo-100/40">
-            <span className="text-slate-500 font-medium flex items-center gap-1 truncate">
-              <Crown className="w-3 h-3 text-indigo-500 shrink-0" />
-              이번 달
-            </span>
-            <span className={`font-bold text-[14px] shrink-0 ml-1.5 ${monthly.remaining <= 3 ? 'text-rose-500' : 'text-slate-800'}`}>
-              {monthly.remaining}회
-            </span>
-          </div>
-        )}
-
-        {!usage.can_generate && (
+        {/* CTA 버튼 */}
+        {!usage.can_generate && !isUnlimited && (
           <Link
             href="/pricing"
-            className="block text-center text-[12px] font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 rounded-lg px-2.5 py-2 hover:shadow-md transition-all mt-1"
+            className="block text-center text-[13px] font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl px-4 py-2.5 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all"
           >
-            요금제 보기
+            요금제 업그레이드
           </Link>
         )}
       </div>
     </div>
   )
-}
+})
