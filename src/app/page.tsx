@@ -305,10 +305,15 @@ export default function HomePage() {
             <div className="p-5 space-y-2">
               <button
                 onClick={() => router.push('/sermon/advanced')}
-                className="w-full p-4 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/40 hover:border-indigo-300/60 hover:shadow-md transition-all duration-200 text-left group"
+                className="w-full p-4 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/40 hover:border-indigo-300/60 hover:shadow-md transition-all duration-200 text-left group relative"
               >
-                <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
-                <p className="text-[12px] text-slate-500 mt-0.5 font-medium">업그레이드된 AI — 더 풍성한 결과물</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-extrabold tracking-wide shadow-sm">
+                    PRO
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-500 mt-1 font-medium">업그레이드된 AI — 더 풍성한 결과물</p>
               </button>
               <button
                 onClick={() => router.push('/sermon/new')}
@@ -318,7 +323,11 @@ export default function HomePage() {
                 <p className="text-[12px] text-slate-400 mt-0.5 font-medium">기본 AI 모델 — 빠르고 간편하게</p>
               </button>
             </div>
-            <div className="px-5 pb-5">
+            <div className="px-5 pb-3">
+              <div className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-slate-400">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
+                실전형 설교준비는 <strong className="text-slate-600">PRO 플랜</strong> 전용입니다
+              </div>
               <button
                 onClick={() => setShowModal(false)}
                 className="w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100/50 transition-all duration-200"
