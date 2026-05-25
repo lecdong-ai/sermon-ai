@@ -179,7 +179,7 @@ export async function checkFeatureAccess(userId: string, feature: string): Promi
   if (feature === 'workspace') {
     return {
       key: 'workspace',
-      name: '설교 워크스페이스',
+      name: '설교원고제작',
       available: info.workspace.remaining > 0,
       remaining: info.workspace.remaining,
       required_plan: planLimits.workspace_limit > 0 ? 'basic' : 'pro',
@@ -243,7 +243,7 @@ export async function consumeWorkspaceUsage(userId: string): Promise<{ success: 
 
   const info = computeUsage(usage)
   if (info.workspace.remaining <= 0) {
-    return { success: false, error: '워크스페이스 사용 한도를 초과했습니다.', usage: info }
+    return { success: false, error: '설교원고제작 사용 한도를 초과했습니다.', usage: info }
   }
 
   await updateUsage(userId, {

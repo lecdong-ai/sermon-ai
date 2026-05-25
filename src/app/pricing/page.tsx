@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Basic과 Pro의 차이는 무엇인가요?',
-    a: 'Basic은 월 10회 AI 분석과 10회 워크스페이스 사용이 가능합니다. Pro는 월 20회 AI 분석과 20회 워크스페이스 사용이 가능하며, 설교 준비를 위한 워크스페이스(본문 관찰, 핵심 메시지, 개요 작성, 원고 작성 도구)를 보다 넉넉하게 이용하실 수 있습니다.',
+    a: 'Basic은 월 10회 AI 분석과 10회 설교원고제작이 가능합니다. Pro는 월 20회 AI 분석과 20회 설교원고제작이 가능하며, 설교 준비를 위한 워크스페이스(본문 관찰, 핵심 메시지, 개요 작성, 원고 작성 도구)를 보다 넉넉하게 이용하실 수 있습니다.',
   },
   {
     q: '사용하지 않은 횟수가 다음 달로 이월되나요?',
@@ -54,7 +54,7 @@ export default function PricingPage() {
       period: '',
       features: [
         { text: 'AI 분석 3회', ok: true },
-        { text: '워크스페이스 사용 불가', ok: false },
+        { text: '설교원고제작 사용 불가', ok: false },
         { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
         { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
         { text: '결과 공유 및 다운로드', ok: true },
@@ -73,10 +73,10 @@ export default function PricingPage() {
       period: '/월',
       features: [
         { text: 'AI 분석 월 10회', ok: true },
-        { text: '워크스페이스 월 10회', ok: true },
         { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
         { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
         { text: '결과 공유 및 다운로드', ok: true },
+        { text: '설교원고제작 월 10회', ok: true },
         { text: '매월 초기화', ok: true },
       ],
       cta: currentPlan === 'basic' ? '현재 이용 중' : '월간 구독',
@@ -92,10 +92,10 @@ export default function PricingPage() {
       period: '/월',
       features: [
         { text: 'AI 분석 월 20회', ok: true },
-        { text: '워크스페이스 월 20회', ok: true },
         { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
         { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
         { text: '결과 공유 및 다운로드', ok: true },
+        { text: '설교원고제작 월 20회', ok: true },
         { text: '매월 초기화', ok: true },
       ],
       cta: currentPlan === 'pro' ? '현재 이용 중' : currentPlan === 'basic' ? '업그레이드' : '월간 구독',

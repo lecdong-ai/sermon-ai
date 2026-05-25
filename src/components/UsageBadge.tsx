@@ -139,13 +139,13 @@ export default memo(function UsageBadge() {
               )}
             </div>
 
-            {/* 워크스페이스 사용량 */}
+            {/* 설교원고제작 사용량 */}
             {workspace.limit > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
                     <Zap className="w-3 h-3 text-purple-500" />
-                    워크스페이스
+                    설교원고제작
                   </span>
                   <span className="text-[16px] font-extrabold text-slate-800">
                     {workspace.remaining}회
