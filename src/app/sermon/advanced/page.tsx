@@ -190,7 +190,7 @@ export default function AdvancedSermonPage() {
               </div>
 
               <div className="max-w-2xl">
-                <h1 className="text-balance font-outfit text-[clamp(2rem,4.5vw,3.4rem)] font-extrabold leading-[1.15] text-slate-900">
+                <h1 className="text-balance font-outfit text-[clamp(1.7rem,4vw,3rem)] font-extrabold leading-[1.15] text-slate-900">
                   설교 한 편을 가장
                   <br /><span className="text-gradient">더 강력하게 완성하는 화면</span>
                 </h1>
