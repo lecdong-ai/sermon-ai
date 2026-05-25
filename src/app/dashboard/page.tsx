@@ -1,178 +1,234 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { useAuth } from '@/components/AuthProvider'
-import { FileText, BookOpen, ChevronRight, Calendar, Trash2, AlertCircle, RefreshCw } from 'lucide-react'
-import Link from 'next/link'
-
-const supabase = createClient()
+import { useState, useCallback, useMemo } from 'react'
+import type { PageView, SermonD } from '@/types/dashboard'
+import { SERMONS as SAMPLE_SERMONS } from '@/data/sampleSermons'
+import Sidebar from '@/components/dashboard/Sidebar'
+import HomeView from '@/components/dashboard/HomeView'
+import SermonListView from '@/components/dashboard/SermonListView'
+import SermonDetailView from '@/components/dashboard/SermonDetailView'
+import SermonFormView from '@/components/dashboard/SermonFormView'
+import GraphView from '@/components/dashboard/GraphView'
+import StatisticsView from '@/components/dashboard/StatisticsView'
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [sermons, setSermons] = useState<any[]>([])
-  const [dataLoading, setDataLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [page, setPage] = useState<PageView>('home')
+  const [params, setParams] = useState<Record<string, string>>({})
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sermons, setSermons] = useState<SermonD[]>(SAMPLE_SERMONS)
 
-  const loadSermons = useCallback(async () => {
-    if (!user) return
-    setDataLoading(true)
-    setError('')
-    const { data, error } = await supabase
-      .from('sermons')
-      .select('id, title, passage, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    if (error) setError(`데이터를 불러올 수 없습니다: ${error.message}`)
-    else setSermons(data || [])
-    setDataLoading(false)
-  }, [user])
+  const navigate = useCallback((p: PageView, p2?: Record<string, string>) => {
+    setPage(p)
+    if (p2) setParams(p2)
+  }, [])
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?redirect=/dashboard')
-      return
+  const selectedSermonId = params.id
+
+  const handleSelectSermon = useCallback((id: string) => {
+    navigate('detail', { id })
+  }, [navigate])
+
+  const handleEditSermon = useCallback((id: string) => {
+    navigate('edit', { id })
+  }, [navigate])
+
+  const handleDeleteSermon = useCallback((id: string) => {
+    setSermons((prev) => prev.filter((s) => s.id !== id))
+    navigate('list')
+  }, [navigate])
+
+  const handleSaveSermon = useCallback((sermon: SermonD) => {
+    setSermons((prev) => {
+      const idx = prev.findIndex((s) => s.id === sermon.id)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = sermon
+        return next
+      }
+      return [sermon, ...prev]
+    })
+    navigate('detail', { id: sermon.id })
+  }, [navigate])
+
+  const renderContent = () => {
+    switch (page) {
+      case 'home':
+        return <HomeView onNavigate={navigate as any} />
+      case 'list':
+        return <SermonListView onSelect={handleSelectSermon} onCreate={() => navigate('new')} />
+      case 'detail':
+        return selectedSermonId ? (
+          <SermonDetailView
+            sermonId={selectedSermonId}
+            onBack={() => navigate('list')}
+            onEdit={handleEditSermon}
+            onDelete={handleDeleteSermon}
+            onGraph={() => navigate('graph')}
+            onNavigate={handleSelectSermon}
+          />
+        ) : <SermonListView onSelect={handleSelectSermon} onCreate={() => navigate('new')} />
+      case 'new':
+      case 'edit':
+        return (
+          <SermonFormView
+            sermonId={page === 'edit' ? params.id : undefined}
+            onBack={() => navigate('list')}
+            onSave={handleSaveSermon}
+          />
+        )
+      case 'graph':
+        return <GraphView onSelectSermon={handleSelectSermon} />
+      case 'stats':
+        return <StatisticsView />
+      case 'series':
+      case 'series-detail':
+      case 'tags':
+        return <SeriesAndTagsFallback page={page} onNavigate={navigate as any} onSelectSermon={handleSelectSermon} />
+      case 'settings':
+        return <SettingsView />
+      default:
+        return <HomeView onNavigate={navigate as any} />
     }
-    if (user) loadSermons()
-  }, [user, loading, loadSermons, router])
-
-  const deleteSermon = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
-    const { error } = await supabase.from('sermons').delete().eq('id', id)
-    if (!error) setSermons((prev) => prev.filter((s) => s.id !== id))
   }
 
-  if (loading || dataLoading) {
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+      <Sidebar
+        currentPage={page}
+        onNavigate={(p, p2) => navigate(p as PageView, p2)}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((c) => !c)}
+      />
+      <main className="flex-1 flex flex-col min-w-0">
+        {renderContent()}
+      </main>
+    </div>
+  )
+}
+
+function SeriesAndTagsFallback({
+  page,
+  onNavigate,
+  onSelectSermon,
+}: {
+  page: string
+  onNavigate: (page: string, params?: Record<string, string>) => void
+  onSelectSermon: (id: string) => void
+}) {
+  const { SERIES, SERMONS, THEMES, TAGS } = require('@/data/sampleSermons') as typeof import('@/data/sampleSermons')
+
+  if (page === 'tags') {
     return (
-      <div className="relative flex items-center justify-center min-h-[70vh] bg-slate-50/50">
-        <div className="absolute inset-0 pointer-events-none bg-grid-tech opacity-60" />
-        <div className="relative flex flex-col items-center gap-4">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 rounded-full border-4 border-slate-200/60" />
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 animate-spin" />
+      <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+        <h2 className="text-lg font-bold text-slate-700 mb-4">주제 & 태그</h2>
+        <div className="space-y-6">
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">주제</h3>
+            <div className="flex flex-wrap gap-2">
+              {THEMES.map((t: any) => {
+                const count = SERMONS.filter((s: SermonD) => s.themeIds.includes(t.id)).length
+                return (
+                  <div key={t.id} className="px-3 py-2 bg-amber-50 rounded-xl border border-amber-100 min-w-[100px]">
+                    <p className="text-sm font-medium text-amber-700">{t.name}</p>
+                    <p className="text-xs text-amber-400">{t.category} · {count}편</p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          <p className="text-[14px] text-slate-400 font-semibold tracking-wider animate-pulse">데이터를 불러오는 중입니다...</p>
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">상황 태그</h3>
+            <div className="flex flex-wrap gap-2">
+              {TAGS.filter((t: any) => t.type === 'situation').map((t: any) => {
+                const count = SERMONS.filter((s: SermonD) => s.tagIds.includes(t.id)).length
+                return (
+                  <span key={t.id} className="px-2.5 py-1 text-xs bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+                    {t.name} ({count})
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">감정 태그</h3>
+            <div className="flex flex-wrap gap-2">
+              {TAGS.filter((t: any) => t.type === 'emotion').map((t: any) => {
+                const count = SERMONS.filter((s: SermonD) => s.tagIds.includes(t.id)).length
+                return (
+                  <span key={t.id} className="px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                    {t.name} ({count})
+                  </span>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!user) return null
-
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-slate-50/50">
-      
-      {/* 백그라운드 디자인 */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-grid-tech">
-        <div className="absolute top-[-25%] right-[-10%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-300/10 via-blue-300/5 to-transparent blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-purple-300/10 via-indigo-300/5 to-transparent blur-3xl animate-pulse-slower" />
-      </div>
-
-      <div className="relative max-w-4xl mx-auto px-6 py-10 sm:py-16">
-        <div className="animate-in">
-          
-          {/* 헤더 섹션 */}
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h1 className="text-[28px] sm:text-[32px] font-extrabold font-outfit text-gradient tracking-tight">대시보드</h1>
-              <p className="text-[14.5px] text-slate-400 font-medium mt-1">
-                {sermons.length > 0
-                  ? `총 ${sermons.length}개의 설교 설계가 보관되어 있습니다.`
-                  : '설교 준비를 스마트하게 시작해 보세요.'}
-              </p>
-            </div>
-            
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[14px] hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-            >
-              <FileText className="w-4.5 h-4.5" />
-              새로 만들기
-            </Link>
-          </div>
-
-          {error && (
-            <div className="flex items-start gap-2.5 text-[14px] font-semibold text-rose-600 bg-rose-50/80 backdrop-blur-xl border border-rose-200/40 rounded-2xl px-5 py-4 mb-8">
-              <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
-              <div className="flex-1">{error}</div>
-              <button onClick={loadSermons} className="shrink-0 text-rose-400 hover:text-rose-600 transition-colors">
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* 설교 리스트 및 비어있는 상태 */}
-          {sermons.length === 0 ? (
-            <div className="text-center py-20 glass-panel rounded-3xl border border-white/60 shadow-lg shadow-indigo-500/5">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/60 flex items-center justify-center mx-auto mb-5 shadow-inner">
-                <FileText className="w-8 h-8 text-indigo-500" />
-              </div>
-              <p className="text-[18px] font-bold text-slate-700 mb-1.5">보관된 설교가 없습니다</p>
-              <p className="text-[14px] text-slate-400 mb-6">원고를 업로드하고 첫 번째 AI 분석 콘텐츠를 생성해 보세요!</p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
-              >
-                설교 원고 업로드하기
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {sermons.map((sermon) => (
-                <div
-                  key={sermon.id}
-                  className="group glass-panel glass-panel-hover rounded-2xl p-4.5 border border-white/70 shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <Link
-                      href={`/workspace?id=${sermon.id}`}
-                      className="flex-1 min-w-0"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/60 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-                          <FileText className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[15.5px] font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                            {sermon.title || '제목 없음'}
-                          </p>
-                          <div className="flex items-center gap-2.5 text-[13px] text-slate-400 font-medium mt-1">
-                            {sermon.passage && (
-                              <>
-                                <span className="bg-indigo-50 text-indigo-600/80 px-2 py-0.5 rounded-md text-[11px] font-bold">{sermon.passage}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-200" />
-                              </>
-                            )}
-                            <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                            <span>{new Date(sermon.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    
-                    <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                      <button
-                        onClick={() => deleteSermon(sermon.id)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50/80 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                        title="삭제"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <Link
-                        href={`/workspace?id=${sermon.id}`}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all duration-200"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </Link>
-                    </div>
+    <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+      <h2 className="text-lg font-bold text-slate-700 mb-4">설교 시리즈</h2>
+      <div className="space-y-4">
+        {SERIES.map((series: any) => {
+          const sSermons = SERMONS.filter((s: SermonD) => s.seriesId === series.id)
+          const statusColor = series.status === '진행중' ? '#10b981' : series.status === '완료' ? '#94a3b8' : '#6366f1'
+          return (
+            <div key={series.id} className="glass-panel rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-slate-700">{series.name}</h3>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: statusColor + '15', color: statusColor }}>{series.status}</span>
                   </div>
+                  <p className="text-xs text-slate-400 mt-0.5">{series.description}</p>
                 </div>
-              ))}
+                <div className="text-xs text-slate-400">{series.startDate} ~ {series.endDate}</div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {sSermons.map((s: SermonD) => (
+                  <button
+                    key={s.id}
+                    onClick={() => onSelectSermon(s.id)}
+                    className="px-2.5 py-1 text-xs bg-slate-50 text-slate-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition-colors border border-slate-100"
+                  >
+                    {s.title}
+                  </button>
+                ))}
+                {sSermons.length === 0 && (
+                  <span className="text-xs text-slate-300">등록된 설교가 없습니다</span>
+                )}
+              </div>
             </div>
-          )}
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SettingsView() {
+  return (
+    <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+      <h2 className="text-lg font-bold text-slate-700 mb-4">설정</h2>
+      <div className="glass-panel rounded-2xl p-5 space-y-4 max-w-xl">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-700 mb-2">정보</h3>
+          <p className="text-xs text-slate-400">설교 대시보드 v1.0</p>
+          <p className="text-xs text-slate-400 mt-1">샘플 데이터 {SAMPLE_SERMONS.length}개, 주제 {require('@/data/sampleSermons').THEMES.length}개, 태그 {require('@/data/sampleSermons').TAGS.length}개, 시리즈 {require('@/data/sampleSermons').SERIES.length}개</p>
+        </div>
+        <div className="border-t border-slate-100 pt-4">
+          <h3 className="text-sm font-semibold text-slate-700 mb-2">데이터 관리</h3>
+          <p className="text-xs text-slate-400 mb-3">현재 샘플 데이터를 사용 중입니다. 실제 데이터베이스 연동은 준비 중입니다.</p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1.5 text-xs bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
+              데이터 내보내기 (준비 중)
+            </button>
+            <button className="px-3 py-1.5 text-xs bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
+              데이터 가져오기 (준비 중)
+            </button>
+          </div>
         </div>
       </div>
     </div>
