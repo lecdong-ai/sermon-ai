@@ -190,9 +190,9 @@ export default function AdvancedSermonPage() {
               </div>
 
               <div className="max-w-2xl">
-                <h1 className="text-balance font-outfit text-[clamp(1.5rem,3.5vw,2.6rem)] font-extrabold leading-[1.1] text-slate-900">
-                  설교 한 편을
-                  <span className="text-gradient"> 가장 강력하게 완성하는 화면</span>
+                <h1 className="text-balance font-outfit text-[clamp(1.7rem,4vw,3rem)] font-extrabold leading-[1.15] text-slate-900">
+                  설교 한 편을 가장
+                  <br /><span className="text-gradient">더 강력하게 완성하는 화면</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-500 sm:text-[16px]">
                   GPT-4o가 본문을 깊이 분석하여 더 풍성한 인사이트와 정교한 결과물을 제공합니다.
