@@ -21,8 +21,8 @@ function splitSubtitle(text: string): { subtitle: string; body: string } | null 
 
 export default function SermonScriptSection({ data }: Props) {
   const paragraphs = data.split('\n\n').filter(Boolean)
-  const labels = ['서론', '본론', '결론/적용', '목회적 기도']
-  const colors = ['bg-blue-100 text-blue-700', 'bg-primary-100 text-primary-700', 'bg-purple-100 text-purple-700', 'bg-[#e0e7ff] text-[#4338ca]']
+  const labels = ['서론', '본론', '결론/적용']
+  const colors = ['bg-blue-100 text-blue-700', 'bg-primary-100 text-primary-700', 'bg-purple-100 text-purple-700']
 
   return (
     <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data}>
