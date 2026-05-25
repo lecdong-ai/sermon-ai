@@ -2,145 +2,309 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Upload, Sparkles, FileText, Share2, Cross, LogIn, LayoutDashboard } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Upload, Sparkles, FileText, Share2, Cross, LogIn, LayoutDashboard, ArrowRight, CheckCircle, ChevronRight, Star, Shield, Zap, Globe } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import UsageBadge from '@/components/UsageBadge'
 import { useAuth } from '@/components/AuthProvider'
 
 const STEPS = [
-  { icon: Upload, title: '파일 업로드', desc: '설교 원고(PDF/TXT/DOCX)를 안전하게 업로드하세요', color: 'from-blue-500 to-indigo-600 shadow-blue-500/10' },
-  { icon: Sparkles, title: 'AI 초고속 생성', desc: '인공지능이 6종 고품질 콘텐츠를 즉시 설계합니다', color: 'from-indigo-500 to-purple-600 shadow-indigo-500/10' },
-  { icon: FileText, title: '다차원 결과 분석', desc: '설교 요약, 나눔, 대본 등을 한눈에 검토하세요', color: 'from-purple-500 to-pink-600 shadow-purple-500/10' },
-  { icon: Share2, title: '스마트 공유 & 다운', desc: '링크 전달은 물론, PPT 및 문서로 간편 저장', color: 'from-pink-500 to-rose-600 shadow-pink-500/10' },
+  { icon: Upload, title: '파일 업로드', desc: '설교 원고(PDF/TXT/DOCX)를 안전하게 업로드하세요', color: 'from-blue-500 to-indigo-600' },
+  { icon: Sparkles, title: 'AI 초고속 생성', desc: '인공지능이 6종 고품질 콘텐츠를 즉시 설계합니다', color: 'from-indigo-500 to-purple-600' },
+  { icon: FileText, title: '다차원 결과 분석', desc: '설교 요약, 나눔, 대본 등을 한눈에 검토하세요', color: 'from-purple-500 to-pink-600' },
+  { icon: Share2, title: '스마트 공유 & 다운', desc: '링크 전달은 물론, PPT 및 문서로 간편 저장', color: 'from-pink-500 to-rose-600' },
+]
+
+const FEATURES = [
+  { icon: FileText, title: '설교 요약', desc: '서론/본론/결론/적용 포인트까지 자동 정리' },
+  { icon: Share2, title: '소그룹 나눔', desc: '연령대별 맞춤 나눔 질문 자동 생성' },
+  { icon: Sparkles, title: '카드뉴스', desc: '5장 슬라이드 + 이미지 저장' },
+  { icon: Zap, title: '설교 대본', desc: '구어체 10분 설교 대본 생성' },
+  { icon: Globe, title: '쇼츠 대본', desc: 'YouTube Shorts 60초 대본' },
+  { icon: Star, title: 'PPT 다운로드', desc: '표지/목차/본문/마무리 .pptx' },
+]
+
+const TRUST_BADGES = [
+  { icon: Shield, text: 'SSL 암호화 전송' },
+  { icon: CheckCircle, text: '15일 무료 체험' },
+  { icon: Zap, text: 'GPT-4o-mini 탑재' },
 ]
 
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+    document.querySelectorAll('.reveal').forEach((el) => observerRef.current?.observe(el))
+    return () => observerRef.current?.disconnect()
+  }, [])
 
   const handleUploadSuccess = (sermonId: string) => {
     router.push(`/workspace?id=${sermonId}`)
   }
 
+  if (!mounted) return null
+
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-slate-50/50">
-      
-      {/* 미래지향적 오로라 백그라운드 & 격자 데코레이션 */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-grid-tech">
-        <div className="absolute top-[-25%] left-[-15%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-300/15 via-blue-300/10 to-transparent blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-[-15%] right-[-15%] w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-300/10 via-indigo-300/5 to-transparent blur-3xl animate-pulse-slower" />
+    <div className="relative min-h-screen overflow-hidden">
+      {/* ─── 배경 ─── */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[#fafbfc]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-gradient-to-br from-blue-400/8 via-indigo-300/6 to-transparent blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-tr from-purple-400/8 via-indigo-300/6 to-transparent blur-3xl" />
+        <div className="absolute top-[40%] left-[50%] w-[600px] h-[600px] rounded-full bg-gradient-to-r from-blue-300/5 via-indigo-200/4 to-transparent blur-3xl -translate-x-1/2" />
       </div>
 
-      <div className="relative max-w-4xl mx-auto px-6 py-14 sm:py-20">
-        
-        {/* 히어로 영역 */}
-        <div className="text-center mb-16 animate-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-blue-600 to-purple-600 shadow-2xl shadow-indigo-500/30 mb-8 animate-float">
-            <Cross className="w-10 h-10 text-white" />
-          </div>
-          
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 text-balance font-outfit text-gradient leading-tight">
-            목회자를 위한 지능형 AI 솔루션
-          </h1>
-          
-          <p className="text-[19px] sm:text-[22px] text-slate-500 leading-relaxed max-w-2xl mx-auto font-medium">
-            복잡한 설교 준비 과정을 획기적으로 혁신합니다. 원고를 업로드하면 요약서, 
-            소그룹 나눔 질문, 카드뉴스, 유튜브 쇼츠 대본까지 자동으로 정밀 설계됩니다.
-          </p>
-
-          {/* CTA 버튼 */}
-          {!loading && !user && (
-            <div className="mt-8 flex items-center justify-center gap-3">
-              <Link
-                href="/login?redirect=/"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] hover:shadow-xl hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-              >
-                <LogIn className="w-5 h-5" />
-                지금 시작하기 (로그인)
-              </Link>
+      {/* ─── 히어로 ─── */}
+      <section className="relative pt-20 pb-12 sm:pt-28 sm:pb-20">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="reveal inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50/70 border border-indigo-200/40 text-indigo-600 text-[13px] font-semibold mb-6 sm:mb-8">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI 기반 설교 준비 플랫폼
             </div>
-          )}
 
-          {!loading && user && (
-            <div className="mt-8 flex items-center justify-center gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 font-bold text-[16px] shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-              >
-                <LayoutDashboard className="w-5 h-5 text-indigo-500" />
-                대시보드로 이동
-              </Link>
+            <h1 className="reveal text-[clamp(2rem,6vw,3.75rem)] font-extrabold tracking-tight leading-[1.1] font-outfit mb-5">
+              <span className="text-gradient">목회자를 위한</span>
+              <br />
+              <span className="text-slate-900">지능형 AI 솔루션</span>
+            </h1>
+
+            <p className="reveal text-[clamp(1rem,2.5vw,1.2rem)] text-slate-500 leading-relaxed max-w-2xl mx-auto font-medium">
+              복잡한 설교 준비 과정을 획기적으로 혁신합니다. 원고를 업로드하면 요약서,
+              소그룹 나눔 질문, 카드뉴스, 유튜브 쇼츠 대본까지 자동으로 정밀 설계됩니다.
+            </p>
+
+            <div className="reveal mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              {!loading && !user && (
+                <Link
+                  href="/login?redirect=/"
+                  className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                >
+                  <LogIn className="w-5 h-5" />
+                  지금 시작하기
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              )}
+              {!loading && user && (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                  >
+                    <LayoutDashboard className="w-5 h-5" />
+                    대시보드로 이동
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/sermon/new"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 font-bold text-[16px] shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto justify-center"
+                  >
+                    <Upload className="w-5 h-5 text-indigo-500" />
+                    새 설교 만들기
+                  </Link>
+                </>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* 미래지향적 사용 흐름 안내 카드 */}
-        <div className="mb-14 animate-in" style={{ animationDelay: '0.1s' }}>
-          <div className="glass-panel rounded-3xl p-8 border border-white/60">
-            <h2 className="text-[14px] font-bold text-indigo-600 uppercase tracking-widest text-center mb-6">4-STEP 설교 설계 워크플로우</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-              {STEPS.map((step, i) => (
-                <div key={step.title} className="text-center group transition-transform duration-300 hover:scale-[1.03]">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-all duration-300`}>
-                    <step.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <p className="text-[16px] font-bold text-slate-800 mb-1.5">{step.title}</p>
-                  <p className="text-[13px] text-slate-400 leading-normal px-2">{step.desc}</p>
+            {/* ─── 신뢰 배지 ─── */}
+            <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-5 sm:gap-8">
+              {TRUST_BADGES.map((badge) => (
+                <div key={badge.text} className="flex items-center gap-1.5 text-[13px] text-slate-400 font-medium">
+                  <badge.icon className="w-4 h-4 text-emerald-500" />
+                  {badge.text}
                 </div>
               ))}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* 메인 파일 업로드/로그인 유도 판넬 */}
-        {!loading && (
-          <div className="animate-in" style={{ animationDelay: '0.2s' }}>
-            {user ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-3 glass-panel rounded-3xl p-1 border border-white/60 shadow-lg">
-                  <FileUpload onSuccess={handleUploadSuccess} />
-                </div>
-                <div className="md:col-span-1 flex items-stretch">
-                  <div className="glass-panel w-full rounded-3xl px-5 py-4 border border-white/60 flex items-center justify-center">
-                    <UsageBadge />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="glass-panel rounded-3xl border border-white/80 p-12 text-center shadow-lg shadow-indigo-500/5 hover:border-indigo-500/20 transition-all duration-300">
-                <Upload className="w-12 h-12 text-slate-300 mx-auto mb-4 animate-pulse" />
-                <p className="text-[18px] font-bold text-slate-700 mb-2">원고 업로드를 위해 로그인이 필요합니다</p>
-                <p className="text-[14px] text-slate-400 mb-6">간단히 소셜/이메일 로그인 후 AI 생성 서비스를 이용하실 수 있습니다.</p>
-                <Link
-                  href="/login?redirect=/"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
-                >
-                  <LogIn className="w-4.5 h-4.5" />
-                  로그인하기
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 든든한 꿀팁 알림 가이드 박스 */}
-        <div className="mt-8 animate-in" style={{ animationDelay: '0.3s' }}>
-          <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/50 to-yellow-50/30 backdrop-blur-xl border border-amber-200/40 p-6 rounded-2xl shadow-sm">
-            <p className="font-bold text-amber-800 text-[15px] mb-2.5 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              스마트 솔루션 알림 및 꿀팁 💡
+      {/* ─── 4-Step 워크플로우 ─── */}
+      <section className="relative py-12 sm:py-20">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="reveal text-[clamp(1.5rem,4vw,2.25rem)] font-extrabold text-slate-900 font-outfit mb-3">
+              설교 준비, 이제 4단계로
+            </h2>
+            <p className="reveal text-[15px] sm:text-[17px] text-slate-500 font-medium">
+              업로드부터 공유까지, 모든 과정이 매끄럽게 연결됩니다
             </p>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-[13.5px] text-amber-700/90 font-medium">
-              <li>• PDF, TXT, DOCX 포맷을 완벽하게 지원합니다 (최대 20MB)</li>
-              <li>• 옛날 한글 문서(.doc)는 미리 .docx로 변환해 주세요!</li>
-              <li>• AI 정밀 모델 설계는 통상 20~40초 가량 소요됩니다</li>
-              <li>• 분석 완료된 모든 콘텐츠는 마이페이지 및 대시보드에 영구 소장됩니다</li>
-            </ul>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {STEPS.map((step, i) => (
+              <div
+                key={step.title}
+                className="reveal group relative"
+                style={{ transitionDelay: `${i * 100}ms` }}
+              >
+                <div className="relative h-full p-6 sm:p-7 rounded-2xl bg-white/70 backdrop-blur-xl border border-slate-200/50 hover:border-indigo-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-500">
+                  <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-indigo-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                  <div className="flex items-center gap-3 sm:flex-col sm:items-center sm:text-center">
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg shadow-indigo-500/10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+                      <step.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="sm:mt-3">
+                      <div className="flex items-center gap-2 sm:justify-center">
+                        <span className="text-[11px] font-bold text-indigo-400">STEP {i + 1}</span>
+                      </div>
+                      <p className="text-[15px] sm:text-[17px] font-bold text-slate-800 mt-0.5">{step.title}</p>
+                    </div>
+                  </div>
+                  <p className="text-[13px] sm:text-[14px] text-slate-400 leading-relaxed mt-3 sm:text-center">
+                    {step.desc}
+                  </p>
+                </div>
+
+                {i < STEPS.length - 1 && (
+                  <div className="hidden lg:block absolute top-1/2 -right-3 -translate-y-1/2 z-10">
+                    <ChevronRight className="w-5 h-5 text-indigo-300/60" />
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-        
-      </div>
+      </section>
+
+      {/* ─── 주요 기능 ─── */}
+      <section className="relative py-12 sm:py-20">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="reveal text-[clamp(1.5rem,4vw,2.25rem)] font-extrabold text-slate-900 font-outfit mb-3">
+              하나의 원고로 여섯 가지 결과
+            </h2>
+            <p className="reveal text-[15px] sm:text-[17px] text-slate-500 font-medium">
+              AI가 설교 원고를 분석하여 다양한 형태의 콘텐츠로 변환합니다
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            {FEATURES.map((feature, i) => (
+              <div
+                key={feature.title}
+                className="reveal group"
+                style={{ transitionDelay: `${i * 80}ms` }}
+              >
+                <div className="h-full p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-200/40 hover:border-indigo-200/50 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-400 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:from-indigo-100 group-hover:to-blue-100 transition-all duration-400">
+                    <feature.icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-indigo-500" />
+                  </div>
+                  <p className="text-[13px] sm:text-[15px] font-bold text-slate-800 mb-1">{feature.title}</p>
+                  <p className="text-[11px] sm:text-[12px] text-slate-400 leading-snug">{feature.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 업로드 섹션 ─── */}
+      <section className="relative py-12 sm:py-20">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="reveal">
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-5">
+                    <div className="sm:col-span-4">
+                      <div className="rounded-2xl sm:rounded-3xl bg-white/60 backdrop-blur-xl border border-slate-200/40 shadow-lg shadow-indigo-500/3 p-1">
+                        <FileUpload onSuccess={handleUploadSuccess} />
+                      </div>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <div className="rounded-2xl sm:rounded-3xl bg-white/60 backdrop-blur-xl border border-slate-200/40 shadow-lg shadow-indigo-500/3 p-4 sm:p-5 h-full flex items-center justify-center">
+                        <UsageBadge />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/60 backdrop-blur-xl border border-slate-200/40 shadow-lg p-8 sm:p-12 text-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-transparent to-purple-50/30 pointer-events-none" />
+                    <div className="relative">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mx-auto mb-5">
+                        <Upload className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-400" />
+                      </div>
+                      <p className="text-[17px] sm:text-[20px] font-bold text-slate-800 mb-2">
+                        원고 업로드를 위해 로그인이 필요합니다
+                      </p>
+                      <p className="text-[14px] sm:text-[15px] text-slate-400 mb-6 max-w-md mx-auto">
+                        간단히 소셜/이메일 로그인 후 AI 생성 서비스를 이용하실 수 있습니다.
+                      </p>
+                      <Link
+                        href="/login?redirect=/"
+                        className="group inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                      >
+                        <LogIn className="w-4.5 h-4.5" />
+                        로그인하기
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 팁 박스 ─── */}
+      <section className="relative pb-16 sm:pb-24">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="reveal rounded-2xl bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-transparent border border-indigo-200/30 p-5 sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-100/70 flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-[14px] sm:text-[15px] text-indigo-900 mb-2.5">
+                  스마트 솔루션 꿀팁
+                </p>
+                <ul className="space-y-1.5">
+                  {[
+                    'PDF, TXT, DOCX 포맷을 완벽하게 지원합니다 (최대 20MB)',
+                    '옛날 한글 문서(.doc)는 미리 .docx로 변환해 주세요!',
+                    'AI 정밀 모델 설계는 통상 20~40초 가량 소요됩니다',
+                    '분석 완료된 모든 콘텐츠는 마이페이지에 영구 소장됩니다',
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[12.5px] sm:text-[13.5px] text-indigo-700/80 font-medium">
+                      <CheckCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <style jsx>{`
+        .reveal {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
     </div>
   )
 }
-
