@@ -6,7 +6,8 @@ import {
   ArrowLeft, Save, Sparkles, Eye, Lightbulb, ListOrdered, FileText,
   MessageSquare, BookOpen, Check, ChevronDown, X, Cross,
   PenLine, Target, Search, Globe, Image as ImageIcon,
-  PartyPopper, Trophy,
+  PartyPopper, Trophy, ChevronRight, Zap, Layers, Wand2,
+  Lock,
 } from 'lucide-react'
 import SermonEditor from './SermonEditor'
 import SermonOutlineEditor from './SermonOutlineEditor'
@@ -294,43 +295,47 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
   ]
 
   return (
-    <div className="relative min-h-screen bg-slate-50/50">
-      {/* Aurora background */}
+    <div className="relative min-h-screen bg-[#0b0d15]">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-300/10 via-blue-300/5 to-transparent blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-purple-300/8 via-indigo-300/5 to-transparent blur-3xl animate-pulse-slower" />
-        <div className="absolute top-[40%] right-[20%] w-[400px] h-[400px] rounded-full bg-gradient-to-bl from-blue-200/5 to-transparent blur-3xl" />
+        <div className="absolute top-[-15%] left-[-8%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-500/8 via-blue-500/5 to-transparent blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-[-20%] right-[-8%] w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-500/6 via-indigo-500/4 to-transparent blur-[120px] animate-pulse-slower" />
+        <div className="absolute top-[30%] right-[15%] w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-blue-400/4 to-transparent blur-[100px]" />
+        <div className="absolute inset-0 bg-grid-tech opacity-[0.03]" />
       </div>
 
       {/* Sticky header */}
-      <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+      <header className="sticky top-0 z-30 bg-[#0d0f1a]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => router.push('/sermon')}
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shrink-0"
+              className="w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.06] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shrink-0"
             >
-              <ArrowLeft className="w-4.5 h-4.5 text-slate-500" />
+              <ArrowLeft className="w-4.5 h-4.5 text-white/60" />
             </button>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <input
                   value={sermon.title}
                   onChange={e => handleFieldChange('title', e.target.value)}
                   placeholder="설교 제목을 입력하세요"
-                  className="text-[18px] font-extrabold text-slate-800 bg-transparent border-none focus:outline-none placeholder-slate-300 min-w-[200px]"
+                  className="text-[18px] font-extrabold text-white bg-transparent border-none focus:outline-none placeholder-white/20 min-w-[200px] tracking-tight"
                 />
-                {advanced && <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-bold shrink-0">GPT-4o</span>}
+                {advanced && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 font-bold border border-amber-500/20 shrink-0">
+                    GPT-4o
+                  </span>
+                )}
                 {isCompleted ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                     <Trophy className="w-3 h-3" />
                     준비 완료
                   </span>
                 ) : (
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all ${
-                    saveStatus === 'saved' ? 'bg-emerald-50 text-emerald-600' :
-                    saveStatus === 'saving' ? 'bg-blue-50 text-blue-600 animate-pulse' :
-                    'bg-amber-50 text-amber-600'
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all border ${
+                    saveStatus === 'saved' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
+                    saveStatus === 'saving' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20 animate-pulse' :
+                    'bg-amber-500/10 text-amber-300 border-amber-500/20'
                   }`}>
                     {saveStatus === 'saved' ? '저장됨' : saveStatus === 'saving' ? '저장 중...' : '수정됨'}
                   </span>
@@ -342,35 +347,35 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
             <button
               onClick={handleSaveNow}
               disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[13px] font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.06] text-white/70 hover:text-white text-[13px] font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               저장
             </button>
             <button
               onClick={() => router.push('/sermon/' + sermon.id + '/preview')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[13px] font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[13px] font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all hover:scale-105 active:scale-95"
             >
               <Eye className="w-4 h-4" />
               미리보기
             </button>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/20 to-transparent" />
       </header>
 
       <div className="max-w-7xl mx-auto flex relative z-10 lg:gap-6">
         {/* Sidebar */}
         <aside className="w-[240px] shrink-0 p-4 lg:pl-0 lg:pr-0 hidden lg:block">
           <div className="sticky top-[76px]">
-            <div className="glass-panel rounded-2xl p-4 border border-white/60">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-[12px] font-bold text-slate-400">진행률</span>
-                <span className="text-[12px] font-bold text-indigo-600">{progress}%</span>
+            <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-4 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="text-[11px] font-bold tracking-wider text-white/40">진행률</span>
+                <span className="text-[12px] font-bold text-indigo-300">{progress}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden mb-4">
+              <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-5">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-400 transition-all duration-700 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-blue-400 to-indigo-400 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(99,102,241,0.3)]"
                   style={{ width: progress + '%' }}
                 />
               </div>
@@ -379,19 +384,21 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                   <div key={step.id} className="relative">
                     {i < steps.length - 1 && (
                       <div className={`absolute left-[15px] top-[30px] w-[2px] h-[32px] transition-colors duration-500 ${
-                        step.done ? 'bg-indigo-300' : 'bg-slate-200'
+                        step.done ? 'bg-indigo-500/30' : 'bg-white/[0.06]'
                       }`} />
                     )}
-                    <div className={`relative flex items-center gap-2 px-2 py-2 rounded-xl transition-all duration-200`}>
+                    <div className={`relative flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all duration-200 ${
+                      step.done ? 'opacity-100' : 'opacity-60'
+                    }`}>
                       <div className={`w-[28px] h-[28px] rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0 transition-all duration-300 ${
                         step.done
-                          ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-200'
-                          : 'bg-slate-100 text-slate-400'
+                          ? 'bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20'
+                          : 'bg-white/[0.06] text-white/30 border border-white/[0.06]'
                       }`}>
                         {step.done ? <Check className="w-3 h-3" /> : step.id}
                       </div>
                       <span className={`text-[12px] font-semibold transition-colors ${
-                        step.done ? 'text-slate-700' : 'text-slate-400'
+                        step.done ? 'text-white/80' : 'text-white/40'
                       }`}>
                         {step.label}
                       </span>
@@ -399,11 +406,11 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                         <button
                           onClick={step.action}
                           disabled={aiLoading === step.ai}
-                          className="ml-auto text-[9px] px-1.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 font-bold hover:bg-indigo-100 transition-all disabled:opacity-40"
+                          className="ml-auto text-[9px] px-1.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 font-bold hover:bg-indigo-500/20 transition-all disabled:opacity-40 border border-indigo-500/10"
                         >
                           {aiLoading === step.ai ? (
                             <span className="flex items-center gap-0.5">
-                              <span className="w-1 h-1 rounded-full bg-indigo-600 animate-bounce" />
+                              <span className="w-1 h-1 rounded-full bg-indigo-400 animate-bounce" />
                             </span>
                           ) : step.label2}
                         </button>
@@ -413,26 +420,26 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                 ))}
               </nav>
 
-              {isCompleted ? (
-                <div className="mt-4 pt-4 border-t border-slate-200/60">
-                  <div className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/50">
-                    <PartyPopper className="w-6 h-6 text-emerald-500" />
-                    <span className="text-[12px] font-bold text-emerald-700 text-center">설교 준비 완료!</span>
-                    <span className="text-[10px] text-emerald-600/70 text-center">모든 단계를 완료했습니다</span>
+              <div className="mt-5 pt-4 border-t border-white/[0.06]">
+                {isCompleted ? (
+                  <div className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/5 border border-emerald-500/20">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                      <PartyPopper className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-[12px] font-bold text-emerald-300 text-center">설교 준비 완료!</span>
+                    <span className="text-[10px] text-emerald-400/60 text-center">모든 단계를 완료했습니다</span>
                   </div>
-                </div>
-              ) : progress === 100 && (
-                <div className="mt-4 pt-4 border-t border-slate-200/60">
+                ) : progress === 100 && (
                   <button
                     onClick={handleComplete}
                     disabled={completing}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[13px] font-bold hover:shadow-lg hover:shadow-emerald-200/50 transition-all active:scale-[0.98] disabled:opacity-60"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[13px] font-bold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all active:scale-[0.98] disabled:opacity-60"
                   >
                     <Trophy className="w-4 h-4" />
                     {completing ? '처리 중...' : '설교 준비 완료로 표시'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </aside>
@@ -440,15 +447,15 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
         {/* Main content */}
         <main className="flex-1 min-w-0 p-4">
           {/* Tabs */}
-          <div className="glass-panel rounded-2xl p-1.5 border border-white/60 inline-flex mb-6">
+          <div className="inline-flex rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-1 mb-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.2)]">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-200/50'
-                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100/50'
+                    ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -463,47 +470,53 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-5">
                   {/* AI 도우미 */}
-                  <div className="glass-panel rounded-2xl p-5 border border-white/60">
-                    <h3 className="text-[15px] font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                      <Sparkles className="w-4.5 h-4.5 text-indigo-500" />
-                      AI 도우미
-                    </h3>
+                  <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-5 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+                    <div className="flex items-center gap-2.5 mb-5">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-indigo-300" />
+                      </div>
+                      <h3 className="text-[15px] font-extrabold text-white/90">AI 도우미</h3>
+                    </div>
                     <div className="grid grid-cols-2 gap-2.5 mb-3">
                       <button
                         onClick={handleCoreMessage}
                         disabled={aiLoading !== null}
-                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 text-[13px] font-semibold text-indigo-700 hover:from-indigo-100 hover:to-blue-100 transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 border border-indigo-100/50"
+                        className="group relative flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] font-semibold text-white/70 hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-200 transition-all hover:shadow-lg hover:shadow-indigo-500/5 active:scale-[0.98] disabled:opacity-40 overflow-hidden"
                       >
-                        <Lightbulb className="w-4.5 h-4.5 text-amber-500" />
-                        {aiLoading === 'generate-core-message' ? '생성 중...' : '핵심 메시지'}
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-transparent group-hover:from-indigo-500/5 transition-all duration-500" />
+                        <Lightbulb className="w-4.5 h-4.5 text-amber-400/70 group-hover:text-amber-300 relative" />
+                        <span className="relative">{aiLoading === 'generate-core-message' ? '생성 중...' : '핵심 메시지'}</span>
                       </button>
                       <button
                         onClick={handleOutline}
                         disabled={aiLoading !== null}
-                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 text-[13px] font-semibold text-indigo-700 hover:from-indigo-100 hover:to-blue-100 transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 border border-indigo-100/50"
+                        className="group relative flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] font-semibold text-white/70 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-200 transition-all hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] disabled:opacity-40 overflow-hidden"
                       >
-                        <ListOrdered className="w-4.5 h-4.5 text-blue-500" />
-                        {aiLoading === 'generate-outline' ? '생성 중...' : '개요 생성'}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-transparent group-hover:from-blue-500/5 transition-all duration-500" />
+                        <ListOrdered className="w-4.5 h-4.5 text-blue-400/70 group-hover:text-blue-300 relative" />
+                        <span className="relative">{aiLoading === 'generate-outline' ? '생성 중...' : '개요 생성'}</span>
                       </button>
                       <button
                         onClick={handleApplication}
                         disabled={aiLoading !== null}
-                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 text-[13px] font-semibold text-indigo-700 hover:from-indigo-100 hover:to-blue-100 transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 border border-indigo-100/50"
+                        className="group relative flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] font-semibold text-white/70 hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-200 transition-all hover:shadow-lg hover:shadow-emerald-500/5 active:scale-[0.98] disabled:opacity-40 overflow-hidden"
                       >
-                        <MessageSquare className="w-4.5 h-4.5 text-emerald-500" />
-                        {aiLoading === 'generate-application' ? '생성 중...' : '적용 질문'}
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-transparent group-hover:from-emerald-500/5 transition-all duration-500" />
+                        <MessageSquare className="w-4.5 h-4.5 text-emerald-400/70 group-hover:text-emerald-300 relative" />
+                        <span className="relative">{aiLoading === 'generate-application' ? '생성 중...' : '적용 질문'}</span>
                       </button>
                       <button
                         onClick={() => setShowDraftModal(true)}
                         disabled={aiLoading !== null}
-                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white text-[13px] font-bold hover:from-indigo-700 hover:to-blue-700 transition-all hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] disabled:opacity-50 border border-indigo-400/20"
+                        className="group relative flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 text-[13px] font-bold text-white hover:from-indigo-500/30 hover:to-violet-500/30 transition-all hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98] disabled:opacity-40 overflow-hidden"
                       >
-                        <FileText className="w-4.5 h-4.5" />
-                        {aiLoading === 'generate-draft' ? '생성 중...' : '초안 생성'}
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-transparent group-hover:from-indigo-500/10 transition-all duration-500" />
+                        <FileText className="w-4.5 h-4.5 text-indigo-300 relative" />
+                        <span className="relative">{aiLoading === 'generate-draft' ? '생성 중...' : '초안 생성'}</span>
                       </button>
                     </div>
                     {aiError && (
-                      <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-[13px] font-medium text-rose-700">
+                      <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[13px] font-medium text-rose-200">
                         <X className="w-4 h-4 text-rose-400 shrink-0" />
                         {aiError}
                       </div>
@@ -534,46 +547,48 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
 
                 {/* Right sidebar - 설교 정보 */}
                 <div className="space-y-4">
-                  <div className="glass-panel rounded-2xl p-5 border border-white/60">
-                    <h3 className="text-[14px] font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                      <PenLine className="w-4 h-4 text-indigo-500" />
-                      설교 정보
-                    </h3>
-                    <div className="space-y-3.5">
+                  <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-5 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+                    <div className="flex items-center gap-2.5 mb-5">
+                      <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
+                        <PenLine className="w-3.5 h-3.5 text-white/50" />
+                      </div>
+                      <h3 className="text-[14px] font-extrabold text-white/80">설교 정보</h3>
+                    </div>
+                    <div className="space-y-4">
                       <div>
-                        <label className="text-[12px] font-bold text-slate-400 block mb-1.5">성경 본문</label>
+                        <label className="text-[11px] font-bold tracking-wider text-white/40 block mb-1.5">성경 본문</label>
                         <input
                           value={sermon.passage}
                           onChange={e => handleFieldChange('passage', e.target.value)}
                           placeholder="예: 에베소서 2:1-10"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[13px] text-slate-700 placeholder-slate-300 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] text-white/80 placeholder-white/20 focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-[12px] font-bold text-slate-400 block mb-1.5">설교 날짜</label>
+                        <label className="text-[11px] font-bold tracking-wider text-white/40 block mb-1.5">설교 날짜</label>
                         <input
                           type="date"
                           value={sermon.sermon_date || ''}
                           onChange={e => handleFieldChange('sermon_date', e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[13px] text-slate-700 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] text-white/80 focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-[12px] font-bold text-slate-400 block mb-1.5">시리즈</label>
+                        <label className="text-[11px] font-bold tracking-wider text-white/40 block mb-1.5">시리즈</label>
                         <input
                           value={sermon.series || ''}
                           onChange={e => handleFieldChange('series', e.target.value)}
                           placeholder="시리즈가 있다면 입력하세요"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[13px] text-slate-700 placeholder-slate-300 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] text-white/80 placeholder-white/20 focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-[12px] font-bold text-slate-400 block mb-1.5">공동체 상황</label>
+                        <label className="text-[11px] font-bold tracking-wider text-white/40 block mb-1.5">공동체 상황</label>
                         <textarea
                           value={sermon.church_context || ''}
                           onChange={e => handleFieldChange('church_context', e.target.value)}
                           placeholder="교회의 현재 상황이나 특징을 적어주세요"
-                          className="w-full min-h-[90px] px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[13px] text-slate-700 placeholder-slate-300 resize-y focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="w-full min-h-[90px] px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[13px] text-white/80 placeholder-white/20 resize-y focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         />
                       </div>
                     </div>
@@ -583,13 +598,13 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
             )}
 
             {activeTab === 'outline' && (
-              <div className="glass-panel rounded-2xl p-6 border border-white/60 max-w-3xl">
+              <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-6 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)] max-w-3xl">
                 <SermonOutlineEditor outline={sermon.outline || null} onChange={handleOutlineChange} />
               </div>
             )}
 
             {activeTab === 'manuscript' && (
-              <div className="glass-panel rounded-2xl p-6 border border-white/60 max-w-3xl">
+              <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.06] p-6 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)] max-w-3xl">
                 <SermonManuscriptEditor manuscript={sermon.manuscript || ''} onChange={handleManuscriptChange} />
               </div>
             )}
@@ -599,32 +614,32 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
 
       {/* Core message modal - suggestion step */}
       {showCoreInput && coreStep === 'suggest' && coreSuggestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
-          <div className="w-full max-w-md glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-slate-200/60 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-[#121420] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
               <div>
-                <h2 className="text-[16px] font-extrabold text-slate-800">AI 추천</h2>
-                <p className="text-[12px] text-slate-400 mt-0.5">AI가 추천한 내용입니다. 확인 후 수정하세요.</p>
+                <h2 className="text-[16px] font-extrabold text-white/90">AI 추천</h2>
+                <p className="text-[12px] text-white/40 mt-0.5">AI가 추천한 내용입니다. 확인 후 수정하세요.</p>
               </div>
-              <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all">
-                <X className="w-4 h-4 text-slate-400" />
+              <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-all">
+                <X className="w-4 h-4 text-white/50" />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
+                <label className="block text-[13px] font-bold text-white/70 mb-1.5">
                   {coreSuggestion.includes(':') ? '추천 성경본문' : '추천 주제'}
                 </label>
                 <textarea
                   value={coreSuggestion}
                   onChange={e => setCoreSuggestion(e.target.value)}
-                  className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[14px] text-slate-700 placeholder-slate-300 resize-y focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[14px] text-white/80 placeholder-white/20 resize-y focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => { setCoreStep('input'); setCoreSuggestion(''); }}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 text-[14px] font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-[0.98]"
+                  className="flex-1 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.06] text-[14px] font-bold text-white/50 hover:bg-white/[0.12] transition-all active:scale-[0.98]"
                 >
                   다시 입력
                 </button>
@@ -639,7 +654,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                       }
                     })
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-[14px] font-bold text-white hover:shadow-lg hover:shadow-indigo-200/50 transition-all active:scale-[0.98]"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-[14px] font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all active:scale-[0.98]"
                 >
                   이 내용으로 생성하기
                 </button>
@@ -651,11 +666,11 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
 
       {/* Draft length modal */}
       {showDraftModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4" onClick={() => setShowDraftModal(false)}>
-          <div className="w-full max-w-sm glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-slate-200/60">
-              <h2 className="text-[16px] font-extrabold text-slate-800">초안 분량 선택</h2>
-              <p className="text-[12px] text-slate-400 mt-0.5">원하는 설교 분량을 선택하세요</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" onClick={() => setShowDraftModal(false)}>
+          <div className="w-full max-w-sm rounded-2xl bg-[#121420] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-white/[0.06]">
+              <h2 className="text-[16px] font-extrabold text-white/90">초안 분량 선택</h2>
+              <p className="text-[12px] text-white/40 mt-0.5">원하는 설교 분량을 선택하세요</p>
             </div>
             <div className="p-5 space-y-2">
               {([
@@ -666,22 +681,22 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                 <button key={key} type="button" onClick={() => setDraftLength(key)}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left text-[14px] font-medium transition-all ${
                     draftLength === key
-                      ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/30'
+                      ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200'
+                      : 'border-white/[0.06] bg-white/[0.02] text-white/60 hover:bg-white/[0.06] hover:border-white/[0.10]'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    draftLength === key ? 'border-indigo-500' : 'border-slate-300'
+                    draftLength === key ? 'border-indigo-400' : 'border-white/20'
                   }`}>
-                    {draftLength === key && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+                    {draftLength === key && <div className="w-2 h-2 rounded-full bg-indigo-400" />}
                   </div>
                   {label}
                 </button>
               ))}
             </div>
             <div className="px-5 pb-5 flex gap-2">
-              <button onClick={() => setShowDraftModal(false)} className="flex-1 py-2.5 rounded-xl bg-slate-100 text-[14px] font-bold text-slate-600 hover:bg-slate-200 transition-all">취소</button>
-              <button onClick={runDraft} disabled={aiLoading !== null} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-[14px] font-bold text-white hover:shadow-lg transition-all disabled:opacity-50">
+              <button onClick={() => setShowDraftModal(false)} className="flex-1 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.06] text-[14px] font-bold text-white/50 hover:bg-white/[0.12] transition-all">취소</button>
+              <button onClick={runDraft} disabled={aiLoading !== null} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-[14px] font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50">
                 {aiLoading === 'generate-draft' ? '생성 중...' : '생성하기'}
               </button>
             </div>
@@ -691,42 +706,42 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
 
       {/* Core message modal - input step */}
       {showCoreInput && coreStep !== 'suggest' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
-          <div className="w-full max-w-md glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-slate-200/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-[#121420] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-[16px] font-extrabold text-slate-800">핵심 메시지 추천</h2>
-                  <p className="text-[12px] text-slate-400 mt-0.5">아래 정보를 입력하면 AI가 핵심 메시지를 추천합니다</p>
+                  <h2 className="text-[16px] font-extrabold text-white/90">핵심 메시지 추천</h2>
+                  <p className="text-[12px] text-white/40 mt-0.5">아래 정보를 입력하면 AI가 핵심 메시지를 추천합니다</p>
                 </div>
-              <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all">
-                <X className="w-4 h-4 text-slate-400" />
+              <button onClick={() => setShowCoreInput(false)} className="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-all">
+                <X className="w-4 h-4 text-white/50" />
               </button>
             </div>
             </div>
             <div className="p-5 space-y-4">
               {sermon.title && (
-                <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
-                  <p className="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">설교 제목</p>
-                  <p className="text-[16px] font-extrabold text-indigo-700 leading-tight">{sermon.title}</p>
+                <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-violet-500/5 border border-indigo-500/20 shadow-sm">
+                  <p className="text-[10px] font-bold tracking-wider text-indigo-300/60 mb-1">설교 제목</p>
+                  <p className="text-[16px] font-extrabold text-indigo-200 leading-tight">{sermon.title}</p>
                 </div>
               )}
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">성경본문 *</label>
+                <label className="block text-[13px] font-bold text-white/70 mb-1.5">성경본문 *</label>
                 <input
                   value={corePassage}
                   onChange={e => setCorePassage(e.target.value)}
                   placeholder="예: 에베소서 2:1-10"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[14px] text-slate-700 placeholder-slate-300 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[14px] text-white/80 placeholder-white/20 focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                   autoFocus
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[13px] font-bold text-slate-700">주제 *</label>
+                  <label className="text-[13px] font-bold text-white/70">주제 *</label>
                   {corePassage.trim() && (
                     <button type="button" onClick={suggestTopics} disabled={suggestingTopic}
-                      className="flex items-center gap-1 text-[11px] text-indigo-500 font-semibold hover:text-indigo-600 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 text-[11px] text-indigo-300 font-semibold hover:text-indigo-200 transition-colors disabled:opacity-50"
                     >
                       <Sparkles className="w-3 h-3" />{suggestingTopic ? '추천 중...' : '주제 추천'}
                     </button>
@@ -736,18 +751,18 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                   value={coreTopic}
                   onChange={e => { setCoreTopic(e.target.value); setTopicSuggestions([]) }}
                   placeholder="설교의 주제나 내용을 간략히 입력하세요"
-                  className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[14px] text-slate-700 placeholder-slate-300 resize-y focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[14px] text-white/80 placeholder-white/20 resize-y focus:outline-none focus:border-indigo-500/40 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                 />
                 {topicSuggestions.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {topicSuggestions.map((s, i) => (
                       <button key={i} type="button" onClick={() => { setCoreTopic(s.value); setTopicSuggestions([]) }}
-                        className="w-full flex items-start gap-2 px-3 py-2 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 text-left text-[13px] text-indigo-700 font-medium transition-all"
+                        className="w-full flex items-start gap-2 px-3 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 text-left text-[13px] text-indigo-200 font-medium transition-all"
                       >
                         <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
                         <div>
                           <span className="block">{s.value}</span>
-                          <span className="block text-[11px] text-indigo-400 font-normal mt-0.5">{s.reason}</span>
+                          <span className="block text-[11px] text-indigo-400/60 font-normal mt-0.5">{s.reason}</span>
                         </div>
                       </button>
                     ))}
@@ -757,7 +772,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowCoreInput(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 text-[14px] font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-[0.98]"
+                  className="flex-1 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.06] text-[14px] font-bold text-white/50 hover:bg-white/[0.12] transition-all active:scale-[0.98]"
                 >
                   취소
                 </button>
@@ -790,7 +805,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
                       runCoreMessage()
                     }
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-[14px] font-bold text-white hover:shadow-lg hover:shadow-indigo-200/50 transition-all active:scale-[0.98]"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-[14px] font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all active:scale-[0.98]"
                 >
                   생성하기
                 </button>
