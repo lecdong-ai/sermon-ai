@@ -658,9 +658,11 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
               <p className="text-[12px] text-slate-400 mt-0.5">원하는 설교 분량을 선택하세요</p>
             </div>
             <div className="p-5 space-y-2">
-              {([['short', '짧게 (약 3분)'],
-                ['medium', '보통 (약 5분)'],
-                ['long', '길게 (약 7분)']] as const).map(([key, label]) => (
+              {([
+                ['short', '짧게 (약 10분)'],
+                ['medium', '보통 (약 20분)'],
+                ['long', '길게 (30분 이상)'],
+              ] as const).map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setDraftLength(key)}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left text-[14px] font-medium transition-all ${
                     draftLength === key

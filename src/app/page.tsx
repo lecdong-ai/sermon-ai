@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Upload, Sparkles, FileText, Share2, Cross, LogIn, LayoutDashboard, ArrowRight, CheckCircle, Star, Shield, Zap, Globe } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import UsageBadge from '@/components/UsageBadge'
@@ -33,6 +33,7 @@ const TRUST_BADGES = [
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [showModal, setShowModal] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
@@ -112,13 +113,13 @@ export default function HomePage() {
                     대시보드로 이동
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link
-                    href="/sermon/new"
+                  <button
+                    onClick={() => setShowModal(true)}
                     className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 font-bold text-[16px] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto justify-center"
                   >
                     <Upload className="w-5 h-5 text-indigo-500" />
                     새 설교 만들기
-                  </Link>
+                  </button>
                 </>
               )}
             </div>
@@ -287,6 +288,47 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md px-4"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="w-full max-w-sm glass-panel rounded-2xl border border-white/70 shadow-2xl overflow-hidden animate-scale"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-slate-200/60">
+              <h2 className="text-[16px] font-extrabold text-slate-800">설교 방식 선택</h2>
+              <p className="text-[12px] text-slate-400 mt-0.5">원하시는 설교 준비 방식을 선택하세요</p>
+            </div>
+            <div className="p-5 space-y-2">
+              <button
+                onClick={() => router.push('/sermon/advanced')}
+                className="w-full p-4 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/40 hover:border-indigo-300/60 hover:shadow-md transition-all duration-200 text-left group"
+              >
+                <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
+                <p className="text-[12px] text-slate-500 mt-0.5 font-medium">GPT-4o 기반 — 더 풍성한 결과물</p>
+              </button>
+              <button
+                onClick={() => router.push('/sermon/new')}
+                className="w-full p-4 rounded-xl bg-white border border-slate-200/60 hover:border-slate-300/80 hover:shadow-md transition-all duration-200 text-left group"
+              >
+                <p className="text-[15px] font-extrabold text-slate-700 group-hover:text-slate-800 transition-colors">일반형 설교준비</p>
+                <p className="text-[12px] text-slate-400 mt-0.5 font-medium">기본 AI 모델 — 빠르고 간편하게</p>
+              </button>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100/50 transition-all duration-200"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .reveal {

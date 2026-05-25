@@ -45,7 +45,26 @@ export default function PricingPage() {
 
   const currentPlan = usage?.plan || 'none'
 
-  const plans = [
+  interface PlanFeature {
+    text: string
+    ok: boolean
+    highlight?: boolean
+  }
+
+  interface Plan {
+    id: 'free' | 'basic' | 'pro'
+    name: string
+    price: string
+    unit: string
+    period: string
+    features: PlanFeature[]
+    cta: string
+    href: string
+    highlight: boolean
+    current: boolean
+  }
+
+  const plans: Plan[] = [
     {
       id: 'free' as const,
       name: '무료체험',
