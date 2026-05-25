@@ -295,7 +295,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
   ]
 
   return (
-    <div className="relative min-h-screen bg-[#0b0d15]">
+    <div className="relative min-h-screen bg-[#141829]">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-15%] left-[-8%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-500/8 via-blue-500/5 to-transparent blur-[120px] animate-pulse-slow" />
         <div className="absolute bottom-[-20%] right-[-8%] w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-500/6 via-indigo-500/4 to-transparent blur-[120px] animate-pulse-slower" />
@@ -615,7 +615,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
       {/* Core message modal - suggestion step */}
       {showCoreInput && coreStep === 'suggest' && coreSuggestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-[#121420] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl bg-[#181c30] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
               <div>
                 <h2 className="text-[16px] font-extrabold text-white/90">AI 추천</h2>
@@ -707,7 +707,7 @@ export default function SermonWorkbench({ sermon: initial, advanced }: SermonWor
       {/* Core message modal - input step */}
       {showCoreInput && coreStep !== 'suggest' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" onClick={() => setShowCoreInput(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-[#121420] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl bg-[#181c30] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-scale" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center justify-between">
                 <div>

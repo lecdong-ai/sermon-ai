@@ -194,7 +194,7 @@ export default function NewSermonPage() {
               </div>
 
               <div className="max-w-2xl">
-                <h1 className="text-balance font-outfit text-[clamp(2rem,4vw,3.3rem)] font-extrabold leading-[1.05] text-slate-900">
+                <h1 className="text-balance font-outfit text-[clamp(1.5rem,3.5vw,2.6rem)] font-extrabold leading-[1.1] text-slate-900">
                   설교 한 편을
                   <span className="text-gradient"> 가장 빠르게 시작하는 화면</span>
                 </h1>

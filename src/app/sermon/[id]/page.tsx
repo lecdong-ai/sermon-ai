@@ -51,7 +51,7 @@ export default function SermonWorkbenchPage() {
   // Pro-only gate
   if (planChecked && plan !== 'pro' && !loading && sermon) {
     return (
-      <div className="relative min-h-screen bg-[#0b0d15] flex items-center justify-center">
+      <div className="relative min-h-screen bg-[#141829] flex items-center justify-center">
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-purple-500/8 via-indigo-500/5 to-transparent blur-[120px]" />
           <div className="absolute top-[-15%] left-[-10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-500/8 via-blue-500/5 to-transparent blur-[120px]" />
@@ -102,7 +102,7 @@ export default function SermonWorkbenchPage() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-[#0b0d15] flex items-center justify-center">
+      <div className="relative min-h-screen bg-[#141829] flex items-center justify-center">
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-500/8 via-blue-500/5 to-transparent blur-[120px] animate-pulse-slow" />
           <div className="absolute inset-0 bg-grid-tech opacity-[0.03]" />
@@ -120,7 +120,7 @@ export default function SermonWorkbenchPage() {
 
   if (error || !sermon) {
     return (
-      <div className="relative min-h-screen bg-[#0b0d15] flex items-center justify-center">
+      <div className="relative min-h-screen bg-[#141829] flex items-center justify-center">
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-purple-500/8 via-indigo-500/5 to-transparent blur-[120px]" />
           <div className="absolute top-[-15%] left-[-10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-500/8 via-blue-500/5 to-transparent blur-[120px]" />
