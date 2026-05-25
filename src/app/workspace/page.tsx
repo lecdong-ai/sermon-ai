@@ -110,7 +110,7 @@ function WorkspacePage() {
         throw new Error(errData.error || '데이터를 불러올 수 없습니다.')
       }
       const data = await res.json()
-      setSermon(data)
+      setSermon(data.data)
     } catch (err: any) {
       if (err.name === 'AbortError') {
         setError('요청 시간이 초과되었습니다. 서버 연결을 확인해주세요.')
