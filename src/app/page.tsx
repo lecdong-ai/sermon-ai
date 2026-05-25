@@ -308,7 +308,7 @@ export default function HomePage() {
                 className="w-full p-4 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/40 hover:border-indigo-300/60 hover:shadow-md transition-all duration-200 text-left group"
               >
                 <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
-                <p className="text-[12px] text-slate-500 mt-0.5 font-medium">GPT-4o 기반 — 더 풍성한 결과물</p>
+                <p className="text-[12px] text-slate-500 mt-0.5 font-medium">업그레이드된 AI — 더 풍성한 결과물</p>
               </button>
               <button
                 onClick={() => router.push('/sermon/new')}
