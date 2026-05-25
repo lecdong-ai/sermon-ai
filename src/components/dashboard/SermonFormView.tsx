@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { SERMONS, THEMES, TAGS, SERIES } from '@/data/sampleSermons'
 import type { SermonD } from '@/types/dashboard'
-import { ArrowLeft, Save, Plus, X } from 'lucide-react'
+import { ArrowLeft, Save, ChevronDown, ChevronRight, BookOpen, Tag, Layers, FileText, MessageSquare, Quote } from 'lucide-react'
 
 interface SermonFormViewProps {
   sermonId?: string
@@ -12,34 +12,37 @@ interface SermonFormViewProps {
 }
 
 export default function SermonFormView({ sermonId, onBack, onSave }: SermonFormViewProps) {
-  const existing = useMemo(() => sermonId ? SERMONS.find((s) => s.id === sermonId) : null, [sermonId])
-  const [form, setForm] = useState<Partial<SermonD>>(existing || {
-    title: '',
-    date: new Date().toISOString().slice(0, 10),
-    preacher: '김은혜 목사',
-    sermonType: '주일예배',
-    audience: '장년',
-    season: '일반주일',
-    seriesId: '',
-    bibleBook: '',
-    chapterStart: 1,
-    verseStart: 1,
-    chapterEnd: 1,
-    verseEnd: 1,
-    normalizedPassage: '',
-    coreMessage: '',
-    outlineIntro: '',
-    outlinePoint1: '',
-    outlinePoint2: '',
-    outlinePoint3: '',
-    outlineConclusion: '',
-    manuscript: '',
-    themeIds: [],
-    tagIds: [],
-    relatedSermonIds: [],
-  })
+  const existing = useMemo(() => (sermonId ? SERMONS.find((s) => s.id === sermonId) : null), [sermonId])
 
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [form, setForm] = useState<Partial<SermonD>>(
+    existing || {
+      title: '',
+      date: new Date().toISOString().slice(0, 10),
+      preacher: '김은혜 목사',
+      sermonType: '주일예배',
+      audience: '장년',
+      season: '일반주일',
+      seriesId: '',
+      bibleBook: '',
+      chapterStart: 1,
+      verseStart: 1,
+      chapterEnd: 1,
+      verseEnd: 1,
+      normalizedPassage: '',
+      coreMessage: '',
+      outlineIntro: '',
+      outlinePoint1: '',
+      outlinePoint2: '',
+      outlinePoint3: '',
+      outlineConclusion: '',
+      manuscript: '',
+      themeIds: [],
+      tagIds: [],
+      relatedSermonIds: [],
+    }
+  )
+
+  const [showAdvanced, setShowAdvanced] = useState(!!existing)
 
   const update = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }))
 
@@ -51,7 +54,10 @@ export default function SermonFormView({ sermonId, onBack, onSave }: SermonFormV
   }
 
   const handleSave = () => {
-    if (!form.title?.trim()) { alert('제목을 입력해주세요'); return }
+    if (!form.title?.trim()) {
+      alert('제목을 입력해주세요')
+      return
+    }
     const id = existing?.id || `s${Date.now()}`
     const now = new Date().toISOString()
     const sermon: SermonD = {
@@ -85,260 +91,206 @@ export default function SermonFormView({ sermonId, onBack, onSave }: SermonFormV
     onSave(sermon)
   }
 
-  const PreviewBadge = ({ label, color }: { label: string; color?: string }) => (
-    <span className="px-1.5 py-0.5 text-xs rounded" style={{ backgroundColor: (color || '#6366f1') + '15', color: color || '#6366f1' }}>{label}</span>
+  const Section = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
+    <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/40 p-5 space-y-4">
+      <h3 className="text-[11px] font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" /> {title}
+      </h3>
+      {children}
+    </div>
+  )
+
+  const Input = ({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
+    <div>
+      <label className="text-xs text-slate-400 mb-1.5 block font-medium">{label}</label>
+      <input
+        {...props}
+        className="w-full px-3.5 py-2 text-sm bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200/50 focus:border-indigo-300 text-slate-700 placeholder-slate-400 transition-all"
+      />
+    </div>
+  )
+
+  const Select = ({ label, children, value, onChange }: { label: string; children: React.ReactNode; value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+    <div>
+      <label className="text-xs text-slate-400 mb-1.5 block font-medium">{label}</label>
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full px-3.5 py-2 text-sm bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200/50 focus:border-indigo-300 text-slate-700 transition-all appearance-none"
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+      >
+        {children}
+      </select>
+    </div>
+  )
+
+  const Textarea = ({ label, ...props }: { label: string } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <div>
+      <label className="text-xs text-slate-400 mb-1.5 block font-medium">{label}</label>
+      <textarea
+        {...props}
+        className="w-full px-3.5 py-2 text-sm bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200/50 focus:border-indigo-300 text-slate-700 placeholder-slate-400 transition-all resize-none"
+      />
+    </div>
+  )
+
+  const ToggleChip = ({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
+        selected
+          ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-medium'
+          : 'bg-white/50 border-slate-200/60 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
+      }`}
+    >
+      {children}
+    </button>
   )
 
   return (
     <div className="flex flex-col h-full">
       {/* header */}
-      <div className="px-6 py-3 border-b border-slate-200/40 bg-white/40 backdrop-blur-sm flex items-center gap-3">
-        <button onClick={onBack} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+      <div className="px-6 py-3 border-b border-slate-200/30 bg-white/50 backdrop-blur-sm flex items-center gap-3">
+        <button onClick={onBack} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-slate-700">{existing ? '설교 편집' : '새 설교 작성'}</h2>
+          <h1 className="text-lg font-bold text-slate-800">{existing ? '설교 편집' : '새 설교 작성'}</h1>
+          <p className="text-xs text-slate-400 mt-0.5">{existing ? '기존 설교를 수정합니다' : '새로운 설교를 등록합니다'}</p>
         </div>
-        <button onClick={handleSave} className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+        <button
+          onClick={handleSave}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors shadow-sm"
+        >
           <Save className="w-3.5 h-3.5" /> 저장
         </button>
       </div>
 
       {/* form */}
-      <div className="flex-1 overflow-y-auto px-6 py-5" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
-        <div className="max-w-3xl space-y-5">
+      <div className="flex-1 overflow-y-auto px-6 py-5" style={{ maxHeight: 'calc(100vh - 11rem)' }}>
+        <div className="max-w-3xl mx-auto space-y-4">
           {/* basic info */}
-          <div className="glass-panel rounded-2xl p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-slate-400">기본 정보</h3>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">제목 *</label>
-              <input
-                type="text"
-                value={form.title || ''}
-                onChange={(e) => update('title', e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 text-slate-700"
-                placeholder="설교 제목을 입력하세요"
-              />
+          <Section title="기본 정보" icon={BookOpen}>
+            <Input label="제목 *" type="text" value={form.title || ''} onChange={(e) => update('title', e.target.value)} placeholder="설교 제목을 입력하세요" />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="날짜" type="date" value={form.date || ''} onChange={(e) => update('date', e.target.value)} />
+              <Input label="설교자" type="text" value={form.preacher || ''} onChange={(e) => update('preacher', e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">날짜</label>
-                <input
-                  type="date"
-                  value={form.date || ''}
-                  onChange={(e) => update('date', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">설교자</label>
-                <input
-                  type="text"
-                  value={form.preacher || ''}
-                  onChange={(e) => update('preacher', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">예배 유형</label>
-                <select
-                  value={form.sermonType || '주일예배'}
-                  onChange={(e) => update('sermonType', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                >
-                  {['주일예배', '새벽예배', '수요예배', '금요기도회', '신년예배', '부활절예배', '성탄예배', '수련회'].map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">대상</label>
-                <select
-                  value={form.audience || '장년'}
-                  onChange={(e) => update('audience', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                >
-                  {['장년', '청년', '학생', '새벽예배', '수요예배', '금요기도회'].map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">교회 절기</label>
-              <select
-                value={form.season || '일반주일'}
-                onChange={(e) => update('season', e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-              >
-                {['일반주일', '대림절', '성탄절', '주현절', '사순절', '부활절', '성령강림절', '신년', '추수감사절'].map((t) => (
+              <Select label="예배 유형" value={form.sermonType || '주일예배'} onChange={(e) => update('sermonType', e.target.value)}>
+                {['주일예배', '새벽예배', '수요예배', '금요기도회', '신년예배', '부활절예배', '성탄예배', '수련회'].map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">시리즈</label>
-              <select
-                value={form.seriesId || ''}
-                onChange={(e) => update('seriesId', e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-              >
-                <option value="">시리즈 없음</option>
-                {SERIES.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.status})</option>
+              </Select>
+              <Select label="대상" value={form.audience || '장년'} onChange={(e) => update('audience', e.target.value)}>
+                {['장년', '청년', '학생', '새벽예배', '수요예배', '금요기도회'].map((t) => (
+                  <option key={t} value={t}>{t}</option>
                 ))}
-              </select>
+              </Select>
             </div>
-          </div>
+            <Select label="교회 절기" value={form.season || '일반주일'} onChange={(e) => update('season', e.target.value)}>
+              {['일반주일', '대림절', '성탄절', '주현절', '사순절', '부활절', '성령강림절', '신년', '추수감사절'].map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </Select>
+            <Select label="시리즈" value={form.seriesId || ''} onChange={(e) => update('seriesId', e.target.value)}>
+              <option value="">시리즈 없음</option>
+              {SERIES.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} ({s.status})</option>
+              ))}
+            </Select>
+          </Section>
 
           {/* passage */}
-          <div className="glass-panel rounded-2xl p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-slate-400">성경 본문</h3>
+          <Section title="성경 본문" icon={Layers}>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">책</label>
-                <input
-                  type="text"
-                  value={form.bibleBook || ''}
-                  onChange={(e) => update('bibleBook', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                  placeholder="예: 마태복음"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">표준 구절</label>
-                <input
-                  type="text"
-                  value={form.normalizedPassage || ''}
-                  onChange={(e) => update('normalizedPassage', e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                  placeholder="마태복음 7:24-27"
-                />
-              </div>
+              <Input label="책" type="text" value={form.bibleBook || ''} onChange={(e) => update('bibleBook', e.target.value)} placeholder="예: 마태복음" />
+              <Input label="표준 구절" type="text" value={form.normalizedPassage || ''} onChange={(e) => update('normalizedPassage', e.target.value)} placeholder="마태복음 7:24-27" />
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">장 시작</label>
-                <input
-                  type="number" value={form.chapterStart || 1}
-                  onChange={(e) => update('chapterStart', parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { key: 'chapterStart', label: '장 시작' },
+                { key: 'verseStart', label: '절 시작' },
+                { key: 'chapterEnd', label: '장 끝' },
+                { key: 'verseEnd', label: '절 끝' },
+              ].map(({ key, label }) => (
+                <Input
+                  key={key}
+                  label={label}
+                  type="number"
+                  value={(form as any)[key] || 1}
+                  onChange={(e) => update(key, parseInt(e.target.value) || 1)}
+                  min={1}
                 />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">절 시작</label>
-                <input
-                  type="number" value={form.verseStart || 1}
-                  onChange={(e) => update('verseStart', parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">장 끝</label>
-                <input
-                  type="number" value={form.chapterEnd || 1}
-                  onChange={(e) => update('chapterEnd', parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">절 끝</label>
-                <input
-                  type="number" value={form.verseEnd || 1}
-                  onChange={(e) => update('verseEnd', parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700"
-                />
-              </div>
+              ))}
             </div>
-          </div>
+          </Section>
 
           {/* core message */}
-          <div className="glass-panel rounded-2xl p-5 space-y-3">
-            <h3 className="text-xs font-semibold text-slate-400">핵심 메시지</h3>
-            <textarea
-              value={form.coreMessage || ''}
-              onChange={(e) => update('coreMessage', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700 resize-none"
-              placeholder="이 설교의 핵심 메시지를 한 문장으로..."
-            />
-          </div>
+          <Section title="핵심 메시지" icon={Quote}>
+            <Textarea label="이 설교의 핵심 메시지를 한 문장으로" value={form.coreMessage || ''} onChange={(e) => update('coreMessage', e.target.value)} rows={3} placeholder="하나님의 사랑은 영원합니다..." />
+          </Section>
 
-          {/* outline (collapsed) */}
-          <div className="glass-panel rounded-2xl p-5 space-y-3">
-            <button onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">
-              {showAdvanced ? '▼' : '▶'} 설교 개요 및 원문 {showAdvanced ? '접기' : '펼치기'}
+          {/* outline (collapsible) */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/40">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="w-full flex items-center justify-between p-5 text-left"
+            >
+              <h3 className="text-[11px] font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5" /> 설교 개요 및 원문
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400">{showAdvanced ? '접기' : '펼치기'}</span>
+                {showAdvanced ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+              </div>
             </button>
             {showAdvanced && (
-              <div className="space-y-3 pt-2">
-                {['outlineIntro', 'outlinePoint1', 'outlinePoint2', 'outlinePoint3', 'outlineConclusion'].map((key, i) => (
-                  <div key={key}>
-                    <label className="text-xs text-slate-400 mb-1 block">
-                      {i === 0 ? '도입' : i <= 3 ? `소제목 ${i}` : '결론'}
-                    </label>
-                    <textarea
-                      value={(form as any)[key] || ''}
-                      onChange={(e) => update(key, e.target.value)}
-                      rows={2}
-                      className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700 resize-none"
-                    />
-                  </div>
+              <div className="px-5 pb-5 space-y-3 border-t border-slate-100 pt-4">
+                {[
+                  { key: 'outlineIntro', label: '도입', rows: 2 },
+                  { key: 'outlinePoint1', label: '소제목 1', rows: 2 },
+                  { key: 'outlinePoint2', label: '소제목 2', rows: 2 },
+                  { key: 'outlinePoint3', label: '소제목 3', rows: 2 },
+                  { key: 'outlineConclusion', label: '결론', rows: 2 },
+                ].map(({ key, label, rows }) => (
+                  <Textarea key={key} label={label} value={(form as any)[key] || ''} onChange={(e) => update(key, e.target.value)} rows={rows} />
                 ))}
-                <div>
-                  <label className="text-xs text-slate-400 mb-1 block">설교 원고</label>
-                  <textarea
-                    value={form.manuscript || ''}
-                    onChange={(e) => update('manuscript', e.target.value)}
-                    rows={8}
-                    className="w-full px-3 py-2 text-sm bg-slate-50/60 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-slate-700 resize-none font-[var(--font-noto-sans-kr)]"
-                    placeholder="설교 원고를 입력하세요..."
-                  />
-                </div>
+                <Textarea label="설교 원고" value={form.manuscript || ''} onChange={(e) => update('manuscript', e.target.value)} rows={8} placeholder="설교 원고를 입력하세요..." />
               </div>
             )}
           </div>
 
           {/* themes & tags */}
-          <div className="glass-panel rounded-2xl p-5 space-y-4">
+          <Section title="주제 및 태그" icon={Tag}>
             <div>
-              <h3 className="text-xs font-semibold text-slate-400 mb-2">주제 (다중 선택)</h3>
+              <label className="text-xs text-slate-400 mb-2 block font-medium">주제 (다중 선택)</label>
               <div className="flex flex-wrap gap-1.5">
-                {THEMES.map((t) => {
-                  const selected = (form.themeIds || []).includes(t.id)
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => toggleArrayItem('themeIds', t.id)}
-                      className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
-                        selected
-                          ? 'bg-amber-50 border-amber-200 text-amber-700'
-                          : 'bg-slate-50 border-slate-200/50 text-slate-500 hover:border-amber-200 hover:text-amber-600'
-                      }`}
-                    >
-                      {t.name}
-                    </button>
-                  )
-                })}
+                {THEMES.map((t) => (
+                  <ToggleChip key={t.id} selected={(form.themeIds || []).includes(t.id)} onClick={() => toggleArrayItem('themeIds', t.id)}>
+                    {t.name}
+                  </ToggleChip>
+                ))}
               </div>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-slate-400 mb-2">태그 (다중 선택)</h3>
+              <label className="text-xs text-slate-400 mb-2 block font-medium">태그 (다중 선택)</label>
               <div className="flex flex-wrap gap-1.5">
                 {TAGS.map((t) => {
                   const selected = (form.tagIds || []).includes(t.id)
-                  const color = t.type === 'situation' ? '#10b981' : '#6366f1'
                   return (
                     <button
                       key={t.id}
+                      type="button"
                       onClick={() => toggleArrayItem('tagIds', t.id)}
                       className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
                         selected
-                          ? 'border-2 text-white'
-                          : 'bg-slate-50 border-slate-200/50 text-slate-500'
+                          ? 'text-white font-medium border-0'
+                          : 'bg-white/50 border-slate-200/60 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
                       }`}
-                      style={selected ? { backgroundColor: color, borderColor: color } : {}}
+                      style={selected ? { backgroundColor: t.type === 'situation' ? '#10b981' : '#6366f1' } : {}}
                     >
                       {t.name}
                     </button>
@@ -347,27 +299,16 @@ export default function SermonFormView({ sermonId, onBack, onSave }: SermonFormV
               </div>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-slate-400 mb-2">관련 설교 (다중 선택)</h3>
+              <label className="text-xs text-slate-400 mb-2 block font-medium">관련 설교 (다중 선택)</label>
               <div className="flex flex-wrap gap-1.5">
-                {SERMONS.filter((s) => s.id !== sermonId).map((s) => {
-                  const selected = (form.relatedSermonIds || []).includes(s.id)
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => toggleArrayItem('relatedSermonIds', s.id)}
-                      className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
-                        selected
-                          ? 'bg-primary-50 border-primary-200 text-primary-700'
-                          : 'bg-slate-50 border-slate-200/50 text-slate-500 hover:border-primary-200 hover:text-primary-600'
-                      }`}
-                    >
-                      {s.title}
-                    </button>
-                  )
-                })}
+                {SERMONS.filter((s) => s.id !== sermonId).map((s) => (
+                  <ToggleChip key={s.id} selected={(form.relatedSermonIds || []).includes(s.id)} onClick={() => toggleArrayItem('relatedSermonIds', s.id)}>
+                    {s.title}
+                  </ToggleChip>
+                ))}
               </div>
             </div>
-          </div>
+          </Section>
         </div>
       </div>
     </div>
