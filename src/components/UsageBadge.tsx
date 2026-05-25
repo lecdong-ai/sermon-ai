@@ -26,7 +26,7 @@ export default memo(function UsageBadge() {
 
   if (authLoading || loading || !usage) return null
 
-  const { trial, monthly, plan } = usage
+  const { trial, monthly, workspace, plan } = usage
   const isTrial = plan === 'none'
   const trialEndDate = trial.ends_at ? new Date(trial.ends_at) : null
   const daysLeft = trialEndDate ? Math.ceil((trialEndDate.getTime() - Date.now()) / 86400000) : 0
@@ -123,7 +123,7 @@ export default memo(function UsageBadge() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
                   <Crown className="w-3 h-3 text-indigo-500" />
-                  이번 달 사용량
+                  AI 분석
                 </span>
                 <span className="text-[16px] font-extrabold text-slate-800">
                   {monthly.remaining === 0 ? '무제한' : `${monthly.remaining}회`}
@@ -138,6 +138,27 @@ export default memo(function UsageBadge() {
                 </div>
               )}
             </div>
+
+            {/* 워크스페이스 사용량 */}
+            {workspace.limit > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-purple-500" />
+                    워크스페이스
+                  </span>
+                  <span className="text-[16px] font-extrabold text-slate-800">
+                    {workspace.remaining}회
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-500"
+                    style={{ width: `${(workspace.remaining / workspace.limit) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </>
         )}
 

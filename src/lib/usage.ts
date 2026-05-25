@@ -47,6 +47,8 @@ export async function ensureUsage(userId: string): Promise<UserUsage> {
     trial_end_at: end,
     monthly_used: 0,
     monthly_limit: 0,
+    workspace_used: 0,
+    workspace_limit: 0,
     last_reset_month: currentMonth(),
     created_at: now,
     updated_at: now,
@@ -84,6 +86,10 @@ function computeUsage(usage: UserUsage): UsageInfo {
   const monthlyUsed = needsReset ? 0 : usage.monthly_used
   const monthlyRemaining = Math.max(0, planLimits.monthly - monthlyUsed)
   const monthlyAvailable = planLimits.monthly === 0 || monthlyUsed < planLimits.monthly
+
+  // Workspace check
+  const workspaceUsed = needsReset ? 0 : usage.workspace_used
+  const workspaceRemaining = Math.max(0, planLimits.workspace_limit - workspaceUsed)
 
   // Can generate?
   let canGenerate = false
@@ -128,6 +134,11 @@ function computeUsage(usage: UserUsage): UsageInfo {
       period_start: monthDate(0),
       period_end: monthDate(1),
     },
+    workspace: {
+      used: workspaceUsed,
+      limit: planLimits.workspace_limit,
+      remaining: workspaceRemaining,
+    },
     can_generate: canGenerate,
     block_reason: blockReason,
   }
@@ -140,6 +151,7 @@ export async function checkUsage(userId: string): Promise<UsageInfo> {
       user_status: 'active',
       trial: { used: 0, limit: 999999, remaining: 999999, ends_at: null, expired: false },
       monthly: { used: 0, limit: 0, remaining: 0, period_start: monthDate(0), period_end: monthDate(1) },
+      workspace: { used: 0, limit: 0, remaining: 0 },
       can_generate: true,
     }
   }
@@ -168,8 +180,9 @@ export async function checkFeatureAccess(userId: string, feature: string): Promi
     return {
       key: 'workspace',
       name: '설교 워크스페이스',
-      available: planLimits.has_workspace,
-      required_plan: 'pro',
+      available: info.workspace.remaining > 0,
+      remaining: info.workspace.remaining,
+      required_plan: planLimits.workspace_limit > 0 ? 'basic' : 'pro',
     }
   }
 
@@ -183,6 +196,7 @@ export async function consumeUsage(userId: string): Promise<{ success: boolean; 
       user_status: 'active',
       trial: { used: 0, limit: 999999, remaining: 999999, ends_at: null, expired: false },
       monthly: { used: 0, limit: 0, remaining: 0, period_start: monthDate(0), period_end: monthDate(1) },
+      workspace: { used: 0, limit: 0, remaining: 0 },
       can_generate: true,
     }}
   }
@@ -205,6 +219,37 @@ export async function consumeUsage(userId: string): Promise<{ success: boolean; 
       last_reset_month: month,
     })
   }
+
+  const updated = await getUserUsage(userId)
+  return { success: true, usage: updated ? computeUsage(updated) : undefined }
+}
+
+export async function consumeWorkspaceUsage(userId: string): Promise<{ success: boolean; error?: string; usage?: UsageInfo }> {
+  if (await isUnlimitedUser(userId)) {
+    return { success: true, usage: {
+      plan: 'pro',
+      user_status: 'active',
+      trial: { used: 0, limit: 999999, remaining: 999999, ends_at: null, expired: false },
+      monthly: { used: 0, limit: 0, remaining: 0, period_start: monthDate(0), period_end: monthDate(1) },
+      workspace: { used: 0, limit: 0, remaining: 0 },
+      can_generate: true,
+    }}
+  }
+
+  const usage = await ensureUsage(userId)
+  const month = currentMonth()
+  const needsReset = usage.last_reset_month !== month
+  const planLimits = PLAN_LIMITS[usage.plan] || PLAN_LIMITS.none
+
+  const info = computeUsage(usage)
+  if (info.workspace.remaining <= 0) {
+    return { success: false, error: '워크스페이스 사용 한도를 초과했습니다.', usage: info }
+  }
+
+  await updateUsage(userId, {
+    workspace_used: needsReset ? 1 : usage.workspace_used + 1,
+    last_reset_month: month,
+  })
 
   const updated = await getUserUsage(userId)
   return { success: true, usage: updated ? computeUsage(updated) : undefined }

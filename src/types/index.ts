@@ -24,6 +24,8 @@ export interface UserUsage {
   trial_end_at: string
   monthly_used: number
   monthly_limit: number
+  workspace_used: number
+  workspace_limit: number
   last_reset_month: string
   subscription_id?: string
   created_at: string
@@ -47,6 +49,11 @@ export interface UsageInfo {
     period_start: string
     period_end: string
   }
+  workspace: {
+    used: number
+    limit: number
+    remaining: number
+  }
   can_generate: boolean
   block_reason?: 'trial_expired' | 'trial_exhausted' | 'monthly_exhausted' | 'past_due' | 'canceled'
 }
@@ -59,10 +66,10 @@ export interface FeatureAccess {
   remaining?: number
 }
 
-export const PLAN_LIMITS: Record<PlanType, { trial: number; monthly: number; has_workspace: boolean }> = {
-  none: { trial: 3, monthly: 0, has_workspace: false },
-  basic: { trial: 0, monthly: 10, has_workspace: false },
-  pro: { trial: 0, monthly: 20, has_workspace: true },
+export const PLAN_LIMITS: Record<PlanType, { trial: number; monthly: number; workspace_limit: number }> = {
+  none: { trial: 3, monthly: 0, workspace_limit: 0 },
+  basic: { trial: 0, monthly: 10, workspace_limit: 10 },
+  pro: { trial: 0, monthly: 20, workspace_limit: 20 },
 }
 
 export const PLAN_LABELS: Record<PlanType, string> = {
