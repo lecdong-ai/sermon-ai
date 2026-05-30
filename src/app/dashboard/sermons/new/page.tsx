@@ -239,7 +239,7 @@ function NewSermonForm() {
             <textarea
               value={form.bibleText}
               onChange={(e) => { updateField('bibleText', e.target.value); setBibleError('') }}
-              rows={6}
+              rows={4}
               placeholder="본문 성경 구절을 여기에 붙여넣으세요..."
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
             />
