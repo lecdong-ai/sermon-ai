@@ -35,6 +35,7 @@ function NewSermonForm() {
     chapterEnd: '',
     verseEnd: '',
     coreMessage: '',
+    bibleText: '',
     manuscript: '',
     outlineIntro: '',
     outlinePoint1: '',
@@ -188,6 +189,17 @@ function NewSermonForm() {
               placeholder="예: 마태복음 11:28-30"
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">성경 본문 내용 (개역개정)</label>
+            <textarea
+              value={form.bibleText}
+              onChange={(e) => updateField('bibleText', e.target.value)}
+              rows={6}
+              placeholder="본문 성경 구절을 여기에 붙여넣으세요...&#10;예: 수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라"
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
             />
           </div>
 
