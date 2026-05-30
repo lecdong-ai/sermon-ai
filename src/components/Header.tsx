@@ -22,10 +22,20 @@ export default memo(function Header() {
   const router = useRouter()
   const [mockOn, setMockOn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [plan, setPlan] = useState<string | null>(null)
 
   useEffect(() => {
     setMockOn(getCookie('use_mock') === 'true')
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      fetch('/api/usage')
+        .then(r => r.json())
+        .then(d => { if (!d.error) setPlan(d.plan) })
+        .catch(() => {})
+    }
+  }, [user])
 
   const toggleMock = () => {
     const next = !mockOn
@@ -72,6 +82,19 @@ export default memo(function Header() {
             <div className="w-8 h-8 rounded-full bg-slate-200/60 animate-pulse" />
           ) : user ? (
             <>
+              {/* 요금제 배지 */}
+              {plan && (
+                <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-bold ${
+                  plan === 'pro'
+                    ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-600 border border-indigo-200/50'
+                    : plan === 'none'
+                    ? 'bg-slate-100/60 text-slate-500 border border-slate-200/50'
+                    : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50'
+                }`}>
+                  {plan === 'pro' ? '👑 Pro' : plan === 'none' ? 'Free' : '🎁 Trial'}
+                </span>
+              )}
+
               {/* 메인 내비게이션 링크 */}
               <Link
                 href="/sermon"
@@ -107,6 +130,19 @@ export default memo(function Header() {
                       <div className="px-4 py-2.5 border-b border-slate-200/40 mb-1.5">
                         <p className="text-[12px] text-slate-400 font-medium">로그인 정보</p>
                         <p className="text-[13px] font-bold text-slate-800 truncate mt-0.5">{user.email}</p>
+                        {plan && (
+                          <div className="mt-1.5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
+                              plan === 'pro'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : plan === 'none'
+                                ? 'bg-slate-100 text-slate-500'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {plan === 'pro' ? '👑 Pro' : plan === 'none' ? 'Free' : '🎁 Trial'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <Link
                         href="/sermon"
