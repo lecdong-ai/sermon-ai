@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef, Suspense } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
@@ -50,7 +50,6 @@ function NewSermonForm() {
   const [themeFilter, setThemeFilter] = useState('')
   const [bibleLoading, setBibleLoading] = useState(false)
   const [bibleError, setBibleError] = useState('')
-  const bibleTextEditedByUser = useRef(false)
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -58,38 +57,6 @@ function NewSermonForm() {
     if (title) setForm(prev => ({ ...prev, title }))
     if (passage) setForm(prev => ({ ...prev, bibleBook: passage }))
   }, [searchParams])
-
-  useEffect(() => {
-    if (!form.bibleBook || form.bibleBook.length < 3) return
-    if (form.bibleText) return
-
-    bibleTextEditedByUser.current = false
-    const timer = setTimeout(async () => {
-      if (bibleTextEditedByUser.current) return
-      setBibleLoading(true)
-      setBibleError('')
-      try {
-        const res = await fetch('/api/bible', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ passage: form.bibleBook }),
-        })
-        if (!res.ok) throw new Error('API 오류')
-        const data = await res.json()
-        if (data.success && data.text && !bibleTextEditedByUser.current) {
-          setForm(prev => ({ ...prev, bibleText: data.text.trim() }))
-        } else if (!data.success) {
-          throw new Error(data.error)
-        }
-      } catch {
-        setBibleError('성경 본문을 자동으로 가져오지 못했습니다. 직접 입력해주세요.')
-      } finally {
-        setBibleLoading(false)
-      }
-    }, 1500)
-
-    return () => clearTimeout(timer)
-  }, [form.bibleBook])
 
   const filteredMajorThemes = useMemo(
     () =>
@@ -217,29 +184,63 @@ function NewSermonForm() {
 
           <div>
             <label className="block text-xs font-medium text-muted mb-1.5">성경 본문 *</label>
-            <input
-              type="text"
-              value={form.bibleBook}
-              onChange={(e) => updateField('bibleBook', e.target.value)}
-              placeholder="예: 마태복음 11:28-30"
-              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={form.bibleBook}
+                onChange={(e) => updateField('bibleBook', e.target.value)}
+                placeholder="예: 마태복음 11:28-30"
+                className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!form.bibleBook || form.bibleBook.length < 3) return
+                  setBibleLoading(true)
+                  setBibleError('')
+                  try {
+                    const res = await fetch('/api/bible', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ passage: form.bibleBook }),
+                    })
+                    if (!res.ok) throw new Error('API 오류')
+                    const data = await res.json()
+                    if (data.success && data.text) {
+                      setForm(prev => ({ ...prev, bibleText: data.text.trim() }))
+                    } else {
+                      throw new Error(data.error)
+                    }
+                  } catch {
+                    setBibleError('성경 본문을 자동으로 가져오지 못했습니다.')
+                  } finally {
+                    setBibleLoading(false)
+                  }
+                }}
+                disabled={bibleLoading}
+                className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap"
+              >
+                {bibleLoading ? '가져오는 중...' : '가져오기'}
+              </button>
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-muted mb-1.5">성경 본문 내용 (개역개정)</label>
-            {bibleLoading && (
-              <p className="text-[10px] text-primary mb-1 animate-pulse">성경 본문 가져오는 중...</p>
-            )}
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">성경 본문 내용 (개역개정)</label>
+              {bibleLoading && (
+                <p className="text-[10px] text-primary animate-pulse">가져오는 중...</p>
+              )}
+            </div>
             {bibleError && (
               <p className="text-[10px] text-rose-500 mb-1">{bibleError}</p>
             )}
             <textarea
               value={form.bibleText}
-              onChange={(e) => { bibleTextEditedByUser.current = true; updateField('bibleText', e.target.value); setBibleError('') }}
+              onChange={(e) => { updateField('bibleText', e.target.value); setBibleError('') }}
               rows={6}
-              placeholder="본문 성경 구절을 여기에 붙여넣으세요...&#10;예: 수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라"
+              placeholder="본문 성경 구절을 여기에 붙여넣으세요..."
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
             />
           </div>
