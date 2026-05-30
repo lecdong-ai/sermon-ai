@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
@@ -50,6 +50,7 @@ function NewSermonForm() {
   const [themeFilter, setThemeFilter] = useState('')
   const [bibleLoading, setBibleLoading] = useState(false)
   const [bibleError, setBibleError] = useState('')
+  const bibleTextEditedByUser = useRef(false)
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -62,7 +63,9 @@ function NewSermonForm() {
     if (!form.bibleBook || form.bibleBook.length < 3) return
     if (form.bibleText) return
 
+    bibleTextEditedByUser.current = false
     const timer = setTimeout(async () => {
+      if (bibleTextEditedByUser.current) return
       setBibleLoading(true)
       setBibleError('')
       try {
@@ -70,7 +73,7 @@ function NewSermonForm() {
         const res = await fetch(`https://bible-api.com/${query}?translation=korean+kv`)
         if (!res.ok) throw new Error('API 오류')
         const data = await res.json()
-        if (data.text) {
+        if (data.text && !bibleTextEditedByUser.current) {
           setForm(prev => ({ ...prev, bibleText: data.text.trim() }))
         }
       } catch {
@@ -229,7 +232,7 @@ function NewSermonForm() {
             )}
             <textarea
               value={form.bibleText}
-              onChange={(e) => { updateField('bibleText', e.target.value); setBibleError('') }}
+              onChange={(e) => { bibleTextEditedByUser.current = true; updateField('bibleText', e.target.value); setBibleError('') }}
               rows={6}
               placeholder="본문 성경 구절을 여기에 붙여넣으세요...&#10;예: 수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라"
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
