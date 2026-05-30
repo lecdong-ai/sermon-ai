@@ -19,7 +19,7 @@ export default function Sidebar() {
   const router = useRouter()
 
   return (
-    <aside className="w-56 bg-sidebar text-white flex flex-col shrink-0 h-screen sticky top-0">
+    <aside className="w-56 bg-sidebar text-white flex flex-col shrink-0 h-full">
       <div
         className="px-5 py-5 border-b border-white/10 cursor-pointer"
         onClick={() => router.push('/dashboard')}
