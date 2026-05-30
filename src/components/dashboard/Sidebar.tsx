@@ -55,8 +55,17 @@ export default function Sidebar() {
           )
         })}
       </nav>
-      <div className="px-5 py-3 border-t border-white/10 text-xs text-white/30">
-        v1.0
+      <div className="px-4 py-3 border-t border-white/10">
+        <button
+          onClick={() => router.push('/')}
+          className="w-full text-left px-3 py-2 text-xs text-white/50 hover:text-white hover:bg-sidebar-hover rounded-md transition-colors flex items-center gap-2"
+        >
+          <span>←</span>
+          <span>처음으로</span>
+        </button>
+        <div className="px-3 py-1 text-[10px] text-white/20">
+          v1.0
+        </div>
       </div>
     </aside>
   )
