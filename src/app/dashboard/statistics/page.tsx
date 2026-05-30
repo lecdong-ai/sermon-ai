@@ -16,8 +16,8 @@ const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false })
 const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false })
 const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
 const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
-const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
 const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
+import { Cell } from 'recharts'
 
 const GRADIENTS: Array<[string, string]> = [
   ['#6366f1', '#8b5cf6'],
@@ -126,7 +126,7 @@ export default function StatisticsPage() {
   const seasonData = useMemo(() => {
     const map = new Map<string, number>()
     for (const s of sermons) if (s.season) map.set(s.season, (map.get(s.season) || 0) + 1)
-    return Array.from(map.entries()).map(([season, count]) => ({ name: season, count }))
+    return Array.from(map.entries()).map(([season, count], i) => ({ name: season, count, fill: PALETTE[i % PALETTE.length] }))
   }, [sermons])
 
   const audienceData = useMemo(() => {
@@ -250,8 +250,8 @@ export default function StatisticsPage() {
                   label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
-                  {seasonData.map((_, i) => (
-                    <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                  {seasonData.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -261,7 +261,7 @@ export default function StatisticsPage() {
           <div className="flex flex-wrap gap-3 justify-center mt-2">
             {seasonData.map((item, i) => (
               <div key={item.name} className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PALETTE[i % PALETTE.length] }} />
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.fill }} />
                 <span className="text-xs text-slate-600">{item.name}</span>
               </div>
             ))}
