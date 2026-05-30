@@ -561,29 +561,29 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full inline-block" style={{backgroundColor:NODE_COLORS[sel.type]}}/>
-              <span className="text-xs uppercase tracking-wider text-muted">{sel.type === 'sermon' ? '설교' : sel.type === 'passage' ? '본문' : sel.type === 'theme' ? '주제' : sel.type === 'season' ? '절기' : sel.type === 'audience' ? '회중' : '시리즈'}</span>
+              <span className="text-xs uppercase tracking-wider" style={{color: THEMES[theme].labelNormal}}>{sel.type === 'sermon' ? '설교' : sel.type === 'passage' ? '본문' : sel.type === 'theme' ? '주제' : sel.type === 'season' ? '절기' : sel.type === 'audience' ? '회중' : '시리즈'}</span>
             </div>
-            <button onClick={() => { setSel(null); setLinkedSermons([]); setConnectedNodes([]) }} className="text-muted hover:text-foreground text-xs leading-none">✕</button>
+            <button onClick={() => { setSel(null); setLinkedSermons([]); setConnectedNodes([]) }} style={{color: THEMES[theme].labelNormal}} className="hover:opacity-70 text-xs leading-none">✕</button>
           </div>
-          <p className="text-base font-semibold text-foreground">{sel.label}</p>
+          <p className="text-base font-semibold" style={{color: THEMES[theme].labelProminent}}>{sel.label}</p>
           {sel.type !== 'sermon' && linkedSermons.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <p className="text-sm font-medium text-muted mb-1.5">관련 설교 ({linkedSermons.length})</p>
+            <div className="mt-3 pt-3" style={{borderTopColor: THEMES[theme].panelBorder, borderTopWidth: 1, borderTopStyle: 'solid'}}>
+              <p className="text-sm font-medium mb-1.5" style={{color: THEMES[theme].labelNormal}}>관련 설교 ({linkedSermons.length})</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {linkedSermons.map((s) => (
-                  <button key={s.id} onClick={() => { const g = data.nodes.find(d => d.id === s.id); if (g) onNodeClick?.(g) }} className="text-sm text-foreground/80 truncate block w-full text-left hover:text-foreground hover:underline cursor-pointer">• {s.label}</button>
+                  <button key={s.id} onClick={() => { const g = data.nodes.find(d => d.id === s.id); if (g) onNodeClick?.(g) }} style={{color: THEMES[theme].labelNormal}} className="text-sm truncate block w-full text-left hover:opacity-70 cursor-pointer">• {s.label}</button>
                 ))}
               </div>
             </div>
           )}
           {sel.type === 'sermon' && connectedNodes.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <p className="text-sm font-medium text-muted mb-1.5">연결된 노드</p>
+            <div className="mt-3 pt-3" style={{borderTopColor: THEMES[theme].panelBorder, borderTopWidth: 1, borderTopStyle: 'solid'}}>
+              <p className="text-sm font-medium mb-1.5" style={{color: THEMES[theme].labelNormal}}>연결된 노드</p>
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {connectedNodes.map((c) => (
                   <div key={c.id} className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{backgroundColor:NODE_COLORS[c.type]}}/>
-                    <span className="text-sm text-foreground/80 truncate">{c.label}</span>
+                    <span className="text-sm truncate" style={{color: THEMES[theme].labelNormal}}>{c.label}</span>
                   </div>
                 ))}
               </div>
@@ -595,7 +595,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
                 const sermonId = sel.id.replace('sermon-', '')
                 router.push(`/dashboard/sermons/${sermonId}`)
               }}
-              className="mt-3 w-full text-sm py-2 rounded-md border transition-colors hover:bg-foreground/5"
+              className="mt-3 w-full text-sm py-2 rounded-md border transition-colors hover:opacity-80"
               style={{borderColor: THEMES[theme].panelBorder, color: THEMES[theme].labelProminent}}
             >
               설교 상세보기 →
