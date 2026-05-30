@@ -52,9 +52,7 @@ function NewSermonForm() {
     const title = searchParams.get('title')
     const passage = searchParams.get('passage')
     if (title) setForm(prev => ({ ...prev, title }))
-    if (passage) {
-      setForm(prev => ({ ...prev, bibleBook: passage.split(' ')[0] || '' }))
-    }
+    if (passage) setForm(prev => ({ ...prev, bibleBook: passage }))
   }, [searchParams])
 
   const filteredMajorThemes = useMemo(
@@ -94,7 +92,7 @@ function NewSermonForm() {
       return
     }
 
-    const normalizedPassage = `${form.bibleBook} ${form.chapterStart || '?'}:${form.verseStart || '?'}-${form.chapterEnd || form.chapterStart || '?'}:${form.verseEnd || '?'}`
+    const normalizedPassage = form.bibleBook
 
     const newSermon: Sermon = {
       id: `sermon-${Date.now()}`,
@@ -181,62 +179,16 @@ function NewSermonForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1.5">성경책 *</label>
-              <select
-                value={form.bibleBook}
-                onChange={(e) => updateField('bibleBook', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                required
-              >
-                <option value="">선택...</option>
-                {BIBLE_BOOKS.map((book) => (
-                  <option key={book} value={book}>{book}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1.5">본문 (장:절)</label>
-              <div className="grid grid-cols-4 gap-2">
-                <div>
-                  <input
-                    type="number"
-                    value={form.chapterStart}
-                    onChange={(e) => updateField('chapterStart', e.target.value)}
-                    placeholder="장"
-                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    value={form.verseStart}
-                    onChange={(e) => updateField('verseStart', e.target.value)}
-                    placeholder="절"
-                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    value={form.chapterEnd}
-                    onChange={(e) => updateField('chapterEnd', e.target.value)}
-                    placeholder="장"
-                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    value={form.verseEnd}
-                    onChange={(e) => updateField('verseEnd', e.target.value)}
-                    placeholder="절"
-                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">성경 본문 *</label>
+            <input
+              type="text"
+              value={form.bibleBook}
+              onChange={(e) => updateField('bibleBook', e.target.value)}
+              placeholder="예: 마태복음 11:28-30"
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
