@@ -68,7 +68,7 @@ function SermonsContent() {
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">설교 목록</h2>
-        <button onClick={() => router.push('/sermons/new')} className="text-sm bg-primary hover:bg-primary-dark text-white px-4 py-1.5 rounded-md transition-colors">
+        <button onClick={() => router.push('/dashboard/sermons/new')} className="text-sm bg-primary hover:bg-primary-dark text-white px-4 py-1.5 rounded-md transition-colors">
           + 새 설교
         </button>
       </div>
@@ -122,7 +122,7 @@ function SermonsContent() {
             </thead>
             <tbody>
               {filtered.map((sermon) => (
-                <tr key={sermon.id} onClick={() => router.push(`/sermons/${sermon.id}`)} className="border-b border-border/50 hover:bg-background/80 cursor-pointer transition-colors">
+                <tr key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="border-b border-border/50 hover:bg-background/80 cursor-pointer transition-colors">
                   <td className="py-3 px-4">
                     <p className="font-medium text-foreground">{sermon.title}</p>
                     <p className="text-xs text-muted mt-0.5">{sermon.coreMessage.slice(0, 40)}...</p>
@@ -140,7 +140,7 @@ function SermonsContent() {
       ) : (
         <div className="grid grid-cols-2 gap-4">
           {filtered.map((sermon) => (
-            <div key={sermon.id} onClick={() => router.push(`/sermons/${sermon.id}`)} className="bg-surface border border-border rounded-lg p-4 hover:shadow-sm cursor-pointer transition-all">
+            <div key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="bg-surface border border-border rounded-lg p-4 hover:shadow-sm cursor-pointer transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-sm text-foreground truncate">{sermon.title}</p>
