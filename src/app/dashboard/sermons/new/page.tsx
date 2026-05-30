@@ -48,6 +48,8 @@ function NewSermonForm() {
 
   const [newThemeInput, setNewThemeInput] = useState('')
   const [themeFilter, setThemeFilter] = useState('')
+  const [bibleLoading, setBibleLoading] = useState(false)
+  const [bibleError, setBibleError] = useState('')
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -55,6 +57,31 @@ function NewSermonForm() {
     if (title) setForm(prev => ({ ...prev, title }))
     if (passage) setForm(prev => ({ ...prev, bibleBook: passage }))
   }, [searchParams])
+
+  useEffect(() => {
+    if (!form.bibleBook || form.bibleBook.length < 3) return
+    if (form.bibleText) return
+
+    const timer = setTimeout(async () => {
+      setBibleLoading(true)
+      setBibleError('')
+      try {
+        const query = form.bibleBook.replace(/ /g, '+')
+        const res = await fetch(`https://bible-api.com/${query}?translation=korean+kv`)
+        if (!res.ok) throw new Error('API 오류')
+        const data = await res.json()
+        if (data.text) {
+          setForm(prev => ({ ...prev, bibleText: data.text.trim() }))
+        }
+      } catch {
+        setBibleError('성경 본문을 자동으로 가져오지 못했습니다. 직접 입력해주세요.')
+      } finally {
+        setBibleLoading(false)
+      }
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [form.bibleBook])
 
   const filteredMajorThemes = useMemo(
     () =>
@@ -194,9 +221,15 @@ function NewSermonForm() {
 
           <div>
             <label className="block text-xs font-medium text-muted mb-1.5">성경 본문 내용 (개역개정)</label>
+            {bibleLoading && (
+              <p className="text-[10px] text-primary mb-1 animate-pulse">성경 본문 가져오는 중...</p>
+            )}
+            {bibleError && (
+              <p className="text-[10px] text-rose-500 mb-1">{bibleError}</p>
+            )}
             <textarea
               value={form.bibleText}
-              onChange={(e) => updateField('bibleText', e.target.value)}
+              onChange={(e) => { updateField('bibleText', e.target.value); setBibleError('') }}
               rows={6}
               placeholder="본문 성경 구절을 여기에 붙여넣으세요...&#10;예: 수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라"
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
