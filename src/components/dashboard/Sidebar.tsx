@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 const MENUS = [
@@ -13,6 +14,55 @@ const MENUS = [
   { key: 'tags', label: '태그 관리', icon: '▪', href: '/dashboard/tags' },
   { key: 'settings', label: '설정', icon: '◇', href: '/dashboard/settings' },
 ]
+
+function UsageBadge() {
+  const [usage, setUsage] = useState<{ plan: string; trial?: { used: number; limit: number; remaining: number }; monthly?: { used: number; limit: number; remaining: number } } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then(r => r.json())
+      .then(d => { if (!d.error) setUsage(d) })
+      .catch(() => {})
+  }, [])
+
+  if (!usage) return null
+
+  const trial = usage.trial
+  const monthly = usage.monthly
+  const remaining = trial?.remaining ?? monthly?.remaining ?? 0
+  const limit = trial?.limit ?? monthly?.limit ?? 0
+  const used = trial?.used ?? monthly?.used ?? 0
+  const pct = limit > 0 ? (used / limit) * 100 : 0
+  const barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#10b981'
+
+  return (
+    <div className="px-5 py-3 border-b border-white/10">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">사용량</span>
+        <span className="text-[10px] text-white/50">
+          <span style={{ color: barColor, fontWeight: 600 }}>{remaining}</span>
+          <span className="text-white/30">/{limit}</span>
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}
+        />
+      </div>
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-[9px] text-white/25">
+          {usage.plan === 'pro' ? 'Pro 플랜' : trial ? '무료체험' : '월간'}
+        </span>
+        {usage.plan === 'pro' ? (
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-medium">무제한</span>
+        ) : (
+          <span className="text-[9px] text-white/25">AI 분석</span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -29,6 +79,7 @@ export default function Sidebar() {
           설교를 저장하고, 연결하고,<br />다시 찾는 목회 지식 지도
         </p>
       </div>
+      <UsageBadge />
       <nav className="flex-1 py-3 overflow-y-auto">
         {MENUS.map((menu) => {
           const isActive =
