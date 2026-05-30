@@ -308,7 +308,7 @@ export default function HomePage() {
                 className="w-full p-4 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/40 hover:border-indigo-300/60 hover:shadow-md transition-all duration-200 text-left group relative"
               >
                 <div className="flex items-center gap-2">
-                  <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
+                  <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">고급형 설교준비</p>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-extrabold tracking-wide shadow-sm">
                     PRO
                   </span>
@@ -326,7 +326,7 @@ export default function HomePage() {
             <div className="px-5 pb-3">
               <div className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-slate-400">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
-                실전형 설교준비는 <strong className="text-slate-600">PRO 플랜</strong> 전용입니다
+                고급형 설교준비는 <strong className="text-slate-600">PRO 플랜</strong> 전용입니다
               </div>
               <button
                 onClick={() => setShowModal(false)}
