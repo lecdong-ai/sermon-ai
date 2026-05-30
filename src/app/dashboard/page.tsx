@@ -74,7 +74,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <button
-          onClick={() => router.push('/sermons/new')}
+          onClick={() => router.push('/dashboard/sermons/new')}
           className="text-sm bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-md transition-colors"
         >
           + 새 설교 등록
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             {recentSermons.map((sermon, i) => (
               <div
                 key={sermon.id}
-                onClick={() => router.push(`/sermons/${sermon.id}`)}
+                onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)}
                 className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-background cursor-pointer transition-colors group"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
