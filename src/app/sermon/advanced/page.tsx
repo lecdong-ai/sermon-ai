@@ -152,7 +152,7 @@ export default function AdvancedSermonPage() {
       const json = await res.json()
 
       if (json.success) {
-        router.push(`/sermon/${json.data.id}?advanced=true`)
+        window.location.href = `/dashboard/sermons/new?title=${encodeURIComponent(title.trim())}&passage=${encodeURIComponent(passage.trim())}&sermonId=${json.data.id}`
       } else {
         setError(json.error || '생성 실패')
       }
