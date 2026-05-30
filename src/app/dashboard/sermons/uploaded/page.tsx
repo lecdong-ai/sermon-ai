@@ -74,6 +74,18 @@ export default function UploadedSermonsPage() {
     return false
   }
 
+  async function handleDelete(e: React.MouseEvent, sermonId: string) {
+    e.stopPropagation()
+    if (!confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return
+    const sb = createClient()
+    const { error } = await sb.from('sermons').delete().eq('id', sermonId)
+    if (error) {
+      alert('삭제 중 오류가 발생했습니다: ' + error.message)
+    } else {
+      setSermons(prev => prev.filter(s => s.id !== sermonId))
+    }
+  }
+
   if (loading) {
     return (
       <div className="animate-fade-in py-12 text-center">
@@ -141,7 +153,16 @@ export default function UploadedSermonsPage() {
                     {sermon.series && <span>· {sermon.series}</span>}
                   </div>
                 </div>
-                <span className="text-muted text-sm shrink-0 group-hover:text-primary transition-colors">→</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={(e) => handleDelete(e, sermon.id)}
+                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs px-2 py-1 rounded transition-all"
+                    title="삭제"
+                  >
+                    🗑️
+                  </button>
+                  <span className="text-muted text-sm group-hover:text-primary transition-colors">→</span>
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5 mt-3 flex-wrap">
