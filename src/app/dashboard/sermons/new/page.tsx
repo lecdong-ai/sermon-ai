@@ -69,12 +69,17 @@ function NewSermonForm() {
       setBibleLoading(true)
       setBibleError('')
       try {
-        const query = form.bibleBook.replace(/ /g, '+')
-        const res = await fetch(`https://bible-api.com/${query}?translation=korean+kv`)
+        const res = await fetch('/api/bible', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passage: form.bibleBook }),
+        })
         if (!res.ok) throw new Error('API 오류')
         const data = await res.json()
-        if (data.text && !bibleTextEditedByUser.current) {
+        if (data.success && data.text && !bibleTextEditedByUser.current) {
           setForm(prev => ({ ...prev, bibleText: data.text.trim() }))
+        } else if (!data.success) {
+          throw new Error(data.error)
         }
       } catch {
         setBibleError('성경 본문을 자동으로 가져오지 못했습니다. 직접 입력해주세요.')
