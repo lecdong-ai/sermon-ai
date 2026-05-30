@@ -2,14 +2,13 @@
 
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter } from 'next/navigation'
-import { use } from 'react'
 
 export default function SermonDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = use(params)
+  const { id } = params
   const { state, getSeries, getTheme, getRelatedSermons } = useApp()
   const router = useRouter()
   const sermon = state.sermons.find((s) => s.id === id)

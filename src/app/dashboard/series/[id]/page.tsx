@@ -2,14 +2,14 @@
 
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter } from 'next/navigation'
-import { use, useMemo } from 'react'
+import { useMemo } from 'react'
 
 export default function SeriesDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = use(params)
+  const { id } = params
   const { state } = useApp()
   const router = useRouter()
   const srs = state.series.find((s) => s.id === id)
