@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
-import Header from '@/components/Header'
+import SiteHeader from '@/components/SiteHeader'
 import { AuthProvider } from '@/components/AuthProvider'
 
 const notoSansKr = Noto_Sans_KR({
@@ -65,7 +65,7 @@ export default function RootLayout({
     <html lang="ko" className={`${notoSansKr.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-[#f7f8fa] text-[#191f28]">
         <AuthProvider>
-          <Header />
+          <SiteHeader />
           <main className="pt-16">{children}</main>
           {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
             <Script
