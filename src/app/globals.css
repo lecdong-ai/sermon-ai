@@ -141,3 +141,39 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Dashboard styles */
+@layer base {
+  :root {
+    --dashboard-bg: #f8f6f1;
+    --dashboard-foreground: #2d3748;
+    --dashboard-muted: #718096;
+    --dashboard-surface: #ffffff;
+    --dashboard-border: #e2e8f0;
+    --dashboard-sidebar: #1a2332;
+    --dashboard-sidebar-hover: #243044;
+    --dashboard-sidebar-active: #2c3e50;
+    --dashboard-primary: #2c5282;
+    --dashboard-primary-light: #3182ce;
+    --dashboard-primary-dark: #1a365d;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  .animate-slide-in {
+    animation: slideIn 0.2s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+

@@ -1,0 +1,87 @@
+'use client'
+
+import { useApp } from '@/lib/dashboard/store'
+import { useRouter } from 'next/navigation'
+import { useMemo } from 'react'
+
+export default function SeriesPage() {
+  const { state } = useApp()
+  const router = useRouter()
+  const { series, sermons } = state
+
+  const seriesWithCounts = useMemo(
+    () =>
+      series.map((srs) => {
+        const sList = sermons
+          .filter((s) => s.seriesId === srs.id)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        return { ...srs, sermonCount: sList.length, sermons: sList }
+      }),
+    [series, sermons]
+  )
+
+  return (
+    <div className="animate-fade-in space-y-6 max-w-6xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">시리즈</h2>
+      </div>
+
+      {seriesWithCounts.length === 0 ? (
+        <div className="bg-surface border border-border rounded-lg p-12 text-center">
+          <p className="text-muted text-sm">등록된 시리즈가 없습니다</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {seriesWithCounts.map((srs) => (
+            <div
+              key={srs.id}
+              className="bg-surface border border-border rounded-lg p-5 hover:shadow-sm transition-shadow cursor-pointer"
+              onClick={() => router.push(`/series/${srs.id}`)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground">{srs.name}</h3>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        srs.status === 'active'
+                          ? 'bg-green-50 text-green-700'
+                          : srs.status === 'completed'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {srs.status === 'active' ? '진행 중' : srs.status === 'completed' ? '완료' : '예정'}
+                    </span>
+                  </div>
+                  {srs.description && (
+                    <p className="text-xs text-muted mt-1">{srs.description}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-muted">
+                    <span>설교 {srs.sermonCount}편</span>
+                    {srs.startDate && <span>시작: {srs.startDate.replace(/-/g, '.')}</span>}
+                    {srs.endDate && <span>종료: {srs.endDate.replace(/-/g, '.')}</span>}
+                  </div>
+                </div>
+                <div className="text-muted text-sm shrink-0 ml-3">→</div>
+              </div>
+
+              {srs.sermons.length > 0 && (
+                <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                  {srs.sermons.map((s) => (
+                    <span
+                      key={s.id}
+                      className="text-[10px] bg-background text-muted px-2 py-0.5 rounded-full truncate max-w-[120px]"
+                    >
+                      {s.title}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

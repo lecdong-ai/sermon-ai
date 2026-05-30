@@ -1,0 +1,496 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import { useApp } from '@/lib/dashboard/store'
+import { useRouter } from 'next/navigation'
+import { Sermon } from '@/lib/dashboard/types'
+import {
+  SERMON_TYPES,
+  AUDIENCES,
+  SEASONS,
+  BIBLE_BOOKS,
+  MAJOR_THEMES,
+  SITUATION_TAGS,
+  EMOTION_TAGS,
+} from '@/lib/dashboard/constants'
+
+export default function NewSermonPage() {
+  const { state, dispatch } = useApp()
+  const router = useRouter()
+
+  const [showOptional, setShowOptional] = useState(false)
+
+  const [form, setForm] = useState({
+    title: '',
+    date: new Date().toISOString().slice(0, 10),
+    preacher: '김은혜 목사',
+    sermonType: '',
+    audience: '',
+    season: '',
+    seriesId: '',
+    bibleBook: '',
+    chapterStart: '',
+    verseStart: '',
+    chapterEnd: '',
+    verseEnd: '',
+    coreMessage: '',
+    manuscript: '',
+    outlineIntro: '',
+    outlinePoint1: '',
+    outlinePoint2: '',
+    outlinePoint3: '',
+    outlineConclusion: '',
+    themeIds: [] as string[],
+    relatedSermonIds: [] as string[],
+  })
+
+  const [newThemeInput, setNewThemeInput] = useState('')
+  const [themeFilter, setThemeFilter] = useState('')
+
+  const filteredMajorThemes = useMemo(
+    () =>
+      MAJOR_THEMES.filter(
+        (t) =>
+          !form.themeIds.includes(t.id) &&
+          t.name.includes(themeFilter)
+      ),
+    [form.themeIds, themeFilter]
+  )
+
+  const filteredSituationTags = useMemo(
+    () =>
+      SITUATION_TAGS.filter(
+        (t) =>
+          !form.themeIds.includes(t.id) &&
+          t.name.includes(themeFilter)
+      ),
+    [form.themeIds, themeFilter]
+  )
+
+  const filteredEmotionTags = useMemo(
+    () =>
+      EMOTION_TAGS.filter(
+        (t) =>
+          !form.themeIds.includes(t.id) &&
+          t.name.includes(themeFilter)
+      ),
+    [form.themeIds, themeFilter]
+  )
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.title || !form.date || !form.sermonType || !form.audience || !form.bibleBook || !form.coreMessage || !form.manuscript) {
+      alert('필수 항목을 모두 입력해주세요.')
+      return
+    }
+
+    const normalizedPassage = `${form.bibleBook} ${form.chapterStart || '?'}:${form.verseStart || '?'}-${form.chapterEnd || form.chapterStart || '?'}:${form.verseEnd || '?'}`
+
+    const newSermon: Sermon = {
+      id: `sermon-${Date.now()}`,
+      title: form.title,
+      date: form.date,
+      preacher: form.preacher || '김은혜 목사',
+      sermonType: form.sermonType,
+      audience: form.audience,
+      season: form.season,
+      seriesId: form.seriesId,
+      bibleBook: form.bibleBook,
+      chapterStart: Number(form.chapterStart) || 0,
+      verseStart: Number(form.verseStart) || 0,
+      chapterEnd: Number(form.chapterEnd) || Number(form.chapterStart) || 0,
+      verseEnd: Number(form.verseEnd) || 0,
+      normalizedPassage,
+      coreMessage: form.coreMessage,
+      outlineIntro: form.outlineIntro,
+      outlinePoint1: form.outlinePoint1,
+      outlinePoint2: form.outlinePoint2,
+      outlinePoint3: form.outlinePoint3,
+      outlineConclusion: form.outlineConclusion,
+      manuscript: form.manuscript,
+      themeIds: form.themeIds,
+      tagIds: form.themeIds,
+      relatedSermonIds: form.relatedSermonIds,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    dispatch({ type: 'ADD_SERMON', payload: newSermon })
+    router.push(`/sermons/${newSermon.id}`)
+  }
+
+  const handleSaveDraft = () => {
+    localStorage.setItem('sermon-draft', JSON.stringify(form))
+    alert('임시저장되었습니다.')
+  }
+
+  const updateField = (field: string, value: string | string[]) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const toggleTheme = (id: string) => {
+    setForm((prev) => ({
+      ...prev,
+      themeIds: prev.themeIds.includes(id)
+        ? prev.themeIds.filter((tid) => tid !== id)
+        : [...prev.themeIds, id],
+    }))
+  }
+
+  return (
+    <div className="animate-fade-in max-w-4xl mx-auto">
+      <h2 className="text-xl font-bold mb-6">새 설교 등록</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-surface border border-border rounded-lg p-6 space-y-5">
+          <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
+            필수 입력
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">설교 제목 *</label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="예: 두려움을 이기는 믿음"
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">설교 날짜 *</label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => updateField('date', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">성경책 *</label>
+              <select
+                value={form.bibleBook}
+                onChange={(e) => updateField('bibleBook', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              >
+                <option value="">선택...</option>
+                {BIBLE_BOOKS.map((book) => (
+                  <option key={book} value={book}>{book}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">본문 (장:절)</label>
+              <div className="grid grid-cols-4 gap-2">
+                <div>
+                  <input
+                    type="number"
+                    value={form.chapterStart}
+                    onChange={(e) => updateField('chapterStart', e.target.value)}
+                    placeholder="장"
+                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={form.verseStart}
+                    onChange={(e) => updateField('verseStart', e.target.value)}
+                    placeholder="절"
+                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={form.chapterEnd}
+                    onChange={(e) => updateField('chapterEnd', e.target.value)}
+                    placeholder="장"
+                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={form.verseEnd}
+                    onChange={(e) => updateField('verseEnd', e.target.value)}
+                    placeholder="절"
+                    className="w-full px-2 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">설교 종류 *</label>
+              <select
+                value={form.sermonType}
+                onChange={(e) => updateField('sermonType', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              >
+                <option value="">선택...</option>
+                {SERMON_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">회중 *</label>
+              <select
+                value={form.audience}
+                onChange={(e) => updateField('audience', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                required
+              >
+                <option value="">선택...</option>
+                {AUDIENCES.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">설교자 *</label>
+              <input
+                type="text"
+                value={form.preacher}
+                onChange={(e) => updateField('preacher', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">핵심 메시지 *</label>
+            <textarea
+              value={form.coreMessage}
+              onChange={(e) => updateField('coreMessage', e.target.value)}
+              rows={3}
+              placeholder="설교의 핵심 메시지를 한 문단으로 요약해주세요."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">설교문 원고 *</label>
+            <textarea
+              value={form.manuscript}
+              onChange={(e) => updateField('manuscript', e.target.value)}
+              rows={10}
+              placeholder="설교 원고를 입력해주세요."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-lg p-6">
+          <button
+            type="button"
+            onClick={() => setShowOptional(!showOptional)}
+            className="text-sm font-semibold text-muted hover:text-foreground transition-colors flex items-center gap-2"
+          >
+            {showOptional ? '▼' : '▶'} 선택 입력 (절기, 시리즈, 개요, 태그)
+          </button>
+
+          {showOptional && (
+            <div className="mt-5 space-y-5 animate-fade-in">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">절기</label>
+                  <select
+                    value={form.season}
+                    onChange={(e) => updateField('season', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  >
+                    <option value="">선택...</option>
+                    {SEASONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">시리즈</label>
+                  <select
+                    value={form.seriesId}
+                    onChange={(e) => updateField('seriesId', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  >
+                    <option value="">선택...</option>
+                    {state.series.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs font-medium text-muted">설교 개요</label>
+                <textarea
+                  value={form.outlineIntro}
+                  onChange={(e) => updateField('outlineIntro', e.target.value)}
+                  rows={2}
+                  placeholder="서론"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                />
+                <textarea
+                  value={form.outlinePoint1}
+                  onChange={(e) => updateField('outlinePoint1', e.target.value)}
+                  rows={2}
+                  placeholder="대지 1"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                />
+                <textarea
+                  value={form.outlinePoint2}
+                  onChange={(e) => updateField('outlinePoint2', e.target.value)}
+                  rows={2}
+                  placeholder="대지 2"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                />
+                <textarea
+                  value={form.outlinePoint3}
+                  onChange={(e) => updateField('outlinePoint3', e.target.value)}
+                  rows={2}
+                  placeholder="대지 3"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                />
+                <textarea
+                  value={form.outlineConclusion}
+                  onChange={(e) => updateField('outlineConclusion', e.target.value)}
+                  rows={2}
+                  placeholder="결론"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted mb-2">태그</label>
+                <input
+                  type="text"
+                  value={themeFilter}
+                  onChange={(e) => setThemeFilter(e.target.value)}
+                  placeholder="태그 검색..."
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light mb-3"
+                />
+
+                {form.themeIds.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs text-muted mb-1">선택된 태그:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {form.themeIds.map((id) => {
+                        const theme = [...MAJOR_THEMES, ...SITUATION_TAGS, ...EMOTION_TAGS].find(
+                          (t) => t.id === id
+                        )
+                        return theme ? (
+                          <span
+                            key={id}
+                            onClick={() => toggleTheme(id)}
+                            className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full cursor-pointer hover:bg-primary/20"
+                          >
+                            {theme.name} ×
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs text-muted mb-1.5">대주제</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
+                      {filteredMajorThemes.map((t) => (
+                        <span
+                          key={t.id}
+                          onClick={() => toggleTheme(t.id)}
+                          className="text-[11px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full cursor-pointer hover:bg-orange-100"
+                        >
+                          {t.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted mb-1.5">상황</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
+                      {filteredSituationTags.map((t) => (
+                        <span
+                          key={t.id}
+                          onClick={() => toggleTheme(t.id)}
+                          className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-100"
+                        >
+                          {t.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted mb-1.5">정서</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
+                      {filteredEmotionTags.map((t) => (
+                        <span
+                          key={t.id}
+                          onClick={() => toggleTheme(t.id)}
+                          className="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full cursor-pointer hover:bg-purple-100"
+                        >
+                          {t.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1.5">수동 관련 설교</label>
+                <select
+                  multiple
+                  value={form.relatedSermonIds}
+                  onChange={(e) =>
+                    updateField(
+                      'relatedSermonIds',
+                      Array.from(e.target.selectedOptions, (option) => option.value)
+                    )
+                  }
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light h-24"
+                >
+                  {state.sermons.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title} ({s.normalizedPassage})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            className="text-sm border border-border px-5 py-2 rounded-md hover:bg-background transition-colors"
+          >
+            임시저장
+          </button>
+          <button
+            type="submit"
+            className="text-sm bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-md transition-colors"
+          >
+            저장
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
