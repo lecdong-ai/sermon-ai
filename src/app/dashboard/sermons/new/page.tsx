@@ -20,7 +20,7 @@ export default function NewSermonPage() {
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-indigo-500" />
-              <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">실전형 설교준비</p>
+              <p className="text-[15px] font-extrabold text-indigo-700 group-hover:text-indigo-800 transition-colors">고급형 설교준비</p>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-extrabold tracking-wide shadow-sm">
                 PRO
               </span>
@@ -41,7 +41,7 @@ export default function NewSermonPage() {
         <div className="px-5 pb-4">
           <div className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-muted">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
-            실전형 설교준비는 <strong className="text-foreground">PRO 플랜</strong> 전용입니다
+            고급형 설교준비는 <strong className="text-foreground">PRO 플랜</strong> 전용입니다
           </div>
           <button
             onClick={() => router.push('/dashboard')}
