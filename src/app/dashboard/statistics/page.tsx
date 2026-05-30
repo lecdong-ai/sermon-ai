@@ -1,11 +1,21 @@
 'use client'
 
 import { useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useApp } from '@/lib/dashboard/store'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer,
-} from 'recharts'
+
+const BarChart = dynamic(() => import('recharts').then(m => m.BarChart), { ssr: false })
+const Bar = dynamic(() => import('recharts').then(m => m.Bar), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false })
+const LineChart = dynamic(() => import('recharts').then(m => m.LineChart), { ssr: false })
+const Line = dynamic(() => import('recharts').then(m => m.Line), { ssr: false })
+const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
+const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
+const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
 
 export default function StatisticsPage() {
   const { state, getSermonsByTheme, getTheme } = useApp()
