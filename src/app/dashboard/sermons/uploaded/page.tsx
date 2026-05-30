@@ -118,7 +118,7 @@ export default function UploadedSermonsPage() {
           {sermons.map((sermon) => (
             <div
               key={sermon.id}
-              onClick={() => router.push('/dashboard/sermons/uploaded/' + sermon.id)}
+              onClick={() => window.location.href = `/workspace?id=${sermon.id}`}
               className="bg-surface border border-border rounded-lg p-5 hover:shadow-sm cursor-pointer transition-all group"
             >
               <div className="flex items-start justify-between gap-4">
