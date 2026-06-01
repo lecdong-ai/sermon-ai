@@ -19,6 +19,7 @@ function NewSermonForm() {
   const { state, dispatch } = useApp()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
 
   const [showOptional, setShowOptional] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
@@ -97,6 +98,45 @@ function NewSermonForm() {
   }
 
   useEffect(() => {
+    if (editId) {
+      const sermon = state.sermons.find((s) => s.id === editId)
+      if (sermon) {
+        setForm({
+          title: sermon.title,
+          date: sermon.date,
+          preacher: sermon.preacher,
+          sermonType: sermon.sermonType,
+          audience: sermon.audience,
+          season: sermon.season || '',
+          seriesId: sermon.seriesId || '',
+          bibleBook: sermon.bibleBook,
+          chapterStart: String(sermon.chapterStart),
+          verseStart: String(sermon.verseStart),
+          chapterEnd: String(sermon.chapterEnd),
+          verseEnd: String(sermon.verseEnd),
+          coreMessage: sermon.coreMessage,
+          bibleText: '',
+          manuscript: sermon.manuscript,
+          introduction: sermon.outlineIntro || '',
+          outlinePoints: [
+            (sermon.outlinePoint1 || '').split(' - ')[0] || '',
+            (sermon.outlinePoint2 || '').split(' - ')[0] || '',
+            (sermon.outlinePoint3 || '').split(' - ')[0] || '',
+          ],
+          outlineDetails: [
+            (sermon.outlinePoint1 || '').split(' - ').slice(1).join(' - ') || '',
+            (sermon.outlinePoint2 || '').split(' - ').slice(1).join(' - ') || '',
+            (sermon.outlinePoint3 || '').split(' - ').slice(1).join(' - ') || '',
+          ],
+          christApplication: '',
+          conclusion: sermon.outlineConclusion || '',
+          illustration: '',
+          themeIds: sermon.themeIds || [],
+          relatedSermonIds: sermon.relatedSermonIds || [],
+        })
+        return
+      }
+    }
     try {
       const saved = localStorage.getItem('sermon-draft')
       if (saved) {
@@ -125,7 +165,7 @@ function NewSermonForm() {
         setForm(prev => prev.date ? prev : { ...prev, date: new Date().toISOString().slice(0, 10) })
       }
     } catch {}
-  }, [])
+  }, [editId])
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -279,8 +319,8 @@ function NewSermonForm() {
 
     const normalizedPassage = form.bibleBook
 
-    const newSermon: Sermon = {
-      id: `sermon-${Date.now()}`,
+    const sermonData: Sermon = {
+      id: editId || `sermon-${Date.now()}`,
       title: form.title,
       date: form.date,
       preacher: form.preacher || '김은혜 목사',
@@ -314,9 +354,16 @@ function NewSermonForm() {
       updatedAt: new Date().toISOString(),
     }
 
-    localStorage.removeItem('sermon-draft')
-    dispatch({ type: 'ADD_SERMON', payload: newSermon })
-    router.push(`/dashboard/sermons/${newSermon.id}`)
+    if (editId) {
+      const existing = state.sermons.find((s) => s.id === editId)
+      if (existing) {
+        sermonData.createdAt = existing.createdAt
+      }
+      dispatch({ type: 'UPDATE_SERMON', payload: sermonData })
+    } else {
+      dispatch({ type: 'ADD_SERMON', payload: sermonData })
+    }
+    router.push(`/dashboard/sermons/${sermonData.id}`)
   }
 
   const handleSaveDraft = () => {
@@ -347,7 +394,7 @@ function NewSermonForm() {
           <ArrowLeft className="w-4 h-4" />
           메인
         </Link>
-        <h2 className="text-xl font-bold">새 설교 등록</h2>
+        <h2 className="text-xl font-bold">{editId ? '설교 수정' : '새 설교 등록'}</h2>
       </div>
 
       <form id="sermon-form" onSubmit={handleSubmit} className="space-y-6">
