@@ -55,6 +55,7 @@ type Action =
   | { type: 'DELETE_PREACHER'; payload: string }
   | { type: 'ADD_SEASON'; payload: string }
   | { type: 'DELETE_SEASON'; payload: string }
+  | { type: 'UPDATE_SEASON'; payload: { old: string; new: string } }
   | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[] } }
   | { type: 'SET_LOADING'; payload: boolean }
 
@@ -111,6 +112,8 @@ function appReducer(state: AppState, action: Action): AppState {
       next = { ...state, seasons: [...state.seasons, action.payload] }; break
     case 'DELETE_SEASON':
       next = { ...state, seasons: state.seasons.filter((s) => s !== action.payload) }; break
+    case 'UPDATE_SEASON':
+      next = { ...state, seasons: state.seasons.map((s) => s === action.payload.old ? action.payload.new : s) }; break
     case 'SET_OPTIONS':
       next = { ...state, ...action.payload }; break
     case 'SET_LOADING':
@@ -152,6 +155,7 @@ interface AppContextType {
   deleteSermon: (id: string) => Promise<boolean>
   deleteSeries: (id: string) => Promise<boolean>
   createSeries: (name: string, description?: string) => Promise<Series | null>
+  updateSeries: (id: string, name: string) => Promise<boolean>
   getSermon: (id: string) => Sermon | undefined
   getTheme: (id: string) => Theme | undefined
   getSeries: (id: string) => Series | undefined
@@ -289,6 +293,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return null
   }, [])
 
+  const updateSeries = useCallback(async (id: string, name: string) => {
+    try {
+      const res = await fetch(`/api/series/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'UPDATE_SERIES', payload: { ...state.series.find(s => s.id === id)!, name } })
+        return true
+      }
+    } catch (err) {
+      console.error('Failed to update series:', err)
+    }
+    return false
+  }, [state.series])
+
   useEffect(() => {
     loadSermons()
     loadSeries()
@@ -365,6 +387,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteSermon,
       deleteSeries,
       createSeries,
+      updateSeries,
       getSermon,
       getTheme,
       getSeries,
@@ -385,6 +408,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteSermon,
       deleteSeries,
       createSeries,
+      updateSeries,
       getSermon,
       getTheme,
       getSeries,

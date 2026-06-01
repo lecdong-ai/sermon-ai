@@ -16,7 +16,7 @@ import {
 } from '@/lib/dashboard/constants'
 
 function NewSermonForm() {
-  const { state, createSermon, updateSermon, createSeries, dispatch } = useApp()
+  const { state, createSermon, updateSermon, createSeries, updateSeries, deleteSeries, dispatch } = useApp()
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
@@ -27,6 +27,10 @@ function NewSermonForm() {
   const [showSeasonInput, setShowSeasonInput] = useState(false)
   const [newSeries, setNewSeries] = useState('')
   const [showSeriesInput, setShowSeriesInput] = useState(false)
+  const [editingSeason, setEditingSeason] = useState(false)
+  const [seasonEditValue, setSeasonEditValue] = useState('')
+  const [editingSeries, setEditingSeries] = useState(false)
+  const [seriesEditValue, setSeriesEditValue] = useState('')
   const [analyzingTags, setAnalyzingTags] = useState(false)
 
   const [form, setForm] = useState({
@@ -1450,6 +1454,46 @@ function NewSermonForm() {
                       </button>
                     </div>
                   )}
+                  {form.season && !showSeasonInput && !editingSeason && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                      <span className="text-muted">선택됨:</span>
+                      <span className="font-medium text-foreground">{form.season}</span>
+                      <button type="button" onClick={() => { setEditingSeason(true); setSeasonEditValue(form.season) }} className="text-primary hover:underline ml-1">수정</button>
+                      <button type="button" onClick={() => { if (confirm('삭제하시겠습니까?')) { dispatch({ type: 'DELETE_SEASON', payload: form.season }); if (form.season === form.season) updateField('season', '') } }} className="text-red-500 hover:underline">삭제</button>
+                    </div>
+                  )}
+                  {editingSeason && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={seasonEditValue}
+                        onChange={(e) => setSeasonEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && seasonEditValue.trim()) {
+                            dispatch({ type: 'UPDATE_SEASON', payload: { old: form.season, new: seasonEditValue.trim() } })
+                            if (form.season === form.season) updateField('season', seasonEditValue.trim())
+                            setEditingSeason(false)
+                          }
+                        }}
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (seasonEditValue.trim()) {
+                            dispatch({ type: 'UPDATE_SEASON', payload: { old: form.season, new: seasonEditValue.trim() } })
+                            if (form.season === form.season) updateField('season', seasonEditValue.trim())
+                            setEditingSeason(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        저장
+                      </button>
+                      <button type="button" onClick={() => setEditingSeason(false)} className="px-2 py-1 text-xs text-muted hover:text-foreground">취소</button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">시리즈</label>
@@ -1502,6 +1546,44 @@ function NewSermonForm() {
                       >
                         추가
                       </button>
+                    </div>
+                  )}
+                  {form.seriesId && !showSeriesInput && !editingSeries && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                      <span className="text-muted">선택됨:</span>
+                      <span className="font-medium text-foreground">{state.series.find(s => s.id === form.seriesId)?.name || ''}</span>
+                      <button type="button" onClick={() => { setEditingSeries(true); setSeriesEditValue(state.series.find(s => s.id === form.seriesId)?.name || '') }} className="text-primary hover:underline ml-1">수정</button>
+                      <button type="button" onClick={async () => { if (confirm('삭제하시겠습니까?')) { const ok = await deleteSeries(form.seriesId); if (ok) updateField('seriesId', '') } }} className="text-red-500 hover:underline">삭제</button>
+                    </div>
+                  )}
+                  {editingSeries && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={seriesEditValue}
+                        onChange={(e) => setSeriesEditValue(e.target.value)}
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter' && seriesEditValue.trim()) {
+                            await updateSeries(form.seriesId, seriesEditValue.trim())
+                            setEditingSeries(false)
+                          }
+                        }}
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (seriesEditValue.trim()) {
+                            await updateSeries(form.seriesId, seriesEditValue.trim())
+                            setEditingSeries(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        저장
+                      </button>
+                      <button type="button" onClick={() => setEditingSeries(false)} className="px-2 py-1 text-xs text-muted hover:text-foreground">취소</button>
                     </div>
                   )}
                 </div>
