@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createServerClient } from '@supabase/ssr'
+
+async function getUser(request: NextRequest) {
+  const sb = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll() {},
+      },
+    },
+  )
+  const { data } = await sb.auth.getUser()
+  return data?.user ?? null
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -7,6 +23,11 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUser(request)
+    if (!user) {
+      return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
     const { passage } = await request.json()
     if (!passage?.trim()) {
       return NextResponse.json({ success: false, error: '성경본문을 입력해주세요.' }, { status: 400 })

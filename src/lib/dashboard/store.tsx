@@ -1,12 +1,11 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useCallback, useMemo, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useCallback, useMemo, useEffect, useState } from 'react'
 import { Sermon, Theme, Series } from './types'
-import { sampleSermons, sampleThemes, sampleSeries } from './data'
+import { sampleThemes, sampleSeries } from './data'
 import { SERMON_TYPES, AUDIENCES } from './constants'
 
 const LS_KEY = 'sermon-options'
-const LS_SERMONS_KEY = 'sermon-data'
 
 function loadOptions() {
   if (typeof window === 'undefined') return null
@@ -23,21 +22,6 @@ function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preache
   } catch {}
 }
 
-function loadSermons(): Sermon[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem(LS_SERMONS_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return null
-}
-
-function saveSermons(sermons: Sermon[]) {
-  try {
-    localStorage.setItem(LS_SERMONS_KEY, JSON.stringify(sermons))
-  } catch {}
-}
-
 interface AppState {
   sermons: Sermon[]
   themes: Theme[]
@@ -46,9 +30,11 @@ interface AppState {
   sermonTypes: string[]
   audiences: string[]
   preachers: string[]
+  loading: boolean
 }
 
 type Action =
+  | { type: 'SET_SERMONS'; payload: Sermon[] }
   | { type: 'ADD_SERMON'; payload: Sermon }
   | { type: 'UPDATE_SERMON'; payload: Sermon }
   | { type: 'DELETE_SERMON'; payload: string }
@@ -66,18 +52,21 @@ type Action =
   | { type: 'ADD_PREACHER'; payload: string }
   | { type: 'DELETE_PREACHER'; payload: string }
   | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[] } }
+  | { type: 'SET_LOADING'; payload: boolean }
 
 function appReducer(state: AppState, action: Action): AppState {
   let next: AppState
   switch (action.type) {
+    case 'SET_SERMONS':
+      next = { ...state, sermons: action.payload }; break
     case 'ADD_SERMON':
-      next = { ...state, sermons: [...state.sermons, action.payload] }; saveSermons(next.sermons); break
+      next = { ...state, sermons: [...state.sermons, action.payload] }; break
     case 'UPDATE_SERMON':
       next = { ...state, sermons: state.sermons.map((s) =>
         s.id === action.payload.id ? action.payload : s
-      )}; saveSermons(next.sermons); break
+      )}; break
     case 'DELETE_SERMON':
-      next = { ...state, sermons: state.sermons.filter((s) => s.id !== action.payload) }; saveSermons(next.sermons); break
+      next = { ...state, sermons: state.sermons.filter((s) => s.id !== action.payload) }; break
     case 'ADD_THEME':
       next = { ...state, themes: [...state.themes, action.payload] }; break
     case 'UPDATE_THEME':
@@ -113,6 +102,8 @@ function appReducer(state: AppState, action: Action): AppState {
       next = { ...state, preachers: state.preachers.filter((p) => p !== action.payload) }; break
     case 'SET_OPTIONS':
       next = { ...state, ...action.payload }; break
+    case 'SET_LOADING':
+      next = { ...state, loading: action.payload }; break
     default:
       return state
   }
@@ -125,15 +116,15 @@ function appReducer(state: AppState, action: Action): AppState {
 }
 
 function getInitialState(): AppState {
-  const savedSermons = loadSermons()
   return {
-    sermons: savedSermons || sampleSermons,
+    sermons: [],
     themes: sampleThemes,
     series: sampleSeries,
     searchQuery: '',
     sermonTypes: [...SERMON_TYPES],
     audiences: [...AUDIENCES],
     preachers: ['김은혜 목사'],
+    loading: true,
   }
 }
 
@@ -142,6 +133,10 @@ const initialAppState = getInitialState()
 interface AppContextType {
   state: AppState
   dispatch: React.Dispatch<Action>
+  loadSermons: () => Promise<void>
+  createSermon: (sermon: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Sermon | null>
+  updateSermon: (sermon: Sermon) => Promise<Sermon | null>
+  deleteSermon: (id: string) => Promise<boolean>
   getSermon: (id: string) => Sermon | undefined
   getTheme: (id: string) => Theme | undefined
   getSeries: (id: string) => Series | undefined
@@ -165,6 +160,77 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_OPTIONS', payload: saved })
     }
   }, [])
+
+  const loadSermons = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: true })
+    try {
+      const res = await fetch('/api/sermons')
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'SET_SERMONS', payload: data.data })
+      }
+    } catch (err) {
+      console.error('Failed to load sermons:', err)
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }, [])
+
+  const createSermon = useCallback(async (sermon: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const res = await fetch('/api/sermons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sermon),
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'ADD_SERMON', payload: data.data })
+        return data.data
+      }
+    } catch (err) {
+      console.error('Failed to create sermon:', err)
+    }
+    return null
+  }, [])
+
+  const updateSermon = useCallback(async (sermon: Sermon) => {
+    try {
+      const res = await fetch(`/api/sermons/${sermon.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sermon),
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'UPDATE_SERMON', payload: data.data || sermon })
+        return data.data || sermon
+      }
+    } catch (err) {
+      console.error('Failed to update sermon:', err)
+    }
+    return null
+  }, [])
+
+  const deleteSermon = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/sermons/${id}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'DELETE_SERMON', payload: id })
+        return true
+      }
+    } catch (err) {
+      console.error('Failed to delete sermon:', err)
+    }
+    return false
+  }, [])
+
+  useEffect(() => {
+    loadSermons()
+  }, [loadSermons])
 
   const getSermon = useCallback(
     (id: string) => state.sermons.find((s) => s.id === id),
@@ -231,6 +297,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     () => ({
       state,
       dispatch,
+      loadSermons,
+      createSermon,
+      updateSermon,
+      deleteSermon,
       getSermon,
       getTheme,
       getSeries,
@@ -245,6 +315,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [
       state,
       dispatch,
+      loadSermons,
+      createSermon,
+      updateSermon,
+      deleteSermon,
       getSermon,
       getTheme,
       getSeries,

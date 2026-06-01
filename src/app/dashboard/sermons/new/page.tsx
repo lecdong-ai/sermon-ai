@@ -16,7 +16,7 @@ import {
 } from '@/lib/dashboard/constants'
 
 function NewSermonForm() {
-  const { state, dispatch } = useApp()
+  const { state, createSermon, updateSermon } = useApp()
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
@@ -165,7 +165,7 @@ function NewSermonForm() {
         setForm(prev => prev.date ? prev : { ...prev, date: new Date().toISOString().slice(0, 10) })
       }
     } catch {}
-  }, [editId])
+  }, [editId, state.sermons])
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -310,7 +310,7 @@ function NewSermonForm() {
     [form.themeIds, themeFilter]
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title || !form.date || !form.sermonType || !form.audience || !form.bibleBook || !form.coreMessage || !form.manuscript) {
       alert('필수 항목을 모두 입력해주세요.')
@@ -319,8 +319,7 @@ function NewSermonForm() {
 
     const normalizedPassage = form.bibleBook
 
-    const sermonData: Sermon = {
-      id: editId || `sermon-${Date.now()}`,
+    const sermonData = {
       title: form.title,
       date: form.date,
       preacher: form.preacher || '김은혜 목사',
@@ -350,20 +349,24 @@ function NewSermonForm() {
       themeIds: form.themeIds,
       tagIds: form.themeIds,
       relatedSermonIds: form.relatedSermonIds,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     }
 
+    let result: any
     if (editId) {
       const existing = state.sermons.find((s) => s.id === editId)
       if (existing) {
-        sermonData.createdAt = existing.createdAt
+        result = await updateSermon({ ...sermonData, id: editId, createdAt: existing.createdAt, updatedAt: new Date().toISOString() } as Sermon)
       }
-      dispatch({ type: 'UPDATE_SERMON', payload: sermonData })
     } else {
-      dispatch({ type: 'ADD_SERMON', payload: sermonData })
+      result = await createSermon(sermonData)
     }
-    router.push(`/dashboard/sermons/${sermonData.id}`)
+
+    if (result) {
+      localStorage.removeItem('sermon-draft')
+      router.push(`/dashboard/sermons/${result.id}`)
+    } else {
+      alert('저장에 실패했습니다.')
+    }
   }
 
   const handleSaveDraft = () => {

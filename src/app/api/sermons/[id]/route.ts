@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getUserFromRequest } from '@/lib/auth'
-import type { SermonOutline } from '@/types'
+
+async function getUser(request: NextRequest) {
+  const sb = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll() {},
+      },
+    },
+  )
+  const { data } = await sb.auth.getUser()
+  return data?.user ?? null
+}
 
 async function getSermon(id: string, userId: string) {
   const { data, error } = await supabaseAdmin
@@ -15,9 +29,41 @@ async function getSermon(id: string, userId: string) {
   return data
 }
 
+function toSermon(row: any) {
+  const result = row.result || {}
+  return {
+    id: row.id,
+    title: row.title || '',
+    date: row.sermon_date || '',
+    preacher: result.preacher || '',
+    sermonType: result.sermonType || '',
+    audience: result.audience || '',
+    season: row.season || '',
+    seriesId: result.seriesId || '',
+    bibleBook: row.book || '',
+    chapterStart: row.chapter_start || 0,
+    verseStart: row.verse_start || 0,
+    chapterEnd: row.chapter_end || 0,
+    verseEnd: row.verse_end || 0,
+    normalizedPassage: row.passage || '',
+    coreMessage: result.coreMessage || '',
+    outlineIntro: result.outlineIntro || '',
+    outlinePoint1: result.outlinePoint1 || '',
+    outlinePoint2: result.outlinePoint2 || '',
+    outlinePoint3: result.outlinePoint3 || '',
+    outlineConclusion: result.outlineConclusion || '',
+    manuscript: result.manuscript || '',
+    themeIds: result.themeIds || [],
+    tagIds: result.tagIds || [],
+    relatedSermonIds: result.relatedSermonIds || [],
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || new Date().toISOString(),
+  }
+}
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await getUserFromRequest(request)
+    const user = await getUser(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
@@ -27,25 +73,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, error: '설교를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    const [notes, outline, manuscript] = await Promise.all([
-      supabaseAdmin.from('sermon_notes').select('*').eq('sermon_id', params.id).maybeSingle(),
-      supabaseAdmin.from('sermon_outlines').select('*').eq('sermon_id', params.id).maybeSingle(),
-      supabaseAdmin.from('sermon_manuscripts').select('*').eq('sermon_id', params.id).maybeSingle(),
-    ])
-
-    const fullData = {
-      ...sermon,
-      core_message: notes.data?.core_message || null,
-      observation_notes: notes.data?.observation_notes || null,
-      background_notes: notes.data?.background_notes || null,
-      interpretation_notes: notes.data?.interpretation_notes || null,
-      illustration_notes: notes.data?.illustration_notes || null,
-      application_points: notes.data?.application_points || null,
-      outline: outline.data?.main_points ? { introduction: outline.data.introduction, main_points: outline.data.main_points, conclusion: outline.data.conclusion } as SermonOutline : null,
-      manuscript: manuscript.data?.content || null,
-    }
-
-    return NextResponse.json({ success: true, data: fullData })
+    return NextResponse.json({ success: true, data: toSermon(sermon) })
   } catch (err: any) {
     console.error('GET /api/sermons/[id] error:', err)
     return NextResponse.json({ success: false, error: err.message || '조회 실패' }, { status: 500 })
@@ -54,7 +82,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await getUserFromRequest(request)
+    const user = await getUser(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
@@ -65,110 +93,52 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const body = await request.json()
-    const updates: any = { updated_at: new Date().toISOString() }
+    const now = new Date().toISOString()
+
+    const updates: any = {
+      updated_at: now,
+    }
 
     if (body.title !== undefined) updates.title = body.title
-    if (body.passage !== undefined) updates.passage = body.passage
-    if (body.book !== undefined) updates.book = body.book
-    if (body.chapter_start !== undefined) updates.chapter_start = body.chapter_start
-    if (body.chapter_end !== undefined) updates.chapter_end = body.chapter_end
-    if (body.verse_start !== undefined) updates.verse_start = body.verse_start
-    if (body.verse_end !== undefined) updates.verse_end = body.verse_end
-    if (body.sermon_date !== undefined) updates.sermon_date = body.sermon_date
-    if (body.series !== undefined) updates.series = body.series
+    if (body.normalizedPassage !== undefined) updates.passage = body.normalizedPassage
+    if (body.bibleBook !== undefined) updates.book = body.bibleBook
+    if (body.chapterStart !== undefined) updates.chapter_start = body.chapterStart
+    if (body.chapterEnd !== undefined) updates.chapter_end = body.chapterEnd
+    if (body.verseStart !== undefined) updates.verse_start = body.verseStart
+    if (body.verseEnd !== undefined) updates.verse_end = body.verseEnd
+    if (body.date !== undefined) updates.sermon_date = body.date
     if (body.season !== undefined) updates.season = body.season
-    if (body.audience !== undefined) updates.audience = body.audience
-    if (body.church_context !== undefined) updates.church_context = body.church_context
-    if (body.status !== undefined) updates.status = body.status
 
-    if (body.status === 'completed' || body.manuscript !== undefined) {
-      updates.version = sermon.version + 1
-
-      await supabaseAdmin.from('sermon_versions').insert({
-        sermon_id: params.id,
-        version: sermon.version,
-        snapshot: { ...sermon },
-      })
+    const existingResult = sermon.result || {}
+    const resultUpdate = {
+      ...existingResult,
+      ...(body.preacher !== undefined && { preacher: body.preacher }),
+      ...(body.sermonType !== undefined && { sermonType: body.sermonType }),
+      ...(body.audience !== undefined && { audience: body.audience }),
+      ...(body.seriesId !== undefined && { seriesId: body.seriesId }),
+      ...(body.coreMessage !== undefined && { coreMessage: body.coreMessage }),
+      ...(body.outlineIntro !== undefined && { outlineIntro: body.outlineIntro }),
+      ...(body.outlinePoint1 !== undefined && { outlinePoint1: body.outlinePoint1 }),
+      ...(body.outlinePoint2 !== undefined && { outlinePoint2: body.outlinePoint2 }),
+      ...(body.outlinePoint3 !== undefined && { outlinePoint3: body.outlinePoint3 }),
+      ...(body.outlineConclusion !== undefined && { outlineConclusion: body.outlineConclusion }),
+      ...(body.manuscript !== undefined && { manuscript: body.manuscript }),
+      ...(body.themeIds !== undefined && { themeIds: body.themeIds }),
+      ...(body.tagIds !== undefined && { tagIds: body.tagIds }),
+      ...(body.relatedSermonIds !== undefined && { relatedSermonIds: body.relatedSermonIds }),
     }
+    updates.result = resultUpdate
 
     const { error: sermonError } = await supabaseAdmin
       .from('sermons')
       .update(updates)
       .eq('id', params.id)
+      .select()
+      .single()
 
     if (sermonError) throw sermonError
 
-    const noteFields = ['core_message', 'observation_notes', 'background_notes', 'interpretation_notes', 'illustration_notes', 'application_points']
-    const noteUpdates: any = {}
-    let hasNoteChanges = false
-    for (const field of noteFields) {
-      if (body[field] !== undefined) {
-        noteUpdates[field] = body[field]
-        hasNoteChanges = true
-      }
-    }
-
-    if (hasNoteChanges) {
-      const { data: existingNotes } = await supabaseAdmin
-        .from('sermon_notes')
-        .select('id')
-        .eq('sermon_id', params.id)
-        .maybeSingle()
-
-      if (existingNotes) {
-        await supabaseAdmin.from('sermon_notes').update(noteUpdates).eq('sermon_id', params.id)
-      } else {
-        await supabaseAdmin.from('sermon_notes').insert({ sermon_id: params.id, ...noteUpdates })
-      }
-    }
-
-    if (body.outline !== undefined) {
-      const outlineData = body.outline as SermonOutline
-      const { data: existingOutline } = await supabaseAdmin
-        .from('sermon_outlines')
-        .select('id')
-        .eq('sermon_id', params.id)
-        .maybeSingle()
-
-      if (existingOutline) {
-        await supabaseAdmin.from('sermon_outlines').update({
-          introduction: outlineData.introduction || null,
-          conclusion: outlineData.conclusion || null,
-          main_points: outlineData.main_points || [],
-        }).eq('sermon_id', params.id)
-      } else {
-        await supabaseAdmin.from('sermon_outlines').insert({
-          sermon_id: params.id,
-          introduction: outlineData.introduction || null,
-          conclusion: outlineData.conclusion || null,
-          main_points: outlineData.main_points || [],
-        })
-      }
-    }
-
-    if (body.manuscript !== undefined) {
-      const wordCount = body.manuscript ? body.manuscript.replace(/\s/g, '').length : 0
-      const { data: existingManuscript } = await supabaseAdmin
-        .from('sermon_manuscripts')
-        .select('id')
-        .eq('sermon_id', params.id)
-        .maybeSingle()
-
-      if (existingManuscript) {
-        await supabaseAdmin.from('sermon_manuscripts').update({
-          content: body.manuscript,
-          word_count: wordCount,
-        }).eq('sermon_id', params.id)
-      } else {
-        await supabaseAdmin.from('sermon_manuscripts').insert({
-          sermon_id: params.id,
-          content: body.manuscript,
-          word_count: wordCount,
-        })
-      }
-    }
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, data: toSermon(sermonError ? sermon : sermonError) })
   } catch (err: any) {
     console.error('PUT /api/sermons/[id] error:', err)
     return NextResponse.json({ success: false, error: err.message || '수정 실패' }, { status: 500 })
@@ -177,7 +147,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await getUserFromRequest(request)
+    const user = await getUser(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }

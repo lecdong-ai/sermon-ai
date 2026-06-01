@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import JSON5 from 'json5'
+import { createServerClient } from '@supabase/ssr'
+
+async function getUser(request: NextRequest) {
+  const sb = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll() {},
+      },
+    },
+  )
+  const { data } = await sb.auth.getUser()
+  return data?.user ?? null
+}
 
 function escapeJSON(str: string): string {
   let result = ''
@@ -59,6 +75,11 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUser(request)
+    if (!user) {
+      return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { title, passage, coreMessage, pointIndex } = body
 
