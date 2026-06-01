@@ -12,6 +12,7 @@ import {
   MAJOR_THEMES,
   SITUATION_TAGS,
   EMOTION_TAGS,
+  ALL_THEMES,
 } from '@/lib/dashboard/constants'
 
 function NewSermonForm() {
@@ -26,6 +27,7 @@ function NewSermonForm() {
   const [showSeasonInput, setShowSeasonInput] = useState(false)
   const [newSeries, setNewSeries] = useState('')
   const [showSeriesInput, setShowSeriesInput] = useState(false)
+  const [analyzingTags, setAnalyzingTags] = useState(false)
 
   const [form, setForm] = useState({
     title: '',
@@ -388,6 +390,36 @@ function NewSermonForm() {
         ? prev.themeIds.filter((tid) => tid !== id)
         : [...prev.themeIds, id],
     }))
+  }
+
+  const analyzeTags = async () => {
+    if (!form.manuscript && !form.coreMessage) return
+    setAnalyzingTags(true)
+    try {
+      const res = await fetch('/api/analyze-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manuscript: form.manuscript,
+          coreMessage: form.coreMessage,
+          outlinePoints: form.outlinePoints,
+          title: form.title,
+          passage: form.bibleBook ? `${form.bibleBook} ${form.chapterStart}${form.verseStart ? ':' + form.verseStart : ''}${form.chapterEnd ? '-' + form.chapterEnd + (form.verseEnd ? ':' + form.verseEnd : '') : ''}` : '',
+          allThemes: ALL_THEMES,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.tags.length > 0) {
+        setForm((prev) => ({
+          ...prev,
+          themeIds: [...new Set([...prev.themeIds, ...data.tags])],
+        }))
+      }
+    } catch (err) {
+      console.error('Failed to analyze tags:', err)
+    } finally {
+      setAnalyzingTags(false)
+    }
   }
 
   return (
@@ -1476,7 +1508,27 @@ function NewSermonForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted mb-2">태그</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-muted">태그</label>
+                  <button
+                    type="button"
+                    onClick={analyzeTags}
+                    disabled={analyzingTags || (!form.manuscript && !form.coreMessage)}
+                    className="text-[11px] flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {analyzingTags ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        분석 중...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        원고 분석으로 자동 선택
+                      </>
+                    )}
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={themeFilter}
