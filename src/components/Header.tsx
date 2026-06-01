@@ -191,13 +191,22 @@ export default memo(function Header() {
               </div>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white text-[14px] font-bold hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              로그인
-            </Link>
+            <>
+              <Link
+                href="/pricing"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200/60 text-slate-700 text-[14px] font-bold hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                요금제
+              </Link>
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white text-[14px] font-bold hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                로그인
+              </Link>
+            </>
           )}
         </nav>
       </div>
