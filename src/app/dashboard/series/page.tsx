@@ -67,10 +67,15 @@ export default function SeriesPage() {
                 <div className="flex items-center gap-2 shrink-0 ml-3">
                   <button
                     type="button"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation()
                       if (confirm(`'${srs.name}' 시리즈를 삭제하시겠습니까?\n시리즈에 속한 설교는 삭제되지 않습니다.`)) {
-                        deleteSeries(srs.id)
+                        const ok = await deleteSeries(srs.id)
+                        if (ok) {
+                          alert('삭제되었습니다.')
+                        } else {
+                          alert('삭제 중 오류가 발생했습니다.')
+                        }
                       }
                     }}
                     className="p-1.5 rounded-lg text-muted hover:text-red-500 hover:bg-red-50 transition-colors"

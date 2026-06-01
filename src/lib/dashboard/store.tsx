@@ -177,6 +177,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const loadSeries = useCallback(async () => {
+    try {
+      const res = await fetch('/api/series')
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'SET_SERIES', payload: data.data })
+      }
+    } catch (err) {
+      console.error('Failed to load series:', err)
+    }
+  }, [])
+
   const createSermon = useCallback(async (sermon: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const res = await fetch('/api/sermons', {
@@ -229,13 +241,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false
   }, [])
 
-  const deleteSeries = useCallback((id: string) => {
-    dispatch({ type: 'DELETE_SERIES', payload: id })
+  const deleteSeries = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/series/${id}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'DELETE_SERIES', payload: id })
+        return true
+      }
+    } catch (err) {
+      console.error('Failed to delete series:', err)
+    }
+    return false
   }, [])
 
   useEffect(() => {
     loadSermons()
-  }, [loadSermons])
+    loadSeries()
+  }, [loadSermons, loadSeries])
 
   const getSermon = useCallback(
     (id: string) => state.sermons.find((s) => s.id === id),
