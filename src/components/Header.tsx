@@ -95,14 +95,6 @@ export default memo(function Header() {
                 </span>
               )}
 
-              {/* 메인 내비게이션 링크 */}
-              <Link
-                href="/sermon"
-                className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[13px] font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-              >
-                <BookOpen className="w-4 h-4" />
-                설교 준비
-              </Link>
               <Link
                 href="/pricing"
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-100/60 transition-all"
@@ -144,14 +136,6 @@ export default memo(function Header() {
                           </div>
                         )}
                       </div>
-                      <Link
-                        href="/sermon"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-[14px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 transition-all"
-                      >
-                        <BookOpen className="w-4 h-4 text-indigo-500" />
-                        설교 준비
-                      </Link>
                       <Link
                         href="/pricing"
                         onClick={() => setMenuOpen(false)}
