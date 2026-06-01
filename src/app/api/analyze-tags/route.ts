@@ -70,7 +70,7 @@ ${themeOptions}
     try {
       parsed = JSON.parse(cleaned)
     } catch {
-      const match = cleaned.match(/\[.*?\]/s)
+      const match = cleaned.match(/\[[\s\S]*?\]/)
       parsed = match ? JSON.parse(match[0]) : []
     }
 
