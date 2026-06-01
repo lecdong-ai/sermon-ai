@@ -195,7 +195,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch('/api/series')
       const data = await res.json()
-      if (data.success) {
+      if (data.success && data.data.length > 0) {
         dispatch({ type: 'SET_SERIES', payload: data.data })
       }
     } catch (err) {
