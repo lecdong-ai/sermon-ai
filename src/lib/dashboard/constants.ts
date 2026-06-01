@@ -66,6 +66,21 @@ export const EMOTION_TAGS = [
   { id: 'emotion-9', name: '권면', category: 'emotion' as const },
   { id: 'emotion-10', name: '확신', category: 'emotion' as const },
   { id: 'emotion-11', name: '경외', category: 'emotion' as const },
+  { id: 'emotion-12', name: '위로', category: 'emotion' as const },
+  { id: 'emotion-13', name: '감동', category: 'emotion' as const },
+  { id: 'emotion-14', name: '감사함', category: 'emotion' as const },
+  { id: 'emotion-15', name: '평안함', category: 'emotion' as const },
+  { id: 'emotion-16', name: '간절함', category: 'emotion' as const },
+  { id: 'emotion-17', name: '절박함', category: 'emotion' as const },
+  { id: 'emotion-18', name: '무거움', category: 'emotion' as const },
+  { id: 'emotion-19', name: '엄중함', category: 'emotion' as const },
+  { id: 'emotion-20', name: '진지함', category: 'emotion' as const },
+  { id: 'emotion-21', name: '담대함', category: 'emotion' as const },
+  { id: 'emotion-22', name: '뜨거움', category: 'emotion' as const },
+  { id: 'emotion-23', name: '벅참', category: 'emotion' as const },
+  { id: 'emotion-24', name: '안타까움', category: 'emotion' as const },
+  { id: 'emotion-25', name: '슬픔', category: 'emotion' as const },
+  { id: 'emotion-26', name: '희열', category: 'emotion' as const },
 ]
 
 export const ALL_THEMES = [...MAJOR_THEMES, ...SITUATION_TAGS, ...EMOTION_TAGS]
