@@ -44,6 +44,7 @@ type Action =
   | { type: 'ADD_SERIES'; payload: Series }
   | { type: 'UPDATE_SERIES'; payload: Series }
   | { type: 'DELETE_SERIES'; payload: string }
+  | { type: 'SET_SERIES'; payload: Series[] }
   | { type: 'SET_SEARCH'; payload: string }
   | { type: 'ADD_SERMON_TYPE'; payload: string }
   | { type: 'DELETE_SERMON_TYPE'; payload: string }
@@ -83,6 +84,8 @@ function appReducer(state: AppState, action: Action): AppState {
       )}; break
     case 'DELETE_SERIES':
       next = { ...state, series: state.series.filter((s) => s.id !== action.payload) }; break
+    case 'SET_SERIES':
+      next = { ...state, series: action.payload }; break
     case 'SET_SEARCH':
       next = { ...state, searchQuery: action.payload }; break
     case 'ADD_SERMON_TYPE':
