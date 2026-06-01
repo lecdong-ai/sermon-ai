@@ -153,13 +153,17 @@ export default function DashboardPage() {
                     {sermon.result?.sermon_title || sermon.title || sermon.file_name?.replace(/\.[^.]+$/, '') || '제목 없음'}
                   </p>
                   <p className="text-xs text-muted mt-0.5 truncate">
-                    {sermon.result?.sermon_passage || sermon.passage || sermon.file_name?.replace(/\.[^.]+$/, '') || ''}
+                    {sermon.result?.summary?.passage_text || sermon.result?.sermon_passage || sermon.passage || sermon.file_name?.replace(/\.[^.]+$/, '') || ''}
                   </p>
                 </div>
                 <div className="text-xs text-muted shrink-0 ml-3">
                   {(() => {
                     const d = new Date(sermon.created_at || sermon.updated_at)
-                    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('ko-KR')
+                    if (isNaN(d.getTime())) return ''
+                    const year = String(d.getFullYear()).slice(-2)
+                    const month = String(d.getMonth() + 1).padStart(2, '0')
+                    const day = String(d.getDate()).padStart(2, '0')
+                    return `${year}/${month}/${day}`
                   })()}
                 </div>
               </div>
