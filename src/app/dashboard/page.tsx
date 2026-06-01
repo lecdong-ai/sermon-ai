@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const { sermons, themes, series } = state
   const [userName, setUserName] = useState('')
+  const [uploadedSermons, setUploadedSermons] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
@@ -22,6 +23,13 @@ export default function DashboardPage() {
       .single()
       .then(({ data }) => { if (data?.name) setUserName(data.name) })
   }, [user])
+
+  useEffect(() => {
+    fetch('/api/sermons?source=upload')
+      .then(res => res.json())
+      .then(data => { if (data.success) setUploadedSermons(data.data) })
+      .catch(() => {})
+  }, [])
 
   const recentSermons = useMemo(
     () => [...sermons].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
@@ -123,17 +131,39 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">자주 다룬 주제 Top 10</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-muted">업로드된 설교</h3>
+            <button
+              onClick={() => router.push('/dashboard/sermons/uploaded')}
+              className="text-[11px] text-primary hover:underline"
+            >
+              전체 보기 →
+            </button>
+          </div>
           <div className="space-y-2">
-            {themeNames.map((item, i) => (
-              <div key={item.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs text-muted w-4 shrink-0">{i + 1}</span>
-                  <span className="truncate">{item.name}</span>
+            {uploadedSermons.slice(0, 5).map((sermon, i) => (
+              <div
+                key={sermon.id}
+                onClick={() => router.push(`/workspace?id=${sermon.id}`)}
+                className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-background cursor-pointer transition-colors group"
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                    {sermon.result?.sermon_title || sermon.title || sermon.file_name?.replace(/\.[^.]+$/, '') || '제목 없음'}
+                  </p>
+                  <p className="text-xs text-muted mt-0.5">
+                    {sermon.result?.sermon_passage || sermon.passage || '본문 미정'}
+                  </p>
                 </div>
-                <span className="text-xs text-muted shrink-0 ml-2">{item.count}회</span>
+                <div className="text-xs text-muted shrink-0 ml-3">
+                  {new Date(sermon.created_at).toLocaleDateString('ko-KR')}
+                </div>
               </div>
             ))}
+            {uploadedSermons.length === 0 && (
+              <p className="text-xs text-muted">업로드된 설교가 없습니다</p>
+            )}
           </div>
         </div>
       </div>

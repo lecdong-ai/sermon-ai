@@ -24,12 +24,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const { data, error } = await supabaseAdmin
+    const url = new URL(request.url)
+    const sourceFilter = url.searchParams.get('source')
+
+    let query = supabaseAdmin
       .from('sermons')
       .select('*')
       .eq('user_id', user.id)
-      .neq('source', 'upload')
       .order('updated_at', { ascending: false })
+
+    if (sourceFilter === 'upload') {
+      query = query.eq('source', 'upload')
+    } else {
+      query = query.neq('source', 'upload')
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
