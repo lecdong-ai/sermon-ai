@@ -128,20 +128,20 @@ export default function SermonDetailPage({
               )}
               {sermon.outlinePoint1 && (
                 <div>
-                  <span className="font-medium text-foreground">{sermon.outlinePoint1.split(' - ')[0]}</span>
-                  <p className="text-muted mt-0.5">{sermon.outlinePoint1.split(' - ').slice(1).join(' - ')}</p>
+                  <span className="font-medium text-foreground">{sermon.outlinePoint1.split(' — ')[0]}</span>
+                  <p className="text-muted mt-0.5">{sermon.outlinePoint1.split(' — ').slice(1).join(' - ')}</p>
                 </div>
               )}
               {sermon.outlinePoint2 && (
                 <div>
-                  <span className="font-medium text-foreground">{sermon.outlinePoint2.split(' - ')[0]}</span>
-                  <p className="text-muted mt-0.5">{sermon.outlinePoint2.split(' - ').slice(1).join(' - ')}</p>
+                  <span className="font-medium text-foreground">{sermon.outlinePoint2.split(' — ')[0]}</span>
+                  <p className="text-muted mt-0.5">{sermon.outlinePoint2.split(' — ').slice(1).join(' - ')}</p>
                 </div>
               )}
               {sermon.outlinePoint3 && (
                 <div>
-                  <span className="font-medium text-foreground">{sermon.outlinePoint3.split(' - ')[0]}</span>
-                  <p className="text-muted mt-0.5">{sermon.outlinePoint3.split(' - ').slice(1).join(' - ')}</p>
+                  <span className="font-medium text-foreground">{sermon.outlinePoint3.split(' — ')[0]}</span>
+                  <p className="text-muted mt-0.5">{sermon.outlinePoint3.split(' — ').slice(1).join(' - ')}</p>
                 </div>
               )}
               {sermon.outlineConclusion && (
