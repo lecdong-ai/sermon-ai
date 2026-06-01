@@ -1,14 +1,51 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useReducer, useCallback, useMemo, useEffect } from 'react'
 import { Sermon, Theme, Series } from './types'
 import { sampleSermons, sampleThemes, sampleSeries } from './data'
+import { SERMON_TYPES, AUDIENCES } from './constants'
+
+const LS_KEY = 'sermon-options'
+const LS_SERMONS_KEY = 'sermon-data'
+
+function loadOptions() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return null
+}
+
+function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[] }) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(data))
+  } catch {}
+}
+
+function loadSermons(): Sermon[] | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(LS_SERMONS_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return null
+}
+
+function saveSermons(sermons: Sermon[]) {
+  try {
+    localStorage.setItem(LS_SERMONS_KEY, JSON.stringify(sermons))
+  } catch {}
+}
 
 interface AppState {
   sermons: Sermon[]
   themes: Theme[]
   series: Series[]
   searchQuery: string
+  sermonTypes: string[]
+  audiences: string[]
+  preachers: string[]
 }
 
 type Action =
@@ -22,64 +59,85 @@ type Action =
   | { type: 'UPDATE_SERIES'; payload: Series }
   | { type: 'DELETE_SERIES'; payload: string }
   | { type: 'SET_SEARCH'; payload: string }
+  | { type: 'ADD_SERMON_TYPE'; payload: string }
+  | { type: 'DELETE_SERMON_TYPE'; payload: string }
+  | { type: 'ADD_AUDIENCE'; payload: string }
+  | { type: 'DELETE_AUDIENCE'; payload: string }
+  | { type: 'ADD_PREACHER'; payload: string }
+  | { type: 'DELETE_PREACHER'; payload: string }
+  | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[] } }
 
 function appReducer(state: AppState, action: Action): AppState {
+  let next: AppState
   switch (action.type) {
     case 'ADD_SERMON':
-      return { ...state, sermons: [...state.sermons, action.payload] }
+      next = { ...state, sermons: [...state.sermons, action.payload] }; saveSermons(next.sermons); break
     case 'UPDATE_SERMON':
-      return {
-        ...state,
-        sermons: state.sermons.map((s) =>
-          s.id === action.payload.id ? action.payload : s
-        ),
-      }
+      next = { ...state, sermons: state.sermons.map((s) =>
+        s.id === action.payload.id ? action.payload : s
+      )}; saveSermons(next.sermons); break
     case 'DELETE_SERMON':
-      return {
-        ...state,
-        sermons: state.sermons.filter((s) => s.id !== action.payload),
-      }
+      next = { ...state, sermons: state.sermons.filter((s) => s.id !== action.payload) }; saveSermons(next.sermons); break
     case 'ADD_THEME':
-      return { ...state, themes: [...state.themes, action.payload] }
+      next = { ...state, themes: [...state.themes, action.payload] }; break
     case 'UPDATE_THEME':
-      return {
-        ...state,
-        themes: state.themes.map((t) =>
-          t.id === action.payload.id ? action.payload : t
-        ),
-      }
+      next = { ...state, themes: state.themes.map((t) =>
+        t.id === action.payload.id ? action.payload : t
+      )}; break
     case 'DELETE_THEME':
-      return {
-        ...state,
-        themes: state.themes.filter((t) => t.id !== action.payload),
-      }
+      next = { ...state, themes: state.themes.filter((t) => t.id !== action.payload) }; break
     case 'ADD_SERIES':
-      return { ...state, series: [...state.series, action.payload] }
+      next = { ...state, series: [...state.series, action.payload] }; break
     case 'UPDATE_SERIES':
-      return {
-        ...state,
-        series: state.series.map((s) =>
-          s.id === action.payload.id ? action.payload : s
-        ),
-      }
+      next = { ...state, series: state.series.map((s) =>
+        s.id === action.payload.id ? action.payload : s
+      )}; break
     case 'DELETE_SERIES':
-      return {
-        ...state,
-        series: state.series.filter((s) => s.id !== action.payload),
-      }
+      next = { ...state, series: state.series.filter((s) => s.id !== action.payload) }; break
     case 'SET_SEARCH':
-      return { ...state, searchQuery: action.payload }
+      next = { ...state, searchQuery: action.payload }; break
+    case 'ADD_SERMON_TYPE':
+      if (state.sermonTypes.includes(action.payload)) return state
+      next = { ...state, sermonTypes: [...state.sermonTypes, action.payload] }; break
+    case 'DELETE_SERMON_TYPE':
+      next = { ...state, sermonTypes: state.sermonTypes.filter((t) => t !== action.payload) }; break
+    case 'ADD_AUDIENCE':
+      if (state.audiences.includes(action.payload)) return state
+      next = { ...state, audiences: [...state.audiences, action.payload] }; break
+    case 'DELETE_AUDIENCE':
+      next = { ...state, audiences: state.audiences.filter((a) => a !== action.payload) }; break
+    case 'ADD_PREACHER':
+      if (state.preachers.includes(action.payload)) return state
+      next = { ...state, preachers: [...state.preachers, action.payload] }; break
+    case 'DELETE_PREACHER':
+      next = { ...state, preachers: state.preachers.filter((p) => p !== action.payload) }; break
+    case 'SET_OPTIONS':
+      next = { ...state, ...action.payload }; break
     default:
       return state
   }
+  saveOptions({
+    sermonTypes: next.sermonTypes,
+    audiences: next.audiences,
+    preachers: next.preachers,
+  })
+  return next
 }
 
-const initialState: AppState = {
-  sermons: sampleSermons,
-  themes: sampleThemes,
-  series: sampleSeries,
-  searchQuery: '',
+function getInitialState(): AppState {
+  const savedSermons = loadSermons()
+  return {
+    sermons: savedSermons || sampleSermons,
+    themes: sampleThemes,
+    series: sampleSeries,
+    searchQuery: '',
+    sermonTypes: [...SERMON_TYPES],
+    audiences: [...AUDIENCES],
+    preachers: ['김은혜 목사'],
+  }
 }
+
+const initialAppState = getInitialState()
 
 interface AppContextType {
   state: AppState
@@ -99,7 +157,14 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, initialState)
+  const [state, dispatch] = useReducer(appReducer, initialAppState)
+
+  useEffect(() => {
+    const saved = loadOptions()
+    if (saved) {
+      dispatch({ type: 'SET_OPTIONS', payload: saved })
+    }
+  }, [])
 
   const getSermon = useCallback(
     (id: string) => state.sermons.find((s) => s.id === id),

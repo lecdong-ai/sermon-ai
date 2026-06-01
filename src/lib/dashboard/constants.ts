@@ -64,9 +64,6 @@ export const AUDIENCES = [
   '청소년',
   '교사',
   '새가족',
-  '새벽예배',
-  '수요예배',
-  '금요기도회',
 ] as const
 
 export const SERMON_TYPES = [

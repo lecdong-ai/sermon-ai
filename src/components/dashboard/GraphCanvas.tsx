@@ -10,11 +10,11 @@ import {
 } from 'd3-force'
 
 const NODE_COLORS: Record<string, string> = {
-  sermon: '#8b5cf6',
-  passage: '#6366f1',
-  theme: '#14b8a6',
-  season: '#f59e0b',
-  audience: '#f43f5e',
+  sermon: '#e11d48',
+  passage: '#4338ca',
+  theme: '#a78bfa',
+  season: '#d97706',
+  audience: '#059669',
   series: '#64748b',
 }
 

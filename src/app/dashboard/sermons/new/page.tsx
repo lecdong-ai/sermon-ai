@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Lightbulb, Loader2, Sparkles, Settings2 } from 'lucide-react'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
+import ManageOptionsModal from '@/components/dashboard/ManageOptionsModal'
 import {
-  SERMON_TYPES,
-  AUDIENCES,
   SEASONS,
   BIBLE_BOOKS,
   MAJOR_THEMES,
@@ -22,10 +21,11 @@ function NewSermonForm() {
   const searchParams = useSearchParams()
 
   const [showOptional, setShowOptional] = useState(false)
+  const [manageOpen, setManageOpen] = useState(false)
 
   const [form, setForm] = useState({
     title: '',
-    date: new Date().toISOString().slice(0, 10),
+    date: '',
     preacher: '김은혜 목사',
     sermonType: '',
     audience: '',
@@ -39,11 +39,12 @@ function NewSermonForm() {
     coreMessage: '',
     bibleText: '',
     manuscript: '',
-    outlineIntro: '',
-    outlinePoint1: '',
-    outlinePoint2: '',
-    outlinePoint3: '',
-    outlineConclusion: '',
+    introduction: '',
+    outlinePoints: ['', '', ''],
+    outlineDetails: ['', '', ''],
+    christApplication: '',
+    conclusion: '',
+    illustration: '',
     themeIds: [] as string[],
     relatedSermonIds: [] as string[],
   })
@@ -53,12 +54,75 @@ function NewSermonForm() {
   const [bibleLoading, setBibleLoading] = useState(false)
   const [bibleError, setBibleError] = useState('')
 
+  const [passageSuggestions, setPassageSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [titleSuggestions, setTitleSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [coreSuggestions, setCoreSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [pointSuggestions, setPointSuggestions] = useState<{ title: string; description: string; reason: string }[][]>([])
+  const [pointLoading, setPointLoading] = useState<number | null>(null)
+  const [suggestLoading, setSuggestLoading] = useState(false)
+  const [introSuggestions, setIntroSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [conclusionSuggestions, setConclusionSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [illustrationSuggestions, setIllustrationSuggestions] = useState<{ value: string; reason: string }[]>([])
+  const [introConclusionLoading, setIntroConclusionLoading] = useState(false)
+  const [illustrationLoading, setIllustrationLoading] = useState(false)
+  const [manuscriptModal, setManuscriptModal] = useState(false)
+  const [manuscriptLength, setManuscriptLength] = useState<string>('30분')
+  const [manuscriptGenerating, setManuscriptGenerating] = useState(false)
+  const [manuscriptPreview, setManuscriptPreview] = useState('')
+
+  const fetchSuggestions = async (params: { title?: string; passage?: string }) => {
+    setSuggestLoading(true)
+    try {
+      const res = await fetch('/api/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      })
+      const data = await res.json()
+      if (data.success) {
+        if (params.title && !params.passage) {
+          setPassageSuggestions(data.suggestions)
+        } else if (params.passage && !params.title) {
+          setTitleSuggestions(data.suggestions)
+        }
+      } else {
+        alert('AI 추천 중 오류가 발생했습니다: ' + (data.error || '알 수 없는 오류'))
+      }
+    } catch (err: any) {
+      console.error('Suggest error:', err)
+      alert('AI 추천 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'))
+    } finally {
+      setSuggestLoading(false)
+    }
+  }
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('sermon-draft')
       if (saved) {
         const parsed = JSON.parse(saved)
+        if (parsed.outlinePoint1 !== undefined) {
+          parsed.outlinePoints = [
+            parsed.outlinePoint1 || '',
+            parsed.outlinePoint2 || '',
+            parsed.outlinePoint3 || '',
+          ]
+          parsed.outlineDetails = ['', '', '']
+          delete parsed.outlinePoint1
+          delete parsed.outlinePoint2
+          delete parsed.outlinePoint3
+        }
+        if (parsed.outlineIntro !== undefined) {
+          parsed.introduction = parsed.outlineIntro
+          delete parsed.outlineIntro
+        }
+        if (parsed.outlineConclusion !== undefined) {
+          parsed.conclusion = parsed.outlineConclusion
+          delete parsed.outlineConclusion
+        }
         setForm(prev => ({ ...prev, ...parsed }))
+      } else {
+        setForm(prev => prev.date ? prev : { ...prev, date: new Date().toISOString().slice(0, 10) })
       }
     } catch {}
   }, [])
@@ -69,6 +133,112 @@ function NewSermonForm() {
     if (title) setForm(prev => ({ ...prev, title }))
     if (passage) setForm(prev => ({ ...prev, bibleBook: passage }))
   }, [searchParams])
+
+  const autoGenerated = useRef({ application: false, introduction: false, conclusion: false })
+
+  useEffect(() => {
+    if (autoGenerated.current.introduction) return
+    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+    if (form.outlinePoints.filter(p => p.trim()).length === 0) return
+    if (form.introduction) return
+    const timer = setTimeout(async () => {
+      autoGenerated.current.introduction = true
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title.trim(), passage: form.bibleBook.trim(),
+            coreMessage: form.coreMessage.trim(),
+            outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+            generateIntroduction: true,
+          }),
+        })
+        const data = await res.json()
+        if (data.success && data.text) updateField('introduction', data.text)
+      } catch (err) { console.error(err) }
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
+
+  useEffect(() => {
+    if (autoGenerated.current.conclusion) return
+    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+    if (form.outlinePoints.filter(p => p.trim()).length === 0) return
+    if (form.conclusion) return
+    const timer = setTimeout(async () => {
+      autoGenerated.current.conclusion = true
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title.trim(), passage: form.bibleBook.trim(),
+            coreMessage: form.coreMessage.trim(),
+            outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+            generateConclusion: true,
+          }),
+        })
+        const data = await res.json()
+        if (data.success && data.text) updateField('conclusion', data.text)
+      } catch (err) { console.error(err) }
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
+
+  useEffect(() => {
+    if (autoGenerated.current.application) return
+    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+    if (form.outlinePoints.filter(p => p.trim()).length === 0) return
+    if (form.christApplication) return
+    const timer = setTimeout(async () => {
+      autoGenerated.current.application = true
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title.trim(), passage: form.bibleBook.trim(),
+            coreMessage: form.coreMessage.trim(),
+            outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+            generateApplication: true,
+          }),
+        })
+        const data = await res.json()
+        if (data.success && data.text) updateField('christApplication', data.text)
+      } catch (err) { console.error(err) }
+    }, 2500)
+    return () => clearTimeout(timer)
+  }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
+
+  const autoGenIllustration = useRef(false)
+
+  useEffect(() => {
+    if (autoGenIllustration.current) return
+    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+    if (form.outlinePoints.filter(p => p.trim()).length === 0) return
+    if (form.illustration) return
+    const timer = setTimeout(async () => {
+      autoGenIllustration.current = true
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title.trim(), passage: form.bibleBook.trim(),
+            coreMessage: form.coreMessage.trim(),
+            outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+            introduction: form.introduction, conclusion: form.conclusion,
+            application: form.christApplication,
+            generateIllustration: true,
+          }),
+        })
+        const data = await res.json()
+        if (data.success && data.text) updateField('illustration', data.text)
+      } catch (err) { console.error(err) }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails, form.introduction, form.conclusion, form.christApplication])
 
   const filteredMajorThemes = useMemo(
     () =>
@@ -125,11 +295,17 @@ function NewSermonForm() {
       verseEnd: Number(form.verseEnd) || 0,
       normalizedPassage,
       coreMessage: form.coreMessage,
-      outlineIntro: form.outlineIntro,
-      outlinePoint1: form.outlinePoint1,
-      outlinePoint2: form.outlinePoint2,
-      outlinePoint3: form.outlinePoint3,
-      outlineConclusion: form.outlineConclusion,
+      outlineIntro: form.introduction,
+      outlinePoint1: form.outlineDetails[0]
+        ? `${form.outlinePoints[0] || ''} — ${form.outlineDetails[0]}`
+        : (form.outlinePoints[0] || ''),
+      outlinePoint2: form.outlineDetails[1]
+        ? `${form.outlinePoints[1] || ''} — ${form.outlineDetails[1]}`
+        : (form.outlinePoints[1] || ''),
+      outlinePoint3: form.outlineDetails[2]
+        ? `${form.outlinePoints[2] || ''} — ${form.outlineDetails[2]}`
+        : (form.outlinePoints[2] || ''),
+      outlineConclusion: form.conclusion,
       manuscript: form.manuscript,
       themeIds: form.themeIds,
       tagIds: form.themeIds,
@@ -181,16 +357,57 @@ function NewSermonForm() {
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="block text-xs font-medium text-muted mb-1.5">설교 제목 *</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => updateField('title', e.target.value)}
-                placeholder="예: 두려움을 이기는 믿음"
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => {
+                    updateField('title', e.target.value)
+                    setPassageSuggestions([])
+                  }}
+                  placeholder="예: 두려움을 이기는 믿음"
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = form.title.trim()
+                    if (val.length < 2) return
+                    setPassageSuggestions([])
+                    fetchSuggestions({ title: val })
+                  }}
+                  disabled={suggestLoading || form.title.trim().length < 2}
+                  className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
+                >
+                  {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI추천
+                </button>
+              </div>
+              {passageSuggestions.length > 0 && (
+                <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                  <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                    <Lightbulb className="w-3 h-3" />
+                    추천 성경 본문
+                  </div>
+                  {passageSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        updateField('bibleBook', s.value)
+                        setPassageSuggestions([])
+                      }}
+                      className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                    >
+                      <span className="font-medium text-foreground">{s.value}</span>
+                      <span className="ml-1.5 text-muted">{s.reason}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">설교 날짜 *</label>
@@ -210,7 +427,10 @@ function NewSermonForm() {
               <input
                 type="text"
                 value={form.bibleBook}
-                onChange={(e) => updateField('bibleBook', e.target.value)}
+                onChange={(e) => {
+                  updateField('bibleBook', e.target.value)
+                  setTitleSuggestions([])
+                }}
                 placeholder="예: 마태복음 11:28-30"
                 className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
                 required
@@ -245,7 +465,44 @@ function NewSermonForm() {
               >
                 {bibleLoading ? '가져오는 중...' : '가져오기'}
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const val = form.bibleBook.trim()
+                  if (val.length < 2) return
+                  setTitleSuggestions([])
+                  fetchSuggestions({ passage: val })
+                }}
+                disabled={suggestLoading || form.bibleBook.trim().length < 2}
+                className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
+              >
+                {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                AI추천
+              </button>
             </div>
+
+            {titleSuggestions.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 설교 제목
+                </div>
+                {titleSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('title', s.value)
+                      setTitleSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="font-medium text-foreground">{s.value}</span>
+                    <span className="ml-1.5 text-muted">{s.reason}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -270,45 +527,108 @@ function NewSermonForm() {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">설교 종류 *</label>
-              <select
-                value={form.sermonType}
-                onChange={(e) => updateField('sermonType', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                required
-              >
-                <option value="">선택...</option>
-                {SERMON_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <div className="flex gap-1.5 items-start">
+                <select
+                  value={form.sermonType}
+                  onChange={(e) => updateField('sermonType', e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  required
+                >
+                  <option value="">선택...</option>
+                  {state.sermonTypes.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  className="p-2 text-muted hover:text-foreground transition-colors"
+                  title="설교 종류 관리"
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">회중 *</label>
-              <select
-                value={form.audience}
-                onChange={(e) => updateField('audience', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                required
-              >
-                <option value="">선택...</option>
-                {AUDIENCES.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
+              <div className="flex gap-1.5 items-start">
+                <select
+                  value={form.audience}
+                  onChange={(e) => updateField('audience', e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  required
+                >
+                  <option value="">선택...</option>
+                  {state.audiences.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  className="p-2 text-muted hover:text-foreground transition-colors"
+                  title="회중 관리"
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">설교자 *</label>
-              <input
-                type="text"
-                value={form.preacher}
-                onChange={(e) => updateField('preacher', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-              />
+              <div className="flex gap-1.5 items-start">
+                <select
+                  value={form.preacher}
+                  onChange={(e) => updateField('preacher', e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  required
+                >
+                  <option value="">선택...</option>
+                  {state.preachers.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  className="p-2 text-muted hover:text-foreground transition-colors"
+                  title="설교자 관리"
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-muted mb-1.5">핵심 메시지 *</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">핵심 메시지 *</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const title = form.title.trim()
+                  const passage = form.bibleBook.trim()
+                  if (!title || !passage) return
+                  setCoreSuggestions([])
+                  setSuggestLoading(true)
+                  fetch('/api/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, passage }),
+                  })
+                    .then((r) => r.json())
+                    .then((data) => {
+                      if (data.success) setCoreSuggestions(data.suggestions)
+                    })
+                    .catch(console.error)
+                    .finally(() => setSuggestLoading(false))
+                }}
+                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim()}
+                className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+              >
+                {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                AI추천
+              </button>
+            </div>
             <textarea
               value={form.coreMessage}
               onChange={(e) => updateField('coreMessage', e.target.value)}
@@ -317,10 +637,572 @@ function NewSermonForm() {
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
               required
             />
+            {coreSuggestions.length > 0 && (
+              <div className="mt-2 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 핵심 메시지
+                </div>
+                {coreSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('coreMessage', s.value)
+                      setCoreSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-foreground">{s.value}</span>
+                    <span className="ml-1.5 text-muted">{s.reason}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-muted">대지 정하기</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const title = form.title.trim()
+                    const passage = `${form.bibleBook.trim()} ${form.chapterStart.trim()}:${form.verseStart.trim()}`
+                    const coreMessage = form.coreMessage.trim()
+                    if (!title || !passage || !coreMessage) return
+                    setPointLoading(-1)
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, passage, coreMessage, generateAllPoints: true }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.suggestions.length >= 3) {
+                        setForm((prev) => ({
+                          ...prev,
+                          outlinePoints: data.suggestions.map((s: any) => s.title),
+                          outlineDetails: data.suggestions.map((s: any) => s.description || ''),
+                        }))
+                        setPointSuggestions([])
+                      } else {
+                        alert('3대지 추천 중 오류가 발생했습니다: ' + (data.error || '결과를 받지 못했습니다'))
+                      }
+                    } catch (err: any) {
+                      console.error(err)
+                      alert('3대지 추천 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'))
+                    } finally {
+                      setPointLoading(null)
+                    }
+                  }}
+                  disabled={pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+                >
+                  {pointLoading === -1 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  3대지 추천
+                </button>
+                <button
+                type="button"
+                onClick={() => {
+                  setForm((prev) => ({
+                    ...prev,
+                    outlinePoints: [...prev.outlinePoints, ''],
+                    outlineDetails: [...prev.outlineDetails, ''],
+                  }))
+                }}
+                className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1"
+              >
+                + 대지 추가
+              </button>
+            </div>
+          </div>
+            {form.outlinePoints.map((point, idx) => {
+              const loading = pointLoading === idx
+              const suggestions = pointSuggestions[idx] || []
+              return (
+                <div key={idx} className="border border-border rounded-md p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={point}
+                        onChange={(e) => {
+                          setForm((prev) => {
+                            const next = [...prev.outlinePoints]
+                            next[idx] = e.target.value
+                            return { ...prev, outlinePoints: next }
+                          })
+                          setPointSuggestions((prev) => {
+                            const next = [...prev]
+                            next[idx] = []
+                            return next
+                          })
+                        }}
+                        placeholder={`대지 ${idx + 1} 제목`}
+                        className="w-full px-3 py-2 text-sm font-medium border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                      />
+                      <textarea
+                        value={form.outlineDetails[idx] || ''}
+                        onChange={(e) => {
+                          setForm((prev) => {
+                            const next = [...prev.outlineDetails]
+                            next[idx] = e.target.value
+                            return { ...prev, outlineDetails: next }
+                          })
+                        }}
+                        placeholder="대지에 대한 상세 설명"
+                        rows={3}
+                        className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const title = form.title.trim()
+                          const passage = form.bibleBook.trim()
+                          const coreMessage = form.coreMessage.trim()
+                          if (!title || !passage || !coreMessage) return
+                          setPointLoading(idx)
+                          setPointSuggestions((prev) => {
+                            const next = [...prev]
+                            next[idx] = []
+                            return next
+                          })
+                          try {
+                            const res = await fetch('/api/suggest', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ title, passage, coreMessage, pointIndex: idx }),
+                            })
+                            const data = await res.json()
+                            if (data.success && data.suggestions.length > 0) {
+                              setForm((prev) => {
+                                const pts = [...prev.outlinePoints]
+                                const dets = [...prev.outlineDetails]
+                                pts[idx] = data.suggestions[0].title
+                                dets[idx] = data.suggestions[0].description || ''
+                                return { ...prev, outlinePoints: pts, outlineDetails: dets }
+                              })
+                              setPointSuggestions((prev) => {
+                                const next = [...prev]
+                                next[idx] = data.suggestions.slice(1)
+                                return next
+                              })
+                            }
+                          } catch (err) {
+                            console.error(err)
+                          } finally {
+                            setPointLoading(null)
+                          }
+                        }}
+                        disabled={loading || pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                        className="px-2.5 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
+                      >
+                        {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                        AI추천
+                      </button>
+                      {form.outlinePoints.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              outlinePoints: prev.outlinePoints.filter((_, i) => i !== idx),
+                              outlineDetails: prev.outlineDetails.filter((_, i) => i !== idx),
+                            }))
+                            setPointSuggestions((prev) => prev.filter((_, i) => i !== idx))
+                          }}
+                          className="p-2 text-muted hover:text-red-500 transition-colors self-end"
+                          title="삭제"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {suggestions.length > 0 && (
+                    <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                      <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3" />
+                        다른 추천 대지
+                      </div>
+                      {suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => {
+                              const pts = [...prev.outlinePoints]
+                              const dets = [...prev.outlineDetails]
+                              pts[idx] = s.title
+                              dets[idx] = s.description || ''
+                              return { ...prev, outlinePoints: pts, outlineDetails: dets }
+                            })
+                            setPointSuggestions((prev) => {
+                              const next = [...prev]
+                              next[idx] = []
+                              return next
+                            })
+                          }}
+                          className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="font-medium text-foreground">{s.title}</span>
+                          {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">적용 (그리스도 중심으로 연결하기)</label>
+              <button
+                type="button"
+                onClick={async () => {
+                  const title = form.title.trim()
+                  const passage = form.bibleBook.trim()
+                  const coreMessage = form.coreMessage.trim()
+                  const points = form.outlinePoints.filter(p => p.trim())
+                  if (!title || !passage || !coreMessage || points.length === 0) return
+                  setSuggestLoading(true)
+                  try {
+                    const res = await fetch('/api/suggest', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        title, passage, coreMessage,
+                        outlinePoints: form.outlinePoints,
+                        outlineDetails: form.outlineDetails,
+                        generateApplication: true,
+                      }),
+                    })
+                    const data = await res.json()
+                    if (data.success && data.text) {
+                      updateField('christApplication', data.text)
+                    }
+                  } catch (err) {
+                    console.error(err)
+                  } finally {
+                    setSuggestLoading(false)
+                  }
+                }}
+                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || form.outlinePoints.every(p => !p.trim())}
+                className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+              >
+                {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                자동완성
+              </button>
+            </div>
+            <textarea
+              value={form.christApplication}
+              onChange={(e) => updateField('christApplication', e.target.value)}
+              rows={5}
+              placeholder="설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 그리스도 중심의 적용이 자동완성됩니다."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">서론 작성</label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setIntroConclusionLoading(true)
+                    setIntroSuggestions([])
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateIntroduction: true, suggestOnly: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.suggestions) setIntroSuggestions(data.suggestions)
+                    } catch (err) { console.error(err) }
+                    finally { setIntroConclusionLoading(false) }
+                  }}
+                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                >
+                  {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI추천
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setSuggestLoading(true)
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateIntroduction: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.text) updateField('introduction', data.text)
+                    } catch (err) { console.error(err) }
+                    finally { setSuggestLoading(false) }
+                  }}
+                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+                >
+                  {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  자동완성
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={form.introduction}
+              onChange={(e) => updateField('introduction', e.target.value)}
+              rows={4}
+              placeholder="설교 서론이 자동완성됩니다."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+            />
+            {introSuggestions.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 서론
+                </div>
+                {introSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('introduction', s.value)
+                      setIntroSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-foreground">{s.value}</span>
+                    {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">결론 작성</label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setIntroConclusionLoading(true)
+                    setConclusionSuggestions([])
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateConclusion: true, suggestOnly: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.suggestions) setConclusionSuggestions(data.suggestions)
+                    } catch (err) { console.error(err) }
+                    finally { setIntroConclusionLoading(false) }
+                  }}
+                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                >
+                  {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI추천
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setSuggestLoading(true)
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateConclusion: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.text) updateField('conclusion', data.text)
+                    } catch (err) { console.error(err) }
+                    finally { setSuggestLoading(false) }
+                  }}
+                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+                >
+                  {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  자동완성
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={form.conclusion}
+              onChange={(e) => updateField('conclusion', e.target.value)}
+              rows={4}
+              placeholder="설교 결론이 자동완성됩니다."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+            />
+            {conclusionSuggestions.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 결론
+                </div>
+                {conclusionSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('conclusion', s.value)
+                      setConclusionSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-foreground">{s.value}</span>
+                    {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">예화</label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setIllustrationLoading(true)
+                    setIllustrationSuggestions([])
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          introduction: form.introduction, conclusion: form.conclusion,
+                          application: form.christApplication,
+                          generateIllustration: true, suggestOnly: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.suggestions) setIllustrationSuggestions(data.suggestions)
+                    } catch (err) { console.error(err) }
+                    finally { setIllustrationLoading(false) }
+                  }}
+                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                >
+                  {illustrationLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI추천
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setIllustrationLoading(true)
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          introduction: form.introduction, conclusion: form.conclusion,
+                          application: form.christApplication,
+                          generateIllustration: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.text) updateField('illustration', data.text)
+                    } catch (err) { console.error(err) }
+                    finally { setIllustrationLoading(false) }
+                  }}
+                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+                >
+                  {illustrationLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  자동완성
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={form.illustration}
+              onChange={(e) => updateField('illustration', e.target.value)}
+              rows={4}
+              placeholder="설교에 사용할 예화가 자동완성됩니다."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+            />
+            {illustrationSuggestions.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 예화
+                </div>
+                {illustrationSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('illustration', s.value)
+                      setIllustrationSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-foreground">{s.value}</span>
+                    {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-medium text-muted mb-1.5">설교문 원고 *</label>
+            <button
+              type="button"
+              onClick={() => {
+                setManuscriptPreview('')
+                setManuscriptLength('30분')
+                setManuscriptModal(true)
+              }}
+              className="mb-2 text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              원고 작성
+            </button>
             <textarea
               value={form.manuscript}
               onChange={(e) => updateField('manuscript', e.target.value)}
@@ -332,13 +1214,99 @@ function NewSermonForm() {
           </div>
         </div>
 
+        {manuscriptModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setManuscriptModal(false)}>
+            <div className="bg-white rounded-lg shadow-xl w-[640px] max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                <h3 className="text-sm font-semibold">원고 작성</h3>
+                <button type="button" onClick={() => setManuscriptModal(false)} className="text-muted hover:text-foreground text-lg leading-none">&times;</button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-2">설교 시간</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: '10분', label: '10분', desc: '1,400~1,700자' },
+                      { value: '20분', label: '20분', desc: '2,800~3,400자' },
+                      { value: '30분', label: '30분', desc: '4,200~5,100자' },
+                      { value: '40분', label: '40분', desc: '5,600~6,800자' },
+                      { value: '50분', label: '50분', desc: '7,000~8,500자' },
+                      { value: '60분', label: '60분', desc: '8,400~10,200자' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setManuscriptLength(opt.value)}
+                        className={`px-3 py-2 text-xs rounded-md border text-left transition-colors ${manuscriptLength === opt.value ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-border text-muted hover:border-primary-light'}`}
+                      >
+                        <div className="font-medium">{opt.label}</div>
+                        <div className="text-[10px] opacity-70">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setManuscriptGenerating(true)
+                    setManuscriptPreview('')
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title,
+                          passage: `${form.bibleBook} ${form.chapterStart}:${form.verseStart}`,
+                          coreMessage: form.coreMessage,
+                          outlinePoints: form.outlinePoints,
+                          outlineDetails: form.outlineDetails,
+                          introduction: form.introduction,
+                          conclusion: form.conclusion,
+                          application: form.christApplication,
+                          illustration: form.illustration,
+                          generateManuscript: true,
+                          length: manuscriptLength,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success) setManuscriptPreview(data.text || data.value || '')
+                    } catch { setManuscriptPreview('생성 중 오류가 발생했습니다.') }
+                    finally { setManuscriptGenerating(false) }
+                  }}
+                  disabled={manuscriptGenerating || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="w-full py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {manuscriptGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {manuscriptGenerating ? '생성 중...' : '생성'}
+                </button>
+                {manuscriptPreview && (
+                  <div>
+                    <label className="block text-xs font-medium text-muted mb-1.5">미리보기</label>
+                    <div className="border border-border rounded-md p-3 text-sm whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">{manuscriptPreview}</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateField('manuscript', manuscriptPreview)
+                        setManuscriptModal(false)
+                      }}
+                      className="mt-2 w-full py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-primary-dark transition-colors"
+                    >
+                      적용하기
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-surface border border-border rounded-lg p-6">
           <button
             type="button"
             onClick={() => setShowOptional(!showOptional)}
             className="text-sm font-semibold text-muted hover:text-foreground transition-colors flex items-center gap-2"
           >
-            {showOptional ? '▼' : '▶'} 선택 입력 (절기, 시리즈, 개요, 태그)
+            {showOptional ? '▼' : '▶'} 선택 입력 (절기, 시리즈, 태그)
           </button>
 
           {showOptional && (
@@ -370,45 +1338,6 @@ function NewSermonForm() {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="block text-xs font-medium text-muted">설교 개요</label>
-                <textarea
-                  value={form.outlineIntro}
-                  onChange={(e) => updateField('outlineIntro', e.target.value)}
-                  rows={2}
-                  placeholder="서론"
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-                />
-                <textarea
-                  value={form.outlinePoint1}
-                  onChange={(e) => updateField('outlinePoint1', e.target.value)}
-                  rows={2}
-                  placeholder="대지 1"
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-                />
-                <textarea
-                  value={form.outlinePoint2}
-                  onChange={(e) => updateField('outlinePoint2', e.target.value)}
-                  rows={2}
-                  placeholder="대지 2"
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-                />
-                <textarea
-                  value={form.outlinePoint3}
-                  onChange={(e) => updateField('outlinePoint3', e.target.value)}
-                  rows={2}
-                  placeholder="대지 3"
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-                />
-                <textarea
-                  value={form.outlineConclusion}
-                  onChange={(e) => updateField('outlineConclusion', e.target.value)}
-                  rows={2}
-                  placeholder="결론"
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-                />
               </div>
 
               <div>
@@ -529,6 +1458,7 @@ function NewSermonForm() {
           </button>
         </div>
       </form>
+      <ManageOptionsModal open={manageOpen} onClose={() => setManageOpen(false)} />
     </div>
   )
 }
