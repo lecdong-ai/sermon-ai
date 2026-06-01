@@ -11,40 +11,7 @@ export const sampleThemes: Theme[] = ALL_THEMES.map((t) => ({
   description: '',
 }))
 
-export const sampleSeries: Series[] = [
-  {
-    id: 'series-1',
-    name: '마가복음 속 예수님',
-    description: '마가복음을 통해 예수님의 사역과 가르침을 조명하는 시리즈',
-    startDate: '2026-01-05',
-    endDate: '2026-03-30',
-    status: 'active',
-  },
-  {
-    id: 'series-2',
-    name: '삶의 무게를 내려놓고',
-    description: '인생의 무거운 짐을 하나님께 내려놓는 믿음에 관한 시리즈',
-    startDate: '2026-02-02',
-    endDate: '2026-04-13',
-    status: 'active',
-  },
-  {
-    id: 'series-3',
-    name: '고난 중에도 소망은 있다',
-    description: '하박국서와 함께하는 고난 극복 시리즈',
-    startDate: '2025-10-05',
-    endDate: '2025-11-30',
-    status: 'completed',
-  },
-  {
-    id: 'series-4',
-    name: '예수님의 비유',
-    description: '예수님께서 가르쳐주신 비유를 통해 하나님 나라를 알아가는 시리즈',
-    startDate: '2026-03-01',
-    endDate: '2026-05-31',
-    status: 'planned',
-  },
-]
+export const sampleSeries: Series[] = []
 
 export const sampleSermons: Sermon[] = [
   {
