@@ -1088,98 +1088,6 @@ function NewSermonForm() {
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-muted">결론 작성</label>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
-                    setIntroConclusionLoading(true)
-                    setConclusionSuggestions([])
-                    try {
-                      const res = await fetch('/api/suggest', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          title: form.title.trim(), passage: form.bibleBook.trim(),
-                          coreMessage: form.coreMessage.trim(),
-                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
-                          generateConclusion: true, suggestOnly: true,
-                        }),
-                      })
-                      const data = await res.json()
-                      if (data.success && data.suggestions) setConclusionSuggestions(data.suggestions)
-                    } catch (err) { console.error(err) }
-                    finally { setIntroConclusionLoading(false) }
-                  }}
-                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
-                  className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
-                >
-                  {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  AI추천
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
-                    setSuggestLoading(true)
-                    try {
-                      const res = await fetch('/api/suggest', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          title: form.title.trim(), passage: form.bibleBook.trim(),
-                          coreMessage: form.coreMessage.trim(),
-                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
-                          generateConclusion: true,
-                        }),
-                      })
-                      const data = await res.json()
-                      if (data.success && data.text) updateField('conclusion', data.text)
-                    } catch (err) { console.error(err) }
-                    finally { setSuggestLoading(false) }
-                  }}
-                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
-                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
-                >
-                  {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  자동완성
-                </button>
-              </div>
-            </div>
-            <textarea
-              value={form.conclusion}
-              onChange={(e) => updateField('conclusion', e.target.value)}
-              rows={4}
-              placeholder="설교 결론이 자동완성됩니다."
-              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
-            />
-            {conclusionSuggestions.length > 0 && (
-              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
-                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3" />
-                  추천 결론
-                </div>
-                {conclusionSuggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      updateField('conclusion', s.value)
-                      setConclusionSuggestions([])
-                    }}
-                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
-                  >
-                    <span className="text-foreground">{s.value}</span>
-                    {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted">예화</label>
               <div className="flex items-center gap-1.5">
                 <button
@@ -1263,6 +1171,98 @@ function NewSermonForm() {
                     onClick={() => {
                       updateField('illustration', s.value)
                       setIllustrationSuggestions([])
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-foreground">{s.value}</span>
+                    {s.reason && <span className="ml-1.5 text-muted">{s.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted">결론 작성</label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setIntroConclusionLoading(true)
+                    setConclusionSuggestions([])
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateConclusion: true, suggestOnly: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.suggestions) setConclusionSuggestions(data.suggestions)
+                    } catch (err) { console.error(err) }
+                    finally { setIntroConclusionLoading(false) }
+                  }}
+                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                >
+                  {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI추천
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
+                    setSuggestLoading(true)
+                    try {
+                      const res = await fetch('/api/suggest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: form.title.trim(), passage: form.bibleBook.trim(),
+                          coreMessage: form.coreMessage.trim(),
+                          outlinePoints: form.outlinePoints, outlineDetails: form.outlineDetails,
+                          generateConclusion: true,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.success && data.text) updateField('conclusion', data.text)
+                    } catch (err) { console.error(err) }
+                    finally { setSuggestLoading(false) }
+                  }}
+                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
+                >
+                  {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  자동완성
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={form.conclusion}
+              onChange={(e) => updateField('conclusion', e.target.value)}
+              rows={4}
+              placeholder="설교 결론이 자동완성됩니다."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
+            />
+            {conclusionSuggestions.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-surface divide-y divide-border">
+                <div className="px-2.5 py-1.5 text-[11px] font-medium text-primary flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  추천 결론
+                </div>
+                {conclusionSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateField('conclusion', s.value)
+                      setConclusionSuggestions([])
                     }}
                     className="w-full text-left px-2.5 py-2 text-xs hover:bg-slate-50 transition-colors"
                   >
