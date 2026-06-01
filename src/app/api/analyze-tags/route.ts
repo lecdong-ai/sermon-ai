@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const themeOptions = themeList.map((t: any) => `{"id": "${t.id}", "name": "${t.name}"}`).join(', ')
 
     const systemPrompt = `당신은 설교문을 분석하여 가장 적합한 태그를 선택하는 AI입니다.
-주어진 설교문의 내용, 핵심 메시지, 대지를 분석하여 아래 태그 목록에서 가장 잘 맞는 태그 ID를 3~5개 선택하세요.
+주어진 설교문의 내용, 핵심 메시지, 대지를 분석하여 아래 태그 목록에서 가장 잘 맞는 태그 ID를 4~6개 선택하세요.
 
 사용 가능한 태그 목록:
 ${themeOptions}
@@ -52,7 +52,7 @@ ${themeOptions}
 대지: ${Array.isArray(outlinePoints) ? outlinePoints.filter(Boolean).join(' / ') : ''}
 설교 원고: ${manuscript || ''}
 
-위 내용을 분석하여 가장 적합한 태그 ID를 3~5개 선택하세요.`
+위 내용을 분석하여 가장 적합한 태그 ID를 4~6개 선택하세요.`
 
     const res = await openai.chat.completions.create({
       model: 'gpt-5.4-mini',
