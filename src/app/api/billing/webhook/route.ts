@@ -21,14 +21,17 @@ export async function POST(request: NextRequest) {
     console.log('[Toss Webhook]', event, data?.orderId)
 
     const webhookSecret = process.env.TOSS_WEBHOOK_SECRET
-    if (webhookSecret) {
-      const signature = request.headers.get('tosspayments-webhook-signature')
-      if (!signature) {
-        return NextResponse.json({ error: '서명이 없습니다.' }, { status: 401 })
-      }
-      if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-        return NextResponse.json({ error: '서명 검증 실패.' }, { status: 401 })
-      }
+    if (!webhookSecret) {
+      console.error('[Toss Webhook] TOSS_WEBHOOK_SECRET is not configured')
+      return NextResponse.json({ error: '서버 설정 오류' }, { status: 500 })
+    }
+
+    const signature = request.headers.get('tosspayments-webhook-signature')
+    if (!signature) {
+      return NextResponse.json({ error: '서명이 없습니다.' }, { status: 401 })
+    }
+    if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+      return NextResponse.json({ error: '서명 검증 실패.' }, { status: 401 })
     }
 
     switch (event) {

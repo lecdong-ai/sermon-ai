@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://t1.kakaocdn.net;
+  script-src 'self' 'unsafe-inline' https://t1.kakaocdn.net;
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https://*.kakaocdn.net;
   font-src 'self';
@@ -37,6 +37,9 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
           { key: 'Content-Security-Policy', value: cspHeader },
         ],
       },
