@@ -9,7 +9,7 @@ export default function SermonDetailPage({
   params: { id: string }
 }) {
   const { id } = params
-  const { state, getSeries, getTheme, getRelatedSermons } = useApp()
+  const { state, deleteSermon, getSeries, getTheme, getRelatedSermons } = useApp()
   const router = useRouter()
   const sermon = state.sermons.find((s) => s.id === id)
 
@@ -71,9 +71,14 @@ export default function SermonDetailPage({
             수정
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (confirm('정말 삭제하시겠습니까?')) {
-                router.push('/dashboard/sermons')
+                const success = await deleteSermon(sermon.id)
+                if (success) {
+                  router.push('/dashboard/sermons')
+                } else {
+                  alert('삭제에 실패했습니다.')
+                }
               }
             }}
             className="text-xs border border-red-200 text-red-500 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
