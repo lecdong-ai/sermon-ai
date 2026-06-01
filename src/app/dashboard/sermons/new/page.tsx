@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
 import {
@@ -50,6 +52,16 @@ function NewSermonForm() {
   const [themeFilter, setThemeFilter] = useState('')
   const [bibleLoading, setBibleLoading] = useState(false)
   const [bibleError, setBibleError] = useState('')
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('sermon-draft')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setForm(prev => ({ ...prev, ...parsed }))
+      }
+    } catch {}
+  }, [])
 
   useEffect(() => {
     const title = searchParams.get('title')
@@ -126,6 +138,7 @@ function NewSermonForm() {
       updatedAt: new Date().toISOString(),
     }
 
+    localStorage.removeItem('sermon-draft')
     dispatch({ type: 'ADD_SERMON', payload: newSermon })
     router.push(`/dashboard/sermons/${newSermon.id}`)
   }
@@ -150,9 +163,18 @@ function NewSermonForm() {
 
   return (
     <div className="animate-fade-in max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold mb-6">새 설교 등록</h2>
+      <div className="flex items-center gap-3 mb-6">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          메인
+        </Link>
+        <h2 className="text-xl font-bold">새 설교 등록</h2>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="sermon-form" onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-surface border border-border rounded-lg p-6 space-y-5">
           <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
             필수 입력
@@ -491,11 +513,11 @@ function NewSermonForm() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="text-sm border border-border px-5 py-2 rounded-md hover:bg-background transition-colors"
+            className="text-sm border border-border px-5 py-2 rounded-md hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
           >
             임시저장
           </button>
