@@ -35,16 +35,24 @@ export async function ensureUsage(userId: string): Promise<UserUsage> {
   const existing = await getUserUsage(userId)
   if (existing) return existing
 
+  const { data: userData } = await supabase.auth.admin.getUserById(userId)
+  const userEmail = userData?.user?.email?.toLowerCase() || ''
+  const { data: deletedCheck } = await supabase
+    .from('deleted_users')
+    .select('id')
+    .eq('email', userEmail)
+    .maybeSingle()
+
   const now = new Date().toISOString()
   const end = new Date(Date.now() + 15 * 86400000).toISOString()
   const defaultRecord = {
     user_id: userId,
     plan: 'none' as PlanType,
-    user_status: 'trial' as const,
-    trial_used: 0,
+    user_status: deletedCheck ? 'expired' as const : 'trial' as const,
+    trial_used: deletedCheck ? 999 : 0,
     trial_limit: 3,
     trial_start_at: now,
-    trial_end_at: end,
+    trial_end_at: deletedCheck ? now : end,
     monthly_used: 0,
     monthly_limit: 0,
     workspace_used: 0,

@@ -183,6 +183,30 @@ export default function MyPage() {
               <LogOut className="w-4 h-4" />
               로그아웃
             </button>
+            <div className="border-t border-[#e5e8eb] my-3" />
+            <button
+              onClick={async () => {
+                if (!confirm('정말 탈퇴하시겠습니까?\n\n모든 설교 데이터가 영구 삭제되며, 동일 이메일로 재가입 시 무료 체험이 불가능합니다.')) return
+                if (!confirm('최종 확인: 정말 탈퇴하시겠습니까?')) return
+                try {
+                  const res = await fetch('/api/auth/delete', { method: 'POST' })
+                  const data = await res.json()
+                  if (data.success) {
+                    alert('탈퇴가 완료되었습니다.')
+                    await signOut()
+                    router.push('/')
+                  } else {
+                    alert('탈퇴 처리 중 오류가 발생했습니다: ' + (data.error || '알 수 없는 오류'))
+                  }
+                } catch {
+                  alert('탈퇴 처리 중 오류가 발생했습니다.')
+                }
+              }}
+              className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-[15px] text-red-600 hover:bg-red-50 transition-colors font-medium"
+            >
+              <Cross className="w-4 h-4" />
+              회원탈퇴
+            </button>
           </div>
         </div>
 
