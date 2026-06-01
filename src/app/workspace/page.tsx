@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import {
   AlertCircle,
@@ -10,11 +10,13 @@ import {
   LayoutGrid,
   List,
   Plus,
+  X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import ResultTabs from '@/components/ResultTabs'
 import GenerateButton from '@/components/GenerateButton'
 import Toast from '@/components/Toast'
+import FileUpload from '@/components/FileUpload'
 import type { SermonRecord, GenerationItem, GenerationState } from '@/types'
 
 const SummarySection = dynamic(() => import('@/components/SummarySection'), { ssr: false })
@@ -55,6 +57,7 @@ export default function Page() {
 }
 
 function WorkspacePage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const sermonId = searchParams.get('id')
 
@@ -65,6 +68,7 @@ function WorkspacePage() {
   const [viewMode, setViewMode] = useState<ViewMode>('tabs')
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
 
   const [generationStates, setGenerationStates] = useState<Record<string, GenerationState>>({})
   const [generatingItem, setGeneratingItem] = useState<string | null>(null)
@@ -213,6 +217,11 @@ function WorkspacePage() {
     }
   }
 
+  const handleUploadSuccess = (newSermonId: string) => {
+    setShowUploadModal(false)
+    router.push(`/workspace?id=${newSermonId}`)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[70vh] bg-grid-tech relative overflow-hidden">
@@ -332,13 +341,13 @@ function WorkspacePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  <Link
-                    href="/"
+                  <button
+                    onClick={() => setShowUploadModal(true)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 text-white text-[13px] font-bold shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
                   >
                     <Plus className="w-4 h-4" />
                     <span>새로 만들기</span>
-                  </Link>
+                  </button>
                   <button
                     onClick={() => setViewMode(viewMode === 'tabs' ? 'all' : 'tabs')}
                     className="w-9 h-9 rounded-xl bg-white/80 border border-slate-200 hover:bg-[#f0f4ff] flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm"
@@ -388,6 +397,35 @@ function WorkspacePage() {
         visible={toast.visible}
         onClose={() => setToast((prev) => ({ ...prev, visible: false }))}
       />
+
+      {/* 업로드 모달 */}
+      {showUploadModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-base font-bold text-gray-900">새 설교 원고 업로드</h2>
+                <p className="text-xs text-gray-400 mt-0.5">PDF, TXT, DOCX 파일을 업로드하면 AI가 6개 서비스를 생성합니다</p>
+              </div>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4">
+              <FileUpload onSuccess={handleUploadSuccess} />
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )
