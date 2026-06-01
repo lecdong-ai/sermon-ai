@@ -14,6 +14,16 @@ export const MAJOR_THEMES = [
   { id: 'theme-major-13', name: '공동체', category: 'major' as const },
   { id: 'theme-major-14', name: '가정', category: 'major' as const },
   { id: 'theme-major-15', name: '제자도', category: 'major' as const },
+  { id: 'theme-major-16', name: '사랑', category: 'major' as const },
+  { id: 'theme-major-17', name: '감사', category: 'major' as const },
+  { id: 'theme-major-18', name: '용서', category: 'major' as const },
+  { id: 'theme-major-19', name: '겸손', category: 'major' as const },
+  { id: 'theme-major-20', name: '성령', category: 'major' as const },
+  { id: 'theme-major-21', name: '예배', category: 'major' as const },
+  { id: 'theme-major-22', name: '거룩', category: 'major' as const },
+  { id: 'theme-major-23', name: '인내', category: 'major' as const },
+  { id: 'theme-major-24', name: '평안', category: 'major' as const },
+  { id: 'theme-major-25', name: '사명', category: 'major' as const },
 ]
 
 export const SITUATION_TAGS = [
