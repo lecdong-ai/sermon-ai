@@ -82,7 +82,7 @@ export default function DashboardPage() {
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-foreground">{userName ? `${userName} 아카이브` : '대시보드'}</h2>
+          <h2 className="text-xl font-bold text-foreground">{userName ? `${userName}의 설교아카이브` : '대시보드'}</h2>
           <p className="text-sm text-muted mt-0.5">
             총 {sermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
           </p>
