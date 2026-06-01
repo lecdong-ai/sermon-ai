@@ -137,6 +137,7 @@ interface AppContextType {
   createSermon: (sermon: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Sermon | null>
   updateSermon: (sermon: Sermon) => Promise<Sermon | null>
   deleteSermon: (id: string) => Promise<boolean>
+  deleteSeries: (id: string) => void
   getSermon: (id: string) => Sermon | undefined
   getTheme: (id: string) => Theme | undefined
   getSeries: (id: string) => Series | undefined
@@ -228,6 +229,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false
   }, [])
 
+  const deleteSeries = useCallback((id: string) => {
+    dispatch({ type: 'DELETE_SERIES', payload: id })
+  }, [])
+
   useEffect(() => {
     loadSermons()
   }, [loadSermons])
@@ -301,6 +306,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createSermon,
       updateSermon,
       deleteSermon,
+      deleteSeries,
       getSermon,
       getTheme,
       getSeries,
@@ -319,6 +325,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createSermon,
       updateSermon,
       deleteSermon,
+      deleteSeries,
       getSermon,
       getTheme,
       getSeries,

@@ -3,9 +3,10 @@
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
+import { Trash2 } from 'lucide-react'
 
 export default function SeriesPage() {
-  const { state } = useApp()
+  const { state, deleteSeries } = useApp()
   const router = useRouter()
   const { series, sermons } = state
 
@@ -63,7 +64,21 @@ export default function SeriesPage() {
                     {srs.endDate && <span>종료: {srs.endDate.replace(/-/g, '.')}</span>}
                   </div>
                 </div>
-                <div className="text-muted text-sm shrink-0 ml-3">→</div>
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm(`'${srs.name}' 시리즈를 삭제하시겠습니까?\n시리즈에 속한 설교는 삭제되지 않습니다.`)) {
+                        deleteSeries(srs.id)
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <span className="text-muted text-sm">→</span>
+                </div>
               </div>
 
               {srs.sermons.length > 0 && (
