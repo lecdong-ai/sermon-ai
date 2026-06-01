@@ -17,6 +17,7 @@ export default function MyPage() {
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [sermonCount, setSermonCount] = useState(0)
 
   const loadProfile = useCallback(async () => {
@@ -185,9 +186,13 @@ export default function MyPage() {
             </button>
             <div className="border-t border-[#e5e8eb] my-3" />
             <button
+              type="button"
+              disabled={deleting}
               onClick={async () => {
+                if (deleting) return
                 if (!confirm('정말 탈퇴하시겠습니까?\n\n모든 설교 데이터가 영구 삭제되며, 동일 이메일로 재가입 시 무료 체험이 불가능합니다.')) return
                 if (!confirm('최종 확인: 정말 탈퇴하시겠습니까?')) return
+                setDeleting(true)
                 try {
                   const res = await fetch('/api/auth/delete', { method: 'POST' })
                   const data = await res.json()
@@ -198,14 +203,16 @@ export default function MyPage() {
                   } else {
                     alert('탈퇴 처리 중 오류가 발생했습니다: ' + (data.error || '알 수 없는 오류'))
                   }
-                } catch {
-                  alert('탈퇴 처리 중 오류가 발생했습니다.')
+                } catch (err: any) {
+                  alert('탈퇴 처리 중 오류가 발생했습니다: ' + (err.message || '네트워크 오류'))
+                } finally {
+                  setDeleting(false)
                 }
               }}
-              className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-[15px] text-red-600 hover:bg-red-50 transition-colors font-medium"
+              className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-[15px] text-red-600 hover:bg-red-50 transition-colors font-medium disabled:opacity-50"
             >
               <Cross className="w-4 h-4" />
-              회원탈퇴
+              {deleting ? '처리 중...' : '회원탈퇴'}
             </button>
           </div>
         </div>
