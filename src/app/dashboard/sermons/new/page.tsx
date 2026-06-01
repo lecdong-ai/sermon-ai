@@ -412,7 +412,7 @@ function NewSermonForm() {
       if (data.success && data.tags.length > 0) {
         setForm((prev) => ({
           ...prev,
-          themeIds: [...new Set([...prev.themeIds, ...data.tags])],
+          themeIds: Array.from(new Set([...prev.themeIds, ...data.tags])),
         }))
       }
     } catch (err) {
