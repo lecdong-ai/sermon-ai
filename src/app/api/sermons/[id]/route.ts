@@ -58,6 +58,15 @@ function toSermon(row: any) {
     relatedSermonIds: result.relatedSermonIds || [],
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
+    result: {
+      summary: result.summary || null,
+      groupDiscussion: result.groupDiscussion || null,
+      cardNews: result.cardNews || null,
+      sermonScript: result.sermonScript || null,
+      shortsScript: result.shortsScript || null,
+      pptData: result.pptData || null,
+    },
+    raw_text: row.raw_text || '',
   }
 }
 
