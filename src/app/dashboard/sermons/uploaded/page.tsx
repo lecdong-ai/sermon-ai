@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import FileUpload from '@/components/FileUpload'
+import { X } from 'lucide-react'
 
 interface UploadedSermon {
   id: string
@@ -44,6 +46,7 @@ export default function UploadedSermonsPage() {
   const [sermons, setSermons] = useState<UploadedSermon[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string } | null>(null)
+  const [showUploadModal, setShowUploadModal] = useState(false)
 
   useEffect(() => {
     const sb = createClient()
@@ -86,6 +89,11 @@ export default function UploadedSermonsPage() {
     }
   }
 
+  const handleUploadSuccess = (sermonId: string) => {
+    setShowUploadModal(false)
+    router.push(`/workspace?id=${sermonId}`)
+  }
+
   if (loading) {
     return (
       <div className="animate-fade-in py-12 text-center">
@@ -119,7 +127,7 @@ export default function UploadedSermonsPage() {
         <div className="bg-surface border border-border rounded-lg p-12 text-center">
           <p className="text-muted text-sm mb-4">업로드된 설교 원고가 없습니다</p>
           <button
-            onClick={() => window.location.href = '/sermon/new'}
+            onClick={() => setShowUploadModal(true)}
             className="text-sm bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-md transition-colors"
           >
             설교 원고 업로드
@@ -182,6 +190,34 @@ export default function UploadedSermonsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showUploadModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-base font-bold text-gray-900">설교 원고 업로드</h2>
+                <p className="text-xs text-gray-400 mt-0.5">PDF, TXT, DOCX 파일을 업로드하면 AI가 6개 서비스를 생성합니다</p>
+              </div>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4">
+              <FileUpload onSuccess={handleUploadSuccess} />
+            </div>
+          </div>
         </div>
       )}
     </div>
