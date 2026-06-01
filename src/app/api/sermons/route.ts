@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       .from('sermons')
       .select('*')
       .eq('user_id', user.id)
+      .neq('source', 'upload')
       .order('updated_at', { ascending: false })
 
     if (error) throw error

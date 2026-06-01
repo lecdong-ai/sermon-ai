@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
         raw_text: parsed.text,
         title: titleFromFileName(parsed.fileName), // fallback title
         user_id: userId,
+        source: 'upload',
       })
       .select()
       .single()

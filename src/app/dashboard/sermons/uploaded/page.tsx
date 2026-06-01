@@ -57,6 +57,7 @@ export default function UploadedSermonsPage() {
           .from('sermons')
           .select('id, title, passage, file_name, sermon_date, status, version, updated_at, created_at, book, series, season, result')
           .eq('user_id', data.user.id)
+          .eq('source', 'upload')
           .order('updated_at', { ascending: false })
           .then(({ data, error }) => {
             if (!error && data) setSermons(data as UploadedSermon[])
