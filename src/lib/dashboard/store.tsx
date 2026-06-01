@@ -137,7 +137,7 @@ interface AppContextType {
   createSermon: (sermon: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Sermon | null>
   updateSermon: (sermon: Sermon) => Promise<Sermon | null>
   deleteSermon: (id: string) => Promise<boolean>
-  deleteSeries: (id: string) => void
+  deleteSeries: (id: string) => Promise<boolean>
   getSermon: (id: string) => Sermon | undefined
   getTheme: (id: string) => Theme | undefined
   getSeries: (id: string) => Series | undefined
