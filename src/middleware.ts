@@ -1,14 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password']
-const protectedRoutes = ['/workspace', '/mypage', '/dashboard', '/study-guide']
+const publicRoutes = ['/login', '/auth/callback', '/auth/reset-password', '/pricing']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isPublic = publicRoutes.some((route) => pathname === route || pathname.startsWith('/share/'))
-  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route))
 
   const response = NextResponse.next({ request })
 
@@ -31,7 +29,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (isProtected && !user) {
+  if (!isPublic && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
@@ -48,11 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/workspace/:path*',
-    '/mypage/:path*',
-    '/dashboard/:path*',
-    '/study-guide/:path*',
-    '/login',
-  ],
+  matcher: ['/:path*'],
 }
