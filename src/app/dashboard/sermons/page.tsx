@@ -10,7 +10,7 @@ function SermonsContent() {
   const { state, getSeries, getTheme } = useApp()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { sermons, themes, series } = state
+  const { sermons, themes, series, seminars } = state
 
   const initialSearch = searchParams.get('search') || ''
   const [viewMode, setViewMode] = useState<ViewMode>('table')
@@ -19,6 +19,7 @@ function SermonsContent() {
   const [filterType, setFilterType] = useState('')
   const [filterAudience, setFilterAudience] = useState('')
   const [filterSeason, setFilterSeason] = useState('')
+  const [filterSeminar, setFilterSeminar] = useState('')
   const [filterSeries, setFilterSeries] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title' | 'book'>('date-desc')
 
@@ -38,6 +39,7 @@ function SermonsContent() {
     if (filterType) result = result.filter((s) => s.sermonType === filterType)
     if (filterAudience) result = result.filter((s) => s.audience === filterAudience)
     if (filterSeason) result = result.filter((s) => s.season === filterSeason)
+    if (filterSeminar) result = result.filter((s) => (s as any).seminar === filterSeminar)
     if (filterSeries) result = result.filter((s) => s.seriesId === filterSeries)
     result.sort((a, b) => {
       switch (sortBy) {
@@ -49,7 +51,7 @@ function SermonsContent() {
       }
     })
     return result
-  }, [sermons, searchText, filterBook, filterType, filterAudience, filterSeason, filterSeries, sortBy])
+  }, [sermons, searchText, filterBook, filterType, filterAudience, filterSeason, filterSeminar, filterSeries, sortBy])
 
   const FilterSelect = ({
     value, onChange, options, placeholder,
@@ -83,6 +85,15 @@ function SermonsContent() {
             <FilterSelect value={filterType} onChange={setFilterType} options={SERMON_TYPES} placeholder="설교 종류" />
             <FilterSelect value={filterAudience} onChange={setFilterAudience} options={AUDIENCES} placeholder="회중" />
             <FilterSelect value={filterSeason} onChange={setFilterSeason} options={SEASONS} placeholder="절기" />
+            <FilterSelect value={filterSeminar} onChange={setFilterSeminar} options={seminars} placeholder="특별 세미나" />
+            <select
+              value={filterSeries}
+              onChange={(e) => setFilterSeries(e.target.value)}
+              className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none focus:ring-1 focus:ring-primary-light text-muted"
+            >
+              <option value="">시리즈</option>
+              {series.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -101,8 +112,8 @@ function SermonsContent() {
         </div>
         <div className="flex items-center gap-2">
           <FilterSelect value={filterBook} onChange={setFilterBook} options={BIBLE_BOOKS} placeholder="성경책" />
-          {(filterBook || filterType || filterAudience || filterSeason || filterSeries) && (
-            <button onClick={() => { setFilterBook(''); setFilterType(''); setFilterAudience(''); setFilterSeason(''); setFilterSeries(''); setSearchText('') }} className="text-xs text-primary hover:text-primary-dark">필터 초기화</button>
+          {(filterBook || filterType || filterAudience || filterSeason || filterSeminar || filterSeries) && (
+            <button onClick={() => { setFilterBook(''); setFilterType(''); setFilterAudience(''); setFilterSeason(''); setFilterSeminar(''); setFilterSeries(''); setSearchText('') }} className="text-xs text-primary hover:text-primary-dark">필터 초기화</button>
           )}
           <span className="text-xs text-muted ml-auto">총 {filtered.length}개의 결과</span>
         </div>
