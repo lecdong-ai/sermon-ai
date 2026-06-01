@@ -2,12 +2,26 @@
 
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/AuthProvider'
 
 export default function DashboardPage() {
   const { state, getSeries } = useApp()
+  const { user } = useAuth()
   const router = useRouter()
   const { sermons, themes, series } = state
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    createClient()
+      .from('user_profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => { if (data?.name) setUserName(data.name) })
+  }, [user])
 
   const recentSermons = useMemo(
     () => [...sermons].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
@@ -68,7 +82,7 @@ export default function DashboardPage() {
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-foreground">대시보드</h2>
+          <h2 className="text-xl font-bold text-foreground">{userName ? `${userName} 아카이브` : '대시보드'}</h2>
           <p className="text-sm text-muted mt-0.5">
             총 {sermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
           </p>
