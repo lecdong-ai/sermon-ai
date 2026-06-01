@@ -41,6 +41,17 @@ export const SITUATION_TAGS = [
   { id: 'situation-12', name: '죄책감', category: 'situation' as const },
   { id: 'situation-13', name: '회복', category: 'situation' as const },
   { id: 'situation-14', name: '선택', category: 'situation' as const },
+  { id: 'situation-15', name: '갈등', category: 'situation' as const },
+  { id: 'situation-16', name: '시험', category: 'situation' as const },
+  { id: 'situation-17', name: '유혹', category: 'situation' as const },
+  { id: 'situation-18', name: '실패', category: 'situation' as const },
+  { id: 'situation-19', name: '낙심', category: 'situation' as const },
+  { id: 'situation-20', name: '중독', category: 'situation' as const },
+  { id: 'situation-21', name: '상처', category: 'situation' as const },
+  { id: 'situation-22', name: '결혼', category: 'situation' as const },
+  { id: 'situation-23', name: '직장', category: 'situation' as const },
+  { id: 'situation-24', name: '죽음', category: 'situation' as const },
+  { id: 'situation-25', name: '노년', category: 'situation' as const },
 ]
 
 export const EMOTION_TAGS = [
