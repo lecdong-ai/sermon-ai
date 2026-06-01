@@ -31,6 +31,10 @@ function NewSermonForm() {
   const [seasonEditValue, setSeasonEditValue] = useState('')
   const [editingSeries, setEditingSeries] = useState(false)
   const [seriesEditValue, setSeriesEditValue] = useState('')
+  const [newSeminar, setNewSeminar] = useState('')
+  const [showSeminarInput, setShowSeminarInput] = useState(false)
+  const [editingSeminar, setEditingSeminar] = useState(false)
+  const [seminarEditValue, setSeminarEditValue] = useState('')
   const [analyzingTags, setAnalyzingTags] = useState(false)
 
   const [form, setForm] = useState({
@@ -40,6 +44,7 @@ function NewSermonForm() {
     sermonType: '',
     audience: '',
     season: '',
+    seminar: '',
     seriesId: '',
     bibleBook: '',
     chapterStart: '',
@@ -117,6 +122,7 @@ function NewSermonForm() {
           sermonType: sermon.sermonType,
           audience: sermon.audience,
           season: sermon.season || '',
+          seminar: (sermon as any).seminar || '',
           seriesId: sermon.seriesId || '',
           bibleBook: sermon.bibleBook,
           chapterStart: String(sermon.chapterStart),
@@ -335,6 +341,7 @@ function NewSermonForm() {
       sermonType: form.sermonType,
       audience: form.audience,
       season: form.season,
+      seminar: form.seminar,
       seriesId: form.seriesId,
       bibleBook: form.bibleBook,
       chapterStart: Number(form.chapterStart) || 0,
@@ -1492,6 +1499,100 @@ function NewSermonForm() {
                         저장
                       </button>
                       <button type="button" onClick={() => setEditingSeason(false)} className="px-2 py-1 text-xs text-muted hover:text-foreground">취소</button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">특별 세미나</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.seminar}
+                      onChange={(e) => updateField('seminar', e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                    >
+                      <option value="">선택...</option>
+                      {state.seminars.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowSeminarInput(!showSeminarInput)}
+                      className="px-2 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {showSeminarInput && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={newSeminar}
+                        onChange={(e) => setNewSeminar(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newSeminar.trim()) {
+                            dispatch({ type: 'ADD_SEMINAR', payload: newSeminar.trim() })
+                            setNewSeminar('')
+                            setShowSeminarInput(false)
+                          }
+                        }}
+                        placeholder="새 세미나..."
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newSeminar.trim()) {
+                            dispatch({ type: 'ADD_SEMINAR', payload: newSeminar.trim() })
+                            setNewSeminar('')
+                            setShowSeminarInput(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
+                  {form.seminar && !showSeminarInput && !editingSeminar && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                      <span className="text-muted">선택됨:</span>
+                      <span className="font-medium text-foreground">{form.seminar}</span>
+                      <button type="button" onClick={() => { setEditingSeminar(true); setSeminarEditValue(form.seminar) }} className="text-primary hover:underline ml-1">수정</button>
+                      <button type="button" onClick={() => { if (confirm('삭제하시겠습니까?')) { dispatch({ type: 'DELETE_SEMINAR', payload: form.seminar }); if (form.seminar === form.seminar) updateField('seminar', '') } }} className="text-red-500 hover:underline">삭제</button>
+                    </div>
+                  )}
+                  {editingSeminar && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={seminarEditValue}
+                        onChange={(e) => setSeminarEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && seminarEditValue.trim()) {
+                            dispatch({ type: 'UPDATE_SEMINAR', payload: { old: form.seminar, new: seminarEditValue.trim() } })
+                            if (form.seminar === form.seminar) updateField('seminar', seminarEditValue.trim())
+                            setEditingSeminar(false)
+                          }
+                        }}
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (seminarEditValue.trim()) {
+                            dispatch({ type: 'UPDATE_SEMINAR', payload: { old: form.seminar, new: seminarEditValue.trim() } })
+                            if (form.seminar === form.seminar) updateField('seminar', seminarEditValue.trim())
+                            setEditingSeminar(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        저장
+                      </button>
+                      <button type="button" onClick={() => setEditingSeminar(false)} className="px-2 py-1 text-xs text-muted hover:text-foreground">취소</button>
                     </div>
                   )}
                 </div>

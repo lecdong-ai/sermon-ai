@@ -16,7 +16,7 @@ function loadOptions() {
   return null
 }
 
-function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[] }) {
+function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[]; seminars: string[] }) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data))
   } catch {}
@@ -31,6 +31,7 @@ interface AppState {
   audiences: string[]
   preachers: string[]
   seasons: string[]
+  seminars: string[]
   loading: boolean
 }
 
@@ -56,6 +57,9 @@ type Action =
   | { type: 'ADD_SEASON'; payload: string }
   | { type: 'DELETE_SEASON'; payload: string }
   | { type: 'UPDATE_SEASON'; payload: { old: string; new: string } }
+  | { type: 'ADD_SEMINAR'; payload: string }
+  | { type: 'DELETE_SEMINAR'; payload: string }
+  | { type: 'UPDATE_SEMINAR'; payload: { old: string; new: string } }
   | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[] } }
   | { type: 'SET_LOADING'; payload: boolean }
 
@@ -114,6 +118,13 @@ function appReducer(state: AppState, action: Action): AppState {
       next = { ...state, seasons: state.seasons.filter((s) => s !== action.payload) }; break
     case 'UPDATE_SEASON':
       next = { ...state, seasons: state.seasons.map((s) => s === action.payload.old ? action.payload.new : s) }; break
+    case 'ADD_SEMINAR':
+      if (state.seminars.includes(action.payload)) return state
+      next = { ...state, seminars: [...state.seminars, action.payload] }; break
+    case 'DELETE_SEMINAR':
+      next = { ...state, seminars: state.seminars.filter((s) => s !== action.payload) }; break
+    case 'UPDATE_SEMINAR':
+      next = { ...state, seminars: state.seminars.map((s) => s === action.payload.old ? action.payload.new : s) }; break
     case 'SET_OPTIONS':
       next = { ...state, ...action.payload }; break
     case 'SET_LOADING':
@@ -126,6 +137,7 @@ function appReducer(state: AppState, action: Action): AppState {
     audiences: next.audiences,
     preachers: next.preachers,
     seasons: next.seasons,
+    seminars: next.seminars,
   })
   return next
 }
@@ -140,6 +152,7 @@ function getInitialState(): AppState {
     audiences: [...AUDIENCES],
     preachers: ['김은혜 목사'],
     seasons: [...SEASONS],
+    seminars: [],
     loading: true,
   }
 }
