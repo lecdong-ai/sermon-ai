@@ -1606,7 +1606,7 @@ function NewSermonForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted mb-1.5">수동 관련 설교</label>
+                <label className="block text-xs font-medium text-muted mb-1.5">관련 설교 연결</label>
                 <select
                   multiple
                   value={form.relatedSermonIds}
