@@ -8,7 +8,6 @@ import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
 import ManageOptionsModal from '@/components/dashboard/ManageOptionsModal'
 import {
-  SEASONS,
   BIBLE_BOOKS,
   MAJOR_THEMES,
   SITUATION_TAGS,
@@ -16,13 +15,17 @@ import {
 } from '@/lib/dashboard/constants'
 
 function NewSermonForm() {
-  const { state, createSermon, updateSermon } = useApp()
+  const { state, createSermon, updateSermon, createSeries, dispatch } = useApp()
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
   const [showOptional, setShowOptional] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
+  const [newSeason, setNewSeason] = useState('')
+  const [showSeasonInput, setShowSeasonInput] = useState(false)
+  const [newSeries, setNewSeries] = useState('')
+  const [showSeriesInput, setShowSeriesInput] = useState(false)
 
   const [form, setForm] = useState({
     title: '',
@@ -1364,29 +1367,111 @@ function NewSermonForm() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">절기</label>
-                  <select
-                    value={form.season}
-                    onChange={(e) => updateField('season', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  >
-                    <option value="">선택...</option>
-                    {SEASONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.season}
+                      onChange={(e) => updateField('season', e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                    >
+                      <option value="">선택...</option>
+                      {state.seasons.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowSeasonInput(!showSeasonInput)}
+                      className="px-2 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {showSeasonInput && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={newSeason}
+                        onChange={(e) => setNewSeason(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newSeason.trim()) {
+                            dispatch({ type: 'ADD_SEASON', payload: newSeason.trim() })
+                            setNewSeason('')
+                            setShowSeasonInput(false)
+                          }
+                        }}
+                        placeholder="새 절기..."
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newSeason.trim()) {
+                            dispatch({ type: 'ADD_SEASON', payload: newSeason.trim() })
+                            setNewSeason('')
+                            setShowSeasonInput(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">시리즈</label>
-                  <select
-                    value={form.seriesId}
-                    onChange={(e) => updateField('seriesId', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
-                  >
-                    <option value="">선택...</option>
-                    {state.series.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.seriesId}
+                      onChange={(e) => updateField('seriesId', e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light"
+                    >
+                      <option value="">선택...</option>
+                      {state.series.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowSeriesInput(!showSeriesInput)}
+                      className="px-2 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {showSeriesInput && (
+                    <div className="mt-2 flex gap-1">
+                      <input
+                        type="text"
+                        value={newSeries}
+                        onChange={(e) => setNewSeries(e.target.value)}
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter' && newSeries.trim()) {
+                            await createSeries(newSeries.trim())
+                            setNewSeries('')
+                            setShowSeriesInput(false)
+                          }
+                        }}
+                        placeholder="새 시리즈..."
+                        className="flex-1 px-2 py-1 text-xs border border-border rounded"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (newSeries.trim()) {
+                            await createSeries(newSeries.trim())
+                            setNewSeries('')
+                            setShowSeriesInput(false)
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-primary text-white rounded"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

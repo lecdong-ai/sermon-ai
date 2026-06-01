@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useReducer, useCallback, useMemo, useEffect, useState } from 'react'
 import { Sermon, Theme, Series } from './types'
 import { sampleThemes, sampleSeries } from './data'
-import { SERMON_TYPES, AUDIENCES } from './constants'
+import { SERMON_TYPES, AUDIENCES, SEASONS } from './constants'
 
 const LS_KEY = 'sermon-options'
 
@@ -16,7 +16,7 @@ function loadOptions() {
   return null
 }
 
-function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[] }) {
+function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[] }) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data))
   } catch {}
@@ -30,6 +30,7 @@ interface AppState {
   sermonTypes: string[]
   audiences: string[]
   preachers: string[]
+  seasons: string[]
   loading: boolean
 }
 
@@ -52,7 +53,9 @@ type Action =
   | { type: 'DELETE_AUDIENCE'; payload: string }
   | { type: 'ADD_PREACHER'; payload: string }
   | { type: 'DELETE_PREACHER'; payload: string }
-  | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[] } }
+  | { type: 'ADD_SEASON'; payload: string }
+  | { type: 'DELETE_SEASON'; payload: string }
+  | { type: 'SET_OPTIONS'; payload: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[] } }
   | { type: 'SET_LOADING'; payload: boolean }
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -103,6 +106,11 @@ function appReducer(state: AppState, action: Action): AppState {
       next = { ...state, preachers: [...state.preachers, action.payload] }; break
     case 'DELETE_PREACHER':
       next = { ...state, preachers: state.preachers.filter((p) => p !== action.payload) }; break
+    case 'ADD_SEASON':
+      if (state.seasons.includes(action.payload)) return state
+      next = { ...state, seasons: [...state.seasons, action.payload] }; break
+    case 'DELETE_SEASON':
+      next = { ...state, seasons: state.seasons.filter((s) => s !== action.payload) }; break
     case 'SET_OPTIONS':
       next = { ...state, ...action.payload }; break
     case 'SET_LOADING':
@@ -114,6 +122,7 @@ function appReducer(state: AppState, action: Action): AppState {
     sermonTypes: next.sermonTypes,
     audiences: next.audiences,
     preachers: next.preachers,
+    seasons: next.seasons,
   })
   return next
 }
@@ -127,6 +136,7 @@ function getInitialState(): AppState {
     sermonTypes: [...SERMON_TYPES],
     audiences: [...AUDIENCES],
     preachers: ['김은혜 목사'],
+    seasons: [...SEASONS],
     loading: true,
   }
 }
@@ -141,6 +151,7 @@ interface AppContextType {
   updateSermon: (sermon: Sermon) => Promise<Sermon | null>
   deleteSermon: (id: string) => Promise<boolean>
   deleteSeries: (id: string) => Promise<boolean>
+  createSeries: (name: string, description?: string) => Promise<Series | null>
   getSermon: (id: string) => Sermon | undefined
   getTheme: (id: string) => Theme | undefined
   getSeries: (id: string) => Series | undefined
@@ -260,6 +271,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false
   }, [])
 
+  const createSeries = useCallback(async (name: string, description?: string) => {
+    try {
+      const res = await fetch('/api/series', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        dispatch({ type: 'ADD_SERIES', payload: data.data })
+        return data.data
+      }
+    } catch (err) {
+      console.error('Failed to create series:', err)
+    }
+    return null
+  }, [])
+
   useEffect(() => {
     loadSermons()
     loadSeries()
@@ -335,6 +364,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateSermon,
       deleteSermon,
       deleteSeries,
+      createSeries,
       getSermon,
       getTheme,
       getSeries,
@@ -354,6 +384,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateSermon,
       deleteSermon,
       deleteSeries,
+      createSeries,
       getSermon,
       getTheme,
       getSeries,
