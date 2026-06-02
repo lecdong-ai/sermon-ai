@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         chapterEnd: row.chapter_end || 0,
         verseEnd: row.verse_end || 0,
         normalizedPassage: row.passage || '',
+        fileName: row.file_name || '',
         coreMessage: result.coreMessage || '',
         outlineIntro: result.outlineIntro || '',
         outlinePoint1: result.outlinePoint1 || '',
