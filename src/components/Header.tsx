@@ -65,18 +65,20 @@ export default memo(function Header() {
         </Link>
 
         <nav className="flex items-center gap-3 mr-8">
-          <button
-            onClick={toggleMock}
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-all duration-200 ${
-              mockOn
-                ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                : 'bg-slate-100/60 border-slate-200/50 text-slate-500 hover:bg-slate-200/60'
-            }`}
-            title={mockOn ? 'Mock 데이터 사용 중 (클릭 시 해제)' : 'Mock 데이터 사용 (클릭 시 활성화)'}
-          >
-            <Bug className={`w-3.5 h-3.5 ${mockOn ? 'text-amber-500 animate-pulse' : ''}`} />
-            {mockOn ? 'Mock 켜짐' : 'Mock'}
-          </button>
+          {user?.email === 'lecdong@gmail.com' && (
+            <button
+              onClick={toggleMock}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-all duration-200 ${
+                mockOn
+                  ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                  : 'bg-slate-100/60 border-slate-200/50 text-slate-500 hover:bg-slate-200/60'
+              }`}
+              title={mockOn ? 'Mock 데이터 사용 중 (클릭 시 해제)' : 'Mock 데이터 사용 (클릭 시 활성화)'}
+            >
+              <Bug className={`w-3.5 h-3.5 ${mockOn ? 'text-amber-500 animate-pulse' : ''}`} />
+              {mockOn ? 'Mock 켜짐' : 'Mock'}
+            </button>
+          )}
 
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-slate-200/60 animate-pulse" />
