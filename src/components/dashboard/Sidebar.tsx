@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 const MENUS = [
   { key: 'dashboard', label: '대시보드', icon: '◈', href: '/dashboard' },
   { key: 'sermons', label: '설교 목록', icon: '☰', href: '/dashboard/sermons' },
-  { key: 'new', label: '새 설교 등록', icon: '✚', href: '/dashboard/sermons/new' },
+  { key: 'new', label: '새 설교 등록', icon: '✚', href: '/sermon/new' },
   { key: 'uploaded', label: '업로드된 설교', icon: '⬆', href: '/dashboard/sermons/uploaded' },
   { key: 'graph', label: '그래프', icon: '✦', href: '/dashboard/graph' },
   { key: 'statistics', label: '통계', icon: '▤', href: '/dashboard/statistics' },
@@ -88,7 +88,7 @@ export default function Sidebar() {
               pathname.startsWith('/dashboard/sermons') &&
               pathname !== '/dashboard/sermons/new' &&
               pathname !== '/dashboard/sermons/uploaded') ||
-            (menu.key === 'new' && pathname === '/dashboard/sermons/new') ||
+            (menu.key === 'new' && pathname === '/sermon/new') ||
             (menu.key === 'uploaded' && pathname === '/dashboard/sermons/uploaded')
           return (
             <button
