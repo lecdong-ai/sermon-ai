@@ -87,11 +87,19 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    if (usage?.plan === 'basic') {
+    const body = await request.json()
+
+    const proOnlyFeatures = [
+      body.generateApplication,
+      body.generateIntroduction,
+      body.generateConclusion,
+      body.generateIllustration,
+      body.generateManuscript,
+    ].some(Boolean)
+
+    if (usage?.plan === 'basic' && proOnlyFeatures) {
       return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
     }
-
-    const body = await request.json()
     const { title, passage, coreMessage, pointIndex } = body
 
     let systemPrompt: string

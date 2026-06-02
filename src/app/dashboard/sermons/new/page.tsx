@@ -480,13 +480,12 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     const val = form.title.trim()
                     if (val.length < 2) return
                     setPassageSuggestions([])
                     fetchSuggestions({ title: val })
                   }}
-                  disabled={suggestLoading || form.title.trim().length < 2 || isBasicPlan}
+                  disabled={suggestLoading || form.title.trim().length < 2}
                   className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
                 >
                   {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -575,13 +574,12 @@ function NewSermonForm() {
               <button
                 type="button"
                 onClick={() => {
-                  if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                   const val = form.bibleBook.trim()
                   if (val.length < 2) return
                   setTitleSuggestions([])
                   fetchSuggestions({ passage: val })
                 }}
-                disabled={suggestLoading || form.bibleBook.trim().length < 2 || isBasicPlan}
+                disabled={suggestLoading || form.bibleBook.trim().length < 2}
                 className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
               >
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -730,7 +728,7 @@ function NewSermonForm() {
                     .catch(console.error)
                     .finally(() => setSuggestLoading(false))
                 }}
-                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || isBasicPlan}
+                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim()}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -906,7 +904,7 @@ function NewSermonForm() {
                             setPointLoading(null)
                           }
                         }}
-                        disabled={loading || pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
+                        disabled={loading || pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
                         className="px-2.5 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
                       >
                         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
