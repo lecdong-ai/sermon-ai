@@ -978,9 +978,15 @@ function NewSermonForm() {
             })}
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-muted">적용 (그리스도 중심으로 연결하기)</label>
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">1</span>
+              <h3 className="text-sm font-semibold text-foreground">자동 완성 영역</h3>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-muted">적용 (그리스도 중심으로 연결하기)</label>
               <div className="flex items-center gap-1.5">
                 {form.christApplication && (
                   <button
@@ -1037,11 +1043,11 @@ function NewSermonForm() {
               placeholder="설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 그리스도 중심의 적용이 자동완성됩니다."
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none"
             />
-          </div>
+            </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-muted">서론 작성</label>
+            <div className="border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-muted">서론 작성</label>
               <div className="flex items-center gap-1.5">
                 {form.introduction && (
                   <button
@@ -1141,11 +1147,11 @@ function NewSermonForm() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-muted">예화</label>
+            <div className="border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-muted">예화</label>
               <div className="flex items-center gap-1.5">
                 {form.illustration && (
                   <button
@@ -1249,11 +1255,11 @@ function NewSermonForm() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-muted">결론 작성</label>
+            <div className="border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-muted">결론 작성</label>
               <div className="flex items-center gap-1.5">
                 {form.conclusion && (
                   <button
