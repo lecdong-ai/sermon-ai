@@ -131,7 +131,7 @@ export default memo(function Header() {
                                 ? 'bg-slate-100 text-slate-500'
                                 : 'bg-emerald-100 text-emerald-700'
                             }`}>
-                              {plan === 'pro' ? '👑 Pro' : plan === 'none' ? 'Free' : '🎁 Trial'}
+{plan === 'pro' ? '👑 Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
                             </span>
                           </div>
                         )}

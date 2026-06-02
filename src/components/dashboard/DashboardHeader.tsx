@@ -75,7 +75,7 @@ export default function DashboardHeader() {
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
                         plan === 'pro' ? 'bg-indigo-100 text-indigo-700' : plan === 'none' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'
                       }`}>
-                        {plan === 'pro' ? '👑 Pro' : plan === 'none' ? 'Free' : '🎁 Trial'}
+{plan === 'pro' ? '👑 Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
                       </span>
                     </div>
                   )}
