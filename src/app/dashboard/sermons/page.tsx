@@ -24,7 +24,7 @@ function SermonsContent() {
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title' | 'book'>('date-desc')
 
   const filtered = useMemo(() => {
-    let result = [...sermons]
+    let result = [...sermons].filter(s => s.status === 'completed')
     if (searchText) {
       const q = searchText.toLowerCase()
       result = result.filter(
