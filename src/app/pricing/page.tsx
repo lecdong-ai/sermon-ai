@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Check, X, Sparkles, ChevronDown, ChevronUp, Shield, CreditCard } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
-import { PLAN_DATA, type Plan } from '@/lib/billing/types'
+import { PLAN_DATA, FREE_PLAN, type Plan } from '@/lib/billing/types'
 import type { UsageInfo } from '@/types'
 
 const FAQ_ITEMS = [
@@ -38,23 +38,50 @@ const FAQ_ITEMS = [
   },
 ]
 
-function PlanCard({ plan, currentPlan, isLoggedIn }: { plan: Plan; currentPlan: string; isLoggedIn: boolean }) {
-  const isCurrent = currentPlan === plan.id
+function PlanCard({ plan, isFree, currentPlan, isLoggedIn, trialRemaining }: { plan: any; isFree?: boolean; currentPlan: string; isLoggedIn: boolean; trialRemaining?: number }) {
+  const isCurrent = isFree ? currentPlan === 'none' : currentPlan === plan.id
+
   const getHref = () => {
     if (isCurrent) return '#'
     if (!isLoggedIn) return '/login?redirect=/pricing'
+    if (isFree) return '/'
     return `/billing?plan=${plan.id}`
+  }
+
+  const getCtaText = () => {
+    if (isCurrent && isFree) return trialRemaining ? `무료체험 중 (${trialRemaining}회 남음)` : '현재 이용 중'
+    if (isCurrent) return '현재 이용 중'
+    if (!isLoggedIn) return isFree ? '회원가입 후 시작' : '로그인 후 구독'
+    if (isFree) return '시작하기'
+    return '구독 시작하기'
+  }
+
+  const getPriceDisplay = () => {
+    if (isFree) {
+      return (
+        <>
+          <span className="text-3xl font-extrabold text-slate-900">무료</span>
+        </>
+      )
+    }
+    return (
+      <>
+        <span className="text-3xl font-extrabold text-slate-900">{plan.price.toLocaleString()}</span>
+        <span className="text-[18px] font-bold text-slate-500">원</span>
+        <span className="text-[14px] text-slate-400 font-medium">/월</span>
+      </>
+    )
   }
 
   return (
     <div
       className={`relative rounded-3xl border p-6 sm:p-8 transition-all duration-300 flex flex-col ${
-        plan.isRecommended
+        plan.isRecommended && !isFree
           ? 'border-indigo-300/60 shadow-xl shadow-indigo-500/10 scale-[1.02] bg-white'
           : 'border-slate-200/60 hover:shadow-lg bg-white/90'
       } ${isCurrent ? 'ring-2 ring-indigo-500' : ''}`}
     >
-      {plan.isRecommended && (
+      {plan.isRecommended && !isFree && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap">
           가장 인기 있는 플랜
         </div>
@@ -62,23 +89,21 @@ function PlanCard({ plan, currentPlan, isLoggedIn }: { plan: Plan; currentPlan: 
 
       {isCurrent && (
         <div className="absolute -top-3 right-4 bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">
-          현재 이용 중
+          {isFree ? '현재 이용 중' : '현재 이용 중'}
         </div>
       )}
 
       <div className="text-center mb-6 mt-1">
-        <h3 className="text-[18px] font-extrabold text-slate-800 mb-2">{plan.name} Plan</h3>
+        <h3 className="text-[18px] font-extrabold text-slate-800 mb-2">{plan.name}{!isFree && ' Plan'}</h3>
         <p className="text-[13px] text-slate-400 leading-relaxed mb-4">{plan.description}</p>
         <div className="flex items-baseline justify-center gap-0.5">
-          <span className="text-3xl font-extrabold text-slate-900">{plan.price.toLocaleString()}</span>
-          <span className="text-[18px] font-bold text-slate-500">원</span>
-          <span className="text-[14px] text-slate-400 font-medium">/월</span>
+          {getPriceDisplay()}
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">(VAT 별도)</p>
+        {!isFree && <p className="text-[11px] text-slate-400 mt-1">(VAT 별도)</p>}
       </div>
 
       <ul className="space-y-3 mb-6 flex-1">
-        {plan.features.map((f, i) => (
+        {plan.features.map((f: any, i: number) => (
           <li key={i} className={`flex items-start gap-2.5 text-[13px] ${f.highlight ? 'bg-gradient-to-r from-indigo-50 to-purple-50 -mx-2 px-2 py-1.5 rounded-lg border border-indigo-100' : ''}`}>
             {f.ok ? (
               <Check className={`w-4 h-4 shrink-0 mt-0.5 ${f.highlight ? 'text-indigo-600' : 'text-emerald-500'}`} />
@@ -97,13 +122,13 @@ function PlanCard({ plan, currentPlan, isLoggedIn }: { plan: Plan; currentPlan: 
         className={`block text-center py-3 rounded-xl text-[14px] font-bold transition-all ${
           isCurrent
             ? 'bg-slate-100 text-slate-400 cursor-default'
-            : plan.isRecommended
+            : plan.isRecommended && !isFree
             ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98]'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-[0.98]'
         }`}
         onClick={(e) => { if (isCurrent) e.preventDefault() }}
       >
-        {isCurrent ? '현재 이용 중' : !isLoggedIn ? '로그인 후 구독' : '구독 시작하기'}
+        {getCtaText()}
       </Link>
     </div>
   )
@@ -120,6 +145,7 @@ export default function PricingPage() {
   }, [user])
 
   const currentPlan = usage?.plan || 'none'
+  const trialRemaining = usage?.trial?.remaining
 
   return (
     <div className="relative min-h-screen bg-slate-50/50">
@@ -138,7 +164,8 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16 animate-in" style={{ animationDelay: '0.1s' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16 animate-in" style={{ animationDelay: '0.1s' }}>
+          <PlanCard plan={FREE_PLAN} isFree currentPlan={currentPlan} isLoggedIn={!!user} trialRemaining={trialRemaining} />
           {PLAN_DATA.map((plan) => (
             <PlanCard key={plan.id} plan={plan} currentPlan={currentPlan} isLoggedIn={!!user} />
           ))}

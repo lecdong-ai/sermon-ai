@@ -95,6 +95,31 @@ export const PLAN_DATA: Plan[] = [
   },
 ]
 
+export interface FreePlan {
+  id: 'free'
+  name: string
+  price: number
+  features: { text: string; ok: boolean }[]
+  priceLabel: string
+  description: string
+}
+
+export const FREE_PLAN: FreePlan = {
+  id: 'free',
+  name: '무료체험',
+  price: 0,
+  priceLabel: '무료',
+  description: '회원가입 후 바로 무료로 체험해보세요.',
+  features: [
+    { text: 'AI 분석 3회', ok: true },
+    { text: '설교원고제작 사용 불가', ok: false },
+    { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
+    { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
+    { text: '결과 공유 및 다운로드', ok: true },
+    { text: '유효 기간 15일', ok: true },
+  ],
+}
+
 export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
   active: '이용 중',
   trialing: '체험 중',
