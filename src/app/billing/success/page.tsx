@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Check, Loader2, CreditCard, ArrowRight } from 'lucide-react'
+import { Check, Loader2, CreditCard, ArrowRight, XCircle } from 'lucide-react'
 
 function SuccessContent() {
   const router = useRouter()
@@ -11,16 +11,84 @@ function SuccessContent() {
   const plan = searchParams.get('plan') || 'basic'
   const planName = plan === 'pro' ? 'Pro' : 'Basic'
   const planPrice = plan === 'pro' ? '19,800' : '9,900'
+  const paymentKey = searchParams.get('paymentKey')
+  const orderId = searchParams.get('orderId')
+  const amount = searchParams.get('amount')
+
+  const [status, setStatus] = useState<'confirming' | 'success' | 'error'>(
+    paymentKey ? 'confirming' : 'success'
+  )
+  const [errorMsg, setErrorMsg] = useState('')
   const [countdown, setCountdown] = useState(10)
 
   useEffect(() => {
+    if (status !== 'confirming') return
+    if (!paymentKey || !orderId || !amount) {
+      setStatus('error')
+      setErrorMsg('결제 정보가 올바르지 않습니다.')
+      return
+    }
+    fetch('/api/billing/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentKey, orderId, amount: Number(amount), plan }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setStatus('success')
+        else {
+          setStatus('error')
+          setErrorMsg(data.error || '결제 승인에 실패했습니다.')
+        }
+      })
+      .catch(() => {
+        setStatus('error')
+        setErrorMsg('네트워크 오류가 발생했습니다.')
+      })
+  }, [paymentKey, orderId, amount, plan, status])
+
+  useEffect(() => {
+    if (status !== 'success') return
     if (countdown <= 0) {
       router.push('/dashboard')
       return
     }
     const timer = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(timer)
-  }, [countdown, router])
+  }, [countdown, router, status])
+
+  if (status === 'confirming') {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto mb-4" />
+          <p className="text-[15px] text-slate-500">결제를 확인하고 있습니다...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="max-w-md w-full px-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8 sm:p-10 text-center animate-in">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center mx-auto mb-6">
+              <XCircle className="w-8 h-8 text-rose-500" />
+            </div>
+            <h1 className="text-[20px] font-extrabold text-slate-800 mb-2">결제 승인 실패</h1>
+            <p className="text-[14px] text-slate-500 mb-6">{errorMsg}</p>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[14px] font-bold hover:shadow-lg transition-all"
+            >
+              다시 시도
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-50/50 flex items-center justify-center">

@@ -44,23 +44,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 })
     }
 
-    const payment = await confirmPayment({ paymentKey, orderId, amount })
+    const isTossReady = !!process.env.TOSS_SECRET_KEY
 
-    if (payment.status !== 'DONE') {
-      return NextResponse.json({
-        error: '결제가 완료되지 않았습니다.',
-        status: payment.status,
-        failure: payment.failure,
-      }, { status: 400 })
+    let paymentMethod = '카드'
+    if (isTossReady) {
+      const payment = await confirmPayment({ paymentKey, orderId, amount })
+      if (payment.status !== 'DONE') {
+        return NextResponse.json({
+          error: '결제가 완료되지 않았습니다.',
+          status: payment.status,
+          failure: payment.failure,
+        }, { status: 400 })
+      }
+      paymentMethod = payment.method
     }
 
-    // 2. 구독 활성화
     const subscription = await activateSubscription({
       userId,
       plan,
       paymentKey,
       amount,
-      method: payment.method,
+      method: paymentMethod,
     })
 
     return NextResponse.json({

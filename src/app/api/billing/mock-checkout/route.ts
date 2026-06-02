@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import { supabaseAdmin as supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { plan, paymentKey, orderId, amount } = body
+    const { plan, orderId, amount } = body
 
     if (!plan || !orderId || !amount) {
       return NextResponse.json({ error: '필수 파라미터가 누락되었습니다.' }, { status: 400 })
@@ -26,43 +27,75 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
-    const nextBilling = new Date(now)
-    nextBilling.setMonth(nextBilling.getMonth() + 1)
+    const end = new Date(now)
+    end.setMonth(end.getMonth() + 1)
+    const monthlyLimit = plan === 'pro' ? 20 : 10
 
-    const subscription = {
-      id: `sub_mock_${Date.now()}`,
-      userId: user.id,
-      planId: plan,
-      status: 'active',
-      startDate: now.toISOString(),
-      nextBillingDate: nextBilling.toISOString(),
-      canceledAt: null,
-      paymentMethod: '카드',
-      provider: 'tosspayments',
-      providerCustomerKey: `customer_${user.id}_mock`,
-      providerBillingKey: paymentKey || `billing_mock_${Date.now()}`,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'past_due'])
+      .maybeSingle()
+
+    if (existingSub) {
+      return NextResponse.json({ error: '이미 활성화된 구독이 있습니다.' }, { status: 400 })
     }
 
-    const payment = {
-      id: `pay_mock_${Date.now()}`,
-      userId: user.id,
-      subscriptionId: subscription.id,
-      orderId,
+    const { data: sub, error: subError } = await supabase
+      .from('subscriptions')
+      .insert({
+        user_id: user.id,
+        plan,
+        status: 'active',
+        billing_cycle_start: now.toISOString(),
+        billing_cycle_end: end.toISOString(),
+        monthly_limit: monthlyLimit,
+        monthly_used: 0,
+        payment_provider: 'tosspayments',
+        payment_method_id: `mock_billing_${Date.now()}`,
+      })
+      .select()
+      .single()
+
+    if (subError) {
+      return NextResponse.json({ error: `구독 생성 실패: ${subError.message}` }, { status: 500 })
+    }
+
+    await supabase.from('payment_history').insert({
+      user_id: user.id,
+      subscription_id: sub.id,
       amount,
+      currency: 'KRW',
       status: 'succeeded',
-      paidAt: now.toISOString(),
-      method: '카드',
-      provider: 'tosspayments',
-      providerPaymentKey: paymentKey || `paykey_mock_${Date.now()}`,
-      createdAt: now.toISOString(),
-    }
+      payment_method: '카드',
+      provider_tx_id: `mock_paykey_${Date.now()}`,
+    })
+
+    await supabase
+      .from('user_usage')
+      .update({
+        plan,
+        user_status: 'active',
+        monthly_limit: monthlyLimit,
+        monthly_used: 0,
+        subscription_id: sub.id,
+        updated_at: now.toISOString(),
+      })
+      .eq('user_id', user.id)
 
     return NextResponse.json({
       success: true,
-      subscription,
-      payment,
+      subscription: {
+        id: sub.id,
+        plan,
+        status: 'active',
+        billing_cycle_start: sub.billing_cycle_start,
+        billing_cycle_end: sub.billing_cycle_end,
+        monthly_limit: monthlyLimit,
+        monthly_used: 0,
+        payment_method: '카드',
+      },
       message: `${plan === 'pro' ? 'Pro' : 'Basic'} 플랜 구독이 시작되었습니다.`,
     })
   } catch (err: any) {
