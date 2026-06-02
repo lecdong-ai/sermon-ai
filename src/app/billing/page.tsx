@@ -149,7 +149,7 @@ function BillingContent() {
       setError(err.message || '결제 처리 중 오류가 발생했습니다.')
       setLoading(false)
     }
-  }, [planId, plan.name, plan.price, router])
+  }, [planId, plan.name, plan.price])
 
   const handlePayment = useCallback(async () => {
     if (IS_TOSS_READY) {
@@ -157,7 +157,7 @@ function BillingContent() {
     } else {
       await handleMockPayment()
     }
-  }, [IS_TOSS_READY, handleTossPayment, handleMockPayment])
+  }, [handleTossPayment, handleMockPayment])
 
   if (step === 'review') {
     return (
