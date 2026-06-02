@@ -45,6 +45,20 @@ function NewSermonForm() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const title = searchParams.get('title')
+    const passage = searchParams.get('passage')
+    const date = searchParams.get('date')
+    if (title) setForm(prev => ({ ...prev, title }))
+    if (passage) {
+      setForm(prev => ({ ...prev, bibleBook: passage }))
+      // Extract book name from passage like "마태복음 11:28-30"
+      const match = passage.match(/^([가-힣a-zA-Z\s]+)/)
+      if (match) setForm(prev => ({ ...prev, bibleBook: match[1].trim() }))
+    }
+    if (date) setForm(prev => ({ ...prev, date }))
+  }, [searchParams])
+
   const isBasicPlan = userPlan === 'basic'
 
   const [form, setForm] = useState({

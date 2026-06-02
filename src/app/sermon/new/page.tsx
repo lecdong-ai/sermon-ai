@@ -409,14 +409,21 @@ export default function NewSermonPage() {
                   </div>
                 </div>
 
-                <Link
-                  href="/dashboard/sermons/new"
+                <button
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams()
+                    if (title) params.set('title', title)
+                    if (passage) params.set('passage', passage)
+                    if (sermonDate) params.set('date', sermonDate)
+                    router.push(`/dashboard/sermons/new?${params.toString()}`)
+                  }}
                   className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-4 text-[15px] font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/25"
                 >
                   <BookOpen className="h-4 w-4" />
                   일반 설교 시작하기
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                </button>
               </div>
             </div>
           </section>
