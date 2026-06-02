@@ -387,6 +387,7 @@ function NewSermonForm() {
       themeIds: form.themeIds,
       tagIds: form.themeIds,
       relatedSermonIds: form.relatedSermonIds,
+      status: 'completed' as const,
     }
 
     let result: any
@@ -987,7 +988,7 @@ function NewSermonForm() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-muted">적용 (그리스도 중심으로 연결하기)</label>
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                 {form.christApplication && (
                   <button
                     type="button"
@@ -1048,7 +1049,7 @@ function NewSermonForm() {
             <div className="border-t border-border pt-6">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-muted">서론 작성</label>
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                 {form.introduction && (
                   <button
                     type="button"
@@ -1152,7 +1153,7 @@ function NewSermonForm() {
             <div className="border-t border-border pt-6">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-muted">예화</label>
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                 {form.illustration && (
                   <button
                     type="button"
@@ -1260,7 +1261,7 @@ function NewSermonForm() {
             <div className="border-t border-border pt-6">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-muted">결론 작성</label>
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                 {form.conclusion && (
                   <button
                     type="button"
@@ -1359,6 +1360,7 @@ function NewSermonForm() {
                 ))}
               </div>
             )}
+            </div>
           </div>
 
           <div>

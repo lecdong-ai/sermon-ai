@@ -25,6 +25,7 @@ export interface Sermon {
   relatedSermonIds: string[]
   createdAt: string
   updatedAt: string
+  status?: 'draft' | 'in_progress' | 'completed'
 }
 
 export interface Theme {
