@@ -1,5 +1,7 @@
 import { supabaseAdmin } from './supabase'
 
+const ADMIN_EMAILS = ['lecdong@gmail.com']
+
 export async function getAdminUser(userId: string): Promise<{ id: string; email: string; name?: string; role: string } | null> {
   const { data: profile } = await supabaseAdmin
     .from('user_profiles')
@@ -13,7 +15,12 @@ export async function getAdminUser(userId: string): Promise<{ id: string; email:
 
 export async function isAdmin(userId: string): Promise<boolean> {
   const profile = await getAdminUser(userId)
-  return profile?.role === 'admin'
+  if (profile?.role === 'admin') return true
+
+  const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
+  if (user?.user?.email && ADMIN_EMAILS.includes(user.user.email)) return true
+
+  return false
 }
 
 export async function ensureAdminRole(userId: string) {
