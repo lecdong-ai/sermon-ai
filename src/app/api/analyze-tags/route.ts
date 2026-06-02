@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createServerClient } from '@supabase/ssr'
+import { supabaseAdmin } from '@/lib/supabase'
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
@@ -26,6 +27,16 @@ export async function POST(request: NextRequest) {
     const user = await getUser(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
+    const { data: usage } = await supabaseAdmin
+      .from('user_usage')
+      .select('plan')
+      .eq('user_id', user.id)
+      .single()
+
+    if (usage?.plan === 'basic') {
+      return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
     }
 
     const body = await request.json()

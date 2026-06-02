@@ -36,6 +36,16 @@ function NewSermonForm() {
   const [editingSeminar, setEditingSeminar] = useState(false)
   const [seminarEditValue, setSeminarEditValue] = useState('')
   const [analyzingTags, setAnalyzingTags] = useState(false)
+  const [userPlan, setUserPlan] = useState<string>('none')
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then(res => res.json())
+      .then(data => { if (data.plan) setUserPlan(data.plan) })
+      .catch(() => {})
+  }, [])
+
+  const isBasicPlan = userPlan === 'basic'
 
   const [form, setForm] = useState({
     title: '',
@@ -470,12 +480,13 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     const val = form.title.trim()
                     if (val.length < 2) return
                     setPassageSuggestions([])
                     fetchSuggestions({ title: val })
                   }}
-                  disabled={suggestLoading || form.title.trim().length < 2}
+                  disabled={suggestLoading || form.title.trim().length < 2 || isBasicPlan}
                   className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
                 >
                   {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -564,12 +575,13 @@ function NewSermonForm() {
               <button
                 type="button"
                 onClick={() => {
+                  if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                   const val = form.bibleBook.trim()
                   if (val.length < 2) return
                   setTitleSuggestions([])
                   fetchSuggestions({ passage: val })
                 }}
-                disabled={suggestLoading || form.bibleBook.trim().length < 2}
+                disabled={suggestLoading || form.bibleBook.trim().length < 2 || isBasicPlan}
                 className="px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
               >
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -718,7 +730,7 @@ function NewSermonForm() {
                     .catch(console.error)
                     .finally(() => setSuggestLoading(false))
                 }}
-                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim()}
+                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || isBasicPlan}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -894,7 +906,7 @@ function NewSermonForm() {
                             setPointLoading(null)
                           }
                         }}
-                        disabled={loading || pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                        disabled={loading || pointLoading === -1 || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                         className="px-2.5 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
                       >
                         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -989,7 +1001,7 @@ function NewSermonForm() {
                     setSuggestLoading(false)
                   }
                 }}
-                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || form.outlinePoints.every(p => !p.trim())}
+                disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || form.outlinePoints.every(p => !p.trim()) || isBasicPlan}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1012,6 +1024,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setIntroConclusionLoading(true)
                     setIntroSuggestions([])
@@ -1031,7 +1044,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setIntroConclusionLoading(false) }
                   }}
-                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
                 >
                   {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1040,6 +1053,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setSuggestLoading(true)
                     try {
@@ -1058,7 +1072,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setSuggestLoading(false) }
                   }}
-                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
                 >
                   {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1104,6 +1118,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setIllustrationLoading(true)
                     setIllustrationSuggestions([])
@@ -1125,7 +1140,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setIllustrationLoading(false) }
                   }}
-                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
                 >
                   {illustrationLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1134,6 +1149,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setIllustrationLoading(true)
                     try {
@@ -1154,7 +1170,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setIllustrationLoading(false) }
                   }}
-                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
                 >
                   {illustrationLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1200,6 +1216,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setIntroConclusionLoading(true)
                     setConclusionSuggestions([])
@@ -1219,7 +1236,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setIntroConclusionLoading(false) }
                   }}
-                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium border border-border rounded-md px-2.5 py-1.5 hover:bg-accent disabled:opacity-50 flex items-center gap-1"
                 >
                   {introConclusionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1228,6 +1245,7 @@ function NewSermonForm() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                     if (!form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()) return
                     setSuggestLoading(true)
                     try {
@@ -1246,7 +1264,7 @@ function NewSermonForm() {
                     } catch (err) { console.error(err) }
                     finally { setSuggestLoading(false) }
                   }}
-                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim()}
+                  disabled={suggestLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
                   className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
                 >
                   {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
@@ -1290,11 +1308,13 @@ function NewSermonForm() {
             <button
               type="button"
               onClick={() => {
+                if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
                 setManuscriptPreview('')
                 setManuscriptLength('30분')
                 setManuscriptModal(true)
               }}
-              className="mb-2 text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1"
+              disabled={isBasicPlan}
+              className="mb-2 text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50"
             >
               <Sparkles className="w-3 h-3" />
               원고 작성
@@ -1695,8 +1715,11 @@ function NewSermonForm() {
                   <label className="text-xs font-medium text-muted">태그</label>
                   <button
                     type="button"
-                    onClick={analyzeTags}
-                    disabled={analyzingTags || (!form.manuscript && !form.coreMessage)}
+                    onClick={() => {
+                      if (isBasicPlan) { alert('Pro 플랜에서만 이용 가능합니다.'); return }
+                      analyzeTags()
+                    }}
+                    disabled={analyzingTags || (!form.manuscript && !form.coreMessage) || isBasicPlan}
                     className="text-[11px] flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {analyzingTags ? (
