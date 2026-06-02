@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Lightbulb, Loader2, Sparkles, Settings2 } from 'lucide-react'
+import { ArrowLeft, Lightbulb, Loader2, Sparkles, Settings2, Trash2 } from 'lucide-react'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
 import ManageOptionsModal from '@/components/dashboard/ManageOptionsModal'
@@ -969,8 +969,19 @@ function NewSermonForm() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted">적용 (그리스도 중심으로 연결하기)</label>
-              <button
-                type="button"
+              <div className="flex items-center gap-1.5">
+                {form.christApplication && (
+                  <button
+                    type="button"
+                    onClick={() => updateField('christApplication', '')}
+                    className="p-1.5 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
+                    title="내용 삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
                 onClick={async () => {
                   const title = form.title.trim()
                   const passage = form.bibleBook.trim()
@@ -1005,6 +1016,7 @@ function NewSermonForm() {
                 {suggestLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                 자동완성
               </button>
+              </div>
             </div>
             <textarea
               value={form.christApplication}
@@ -1019,6 +1031,16 @@ function NewSermonForm() {
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted">서론 작성</label>
               <div className="flex items-center gap-1.5">
+                {form.introduction && (
+                  <button
+                    type="button"
+                    onClick={() => updateField('introduction', '')}
+                    className="p-1.5 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
+                    title="내용 삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={async () => {
@@ -1113,6 +1135,16 @@ function NewSermonForm() {
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted">예화</label>
               <div className="flex items-center gap-1.5">
+                {form.illustration && (
+                  <button
+                    type="button"
+                    onClick={() => updateField('illustration', '')}
+                    className="p-1.5 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
+                    title="내용 삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={async () => {
@@ -1211,6 +1243,16 @@ function NewSermonForm() {
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted">결론 작성</label>
               <div className="flex items-center gap-1.5">
+                {form.conclusion && (
+                  <button
+                    type="button"
+                    onClick={() => updateField('conclusion', '')}
+                    className="p-1.5 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
+                    title="내용 삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={async () => {
