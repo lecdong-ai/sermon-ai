@@ -51,7 +51,7 @@ const PREP_STEPS = [
 const BENEFITS = [
   '다음 주일 날짜가 기본값으로 자동 설정됩니다.',
   'AI가 제목과 본문을 서로 맥락에 맞게 추천합니다.',
-  '입력 후 바로 일반 설교 워크스페이스로 이동합니다.',
+  '입력 후 바로 설교 워크스페이스로 이동합니다.',
 ]
 
 interface SuggestionItem {
@@ -191,7 +191,7 @@ export default function NewSermonPage() {
             <section className="glass-panel glass-border-neon rounded-[32px] p-6 sm:p-8 lg:p-10">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-200/70 bg-white/80 px-3.5 py-1.5 text-[12px] font-bold text-indigo-600 shadow-sm">
                 <BookOpen className="h-3.5 w-3.5" />
-                일반 설교 생성
+                설교 생성
               </div>
 
               <div className="max-w-2xl">
@@ -200,7 +200,7 @@ export default function NewSermonPage() {
                   <br /><span className="text-gradient">빠르게 시작하는 화면</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-500 sm:text-[16px]">
-                  제목과 성경 본문, 설교 날짜만 정리하면 바로 일반 설교 워크스페이스로 이어집니다.
+                  제목과 성경 본문, 설교 날짜만 정리하면 바로 설교 워크스페이스로 이어집니다.
                   막막한 시작 대신, 집중할 수 있는 출발점을 만들어 드립니다.
                 </p>
               </div>
@@ -281,7 +281,7 @@ export default function NewSermonPage() {
                   </div>
                   <h2 className="text-[24px] font-extrabold tracking-tight text-slate-900">새 설교 준비</h2>
                   <p className="mt-2 text-[14px] leading-6 text-slate-500">
-                    필수 정보만 입력하면 바로 일반 설교 워크스페이스가 생성됩니다.
+                    필수 정보만 입력하면 바로 설교 워크스페이스가 생성됩니다.
                   </p>
                 </div>
                 <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md sm:flex">
@@ -421,7 +421,7 @@ export default function NewSermonPage() {
                   className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-4 text-[15px] font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/25"
                 >
                   <BookOpen className="h-4 w-4" />
-                  일반 설교 시작하기
+                  새 설교 시작하기
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
