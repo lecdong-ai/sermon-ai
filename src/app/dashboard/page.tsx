@@ -32,13 +32,21 @@ export default function DashboardPage() {
   }, [])
 
   const recentSermons = useMemo(
-    () => [...sermons].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
+    () => [...sermons]
+      .filter(s => s.status === 'completed')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5),
+    [sermons]
+  )
+
+  const completedSermons = useMemo(
+    () => sermons.filter(s => s.status === 'completed'),
     [sermons]
   )
 
   const themeNames = useMemo(() => {
     const map = new Map<string, number>()
-    for (const s of sermons) {
+    for (const s of completedSermons) {
       for (const tid of s.themeIds) {
         const theme = themes.find((t) => t.id === tid)
         const name = theme?.name || tid
@@ -49,42 +57,42 @@ export default function DashboardPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([name, count]) => ({ name, count }))
-  }, [sermons, themes])
+  }, [completedSermons, themes])
 
   const bookCount = useMemo(() => {
     const map = new Map<string, number>()
-    for (const s of sermons) {
+    for (const s of completedSermons) {
       map.set(s.bibleBook, (map.get(s.bibleBook) || 0) + 1)
     }
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([book, count]) => ({ book, count }))
-  }, [sermons])
+  }, [completedSermons])
 
   const seasonCount = useMemo(() => {
     const map = new Map<string, number>()
-    for (const s of sermons) {
+    for (const s of completedSermons) {
       if (s.season) {
         map.set(s.season, (map.get(s.season) || 0) + 1)
       }
     }
     return Array.from(map.entries()).map(([season, count]) => ({ season, count }))
-  }, [sermons])
+  }, [completedSermons])
 
   const audienceCount = useMemo(() => {
     const map = new Map<string, number>()
-    for (const s of sermons) {
+    for (const s of completedSermons) {
       map.set(s.audience, (map.get(s.audience) || 0) + 1)
     }
     return Array.from(map.entries()).map(([audience, count]) => ({ audience, count }))
-  }, [sermons])
+  }, [completedSermons])
 
   const seriesProgress = useMemo(() => {
     return series.map((srs) => {
-      const count = sermons.filter((s) => s.seriesId === srs.id).length
+      const count = completedSermons.filter((s) => s.seriesId === srs.id).length
       return { ...srs, sermonCount: count }
     })
-  }, [series, sermons])
+  }, [series, completedSermons])
 
   return (
     <div className="animate-fade-in space-y-6 max-w-6xl">
@@ -92,7 +100,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-xl font-bold text-foreground">{userName ? `${userName}의 설교아카이브` : '대시보드'}</h2>
           <p className="text-sm text-muted mt-0.5">
-            총 {sermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
+            총 {completedSermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
           </p>
         </div>
         <button

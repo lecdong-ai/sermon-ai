@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
         themeIds: result.themeIds || [],
         tagIds: result.tagIds || [],
         relatedSermonIds: result.relatedSermonIds || [],
+        status: row.status || 'draft',
         createdAt: row.created_at || new Date().toISOString(),
         updatedAt: row.updated_at || new Date().toISOString(),
       }
