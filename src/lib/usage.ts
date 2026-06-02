@@ -3,11 +3,18 @@ import type { PlanType, UserUsage, UsageInfo, FeatureAccess } from '@/types'
 import { PLAN_LIMITS } from '@/types'
 
 const UNLIMITED_EMAILS = ['lecdong@gmail.com']
+const UNLIMITED_GENERATION_EMAILS = ['lecdong01@gmail.com']
 
 async function isUnlimitedUser(userId: string): Promise<boolean> {
   const { data, error } = await supabase.auth.admin.getUserById(userId)
   if (error || !data?.user?.email) return false
   return UNLIMITED_EMAILS.includes(data.user.email.toLowerCase())
+}
+
+async function isUnlimitedGenerationUser(userId: string): Promise<boolean> {
+  const { data, error } = await supabase.auth.admin.getUserById(userId)
+  if (error || !data?.user?.email) return false
+  return UNLIMITED_GENERATION_EMAILS.includes(data.user.email.toLowerCase())
 }
 
 function currentMonth(): string {
@@ -164,7 +171,16 @@ export async function checkUsage(userId: string): Promise<UsageInfo> {
     }
   }
   const usage = await ensureUsage(userId)
-  return computeUsage(usage)
+  const info = computeUsage(usage)
+
+  if (await isUnlimitedGenerationUser(userId)) {
+    info.monthly.limit = 999999
+    info.monthly.remaining = 999999
+    info.can_generate = true
+    info.block_reason = undefined
+  }
+
+  return info
 }
 
 export async function checkFeatureAccess(userId: string, feature: string): Promise<FeatureAccess> {
@@ -207,6 +223,16 @@ export async function consumeUsage(userId: string): Promise<{ success: boolean; 
       workspace: { used: 0, limit: 0, remaining: 0 },
       can_generate: true,
     }}
+  }
+
+  if (await isUnlimitedGenerationUser(userId)) {
+    const usage = await ensureUsage(userId)
+    const info = computeUsage(usage)
+    info.monthly.limit = 999999
+    info.monthly.remaining = 999999
+    info.can_generate = true
+    info.block_reason = undefined
+    return { success: true, usage: info }
   }
 
   const usage = await ensureUsage(userId)
