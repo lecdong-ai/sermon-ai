@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Search, Shield, Trash2, XCircle, AlertTriangle } from 'lucide-react'
+import { Loader2, Search, Shield, Trash2, AlertTriangle, Gift, Crown } from 'lucide-react'
 
 interface User {
   id: string
@@ -13,12 +13,17 @@ interface User {
   confirmed_at: string | null
 }
 
+type ActionType = 'reset_trial' | 'give_basic' | 'give_pro' | null
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [confirmUser, setConfirmUser] = useState<User | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ user: User; action: ActionType } | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [actionMsg, setActionMsg] = useState('')
 
   const fetchUsers = () => {
     setLoading(true)
@@ -50,6 +55,56 @@ export default function AdminUsersPage() {
       alert('네트워크 오류')
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handlePlanAction = async () => {
+    if (!confirmAction) return
+    setActionLoading(true)
+    setActionMsg('')
+
+    try {
+      const plan = confirmAction.action === 'give_basic' ? 'basic' : confirmAction.action === 'give_pro' ? 'pro' : null
+      const res = await fetch('/api/admin/users/update-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId: confirmAction.user.id,
+          action: plan ? 'give_month' : 'reset_trial',
+          ...(plan ? { plan } : {}),
+        }),
+      })
+      const data = await res.json()
+      setActionMsg(data.message || data.error || '완료')
+      if (data.success) {
+        setTimeout(() => {
+          setConfirmAction(null)
+          setActionMsg('')
+          fetchUsers()
+        }, 1500)
+      }
+    } catch {
+      setActionMsg('네트워크 오류')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const actionLabel = (action: ActionType) => {
+    switch (action) {
+      case 'reset_trial': return '무료체험 초기화'
+      case 'give_basic': return 'Basic 1개월'
+      case 'give_pro': return 'Pro 1개월'
+      default: return ''
+    }
+  }
+
+  const actionIcon = (action: ActionType) => {
+    switch (action) {
+      case 'reset_trial': return Gift
+      case 'give_basic': return Crown
+      case 'give_pro': return Crown
+      default: return Gift
     }
   }
 
@@ -93,8 +148,8 @@ export default function AdminUsersPage() {
                 <th className="text-left px-5 py-3 font-bold text-slate-600">이름</th>
                 <th className="text-left px-5 py-3 font-bold text-slate-600">권한</th>
                 <th className="text-left px-5 py-3 font-bold text-slate-600">가입일</th>
-                <th className="text-left px-5 py-3 font-bold text-slate-600">마지막 접속</th>
-                <th className="text-left px-5 py-3 font-bold text-slate-600">관리</th>
+                <th className="text-left px-5 py-3 font-bold text-slate-600">서비스</th>
+                <th className="text-left px-5 py-3 font-bold text-slate-600">삭제</th>
               </tr>
             </thead>
             <tbody>
@@ -119,8 +174,27 @@ export default function AdminUsersPage() {
                   <td className="px-5 py-3 text-slate-500">
                     {new Date(u.created_at).toLocaleDateString('ko-KR')}
                   </td>
-                  <td className="px-5 py-3 text-slate-500">
-                    {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('ko-KR') : '-'}
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setConfirmAction({ user: u, action: 'reset_trial' })}
+                        className="px-2 py-1 rounded-lg text-[11px] font-bold text-emerald-600 hover:bg-emerald-50 transition-all border border-emerald-200"
+                      >
+                        체험
+                      </button>
+                      <button
+                        onClick={() => setConfirmAction({ user: u, action: 'give_basic' })}
+                        className="px-2 py-1 rounded-lg text-[11px] font-bold text-blue-600 hover:bg-blue-50 transition-all border border-blue-200"
+                      >
+                        Basic
+                      </button>
+                      <button
+                        onClick={() => setConfirmAction({ user: u, action: 'give_pro' })}
+                        className="px-2 py-1 rounded-lg text-[11px] font-bold text-purple-600 hover:bg-purple-50 transition-all border border-purple-200"
+                      >
+                        Pro
+                      </button>
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     <button
@@ -150,33 +224,47 @@ export default function AdminUsersPage() {
               <AlertTriangle className="w-6 h-6 text-rose-500" />
             </div>
             <h2 className="text-[18px] font-extrabold text-slate-800 text-center mb-2">사용자 탈퇴</h2>
-            <p className="text-[14px] text-slate-500 text-center mb-1">
-              다음 사용자를 탈퇴시키겠습니까?
-            </p>
-            <p className="text-[15px] font-bold text-slate-700 text-center mb-4">
-              {confirmUser.email}
-            </p>
+            <p className="text-[14px] text-slate-500 text-center mb-4">{confirmUser.email}</p>
             <div className="bg-amber-50 rounded-xl px-4 py-3 mb-5 text-[12px] text-amber-700 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              모든 데이터(설교, 사용량, 구독 등)가 영구 삭제되며 복구할 수 없습니다.
+              모든 데이터가 영구 삭제되며 복구할 수 없습니다.
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setConfirmUser(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition-all"
-              >
-                취소
+              <button onClick={() => setConfirmUser(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition-all">취소</button>
+              <button onClick={() => handleDelete(confirmUser.id)} disabled={deleting === confirmUser.id} className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white text-[14px] font-bold hover:bg-rose-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {deleting === confirmUser.id ? <><Loader2 className="w-4 h-4 animate-spin" /> 처리 중...</> : <><Trash2 className="w-4 h-4" /> 탈퇴 처리</>}
               </button>
-              <button
-                onClick={() => handleDelete(confirmUser.id)}
-                disabled={deleting === confirmUser.id}
-                className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white text-[14px] font-bold hover:bg-rose-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {deleting === confirmUser.id ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> 처리 중...</>
-                ) : (
-                  <><Trash2 className="w-4 h-4" /> 탈퇴 처리</>
-                )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 max-w-sm w-full mx-4 animate-in">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-4">
+              <Gift className="w-6 h-6 text-indigo-500" />
+            </div>
+            <h2 className="text-[18px] font-extrabold text-slate-800 text-center mb-1">{actionLabel(confirmAction.action)}</h2>
+            <p className="text-[14px] text-slate-500 text-center mb-4">{confirmAction.user.email}</p>
+            <div className="bg-slate-50 rounded-xl px-4 py-3 mb-5 text-[13px] text-slate-600">
+              {confirmAction.action === 'reset_trial' ? (
+                <>무료체험 횟수(3회)와 유효기간(15일)이 초기화됩니다.</>
+              ) : confirmAction.action === 'give_basic' ? (
+                <>Basic 플랜 1개월(AI 분석 10회)이 즉시 활성화됩니다.</>
+              ) : (
+                <>Pro 플랜 1개월(AI 분석 20회)이 즉시 활성화됩니다.</>
+              )}
+            </div>
+            {actionMsg && (
+              <div className={`text-center text-[13px] font-bold mb-4 ${actionMsg.includes('실패') || actionMsg.includes('오류') ? 'text-rose-600' : 'text-emerald-600'}`}>
+                {actionMsg}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => { setConfirmAction(null); setActionMsg('') }} disabled={actionLoading} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50">취소</button>
+              <button onClick={handlePlanAction} disabled={actionLoading} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[14px] font-bold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {actionLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> 처리 중...</> : '적용하기'}
               </button>
             </div>
           </div>
