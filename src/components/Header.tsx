@@ -91,7 +91,7 @@ export default memo(function Header() {
                     ? 'bg-slate-100/60 text-slate-500 border border-slate-200/50'
                     : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50'
                 }`}>
-                  {plan === 'pro' ? '👑 Pro' : plan === 'none' ? 'Free' : '🎁 Trial'}
+                  {plan === 'pro' ? '👑 Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
                 </span>
               )}
 
