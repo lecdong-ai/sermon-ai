@@ -67,6 +67,14 @@ function UsageBadge() {
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/check-role')
+      .then(r => r.json())
+      .then(d => setIsAdmin(d.admin))
+      .catch(() => {})
+  }, [])
 
   return (
     <aside className="w-56 bg-sidebar text-white flex flex-col shrink-0 h-full">
@@ -105,6 +113,22 @@ export default function Sidebar() {
             </button>
           )
         })}
+        {isAdmin && (
+          <div className="px-5 pt-3 pb-1 mt-2 border-t border-white/10">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1 px-1">관리자</p>
+            <button
+              onClick={() => router.push('/admin')}
+              className={`w-full text-left px-5 py-2.5 text-sm flex items-center gap-3 transition-colors rounded-lg ${
+                pathname.startsWith('/admin')
+                  ? 'bg-sidebar-active text-white'
+                  : 'text-white/60 hover:bg-sidebar-hover hover:text-white/90'
+              }`}
+            >
+              <span className="text-xs w-4 text-center">⚙</span>
+              <span>관리자 패널</span>
+            </button>
+          </div>
+        )}
       </nav>
       <div className="px-4 py-3 border-t border-white/10">
         <button
