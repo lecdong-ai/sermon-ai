@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
   LayoutDashboard, Users, CreditCard, FileText, ChevronLeft, Shield,
-  Loader2, Cross
+  Loader2,
 } from 'lucide-react'
 
 const ADMIN_MENUS = [
@@ -20,11 +20,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
   const [checking, setChecking] = useState(true)
   const [isAdminUser, setIsAdminUser] = useState(false)
 
   useEffect(() => {
-    if (loading) return
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (loading || !mounted) return
     if (!user) {
       router.push('/login?redirect=/admin')
       return
@@ -40,17 +45,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
       .catch(() => router.push('/dashboard'))
       .finally(() => setChecking(false))
-  }, [user, loading, router])
+  }, [user, loading, mounted, router])
 
-  if (loading || checking) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto mb-4" />
-          <p className="text-[15px] text-slate-500">확인 중...</p>
-        </div>
-      </div>
-    )
+  if (!mounted || loading || checking) {
+    return null
   }
 
   if (!isAdminUser) return null
