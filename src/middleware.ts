@@ -2,11 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/pricing']
+const publicPrefixes = ['/share/', '/api/']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const isPublic = publicRoutes.some((route) => pathname === route || pathname.startsWith('/share/'))
+  const isPublic = publicRoutes.some((route) => pathname === route) ||
+    publicPrefixes.some((prefix) => pathname.startsWith(prefix))
 
   const response = NextResponse.next({ request })
 
