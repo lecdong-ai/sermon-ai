@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   ArrowLeft,
   ArrowRight,
@@ -288,7 +289,7 @@ export default function NewSermonPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-5">
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <label className="text-[14px] font-bold text-slate-900">설교 제목 *</label>
@@ -408,16 +409,15 @@ export default function NewSermonPage() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-4 text-[15px] font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/25 disabled:opacity-60"
+                <Link
+                  href="/dashboard/sermons/new"
+                  className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-4 text-[15px] font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/25"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />}
-                  {saving ? '워크스페이스 생성 중...' : '일반 설교 시작하기'}
-                  {!saving && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
-                </button>
-              </form>
+                  <BookOpen className="h-4 w-4" />
+                  일반 설교 시작하기
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
             </div>
           </section>
         </div>
