@@ -236,6 +236,7 @@ function NewSermonForm() {
       } catch (err) { console.error(err) }
     }, 1500)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
 
   useEffect(() => {
@@ -261,6 +262,7 @@ function NewSermonForm() {
       } catch (err) { console.error(err) }
     }, 2000)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
 
   useEffect(() => {
@@ -286,6 +288,7 @@ function NewSermonForm() {
       } catch (err) { console.error(err) }
     }, 2500)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails])
 
   const autoGenIllustration = useRef(false)
@@ -315,6 +318,7 @@ function NewSermonForm() {
       } catch (err) { console.error(err) }
     }, 3000)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.title, form.bibleBook, form.coreMessage, form.outlinePoints, form.outlineDetails, form.introduction, form.conclusion, form.christApplication])
 
   const filteredMajorThemes = useMemo(
