@@ -334,6 +334,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     })
 
     const raw = res.choices[0]?.message?.content || ''
+    console.log('[suggest] raw response (first 500):', raw.slice(0, 500))
     const parsed = safeParse(raw)
 
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
