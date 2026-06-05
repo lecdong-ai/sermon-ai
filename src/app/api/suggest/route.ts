@@ -213,9 +213,12 @@ ${body.suggestOnly ? '[{"value": "결론1", "reason": "추천 이유1"}, {"value
     } else if (title && passage && coreMessage && body.generateConclusion) {
       const points = body.outlinePoints || []
       const details = body.outlineDetails || []
+      const intro = body.introduction || ''
+      const application = body.application || ''
+      const illustration = body.illustration || ''
       systemPrompt = body.suggestOnly
-        ? `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 강단에서 바로 사용할 수 있는 설교 결론 3가지를 추천하라. 각 결론은 3~5문장으로 작성하라. 반드시 JSON 배열로만 응답하라.`
-        : `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 강단에서 바로 사용할 수 있는 설교 결론을 작성하라.
+        ? `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지, 적용, 서론, 예화를 모두 종합하여 강단에서 바로 사용할 수 있는 설교 결론 3가지를 추천하라. 각 결론은 3~5문장으로 작성하라. 반드시 JSON 배열로만 응답하라.`
+        : `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지, 적용, 서론, 예화를 모두 종합하여 강단에서 바로 사용할 수 있는 설교 결론을 작성하라.
 
 [역할]
 - 3대지를 요약하고 핵심 메시지로 수렴하라.
@@ -234,8 +237,11 @@ ${body.suggestOnly ? '[{"value": "결론1", "reason": "추천 이유1"}, {"value
 핵심 메시지: ${coreMessage}
 3대지:
 ${points.map((p: string, i: number) => `대지 ${i + 1}: ${p}${details[i] ? ` - ${details[i]}` : ''}`).join('\n')}
+${intro ? `\n서론: ${intro}` : ''}
+${application ? `\n적용: ${application}` : ''}
+${illustration ? `\n예화: ${illustration}` : ''}
 
-{"value": "결론 전문"}`
+${body.suggestOnly ? '[{"value": "결론1", "reason": "추천 이유1"}, {"value": "결론2", "reason": "추천 이유2"}, {"value": "결론3", "reason": "추천 이유3"}]' : '{"value": "결론 전문"}'}`
     } else if (title && passage && coreMessage && body.generateIllustration) {
       const points = body.outlinePoints || []
       const details = body.outlineDetails || []
