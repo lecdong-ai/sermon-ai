@@ -349,7 +349,14 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
 
-    const items: { value: string; reason: string }[] = Array.isArray(parsed) ? parsed : (parsed.suggestions || [])
+    console.log('[suggest] parsed type:', typeof parsed, 'isArray:', Array.isArray(parsed), 'keys:', Object.keys(parsed || {}))
+    const items: { value: string; reason: string }[] = Array.isArray(parsed)
+      ? parsed
+      : parsed.suggestions
+        ? parsed.suggestions
+        : parsed.value
+          ? [{ value: parsed.value, reason: parsed.reason || '' }]
+          : []
 
     return NextResponse.json({ success: true, suggestions: items })
   } catch (err: any) {
