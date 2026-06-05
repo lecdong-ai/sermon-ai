@@ -72,12 +72,12 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
     '<p style="font-size:13px;color:#1a56db;font-weight:600;margin:3px 0 0 0;">' + ageLabels[ageKey] + '</p></div>')
 
   chunks.push('<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">' +
-    '<tr><td style="width:60px;padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">제목</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;vertical-align:middle;">' + esc(stripPassage(data.title)) + '</td></tr>' +
-    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">본문</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;">' + esc(data.passage) + '</td></tr>' +
-    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">주제</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;">' + esc(data.topic) + '</td></tr></table>')
+    '<tr><td style="width:60px;padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">제목</span></td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">' + esc(stripPassage(data.title)) + '</span></td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">본문</span></td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">' + esc(data.passage) + '</span></td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">주제</span></td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;"><span style="transform:translateY(-2px);display:inline-block;">' + esc(data.topic) + '</span></td></tr></table>')
 
   if (passageText) {
     chunks.push('<div class="passage-box"><p class="lbl">개역개정 성경본문</p><p>' + esc(passageText) + '</p></div>')
@@ -88,7 +88,7 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
 
   let pointsHtml = ''
   for (let pi = 0; pi < data.directionPoints.length; pi++) {
-    pointsHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(data.directionPoints[pi]) + '</li>'
+    pointsHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;transform:translateY(-2px);">' + esc(data.directionPoints[pi]) + '</li>'
   }
   chunks.push('<div class="section-h2">전체 나눔 방향</div>' +
     '<ul style="margin:0 0 10px 0;padding-left:16px;">' + pointsHtml + '</ul>')
@@ -113,7 +113,7 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
 
   let closingHtml = ''
   for (let ci = 0; ci < data.closingQuestions.length; ci++) {
-    closingHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(data.closingQuestions[ci]) + '</li>'
+    closingHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;transform:translateY(-2px);">' + esc(data.closingQuestions[ci]) + '</li>'
   }
   chunks.push('<hr style="border:none;border-top:1px dashed #d1d5db;margin:16px 0;">' +
     '<div class="section-h2">공통 마무리</div>' +
