@@ -23,8 +23,12 @@ function setCache(key: string, data: any): void {
 }
 
 function invalidateCache(userId: string): void {
+  const keysToDelete: string[] = []
   for (const key of usageCache.keys()) {
-    if (key.startsWith(userId)) usageCache.delete(key)
+    if (key.startsWith(userId)) keysToDelete.push(key)
+  }
+  for (const key of keysToDelete) {
+    usageCache.delete(key)
   }
 }
 
