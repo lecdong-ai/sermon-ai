@@ -345,18 +345,16 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: false, error: parseErr.message || 'JSON 파싱 실패', rawResponse: raw.slice(0, 300) }, { status: 500 })
     }
 
+    console.log('[suggest] items count:', items.length, 'first item:', JSON.stringify(items[0]).slice(0, 200))
+
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
 
-    console.log('[suggest] parsed type:', typeof parsed, 'isArray:', Array.isArray(parsed), 'keys:', Object.keys(parsed || {}))
-    const items: { value: string; reason: string }[] = Array.isArray(parsed)
-      ? parsed
-      : parsed.suggestions
-        ? parsed.suggestions
-        : parsed.value
-          ? [{ value: parsed.value, reason: parsed.reason || '' }]
-          : []
+    if (items.length === 0) {
+      console.error('[suggest] empty items, raw response:', raw.slice(0, 500))
+      return NextResponse.json({ success: false, error: 'AI 응답에서 추천 항목을 찾지 못했습니다', rawResponse: raw.slice(0, 500) }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, suggestions: items })
   } catch (err: any) {
