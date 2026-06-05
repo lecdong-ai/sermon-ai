@@ -209,7 +209,7 @@ ${body.suggestOnly ? '[{"value": "적용1", "reason": "추천 이유1"}, {"value
 3대지:
 ${points.map((p: string, i: number) => `대지 ${i + 1}: ${p}${details[i] ? ` - ${details[i]}` : ''}`).join('\n')}
 
-${body.suggestOnly ? '[{"value": "서론1", "reason": "추천 이유1"}, {"value": "서론2", "reason": "추천 이유2"}, {"value": "서론3", "reason": "추천 이유3"}]' : '{"value": "서론 전문"}'}`
+${body.suggestOnly ? '[{"value": "결론1", "reason": "추천 이유1"}, {"value": "결론2", "reason": "추천 이유2"}, {"value": "결론3", "reason": "추천 이유3"}]' : '{"value": "결론 전문"}'}`
     } else if (title && passage && coreMessage && body.generateConclusion) {
       const points = body.outlinePoints || []
       const details = body.outlineDetails || []
@@ -330,7 +330,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         : body.length === '40분' ? 14000
         : body.length === '50분' ? 18000
         : 22000
-        : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 500,
+        : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 1000,
     })
 
     console.log('[suggest] usage:', JSON.stringify(res.usage))
