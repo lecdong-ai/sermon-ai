@@ -354,6 +354,6 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     return NextResponse.json({ success: true, suggestions: items })
   } catch (err: any) {
     console.error('POST /api/suggest error:', err)
-    return NextResponse.json({ success: false, error: err.message || '제안 실패', rawResponse: res?.choices?.[0]?.message?.content?.slice(0, 200) || 'no response' }, { status: 500 })
+    return NextResponse.json({ success: false, error: err.message || '제안 실패' }, { status: 500 })
   }
 }
