@@ -52,8 +52,6 @@ async function callAI<T>(
 
   const cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
 
-  console.log(`[callAI] 응답 길이: ${cleaned.length}자, 토큰: ${res.usage?.completion_tokens || 'unknown'}`)
-
   try {
     return JSON.parse(cleaned) as T
   } catch {
@@ -80,7 +78,6 @@ async function safeCallAI<T>(
 export async function generateAll(text: string, useMock?: boolean): Promise<SermonResultData> {
   const mock = useMock ?? process.env.NEXT_PUBLIC_USE_MOCK === 'true'
   if (mock) {
-    console.log('📦 Using mock data')
     await new Promise((r) => setTimeout(r, 1500))
     return getMockResult()
   }
@@ -191,14 +188,8 @@ export async function generateSingleItem(
   }
 
   const config = configs[item]
-  console.log(`[generateSingleItem] item=${item}, maxTokens=${config.maxTokens}, temp=${config.temperature || 0.3}, promptLen=${config.prompt.length}`)
-  console.log(`[generateSingleItem] prompt preview: ${config.prompt.substring(0, 100)}...`)
   const data = await callAI(config.prompt, text, config.schema, config.maxTokens, config.temperature)
   const mapped = config.mapper(data)
-  if (mapped.sermonScript) {
-    console.log(`[generateSingleItem] sermonScript 길이: ${mapped.sermonScript.length}자`)
-    console.log(`[generateSingleItem] sermonScript preview: ${mapped.sermonScript.substring(0, 200)}...`)
-  }
   return mapped
 }
 

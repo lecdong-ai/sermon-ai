@@ -339,10 +339,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 1000,
     })
 
-    console.log('[suggest] usage:', JSON.stringify(res.usage))
     const raw = res.choices[0]?.message?.content || ''
-    console.log('[suggest] usage:', JSON.stringify(res.usage))
-    console.log('[suggest] raw response length:', raw.length, 'first 300:', raw.slice(0, 300))
     let parsed
     try {
       parsed = safeParse(raw)
@@ -360,8 +357,6 @@ ${illustration ? `\n예화: ${illustration}` : ''}
           : parsed.text
             ? [{ value: parsed.text, reason: '' }]
             : Object.values(parsed).filter((v): v is string => typeof v === 'string').map(v => ({ value: v, reason: '' }))
-
-    console.log('[suggest] items count:', items.length, 'first item:', JSON.stringify(items[0]).slice(0, 200))
 
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })

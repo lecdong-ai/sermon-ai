@@ -151,7 +151,6 @@ function WorkspacePage() {
         }),
       })
       const data = await res.json()
-      console.log('[workspace] API 응답:', JSON.stringify(data).substring(0, 500))
       if (!data.success) {
         if (data.block_reason) {
           setToast({ visible: true, message: data.error + ' 요금제를 확인해주세요.', type: 'error' })

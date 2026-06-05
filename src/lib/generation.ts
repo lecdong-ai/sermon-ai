@@ -76,20 +76,13 @@ export async function generateWithDeduction(params: GenerateParams): Promise<Gen
   let result: any
   try {
     if (useMock) {
-      console.log(`[generation] ⚠️ MOCK MODE - item=${item}`)
       const mock = getMockResult()
       const key = item as keyof typeof mock
       result = { [item]: (mock as any)[key] }
     } else if (item === 'all') {
-      console.log(`[generation] generateAll - textLen=${text.length}`)
       result = await generateAll(text)
     } else {
-      console.log(`[generation] generateSingleItem - item=${item}, textLen=${text.length}`)
       result = await generateSingleItem(text, item as GenerationItem)
-    }
-    console.log(`[generation] result keys: ${Object.keys(result || {}).join(', ')}`)
-    if (result?.sermonScript) {
-      console.log(`[generation] sermonScript 길이: ${result.sermonScript.length}자`)
     }
   } catch (err: any) {
     // Generation failed → mark job as failed, NO deduction
