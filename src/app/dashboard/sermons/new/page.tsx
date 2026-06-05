@@ -920,7 +920,7 @@ function NewSermonForm() {
                     if (data.success && data.suggestions) {
                       setAppSuggestions(data.suggestions)
                     } else {
-                      alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                      alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다') + '\n\nRaw: ' + (data.rawResponse || ''))
                     }
                   } catch (err: any) {
                     console.error(err)
@@ -1002,7 +1002,7 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setIntroSuggestions(data.suggestions)
-                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다') + '\n\nRaw: ' + (data.rawResponse || ''))
                     } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIntroConclusionLoading(false) }
                   }}
@@ -1081,7 +1081,7 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setIllustrationSuggestions(data.suggestions)
-                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다') + '\n\nRaw: ' + (data.rawResponse || ''))
                     } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIllustrationLoading(false) }
                   }}
@@ -1158,7 +1158,7 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setConclusionSuggestions(data.suggestions)
-                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다') + '\n\nRaw: ' + (data.rawResponse || ''))
                     } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIntroConclusionLoading(false) }
                   }}

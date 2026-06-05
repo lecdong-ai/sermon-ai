@@ -45,39 +45,39 @@ function safeParse(raw: string): any {
     cleaned = cleaned.slice(firstBracket)
   }
   
+  // Try parsing directly first
+  try { return JSON5.parse(cleaned) } catch {}
+  try { return JSON.parse(cleaned) } catch {}
+  
+  // Try with escaped newlines
   const escaped = escapeJSON(cleaned)
   try { return JSON5.parse(escaped) } catch {}
   try { return JSON.parse(escaped) } catch {}
   
+  // Try extracting just the array/object with balanced brackets
   const bracketMatch = cleaned.match(/^(\[[\s\S]*\]|\{[\s\S]*\})/)
   if (bracketMatch) {
     const str = bracketMatch[1]
-    const stack: string[] = []
-    for (let i = 0; i < str.length; i++) {
-      const ch = str[i]
-      if (ch === '"' || ch === "'") {
-        const quote = ch
-        i++
-        while (i < str.length && str[i] !== quote) {
-          if (str[i] === '\\') i++
-          i++
-        }
-      } else if (ch === '[' || ch === '{') {
-        stack.push(ch)
-      } else if (ch === ']' || ch === '}') {
-        const open = stack.pop()
-        if (!open) break
-        if ((ch === ']' && open !== '[') || (ch === '}' && open !== '{')) break
-        if (stack.length === 0) {
-          const segment = str.slice(0, i + 1)
+    const escaped = escapeJSON(str)
+    try { return JSON5.parse(escaped) } catch {}
+    try { return JSON.parse(escaped) } catch {}
+  }
+  
+  // Last resort: try to find any JSON-like structure
+  for (let start = 0; start < cleaned.length; start++) {
+    if (cleaned[start] === '[' || cleaned[start] === '{') {
+      for (let end = cleaned.length; end > start; end--) {
+        if ((cleaned[start] === '[' && cleaned[end-1] === ']') ||
+            (cleaned[start] === '{' && cleaned[end-1] === '}')) {
+          const segment = cleaned.slice(start, end)
           const escaped = escapeJSON(segment)
           try { return JSON5.parse(escaped) } catch {}
           try { return JSON.parse(escaped) } catch {}
-          break
         }
       }
     }
   }
+  
   throw new Error('Failed to parse AI response as JSON:\n' + cleaned.slice(0, 500))
 }
 
@@ -335,8 +335,15 @@ ${illustration ? `\n예화: ${illustration}` : ''}
 
     console.log('[suggest] usage:', JSON.stringify(res.usage))
     const raw = res.choices[0]?.message?.content || ''
+    console.log('[suggest] usage:', JSON.stringify(res.usage))
     console.log('[suggest] raw response length:', raw.length, 'first 300:', raw.slice(0, 300))
-    const parsed = safeParse(raw)
+    let parsed
+    try {
+      parsed = safeParse(raw)
+    } catch (parseErr: any) {
+      console.error('[suggest] parse error:', parseErr.message)
+      return NextResponse.json({ success: false, error: parseErr.message || 'JSON 파싱 실패', rawResponse: raw.slice(0, 300) }, { status: 500 })
+    }
 
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
@@ -347,6 +354,6 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     return NextResponse.json({ success: true, suggestions: items })
   } catch (err: any) {
     console.error('POST /api/suggest error:', err)
-    return NextResponse.json({ success: false, error: err.message || '제안 실패' }, { status: 500 })
+    return NextResponse.json({ success: false, error: err.message || '제안 실패', rawResponse: res?.choices?.[0]?.message?.content?.slice(0, 200) || 'no response' }, { status: 500 })
   }
 }
