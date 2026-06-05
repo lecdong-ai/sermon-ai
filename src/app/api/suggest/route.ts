@@ -305,7 +305,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     }
 
     const res = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },

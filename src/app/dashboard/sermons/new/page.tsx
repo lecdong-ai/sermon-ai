@@ -919,9 +919,12 @@ function NewSermonForm() {
                     const data = await res.json()
                     if (data.success && data.suggestions) {
                       setAppSuggestions(data.suggestions)
+                    } else {
+                      alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
                     }
-                  } catch (err) {
+                  } catch (err: any) {
                     console.error(err)
+                    alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류'))
                   } finally {
                     setSuggestLoading(false)
                   }
@@ -999,7 +1002,8 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setIntroSuggestions(data.suggestions)
-                    } catch (err) { console.error(err) }
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                    } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIntroConclusionLoading(false) }
                   }}
                   disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
@@ -1077,7 +1081,8 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setIllustrationSuggestions(data.suggestions)
-                    } catch (err) { console.error(err) }
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                    } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIllustrationLoading(false) }
                   }}
                   disabled={illustrationLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
@@ -1153,7 +1158,8 @@ function NewSermonForm() {
                       })
                       const data = await res.json()
                       if (data.success && data.suggestions) setConclusionSuggestions(data.suggestions)
-                    } catch (err) { console.error(err) }
+                      else alert('AI 추천 중 오류: ' + (data.error || '결과를 받지 못했습니다'))
+                    } catch (err: any) { console.error(err); alert('AI 추천 중 오류: ' + (err.message || '알 수 없는 오류')) }
                     finally { setIntroConclusionLoading(false) }
                   }}
                   disabled={introConclusionLoading || !form.title.trim() || !form.bibleBook.trim() || !form.coreMessage.trim() || isBasicPlan}
