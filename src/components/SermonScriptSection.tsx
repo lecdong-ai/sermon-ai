@@ -39,8 +39,6 @@ export default function SermonScriptSection({ data }: Props) {
   console.log('[SermonScriptSection] data 길이:', data?.length, '자')
   console.log('[SermonScriptSection] data preview:', data?.substring(0, 300))
   const paragraphs = data.split('\n\n').filter(Boolean)
-  const labels = ['서론', '본론', '결론/적용']
-  const colors = ['bg-blue-100 text-blue-700', 'bg-primary-100 text-primary-700', 'bg-purple-100 text-purple-700']
 
   const SECTION_HEADERS = /^(서론|본론|결론\/적용|결론|적용)\s*\n/
 
@@ -53,13 +51,6 @@ export default function SermonScriptSection({ data }: Props) {
           const lines = cleaned.split('\n').filter(Boolean)
           return (
             <div key={i} className="animate-in-fast p-5 rounded-xl bg-white border border-[#f0f2f5] shadow-sm" style={{ animationDelay: `${i * 80}ms` }}>
-              {i < labels.length && (
-                <span className="text-[17px] font-extrabold px-3 py-1 rounded-md inline-block mb-3 tracking-tight"
-                  style={{ backgroundColor: colors[i % colors.length].split(' ')[0], color: colors[i % colors.length].split(' ')[1] }}
-                >
-                  {labels[i]}
-                </span>
-              )}
               <div className="space-y-2">
                 {lines.map((line, j) => {
                   const s = splitSubtitle(line)
