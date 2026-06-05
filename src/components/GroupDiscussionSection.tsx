@@ -28,16 +28,16 @@ const GD_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
 .pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
 .pdf-page-inner{width:174mm;}
-.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:10px 16px 4px 16px;margin-bottom:4px}
-.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:3px;display:block;position:relative;top:-1px}
-.prayer-box .txt{font-size:13px;color:#374151;line-height:1.6;margin:0;font-style:italic;position:relative;top:-1px}
+.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:12px 16px;margin-bottom:4px}
+.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:4px}
+.prayer-box .txt{font-size:13px;color:#374151;line-height:1.7;margin:0;font-style:italic}
 .section-h2{font-size:16px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe}
 .section-h3{font-size:14px;font-weight:700;color:#374151;margin:12px 0 4px 0}
-.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px 4px 14px;border-radius:3px;margin-bottom:10px}
-.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.6;position:relative;top:-1px}
-.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:10px 14px 4px 14px;border-radius:3px;margin-bottom:14px}
-.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 3px 0;display:block;position:relative;top:-1px}
-.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.6;position:relative;top:-1px}`
+.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px;border-radius:3px;margin-bottom:10px}
+.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.7}
+.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:10px 14px;border-radius:3px;margin-bottom:14px}
+.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 4px 0}
+.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.7}`
 
 const GD_CONTENT_MM = 261
 const GD_MM_PX = 96 / 25.4
@@ -57,7 +57,7 @@ function gdPageWrapper(content: string): string {
 function olHtml(items: string[]): string {
   let h = '<ol style="margin:0 0 10px 0;padding-left:18px;">'
   for (let i = 0; i < items.length; i++) {
-    h += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.6;position:relative;top:-1px;">' + esc(items[i]) + '</li>'
+    h += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(items[i]) + '</li>'
   }
   return h + '</ol>'
 }
@@ -72,12 +72,12 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
     '<p style="font-size:13px;color:#1a56db;font-weight:600;margin:3px 0 0 0;">' + ageLabels[ageKey] + '</p></div>')
 
   chunks.push('<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">' +
-    '<tr><td style="width:60px;padding:4px 10px 2px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;line-height:1.2;">제목</td>' +
-    '<td style="padding:4px 12px 2px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;vertical-align:middle;line-height:1.2;">' + esc(stripPassage(data.title)) + '</td></tr>' +
-    '<tr><td style="padding:4px 10px 2px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;line-height:1.2;">본문</td>' +
-    '<td style="padding:4px 12px 2px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;line-height:1.2;">' + esc(data.passage) + '</td></tr>' +
-    '<tr><td style="padding:4px 10px 2px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;line-height:1.2;">주제</td>' +
-    '<td style="padding:4px 12px 2px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;line-height:1.2;">' + esc(data.topic) + '</td></tr></table>')
+    '<tr><td style="width:60px;padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">제목</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;">' + esc(stripPassage(data.title)) + '</td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">본문</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;">' + esc(data.passage) + '</td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">주제</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;">' + esc(data.topic) + '</td></tr></table>')
 
   if (passageText) {
     chunks.push('<div class="passage-box"><p class="lbl">개역개정 성경본문</p><p>' + esc(passageText) + '</p></div>')
@@ -88,7 +88,7 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
 
   let pointsHtml = ''
   for (let pi = 0; pi < data.directionPoints.length; pi++) {
-    pointsHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.6;position:relative;top:-1px;">' + esc(data.directionPoints[pi]) + '</li>'
+    pointsHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(data.directionPoints[pi]) + '</li>'
   }
   chunks.push('<div class="section-h2">전체 나눔 방향</div>' +
     '<ul style="margin:0 0 10px 0;padding-left:16px;">' + pointsHtml + '</ul>')
@@ -113,7 +113,7 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
 
   let closingHtml = ''
   for (let ci = 0; ci < data.closingQuestions.length; ci++) {
-    closingHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.6;position:relative;top:-1px;">' + esc(data.closingQuestions[ci]) + '</li>'
+    closingHtml += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(data.closingQuestions[ci]) + '</li>'
   }
   chunks.push('<hr style="border:none;border-top:1px dashed #d1d5db;margin:16px 0;">' +
     '<div class="section-h2">공통 마무리</div>' +
