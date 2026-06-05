@@ -46,9 +46,9 @@ function chunkHtml(label: string, text: string) {
 }
 
 function passageChunk(text: string) {
-  return '<div style="background:#fefce8;border-left:4px solid #eab308;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:14px;">' +
-    '<p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#92400e;">성경 본문 (개역개정)</p>' +
-    '<p style="margin:0;font-size:13px;color:#333;line-height:1.75;font-style:italic;">' + esc(text) + '</p></div>'
+  return '<div style="background:#fefce8;border-left:4px solid #eab308;padding:8px 14px 18px 14px;border-radius:3px;margin-bottom:14px;">' +
+    '<p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#92400e;transform:translateY(-2px);">성경 본문 (개역개정)</p>' +
+    '<p style="margin:0;font-size:13px;color:#333;line-height:1.75;font-style:italic;transform:translateY(-2px);">' + esc(text) + '</p></div>'
 }
 
 function buildSummaryChunks(data: Summary): string[] {

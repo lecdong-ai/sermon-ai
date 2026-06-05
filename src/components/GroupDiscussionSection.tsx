@@ -28,16 +28,16 @@ const GD_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
 .pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
 .pdf-page-inner{width:174mm;}
-.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:14px 16px 12px 16px;margin-bottom:4px}
-.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:6px;display:block}
-.prayer-box .txt{font-size:13px;color:#374151;line-height:1.75;margin:0;font-style:italic}
+.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:8px 16px 18px 16px;margin-bottom:4px}
+.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:4px;display:block;transform:translateY(-2px)}
+.prayer-box .txt{font-size:13px;color:#374151;line-height:1.75;margin:0;font-style:italic;transform:translateY(-2px)}
 .section-h2{font-size:16px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe}
 .section-h3{font-size:14px;font-weight:700;color:#374151;margin:12px 0 4px 0}
-.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:10px}
-.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.75}
-.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:14px}
-.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 6px 0;display:block}
-.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.75}`
+.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:8px 14px 18px 14px;border-radius:3px;margin-bottom:10px}
+.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.75;transform:translateY(-2px)}
+.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:8px 14px 18px 14px;border-radius:3px;margin-bottom:14px}
+.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 4px 0;display:block;transform:translateY(-2px)}
+.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.75;transform:translateY(-2px)}`
 
 const GD_CONTENT_MM = 261
 const GD_MM_PX = 96 / 25.4
@@ -57,7 +57,7 @@ function gdPageWrapper(content: string): string {
 function olHtml(items: string[]): string {
   let h = '<ol style="margin:0 0 10px 0;padding-left:18px;">'
   for (let i = 0; i < items.length; i++) {
-    h += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;">' + esc(items[i]) + '</li>'
+    h += '<li style="margin-bottom:4px;font-size:13px;color:#333;line-height:1.7;transform:translateY(-1px);">' + esc(items[i]) + '</li>'
   }
   return h + '</ol>'
 }
@@ -72,12 +72,12 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
     '<p style="font-size:13px;color:#1a56db;font-weight:600;margin:3px 0 0 0;">' + ageLabels[ageKey] + '</p></div>')
 
   chunks.push('<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">' +
-    '<tr><td style="width:60px;padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">제목</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;">' + esc(stripPassage(data.title)) + '</td></tr>' +
-    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">본문</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;">' + esc(data.passage) + '</td></tr>' +
-    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;">주제</td>' +
-    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;">' + esc(data.topic) + '</td></tr></table>')
+    '<tr><td style="width:60px;padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">제목</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;font-weight:600;color:#1f2937;vertical-align:middle;">' + esc(stripPassage(data.title)) + '</td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">본문</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;">' + esc(data.passage) + '</td></tr>' +
+    '<tr><td style="padding:6px 10px;background:#f3f4f6;border:1px solid #d1d5db;font-size:13px;font-weight:700;color:#1a56db;text-align:center;vertical-align:middle;">주제</td>' +
+    '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;vertical-align:middle;">' + esc(data.topic) + '</td></tr></table>')
 
   if (passageText) {
     chunks.push('<div class="passage-box"><p class="lbl">개역개정 성경본문</p><p>' + esc(passageText) + '</p></div>')
