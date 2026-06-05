@@ -43,9 +43,10 @@ function chunkHtml(label: string, text: string) {
 }
 
 function passageChunk(text: string) {
-  return '<div style="background:#fefce8;border-left:4px solid #eab308;padding:10px 14px;border-radius:3px;margin-bottom:14px;">' +
+  return '<div style="background:#fefce8;border-left:4px solid #eab308;border-radius:3px;margin-bottom:14px;display:table;width:100%;">' +
+    '<div style="display:table-cell;vertical-align:middle;padding:10px 14px;">' +
     '<p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#92400e;">성경 본문 (개역개정)</p>' +
-    '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;font-style:italic;">' + esc(text) + '</p></div>'
+    '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;font-style:italic;">' + esc(text) + '</p></div></div>'
 }
 
 function buildSummaryChunks(data: Summary): string[] {

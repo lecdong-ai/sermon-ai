@@ -28,14 +28,17 @@ const GD_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
 .pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
 .pdf-page-inner{width:174mm;}
-.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:12px 16px;margin-bottom:4px}
+.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;margin-bottom:4px;display:table;width:100%}
+.prayer-box-inner{display:table-cell;vertical-align:middle;padding:12px 16px}
 .prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:4px}
 .prayer-box .txt{font-size:13px;color:#374151;line-height:1.7;margin:0;font-style:italic}
 .section-h2{font-size:16px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe}
 .section-h3{font-size:14px;font-weight:700;color:#374151;margin:12px 0 4px 0}
-.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px;border-radius:3px;margin-bottom:10px}
+.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;border-radius:3px;margin-bottom:10px;display:table;width:100%}
+.hl-box-inner{display:table-cell;vertical-align:middle;padding:10px 14px}
 .hl-box p{margin:0;font-size:13px;color:#333;line-height:1.7}
-.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:10px 14px;border-radius:3px;margin-bottom:14px}
+.passage-box{background:#fefce8;border-left:4px solid #eab308;border-radius:3px;margin-bottom:14px;display:table;width:100%}
+.passage-box-inner{display:table-cell;vertical-align:middle;padding:10px 14px}
 .passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 4px 0}
 .passage-box p{margin:0;font-size:13px;color:#333;line-height:1.7}`
 
@@ -80,11 +83,11 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
     '<td style="padding:6px 12px;border:1px solid #d1d5db;font-size:15px;color:#1f2937;">' + esc(data.topic) + '</td></tr></table>')
 
   if (passageText) {
-    chunks.push('<div class="passage-box"><p class="lbl">개역개정 성경본문</p><p>' + esc(passageText) + '</p></div>')
+    chunks.push('<div class="passage-box"><div class="passage-box-inner"><p class="lbl">개역개정 성경본문</p><p>' + esc(passageText) + '</p></div></div>')
   }
 
   chunks.push('<div class="section-h2">본문 핵심 요약</div>' +
-    '<div class="hl-box"><p>' + esc(data.summary) + '</p></div>')
+    '<div class="hl-box"><div class="hl-box-inner"><p>' + esc(data.summary) + '</p></div></div>')
 
   let pointsHtml = ''
   for (let pi = 0; pi < data.directionPoints.length; pi++) {
@@ -96,10 +99,10 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
   chunks.push('<div class="section-h2">' + ageLabels[ageKey] + ' 나눔 자료</div>')
 
   chunks.push('<div class="section-h3">나눔 목표</div>' +
-    '<div class="hl-box"><p>' + esc(g.goal) + '</p></div>')
+    '<div class="hl-box"><div class="hl-box-inner"><p>' + esc(g.goal) + '</p></div></div>')
 
   chunks.push('<div class="section-h3">핵심 메시지</div>' +
-    '<div class="hl-box"><p>' + esc(g.coreMessage) + '</p></div>')
+    '<div class="hl-box"><div class="hl-box-inner"><p>' + esc(g.coreMessage) + '</p></div></div>')
 
   chunks.push('<div class="section-h3">아이스브레이크</div>' + olHtml(g.icebreakers))
 
@@ -120,7 +123,7 @@ function buildGdChunks(data: GroupDiscussion, ageKey: string, passageText?: stri
     '<div class="section-h3">마무리 질문</div>' +
     '<ol style="margin:0 0 10px 0;padding-left:18px;">' + closingHtml + '</ol>' +
     '<div class="section-h3">대표기도문</div>' +
-    '<div class="prayer-box"><p class="lbl">대표기도</p><p class="txt">' + esc(data.representativePrayer) + '</p></div>')
+    '<div class="prayer-box"><div class="prayer-box-inner"><p class="lbl">대표기도</p><p class="txt">' + esc(data.representativePrayer) + '</p></div></div>')
 
   return chunks
 }
