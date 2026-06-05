@@ -34,11 +34,22 @@ function escapeJSON(str: string): string {
 }
 
 function safeParse(raw: string): any {
-  const cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
+  let cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
+  
+  // Find the first [ or { and slice from there
+  const firstBracket = Math.min(
+    cleaned.indexOf('[') !== -1 ? cleaned.indexOf('[') : Infinity,
+    cleaned.indexOf('{') !== -1 ? cleaned.indexOf('{') : Infinity
+  )
+  if (firstBracket !== Infinity) {
+    cleaned = cleaned.slice(firstBracket)
+  }
+  
   const escaped = escapeJSON(cleaned)
   try { return JSON5.parse(escaped) } catch {}
   try { return JSON.parse(escaped) } catch {}
-  const bracketMatch = cleaned.match(/^(\[[\s\S]*?\]|\{[\s\S]*\})/)
+  
+  const bracketMatch = cleaned.match(/^(\[[\s\S]*\]|\{[\s\S]*\})/)
   if (bracketMatch) {
     const str = bracketMatch[1]
     const stack: string[] = []
