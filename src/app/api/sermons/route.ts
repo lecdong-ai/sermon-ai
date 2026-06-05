@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('sermons')
-      .select('*')
+      .select('id, title, sermon_date, book, passage, chapter_start, chapter_end, verse_start, verse_end, season, status, version, updated_at, created_at, source, file_name, result')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 

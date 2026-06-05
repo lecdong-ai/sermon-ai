@@ -22,10 +22,10 @@ async function getSermon(id: string, userId: string) {
     .from('sermons')
     .select('*')
     .eq('id', id)
+    .eq('user_id', userId)
     .single()
 
   if (error || !data) return null
-  if (data.user_id !== userId) return null
   return data
 }
 

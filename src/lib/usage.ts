@@ -5,16 +5,51 @@ import { PLAN_LIMITS } from '@/types'
 const UNLIMITED_EMAILS = ['lecdong@gmail.com']
 const UNLIMITED_GENERATION_EMAILS = ['lecdong01@gmail.com']
 
-async function isUnlimitedUser(userId: string): Promise<boolean> {
+// In-memory cache for usage data (5 second TTL)
+const usageCache = new Map<string, { data: any; expires: number }>()
+const USAGE_CACHE_TTL = 5000 // 5 seconds
+
+function getCached<T>(key: string): T | null {
+  const entry = usageCache.get(key)
+  if (entry && Date.now() < entry.expires) {
+    return entry.data as T
+  }
+  usageCache.delete(key)
+  return null
+}
+
+function setCache(key: string, data: any): void {
+  usageCache.set(key, { data, expires: Date.now() + USAGE_CACHE_TTL })
+}
+
+function invalidateCache(userId: string): void {
+  for (const key of usageCache.keys()) {
+    if (key.startsWith(userId)) usageCache.delete(key)
+  }
+}
+
+async function getUserEmail(userId: string): Promise<string | null> {
+  const cached = getCached<string>(`email:${userId}`)
+  if (cached) return cached
+
   const { data, error } = await supabase.auth.admin.getUserById(userId)
-  if (error || !data?.user?.email) return false
-  return UNLIMITED_EMAILS.includes(data.user.email.toLowerCase())
+  if (error || !data?.user?.email) return null
+
+  const email = data.user.email.toLowerCase()
+  setCache(`email:${userId}`, email)
+  return email
+}
+
+async function isUnlimitedUser(userId: string): Promise<boolean> {
+  const email = await getUserEmail(userId)
+  if (!email) return false
+  return UNLIMITED_EMAILS.includes(email)
 }
 
 async function isUnlimitedGenerationUser(userId: string): Promise<boolean> {
-  const { data, error } = await supabase.auth.admin.getUserById(userId)
-  if (error || !data?.user?.email) return false
-  return UNLIMITED_GENERATION_EMAILS.includes(data.user.email.toLowerCase())
+  const email = await getUserEmail(userId)
+  if (!email) return false
+  return UNLIMITED_GENERATION_EMAILS.includes(email)
 }
 
 function currentMonth(): string {
@@ -30,11 +65,16 @@ function monthDate(offset: number): string {
 }
 
 export async function getUserUsage(userId: string): Promise<UserUsage | null> {
+  const cached = getCached<UserUsage>(`usage:${userId}`)
+  if (cached) return cached
+
   const { data } = await supabase
     .from('user_usage')
     .select('*')
     .eq('user_id', userId)
     .single()
+
+  if (data) setCache(`usage:${userId}`, data)
   return data
 }
 
@@ -42,8 +82,8 @@ export async function ensureUsage(userId: string): Promise<UserUsage> {
   const existing = await getUserUsage(userId)
   if (existing) return existing
 
-  const { data: userData } = await supabase.auth.admin.getUserById(userId)
-  const userEmail = userData?.user?.email?.toLowerCase() || ''
+  const email = await getUserEmail(userId)
+  const userEmail = email || ''
   const { data: deletedCheck } = await supabase
     .from('deleted_users')
     .select('id')
@@ -75,7 +115,9 @@ export async function ensureUsage(userId: string): Promise<UserUsage> {
     .select()
     .single()
 
-  return data || defaultRecord
+  const result = data || defaultRecord
+  setCache(`usage:${userId}`, result)
+  return result
 }
 
 async function updateUsage(userId: string, updates: Record<string, any>): Promise<void> {
@@ -83,6 +125,7 @@ async function updateUsage(userId: string, updates: Record<string, any>): Promis
     .from('user_usage')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('user_id', userId)
+  invalidateCache(userId)
 }
 
 function computeUsage(usage: UserUsage): UsageInfo {

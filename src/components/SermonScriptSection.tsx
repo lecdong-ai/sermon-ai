@@ -3,8 +3,6 @@
 import { useRef } from 'react'
 import SectionCard from './SectionCard'
 import { FileDown } from 'lucide-react'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
 
 interface Props {
   data: string
@@ -25,6 +23,8 @@ function splitSubtitle(text: string): { subtitle: string; body: string } | null 
 
 async function downloadPdf(element: HTMLElement | null) {
   if (!element) return
+  const html2canvas = (await import('html2canvas')).default
+  const jsPDF = (await import('jspdf')).default
   const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
   const imgData = canvas.toDataURL('image/png')
   const pdf = new jsPDF('p', 'mm', 'a4')
@@ -36,8 +36,6 @@ async function downloadPdf(element: HTMLElement | null) {
 
 export default function SermonScriptSection({ data }: Props) {
   const contentRef = useRef<HTMLDivElement>(null)
-  console.log('[SermonScriptSection] data 길이:', data?.length, '자')
-  console.log('[SermonScriptSection] data preview:', data?.substring(0, 300))
   const paragraphs = data.split('\n\n').filter(Boolean)
 
   const SECTION_HEADERS = /^(서론|본론|결론\/적용|결론|적용)\s*\n/
