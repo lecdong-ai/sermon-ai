@@ -21,7 +21,10 @@ const SECTIONS: { key: keyof Summary; label: string; bar: string; tag: string; b
 const PDF_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
 .pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
-.pdf-page-inner{width:174mm;}`
+.pdf-page-inner{width:174mm;}
+.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:14px}
+.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 6px 0;display:block}
+.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.75;font-style:italic}`
 
 const PAGE_CONTENT_MM = 261 // 297 - 18 - 18
 const MM_PX = 96 / 25.4
@@ -38,14 +41,14 @@ function esc(s: string) {
 function chunkHtml(label: string, text: string) {
   return '<div style="margin-bottom:16px;">' +
     '<div style="font-size:14px;font-weight:700;color:#1a56db;margin-bottom:6px;">' + esc(label) + '</div>' +
-    '<p style="margin:0;font-size:14px;color:#333;line-height:1.8;white-space:pre-wrap;">' + esc(text) + '</p>' +
+    '<p style="margin:0;font-size:14px;color:#333;line-height:1.85;white-space:pre-wrap;">' + esc(text) + '</p>' +
     '</div>'
 }
 
 function passageChunk(text: string) {
-  return '<div style="background:#fefce8;border-left:4px solid #eab308;padding:10px 14px;border-radius:3px;margin-bottom:14px;">' +
-    '<p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#92400e;">성경 본문 (개역개정)</p>' +
-    '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;font-style:italic;">' + esc(text) + '</p></div>'
+  return '<div style="background:#fefce8;border-left:4px solid #eab308;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:14px;">' +
+    '<p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#92400e;">성경 본문 (개역개정)</p>' +
+    '<p style="margin:0;font-size:13px;color:#333;line-height:1.75;font-style:italic;">' + esc(text) + '</p></div>'
 }
 
 function buildSummaryChunks(data: Summary): string[] {

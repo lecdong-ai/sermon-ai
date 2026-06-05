@@ -28,16 +28,16 @@ const GD_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
 .pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
 .pdf-page-inner{width:174mm;}
-.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:12px 16px;margin-bottom:4px}
-.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:4px}
-.prayer-box .txt{font-size:13px;color:#374151;line-height:1.7;margin:0;font-style:italic}
+.prayer-box{background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:14px 16px 12px 16px;margin-bottom:4px}
+.prayer-box .lbl{font-size:12px;font-weight:700;color:#1a56db;margin-bottom:6px;display:block}
+.prayer-box .txt{font-size:13px;color:#374151;line-height:1.75;margin:0;font-style:italic}
 .section-h2{font-size:16px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe}
 .section-h3{font-size:14px;font-weight:700;color:#374151;margin:12px 0 4px 0}
-.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px;border-radius:3px;margin-bottom:10px}
-.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.7}
-.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:10px 14px;border-radius:3px;margin-bottom:14px}
-.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 4px 0}
-.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.7}`
+.hl-box{background:#f0f5ff;border-left:4px solid #1a56db;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:10px}
+.hl-box p{margin:0;font-size:13px;color:#333;line-height:1.75}
+.passage-box{background:#fefce8;border-left:4px solid #eab308;padding:14px 14px 12px 14px;border-radius:3px;margin-bottom:14px}
+.passage-box .lbl{font-size:12px;font-weight:700;color:#92400e;margin:0 0 6px 0;display:block}
+.passage-box p{margin:0;font-size:13px;color:#333;line-height:1.75}`
 
 const GD_CONTENT_MM = 261
 const GD_MM_PX = 96 / 25.4
