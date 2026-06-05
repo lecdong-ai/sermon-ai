@@ -1,14 +1,12 @@
 'use client'
 
-import { Suspense, useState, useMemo } from 'react'
+import { Suspense, useState, useMemo, useEffect } from 'react'
 import { useApp } from '@/lib/dashboard/store'
 import { useSearchParams, useRouter } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { buildGraphData } from '@/lib/dashboard/graphUtils'
 import { GraphNode } from '@/lib/dashboard/types'
 import { BIBLE_BOOKS, SEASONS, AUDIENCES } from '@/lib/dashboard/constants'
-
-const GraphCanvas = dynamic(() => import('@/components/dashboard/GraphCanvas'), { ssr: false })
+import GraphCanvas from '@/components/dashboard/GraphCanvas'
 
 type GraphViewMode = 'full' | 'sermon-centric' | 'theme-centric' | 'theme' | 'book'
 
@@ -16,13 +14,19 @@ function GraphContent() {
   const { state } = useApp()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const focusId = searchParams.get('focus')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  const focusId = searchParams.get('focus') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('focus') : null)
 
   const [viewMode, setViewMode] = useState<GraphViewMode>(focusId ? 'sermon-centric' : 'full')
   const [filterBook, setFilterBook] = useState('')
   const [filterSeason, setFilterSeason] = useState('')
   const [filterAudience, setFilterAudience] = useState('')
-  const [searchHighlight, setSearchHighlight] = useState('')
+  useEffect(() => {
+    setViewMode(focusId ? 'sermon-centric' : 'full')
+  }, [focusId])
 
   const graphData = useMemo(() => {
     return buildGraphData(state.sermons, state.themes, state.series, {
@@ -33,6 +37,14 @@ function GraphContent() {
 
   const handleNodeClick = (node: GraphNode) => {
     // Panel handles navigation
+  }
+
+  if (state.loading || state.sermons.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-muted text-sm">데이터를 불러오는 중...</p>
+      </div>
+    )
   }
 
   return (
@@ -61,14 +73,11 @@ function GraphContent() {
           <option value="">모든 회중</option>
           {AUDIENCES.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-        <div className="relative flex-1 max-w-xs ml-auto">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs">⌕</span>
-          <input type="text" value={searchHighlight} onChange={(e) => setSearchHighlight(e.target.value)} placeholder="그래프 내 검색..." className="w-full pl-7 pr-3 py-1.5 text-xs border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light" />
-        </div>
+
       </div>
 
       <div className="flex-1 min-h-0">
-        <GraphCanvas data={graphData} focusNodeId={focusId || undefined} onNodeClick={handleNodeClick} sermonCentric={viewMode === 'sermon-centric'} themeCentric={viewMode === 'theme-centric'} />
+        {mounted && <GraphCanvas data={graphData} focusNodeId={focusId || undefined} onNodeClick={handleNodeClick} sermonCentric={viewMode === 'sermon-centric'} themeCentric={viewMode === 'theme-centric'} />}
       </div>
     </div>
   )

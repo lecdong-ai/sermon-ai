@@ -345,7 +345,7 @@ export const SERMON_SCRIPT_SCHEMA = {
     schema: {
       type: 'object',
       properties: {
-        script: { type: 'string', description: '12~15분 분량 설교 대본. 도입 1~2분, 본론 8~10분(3~4포인트), 적용 1~2분, 마무리 기도. 구어체, 예화 포함, 3000~4000자.' },
+        script: { type: 'string', description: '유튜브 영상용 설교 대본. 약 2000자 내외. 첫 2~3문장은 집중을 끄는 훅, 본론은 2~3개 핵심 포인트(짧은 설명+삶의 적용), 마지막은 은혜로운 결론. 따뜻하고 부드러운 구어체.' },
       },
       required: ['script'],
       additionalProperties: false,

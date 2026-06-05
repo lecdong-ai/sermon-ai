@@ -27,7 +27,7 @@ const FEATURES = [
 const TRUST_BADGES = [
   { icon: Shield, text: 'SSL 암호화 전송' },
   { icon: CheckCircle, text: '15일 무료 체험' },
-  { icon: Zap, text: 'GPT-4o-mini 탑재' },
+  { icon: Zap, text: '최신 AI 탑재' },
 ]
 
 export default function HomePage() {
@@ -63,7 +63,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <><div className="relative min-h-screen overflow-hidden">
       {/* 배경 */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[#fafbfc]" />
@@ -327,5 +327,9 @@ export default function HomePage() {
         }
       `}</style>
     </div>
+    <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999, borderTop: '1px solid #334155', backgroundColor: '#0f172a', padding: '14px 20px', textAlign: 'center', fontSize: '13px', color: '#ffffff', fontWeight: 400, lineHeight: 1.6 }}>
+      로스터 768-19-00582 · 전정우 · 경남 거창군 거창읍 거열로1길 86. 상가동 202호 · 070-8925-7400
+    </footer>
+    </>
   )
 }

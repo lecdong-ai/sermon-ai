@@ -152,7 +152,7 @@ export default memo(function Header() {
                         className="flex items-center gap-2.5 px-4 py-2 text-[14px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-all"
                       >
                         <LayoutDashboard className="w-4 h-4 text-indigo-500" />
-                        대시보드
+                        설교 아카이브
                       </Link>
                       <Link
                         href="/mypage"

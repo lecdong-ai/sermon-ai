@@ -36,26 +36,21 @@ async function downloadPdf(element: HTMLElement | null) {
 
 export default function SermonScriptSection({ data }: Props) {
   const contentRef = useRef<HTMLDivElement>(null)
+  console.log('[SermonScriptSection] data 길이:', data?.length, '자')
+  console.log('[SermonScriptSection] data preview:', data?.substring(0, 300))
   const paragraphs = data.split('\n\n').filter(Boolean)
   const labels = ['서론', '본론', '결론/적용']
   const colors = ['bg-blue-100 text-blue-700', 'bg-primary-100 text-primary-700', 'bg-purple-100 text-purple-700']
 
-  const pdfAction = (
-    <button
-      onClick={() => downloadPdf(contentRef.current)}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-rose-500 hover:bg-rose-50 transition-all duration-200"
-    >
-      <FileDown className="w-3.5 h-3.5" />
-      <span className="font-medium">PDF</span>
-    </button>
-  )
+  const SECTION_HEADERS = /^(서론|본론|결론\/적용|결론|적용)\s*\n/
 
   return (
-    <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data} action={pdfAction}>
+    <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data} action={<button onClick={() => downloadPdf(contentRef.current)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"><FileDown className="w-3.5 h-3.5" /><span className="font-medium">PDF</span></button>}>
       <div ref={contentRef} className="space-y-5">
-        {paragraphs.slice(0, 3).map((p, i) => {
-          const split = splitSubtitle(p)
-          const lines = p.split('\n').filter(Boolean)
+        {paragraphs.map((p, i) => {
+          const cleaned = p.replace(SECTION_HEADERS, '')
+          const split = splitSubtitle(cleaned)
+          const lines = cleaned.split('\n').filter(Boolean)
           return (
             <div key={i} className="animate-in-fast p-5 rounded-xl bg-white border border-[#f0f2f5] shadow-sm" style={{ animationDelay: `${i * 80}ms` }}>
               {i < labels.length && (

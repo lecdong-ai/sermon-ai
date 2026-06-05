@@ -149,7 +149,9 @@ export async function POST(request: NextRequest) {
     } else if (title && passage && coreMessage && body.generateApplication) {
       const points = body.outlinePoints || []
       const details = body.outlineDetails || []
-      systemPrompt = `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 설교 3대지를 바탕으로 "그리스도 중심으로 연결하기" 적용을 작성하라.
+      systemPrompt = body.suggestOnly
+        ? `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 "그리스도 중심으로 연결하기" 적용 3가지를 추천하라. 각 적용은 3~5문장으로 작성하라. 반드시 JSON 배열로만 응답하라.`
+        : `당신은 개혁주의 복음주의 설교 조수다. 설교 제목, 성경 본문, 핵심 메시지, 3대지를 바탕으로 "그리스도 중심으로 연결하기" 적용을 작성하라.
 
 [역할]
 - 3대지 각각을 그리스도와 어떻게 연결할지 제시하라.
@@ -170,7 +172,7 @@ export async function POST(request: NextRequest) {
 3대지:
 ${points.map((p: string, i: number) => `대지 ${i + 1}: ${p}${details[i] ? ` - ${details[i]}` : ''}`).join('\n')}
 
-{"value": "그리스도 중심 적용문 전체"}`
+${body.suggestOnly ? '[{"value": "적용1", "reason": "추천 이유1"}, {"value": "적용2", "reason": "추천 이유2"}, {"value": "적용3", "reason": "추천 이유3"}]' : '{"value": "그리스도 중심 적용문 전체"}'}`
     } else if (title && passage && coreMessage && body.generateIntroduction) {
       const points = body.outlinePoints || []
       const details = body.outlineDetails || []
@@ -317,13 +319,13 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         : body.length === '40분' ? 14000
         : body.length === '50분' ? 18000
         : 22000
-        : (body.generateAllPoints || body.generateApplication || body.generateIllustration || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 500,
+        : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 500,
     })
 
     const raw = res.choices[0]?.message?.content || ''
     const parsed = safeParse(raw)
 
-    if (body.generateApplication || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
+    if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
 

@@ -5,6 +5,7 @@ import { useApp } from '@/lib/dashboard/store'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ViewMode, Sermon } from '@/lib/dashboard/types'
 import { BIBLE_BOOKS, SERMON_TYPES, AUDIENCES, SEASONS } from '@/lib/dashboard/constants'
+import { Sparkles } from 'lucide-react'
 
 function SermonsContent() {
   const { state, getSeries, getTheme } = useApp()
@@ -22,6 +23,25 @@ function SermonsContent() {
   const [filterSeminar, setFilterSeminar] = useState('')
   const [filterSeries, setFilterSeries] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title' | 'book'>('date-desc')
+  const [generatingId, setGeneratingId] = useState<string | null>(null)
+
+  const handleGenerate = async (sermon: Sermon) => {
+    if (generatingId) return
+    setGeneratingId(sermon.id)
+    try {
+      const res = await fetch(`/api/sermons/${sermon.id}/generate`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        router.push(`/workspace?id=${sermon.id}`)
+      } else {
+        alert(data.error || '생성에 실패했습니다.')
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다.')
+    } finally {
+      setGeneratingId(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     let result = [...sermons].filter(s => s.status === 'completed')
@@ -129,6 +149,7 @@ function SermonsContent() {
                 <th className="text-left py-3 px-4 text-xs text-muted font-medium">종류</th>
                 <th className="text-left py-3 px-4 text-xs text-muted font-medium">회중</th>
                 <th className="text-left py-3 px-4 text-xs text-muted font-medium">날짜</th>
+                <th className="text-right py-3 px-4 text-xs text-muted font-medium">AI</th>
               </tr>
             </thead>
             <tbody>
@@ -142,6 +163,16 @@ function SermonsContent() {
                   <td className="py-3 px-4 text-muted">{sermon.sermonType}</td>
                   <td className="py-3 px-4 text-muted">{sermon.audience}</td>
                   <td className="py-3 px-4 text-muted shrink-0">{sermon.date.replace(/-/g, '.')}</td>
+                  <td className="py-3 px-4 text-right">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleGenerate(sermon); }}
+                      disabled={generatingId === sermon.id}
+                      className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {generatingId === sermon.id ? '생성중...' : 'AI 생성'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -164,6 +195,14 @@ function SermonsContent() {
                 <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.sermonType}</span>
                 <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.audience}</span>
                 {sermon.season && <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.season}</span>}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleGenerate(sermon); }}
+                  disabled={generatingId === sermon.id}
+                  className="ml-auto inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {generatingId === sermon.id ? '생성중...' : 'AI 생성'}
+                </button>
               </div>
             </div>
           ))}

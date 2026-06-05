@@ -1,22 +1,15 @@
 'use client'
 
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GraphNode } from '@/lib/dashboard/types'
 import { GRAPH_COLORS } from '@/lib/dashboard/constants'
 import {
   forceSimulation, forceManyBody, forceLink,
-  forceCenter, forceCollide, SimulationNodeDatum,
+  forceCenter, forceCollide,
 } from 'd3-force'
 
-const NODE_COLORS: Record<string, string> = {
-  sermon: '#e11d48',
-  passage: '#4338ca',
-  theme: '#a78bfa',
-  season: '#d97706',
-  audience: '#059669',
-  series: '#64748b',
-}
+const NODE_COLORS: Record<string, string> = GRAPH_COLORS
 
 const THEMES = {
   light: {
@@ -48,7 +41,7 @@ const NODE_RADIUS: Record<string, number> = {
   series: 26,
 }
 
-interface SimNode extends SimulationNodeDatum {
+interface SimNode {
   id: string
   label: string
   type: GraphNode['type']
@@ -56,10 +49,13 @@ interface SimNode extends SimulationNodeDatum {
   size: number
   sermonCount: number
   r: number
-  bx: number
-  by: number
   fx: number | null
   fy: number | null
+  x: number
+  y: number
+  vx: number
+  vy: number
+  index?: number
 }
 
 interface SimLink {
@@ -92,8 +88,35 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
   const [linkedSermons, setLinkedSermons] = useState<{id:string;label:string}[]>([])
   const [connectedNodes, setConnectedNodes] = useState<{id:string;label:string;type:GraphNode['type']}[]>([])
   const settledRef = useRef(false)
-  const settleRef = useRef(0)
-  const splashDoneRef = useRef(false)
+  const nodesRef = useRef<SimNode[]>([])
+  const linksRef = useRef<SimLink[]>([])
+  const dataRef = useRef(data)
+  const whRef = useRef(wh)
+  const themeRef = useRef(theme)
+  const sermonCentricRef = useRef(sermonCentric)
+  const themeCentricRef = useRef(themeCentric)
+  const focusNodeIdRef = useRef(focusNodeId)
+  const selRef = useRef<GraphNode | null>(null)
+
+  useEffect(() => { dataRef.current = data }, [data])
+  useEffect(() => { whRef.current = wh }, [wh])
+  useEffect(() => { themeRef.current = theme }, [theme])
+  useEffect(() => { sermonCentricRef.current = sermonCentric }, [sermonCentric])
+  useEffect(() => { themeCentricRef.current = themeCentric }, [themeCentric])
+  useEffect(() => { focusNodeIdRef.current = focusNodeId }, [focusNodeId])
+  useEffect(() => { selRef.current = sel }, [sel])
+
+  useEffect(() => {
+    const newNodes = data.nodes.map((n) => ({
+      ...n,
+      r: NODE_RADIUS[n.type] || 3,
+      sermonCount: n.sermonCount || 0,
+      x: 0, y: 0, vx: 0, vy: 0,
+      fx: null, fy: null,
+    }))
+    nodesRef.current = newNodes
+    linksRef.current = data.links.map((l) => ({ source: l.source, target: l.target }))
+  }, [data.nodes, data.links])
 
   // Build adjacency for neighborhood highlighting
   const adjRef = useRef(new Map<string, Set<string>>())
@@ -107,22 +130,6 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     }
     adjRef.current = m
   }, [data.links])
-
-  const nodes = useMemo(() => {
-    return data.nodes.map((n) => ({
-      ...n,
-      r: NODE_RADIUS[n.type] || 3,
-      sermonCount: n.sermonCount || 0,
-      x: 0, y: 0, vx: 0, vy: 0,
-      bx: 0, by: 0,
-      fx: null, fy: null,
-    }))
-  }, [data.nodes])
-
-  const links = useMemo(() =>
-    data.links.map((l) => ({ source: l.source, target: l.target })),
-    [data.links]
-  )
 
   useEffect(() => {
     const el = wrapRef.current
@@ -144,6 +151,9 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
 
   // Build simulation
   useEffect(() => {
+    const nodes = nodesRef.current
+    const links = linksRef.current
+    settledRef.current = false
     if (!wh.w || !wh.h) return
     if (nodes.length === 0) return
 
@@ -175,12 +185,10 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       sim.stop()
       simRef.current = null
     }
-  }, [nodes, links, wh])
+  }, [wh, data])
 
-  // Render loop
+  // Render loop (always-on, reads from refs only)
   useEffect(() => {
-    if (!settledRef.current) return
-    if (!wh.w || !wh.h) return
     let running = true
 
     function render() {
@@ -189,46 +197,49 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       const ctx = ctxRef.current
       if (!canvas || !ctx) { rafRef.current = requestAnimationFrame(render); return }
 
-      const W = canvas.width = wh.w
-      const H = canvas.height = wh.h
+      const curWh = whRef.current
+      if (!curWh.w || !curWh.h) { rafRef.current = requestAnimationFrame(render); return }
+
+      const W = canvas.width = curWh.w
+      const H = canvas.height = curWh.h
       const v = viewRef.current
       const drag = dragNodeRef.current
+      const nodes = nodesRef.current
+      const links = linksRef.current
+      const currentData = dataRef.current
 
       ctx.clearRect(0, 0, W, H)
-      const T = THEMES[theme]
+      const T = THEMES[themeRef.current]
       ctx.fillStyle = T.bg
       ctx.fillRect(0, 0, W, H)
 
-      // Settling physics
-      const settle = settleRef.current
-      const sim = simRef.current
-      const simActive = sim && sim.alpha() > 0.01
+      if (!settledRef.current || nodes.length === 0) {
+        rafRef.current = requestAnimationFrame(render)
+        return
+      }
 
-      if (drag) {
-        // sim controls positions
-      } else if (settle > 0 && sim) {
-        sim.tick(1)
-        settleRef.current = settle - 1
-        if (settleRef.current === 0) {
-          for (const n of nodes) { n.bx = n.x; n.by = n.y; n.vx = 0; n.vy = 0 }
-          sim.stop()
-          splashDoneRef.current = true
-        }
-      } else if (simActive) {
-        // Splash settling - just render sim positions
-      } else if (!splashDoneRef.current && settledRef.current) {
-        // Splash just finished - save positions and start float
-        for (const n of nodes) { n.bx = n.x; n.by = n.y; n.vx = 0; n.vy = 0 }
-        splashDoneRef.current = true
-      } else if (settledRef.current) {
-        const t = Date.now() / 1000
-        for (const n of nodes) {
-          const p = n.id.charCodeAt(0) + n.id.charCodeAt(n.id.length - 1) * 3
-          const s = 0.8 + (p % 5) * 0.15
-          const amp = 5 + (p % 4) * 1.5
-          n.x = n.bx + Math.sin(t * s + p) * amp + Math.sin(t * s * 0.6 + p * 2.1) * amp * 0.3
-          n.y = n.by + Math.cos(t * s * 0.8 + p * 1.7) * amp + Math.cos(t * s * 0.4 + p * 3.3) * amp * 0.3
-        }
+      // Continuous float offset (always active, smoothly blends with sim)
+      const sim = simRef.current
+      const simAlpha = sim ? sim.alpha() : 1
+      const floatFactor = simAlpha < 0.01 ? 1 : Math.max(0, 1 - simAlpha * 3)
+
+      const t = Date.now() / 1000
+      const floatX = new Map<string, number>()
+      const floatY = new Map<string, number>()
+      for (const n of nodes) {
+        if (drag && n.id === drag.id) { floatX.set(n.id, 0); floatY.set(n.id, 0); continue }
+        const p = n.id.charCodeAt(0) + n.id.charCodeAt(n.id.length - 1) * 3
+        const speed = 0.6 + (p % 5) * 0.12
+        const amp = (8 + (p % 5) * 2.5) * floatFactor
+        const phase = p * 0.7
+        const fx = Math.sin(t * speed * 0.7 + phase) * amp * 0.8
+                 + Math.sin(t * speed * 1.3 + phase * 2.1) * amp * 0.35
+                 + Math.sin(t * speed * 2.1 + phase * 0.3) * amp * 0.15
+        const fy = Math.cos(t * speed * 0.6 + phase * 1.3) * amp * 0.7
+                 + Math.cos(t * speed * 1.1 + phase * 0.8) * amp * 0.4
+                 + Math.cos(t * speed * 1.8 + phase * 2.5) * amp * 0.2
+        floatX.set(n.id, fx)
+        floatY.set(n.id, fy)
       }
 
       ctx.save()
@@ -236,10 +247,11 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       ctx.scale(v.k, v.k)
 
       const adj = adjRef.current
-      const focus = focusNodeId ? 'sermon-' + focusNodeId : null
+      const focus = focusNodeIdRef.current ? 'sermon-' + focusNodeIdRef.current : null
       const hovered = hoverRef.current
+      const selNode = selRef.current
 
-      // Compute neighborhood highlights
+      // Compute neighborhood highlights for focus/hover
       const focusNeighbors1 = new Set<string>()
       const focusNeighbors2 = new Set<string>()
       if (focus && adj.has(focus)) {
@@ -258,7 +270,27 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
         adj.get(hovered)!.forEach(n => hoverNeighbors.add(n))
       }
 
-      const linkData = data.links
+      // Compute neighborhood highlights for selected (clicked) node
+      const selNeighbors1 = new Set<string>()
+      const selNeighbors2 = new Set<string>()
+      const selNodeId = selNode ? selNode.id : null
+      if (selNodeId && adj.has(selNodeId)) {
+        adj.get(selNodeId)!.forEach(n => selNeighbors1.add(n))
+        selNeighbors1.forEach(n => {
+          if (adj.has(n)) {
+            adj.get(n)!.forEach(n2 => {
+              if (n2 !== selNodeId && !selNeighbors1.has(n2)) selNeighbors2.add(n2)
+            })
+          }
+        })
+      }
+
+      // Merge focus and sel neighborhoods (sel takes priority when clicked)
+      const activeNeighbors1 = new Set<string>(selNodeId ? selNeighbors1 : focusNeighbors1)
+      const activeNeighbors2 = new Set<string>(selNodeId ? selNeighbors2 : focusNeighbors2)
+      const activeFocus = selNodeId || focus
+
+      const linkData = currentData.links
       const linkAlpha = new Float32Array(linkData.length)
 
       // Determine link emphasis
@@ -272,20 +304,20 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
           else if (hoverNeighbors.has(s) || hoverNeighbors.has(t)) la = 0.15
           else la = 0
         }
-        if (focus) {
-          if (s === focus || t === focus) la = Math.max(la, 0.7)
-          else if (focusNeighbors1.has(s) && focusNeighbors1.has(t)) la = Math.max(la, 0.45)
-          else if (focusNeighbors1.has(s) || focusNeighbors1.has(t)) la = Math.max(la, 0.2)
+        if (activeFocus) {
+          if (s === activeFocus || t === activeFocus) la = Math.max(la, 0.7)
+          else if (activeNeighbors1.has(s) && activeNeighbors1.has(t)) la = Math.max(la, 0.45)
+          else if (activeNeighbors1.has(s) || activeNeighbors1.has(t)) la = Math.max(la, 0.2)
           else if (!hovered) la = 0
         }
-        if (sermonCentric && !hovered && !focus) {
+        if (sermonCentricRef.current && !hovered && !activeFocus) {
           const aNode = nodes.find((n) => n.id === s)
           const bNode = nodes.find((n) => n.id === t)
           if (aNode?.type !== 'sermon' && bNode?.type !== 'sermon') {
             la = 0.02
           }
         }
-        if (themeCentric && !hovered && !focus) {
+        if (themeCentricRef.current && !hovered && !activeFocus) {
           const aNode = nodes.find((n) => n.id === s)
           const bNode = nodes.find((n) => n.id === t)
           if (aNode?.type !== 'theme' && bNode?.type !== 'theme') {
@@ -304,9 +336,11 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
         if (!a || !b) continue
         const la = linkAlpha[i]
         if (la < 0.01) continue
+        const afx = floatX.get(a.id) || 0, afy = floatY.get(a.id) || 0
+        const bfx = floatX.get(b.id) || 0, bfy = floatY.get(b.id) || 0
         ctx.beginPath()
-        ctx.moveTo(a.x, a.y)
-        ctx.lineTo(b.x, b.y)
+        ctx.moveTo(a.x + afx, a.y + afy)
+        ctx.lineTo(b.x + bfx, b.y + bfy)
         ctx.strokeStyle = `${T.lineBase}${la * 0.7})`
         if (la > 0.5) ctx.lineWidth = 1
         else if (la > 0.1) ctx.lineWidth = 0.6
@@ -315,36 +349,43 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       }
 
       // Draw nodes
-      const selId = sel?.id
+      const selId = selRef.current?.id
       for (const n of nodes) {
-        const isF = focus === n.id
+        const isF = activeFocus === n.id
         const isH = hovered === n.id
         const isSel = selId === n.id
-        const neighbor1 = focus ? focusNeighbors1.has(n.id) : hoverNeighbors.has(n.id)
-        const neighbor2 = focus ? focusNeighbors2.has(n.id) : false
-        const dim = (focus || hovered) && !isF && !isH && !neighbor1 && !neighbor2 && !isSel
+        const hasFocus = activeFocus !== null
+        const hasHover = hovered !== null
+        const hasSel = selNode !== null
+        const neighbor1 = hasHover ? hoverNeighbors.has(n.id) : activeNeighbors1.has(n.id)
+        const neighbor2 = hasHover ? false : activeNeighbors2.has(n.id)
+        const dim = (hasFocus || hasHover || hasSel) && !isF && !isH && !neighbor1 && !neighbor2 && !isSel
         const isSermon = n.type === 'sermon'
         const isTheme = n.type === 'theme'
-        const scDim = sermonCentric && !isSermon && !isF && !isH && !isSel
-        const tcDim = themeCentric && !isTheme && !isF && !isH && !isSel
 
         const color = NODE_COLORS[n.type] || '#888'
         const radius = n.r
         let alpha = 0.6
         let glow = 0
 
+        const scActive = sermonCentricRef.current && !isSermon && !isF && !isH && !isSel
+        const tcActive = themeCentricRef.current && !isTheme && !isF && !isH && !isSel
+        const hasViewMode = sermonCentricRef.current || themeCentricRef.current
+
         if (isF || isSel) { alpha = 1; glow = 0 }
         else if (isH) { alpha = 1; glow = 0 }
         else if (neighbor1) { alpha = 0.95 }
         else if (neighbor2) { alpha = 0.8 }
-        else if (scDim || tcDim) { alpha = 0.1 }
-        else if (dim) { alpha = 0.12 }
+        else if (scActive || tcActive) { alpha = 0.08 }
+        else if (dim && hasViewMode) { alpha = 0.12 }
         else if (hovered) { alpha = 0.15 }
         else { alpha = 0.7 }
 
         // Main dot
+        const nx = n.x + (floatX.get(n.id) || 0)
+        const ny = n.y + (floatY.get(n.id) || 0)
         ctx.beginPath()
-        ctx.arc(n.x, n.y, radius, 0, Math.PI * 2)
+        ctx.arc(nx, ny, radius, 0, Math.PI * 2)
         ctx.fillStyle = color
         ctx.globalAlpha = alpha
         ctx.fill()
@@ -353,7 +394,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
         // White core for prominent nodes
         if (isF || isSel || isH) {
           ctx.beginPath()
-          ctx.arc(n.x, n.y, radius * 0.5, 0, Math.PI * 2)
+          ctx.arc(nx, ny, radius * 0.5, 0, Math.PI * 2)
           ctx.fillStyle = '#ffffff'
           ctx.globalAlpha = 0.5
           ctx.fill()
@@ -363,7 +404,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
         // Labels
         {
           const isProminent = isH || isF || isSel
-          if (dim || (scDim && !neighbor1 && !neighbor2) || (tcDim && !neighbor1 && !neighbor2)) {
+          if (scActive || tcActive || (dim && hasViewMode)) {
             ctx.globalAlpha = 0
           } else {
             const fontSize = Math.max(22, Math.min(34, (isProminent ? 28 : 24) * Math.min(1.3, v.k)))
@@ -373,7 +414,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
             ctx.fillStyle = isProminent ? T.labelProminent : T.labelNormal
             ctx.globalAlpha = isProminent ? 1 : 0.85
             const label = n.label.length > 18 ? n.label.slice(0, 18) + '…' : n.label
-            ctx.fillText(label, n.x, n.y + radius + 4)
+            ctx.fillText(label, nx, ny + radius + 4)
           }
           ctx.globalAlpha = 1
         }
@@ -384,8 +425,9 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     }
 
     rafRef.current = requestAnimationFrame(render)
+    console.log('[renderLoop] started')
     return () => { running = false; cancelAnimationFrame(rafRef.current) }
-  }, [wh, nodes, data.links, focusNodeId, sel, theme, sermonCentric, themeCentric])
+  }, [])
 
   function findNode(px: number, py: number): SimNode | null {
     const v = viewRef.current
@@ -393,7 +435,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     const ry = (py - v.y) / v.k
     let best: SimNode | null = null
     let bestD = 20 / v.k
-    for (const n of nodes) {
+    for (const n of nodesRef.current) {
       const dx = n.x - rx, dy = n.y - ry
       const d = Math.sqrt(dx * dx + dy * dy)
       const hitR = Math.max(n.r + 4, 8)
@@ -448,8 +490,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     const drag = dragNodeRef.current
     if (drag && sim) {
       drag.fx = null; drag.fy = null
-      sim.alpha(0.4).alphaTarget(0)
-      settleRef.current = 60
+      sim.alphaTarget(0)
     }
     downRef.current = false
     dragNodeRef.current = null
@@ -489,17 +530,16 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     const rect = el.getBoundingClientRect()
     const n = findNode(e.clientX - rect.left, e.clientY - rect.top)
     if (n) {
-      const orig = data.nodes.find((d) => d.id === n.id)
+      const orig = dataRef.current.nodes.find((d) => d.id === n.id)
       if (orig) {
         setSel(orig)
         onNodeClick?.(orig)
-        // Find all sermons connected to this node
         const sermons: {id:string;label:string}[] = []
         const connected: {id:string;label:string;type:GraphNode['type']}[] = []
-        for (const l of data.links) {
+        for (const l of dataRef.current.links) {
           const otherId = l.source === n.id ? l.target : l.target === n.id ? l.source : null
           if (otherId) {
-            const sn = data.nodes.find((d) => d.id === otherId)
+            const sn = dataRef.current.nodes.find((d) => d.id === otherId)
             if (sn) {
               if (sn.id.startsWith('sermon-') && !sermons.find((s) => s.id === sn.id)) {
                 sermons.push({ id: sn.id, label: sn.label })
@@ -571,7 +611,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
               <p className="text-sm font-medium mb-1.5" style={{color: THEMES[theme].labelNormal}}>관련 설교 ({linkedSermons.length})</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {linkedSermons.map((s) => (
-                  <button key={s.id} onClick={() => { const g = data.nodes.find(d => d.id === s.id); if (g) onNodeClick?.(g) }} style={{color: THEMES[theme].labelNormal}} className="text-sm truncate block w-full text-left hover:opacity-70 cursor-pointer">• {s.label}</button>
+                  <button key={s.id} onClick={() => { const g = dataRef.current.nodes.find(d => d.id === s.id); if (g) onNodeClick?.(g) }} style={{color: THEMES[theme].labelNormal}} className="text-sm truncate block w-full text-left hover:opacity-70 cursor-pointer">• {s.label}</button>
                 ))}
               </div>
             </div>

@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       season: body.season || null,
       audience: [],
       church_context: null,
-      status: 'draft',
+      status: body.status || 'draft',
       version: 1,
       result: {
         preacher: body.preacher || '',
@@ -164,6 +164,7 @@ export async function POST(request: NextRequest) {
       themeIds: sermonData.result.themeIds,
       tagIds: sermonData.result.tagIds,
       relatedSermonIds: sermonData.result.relatedSermonIds,
+      status: data.status || 'completed',
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     }

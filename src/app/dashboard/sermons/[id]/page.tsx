@@ -65,8 +65,14 @@ export default function SermonDetailPage({
         </button>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => window.print()}
+            className="text-xs border border-border px-3 py-1.5 rounded-md hover:bg-background transition-colors print:hidden"
+          >
+            인쇄
+          </button>
+          <button
             onClick={() => router.push(`/dashboard/sermons/new?edit=${sermon.id}`)}
-            className="text-xs border border-border px-3 py-1.5 rounded-md hover:bg-background transition-colors"
+            className="text-xs border border-border px-3 py-1.5 rounded-md hover:bg-background transition-colors print:hidden"
           >
             수정
           </button>
@@ -81,7 +87,7 @@ export default function SermonDetailPage({
                 }
               }
             }}
-            className="text-xs border border-red-200 text-red-500 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+            className="text-xs border border-red-200 text-red-500 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors print:hidden"
           >
             삭제
           </button>
@@ -338,6 +344,18 @@ export default function SermonDetailPage({
       >
         이 설교를 그래프로 보기 →
       </button>
+
+      <style>{`
+        @media print {
+          @page { margin: 15mm; }
+          body { background: white !important; }
+          nav, aside, header, footer, .sidebar { display: none !important; }
+          .print\\:hidden { display: none !important; }
+          [class*="overflow"] { overflow: visible !important; }
+          [class*="h-\\[calc"] { height: auto !important; }
+          main { padding: 0 !important; }
+        }
+      `}</style>
     </div>
   )
 }

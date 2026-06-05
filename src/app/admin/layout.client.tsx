@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
   LayoutDashboard, Users, CreditCard, FileText, ChevronLeft, Shield,
-  Loader2,
+  Loader2, Home,
 } from 'lucide-react'
 
 const ADMIN_MENUS = [
@@ -90,13 +90,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )
             })}
           </nav>
-          <div className="px-4 py-3 border-t border-slate-100">
+          <div className="px-4 py-3 border-t border-slate-100 space-y-1">
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-3 py-2 text-[13px] text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all w-full"
+            >
+              <Home className="w-3.5 h-3.5" />
+              메인페이지
+            </Link>
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 px-3 py-2 text-[13px] text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+              className="flex items-center gap-2 px-3 py-2 text-[13px] text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all w-full"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-              대시보드로 돌아가기
+              대시보드
             </Link>
           </div>
         </aside>

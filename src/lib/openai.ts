@@ -34,14 +34,15 @@ async function callAI<T>(
   userText: string,
   schema: any,
   maxTokens = 4000,
+  temperature = 0.3,
 ): Promise<T> {
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `다음 설교 원고를 분석해주세요:\n\n${truncate(userText)}` },
+      { role: 'user', content: `다음 설교 원고를 바탕으로 작업해주세요:\n\n${truncate(userText)}` },
     ],
-    temperature: 0.3,
+    temperature,
     max_tokens: maxTokens,
     response_format: schema,
   })
@@ -50,6 +51,8 @@ async function callAI<T>(
   if (!raw) throw new Error('OpenAI 응답이 비어 있습니다.')
 
   const cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
+
+  console.log(`[callAI] 응답 길이: ${cleaned.length}자, 토큰: ${res.usage?.completion_tokens || 'unknown'}`)
 
   try {
     return JSON.parse(cleaned) as T
@@ -64,9 +67,10 @@ async function safeCallAI<T>(
   schema: any,
   itemName: string,
   maxTokens?: number,
+  temperature?: number,
 ): Promise<T | null> {
   try {
-    return await callAI<T>(systemPrompt, userText, schema, maxTokens)
+    return await callAI<T>(systemPrompt, userText, schema, maxTokens, temperature)
   } catch (err) {
     console.error(`[${itemName}] generation failed:`, err)
     return null
@@ -86,7 +90,7 @@ export async function generateAll(text: string, useMock?: boolean): Promise<Serm
       safeCallAI<SummaryResponse>(SummaryPrompt.SYSTEM_PROMPT, text, SUMMARY_SCHEMA, 'summary', 3000),
       safeCallAI<any>(GroupDiscussionPrompt.SYSTEM_PROMPT, text, GROUP_DISCUSSION_SCHEMA, 'groupDiscussion', 3000),
       safeCallAI<any>(CardNewsPrompt.SYSTEM_PROMPT, text, CARD_NEWS_SCHEMA, 'cardNews', 3000),
-      safeCallAI<any>(SermonScriptPrompt.SYSTEM_PROMPT, text, SERMON_SCRIPT_SCHEMA, 'sermonScript', 4000),
+      safeCallAI<any>(SermonScriptPrompt.SYSTEM_PROMPT, text, SERMON_SCRIPT_SCHEMA, 'sermonScript', 4000, 0.3),
       safeCallAI<any>(ShortsScriptPrompt.SYSTEM_PROMPT, text, SHORTS_SCRIPT_SCHEMA, 'shortsScript', 2000),
       safeCallAI<any>(PptOutlinePrompt.SYSTEM_PROMPT, text, PPT_SCHEMA, 'pptOutline', 3000),
     ])
@@ -143,6 +147,7 @@ export async function generateSingleItem(
     schema: any
     mapper: (data: any) => Partial<SermonResultData>
     maxTokens?: number
+    temperature?: number
   }> = {
     summary: {
       prompt: SummaryPrompt.SYSTEM_PROMPT,
@@ -169,6 +174,7 @@ export async function generateSingleItem(
       schema: SERMON_SCRIPT_SCHEMA,
       mapper: (d: any) => ({ sermonScript: d.script }),
       maxTokens: 4000,
+      temperature: 0.3,
     },
     shortsScript: {
       prompt: ShortsScriptPrompt.SYSTEM_PROMPT,
@@ -185,8 +191,15 @@ export async function generateSingleItem(
   }
 
   const config = configs[item]
-  const data = await callAI(config.prompt, text, config.schema, config.maxTokens)
-  return config.mapper(data)
+  console.log(`[generateSingleItem] item=${item}, maxTokens=${config.maxTokens}, temp=${config.temperature || 0.3}, promptLen=${config.prompt.length}`)
+  console.log(`[generateSingleItem] prompt preview: ${config.prompt.substring(0, 100)}...`)
+  const data = await callAI(config.prompt, text, config.schema, config.maxTokens, config.temperature)
+  const mapped = config.mapper(data)
+  if (mapped.sermonScript) {
+    console.log(`[generateSingleItem] sermonScript 길이: ${mapped.sermonScript.length}자`)
+    console.log(`[generateSingleItem] sermonScript preview: ${mapped.sermonScript.substring(0, 200)}...`)
+  }
+  return mapped
 }
 
 export async function generateStudyGuide(input: StudyGuideInput): Promise<StudyGuideOutput> {
