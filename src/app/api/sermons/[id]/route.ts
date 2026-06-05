@@ -147,7 +147,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (sermonError) throw sermonError
 
-    return NextResponse.json({ success: true, data: toSermon(sermonError ? sermon : sermonError) })
+    const { data: updatedSermon } = await supabaseAdmin
+      .from('sermons')
+      .select('*')
+      .eq('id', params.id)
+      .single()
+
+    return NextResponse.json({ success: true, data: toSermon(updatedSermon || sermon) })
   } catch (err: any) {
     console.error('PUT /api/sermons/[id] error:', err)
     return NextResponse.json({ success: false, error: err.message || '수정 실패' }, { status: 500 })
