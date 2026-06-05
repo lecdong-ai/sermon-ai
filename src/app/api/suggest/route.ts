@@ -333,8 +333,9 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 500,
     })
 
+    console.log('[suggest] usage:', JSON.stringify(res.usage))
     const raw = res.choices[0]?.message?.content || ''
-    console.log('[suggest] raw response (first 500):', raw.slice(0, 500))
+    console.log('[suggest] raw response length:', raw.length, 'first 300:', raw.slice(0, 300))
     const parsed = safeParse(raw)
 
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
