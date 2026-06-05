@@ -345,6 +345,16 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: false, error: parseErr.message || 'JSON 파싱 실패', rawResponse: raw.slice(0, 300) }, { status: 500 })
     }
 
+    let items: { value: string; reason: string }[] = Array.isArray(parsed)
+      ? parsed
+      : parsed.suggestions
+        ? parsed.suggestions
+        : parsed.value
+          ? [{ value: parsed.value, reason: parsed.reason || '' }]
+          : parsed.text
+            ? [{ value: parsed.text, reason: '' }]
+            : Object.values(parsed).filter((v): v is string => typeof v === 'string').map(v => ({ value: v, reason: '' }))
+
     console.log('[suggest] items count:', items.length, 'first item:', JSON.stringify(items[0]).slice(0, 200))
 
     if ((body.generateApplication && !body.suggestOnly) || body.generateManuscript || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) {
