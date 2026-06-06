@@ -156,8 +156,8 @@ export default function StudyGuideDetailPage() {
       const subVal = (text: string) => `<p style="margin:0 0 1px 20px;font-size:11px;color:#555;line-height:1.6;">${esc(text)}</p>`
 
       const qItem = (num: number, text: string, details: string) =>
-        '<div style="margin-bottom:8px;padding:6px 10px;background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;">' +
-        `<p style="margin:0;font-size:13px;color:#333;line-height:1.7;"><strong>${num}.</strong> ${esc(text)}</p>${details}</div>`
+        '<div style="margin-bottom:8px;padding:8px 10px;background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;display:flex;flex-direction:column;justify-content:center;">' +
+        `<p style="margin:0;font-size:13px;color:#333;line-height:1.6;"><strong>${num}.</strong> ${esc(text)}</p>${details}</div>`
 
       const openingDetails = (q: OpeningQuestion) =>
         subLabel('질문 의도') + subVal(q.intent) +
@@ -177,13 +177,13 @@ export default function StudyGuideDetailPage() {
         '<p style="font-size:13px;color:#1a56db;font-weight:600;margin:3px 0 0 0;">' + esc(editOutput.title) + '</p></div>',
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">🎯 이번 나눔의 포커스</div>' +
-        '<div style="background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px;border-radius:3px;margin-bottom:14px;">' +
-        editOutput.focus.map(l => '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;">' + esc(l) + '</p>').join('') +
+        '<div style="background:#f0f5ff;border-left:4px solid #1a56db;padding:12px 14px;border-radius:3px;margin-bottom:14px;display:flex;flex-direction:column;justify-content:center;">' +
+        editOutput.focus.map(l => '<p style="margin:0;font-size:13px;color:#333;line-height:1.5;">' + esc(l) + '</p>').join('') +
         '</div>',
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">📖 본문 읽기 안내</div>' +
-        '<div style="background:#fefce8;border-left:4px solid #eab308;padding:8px 14px;border-radius:3px;margin-bottom:14px;">' +
-        '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;font-style:italic;">' + esc(editOutput.readingGuide) + '</p></div>',
+        '<div style="background:#fefce8;border-left:4px solid #eab308;padding:12px 14px;border-radius:3px;margin-bottom:14px;display:flex;flex-direction:column;justify-content:center;">' +
+        '<p style="margin:0;font-size:13px;color:#333;line-height:1.5;font-style:italic;">' + esc(editOutput.readingGuide) + '</p></div>',
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">💬 1. 여는 질문</div>' +
         editOutput.openingQuestions.map((q, i) => qItem(i + 1, q.question, openingDetails(q))).join(''),
@@ -195,25 +195,25 @@ export default function StudyGuideDetailPage() {
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">💬 3. 삶의 적용</div>' +
         editOutput.lifeApplication.map((q, i) =>
-          '<div style="margin-bottom:8px;padding:6px 10px;background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;">' +
-          `<p style="margin:0;font-size:13px;color:#333;line-height:1.7;"><strong>${i + 1}.</strong> ${esc(q)}</p></div>`
+          '<div style="margin-bottom:8px;padding:10px 12px;background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;display:flex;flex-direction:column;justify-content:center;">' +
+          `<p style="margin:0;font-size:13px;color:#333;line-height:1.5;"><strong>${i + 1}.</strong> ${esc(q)}</p></div>`
         ).join(''),
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">🙏 함께 기도</div>' +
-        '<div style="background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:12px 16px;">' +
+        '<div style="background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;">' +
         '<ol style="margin:0;padding-left:18px;">' +
-        editOutput.prayerTopics.map(item => '<li style="margin-bottom:4px;font-size:13px;color:#374151;line-height:1.7;">' + esc(item) + '</li>').join('') +
+        editOutput.prayerTopics.map(item => '<li style="margin-bottom:4px;font-size:13px;color:#374151;line-height:1.5;">' + esc(item) + '</li>').join('') +
         '</ol></div>',
 
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">📝 리더 노트</div>' +
-        '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:12px 16px;">' +
-        editOutput.leaderNotes.map(item => '<p style="margin:0 0 4px;font-size:13px;color:#374151;line-height:1.7;">• ' + esc(item) + '</p>').join('') +
+        '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;">' +
+        editOutput.leaderNotes.map(item => '<p style="margin:0 0 4px;font-size:13px;color:#374151;line-height:1.5;">• ' + esc(item) + '</p>').join('') +
         '</div>',
       ]
 
       const css = `*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.7}
-.pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;}
+body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Gothic",sans-serif;color:#222;line-height:1.5}
+.pdf-page{width:210mm;min-height:297mm;padding:18mm;margin:0;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;}
 .pdf-page-inner{width:174mm;}`
       const pageWrap = (content: string) => `<style>${css}</style><div class="pdf-page"><div class="pdf-page-inner">${content}</div></div>`
       const CONTENT_PX = Math.round(261 * 96 / 25.4)

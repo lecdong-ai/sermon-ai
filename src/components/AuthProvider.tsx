@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User, SupabaseClient } from '@supabase/supabase-js'
 
@@ -12,21 +12,17 @@ interface AuthValue {
 
 const AuthCtx = createContext<AuthValue>({ user: null, loading: true, signOut: async () => {} })
 
-let supabaseInstance: SupabaseClient | null = null
-
-function getSupabase() {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient()
-  }
-  return supabaseInstance
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = getSupabase()
+  const supabaseRef = useRef<SupabaseClient | null>(null)
 
   useEffect(() => {
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
@@ -35,12 +31,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
     })
     return () => subscription.unsubscribe()
-  }, [supabase])
+  }, [])
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const signOut = useCallback(async () => {
+    if (supabaseRef.current) {
+      await supabaseRef.current.auth.signOut()
+    }
     setUser(null)
-  }
+  }, [])
 
   return (
     <AuthCtx.Provider value={{ user, loading, signOut }}>

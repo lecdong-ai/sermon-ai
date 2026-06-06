@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import Script from 'next/script'
+import { Suspense } from 'react'
 import './globals.css'
 import SiteHeader from '@/components/SiteHeader'
 import { AuthProvider } from '@/components/AuthProvider'
+import HydrationGuard from '@/components/HydrationGuard'
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
@@ -62,24 +64,28 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable} ${outfit.variable}`}>
-      <body className="min-h-screen bg-[#f7f8fa] text-[#191f28]">
-        <AuthProvider>
-          <SiteHeader />
-          <main className="pt-16">{children}</main>
-          {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
-            <Script
-              src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-              strategy="afterInteractive"
-              crossOrigin="anonymous"
-              onLoad={() => {
-                if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
-                  Kakao.init(process.env.NEXT_PUBLIC_KAKAO_KEY!)
-                }
-              }}
-            />
-          ) : null}
-        </AuthProvider>
+    <html lang="ko" className={`${notoSansKr.variable} ${outfit.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning className="min-h-screen bg-[#f7f8fa] text-[#191f28]">
+        <HydrationGuard>
+          <AuthProvider>
+            <Suspense fallback={null}>
+              <SiteHeader />
+              <main className="pt-16">{children}</main>
+            </Suspense>
+            {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
+              <Script
+                src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+                strategy="afterInteractive"
+                crossOrigin="anonymous"
+                onLoad={() => {
+                  if (typeof window !== 'undefined' && typeof (window as any).Kakao !== 'undefined' && !(window as any).Kakao.isInitialized()) {
+                    (window as any).Kakao.init(process.env.NEXT_PUBLIC_KAKAO_KEY!)
+                  }
+                }}
+              />
+            ) : null}
+          </AuthProvider>
+        </HydrationGuard>
       </body>
     </html>
   )

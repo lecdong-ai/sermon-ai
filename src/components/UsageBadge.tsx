@@ -10,6 +10,11 @@ export default memo(function UsageBadge() {
   const { user, loading: authLoading } = useAuth()
   const [usage, setUsage] = useState<UsageInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    setNow(Date.now())
+  }, [])
 
   useEffect(() => {
     if (authLoading) return
@@ -29,7 +34,7 @@ export default memo(function UsageBadge() {
   const { trial, monthly, workspace, plan } = usage
   const isTrial = plan === 'none'
   const trialEndDate = trial.ends_at ? new Date(trial.ends_at) : null
-  const daysLeft = trialEndDate ? Math.ceil((trialEndDate.getTime() - Date.now()) / 86400000) : 0
+  const daysLeft = trialEndDate ? Math.ceil((trialEndDate.getTime() - now) / 86400000) : 0
   const isUnlimited = trial.remaining >= 999999 || (monthly.limit === 0 && monthly.remaining === 0 && !isTrial)
 
   const planColors = {
