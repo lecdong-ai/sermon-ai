@@ -42,7 +42,7 @@ function NewStudyGuideForm() {
   const sermonId = searchParams.get('sermonId')
 
   const [loading, setLoading] = useState(false)
-  const [prefilling, setPrefilling] = useState(!!sermonId)
+  const [prefilling, setPrefilling] = useState(false)
   const [error, setError] = useState('')
   const [title, setTitle] = useState('')
   const [passage, setPassage] = useState('')
@@ -56,6 +56,7 @@ function NewStudyGuideForm() {
 
   useEffect(() => {
     if (!sermonId) return
+    setPrefilling(true)
     fetch(`/api/sermons/${sermonId}`)
       .then(r => r.json())
       .then(response => {

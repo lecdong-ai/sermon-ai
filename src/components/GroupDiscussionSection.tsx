@@ -17,11 +17,11 @@ const AGE_GROUPS: {
   color: string
   desc: string
 }[] = [
-    { key: 'teens', icon: School, label: '청소년', color: 'from-sky-500 to-sky-600', desc: '10대 청소년' },
-    { key: 'twentiesThirties', icon: Users, label: '20~30대', color: 'from-blue-500 to-blue-600', desc: '청년 세대' },
-    { key: 'forties', icon: Sparkles, label: '40대', color: 'from-indigo-500 to-indigo-600', desc: '중년 세대' },
-    { key: 'fiftiesSixties', icon: BookMarked, label: '50~60대', color: 'from-primary-500 to-primary-600', desc: '장년 세대' },
-    { key: 'seventiesPlus', icon: Heart, label: '70대 이상', color: 'from-purple-500 to-purple-600', desc: '시니어 세대' },
+    { key: 'teens', icon: School, label: '청소년', color: 'bg-[#eae7e2] text-[#8d7a5b]', desc: '10대 청소년' },
+    { key: 'twentiesThirties', icon: Users, label: '20~30대', color: 'bg-[#eae7e2] text-[#8d7a5b]', desc: '청년 세대' },
+    { key: 'forties', icon: Sparkles, label: '40대', color: 'bg-[#eae7e2] text-[#8d7a5b]', desc: '중년 세대' },
+    { key: 'fiftiesSixties', icon: BookMarked, label: '50~60대', color: 'bg-[#eae7e2] text-[#8d7a5b]', desc: '장년 세대' },
+    { key: 'seventiesPlus', icon: Heart, label: '70대 이상', color: 'bg-[#eae7e2] text-[#8d7a5b]', desc: '시니어 세대' },
   ]
 
 const GD_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
@@ -160,43 +160,43 @@ function AgeGroupCard({
       <button
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${open
-          ? 'border-primary-200 bg-gradient-to-r from-primary-50/80 to-white'
-          : 'border-[#e5e8eb] bg-white hover:border-[#d1d6db] hover:shadow-sm'
+          ? 'border-[#8d7a5b] bg-[#fdfcf9]'
+          : 'border-[#e4e2dd] bg-white hover:border-[#d4d1c9]'
           }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${group.color} flex items-center justify-center shadow-sm`}>
-            <group.icon className="w-4 h-4 text-white" />
+          <div className={`w-9 h-9 rounded-lg ${group.color} flex items-center justify-center`}>
+            <group.icon className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <p className="text-[16px] font-bold text-[#191f28]">{group.label}</p>
-            <p className="text-[13px] text-[#8b95a1]">{group.desc}</p>
+            <p className="text-[14px] font-bold text-[#2c2a29]">{group.label}</p>
+            <p className="text-[12px] text-[#8a8580]">{group.desc}</p>
           </div>
         </div>
-        <ChevronDown className={`w-4 h-4 text-[#8b95a1] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-[#8a8580] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <div className={`overflow-hidden transition-all duration-300 ${open ? 'max-h-[2000px] opacity-100 mt-2' : 'max-h-0 opacity-0'
         }`}>
-        <div className="p-4 rounded-xl border border-[#e5e8eb] bg-white space-y-4">
-          <div className="p-3 rounded-lg bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-100">
-            <p className="font-bold text-[14px] text-primary-700 mb-1">나눔 목표</p>
-            <p className="text-[14px] text-[#4e5968]">{material.goal}</p>
+        <div className="p-4 rounded-xl border border-[#e4e2dd] bg-white space-y-4">
+          <div className="p-3 rounded-lg bg-[#fbfaf7] border border-[#e4e2dd]">
+            <p className="font-bold text-[13px] text-[#2c2a29] mb-1">나눔 목표</p>
+            <p className="text-[13px] text-[#4a4744] leading-relaxed">{material.goal}</p>
           </div>
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
-            <p className="font-bold text-[14px] text-amber-700 mb-1">핵심 메시지</p>
-            <p className="text-[14px] text-[#4e5968]">{material.coreMessage}</p>
+          <div className="p-3 rounded-lg bg-[#fdfcf7] border border-[#e8e6e1]">
+            <p className="font-bold text-[13px] text-[#6b5f4c] mb-1">핵심 메시지</p>
+            <p className="text-[13px] text-[#4a4744] leading-relaxed">{material.coreMessage}</p>
           </div>
           {sections.map((section) => (
             <div key={section.label}>
-              <p className="font-bold text-[14px] text-[#191f28] mb-2 flex items-center gap-1.5">
-                <section.icon className="w-3.5 h-3.5 text-primary-500" />
+              <p className="font-bold text-[13px] text-[#2c2a29] mb-2 flex items-center gap-1.5">
+                <section.icon className="w-3.5 h-3.5 text-[#8d7a5b]" />
                 {section.label}
               </p>
               <ul className="space-y-2">
                 {section.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[14px] text-[#4e5968] leading-relaxed">
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
+                  <li key={i} className="flex items-start gap-2 text-[13px] text-[#4a4744] leading-relaxed">
+                    <span className="shrink-0 w-4 h-4 rounded-full bg-[#f2efe9] text-[#6b6255] text-[10px] font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
                     {item}
@@ -210,7 +210,7 @@ function AgeGroupCard({
               <button
                 onClick={onDownloadPdf}
                 disabled={pdfLoading}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium text-primary-600 bg-primary-50 border border-primary-200 hover:bg-primary-100 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#8d7a5b] bg-[#fdfcf7] border border-[#d4d1c9] hover:bg-[#f5f4f0] transition-colors disabled:opacity-50"
               >
                 <FileDown className="w-3.5 h-3.5" />
                 {pdfLoading ? '생성 중...' : 'PDF 다운로드'}
@@ -294,7 +294,7 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
       action={
         <Link
           href="/study-guide"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-gradient-to-r from-primary-500 to-blue-600 shadow-md hover:shadow-lg hover:from-primary-600 hover:to-blue-700 transition-all duration-200"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-[#2c2a29] hover:bg-[#1e1d1c] transition-all duration-200"
         >
           <BookOpen className="w-3.5 h-3.5" />
           리더가이드
@@ -303,39 +303,39 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
     >
       {/* 기본 정보 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="p-4 rounded-xl bg-primary-50 border border-primary-100 text-center">
-          <p className="text-[14px] font-bold text-primary-600 mb-1">제목</p>
-          <p className="text-[18px] font-bold text-[#191f28]">{stripPassage(data.title)}</p>
+        <div className="p-4 rounded-xl bg-[#fbfaf7] border border-[#e4e2dd] text-center">
+          <p className="text-[13px] font-bold text-[#8a8580] mb-1">제목</p>
+          <p className="text-[16px] font-bold text-[#2c2a29]">{stripPassage(data.title)}</p>
         </div>
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 text-center">
-          <p className="text-[14px] font-bold text-blue-600 mb-1">본문</p>
-          <p className="text-[18px] font-bold text-[#191f28]">{data.passage}</p>
+        <div className="p-4 rounded-xl bg-[#fbfaf7] border border-[#e4e2dd] text-center">
+          <p className="text-[13px] font-bold text-[#8a8580] mb-1">본문</p>
+          <p className="text-[16px] font-bold text-[#2c2a29]">{data.passage}</p>
         </div>
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 text-center">
-          <p className="text-[14px] font-bold text-amber-600 mb-1">주제</p>
-          <p className="text-[18px] font-bold text-[#191f28]">{data.topic}</p>
+        <div className="p-4 rounded-xl bg-[#fbfaf7] border border-[#e4e2dd] text-center">
+          <p className="text-[13px] font-bold text-[#8a8580] mb-1">주제</p>
+          <p className="text-[16px] font-bold text-[#2c2a29]">{data.topic}</p>
         </div>
       </div>
 
       {/* 본문 핵심 요약 */}
-      <div className="mb-5 p-4 rounded-xl bg-white border border-[#e5e8eb]">
-        <p className="font-bold text-[15px] text-[#191f28] mb-2 flex items-center gap-1.5">
-          <MessageCircle className="w-4 h-4 text-primary-500" />
+      <div className="mb-5 p-4 rounded-xl bg-white border border-[#e4e2dd]">
+        <p className="font-bold text-[14px] text-[#2c2a29] mb-2 flex items-center gap-1.5">
+          <MessageCircle className="w-4 h-4 text-[#8d7a5b]" />
           본문 핵심 요약
         </p>
-        <p className="text-[14px] text-[#4e5968] leading-relaxed">{data.summary}</p>
+        <p className="text-[13px] text-[#4a4744] leading-relaxed">{data.summary}</p>
       </div>
 
       {/* 전체 나눔 방향 */}
-      <div className="mb-5 p-4 rounded-xl bg-white border border-[#e5e8eb]">
-        <p className="font-bold text-[15px] text-[#191f28] mb-2 flex items-center gap-1.5">
-          <Target className="w-4 h-4 text-primary-500" />
+      <div className="mb-5 p-4 rounded-xl bg-white border border-[#e4e2dd]">
+        <p className="font-bold text-[14px] text-[#2c2a29] mb-2 flex items-center gap-1.5">
+          <Target className="w-4 h-4 text-[#8d7a5b]" />
           전체 나눔 방향
         </p>
         <ul className="space-y-1.5">
           {data.directionPoints.map((point, i) => (
-            <li key={i} className="flex items-start gap-2 text-[14px] text-[#4e5968] leading-relaxed">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-2 shrink-0" />
+            <li key={i} className="flex items-start gap-2 text-[13px] text-[#4a4744] leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8d7a5b] mt-2 shrink-0" />
               {point}
             </li>
           ))}
@@ -344,8 +344,8 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
 
       {/* 연령별 나눔 자료 */}
       <div className="space-y-3 mb-5">
-        <p className="font-bold text-[15px] text-[#191f28] flex items-center gap-1.5">
-          <Users className="w-4 h-4 text-primary-500" />
+        <p className="font-bold text-[14px] text-[#2c2a29] flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-[#8d7a5b]" />
           연령별 소그룹 나눔 자료
         </p>
         {AGE_GROUPS.map((group, i) => (
@@ -362,17 +362,17 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
       </div>
 
       {/* 공통 마무리 */}
-      <div className="p-4 rounded-xl bg-white border border-[#e5e8eb]">
-        <p className="font-bold text-[15px] text-[#191f28] mb-3 flex items-center gap-1.5">
-          <HeartHandshake className="w-4 h-4 text-primary-500" />
+      <div className="p-4 rounded-xl bg-white border border-[#e4e2dd]">
+        <p className="font-bold text-[14px] text-[#2c2a29] mb-3 flex items-center gap-1.5">
+          <HeartHandshake className="w-4 h-4 text-[#8d7a5b]" />
           공통 마무리
         </p>
         <div className="mb-4">
-          <p className="font-medium text-[14px] text-[#4e5968] mb-2">마무리 질문</p>
+          <p className="font-medium text-[13px] text-[#6b6764] mb-2">마무리 질문</p>
           <ul className="space-y-2">
             {data.closingQuestions.map((q, i) => (
-              <li key={i} className="flex items-start gap-2 text-[14px] text-[#4e5968] leading-relaxed">
-                <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
+              <li key={i} className="flex items-start gap-2 text-[13px] text-[#4a4744] leading-relaxed">
+                <span className="shrink-0 w-4 h-4 rounded-full bg-[#f2efe9] text-[#6b6255] text-[10px] font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 {q}
@@ -380,12 +380,12 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
             ))}
           </ul>
         </div>
-        <div className="p-3 rounded-lg bg-gradient-to-r from-primary-50 to-purple-50 border border-primary-100">
-          <p className="font-bold text-[14px] text-primary-700 mb-1 flex items-center gap-1.5">
+        <div className="p-3 rounded-lg bg-[#fdfcf7] border border-[#e8e6e1]">
+          <p className="font-bold text-[13px] text-[#6b5f4c] mb-1 flex items-center gap-1.5">
             <Cross className="w-3.5 h-3.5" />
             대표기도문
           </p>
-          <p className="text-[14px] text-[#4e5968] leading-relaxed whitespace-pre-wrap">{data.representativePrayer}</p>
+          <p className="text-[13px] text-[#4a4744] leading-relaxed whitespace-pre-wrap">{data.representativePrayer}</p>
         </div>
       </div>
       <div ref={pdfContentRef} style={{ position: 'absolute', left: -9999, top: 0, width: 800 }} />

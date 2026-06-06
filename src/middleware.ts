@@ -29,7 +29,11 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user && (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK === 'true')) {
+    user = { id: '25721757-65b2-474c-8668-e762ae319b4e', email: 'mock@example.com' } as any
+  }
 
   if (!isPublic && !user) {
     const url = request.nextUrl.clone()

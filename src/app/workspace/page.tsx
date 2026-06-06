@@ -41,13 +41,13 @@ type ViewMode = 'tabs' | 'all'
 export default function Page() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[70vh] bg-grid-tech relative overflow-hidden">
-        <div className="glass-panel glass-border-neon p-8 rounded-2xl text-center max-w-xs w-full animate-in">
-          <div className="relative w-12 h-12 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
+      <div className="flex items-center justify-center min-h-[70vh] bg-[#fbfaf7]">
+        <div className="bg-white border border-[#e4e2dd] p-8 rounded-xl text-center max-w-xs w-full shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="relative w-10 h-10 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-2 border-[#e4e2dd]" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#8d7a5b] animate-spin" />
           </div>
-          <p className="text-[15px] font-bold text-slate-500">워크스페이스 준비 중...</p>
+          <p className="text-[14px] font-medium text-[#8a8580]">워크스페이스 준비 중...</p>
         </div>
       </div>
     }>
@@ -224,13 +224,13 @@ function WorkspacePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] bg-grid-tech relative overflow-hidden">
-        <div className="glass-panel glass-border-neon p-8 rounded-2xl text-center max-w-xs w-full animate-in">
-          <div className="relative w-12 h-12 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
+      <div className="flex items-center justify-center min-h-[70vh] bg-[#fbfaf7]">
+        <div className="bg-white border border-[#e4e2dd] p-8 rounded-xl text-center max-w-xs w-full shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="relative w-10 h-10 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-2 border-[#e4e2dd]" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#8d7a5b] animate-spin" />
           </div>
-          <p className="text-[15px] font-bold text-slate-500">콘텐츠를 불러오는 중...</p>
+          <p className="text-[14px] font-medium text-[#8a8580]">콘텐츠를 불러오는 중...</p>
         </div>
       </div>
     )
@@ -297,11 +297,7 @@ function WorkspacePage() {
   }
 
   return (
-    <div className="flex justify-center min-h-[calc(100vh-4rem)] relative bg-grid-tech overflow-hidden">
-      {/* 몽환적인 백그라운드 오로라 구체 */}
-      <div className="absolute top-10 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slower" />
-
+    <div className="flex justify-center min-h-[calc(100vh-4rem)] relative bg-[#fbfaf7]">
       <div className="flex w-full max-w-7xl z-10">
       {/* 사이드바 */}
       <WorkspaceSidebar
@@ -319,44 +315,42 @@ function WorkspacePage() {
       <div className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* 상단 헤더 */}
-          <div className="flex items-center gap-4 mb-8 p-6 glass-panel glass-border-neon rounded-2xl animate-in shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-            
+          <div className="flex items-center gap-4 mb-8 p-6 bg-white border border-[#e4e2dd] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] animate-in">
             {/* 모바일 햄버거 */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="w-10 h-10 rounded-xl bg-white/80 border border-slate-200 flex items-center justify-center hover:bg-[#f0f4ff] hover:scale-105 active:scale-95 transition-all duration-200 lg:hidden shadow-sm"
+              className="w-10 h-10 rounded-lg bg-white border border-[#e4e2dd] flex items-center justify-center hover:bg-[#fbfaf7] active:scale-95 transition-all duration-200 lg:hidden"
             >
-              <Menu className="w-5 h-5 text-slate-600" />
+              <Menu className="w-5 h-5 text-[#4a4744]" />
             </button>
 
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-800 truncate tracking-tight">
+                  <h1 className="text-lg sm:text-xl font-bold text-[#2c2a29] truncate tracking-tight">
                     {sermon.title || '설교 워크스페이스'}
                   </h1>
                   {sermon.passage && (
-                    <p className="text-[14px] font-medium text-slate-400 mt-1 select-all">{sermon.passage}</p>
+                    <p className="text-[13px] font-medium text-[#8a8580] mt-1 select-all">{sermon.passage}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <button
                     onClick={() => setShowUploadModal(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 text-white text-[13px] font-bold shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#8d7a5b] text-white text-[13px] font-medium hover:bg-[#7a694e] active:scale-[0.98] transition-all duration-200"
                   >
                     <Plus className="w-4 h-4" />
                     <span>새로 만들기</span>
                   </button>
                   <button
                     onClick={() => setViewMode(viewMode === 'tabs' ? 'all' : 'tabs')}
-                    className="w-9 h-9 rounded-xl bg-white/80 border border-slate-200 hover:bg-[#f0f4ff] flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm"
+                    className="w-9 h-9 rounded-lg bg-white border border-[#e4e2dd] hover:bg-[#fbfaf7] flex items-center justify-center active:scale-95 transition-all duration-200"
                     title={viewMode === 'tabs' ? '전체 보기' : '탭으로 보기'}
                   >
                     {viewMode === 'tabs' ? (
-                      <LayoutGrid className="w-4 h-4 text-slate-500" />
+                      <LayoutGrid className="w-4 h-4 text-[#8a8580]" />
                     ) : (
-                      <List className="w-4 h-4 text-slate-500" />
+                      <List className="w-4 h-4 text-[#8a8580]" />
                     )}
                   </button>
                 </div>

@@ -61,16 +61,16 @@ export default function WorkspaceSidebar({
       )}
 
       <aside
-        className={`fixed top-16 left-0 bottom-0 z-40 w-72 bg-gradient-to-b from-[#14181f] via-[#161b24] to-[#0f131a] border-r border-white/[0.06] shadow-2xl shadow-black/20 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:z-auto ${
+        className={`fixed top-16 left-0 bottom-0 z-40 w-72 bg-[#f5f4f0] border-r border-[#e4e2dd] shadow-[1px_0_3px_rgba(0,0,0,0.01)] transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:z-auto ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* 모바일 닫기 */}
           <div className="flex items-center justify-between px-5 h-14 lg:hidden">
-            <span className="text-[15px] font-bold text-white/80 tracking-tight">메뉴</span>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200 border border-white/10">
-              <X className="w-3.5 h-3.5 text-white/60" />
+            <span className="text-[14px] font-bold text-[#2c2a29] tracking-tight">메뉴</span>
+            <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/50 hover:bg-white/80 flex items-center justify-center transition-all duration-200 border border-[#e4e2dd]">
+              <X className="w-3.5 h-3.5 text-[#4a4744]" />
             </button>
           </div>
 
@@ -81,21 +81,21 @@ export default function WorkspaceSidebar({
           <div className="px-5 pt-3">
             <Link
               href="/dashboard/sermons/uploaded"
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[#6b6764] hover:text-[#2c2a29] hover:bg-[#eae8e3]/50 transition-all duration-200"
             >
-              <Upload className="w-5 h-5" />
+              <Upload className="w-5 h-5 text-[#8d7a5b]" />
               <div>
-                <span className="block text-[15px] font-semibold tracking-tight">업로드된 설교</span>
-                <span className="block text-[11px] mt-0.5 font-medium text-white/30">파일 관리</span>
+                <span className="block text-[14px] font-bold tracking-tight text-[#2c2a29]">업로드된 설교</span>
+                <span className="block text-[11px] mt-0.5 font-medium text-[#8a8580]">파일 관리</span>
               </div>
             </Link>
           </div>
 
           {/* 구분선 */}
-          <div className="mx-5 h-px bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
+          <div className="mx-5 h-px bg-[#e4e2dd] my-2" />
 
           {/* 네비게이션 */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
             {NAV_ITEMS.map((item, idx) => {
               const isActive = activeTab === item.id
               const status = getItemStatus(sermon, item.id)
@@ -106,19 +106,19 @@ export default function WorkspaceSidebar({
                   className="group relative w-full"
                 >
                   <div
-                    className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all duration-200 ${
+                    className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-primary-500/20 via-primary-400/10 to-transparent text-white shadow-lg shadow-primary-500/5'
-                        : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]'
+                        ? 'bg-[#eae7e0] text-[#2c2a29]'
+                        : 'text-[#6b6764] hover:text-[#2c2a29] hover:bg-[#eae8e3]/50'
                     }`}
                   >
                     {/* 활성 인디케이터 */}
                     {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-full bg-gradient-to-b from-primary-400 to-primary-500 shadow-sm shadow-primary-500/50" />
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-full bg-[#8d7a5b]" />
                     )}
 
                     {/* 아이콘 */}
-                    <span className={`text-[20px] transition-transform duration-200 ${
+                    <span className={`text-[18px] transition-transform duration-200 ${
                       isActive ? 'scale-110' : 'group-hover:scale-105'
                     }`}>
                       {item.icon}
@@ -126,13 +126,13 @@ export default function WorkspaceSidebar({
 
                     {/* 텍스트 */}
                     <div className="flex-1 text-left min-w-0">
-                      <span className={`block text-[15px] font-semibold tracking-tight truncate transition-colors duration-200 ${
-                        isActive ? 'text-white' : 'text-white/70 group-hover:text-white/90'
+                      <span className={`block text-[14px] font-bold tracking-tight truncate transition-colors duration-200 ${
+                        isActive ? 'text-[#2c2a29]' : 'text-[#4a4744] group-hover:text-[#2c2a29]'
                       }`}>
                         {item.label}
                       </span>
                       <span className={`block text-[11px] mt-0.5 font-medium transition-colors duration-200 ${
-                        isActive ? 'text-white/40' : 'text-white/30 group-hover:text-white/40'
+                        isActive ? 'text-[#8a8580]' : 'text-[#8a8580] group-hover:text-[#6b6764]'
                       }`}>
                         {item.description}
                       </span>
@@ -142,16 +142,15 @@ export default function WorkspaceSidebar({
                     <div className="flex items-center gap-1.5 shrink-0">
                       {status === 'done' ? (
                         <div className="relative">
-                          <CheckCircle className="w-[18px] h-[18px] text-emerald-400 drop-shadow-sm" />
-                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping opacity-50" />
+                          <CheckCircle className="w-[18px] h-[18px] text-[#8d7a5b] drop-shadow-sm" />
                         </div>
                       ) : status === 'generating' ? (
-                        <Loader2 className="w-[18px] h-[18px] text-primary-400 animate-spin" />
+                        <Loader2 className="w-[18px] h-[18px] text-[#8d7a5b] animate-spin" />
                       ) : status === 'error' ? (
-                        <AlertCircle className="w-[18px] h-[18px] text-red-400" />
+                        <AlertCircle className="w-[18px] h-[18px] text-red-500" />
                       ) : (
                         <ChevronRight className={`w-4 h-4 transition-all duration-200 ${
-                          isActive ? 'text-white/30 translate-x-0' : 'text-white/10 group-hover:text-white/30 group-hover:translate-x-0.5'
+                          isActive ? 'text-[#8a8580]/50 translate-x-0' : 'text-[#8a8580]/30 group-hover:text-[#8a8580]/50 group-hover:translate-x-0.5'
                         }`} />
                       )}
                     </div>
@@ -163,7 +162,7 @@ export default function WorkspaceSidebar({
 
           {/* 하단 버전 */}
           <div className="px-5 py-3">
-            <p className="text-[10px] text-white/15 text-center font-medium tracking-[0.15em]">v0.1.0</p>
+            <p className="text-[10px] text-[#8a8580]/40 text-center font-medium tracking-[0.15em]">v0.1.0</p>
           </div>
         </div>
       </aside>

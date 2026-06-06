@@ -26,10 +26,10 @@ export default function SectionCard({ title, emoji, children, copyText, action, 
 
   return (
     <section
-      className={`rounded-2xl border border-[#e5e8eb] bg-white shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden animate-in ${className}`}
+      className={`rounded-xl border border-[#e4e2dd] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] animate-in ${className}`}
     >
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e8eb]/60 bg-gradient-to-r from-[#fafbfc] to-white">
-        <h3 className="text-[17px] font-bold text-[#191f28]">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e4e2dd]/60 bg-[#fdfcf9]">
+        <h3 className="text-[15px] font-bold text-[#2c2a29]">
           {emoji ? <span className="mr-1.5">{emoji}</span> : null}
           {title}
         </h3>
@@ -38,12 +38,12 @@ export default function SectionCard({ title, emoji, children, copyText, action, 
           {copyText && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] text-[#8a8580] hover:text-[#8d7a5b] hover:bg-[#f5f4f0] transition-all duration-200"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-green-500" />
-                  <span className="text-green-500 font-medium">복사됨</span>
+                  <Check className="w-3.5 h-3.5 text-[#8d7a5b]" />
+                  <span className="text-[#8d7a5b] font-medium">복사됨</span>
                 </>
               ) : (
                 <>

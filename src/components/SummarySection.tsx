@@ -11,11 +11,11 @@ interface Props {
 }
 
 const SECTIONS: { key: keyof Summary; label: string; bar: string; tag: string; bg: string }[] = [
-  { key: 'central_topic', label: '중심 주제', bar: 'bg-primary-500', tag: 'text-primary-700 bg-primary-50', bg: 'bg-white' },
-  { key: 'intro', label: '서론', bar: 'bg-blue-500', tag: 'text-blue-700 bg-blue-50', bg: 'bg-white' },
-  { key: 'body', label: '본론', bar: 'bg-indigo-500', tag: 'text-indigo-700 bg-indigo-50', bg: 'bg-white' },
-  { key: 'conclusion', label: '결론', bar: 'bg-rose-500', tag: 'text-rose-700 bg-rose-50', bg: 'bg-white' },
-  { key: 'application', label: '적용', bar: 'bg-emerald-500', tag: 'text-emerald-700 bg-emerald-50', bg: 'bg-white' },
+  { key: 'central_topic', label: '중심 주제', bar: 'bg-[#8d7a5b]', tag: 'text-[#2c2a29] bg-[#eae7e0] border border-[#d4d1c9]', bg: 'bg-white' },
+  { key: 'intro', label: '서론', bar: 'bg-[#d4d1c9]', tag: 'text-[#5c5854] bg-[#f5f4f0] border border-[#e4e2dd]', bg: 'bg-white' },
+  { key: 'body', label: '본론', bar: 'bg-[#d4d1c9]', tag: 'text-[#5c5854] bg-[#f5f4f0] border border-[#e4e2dd]', bg: 'bg-white' },
+  { key: 'conclusion', label: '결론', bar: 'bg-[#d4d1c9]', tag: 'text-[#5c5854] bg-[#f5f4f0] border border-[#e4e2dd]', bg: 'bg-white' },
+  { key: 'application', label: '적용', bar: 'bg-[#d4d1c9]', tag: 'text-[#5c5854] bg-[#f5f4f0] border border-[#e4e2dd]', bg: 'bg-white' },
 ]
 
 const PDF_PAGE_CSS = `*{box-sizing:border-box;margin:0;padding:0}
@@ -96,8 +96,8 @@ export default function SummarySection({ data }: Props) {
       <div key={key} className="flex gap-4 animate-in-fast" style={{ animationDelay: `${i * 80}ms` }}>
         <div className={`w-[3px] shrink-0 rounded-full ${bar} mt-[7px]`} />
         <div className="flex-1 min-w-0">
-          <span className={`text-[12px] font-bold px-2 py-[3px] rounded-md ${tag}`}>{label}</span>
-          <p className="text-[15px] text-[#4e5968] leading-[1.8] whitespace-pre-wrap mt-2">{val}</p>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${tag}`}>{label}</span>
+          <p className="text-[14px] text-[#4a4744] leading-[1.8] whitespace-pre-wrap mt-2">{val}</p>
         </div>
       </div>
     )
@@ -173,7 +173,7 @@ export default function SummarySection({ data }: Props) {
         <button
           onClick={handleDownloadPdf}
           disabled={pdfLoading}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-primary-500 hover:bg-primary-50 transition-all duration-200 disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] text-[#8a8580] hover:text-[#8d7a5b] hover:bg-[#f5f4f0] border border-[#e4e2dd] transition-all duration-200 disabled:opacity-50"
         >
           <FileDown className="w-3.5 h-3.5" />
           <span className="font-medium">{pdfLoading ? '생성 중...' : 'PDF'}</span>
@@ -183,10 +183,10 @@ export default function SummarySection({ data }: Props) {
       <div className="space-y-6">
         {data.passage_text && (
           <div className="flex gap-4 animate-in-fast">
-            <div className="w-[3px] shrink-0 rounded-full bg-amber-400 mt-[7px]" />
+            <div className="w-[3px] shrink-0 rounded-full bg-[#8d7a5b] mt-[7px]" />
             <div className="flex-1 min-w-0">
-              <span className="text-[12px] font-bold px-2 py-[3px] rounded-md text-amber-700 bg-amber-50">📖 성경 본문 (개역개정)</span>
-              <p className="text-[15px] text-[#4e5968] leading-[1.8] italic whitespace-pre-wrap mt-2">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded text-[#6b5f4c] bg-[#fdfcf7] border border-[#e8e6e1]">📖 성경 본문 (개역개정)</span>
+              <p className="text-[14px] text-[#4a4744] leading-[1.8] italic whitespace-pre-wrap mt-2">
                 {data.passage_text}
               </p>
             </div>
