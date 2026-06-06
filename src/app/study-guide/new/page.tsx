@@ -58,11 +58,15 @@ function NewStudyGuideForm() {
     if (!sermonId) return
     fetch(`/api/sermons/${sermonId}`)
       .then(r => r.json())
-      .then(data => {
-        if (data?.id) {
-          setTitle(data.title || '')
-          setPassage(data.passage || '')
-          setSermonText(data.raw_text || '')
+      .then(response => {
+        if (!response.success) return
+        const sermon = response.data
+        if (sermon?.id) {
+          setTitle(sermon.title || '')
+          setPassage(sermon.normalizedPassage || sermon.passage || '')
+          const manuscript = sermon.result?.manuscript || ''
+          const rawText = sermon.raw_text || ''
+          setSermonText(manuscript || rawText || '')
         }
       })
       .catch(() => {})
