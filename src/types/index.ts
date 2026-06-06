@@ -411,20 +411,20 @@ export interface StudyGuideInput {
 }
 
 export interface OpeningQuestion {
-  text: string
-  intention: string
-  silenceGuide: string
-  tip: string
+  question: string
+  intent: string
+  ifSilence: string
+  leaderTip: string
 }
 
 export interface SermonDiscussionQuestion {
-  text: string
-  type: '관찰' | '해석' | '적용'
-  intention: string
-  expectedAnswer: string
-  silenceGuide: string
-  tip: string
-  reference: string
+  type: 'observation' | 'interpretation' | 'application'
+  question: string
+  intent: string
+  expectedResponses: string[]
+  followUp: string
+  scripture: string
+  bridge: string
 }
 
 export interface LifeApplicationQuestion {
@@ -436,13 +436,13 @@ export interface LifeApplicationQuestion {
 
 export interface StudyGuideOutput {
   title: string
-  passage: string
-  focus: string
+  focus: string[]
   readingGuide: string
   openingQuestions: OpeningQuestion[]
   sermonDiscussion: SermonDiscussionQuestion[]
-  lifeApplication: LifeApplicationQuestion[]
+  lifeApplication: string[]
   prayerTopics: string[]
+  leaderNotes: string[]
 }
 
 export interface StudyGuideRecord {
@@ -464,72 +464,63 @@ export const STUDY_GUIDE_SCHEMA = {
     schema: {
       type: 'object',
       properties: {
-        output: {
-          type: 'object',
-          properties: {
-            title: { type: 'string', description: '설교 핵심을 한 문장으로 드러내는 제목. "참된 신앙은 ~이다"처럼 메시지가 분명한 문장형 제목' },
-            passage: { type: 'string', description: '성경본문' },
-            focus: { type: 'string', description: '3개의 핵심 포인트를 번호로 정리. 각 포인트는 1~2문장. 마지막에 →로 시작하는 한 줄 결론/초청문 포함' },
-            readingGuide: { type: 'string', description: '본문 읽기 안내 (예: "한 사람이 천천히 읽거나, 한 절씩 교독해 주세요.")' },
-            openingQuestions: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  text: { type: 'string', description: '여는 질문. 아이스브레이크 성격이면서도 신앙의 태도를 돌아보게 하는 질문' },
-                  intention: { type: 'string', description: '질문 의도' },
-                  silenceGuide: { type: 'string', description: '침묵이 흐를 때 리더가 사용할 멘트' },
-                  tip: { type: 'string', description: '진행 팁' },
-                },
-                required: ['text', 'intention', 'silenceGuide', 'tip'],
-                additionalProperties: false,
-              },
-              description: '여는 질문 2개',
+        title: { type: 'string', description: '설교 핵심을 한 문장으로 드러내는 제목. "참된 신앙은 ~이다"처럼 메시지가 분명한 문장형 제목' },
+        focus: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '이번 모임에서 리더가 꼭 붙들어야 할 핵심 3가지를 번호로 정리. 마지막은 →로 시작하는 한 줄 결론/초청문',
+        },
+        readingGuide: { type: 'string', description: '본문을 함께 읽도록 초대하는 한 줄 안내문' },
+        openingQuestions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: '여는 질문. 아이스브레이크 성격이면서도 신앙의 태도를 돌아보게 하는 질문' },
+              intent: { type: 'string', description: '질문 의도' },
+              ifSilence: { type: 'string', description: '침묵이 흐를 때 리더가 사용할 멘트' },
+              leaderTip: { type: 'string', description: '진행 팁' },
             },
-            sermonDiscussion: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  text: { type: 'string', description: '질문 내용' },
-                  type: { type: 'string', enum: ['관찰', '해석', '적용'], description: '질문 유형: 관찰 1문항, 해석 2문항, 적용 1문항 순서' },
-                  intention: { type: 'string', description: '질문 의도' },
-                  expectedAnswer: { type: 'string', description: '예상 응답 방향' },
-                  silenceGuide: { type: 'string', description: '침묵이 흐를 때 리더가 사용할 멘트' },
-                  tip: { type: 'string', description: '진행 팁' },
-                  reference: { type: 'string', description: '참고 성경구절' },
-                },
-                required: ['text', 'type', 'intention', 'expectedAnswer', 'silenceGuide', 'tip', 'reference'],
-                additionalProperties: false,
-              },
-              description: '말씀 나눔 4문항 (1 관찰, 2 해석, 1 적용)',
-            },
-            lifeApplication: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  text: { type: 'string', description: '실천 질문. "이번 주", "내일", "구체적인 상황" 등의 표현으로 실제 행동 연결' },
-                  intention: { type: 'string', description: '질문 의도' },
-                  silenceGuide: { type: 'string', description: '침묵이 흐를 때 리더가 사용할 멘트' },
-                  tip: { type: 'string', description: '진행 팁' },
-                },
-                required: ['text', 'intention', 'silenceGuide', 'tip'],
-                additionalProperties: false,
-              },
-              description: '삶의 적용 질문 2개',
-            },
-            prayerTopics: {
-              type: 'array',
-              items: { type: 'string' },
-              description: '함께 기도제목 3개. 1)개인의 내면 변화 2)삶의 현장에서의 순종 3)공동체의 성숙',
-            },
+            required: ['question', 'intent', 'ifSilence', 'leaderTip'],
+            additionalProperties: false,
           },
-          required: ['title', 'passage', 'focus', 'readingGuide', 'openingQuestions', 'sermonDiscussion', 'lifeApplication', 'prayerTopics'],
-          additionalProperties: false,
+          description: '여는 질문 2개',
+        },
+        sermonDiscussion: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['observation', 'interpretation', 'application'], description: '질문 유형: 관찰 1문항, 해석 2문항, 적용 1문항 순서' },
+              question: { type: 'string', description: '질문 내용' },
+              intent: { type: 'string', description: '질문 의도' },
+              expectedResponses: { type: 'array', items: { type: 'string' }, description: '예상 응답 방향 2개' },
+              followUp: { type: 'string', description: '보조 질문' },
+              scripture: { type: 'string', description: '참고 성경구절' },
+              bridge: { type: 'string', description: '다음 질문으로 연결하는 자연스러운 연결 문장' },
+            },
+            required: ['type', 'question', 'intent', 'expectedResponses', 'followUp', 'scripture', 'bridge'],
+            additionalProperties: false,
+          },
+          description: '말씀 나눔 4문항 (1 관찰, 2 해석, 1 적용)',
+        },
+        lifeApplication: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '실천 질문 2개. "이번 주", "내일", "구체적인 상황" 등의 표현으로 실제 행동 연결. 마지막 질문은 중보기도로 이어지게',
+        },
+        prayerTopics: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '함께 기도제목 3개. 1)개인의 내면 변화 2)삶의 현장에서의 순종 3)공동체의 성숙',
+        },
+        leaderNotes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '리더가 오늘 나눔에서 꼭 기억할 점 3가지',
         },
       },
-      required: ['output'],
+      required: ['title', 'focus', 'readingGuide', 'openingQuestions', 'sermonDiscussion', 'lifeApplication', 'prayerTopics', 'leaderNotes'],
       additionalProperties: false,
     },
   },

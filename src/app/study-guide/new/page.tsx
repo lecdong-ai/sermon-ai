@@ -64,7 +64,7 @@ function NewStudyGuideForm() {
         if (sermon?.id) {
           setTitle(sermon.title || '')
           setPassage(sermon.normalizedPassage || sermon.passage || '')
-          const manuscript = sermon.result?.manuscript || ''
+          const manuscript = sermon.manuscript || sermon.result?.manuscript || ''
           const rawText = sermon.raw_text || ''
           setSermonText(manuscript || rawText || '')
         }

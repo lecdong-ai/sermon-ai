@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import type {
   StudyGuideOutput, StudyGuideRecord,
-  OpeningQuestion, SermonDiscussionQuestion, LifeApplicationQuestion,
+  OpeningQuestion, SermonDiscussionQuestion,
 } from '@/types'
 
 export default function StudyGuideDetailPage() {
@@ -33,7 +33,31 @@ export default function StudyGuideDetailPage() {
           return
         }
         setRecord(json.data)
-        setEditOutput(json.data.output_data)
+        const raw = json.data.output_data
+        const normalized: StudyGuideOutput = {
+          title: raw.title || '',
+          focus: Array.isArray(raw.focus) ? raw.focus : (raw.focus ? raw.focus.split('\n').filter(Boolean) : ['', '', '']),
+          readingGuide: raw.readingGuide || '',
+          openingQuestions: (raw.openingQuestions || []).map((q: any) => ({
+            question: q.question || q.text || '',
+            intent: q.intent || q.intention || '',
+            ifSilence: q.ifSilence || q.silenceGuide || '',
+            leaderTip: q.leaderTip || q.tip || '',
+          })),
+          sermonDiscussion: (raw.sermonDiscussion || []).map((q: any) => ({
+            type: q.type || 'observation',
+            question: q.question || q.text || '',
+            intent: q.intent || q.intention || '',
+            expectedResponses: Array.isArray(q.expectedResponses) ? q.expectedResponses : (q.expectedResponses ? [q.expectedResponses] : (q.expectedAnswer ? [q.expectedAnswer] : [])),
+            followUp: q.followUp || '',
+            scripture: q.scripture || q.reference || '',
+            bridge: q.bridge || '',
+          })),
+          lifeApplication: Array.isArray(raw.lifeApplication) ? raw.lifeApplication.map((q: any) => typeof q === 'string' ? q : q.text || '') : [],
+          prayerTopics: raw.prayerTopics || [],
+          leaderNotes: raw.leaderNotes || ['', '', ''],
+        }
+        setEditOutput(normalized)
       })
       .catch(() => setError('네트워크 오류'))
       .finally(() => setLoading(false))
@@ -77,41 +101,37 @@ export default function StudyGuideDetailPage() {
     if (!editOutput) return
     const text = [
       `# ${editOutput.title}`,
-      `본문: ${editOutput.passage}`,
       '',
       `## 이번 나눔의 포커스`,
-      editOutput.focus,
+      ...editOutput.focus.map((f, i) => `${i + 1}. ${f}`),
       '',
       `## 본문 읽기 안내`,
       editOutput.readingGuide,
       '',
       `## 1. 여는 질문`,
       ...editOutput.openingQuestions.map((q, i) =>
-        `${i + 1}. ${q.text}\n   · 질문 의도: ${q.intention}\n   · 침묵 시: ${q.silenceGuide}\n   · 진행 팁: ${q.tip}`
+        `${i + 1}. ${q.question}\n   · 질문 의도: ${q.intent}\n   · 침묵 시: ${q.ifSilence}\n   · 진행 팁: ${q.leaderTip}`
       ),
       '',
       `## 2. 말씀 나눔`,
       ...editOutput.sermonDiscussion.map((q, i) => {
-        let s = `${i + 1}. [${q.type}] ${q.text}`
-        s += `\n   · 질문 의도: ${q.intention}`
-        s += `\n   · 예상 응답 방향: ${q.expectedAnswer}`
-        if (q.silenceGuide) s += `\n   · 침묵 시: ${q.silenceGuide}`
-        if (q.tip) s += `\n   · 진행 팁: ${q.tip}`
-        s += `\n   · 참고: ${q.reference}`
+        let s = `${i + 1}. [${q.type}] ${q.question}`
+        s += `\n   · 질문 의도: ${q.intent}`
+        s += `\n   · 예상 응답: ${q.expectedResponses.join(', ')}`
+        s += `\n   · 보조 질문: ${q.followUp}`
+        s += `\n   · 참고: ${q.scripture}`
+        s += `\n   · 연결: ${q.bridge}`
         return s
       }),
       '',
       `## 3. 삶의 적용`,
-      ...editOutput.lifeApplication.map((q, i) => {
-        let s = `${i + 1}. ${q.text}`
-        s += `\n   · 질문 의도: ${q.intention}`
-        if (q.silenceGuide) s += `\n   · 침묵 시: ${q.silenceGuide}`
-        s += `\n   · 진행 팁: ${q.tip}`
-        return s
-      }),
+      ...editOutput.lifeApplication.map((q, i) => `${i + 1}. ${q}`),
       '',
       `## 함께 기도`,
       ...editOutput.prayerTopics.map((q, i) => `${i + 1}. ${q}`),
+      '',
+      `## 리더 노트`,
+      ...editOutput.leaderNotes.map((n, i) => `${i + 1}. ${n}`),
     ].join('\n')
     await navigator.clipboard.writeText(text)
     setCopied(true)
@@ -140,66 +160,55 @@ export default function StudyGuideDetailPage() {
         `<p style="margin:0;font-size:13px;color:#333;line-height:1.7;"><strong>${num}.</strong> ${esc(text)}</p>${details}</div>`
 
       const openingDetails = (q: OpeningQuestion) =>
-        subLabel('질문 의도') + subVal(q.intention) +
-        subLabel('침묵 시') + subVal(q.silenceGuide) +
-        subLabel('진행 팁') + subVal(q.tip)
+        subLabel('질문 의도') + subVal(q.intent) +
+        subLabel('침묵 시') + subVal(q.ifSilence) +
+        subLabel('진행 팁') + subVal(q.leaderTip)
 
       const sermonDetails = (q: SermonDiscussionQuestion) =>
-        subLabel('질문 의도') + subVal(q.intention) +
-        subLabel('예상 응답 방향') + subVal(q.expectedAnswer) +
-        (q.silenceGuide ? subLabel('침묵 시') + subVal(q.silenceGuide) : '') +
-        (q.tip ? subLabel('진행 팁') + subVal(q.tip) : '') +
-        subLabel('참고') + subVal(q.reference)
-
-      const lifeDetails = (q: LifeApplicationQuestion) =>
-        subLabel('질문 의도') + subVal(q.intention) +
-        (q.silenceGuide ? subLabel('침묵 시') + subVal(q.silenceGuide) : '') +
-        subLabel('진행 팁') + subVal(q.tip)
+        subLabel('질문 의도') + subVal(q.intent) +
+        subLabel('예상 응답') + subVal(q.expectedResponses.join(', ')) +
+        subLabel('보조 질문') + subVal(q.followUp) +
+        subLabel('참고') + subVal(q.scripture) +
+        subLabel('연결') + subVal(q.bridge)
 
       const chunks: string[] = [
-        // 1. Title header
         '<div style="text-align:center;padding-bottom:12px;border-bottom:3px solid #1a56db;margin-bottom:16px;">' +
         '<h1 style="font-size:24px;font-weight:800;color:#1a2a3a;margin:0 0 2px 0;">소그룹 리더가이드</h1>' +
         '<p style="font-size:13px;color:#1a56db;font-weight:600;margin:3px 0 0 0;">' + esc(editOutput.title) + '</p></div>',
 
-        // 2. Metadata table
-        '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">' +
-        '<tr><td style="width:50px;padding:5px 8px;background:#f3f4f6;border:1px solid #d1d5db;font-size:12px;font-weight:700;color:#1a56db;text-align:center;">제목</td>' +
-        '<td style="padding:5px 10px;border:1px solid #d1d5db;font-size:14px;font-weight:600;color:#1f2937;">' + esc(editOutput.title) + '</td></tr>' +
-        '<tr><td style="padding:5px 8px;background:#f3f4f6;border:1px solid #d1d5db;font-size:12px;font-weight:700;color:#1a56db;text-align:center;">본문</td>' +
-        '<td style="padding:5px 10px;border:1px solid #d1d5db;font-size:14px;color:#1f2937;">' + esc(editOutput.passage) + '</td></tr></table>',
-
-        // 3. Focus
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">🎯 이번 나눔의 포커스</div>' +
         '<div style="background:#f0f5ff;border-left:4px solid #1a56db;padding:10px 14px;border-radius:3px;margin-bottom:14px;">' +
-        editOutput.focus.split('\n').map(l => '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;">' + esc(l) + '</p>').join('') +
+        editOutput.focus.map(l => '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;">' + esc(l) + '</p>').join('') +
         '</div>',
 
-        // 4. Reading guide
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">📖 본문 읽기 안내</div>' +
         '<div style="background:#fefce8;border-left:4px solid #eab308;padding:8px 14px;border-radius:3px;margin-bottom:14px;">' +
         '<p style="margin:0;font-size:13px;color:#333;line-height:1.7;font-style:italic;">' + esc(editOutput.readingGuide) + '</p></div>',
 
-        // 5. Opening questions
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">💬 1. 여는 질문</div>' +
-        editOutput.openingQuestions.map((q, i) => qItem(i + 1, q.text, openingDetails(q))).join(''),
+        editOutput.openingQuestions.map((q, i) => qItem(i + 1, q.question, openingDetails(q))).join(''),
 
-        // 6. Sermon discussion
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">💬 2. 말씀 나눔</div>' +
         editOutput.sermonDiscussion.map((q, i) =>
-          qItem(i + 1, `[${q.type}] ${q.text}`, sermonDetails(q))
+          qItem(i + 1, `[${q.type}] ${q.question}`, sermonDetails(q))
         ).join(''),
 
-        // 7. Life application
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">💬 3. 삶의 적용</div>' +
-        editOutput.lifeApplication.map((q, i) => qItem(i + 1, q.text, lifeDetails(q))).join(''),
+        editOutput.lifeApplication.map((q, i) =>
+          '<div style="margin-bottom:8px;padding:6px 10px;background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;">' +
+          `<p style="margin:0;font-size:13px;color:#333;line-height:1.7;"><strong>${i + 1}.</strong> ${esc(q)}</p></div>`
+        ).join(''),
 
-        // 8. Prayer topics
         '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">🙏 함께 기도</div>' +
         '<div style="background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #dbeafe;border-radius:5px;padding:12px 16px;">' +
         '<ol style="margin:0;padding-left:18px;">' +
         editOutput.prayerTopics.map(item => '<li style="margin-bottom:4px;font-size:13px;color:#374151;line-height:1.7;">' + esc(item) + '</li>').join('') +
         '</ol></div>',
+
+        '<div style="font-size:15px;font-weight:700;color:#1a56db;margin:0 0 8px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;">📝 리더 노트</div>' +
+        '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:12px 16px;">' +
+        editOutput.leaderNotes.map(item => '<p style="margin:0 0 4px;font-size:13px;color:#374151;line-height:1.7;">• ' + esc(item) + '</p>').join('') +
+        '</div>',
       ]
 
       const css = `*{box-sizing:border-box;margin:0;padding:0}
@@ -343,47 +352,46 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
 
         {/* 섹션 카드들 */}
         <div className="space-y-4">
-          {/* 제목 + 본문 */}
+          {/* 제목 */}
           <SectionCard title="교재 정보">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-primary-50 border border-primary-100">
-                <p className="text-[12px] font-bold text-primary-600 mb-1">제목</p>
-                {editing ? (
-                  <input
-                    value={editOutput.title}
-                    onChange={e => setEditOutput({ ...editOutput, title: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[15px] font-bold text-[#191f28] bg-white outline-none focus:border-primary-400"
-                  />
-                ) : (
-                  <p className="text-[15px] font-bold text-[#191f28]">{editOutput.title}</p>
-                )}
-              </div>
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                <p className="text-[12px] font-bold text-blue-600 mb-1">본문</p>
-                {editing ? (
-                  <input
-                    value={editOutput.passage}
-                    onChange={e => setEditOutput({ ...editOutput, passage: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[15px] font-bold text-[#191f28] bg-white outline-none focus:border-primary-400"
-                  />
-                ) : (
-                  <p className="text-[15px] font-bold text-[#191f28]">{editOutput.passage}</p>
-                )}
-              </div>
+            <div className="p-4 rounded-xl bg-primary-50 border border-primary-100">
+              <p className="text-[12px] font-bold text-primary-600 mb-1">제목</p>
+              {editing ? (
+                <input
+                  value={editOutput.title}
+                  onChange={e => setEditOutput({ ...editOutput, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[15px] font-bold text-[#191f28] bg-white outline-none focus:border-primary-400"
+                />
+              ) : (
+                <p className="text-[15px] font-bold text-[#191f28]">{editOutput.title}</p>
+              )}
             </div>
           </SectionCard>
 
           {/* 포커스 */}
           <SectionCard title="🎯 이번 나눔의 포커스">
             {editing ? (
-              <textarea
-                value={editOutput.focus}
-                onChange={e => setEditOutput({ ...editOutput, focus: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
-              />
+              <div className="space-y-2">
+                {editOutput.focus.map((f, i) => (
+                  <textarea
+                    key={i}
+                    value={f}
+                    onChange={e => {
+                      const next = [...editOutput.focus]
+                      next[i] = e.target.value
+                      setEditOutput({ ...editOutput, focus: next })
+                    }}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
+                  />
+                ))}
+              </div>
             ) : (
-              <div className="text-[14px] text-[#4e5968] leading-relaxed whitespace-pre-line">{editOutput.focus}</div>
+              <div className="space-y-1.5">
+                {editOutput.focus.map((f, i) => (
+                  <p key={i} className="text-[14px] text-[#4e5968] leading-relaxed">{i + 1}. {f}</p>
+                ))}
+              </div>
             )}
           </SectionCard>
 
@@ -408,20 +416,20 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                 {editOutput.openingQuestions.map((q, i) => (
                   <div key={i} className="space-y-1.5">
                     <textarea
-                      value={q.text}
+                      value={q.question}
                       onChange={e => {
                         const next = [...editOutput.openingQuestions]
-                        next[i] = { ...next[i], text: e.target.value }
+                        next[i] = { ...next[i], question: e.target.value }
                         setEditOutput({ ...editOutput, openingQuestions: next })
                       }}
                       rows={2}
                       className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                     <textarea
-                      value={q.intention}
+                      value={q.intent}
                       onChange={e => {
                         const next = [...editOutput.openingQuestions]
-                        next[i] = { ...next[i], intention: e.target.value }
+                        next[i] = { ...next[i], intent: e.target.value }
                         setEditOutput({ ...editOutput, openingQuestions: next })
                       }}
                       rows={1}
@@ -429,10 +437,10 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                       className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                     <textarea
-                      value={q.silenceGuide}
+                      value={q.ifSilence}
                       onChange={e => {
                         const next = [...editOutput.openingQuestions]
-                        next[i] = { ...next[i], silenceGuide: e.target.value }
+                        next[i] = { ...next[i], ifSilence: e.target.value }
                         setEditOutput({ ...editOutput, openingQuestions: next })
                       }}
                       rows={1}
@@ -440,10 +448,10 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                       className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                     <textarea
-                      value={q.tip}
+                      value={q.leaderTip}
                       onChange={e => {
                         const next = [...editOutput.openingQuestions]
-                        next[i] = { ...next[i], tip: e.target.value }
+                        next[i] = { ...next[i], leaderTip: e.target.value }
                         setEditOutput({ ...editOutput, openingQuestions: next })
                       }}
                       rows={1}
@@ -473,20 +481,20 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                       <span className="text-[11px] text-[#8b95a1]">질문 {i + 1}</span>
                     </div>
                     <textarea
-                      value={q.text}
+                      value={q.question}
                       onChange={e => {
                         const next = [...editOutput.sermonDiscussion]
-                        next[i] = { ...next[i], text: e.target.value }
+                        next[i] = { ...next[i], question: e.target.value }
                         setEditOutput({ ...editOutput, sermonDiscussion: next })
                       }}
                       rows={2}
                       className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                     <textarea
-                      value={q.intention}
+                      value={q.intent}
                       onChange={e => {
                         const next = [...editOutput.sermonDiscussion]
-                        next[i] = { ...next[i], intention: e.target.value }
+                        next[i] = { ...next[i], intent: e.target.value }
                         setEditOutput({ ...editOutput, sermonDiscussion: next })
                       }}
                       rows={1}
@@ -494,51 +502,47 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                       className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                     <textarea
-                      value={q.expectedAnswer}
+                      value={q.expectedResponses.join(', ')}
                       onChange={e => {
                         const next = [...editOutput.sermonDiscussion]
-                        next[i] = { ...next[i], expectedAnswer: e.target.value }
+                        next[i] = { ...next[i], expectedResponses: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
                         setEditOutput({ ...editOutput, sermonDiscussion: next })
                       }}
                       rows={1}
-                      placeholder="예상 응답 방향"
+                      placeholder="예상 응답 (쉼표로 구분)"
                       className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
                     />
-                    {q.silenceGuide !== undefined && (
-                      <textarea
-                        value={q.silenceGuide ?? ''}
-                        onChange={e => {
-                          const next = [...editOutput.sermonDiscussion]
-                          next[i] = { ...next[i], silenceGuide: e.target.value }
-                          setEditOutput({ ...editOutput, sermonDiscussion: next })
-                        }}
-                        rows={1}
-                        placeholder="침묵 시 (선택)"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
-                      />
-                    )}
-                    {q.tip !== undefined && (
-                      <textarea
-                        value={q.tip ?? ''}
-                        onChange={e => {
-                          const next = [...editOutput.sermonDiscussion]
-                          next[i] = { ...next[i], tip: e.target.value }
-                          setEditOutput({ ...editOutput, sermonDiscussion: next })
-                        }}
-                        rows={1}
-                        placeholder="진행 팁 (선택)"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
-                      />
-                    )}
                     <textarea
-                      value={q.reference}
+                      value={q.followUp}
                       onChange={e => {
                         const next = [...editOutput.sermonDiscussion]
-                        next[i] = { ...next[i], reference: e.target.value }
+                        next[i] = { ...next[i], followUp: e.target.value }
+                        setEditOutput({ ...editOutput, sermonDiscussion: next })
+                      }}
+                      rows={1}
+                      placeholder="보조 질문"
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
+                    />
+                    <textarea
+                      value={q.scripture}
+                      onChange={e => {
+                        const next = [...editOutput.sermonDiscussion]
+                        next[i] = { ...next[i], scripture: e.target.value }
                         setEditOutput({ ...editOutput, sermonDiscussion: next })
                       }}
                       rows={1}
                       placeholder="참고 성경구절"
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
+                    />
+                    <textarea
+                      value={q.bridge}
+                      onChange={e => {
+                        const next = [...editOutput.sermonDiscussion]
+                        next[i] = { ...next[i], bridge: e.target.value }
+                        setEditOutput({ ...editOutput, sermonDiscussion: next })
+                      }}
+                      rows={1}
+                      placeholder="연결 문장"
                       className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
                     />
                   </div>
@@ -556,63 +560,32 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
           {/* 3. 삶의 적용 */}
           <SectionCard title="💬 3. 삶의 적용">
             {editing ? (
-              <div className="space-y-3">
-                {editOutput.lifeApplication.map((q, i) => (
-                  <div key={i} className="space-y-1.5">
-                    <textarea
-                      value={q.text}
-                      onChange={e => {
-                        const next = [...editOutput.lifeApplication]
-                        next[i] = { ...next[i], text: e.target.value }
-                        setEditOutput({ ...editOutput, lifeApplication: next })
-                      }}
-                      rows={2}
-                      className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
-                    />
-                    <textarea
-                      value={q.intention}
-                      onChange={e => {
-                        const next = [...editOutput.lifeApplication]
-                        next[i] = { ...next[i], intention: e.target.value }
-                        setEditOutput({ ...editOutput, lifeApplication: next })
-                      }}
-                      rows={1}
-                      placeholder="질문 의도"
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
-                    />
-                    {q.silenceGuide !== undefined && (
-                      <textarea
-                        value={q.silenceGuide ?? ''}
-                        onChange={e => {
-                          const next = [...editOutput.lifeApplication]
-                          next[i] = { ...next[i], silenceGuide: e.target.value }
-                          setEditOutput({ ...editOutput, lifeApplication: next })
-                        }}
-                        rows={1}
-                        placeholder="침묵 시 (선택)"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
-                      />
-                    )}
-                    <textarea
-                      value={q.tip}
-                      onChange={e => {
-                        const next = [...editOutput.lifeApplication]
-                        next[i] = { ...next[i], tip: e.target.value }
-                        setEditOutput({ ...editOutput, lifeApplication: next })
-                      }}
-                      rows={1}
-                      placeholder="진행 팁"
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#e5e8eb] text-[12px] text-[#8b95a1] bg-white outline-none focus:border-primary-400 resize-y"
-                    />
-                  </div>
+              <div className="space-y-2">
+                {editOutput.lifeApplication.map((item, i) => (
+                  <textarea
+                    key={i}
+                    value={item}
+                    onChange={e => {
+                      const next = [...editOutput.lifeApplication]
+                      next[i] = e.target.value
+                      setEditOutput({ ...editOutput, lifeApplication: next })
+                    }}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
+                  />
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {editOutput.lifeApplication.map((q, i) => (
-                  <LifeApplicationCard key={i} index={i} question={q} />
+              <ul className="space-y-2">
+                {editOutput.lifeApplication.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-[14px] text-[#4e5968] leading-relaxed">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
+                      {i + 1}
+                    </span>
+                    {item}
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </SectionCard>
 
@@ -639,6 +612,38 @@ body{font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","Nanum Got
                 {editOutput.prayerTopics.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-[14px] text-[#4e5968] leading-relaxed">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
+                      {i + 1}
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+
+          {/* 리더 노트 */}
+          <SectionCard title="📝 리더 노트">
+            {editing ? (
+              <div className="space-y-2">
+                {editOutput.leaderNotes.map((item, i) => (
+                  <textarea
+                    key={i}
+                    value={item}
+                    onChange={e => {
+                      const next = [...editOutput.leaderNotes]
+                      next[i] = e.target.value
+                      setEditOutput({ ...editOutput, leaderNotes: next })
+                    }}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-[#e5e8eb] text-[14px] text-[#4e5968] bg-white outline-none focus:border-primary-400 resize-y"
+                  />
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {editOutput.leaderNotes.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-[14px] text-[#4e5968] leading-relaxed">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
                     {item}
@@ -697,14 +702,14 @@ function OpeningQuestionCard({ index, question }: { index: number; question: Ope
         <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
           {index + 1}
         </span>
-        <span className="flex-1 text-[14px] text-[#4e5968] leading-relaxed">{question.text}</span>
+        <span className="flex-1 text-[14px] text-[#4e5968] leading-relaxed">{question.question}</span>
         {open ? <ChevronUp className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" />}
       </button>
       {open && (
         <div className="px-3 pb-3 space-y-1.5 border-t border-[#e5e8eb]">
-          <SubField label="질문 의도" value={question.intention} />
-          <SubField label="침묵 시" value={question.silenceGuide} />
-          <SubField label="진행 팁" value={question.tip} />
+          <SubField label="질문 의도" value={question.intent} />
+          <SubField label="침묵 시" value={question.ifSilence} />
+          <SubField label="진행 팁" value={question.leaderTip} />
         </div>
       )}
     </div>
@@ -713,7 +718,7 @@ function OpeningQuestionCard({ index, question }: { index: number; question: Ope
 
 function SermonDiscussionCard({ index, question }: { index: number; question: SermonDiscussionQuestion }) {
   const [open, setOpen] = useState(false)
-  const typeColor = question.type === '관찰' ? 'bg-blue-100 text-blue-600' : question.type === '해석' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+  const typeColor = question.type === 'observation' ? 'bg-blue-100 text-blue-600' : question.type === 'interpretation' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
   return (
     <div className="rounded-xl border border-[#e5e8eb] overflow-hidden">
       <button
@@ -724,43 +729,18 @@ function SermonDiscussionCard({ index, question }: { index: number; question: Se
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full {typeColor} mb-1">{question.type}</span>
-          <p className="text-[14px] text-[#4e5968] leading-relaxed">{question.text}</p>
+          <span className={`inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full ${typeColor} mb-1`}>{question.type}</span>
+          <p className="text-[14px] text-[#4e5968] leading-relaxed">{question.question}</p>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" />}
       </button>
       {open && (
         <div className="px-3 pb-3 space-y-1.5 border-t border-[#e5e8eb]">
-          <SubField label="질문 의도" value={question.intention} />
-          <SubField label="예상 응답 방향" value={question.expectedAnswer} />
-          {question.silenceGuide && <SubField label="침묵 시" value={question.silenceGuide} />}
-          {question.tip && <SubField label="진행 팁" value={question.tip} />}
-          <SubField label="참고" value={question.reference} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function LifeApplicationCard({ index, question }: { index: number; question: LifeApplicationQuestion }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="rounded-xl border border-[#e5e8eb] overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-2.5 p-3 hover:bg-[#f8f9fc] transition-colors text-left"
-      >
-        <span className="shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[11px] font-bold flex items-center justify-center mt-0.5">
-          {index + 1}
-        </span>
-        <span className="flex-1 text-[14px] text-[#4e5968] leading-relaxed">{question.text}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#8b95a1] mt-1 shrink-0" />}
-      </button>
-      {open && (
-        <div className="px-3 pb-3 space-y-1.5 border-t border-[#e5e8eb]">
-          <SubField label="질문 의도" value={question.intention} />
-          {question.silenceGuide && <SubField label="침묵 시" value={question.silenceGuide} />}
-          <SubField label="진행 팁" value={question.tip} />
+          <SubField label="질문 의도" value={question.intent} />
+          <SubField label="예상 응답" value={question.expectedResponses.join(', ')} />
+          <SubField label="보조 질문" value={question.followUp} />
+          <SubField label="참고" value={question.scripture} />
+          <SubField label="연결" value={question.bridge} />
         </div>
       )}
     </div>

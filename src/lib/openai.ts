@@ -210,12 +210,12 @@ export async function generateStudyGuide(input: StudyGuideInput): Promise<StudyG
     .filter(Boolean)
     .join('\n')
 
-  const res = await callAI<{ output: StudyGuideOutput }>(
+  const res = await callAI<StudyGuideOutput>(
     StudyGuidePrompt.SYSTEM_PROMPT,
     userMessage,
     STUDY_GUIDE_SCHEMA,
     4000,
   )
 
-  return res.output
+  return res
 }
