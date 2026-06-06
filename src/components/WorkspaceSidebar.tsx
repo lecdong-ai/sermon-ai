@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Share2, FileDown, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen } from 'lucide-react'
+import { X, Share2, FileDown, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload } from 'lucide-react'
 import Link from 'next/link'
 import type { SermonRecord } from '@/types'
 import UsageSidebarBadge from './UsageSidebarBadge'
@@ -76,6 +76,20 @@ export default function WorkspaceSidebar({
 
           {/* 사용량 */}
           <UsageSidebarBadge />
+
+          {/* 업로드된 설교 버튼 */}
+          <div className="px-5 pt-3">
+            <Link
+              href="/dashboard/sermons/uploaded"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-200"
+            >
+              <Upload className="w-5 h-5" />
+              <div>
+                <span className="block text-[15px] font-semibold tracking-tight">업로드된 설교</span>
+                <span className="block text-[11px] mt-0.5 font-medium text-white/30">파일 관리</span>
+              </div>
+            </Link>
+          </div>
 
           {/* 구분선 */}
           <div className="mx-5 h-px bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
