@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Auth 계정 삭제 (공식 Admin API)
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
-    if (error) {
+    if (error && error.code !== 'user_not_found') {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
