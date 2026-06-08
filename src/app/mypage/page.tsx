@@ -7,7 +7,9 @@ import { useAuth } from '@/components/AuthProvider'
 import { Cross, User, Mail, Shield, Calendar, LogOut, KeyRound, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
-const supabase = createClient()
+function getSupabase() {
+  return createClient()
+}
 
 export default function MyPage() {
   const { user, loading, signOut } = useAuth()
@@ -23,7 +25,7 @@ export default function MyPage() {
   const loadProfile = useCallback(async () => {
     if (!user) return
     setProfileLoading(true)
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('user_profiles')
       .select('*')
       .eq('id', user.id)
@@ -37,7 +39,7 @@ export default function MyPage() {
 
   const loadSermonCount = useCallback(async () => {
     if (!user) return
-    const { count } = await supabase
+    const { count } = await getSupabase()
       .from('sermons')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -59,7 +61,7 @@ export default function MyPage() {
   const saveProfile = async () => {
     setSaving(true)
     setSaveMessage('')
-    const { error } = await supabase.from('user_profiles').upsert({
+    const { error } = await getSupabase().from('user_profiles').upsert({
       id: user?.id,
       email: user?.email,
       name,

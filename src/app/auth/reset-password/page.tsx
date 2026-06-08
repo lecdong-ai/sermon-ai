@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Cross, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 
-const supabase = createClient()
+function getSupabase() {
+  return createClient()
+}
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -17,7 +19,7 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabase().auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         router.push('/login')
       }
@@ -38,7 +40,7 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true)
-    const { error } = await supabase.auth.updateUser({ password })
+    const { error } = await getSupabase().auth.updateUser({ password })
     if (error) {
       setError(error.message)
     } else {

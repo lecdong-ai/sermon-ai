@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { getUsageInfo, checkFeatureAccess } from '@/lib/usage'
 
+export const dynamic = 'force-dynamic'
+
 function getClient(request: NextRequest) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
