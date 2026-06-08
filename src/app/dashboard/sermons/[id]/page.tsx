@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter } from 'next/navigation'
+import { Sparkles } from 'lucide-react'
 
 export default function SermonDetailPage({
   params,
@@ -12,6 +14,25 @@ export default function SermonDetailPage({
   const { state, deleteSermon, getSeries, getTheme, getRelatedSermons } = useApp()
   const router = useRouter()
   const sermon = state.sermons.find((s) => s.id === id)
+  const [generating, setGenerating] = useState(false)
+
+  const handleGenerate = async () => {
+    if (generating) return
+    setGenerating(true)
+    try {
+      const res = await fetch(`/api/sermons/${id}/generate`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        router.push(`/workspace?id=${id}`)
+      } else {
+        alert(data.error || '생성에 실패했습니다.')
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다.')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   if (!sermon) {
     return (
@@ -75,6 +96,14 @@ export default function SermonDetailPage({
             className="text-xs border border-border px-3 py-1.5 rounded-md hover:bg-background transition-colors print:hidden"
           >
             수정
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors print:hidden"
+          >
+            <Sparkles className="w-3 h-3" />
+            {generating ? '생성중...' : 'AI 생성'}
           </button>
           <button
             onClick={async () => {
