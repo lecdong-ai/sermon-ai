@@ -20,9 +20,16 @@ import * as PptOutlinePrompt from './prompts/pptOutline'
 import * as StudyGuidePrompt from './prompts/studyGuide'
 import { STUDY_GUIDE_SCHEMA, StudyGuideInput, StudyGuideOutput } from '@/types'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 function truncate(text: string, maxChars = 20000): string {
   if (text.length <= maxChars) return text
@@ -36,7 +43,7 @@ async function callAI<T>(
   maxTokens = 4000,
   temperature = 0.3,
 ): Promise<T> {
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },

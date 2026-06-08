@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenai() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 const STEP_PROMPTS: Record<number, { system: string; buildUser: (data: any) => string }> = {
   1: {
@@ -155,7 +161,7 @@ export async function POST(request: NextRequest) {
         '', '[회중 상황]', data.audience || '일반',
       ].join('\n')
 
-      const res = await openai.chat.completions.create({
+      const res = await getOpenai().chat.completions.create({
         model: 'gpt-5.4-mini',
         messages: [
           { role: 'system', content: FINAL_INTEGRATION_PROMPT },
@@ -182,7 +188,7 @@ export async function POST(request: NextRequest) {
 
     const userText = stepConfig.buildUser(data)
 
-    const res = await openai.chat.completions.create({
+    const res = await getOpenai().chat.completions.create({
       model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: stepConfig.system },

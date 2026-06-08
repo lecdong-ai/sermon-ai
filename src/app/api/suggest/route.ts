@@ -81,9 +81,15 @@ function safeParse(raw: string): any {
   throw new Error('Failed to parse AI response as JSON:\n' + cleaned.slice(0, 500))
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenai() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -321,7 +327,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: false, error: '제목과 본문 중 하나 이상을 입력해주세요.' }, { status: 400 })
     }
 
-    const res = await openai.chat.completions.create({
+    const res = await getOpenai().chat.completions.create({
       model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: systemPrompt },

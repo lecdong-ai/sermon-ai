@@ -18,9 +18,15 @@ async function getUser(request: NextRequest) {
   return data?.user ?? null
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenai() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +71,7 @@ ${themeOptions}
 
 위 내용을 분석하여 가장 적합한 태그 ID를 4~6개 선택하세요.`
 
-    const res = await openai.chat.completions.create({
+    const res = await getOpenai().chat.completions.create({
       model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: systemPrompt },

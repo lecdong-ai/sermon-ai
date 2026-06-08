@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenai() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 const SUGGEST_SYSTEM_PROMPT = '당신은 설교 준비를 돕는 AI입니다. 간결하고 명확하게 제안하세요.'
 
@@ -33,7 +39,7 @@ export async function POST(request: NextRequest) {
       suggestionType = 'passage'
     }
 
-    const res = await openai.chat.completions.create({
+    const res = await getOpenai().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: SUGGEST_SYSTEM_PROMPT },

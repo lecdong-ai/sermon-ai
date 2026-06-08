@@ -6,9 +6,15 @@ import * as DraftPrompt from './prompts/draft'
 import * as AdvancedDraftPrompt from './prompts/draft-advanced'
 import type { CoreMessageResult, OutlineResult, DraftResult } from '@/types'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenai() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) throw new Error('OPENAI_API_KEY is not set')
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 interface CoreMessageInput {
   passage: string
@@ -204,7 +210,7 @@ const DRAFT_SCHEMA = {
 }
 
 async function callAI<T>(systemPrompt: string, userText: string, schema: any, maxTokens = 4000): Promise<T> {
-  const res = await openai.chat.completions.create({
+  const res = await getOpenai().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
@@ -320,7 +326,7 @@ export async function generateAdvancedDraft(input: DraftInput): Promise<string> 
     '- 교회 상황: ' + (input.church_context || '(미입력)'),
   ].join('\n')
 
-  const res = await openai.chat.completions.create({
+  const res = await getOpenai().chat.completions.create({
     model: 'gpt-5.4-mini',
     messages: [
       { role: 'system', content: AdvancedDraftPrompt.SYSTEM_PROMPT },
