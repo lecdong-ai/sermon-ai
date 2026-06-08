@@ -86,7 +86,7 @@ export const PLAN_DATA: Plan[] = [
     features: [
       { text: 'AI 분석 월 20회', ok: true, highlight: true },
       { text: '설교원고제작 월 20회', ok: true, highlight: true },
-      { text: '실전형 설교제작 월 15회', ok: true, highlight: true },
+      { text: '고급형 설교제작 월 15회', ok: true, highlight: true },
       { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
       { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
       { text: '결과 공유 및 다운로드', ok: true },
