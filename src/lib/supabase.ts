@@ -1,10 +1,26 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+function makeLazyClient(init: () => SupabaseClient): SupabaseClient {
+  let client: SupabaseClient | null = null
+  return new Proxy({} as SupabaseClient, {
+    get(_target, prop) {
+      if (!client) client = init()
+      const value = (client as any)[prop]
+      return typeof value === 'function' ? (...args: any[]) => (value as Function).apply(client, args) : value
+    },
+  })
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = makeLazyClient(() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error('Supabase environment variables are not set')
+  return createClient(url, key)
+})
 
-// 서버 전용: service_role 키로 RLS 우회
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+export const supabaseAdmin = makeLazyClient(() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Supabase environment variables are not set')
+  return createClient(url, key)
+})
