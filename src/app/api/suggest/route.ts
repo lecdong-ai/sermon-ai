@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       body.generateManuscript,
     ].some(Boolean)
 
-    if (usage?.plan === 'basic' && proOnlyFeatures) {
+    if (usage?.plan !== 'pro' && proOnlyFeatures) {
       return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
     }
     const { title, passage, coreMessage, pointIndex } = body

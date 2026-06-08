@@ -91,6 +91,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
+    const { data: usage, error: usageErr } = await supabaseAdmin
+      .from('user_usage')
+      .select('plan')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const plan = (usage?.plan) || (usageErr ? 'none' : 'none')
+    if (plan === 'none') {
+      return NextResponse.json({ success: false, error: 'Basic 플랜 이상에서만 설교를 작성할 수 있습니다. 구독 후 이용해주세요.' }, { status: 403 })
+    }
+
     const body = await request.json()
 
     if (!body.title?.trim()) {

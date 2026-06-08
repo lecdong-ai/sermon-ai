@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    if (usage?.plan === 'basic') {
+    if (usage?.plan !== 'pro') {
       return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
     }
 

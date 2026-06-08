@@ -45,7 +45,7 @@ function NewSermonForm() {
       .catch(() => {})
   }, [])
 
-  const isBasicPlan = userPlan === 'basic'
+  const isBasicPlan = userPlan === 'basic' || userPlan === 'none'
 
   const [form, setForm] = useState({
     title: '',
@@ -244,6 +244,10 @@ function NewSermonForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (userPlan === 'none') {
+      alert('Basic 플랜 이상에서만 설교를 작성할 수 있습니다. 구독 후 이용해주세요.')
+      return
+    }
     if (!form.title || !form.date || !form.sermonType || !form.audience || !form.bibleBook || !form.coreMessage || !form.manuscript) {
       alert('필수 항목을 모두 입력해주세요.')
       return
