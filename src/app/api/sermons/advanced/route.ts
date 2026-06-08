@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       ].join('\n')
 
       const res = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.4-mini',
         messages: [
           { role: 'system', content: FINAL_INTEGRATION_PROMPT },
           { role: 'user', content: userText },
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     const userText = stepConfig.buildUser(data)
 
     const res = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: stepConfig.system },
         { role: 'user', content: userText },
