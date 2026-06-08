@@ -67,7 +67,7 @@ export const PLAN_DATA: Plan[] = [
     priceLabel: '월 9,900원',
     description: '설교 준비를 시작하는 목회자에게 적합한 플랜입니다.',
     features: [
-      { text: 'AI 분석 월 10회', ok: true },
+      { text: 'AI 분석, 컨텐츠 제작 월 10회', ok: true },
       { text: '설교원고제작 월 10회', ok: true },
       { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
       { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
@@ -84,7 +84,7 @@ export const PLAN_DATA: Plan[] = [
     priceLabel: '월 19,800원',
     description: '설교 준비를 더 넉넉하게 이용하고 싶은 목회자에게 추천합니다.',
     features: [
-      { text: 'AI 분석 월 20회', ok: true, highlight: true },
+      { text: 'AI 분석, 컨텐츠 제작 월 20회', ok: true, highlight: true },
       { text: '설교원고제작 월 20회', ok: true, highlight: true },
       { text: '고급형 설교제작 월 15회', ok: true, highlight: true },
       { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
@@ -111,7 +111,7 @@ export const FREE_PLAN: FreePlan = {
   priceLabel: '무료',
   description: '회원가입 후 바로 무료로 체험해보세요.',
   features: [
-    { text: 'AI 분석 3회', ok: true },
+    { text: 'AI 분석, 컨텐츠 제작 3회', ok: true },
     { text: '설교원고제작 사용 불가', ok: false },
     { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
     { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
