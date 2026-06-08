@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
-    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/supabase-js": "^2.107.0",
     "@types/d3-force": "^3.0.10",
     "d3-force": "^3.0.0",
     "html2canvas": "^1.4.1",

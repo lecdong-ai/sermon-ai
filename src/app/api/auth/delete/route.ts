@@ -24,11 +24,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    // SQL RPC로 auth.users + 모든 서비스 데이터 한 번에 삭제
-    const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', { user_uuid: user.id })
-    if (rpcError) {
-      console.error('deleteUser rpc error:', rpcError)
-      return NextResponse.json({ success: false, error: rpcError.message }, { status: 500 })
+    // 서비스 테이블 데이터 삭제
+    await supabaseAdmin.from('sermons').delete().eq('user_id', user.id)
+    await supabaseAdmin.from('user_profiles').delete().eq('id', user.id)
+    await supabaseAdmin.from('user_usage').delete().eq('user_id', user.id)
+    await supabaseAdmin.from('study_guides').delete().eq('user_id', user.id)
+    await supabaseAdmin.from('usage_logs').delete().eq('user_id', user.id)
+    await supabaseAdmin.from('subscriptions').delete().eq('user_id', user.id)
+
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+    if (deleteError) {
+      console.error('deleteUser error:', deleteError)
+      return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

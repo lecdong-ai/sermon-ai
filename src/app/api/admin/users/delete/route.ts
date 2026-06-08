@@ -5,6 +5,15 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+async function deleteServiceData(userId: string) {
+  await supabaseAdmin.from('sermons').delete().eq('user_id', userId)
+  await supabaseAdmin.from('user_profiles').delete().eq('id', userId)
+  await supabaseAdmin.from('user_usage').delete().eq('user_id', userId)
+  await supabaseAdmin.from('study_guides').delete().eq('user_id', userId)
+  await supabaseAdmin.from('usage_logs').delete().eq('user_id', userId)
+  await supabaseAdmin.from('subscriptions').delete().eq('user_id', userId)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request)
@@ -18,10 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '자기 자신을 탈퇴시킬 수 없습니다.' }, { status: 400 })
     }
 
-    // SQL RPC로 auth.users + 모든 서비스 데이터 한 번에 삭제
-    const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', { user_uuid: userId })
-    if (rpcError) {
-      return NextResponse.json({ error: rpcError.message }, { status: 500 })
+    await deleteServiceData(userId)
+
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
