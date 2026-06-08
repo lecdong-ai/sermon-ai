@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { supabaseAdmin } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
@@ -24,26 +24,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    // 사용자 데이터 삭제
-    await supabaseAdmin.from('sermons').delete().eq('user_id', user.id)
-    await supabaseAdmin.from('user_profiles').delete().eq('id', user.id)
-    await supabaseAdmin.from('user_usage').delete().eq('user_id', user.id)
-    await supabaseAdmin.from('study_guides').delete().eq('user_id', user.id)
-    await supabaseAdmin.from('usage_logs').delete().eq('user_id', user.id)
-    await supabaseAdmin.from('subscriptions').delete().eq('user_id', user.id)
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
 
-    // Auth 계정 삭제 (GoTrue Admin API 직접 호출)
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-      },
-    })
-    if (!res.ok && res.status !== 404) {
-      const body = await res.text()
-      console.error('deleteUser failed:', res.status, body)
-      return NextResponse.json({ success: false, error: `탈퇴 처리 중 오류가 발생했습니다. (${res.status})` }, { status: 500 })
+    // 서비스 테이블 데이터 삭제
+    await Promise.all([
+      sb.from('sermons').delete().eq('user_id', user.id),
+      sb.from('user_profiles').delete().eq('id', user.id),
+      sb.from('user_usage').delete().eq('user_id', user.id),
+      sb.from('study_guides').delete().eq('user_id', user.id),
+      sb.from('usage_logs').delete().eq('user_id', user.id),
+      sb.from('subscriptions').delete().eq('user_id', user.id),
+    ])
+
+    // Auth 계정 삭제 (직접 생성한 클라이언트)
+    const { error: deleteError } = await sb.auth.admin.deleteUser(user.id)
+    if (deleteError) {
+      console.error('deleteUser failed:', deleteError)
+      return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
