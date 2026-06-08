@@ -32,11 +32,18 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from('usage_logs').delete().eq('user_id', user.id)
     await supabaseAdmin.from('subscriptions').delete().eq('user_id', user.id)
 
-    // Auth 계정 삭제 (공식 Admin API)
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id)
-    if (error) {
-      console.error('deleteUser error:', error)
-      return NextResponse.json({ success: false, error: error.message || '탈퇴 처리 중 오류가 발생했습니다.' }, { status: 500 })
+    // Auth 계정 삭제 (GoTrue Admin API 직접 호출)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+    })
+    if (!res.ok && res.status !== 404) {
+      const body = await res.text()
+      console.error('deleteUser failed:', res.status, body)
+      return NextResponse.json({ success: false, error: `탈퇴 처리 중 오류가 발생했습니다. (${res.status})` }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
