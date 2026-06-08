@@ -611,7 +611,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
               <p className="text-sm font-medium mb-1.5" style={{color: THEMES[theme].labelNormal}}>관련 설교 ({linkedSermons.length})</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {linkedSermons.map((s) => (
-                  <button key={s.id} onClick={() => { const g = dataRef.current.nodes.find(d => d.id === s.id); if (g) onNodeClick?.(g) }} style={{color: THEMES[theme].labelNormal}} className="text-sm truncate block w-full text-left hover:opacity-70 cursor-pointer">• {s.label}</button>
+                  <button key={s.id} onClick={() => { const id = s.id.replace('sermon-', ''); router.push(`/dashboard/sermons/${id}`) }} style={{color: THEMES[theme].labelNormal}} className="text-sm truncate block w-full text-left hover:opacity-70 cursor-pointer">• {s.label}</button>
                 ))}
               </div>
             </div>
