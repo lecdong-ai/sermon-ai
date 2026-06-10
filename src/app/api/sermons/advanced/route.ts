@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import { checkUsage, consumeWorkspaceUsage } from '@/lib/usage'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -146,6 +147,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
+    const usageInfo = await checkUsage(user.id)
+    if (usageInfo.workspace.remaining <= 0) {
+      return NextResponse.json({ success: false, error: '설교원고제작 사용 한도를 초과했습니다.' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { step, ...data } = body
 
@@ -170,6 +176,8 @@ export async function POST(request: NextRequest) {
         temperature: 0.7,
         max_tokens: 16000,
       })
+
+      await consumeWorkspaceUsage(user.id).catch(() => {})
 
       return NextResponse.json({
         success: true,

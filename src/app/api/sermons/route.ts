@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
+import { checkUsage } from '@/lib/usage'
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
@@ -91,15 +92,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const { data: usage, error: usageErr } = await supabaseAdmin
-      .from('user_usage')
-      .select('plan')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    const usageInfo = await checkUsage(user.id)
+    if (!usageInfo.can_generate) {
+      const messages: Record<string, string> = {
+        trial_expired: '무료체험이 만료되었습니다. 구독 후 이용해주세요.',
+        trial_exhausted: '무료체험 횟수를 모두 사용했습니다. 구독 후 이용해주세요.',
+        monthly_exhausted: '이번 달 사용 한도를 모두 사용했습니다.',
+        past_due: '결제 연체로 서비스가 제한되었습니다.',
+        canceled: '구독이 해지되어 서비스가 제한되었습니다.',
+      }
+      return NextResponse.json({
+        success: false,
+        error: messages[usageInfo.block_reason || ''] || 'Basic 플랜 이상에서만 설교를 작성할 수 있습니다. 구독 후 이용해주세요.',
+      }, { status: 403 })
+    }
 
-    const plan = (usage?.plan) || (usageErr ? 'none' : 'none')
-    if (plan === 'none') {
-      return NextResponse.json({ success: false, error: 'Basic 플랜 이상에서만 설교를 작성할 수 있습니다. 구독 후 이용해주세요.' }, { status: 403 })
+    if (usageInfo.plan === 'none') {
+      const { count } = await supabaseAdmin
+        .from('sermons')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+      if ((count || 0) >= 1) {
+        return NextResponse.json({ success: false, error: '무료체험은 설교 1회만 생성할 수 있습니다. 구독 후 이용해주세요.' }, { status: 403 })
+      }
     }
 
     const body = await request.json()

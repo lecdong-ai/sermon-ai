@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getUserFromRequest } from '@/lib/auth'
 import { generateStudyGuide } from '@/lib/openai'
+import { checkUsage, consumeWorkspaceUsage } from '@/lib/usage'
 import type { StudyGuideInput } from '@/types'
 
 export async function GET(request: NextRequest) {
@@ -45,6 +46,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '설교원고는 최소 100자 이상 입력해주세요.' }, { status: 400 })
     }
 
+    const usageInfo = await checkUsage(user.id)
+    if (usageInfo.workspace.remaining <= 0) {
+      return NextResponse.json({ success: false, error: '설교원고제작 사용 한도를 초과했습니다.' }, { status: 403 })
+    }
+
     const output = await generateStudyGuide(body)
 
     const { data, error } = await supabaseAdmin
@@ -59,6 +65,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    await consumeWorkspaceUsage(user.id).catch(() => {})
 
     return NextResponse.json({ success: true, data }, { status: 201 })
   } catch (err: any) {

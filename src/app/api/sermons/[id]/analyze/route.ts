@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getUserFromRequest } from '@/lib/auth'
 import { generateAll } from '@/lib/openai'
+import { checkUsage, consumeUsage } from '@/lib/usage'
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -67,6 +68,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       notes?.application_points ? '\n[적용]\n' + notes.application_points : '',
     ].filter(Boolean).join('\n')
 
+    const usageInfo = await checkUsage(user.id)
+    if (!usageInfo.can_generate) {
+      const errorMsg =
+        usageInfo.block_reason === 'trial_expired' ? '무료체험 기간이 만료되었습니다.' :
+        usageInfo.block_reason === 'trial_exhausted' ? '무료 분석 횟수를 모두 사용했습니다.' :
+        '사용 한도를 초과했습니다.'
+      return NextResponse.json({ success: false, error: errorMsg, usage_limit: true }, { status: 403 })
+    }
+
     const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
 
     let result
@@ -91,6 +101,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .single()
 
     if (insertError) throw insertError
+
+    await consumeUsage(user.id).catch(() => {})
 
     return NextResponse.json({
       success: true,

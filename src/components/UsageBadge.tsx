@@ -36,6 +36,7 @@ export default memo(function UsageBadge() {
   const trialEndDate = trial.ends_at ? new Date(trial.ends_at) : null
   const daysLeft = trialEndDate ? Math.ceil((trialEndDate.getTime() - now) / 86400000) : 0
   const isUnlimited = trial.remaining >= 999999 || (monthly.limit === 0 && monthly.remaining === 0 && !isTrial)
+  const hasWorkspace = workspace.limit > 0
 
   const planColors = {
     none: { bg: 'from-amber-500 to-orange-500', light: 'from-amber-50 to-orange-50', text: 'text-amber-600', border: 'border-amber-200/50' },
@@ -110,6 +111,27 @@ export default memo(function UsageBadge() {
                 {daysLeft}일
               </span>
             </div>
+
+            {/* 설교원고제작 */}
+            {hasWorkspace && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[12px] font-medium text-slate-500 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-purple-500" />
+                    설교원고제작
+                  </span>
+                  <span className="text-[16px] font-extrabold text-slate-800">
+                    {workspace.remaining}회
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-500"
+                    style={{ width: `${(workspace.remaining / workspace.limit) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </>
         ) : isTrial && trial.expired ? (
           <div className="flex items-center justify-center gap-2 py-3 text-[13px] text-amber-600 bg-amber-50 border border-amber-200 rounded-xl">

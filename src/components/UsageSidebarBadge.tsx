@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthProvider'
-import { Gauge, Sparkles, AlertTriangle, Loader2 } from 'lucide-react'
+import { Gauge, Sparkles, AlertTriangle, Loader2, Zap } from 'lucide-react'
 import type { UsageInfo } from '@/types'
 
 export default function UsageSidebarBadge() {
@@ -45,6 +45,8 @@ export default function UsageSidebarBadge() {
 
   const trialLeft = usage.trial.remaining
   const monthlyLeft = usage.monthly.remaining
+  const workspaceLeft = usage.workspace.remaining
+  const workspaceLimit = usage.workspace.limit
   const isUnlimited = usage.monthly.limit === -1
 
   return (
@@ -62,14 +64,14 @@ export default function UsageSidebarBadge() {
             <div className="flex items-center justify-between text-[12px] bg-white/15 rounded-lg px-2.5 py-1.5 border border-white/20 backdrop-blur-sm">
               <span className="text-white font-medium flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-yellow-200" />
-                무료 체험
+                AI 분석
               </span>
               <span className="font-bold text-white">
                 {trialLeft}회
               </span>
             </div>
           )}
-          {!isUnlimited && (
+          {!isUnlimited && monthlyLeft !== undefined && (
             <div className="flex items-center justify-between text-[12px] bg-white/15 rounded-lg px-2.5 py-1.5 border border-white/20 backdrop-blur-sm">
               <span className="text-white font-medium flex items-center gap-1.5">
                 <Gauge className="w-3 h-3 text-blue-200" />
@@ -77,6 +79,17 @@ export default function UsageSidebarBadge() {
               </span>
               <span className={`font-bold ${monthlyLeft <= 3 ? 'text-red-200' : 'text-white'}`}>
                 {monthlyLeft}회
+              </span>
+            </div>
+          )}
+          {workspaceLimit > 0 && (
+            <div className="flex items-center justify-between text-[12px] bg-white/15 rounded-lg px-2.5 py-1.5 border border-white/20 backdrop-blur-sm">
+              <span className="text-white font-medium flex items-center gap-1.5">
+                <Zap className="w-3 h-3 text-purple-200" />
+                설교원고
+              </span>
+              <span className={`font-bold ${workspaceLeft <= 0 ? 'text-red-200' : 'text-white'}`}>
+                {workspaceLeft}회
               </span>
             </div>
           )}

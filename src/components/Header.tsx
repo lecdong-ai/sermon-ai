@@ -55,7 +55,7 @@ export default memo(function Header() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* SermonAI 로고 브랜딩 */}
-        <Link href="/" className="flex items-center gap-2.5 group ml-[1.5cm]">
+        <Link href="/" className="flex items-center gap-2.5 group ml-[0.5cm]">
           <div className="w-8 h-8 rounded-lg bg-[#8d7a5b] flex items-center justify-center group-hover:bg-[#7a694e] transition-colors duration-200">
             <Cross className="w-4 h-4 text-white" />
           </div>
@@ -177,22 +177,13 @@ export default memo(function Header() {
               </div>
             </>
           ) : (
-            <>
-              <Link
-                href="/pricing"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-[#e4e2dd] text-[#4a4744] text-[14px] font-medium hover:bg-[#f5f4f0] transition-all duration-200"
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                요금제
-              </Link>
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#2c2a29] text-white text-[14px] font-medium hover:bg-[#1e1d1c] transition-all duration-200"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                로그인
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#2c2a29] text-white text-[14px] font-medium hover:bg-[#1e1d1c] transition-all duration-200"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              로그인
+            </Link>
           )}
         </nav>
       </div>

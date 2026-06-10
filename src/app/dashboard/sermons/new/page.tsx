@@ -37,11 +37,15 @@ function NewSermonForm() {
   const [seminarEditValue, setSeminarEditValue] = useState('')
   const [analyzingTags, setAnalyzingTags] = useState(false)
   const [userPlan, setUserPlan] = useState<string>('none')
+  const [canGenerate, setCanGenerate] = useState(true)
 
   useEffect(() => {
     fetch('/api/usage')
       .then(res => res.json())
-      .then(data => { if (data.plan) setUserPlan(data.plan) })
+      .then(data => {
+        if (data.plan) setUserPlan(data.plan)
+        if (data.can_generate !== undefined) setCanGenerate(data.can_generate)
+      })
       .catch(() => {})
   }, [])
 
@@ -244,8 +248,8 @@ function NewSermonForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (userPlan === 'none') {
-      alert('Basic 플랜 이상에서만 설교를 작성할 수 있습니다. 구독 후 이용해주세요.')
+    if (!canGenerate) {
+      alert('설교 생성 권한이 없습니다. 구독 후 이용해주세요.')
       return
     }
     if (!form.title || !form.date || !form.sermonType || !form.audience || !form.bibleBook || !form.coreMessage || !form.manuscript) {

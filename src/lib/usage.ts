@@ -91,20 +91,30 @@ export async function ensureUsage(userId: string): Promise<UserUsage> {
     .eq('email', userEmail)
     .maybeSingle()
 
+  const { data: activeSub } = await supabase
+    .from('subscriptions')
+    .select('plan')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  const subPlan = activeSub?.plan as PlanType | undefined
+  const isTrial = !deletedCheck
+
   const now = new Date().toISOString()
   const end = new Date(Date.now() + 15 * 86400000).toISOString()
   const defaultRecord = {
     user_id: userId,
-    plan: 'none' as PlanType,
-    user_status: deletedCheck ? 'expired' as const : 'trial' as const,
+    plan: subPlan || 'none' as PlanType,
+    user_status: subPlan ? 'active' as const : (deletedCheck ? 'expired' as const : 'trial' as const),
     trial_used: deletedCheck ? 999 : 0,
     trial_limit: 3,
     trial_start_at: now,
     trial_end_at: deletedCheck ? now : end,
     monthly_used: 0,
-    monthly_limit: 0,
+    monthly_limit: subPlan ? PLAN_LIMITS[subPlan]?.monthly || 0 : 0,
     workspace_used: 0,
-    workspace_limit: 0,
+    workspace_limit: subPlan ? PLAN_LIMITS[subPlan]?.workspace_limit || 0 : 0,
     last_reset_month: currentMonth(),
     created_at: now,
     updated_at: now,

@@ -111,7 +111,7 @@ export const FREE_PLAN: FreePlan = {
   description: '회원가입 후 바로 무료로 체험해보세요.',
   features: [
     { text: 'AI 분석 및 컨텐츠 제작 3회', ok: true },
-    { text: '설교원고제작 사용 불가', ok: false },
+    { text: '설교원고제작 1회', ok: true },
     { text: '요약 / 나눔 자료 / 카드뉴스', ok: true },
     { text: '설교 대본 / 쇼츠 대본 / PPT', ok: true },
     { text: '결과 공유 및 다운로드', ok: true },

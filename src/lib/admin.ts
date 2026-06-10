@@ -47,10 +47,6 @@ export async function getUserStats() {
 
   const adminCount = authUsers?.users.filter(u => isAdminFromMeta(u)).length || 0
 
-  const { data: usage } = await supabaseAdmin
-    .from('user_usage')
-    .select('plan, user_status, monthly_used, monthly_limit')
-
   const { data: subscriptions } = await supabaseAdmin
     .from('subscriptions')
     .select('plan, status')
@@ -59,11 +55,12 @@ export async function getUserStats() {
     .from('payment_history')
     .select('amount, status')
 
+  const activeSubs = subscriptions?.filter(s => s.status === 'active') || []
   const totalRevenue = paymentSum?.filter(p => p.status === 'succeeded').reduce((s, p) => s + p.amount, 0) || 0
-  const activeSubscriptions = subscriptions?.filter(s => s.status === 'active').length || 0
-  const proUsers = usage?.filter(u => u.plan === 'pro').length || 0
-  const basicUsers = usage?.filter(u => u.plan === 'basic').length || 0
-  const trialUsers = usage?.filter(u => u.plan === 'none' && u.user_status === 'trial').length || 0
+  const activeSubscriptions = activeSubs.length
+  const proUsers = activeSubs.filter(s => s.plan === 'pro').length
+  const basicUsers = activeSubs.filter(s => s.plan === 'basic').length
+  const trialUsers = Math.max(0, totalUsers - adminCount - proUsers - basicUsers)
 
   return { totalUsers, totalRevenue, activeSubscriptions, adminCount, planDistribution: { pro: proUsers, basic: basicUsers, trial: trialUsers } }
 }
