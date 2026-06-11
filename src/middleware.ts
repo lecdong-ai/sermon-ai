@@ -1,14 +1,28 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password']
+const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/intro']
 const publicPrefixes = ['/share/', '/api/']
+
+const hasSupabaseConfig = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isPublic = publicRoutes.some((route) => pathname === route) ||
     publicPrefixes.some((prefix) => pathname.startsWith(prefix))
+
+  if (!hasSupabaseConfig) {
+    if (!isPublic && !pathname.startsWith('/advanced')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next({ request })
+  }
 
   const response = NextResponse.next({ request })
 
@@ -31,7 +45,7 @@ export async function middleware(request: NextRequest) {
 
   let { data: { user } } = await supabase.auth.getUser()
 
-  if (!isPublic && !user) {
+  if (!isPublic && !user && !pathname.startsWith('/advanced')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

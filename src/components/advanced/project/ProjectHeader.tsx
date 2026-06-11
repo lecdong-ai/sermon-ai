@@ -1,0 +1,128 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { ProjectDetail, PROJECT_STATUS_ORDER } from '@/lib/advanced/types'
+import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
+import StatusTimeline from '@/components/advanced/shared/StatusTimeline'
+import { ProjectStatusBadge } from '@/components/advanced/shared'
+import { MOCK_SAVE_STATE } from '@/lib/advanced/statusData'
+
+interface Props {
+  project: ProjectDetail
+}
+
+export default function ProjectHeader({ project }: Props) {
+  const router = useRouter()
+  const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
+  const totalSteps = PROJECT_STATUS_ORDER.length - 1
+  const progressPercent = Math.round((statusIndex / totalSteps) * 100)
+
+  return (
+    <div className="bg-white border-b border-paper-200 shrink-0">
+      <div className="max-w-[1440px] mx-auto px-6 py-4">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-1 text-[11px] text-paper-400 mb-2">
+          <button onClick={() => router.push('/advanced')} className="hover:text-green-600 transition-colors">대시보드</button>
+          <span className="text-paper-300">/</span>
+          <button onClick={() => router.push('/advanced/projects')} className="hover:text-green-600 transition-colors">프로젝트</button>
+          <span className="text-paper-300">/</span>
+          <span className="text-paper-600 font-medium truncate max-w-[200px]">{project.title}</span>
+        </div>
+
+        {/* 상단: 뒤로가기 + 제목 + 상태 + 버튼 */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/advanced/projects')}
+                className="text-paper-400 hover:text-paper-600 shrink-0 transition-colors p-1 -ml-1"
+                title="프로젝트 목록"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="text-lg font-bold text-paper-900 truncate font-serif">
+                {project.title}
+              </h1>
+              <ProjectStatusBadge status={project.status} />
+            </div>
+
+            {/* 본문 정보 행 */}
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-paper-500 flex-wrap">
+              <span className="font-medium text-paper-700 bg-paper-100 px-2 py-0.5 rounded">{project.passage}</span>
+              <span className="text-paper-300">·</span>
+              <span>{project.sermonDate}</span>
+              <span className="text-paper-300">·</span>
+              <span>{project.sermonType}</span>
+              <span className="text-paper-300">·</span>
+              <span>{project.audience.join(', ')}</span>
+              {project.seriesName && (
+                <>
+                  <span className="text-paper-300">·</span>
+                  <button
+                    onClick={() => project.seriesId && router.push(`/advanced/series/${project.seriesId}`)}
+                    className="text-green-600 hover:text-green-700 hover:underline"
+                  >
+                    {project.seriesName}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* 태그 */}
+            {project.tagNames.length > 0 && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                {project.tagNames.map(t => (
+                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-paper-100 text-paper-500">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 우측 버튼 */}
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            <SaveStatusIndicator status={MOCK_SAVE_STATE.status} lastSavedAt={MOCK_SAVE_STATE.lastSavedAt} minimal />
+            <button
+              onClick={() => router.push(`/advanced/graph?focus=${project.id}`)}
+              className="text-xs text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded-md px-3 py-1.5 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.101 1.101" />
+              </svg>
+              그래프
+            </button>
+            <button
+              onClick={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
+              className="text-xs text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded-md px-3 py-1.5 transition-colors"
+            >
+              미리보기
+            </button>
+            <button className="text-xs bg-green-500 hover:bg-green-600 text-white rounded-md px-4 py-1.5 transition-colors font-medium">
+              저장
+            </button>
+          </div>
+        </div>
+
+        {/* 진행률 바 */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <StatusTimeline currentStatus={project.status} />
+            <div className="adv-progress-bar h-1 mt-1.5">
+              <div
+                className="adv-progress-fill bg-green-500 h-full rounded-full transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-[11px] text-paper-400 shrink-0">
+            v{project.version} · {project.wordCount.toLocaleString()}자
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}

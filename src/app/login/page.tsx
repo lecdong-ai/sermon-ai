@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, hasSupabaseClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Cross, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
@@ -42,7 +42,11 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
-  const supabase = createClient()
+  const [supabase] = useState(() => {
+    if (!hasSupabaseClient()) return null as any
+    return createClient()
+  })
+  const isSupabaseReady = hasSupabaseClient()
 
   const validate = useCallback(() => {
     const errors: { email?: string; password?: string } = {}
@@ -63,6 +67,7 @@ function LoginForm() {
     e.preventDefault()
     setError('')
     setResetSent(false)
+    if (!isSupabaseReady) { setError('Supabase 인증이 구성되지 않았습니다.'); return }
     if (!validate()) return
 
     setLoading(true)
@@ -116,6 +121,7 @@ function LoginForm() {
   }
 
   const handleKakao = async () => {
+    if (!isSupabaseReady) return
     setLoading(true)
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
@@ -128,6 +134,7 @@ function LoginForm() {
   }
 
   const handleGoogle = async () => {
+    if (!isSupabaseReady) return
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
