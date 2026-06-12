@@ -241,13 +241,14 @@ function ConnectionsGraphSVG({ project }: { project: ProjectDetail }) {
           )}
           <text
             x={node.x}
-            y={node.y + node.r + 10}
+            y={node.y + node.r + 14}
             textAnchor="middle"
-            fontSize="5.5"
-            fill="#9C9487"
+            fontSize="9.5"
+            fill="#6B6358"
             fontFamily="sans-serif"
+            fontWeight="500"
           >
-            {node.label.length > 6 ? node.label.slice(0, 6) + '…' : node.label}
+            {node.label.length > 8 ? node.label.slice(0, 8) + '…' : node.label}
           </text>
         </g>
       ))}
@@ -269,7 +270,17 @@ function ConnectionNodeCard({ type, label, subtitle, strength, onClick }: {
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
         type === 'passage' ? 'bg-slateblue-100 text-slateblue-700' : 'bg-paper-100 text-paper-500'
       }`}>
-        {type === 'passage' ? '📖' : '🔗'}
+        {type === 'passage' ? (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  ) : (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  )}
       </div>
       <div className="flex-1 min-w-0">
         <span className="text-sm font-medium text-paper-800 block truncate">{label}</span>

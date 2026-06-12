@@ -12,7 +12,7 @@ import {
   mockGraphData,
 } from '@/lib/advanced/mockData'
 import { PROJECT_STATUS_ORDER, PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
-import { ContextBreadcrumbs, NextStepCard, SaveStatusIndicator, AppSectionHeader, ProjectStatusBadge } from '@/components/advanced/shared'
+import { NextStepCard, SaveStatusIndicator, AppSectionHeader, ProjectStatusBadge } from '@/components/advanced/shared'
 import { MOCK_SAVE_STATE } from '@/lib/advanced/statusData'
 
 /* ─── Progress Bar ─── */
@@ -49,13 +49,6 @@ export default function AdvancedDashboardPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
         <div className="max-w-[1400px] mx-auto space-y-6">
-
-          {/* ─── Breadcrumbs ─── */}
-          <ContextBreadcrumbs items={[
-            { label: '말씀 사역' },
-            { label: '대시보드' },
-          ]} />
-
           {/* ─── Header ─── */}
           <div className="flex items-end justify-between">
             <div>
@@ -66,12 +59,6 @@ export default function AdvancedDashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => router.push('/intro')}
-                className="text-[11px] text-paper-400 hover:text-green-600 transition-colors px-2 py-1"
-              >
-                제품 소개 →
-              </button>
               <span className="text-[11px] text-paper-400 bg-paper-100 px-3 py-1.5 rounded-full">
                 설교까지 <span className="font-semibold text-paper-700">{daysUntilSermon}일</span>
               </span>
@@ -82,7 +69,7 @@ export default function AdvancedDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* Hero Card: Today's Work */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-paper-200 p-6 shadow-sm">
+            <div className="lg:col-span-2 bg-white rounded-xl border border-paper-200 p-6 ">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
@@ -151,19 +138,9 @@ export default function AdvancedDashboardPage() {
                   원고 작성
                 </button>
               </div>
-              <div className="mt-2">
-                <button
-                  onClick={() => router.push('/advanced/bible')}
-                  className="text-[11px] text-paper-400 hover:text-green-600 px-2 py-1 rounded-md transition-colors"
-                >
-                  본문 연구실로 이동 →
-                </button>
-              </div>
             </div>
-
-            {/* Quick Stats Panel */}
             <div className="space-y-4">
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader title="사역 현황" />
                 <div className="space-y-3">
                   <StatRow label="전체 프로젝트" value={mockQuickStats.totalProjects} />
@@ -183,7 +160,7 @@ export default function AdvancedDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader title="상태별" />
                 <div className="space-y-2.5">
                   {PROJECT_STATUS_ORDER.map(status => {
@@ -224,7 +201,7 @@ export default function AdvancedDashboardPage() {
             <div className="lg:col-span-2 space-y-5">
 
               {/* In-Progress Projects */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader
                   title="진행 중 프로젝트"
                   action={
@@ -293,7 +270,7 @@ export default function AdvancedDashboardPage() {
               </div>
 
               {/* Recent Passages */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader
                   title="최근 연구한 본문"
                   action={
@@ -329,7 +306,7 @@ export default function AdvancedDashboardPage() {
             <div className="space-y-5">
 
               {/* Graph Preview */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader
                   title="지식 그래프"
                   action={
@@ -353,7 +330,7 @@ export default function AdvancedDashboardPage() {
               </div>
 
               {/* Recent Notes */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
                 <AppSectionHeader
                   title="최근 통찰 노트"
                   action={
@@ -386,7 +363,7 @@ export default function AdvancedDashboardPage() {
           </div>
 
           {/* ─── Row 3: Recommendations ─── */}
-          <div className="bg-white rounded-xl border border-paper-200 p-5 shadow-sm">
+          <div className="bg-white rounded-xl border border-paper-200 p-5 ">
             <AppSectionHeader title="관련 설교 자료 · 재사용 추천" />
             {mockRecommendations.length === 0 ? (
               <div className="py-10 text-center">
@@ -550,11 +527,11 @@ function GraphPreviewSVG() {
               x={pos.x}
               y={pos.y + r + 10}
               textAnchor="middle"
-              fontSize="5.5"
-              fill="#9C9487"
+              fontSize="9.5"
+              fill="#6B6358"
               fontFamily="sans-serif"
             >
-              {node.label.length > 5 ? node.label.slice(0, 5) + '…' : node.label}
+              {node.label.length > 8 ? node.label.slice(0, 8) + '…' : node.label}
             </text>
           </g>
         )

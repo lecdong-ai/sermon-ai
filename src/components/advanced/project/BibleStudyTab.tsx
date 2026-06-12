@@ -9,6 +9,7 @@ import {
   JOHN_THEMES, JOHN_CONTEXT,
 } from '@/lib/advanced/johnStudyData'
 import type { JohnWordDetail, JohnCommentary } from '@/lib/advanced/johnStudyData'
+import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 
 interface Props { project: ProjectDetail }
 
@@ -79,6 +80,14 @@ export default function BibleStudyTab({ project }: Props) {
       {/* ─── Main Content ─── */}
       <div className="flex-1 min-w-0 overflow-y-auto scrollbar-thin pr-5">
 
+        {/* Project Context */}
+        <ProjectContextRow
+          project={project}
+          currentStage="study"
+          stageStatus={{ study: 'done', prep: 'progress', manuscript: 'empty' }}
+          lastSaved={lastSaved || undefined}
+        />
+
         {/* Research Toolbar */}
         <ResearchToolbar
           passage="요한복음 1:1-5"
@@ -140,6 +149,9 @@ export default function BibleStudyTab({ project }: Props) {
           isSaving={isSaving}
           lastSaved={lastSaved}
         />
+
+        {/* ─── Research Summary for Prep Handoff ─── */}
+        <ResearchSummaryForPrep onSendToPrep={handleSendToPrep} />
 
         {/* Bottom spacer */}
         <div className="h-8" />
@@ -878,6 +890,106 @@ function RightPanel({
         <div className="bg-paper-100 rounded-lg p-3">
           <p className="font-medium text-paper-600 mb-1">주제 연결</p>
           <p>주제를 클릭하면 연결된 설교와 자료를 탐색할 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Research Summary for Prep ─── */
+
+function ResearchSummaryForPrep({ onSendToPrep }: { onSendToPrep: () => void }) {
+  return (
+    <div className="bg-white rounded-xl border border-green-200/60 mb-5 overflow-hidden">
+      <div className="px-5 py-3 bg-green-50/50 border-b border-green-200/60 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <span className="text-[10px] font-semibold text-green-700 uppercase tracking-widest">설교 준비로 가져갈 핵심 정리</span>
+        </div>
+        <span className="text-[10px] text-green-600">연구에서 정리한 내용입니다</span>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {/* Recurring Themes */}
+        <div>
+          <span className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest block mb-2">반복 주제</span>
+          <div className="flex flex-wrap gap-2">
+            {['말씀(λόγος)', '생명(ζωή)', '빛(φῶς)', '어둠(σκοτία)', '창조', '계시'].map(t => (
+              <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Key Insights */}
+        <div>
+          <span className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest block mb-2">핵심 통찰</span>
+          <div className="space-y-1.5">
+            {[
+              '요한의 프롤로그는 창세기 1장의 새 창조를 선포한다 — "태초에"는 창 1:1의 의도적 인용',
+              'λόγος는 헬라 철학의 추상적 이성이 아니라 인격적 그리스도 — 구약의 "다바르" 전통 계승',
+              '5절 어둠이 빛을 "깨닫지 못하더라"(οὐ κατέλαβεν)는 이해와 정복의 중의적 의미',
+              '그리스도의 선재성(1-2절) → 창조와 생명(3-4절) → 빛과 어둠의 긴장(5절)으로 전개',
+            ].map((insight, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-paper-600 leading-relaxed">
+                <span className="w-1 h-1 rounded-full bg-green-400 mt-1.5 shrink-0" />
+                <span>{insight}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Key Greek Words */}
+        <div>
+          <span className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest block mb-2">핵심 원어</span>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { word: 'λόγος', meaning: '말씀 — 하나님의 자기 계시' },
+              { word: 'ζωή', meaning: '생명 — 영원하고 질적인 생명' },
+              { word: 'φῶς', meaning: '빛 — 계시와 진리와 구원' },
+              { word: 'σκοτία', meaning: '어둠 — 영적 무지와 단절' },
+            ].map(kw => (
+              <div key={kw.word} className="bg-paper-50 rounded-lg border border-paper-200 p-2.5">
+                <span className="text-xs text-paper-700 font-greek">{kw.word}</span>
+                <p className="text-[10px] text-paper-500 mt-0.5">{kw.meaning}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Questions for Prep */}
+        <div>
+          <span className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest block mb-2">설교에 반영할 질문</span>
+          <div className="space-y-1.5">
+            {[
+              '회중이 익숙한 "태초에"를 새롭게 듣게 하려면 어떻게 도입해야 하는가?',
+              '말씀의 선재성(1-2절)과 생명 되심(3-4절)을 어떻게 한 흐름으로 연결할 것인가?',
+              '5절의 중의적 의미(이해/정복)를 설교에서 어떻게 효과적으로 전달할 것인가?',
+            ].map((q, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50/50 rounded-lg p-3 leading-relaxed">
+                <svg className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{q}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="text-right">
+          <button
+            onClick={onSendToPrep}
+            className="inline-flex items-center gap-1.5 text-xs bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg transition-colors font-medium"
+          >
+            이 연구를 바탕으로 설교 구조 세우기 →
+          </button>
+          <p className="text-[10px] text-paper-400 mt-1.5">
+            연구에서 정리한 핵심 통찰과 원어 분석이 설교 준비 탭으로 전달됩니다
+          </p>
         </div>
       </div>
     </div>

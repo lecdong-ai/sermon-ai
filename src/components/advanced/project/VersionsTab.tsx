@@ -120,7 +120,7 @@ export default function VersionsTab({ project }: Props) {
           onClick={() => router.push(`/advanced/projects/${project.id}?tab=connections`)}
           className="text-sm border border-paper-200 hover:border-slateblue-300 text-paper-600 hover:text-slateblue-600 px-5 py-2.5 rounded-md transition-colors"
         >
-          ← 연결 노드
+          ← 연결 보기
         </button>
         <button
           onClick={() => router.push(`/advanced/projects/${project.id}?tab=overview`)}

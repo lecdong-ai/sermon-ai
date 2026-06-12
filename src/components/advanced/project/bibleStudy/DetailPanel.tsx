@@ -155,19 +155,19 @@ function DefaultGuideView({ data, onClose }: { data: BibleStudyData; onClose: ()
       <DetailHeader title="연구 도구" onClose={onClose} />
       <div className="space-y-4 text-xs text-paper-500 leading-relaxed">
         <div className="bg-paper-100 rounded-lg p-3">
-          <p className="font-medium text-paper-700 mb-1">💡 단어 분석</p>
+          <p className="font-medium text-paper-700 mb-1">단어 분석</p>
           <p>본문에서 원어 단어를 클릭하면 상세 정보를 볼 수 있습니다.</p>
         </div>
         <div className="bg-paper-100 rounded-lg p-3">
-          <p className="font-medium text-paper-700 mb-1">📖 주석 보기</p>
+          <p className="font-medium text-paper-700 mb-1">주석 보기</p>
           <p>절 번호를 클릭하면 해당 절의 주석을 확인할 수 있습니다.</p>
         </div>
         <div className="bg-paper-100 rounded-lg p-3">
-          <p className="font-medium text-paper-700 mb-1">🔗 주제 연결</p>
+          <p className="font-medium text-paper-700 mb-1">주제 연결</p>
           <p>주제를 클릭하면 연결된 설교와 자료를 탐색할 수 있습니다.</p>
         </div>
         <div className="bg-paper-100 rounded-lg p-3">
-          <p className="font-medium text-paper-700 mb-1">📊 연구 현황</p>
+          <p className="font-medium text-paper-700 mb-1">연구 현황</p>
           <p>본문 연구 횟수: {data.verses.length}절 · 원어 분석: {Object.keys(data.words).length}개 · 주석: {data.commentaries.length}건</p>
         </div>
       </div>
