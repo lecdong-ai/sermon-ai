@@ -22,12 +22,12 @@ const TABS = [
 ]
 
 const TAB_COLORS: Record<string, string> = {
-  overview: 'border-paper-400 text-paper-600',
+  overview: 'border-white/5 text-slate-200',
   study: 'border-teal-500 text-teal-700',
   prep: 'border-amber-500 text-amber-700',
-  manuscript: 'border-green-500 text-green-700',
+  manuscript: 'border-indigo-600 text-indigo-300',
   connections: 'border-slateblue-500 text-slateblue-700',
-  versions: 'border-paper-400 text-paper-600',
+  versions: 'border-white/5 text-slate-200',
 }
 
 function ProjectContent() {
@@ -50,7 +50,7 @@ function ProjectContent() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {/* Tab Bar */}
-          <div className="bg-white border-b border-paper-200 px-6 sticky top-0 z-10">
+          <div className="bg-[#04060f]/60 border-b border-white/5 px-6 sticky top-0 z-10">
             <div className="flex max-w-[1440px] mx-auto">
               {TABS.map(tab => (
                 <button
@@ -59,7 +59,7 @@ function ProjectContent() {
                   className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                     currentTab === tab.key
                       ? `${TAB_COLORS[tab.key]} border-b-2`
-                      : 'text-paper-400 border-transparent hover:text-paper-600'
+                      : 'text-slate-500 border-transparent hover:text-slate-200'
                   }`}
                 >
                   {tab.label}
@@ -90,7 +90,7 @@ export default function ProjectDetailPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center h-full">
-        <div className="text-sm text-paper-400">로딩 중...</div>
+        <div className="text-sm text-slate-500">로딩 중...</div>
       </div>
     }>
       <ProjectContent />

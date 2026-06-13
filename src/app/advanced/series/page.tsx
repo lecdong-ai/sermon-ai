@@ -20,13 +20,13 @@ export default function SeriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-paper-800 font-serif">설교 시리즈</h1>
-          <p className="text-xs text-paper-500 mt-1">연속 설교를 계획하고 관리합니다 · 총 {SERIES_DATA.length}개 시리즈</p>
+          <h1 className="text-lg font-bold text-white">설교 시리즈</h1>
+          <p className="text-xs text-slate-500 font-bold mt-1">연속 설교를 계획하고 관리합니다 · 총 {SERIES_DATA.length}개 시리즈</p>
         </div>
       </div>
 
       {/* Status Filter */}
-      <div className="flex items-center gap-1.5 mb-6 bg-paper-100 rounded-lg p-0.5 w-fit">
+      <div className="flex items-center gap-1.5 mb-6 bg-white/5 border border-white/5 rounded-xl p-0.5 w-fit">
         <FilterBtn label="전체" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
         <FilterBtn label={`진행중 (${SERIES_DATA.filter(s => s.completedSermons < s.totalSermons).length})`}
           active={filterStatus === 'active'} onClick={() => setFilterStatus('active')} />
@@ -36,11 +36,11 @@ export default function SeriesPage() {
 
       {/* Series Grid */}
       {filtered.length === 0 ? (
-        <div className="adv-card">
+        <div className="bg-[#04060f]/60 rounded-2xl border border-white/5">
           <div className="py-12 text-center">
-            <p className="text-sm text-paper-400">조건에 맞는 시리즈가 없습니다</p>
+            <p className="text-sm text-slate-500 font-bold">조건에 맞는 시리즈가 없습니다</p>
             <button onClick={() => setFilterStatus('all')}
-              className="text-xs text-green-600 hover:underline mt-2 inline-block">
+              className="text-xs text-indigo-400 font-bold hover:underline mt-2 inline-block">
               전체 시리즈 보기
             </button>
           </div>
@@ -59,7 +59,7 @@ export default function SeriesPage() {
 function FilterBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick}
-      className={`px-4 py-1.5 text-[11px] rounded-md font-medium transition-colors ${active ? 'bg-white text-paper-800 shadow-sm' : 'text-paper-500 hover:text-paper-700'}`}>
+      className={`px-4 py-1.5 text-[11px] rounded-lg font-bold transition-colors ${active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' : 'text-slate-500 hover:text-slate-300'}`}>
       {label}
     </button>
   )
@@ -71,45 +71,45 @@ function SeriesCard({ series, onClick }: { series: SeriesData; onClick: () => vo
 
   return (
     <div onClick={onClick}
-      className="bg-white rounded-xl border border-paper-200 overflow-hidden hover:border-green-300 hover:shadow-sm transition-all cursor-pointer group">
+      className="bg-[#04060f]/60 rounded-2xl border border-white/5 overflow-hidden hover:border-indigo-500/30 transition-all cursor-pointer group">
       {/* Top color bar */}
-      <div className={`h-1 ${isCompleted ? 'bg-green-400' : 'bg-amber-400'}`} />
+      <div className={`h-1 ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
 
       <div className="p-5">
         {/* Title + Season */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-bold text-paper-800 font-serif group-hover:text-green-700 transition-colors">{series.title}</h3>
+          <h3 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{series.title}</h3>
           {series.season && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded shrink-0 bg-paper-100 text-paper-500">{series.season}</span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 bg-white/5 border border-white/5 text-slate-500">{series.season}</span>
           )}
         </div>
 
         {/* Progress */}
         <div className="mt-3 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-paper-100 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${isCompleted ? 'bg-green-400' : 'bg-amber-400'}`}
+          <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`}
               style={{ width: `${progress}%` }} />
           </div>
-          <span className="text-[11px] text-paper-500 shrink-0">{series.completedSermons}/{series.totalSermons}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+          <span className="text-[11px] text-slate-500 font-bold shrink-0">{series.completedSermons}/{series.totalSermons}</span>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 border ${isCompleted ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'}`}>
             {isCompleted ? '완료' : '진행중'}
           </span>
         </div>
 
         {/* Description */}
-        <p className="text-[11px] text-paper-500 leading-relaxed mt-3 line-clamp-2">{series.description}</p>
+        <p className="text-[11px] text-slate-400 leading-relaxed mt-3 line-clamp-2 font-medium">{series.description}</p>
 
         {/* Themes */}
         <div className="flex flex-wrap gap-1 mt-3">
           {series.themeNames.slice(0, 4).map(t => (
-            <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">{t}</span>
+            <span key={t} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">{t}</span>
           ))}
         </div>
 
         {/* Latest */}
-        <div className="mt-3 pt-3 border-t border-paper-100 flex items-center justify-between text-[10px] text-paper-400">
+        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500 font-bold">
           <span>최근: {series.sermons.filter(s => s.status !== 'planned').reverse()[0]?.sermonDate || series.sermons[0]?.sermonDate}</span>
-          <span className="text-green-600 group-hover:underline">상세보기 →</span>
+          <span className="text-indigo-400 group-hover:underline">상세보기 →</span>
         </div>
       </div>
     </div>

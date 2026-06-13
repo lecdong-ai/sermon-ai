@@ -24,9 +24,9 @@ export default function StageFlowIndicator({
   const router = useRouter()
 
   const statusDot: Record<string, string> = {
-    done: 'bg-green-500',
+    done: 'bg-indigo-600',
     progress: 'bg-amber-400',
-    empty: 'bg-paper-300',
+    empty: 'bg-white/10',
   }
 
   const stageColor: Record<StageKey, string> = {
@@ -56,9 +56,9 @@ export default function StageFlowIndicator({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors ${
                 isCurrent
                   ? `${stageBg[stage.key]} text-white font-medium`
-                  : isDone
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
-                    : 'bg-paper-50 text-paper-400 hover:text-paper-600 border border-paper-200'
+                    : isDone
+                      ? 'bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20'
+                      : 'bg-[#04060f]/60 text-slate-500 hover:text-slate-200 border border-white/5'
               }`}
             >
               {isDone && !isCurrent && (
@@ -75,7 +75,7 @@ export default function StageFlowIndicator({
             {/* Arrow to next */}
             {stage.next && (
               <div className="flex items-center mx-1">
-                <svg className={`w-3.5 h-3.5 ${isCurrent ? 'text-paper-300' : 'text-paper-200'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`w-3.5 h-3.5 ${isCurrent ? 'text-slate-600' : 'text-slate-700'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>

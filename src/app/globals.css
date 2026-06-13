@@ -351,5 +351,72 @@
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* 프리미엄 다크 글래스모피즘 */
+  .glass-dark {
+    background: rgba(11, 16, 32, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      0 20px 50px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  }
+  .glass-dark-hover {
+    @apply transition-all duration-500 hover:-translate-y-1 hover:border-indigo-500/30;
+    box-shadow: 
+      0 30px 60px -15px rgba(0, 0, 0, 0.5),
+      0 0 25px rgba(99, 102, 241, 0.12),
+      inset 0 1px 1px rgba(255, 255, 255, 0.07);
+  }
+
+  /* 네온 및 하이라이팅 효과 */
+  .text-neon-blue {
+    color: #38bdf8;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+  }
+  .text-neon-purple {
+    color: #c084fc;
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
+  }
+  .text-gradient-neon {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400;
+  }
+
+  /* 모션 애니메이션 */
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+  .animate-float {
+    animation: floatCard 6s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: floatCard 6s ease-in-out infinite 2s;
+  }
+  .animate-float-slow {
+    animation: floatCard 8s ease-in-out infinite 1s;
+  }
+  
+  .line-trail {
+    stroke-dasharray: 6 12;
+    animation: dash 35s linear infinite;
+  }
 }
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.3)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.6)); }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
 

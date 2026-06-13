@@ -28,17 +28,17 @@ const STATUS_LABELS: Record<WritingStatus, string> = {
 }
 
 const STATUS_COLORS: Record<WritingStatus, string> = {
-  empty: 'bg-paper-200 text-paper-400',
-  draft: 'bg-blue-100 text-blue-700',
-  revised: 'bg-amber-100 text-amber-700',
-  complete: 'bg-green-100 text-green-700',
+  empty: 'bg-white/5 text-slate-500',
+  draft: 'bg-blue-500/10 text-blue-300',
+  revised: 'bg-amber-500/10 text-amber-300',
+  complete: 'bg-indigo-500/10 text-indigo-300',
 }
 
 const STATUS_DOTS: Record<WritingStatus, string> = {
-  empty: 'bg-paper-300',
+  empty: 'bg-white/10',
   draft: 'bg-blue-400',
   revised: 'bg-amber-400',
-  complete: 'bg-green-500',
+  complete: 'bg-indigo-600',
 }
 
 const OVERALL_STATUS_LABELS: Record<string, string> = {
@@ -50,11 +50,11 @@ const OVERALL_STATUS_LABELS: Record<string, string> = {
 }
 
 const OVERALL_STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-blue-100 text-blue-700',
-  first_draft_done: 'bg-green-100 text-green-700',
-  revising: 'bg-amber-100 text-amber-700',
-  final_review: 'bg-purple-100 text-purple-700',
-  complete: 'bg-navy-100 text-navy-700',
+  draft: 'bg-blue-500/10 text-blue-300',
+  first_draft_done: 'bg-indigo-500/10 text-indigo-300',
+  revising: 'bg-amber-500/10 text-amber-300',
+  final_review: 'bg-purple-500/10 text-purple-300',
+  complete: 'bg-indigo-500/10 text-indigo-300',
 }
 
 const EMPTY_GUIDANCE: Record<string, { message: string; hint: string }> = {
@@ -214,7 +214,7 @@ export default function ManuscriptTab({ project }: Props) {
     const section = manuscript.sections[presentationSectionIdx]
     return (
       <div className="fixed inset-0 z-50 bg-navy-900 text-white flex flex-col">
-        <div className="flex items-center justify-between px-6 py-3 border-b border-navy-800">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/5">
           <span className="text-xs text-paper-500">{manuscript.title} — {section.label}</span>
           <div className="flex items-center gap-3">
             <span className="text-xs text-paper-400">{presentationSectionIdx + 1} / {manuscript.sections.length}</span>
@@ -234,7 +234,7 @@ export default function ManuscriptTab({ project }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-4 px-6 py-4 border-t border-navy-800">
+        <div className="flex items-center justify-center gap-4 px-6 py-4 border-t border-white/5">
           <button
             onClick={() => setPresentationSectionIdx(i => Math.max(i - 1, 0))}
             disabled={presentationSectionIdx === 0}
@@ -258,22 +258,22 @@ export default function ManuscriptTab({ project }: Props) {
 
   if (viewMode === 'print') {
     return (
-      <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-white border-b border-paper-200 px-6 py-3 flex items-center justify-between">
-          <span className="text-xs text-paper-500">인쇄 미리보기 — {manuscript.title}</span>
-          <button onClick={() => setViewMode('edit')} className="text-xs text-paper-500 hover:text-paper-700 border border-paper-200 px-3 py-1 rounded">
+      <div className="fixed inset-0 z-50 bg-[#04060f]/60 overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-[#04060f]/60 border-b border-white/5 px-6 py-3 flex items-center justify-between">
+          <span className="text-xs text-slate-400">인쇄 미리보기 — {manuscript.title}</span>
+          <button onClick={() => setViewMode('edit')} className="text-xs text-slate-400 hover:text-slate-100 border border-white/5 px-3 py-1 rounded">
             편집으로 돌아가기
           </button>
         </div>
         <div className="max-w-[800px] mx-auto p-12 print:p-0">
-          <h1 className="text-2xl font-serif font-bold text-paper-900 mb-2">{manuscript.title}</h1>
-          <p className="text-sm text-paper-500 mb-1">{manuscript.passage} · {manuscript.sermonDate} · {manuscript.audience}</p>
-          <p className="text-sm text-paper-500 italic mb-8">{manuscript.oneSentenceSummary}</p>
+          <h1 className="text-2xl font-serif font-bold text-white mb-2">{manuscript.title}</h1>
+          <p className="text-sm text-slate-400 mb-1">{manuscript.passage} · {manuscript.sermonDate} · {manuscript.audience}</p>
+          <p className="text-sm text-slate-400 italic mb-8">{manuscript.oneSentenceSummary}</p>
           {manuscript.sections.map(section => (
             <div key={section.id} className="mb-8">
-              <h2 className="text-lg font-serif font-bold text-paper-800 mb-2 pb-2 border-b border-paper-200">{section.label}</h2>
-              {section.passage && <p className="text-xs text-paper-400 italic mb-2">{section.passage}</p>}
-              <div className="text-sm leading-relaxed whitespace-pre-wrap text-paper-700">{section.content}</div>
+              <h2 className="text-lg font-serif font-bold text-white mb-2 pb-2 border-b border-white/5">{section.label}</h2>
+              {section.passage && <p className="text-xs text-slate-500 italic mb-2">{section.passage}</p>}
+              <div className="text-sm leading-relaxed whitespace-pre-wrap text-slate-100">{section.content}</div>
             </div>
           ))}
         </div>
@@ -345,7 +345,7 @@ export default function ManuscriptTab({ project }: Props) {
         />
 
         {/* Center: Sermon Editor */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin bg-white">
+        <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
           <div className="max-w-[720px] mx-auto p-8 space-y-10">
             {manuscript.sections.map(section => (
               <SermonSectionBlock
@@ -432,14 +432,14 @@ function WritingContextHeader({
     '저장 대기 중'
   const saveColor =
     autoSaveStatus === 'saving' ? 'text-blue-500' :
-    autoSaveStatus === 'saved' ? 'text-green-500' :
+    autoSaveStatus === 'saved' ? 'text-indigo-400' :
     'text-amber-500'
 
   return (
-    <div className="bg-white border-b border-paper-200 px-5 py-2.5 flex items-center justify-between shrink-0">
+    <div className="bg-[#04060f]/60 border-b border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-4 min-w-0">
-        <span className="text-sm font-medium text-paper-800 truncate max-w-[200px]">{manuscript.title}</span>
-        <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${OVERALL_STATUS_COLORS[overallStatus] || 'bg-paper-100 text-paper-600'}`}>
+        <span className="text-sm font-medium text-white truncate max-w-[200px]">{manuscript.title}</span>
+        <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${OVERALL_STATUS_COLORS[overallStatus] || 'bg-white/5 text-slate-200'}`}>
           {OVERALL_STATUS_LABELS[overallStatus] || overallStatus}
         </span>
         <span className={`text-[10px] ${saveColor} flex items-center gap-1`}>
@@ -450,11 +450,11 @@ function WritingContextHeader({
             </svg>
           )}
           {saveLabel}
-          {lastSaved && autoSaveStatus === 'saved' && <span className="text-paper-400"> · {lastSaved}</span>}
+          {lastSaved && autoSaveStatus === 'saved' && <span className="text-slate-500"> · {lastSaved}</span>}
         </span>
-        <span className="text-[11px] text-paper-400">{manuscript.passage} · {totalWordCount.toLocaleString()}자 · 약 {readingTimeMin}분</span>
+        <span className="text-[11px] text-slate-500">{manuscript.passage} · {totalWordCount.toLocaleString()}자 · 약 {readingTimeMin}분</span>
         {currentVersion && (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-700 font-medium whitespace-nowrap">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold whitespace-nowrap">
             기준본: {currentVersion.label} ({JOHN_MANUSCRIPT_VERSIONS.indexOf(currentVersion as any) + 1}개 중)
           </span>
         )}
@@ -464,26 +464,26 @@ function WritingContextHeader({
         <button
           onClick={onShowPrepToggle}
           className={`text-[11px] px-2.5 py-1 rounded transition-colors ${
-            showPrepPanel ? 'bg-green-100 text-green-700' : 'bg-paper-100 text-paper-500'
+            showPrepPanel ? 'bg-indigo-500/10 text-indigo-300' : 'bg-white/5 text-slate-400'
           }`}
         >
           준비 요약
         </button>
         <button
           onClick={() => onViewModeChange('presentation')}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded px-2.5 py-1 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
         >
           발표용 보기
         </button>
         <button
           onClick={() => onViewModeChange('print')}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded px-2.5 py-1 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
         >
           인쇄용 보기
         </button>
         <button
           onClick={onGoToVersions}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-300 rounded px-2.5 py-1 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
         >
           버전 기록
         </button>
@@ -507,17 +507,17 @@ function SermonMetaBar({
   tone: string
 }) {
   return (
-    <div className="bg-paper-50/70 border-b border-paper-200 px-6 py-3 shrink-0">
+    <div className="bg-[#04060f]/60 border-b border-white/5 px-6 py-3 shrink-0">
       <div className="max-w-[720px] mx-auto space-y-2">
         <div className="flex items-center gap-4">
           <input
             value={title}
             onChange={e => onTitleChange(e.target.value)}
-            className="flex-1 text-lg font-serif font-bold text-paper-900 bg-transparent border-none outline-none placeholder:text-paper-300"
+            className="flex-1 text-lg font-serif font-bold text-white bg-transparent border-none outline-none placeholder:text-slate-600"
             placeholder="설교 제목"
           />
-          <div className="flex items-center gap-2 text-xs text-paper-500 shrink-0">
-            <span className="bg-paper-100 px-2 py-0.5 rounded">{passage}</span>
+          <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0">
+            <span className="bg-white/5 px-2 py-0.5 rounded">{passage}</span>
             <span>{sermonDate}</span>
             <span>·</span>
             <span>{audience}</span>
@@ -526,7 +526,7 @@ function SermonMetaBar({
         <textarea
           value={summary}
           onChange={e => onSummaryChange(e.target.value)}
-          className="w-full text-sm text-paper-500 bg-transparent border-none outline-none resize-none placeholder:text-paper-300 leading-relaxed italic"
+          className="w-full text-sm text-slate-400 bg-transparent border-none outline-none resize-none placeholder:text-slate-600 leading-relaxed italic"
           placeholder="이 설교의 핵심을 한 문장으로 요약하세요..."
           rows={1}
         />
@@ -550,22 +550,22 @@ function ManuscriptNavigator({
 }) {
   const iconByType: Record<string, string> = {
     introduction: 'border-l-blue-400',
-    body: 'border-l-green-400',
-    conclusion: 'border-l-gold-400',
+    body: 'border-l-indigo-500',
+    conclusion: 'border-l-amber-500',
     application: 'border-l-amber-400',
   }
 
   return (
-    <aside className="w-56 border-r border-paper-200 bg-paper-50/50 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
-      <div className="p-4 border-b border-paper-200">
+    <aside className="w-56 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+      <div className="p-4 border-b border-white/5">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">원고 구조</span>
-          <span className="text-xs font-semibold text-green-600">{writingProgress}%</span>
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원고 구조</span>
+          <span className="text-xs font-semibold text-indigo-400">{writingProgress}%</span>
         </div>
         <div className="adv-progress-bar h-1 mb-2">
-          <div className="adv-progress-fill bg-green-500 h-full rounded-full" style={{ width: `${writingProgress}%` }} />
+          <div className="adv-progress-fill bg-indigo-600 h-full rounded-full" style={{ width: `${writingProgress}%` }} />
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-paper-400">
+        <div className="flex items-center gap-2 text-[10px] text-slate-500">
           {emptyCount > 0 && <span>미작성 {emptyCount}</span>}
           {draftCount > 0 && <span>초안 {draftCount}</span>}
           {emptyCount === 0 && <span>모든 섹션 작성됨</span>}
@@ -580,15 +580,15 @@ function ManuscriptNavigator({
             <button
               key={section.id}
               onClick={() => onNavigate(section.id)}
-              className={`w-full text-left px-3 py-2 rounded-md text-xs transition-colors flex items-center gap-2 ${
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center gap-2 ${
                 activeSectionId === section.id
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'text-paper-600 hover:bg-paper-100'
+                  ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                  : 'text-slate-200 hover:bg-white/5'
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOTS[status]}`} />
               <span className="flex-1 truncate">{section.label}</span>
-              {wordCount > 0 && <span className="text-[9px] text-paper-400">{wordCount}자</span>}
+              {wordCount > 0 && <span className="text-[9px] text-slate-500">{wordCount}자</span>}
               <span className={`text-[8px] px-1 py-0.5 rounded ${STATUS_COLORS[status]}`}>
                 {STATUS_LABELS[status]}
               </span>
@@ -597,8 +597,8 @@ function ManuscriptNavigator({
         })}
       </div>
 
-      <div className="mt-auto p-4 border-t border-paper-200">
-        <p className="text-[10px] text-paper-400 leading-relaxed">
+      <div className="mt-auto p-4 border-t border-white/5">
+        <p className="text-[10px] text-slate-500 leading-relaxed">
           각 섹션을 선택하여 원고를 작성하세요.<br />
           준비된 구조가 문장을 기다리고 있습니다.
         </p>
@@ -622,8 +622,8 @@ function SermonSectionBlock({
   const emptyGuide = EMPTY_GUIDANCE[section.type === 'body' ? 'body' : section.type] || EMPTY_GUIDANCE.body
   const sectionColor: Record<string, string> = {
     introduction: 'border-l-blue-400',
-    body: 'border-l-green-400',
-    conclusion: 'border-l-gold-400',
+    body: 'border-l-indigo-500',
+    conclusion: 'border-l-amber-500',
     application: 'border-l-amber-400',
   }
   const hasContent = section.content.trim().length > 0
@@ -632,13 +632,13 @@ function SermonSectionBlock({
   return (
     <div
       ref={sectionRef}
-      className={`border-l-4 ${sectionColor[section.type] || 'border-l-paper-300'} pl-5 ${isActive ? 'bg-green-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}
+      className={`border-l-4 ${sectionColor[section.type] || 'border-l-white/10'} pl-5 ${isActive ? 'bg-indigo-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}
       onClick={onActivate}
     >
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-base font-serif font-bold text-paper-800">{section.label}</h3>
+        <h3 className="text-base font-serif font-bold text-white">{section.label}</h3>
         {section.passage && (
-          <span className="text-[11px] text-paper-400 bg-paper-100 px-2 py-0.5 rounded">{section.passage}</span>
+          <span className="text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">{section.passage}</span>
         )}
         <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ml-auto ${STATUS_COLORS[status]}`}>
           {STATUS_LABELS[status]}
@@ -647,9 +647,9 @@ function SermonSectionBlock({
 
       {/* Empty state guidance */}
       {isEmpty && (
-        <div className="mb-4 bg-paper-50/70 border border-dashed border-paper-300 rounded-lg p-4 text-center">
-          <p className="text-xs text-paper-500 mb-1">{emptyGuide.message}</p>
-          <p className="text-[10px] text-paper-400 leading-relaxed">{emptyGuide.hint}</p>
+        <div className="mb-4 bg-[#04060f]/60 border border-dashed border-white/10 rounded-xl p-4 text-center">
+          <p className="text-xs text-slate-400 mb-1">{emptyGuide.message}</p>
+          <p className="text-[10px] text-slate-500 leading-relaxed">{emptyGuide.hint}</p>
         </div>
       )}
 
@@ -657,17 +657,17 @@ function SermonSectionBlock({
       {section.type === 'body' && (
         <div className="mb-4 space-y-2">
           {section.researchPoints && section.researchPoints.length > 0 && (
-            <div className="bg-teal-50/60 border border-teal-100/60 rounded-lg p-3">
-              <div className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider mb-1">연구 포인트</div>
+            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3">
+              <div className="text-[10px] font-semibold text-teal-300 uppercase tracking-wider mb-1">연구 포인트</div>
               {section.researchPoints.map((p, i) => (
-                <p key={i} className="text-xs text-teal-700 leading-relaxed">• {p}</p>
+                <p key={i} className="text-xs text-teal-300 leading-relaxed">• {p}</p>
               ))}
             </div>
           )}
           {section.applicationDirection && (
-            <div className="bg-amber-50/60 border border-amber-100/60 rounded-lg p-3">
-              <div className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider mb-1">적용 방향</div>
-              <p className="text-xs text-amber-700 leading-relaxed">{section.applicationDirection}</p>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+              <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider mb-1">적용 방향</div>
+              <p className="text-xs text-amber-300 leading-relaxed">{section.applicationDirection}</p>
             </div>
           )}
         </div>
@@ -675,9 +675,9 @@ function SermonSectionBlock({
 
       {/* Application section: show prep application hints */}
       {section.type === 'application' && isEmpty && (
-        <div className="mb-4 bg-green-50/60 border border-green-100/60 rounded-lg p-3">
-          <div className="text-[10px] font-semibold text-green-600 uppercase tracking-wider mb-1">준비 단계의 적용 포인트</div>
-          <ul className="text-xs text-green-700 leading-relaxed space-y-1">
+        <div className="mb-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">
+          <div className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mb-1">준비 단계의 적용 포인트</div>
+          <ul className="text-xs text-indigo-300 leading-relaxed space-y-1">
             <li>• 익숙한 본문을 새롭게 듣는 훈련 — 말씀을 현재의 삶에 연결하기</li>
             <li>• 빛을 지식으로만 이해하지 않도록 — 생명으로 연결되게</li>
             <li>• 고난 중에도 그리스도의 빛이 비추고 있음을 선포</li>
@@ -689,7 +689,7 @@ function SermonSectionBlock({
       <textarea
         value={section.content}
         onChange={e => onContentChange(e.target.value)}
-        className={`w-full min-h-[180px] text-sm text-paper-700 bg-transparent border-none outline-none resize-y leading-loose font-serif ${
+        className={`w-full min-h-[180px] text-sm text-slate-100 bg-transparent border-none outline-none resize-y leading-loose font-serif ${
           section.type === 'introduction' ? 'italic' : ''
         } ${isEmpty ? 'opacity-60' : ''}`}
         placeholder={
@@ -700,15 +700,15 @@ function SermonSectionBlock({
         }
       />
 
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-paper-100">
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-paper-400">{section.content.replace(/\s/g, '').length}자</span>
+          <span className="text-[10px] text-slate-500">{section.content.replace(/\s/g, '').length}자</span>
           {status === 'revised' && (
             <span className="text-[9px] text-amber-600">수정 검토 권장</span>
           )}
         </div>
         {section.applicationDirection && (
-          <span className="text-[9px] text-paper-400 italic">적용 방향: {section.applicationDirection.slice(0, 40)}…</span>
+          <span className="text-[9px] text-slate-500 italic">적용 방향: {section.applicationDirection.slice(0, 40)}…</span>
         )}
       </div>
     </div>
@@ -719,25 +719,25 @@ function SermonSectionBlock({
 
 function IllustrationNotesSection({ notes }: { notes: IllustrationNote[] }) {
   const statusColors: Record<string, string> = {
-    '사용': 'bg-green-100 text-green-700',
-    '보류': 'bg-amber-100 text-amber-700',
-    '검토중': 'bg-blue-100 text-blue-700',
+    '사용': 'bg-indigo-500/10 text-indigo-300',
+    '보류': 'bg-amber-500/10 text-amber-300',
+    '검토중': 'bg-blue-500/10 text-blue-300',
   }
 
   return (
-    <div className="border-t border-paper-200 pt-8">
+    <div className="border-t border-white/5 pt-8">
       <AppSectionHeader title="예화 메모" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {notes.map(note => (
-          <div key={note.id} className="bg-paper-50 rounded-lg border border-paper-200 p-4">
+          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-paper-800">{note.title}</h4>
+              <h4 className="text-sm font-medium text-white">{note.title}</h4>
               <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${statusColors[note.status]}`}>
                 {note.status}
               </span>
             </div>
-            <p className="text-xs text-paper-600 leading-relaxed">{note.content}</p>
-            {note.source && <p className="text-[10px] text-paper-400 mt-1.5 italic">— {note.source}</p>}
+            <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+            {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
           </div>
         ))}
       </div>
@@ -749,11 +749,11 @@ function IllustrationNotesSection({ notes }: { notes: IllustrationNote[] }) {
 
 function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
   const categoryColors: Record<string, string> = {
-    commentary: 'bg-teal-100 text-teal-700',
-    theology: 'bg-gold-100 text-gold-700',
-    historical: 'bg-amber-100 text-amber-700',
-    pastoral: 'bg-green-100 text-green-700',
-    warning: 'bg-red-100 text-red-700',
+    commentary: 'bg-teal-500/10 text-teal-300',
+    theology: 'bg-amber-500/10 text-amber-300',
+    historical: 'bg-amber-500/10 text-amber-300',
+    pastoral: 'bg-indigo-500/10 text-indigo-300',
+    warning: 'bg-red-500/10 text-red-300',
   }
   const categoryLabels: Record<string, string> = {
     commentary: '주석',
@@ -764,18 +764,18 @@ function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
   }
 
   return (
-    <div className="border-t border-paper-200 pt-8">
+    <div className="border-t border-white/5 pt-8">
       <AppSectionHeader title="참고 메모" />
       <div className="space-y-2">
         {notes.map(note => (
-          <div key={note.id} className="bg-paper-50 rounded-lg border border-paper-200 p-3">
+          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
                 {categoryLabels[note.category]}
               </span>
-              <h4 className="text-xs font-medium text-paper-800">{note.title}</h4>
+              <h4 className="text-xs font-medium text-white">{note.title}</h4>
             </div>
-            <p className="text-xs text-paper-600 leading-relaxed">{note.content}</p>
+            <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
           </div>
         ))}
       </div>
@@ -787,11 +787,11 @@ function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
 
 function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscriptData; onGoToPrep?: () => void }) {
   return (
-    <aside className="w-80 border-l border-paper-200 bg-paper-50/50 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+    <aside className="w-80 border-l border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
 
       {/* Stage Connection Badge */}
-      <div className="px-4 py-2.5 bg-green-50/60 border-b border-green-200/60">
-        <div className="flex items-center gap-1.5 text-[10px] text-green-700">
+      <div className="px-4 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20">
+        <div className="flex items-center gap-1.5 text-[10px] text-indigo-300">
           <span className="flex items-center gap-0.5">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -811,44 +811,44 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <span className="flex items-center gap-0.5 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
             작성 중
           </span>
         </div>
-        <p className="text-[10px] text-green-600 mt-0.5">준비 단계에서 정리한 구조가 원고 작성에 반영됩니다</p>
+        <p className="text-[10px] text-indigo-400 mt-0.5">준비 단계에서 정리한 구조가 원고 작성에 반영됩니다</p>
       </div>
 
       {/* Core Message (from prep) */}
-      <div className="p-4 border-b border-paper-200">
+      <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">중심명제</span>
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">준비에서 설정</span>
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">중심명제</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-medium">준비에서 설정</span>
         </div>
-        <p className="text-sm text-paper-700 leading-relaxed font-serif italic">
+        <p className="text-sm text-slate-100 leading-relaxed font-serif italic">
           &ldquo;{manuscript.coreMessage}&rdquo;
         </p>
       </div>
 
       {/* Status Connection: Prep → Manuscript handoff */}
-      <div className="p-4 border-b border-paper-200 bg-green-50/20">
+      <div className="p-4 border-b border-white/5 bg-indigo-500/10">
         <div className="flex items-center gap-1.5 mb-1.5">
-          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
-          <span className="text-[10px] font-medium text-green-700">준비 단계에서 전달된 구조</span>
+          <span className="text-[10px] font-medium text-indigo-300">준비 단계에서 전달된 구조</span>
         </div>
-        <p className="text-[10px] text-green-600 leading-relaxed">
+        <p className="text-[10px] text-indigo-400 leading-relaxed">
           작성 전달용 준비본(v3)을 기반으로 원고를 작성 중입니다. 중심명제, 대지 구조, 적용 포인트가 준비 단계에서 정리되어 이 원고에 반영되었습니다.
         </p>
       </div>
 
       {/* Prep → Manuscript connection */}
-      <div className="p-4 border-b border-paper-200">
+      <div className="p-4 border-b border-white/5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">설교 준비 요약</span>
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">설교 준비 요약</span>
           <button
             onClick={onGoToPrep}
-            className="text-[10px] text-green-600 hover:text-green-700 transition-colors"
+            className="text-[10px] text-indigo-400 hover:text-indigo-400 transition-colors"
           >
             준비 다시 보기
           </button>
@@ -856,32 +856,32 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
 
         {/* Outline from prep */}
         <div className="space-y-2 mb-3">
-          <span className="text-[10px] text-paper-500 font-medium">대지 구조</span>
+          <span className="text-[10px] text-slate-400 font-medium">대지 구조</span>
           {manuscript.outlinePoints.map((p, i) => (
             <div key={i} className="flex items-start gap-1.5 text-xs">
-              <span className="w-4 h-4 rounded-full bg-green-100 text-green-700 text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+              <span className="w-4 h-4 rounded-full bg-indigo-500/10 text-indigo-300 text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                 {i + 1}
               </span>
               <div>
-                <span className="font-medium text-paper-700 block">{p.title}</span>
-                <span className="text-[10px] text-paper-400">{p.passage}</span>
+                <span className="font-medium text-slate-100 block">{p.title}</span>
+                <span className="text-[10px] text-slate-500">{p.passage}</span>
               </div>
             </div>
           ))}
         </div>
 
         {/* Purpose from prep */}
-        <div className="bg-white rounded-lg border border-paper-200 p-3">
-          <span className="text-[10px] font-medium text-paper-500 block mb-0.5">설교 목적</span>
-          <p className="text-[11px] text-paper-600 leading-relaxed">
+        <div className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3">
+          <span className="text-[10px] font-medium text-slate-400 block mb-0.5">설교 목적</span>
+          <p className="text-[11px] text-slate-200 leading-relaxed">
             회중이 예수 그리스도를 추상적 진리가 아닌 생명과 빛의 주로 다시 바라보게 한다
           </p>
         </div>
       </div>
 
       {/* Application Points from prep */}
-      <div className="p-4 border-b border-paper-200">
-        <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest block mb-2">적용 포인트</span>
+      <div className="p-4 border-b border-white/5">
+        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest block mb-2">적용 포인트</span>
         <div className="space-y-2">
           {[
             '익숙한 본문을 새롭게 듣는 훈련 — 말씀을 현재의 삶에 연결하기',
@@ -889,38 +889,38 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
             '고난 중에도 그리스도의 빛이 비추고 있음을 선포',
             '새로운 시작을 앞둔 이들에게 "하나님이 당신의 이야기를 시작하신다"는 선포',
           ].map((point, i) => (
-            <div key={i} className="flex items-start gap-1.5 bg-blue-50/40 border border-blue-100/40 rounded-lg p-2.5">
+            <div key={i} className="flex items-start gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl p-2.5">
               <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-              <span className="text-[11px] text-paper-600 leading-relaxed">{point}</span>
+              <span className="text-[11px] text-slate-200 leading-relaxed">{point}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Greek Words */}
-      <div className="p-4 border-b border-paper-200">
-        <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest block mb-2">핵심 원어</span>
+      <div className="p-4 border-b border-white/5">
+        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest block mb-2">핵심 원어</span>
         <div className="space-y-2">
           {manuscript.greekWords.map(w => (
-            <div key={w.word} className="bg-white rounded-lg border border-paper-200 p-2.5">
+            <div key={w.word} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-2.5">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-sm font-greek text-paper-800">{w.greek}</span>
-                <span className="text-[10px] text-paper-500">{w.word}</span>
+                <span className="text-sm font-greek text-white">{w.greek}</span>
+                <span className="text-[10px] text-slate-400">{w.word}</span>
               </div>
-              <p className="text-[10px] text-paper-600">{w.meaning}</p>
-              <p className="text-[10px] text-paper-400 mt-0.5 italic">{w.note}</p>
+              <p className="text-[10px] text-slate-200">{w.meaning}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 italic">{w.note}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Prep Insights & Warning Points */}
-      <div className="p-4 border-b border-paper-200">
-        <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest block mb-2">통찰 요약</span>
+      <div className="p-4 border-b border-white/5">
+        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest block mb-2">통찰 요약</span>
         <div className="space-y-1.5">
           {manuscript.prepInsights.map((insight, i) => (
-            <div key={i} className="flex items-start gap-1.5 text-xs text-paper-600">
-              <span className="w-1 h-1 rounded-full bg-green-400 mt-1.5 shrink-0" />
+            <div key={i} className="flex items-start gap-1.5 text-xs text-slate-200">
+              <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
               <span>{insight}</span>
             </div>
           ))}
@@ -932,7 +932,7 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
         <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-widest block mb-2">유의 사항</span>
         <div className="space-y-1.5">
           {manuscript.warningPoints.map((warning, i) => (
-            <div key={i} className="flex items-start gap-1.5 text-xs text-red-600 bg-red-50/60 rounded-lg p-2 border border-red-100/60">
+            <div key={i} className="flex items-start gap-1.5 text-xs text-red-600 bg-red-500/10 rounded-lg p-2 border border-red-500/20">
               <svg className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
@@ -949,26 +949,26 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
 
 function ManuscriptRecentActivity() {
   return (
-    <div className="border-t border-paper-200 pt-8">
+    <div className="border-t border-white/5 pt-8">
       <div className="flex items-center gap-2 mb-4">
-        <svg className="w-3.5 h-3.5 text-paper-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">최근 작업</span>
+        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">최근 작업</span>
       </div>
-      <div className="bg-paper-50/50 rounded-lg border border-paper-200 divide-y divide-paper-100">
+      <div className="bg-[#04060f]/60 rounded-xl border border-white/5 divide-y divide-white/5">
         {JOHN_RECENT_ACTIVITY.map((entry, i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-2.5">
             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-              entry.section === 'manuscript' ? 'bg-green-400' :
+              entry.section === 'manuscript' ? 'bg-indigo-400' :
               entry.section === 'prep' ? 'bg-amber-400' : 'bg-teal-400'
             }`} />
-            <span className="text-[10px] text-paper-400 w-14 shrink-0 font-mono">{entry.time}</span>
-            <span className="text-xs text-paper-600 flex-1">{entry.description}</span>
+            <span className="text-[10px] text-slate-500 w-14 shrink-0 font-mono">{entry.time}</span>
+            <span className="text-xs text-slate-200 flex-1">{entry.description}</span>
             <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
-              entry.section === 'manuscript' ? 'bg-green-100 text-green-700' :
-              entry.section === 'prep' ? 'bg-amber-100 text-amber-700' :
-              'bg-teal-100 text-teal-700'
+              entry.section === 'manuscript' ? 'bg-indigo-500/10 text-indigo-300' :
+              entry.section === 'prep' ? 'bg-amber-500/10 text-amber-300' :
+              'bg-teal-500/10 text-teal-300'
             }`}>
               {entry.section === 'manuscript' ? '작성' : entry.section === 'prep' ? '준비' : '연구'}
             </span>
@@ -999,34 +999,34 @@ function WritingStatusBar({
   const allDone = emptySections.length === 0
 
   return (
-    <div className="bg-white border-t border-paper-200 px-5 py-2.5 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-4 text-[11px] text-paper-500">
+    <div className="bg-[#04060f]/60 border-t border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-4 text-[11px] text-slate-400">
         <span className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${allDone ? 'bg-green-400' : 'bg-amber-400'}`} />
-          집필도 <span className={`font-semibold ${allDone ? 'text-green-600' : 'text-amber-600'}`}>{writingProgress}%</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${allDone ? 'bg-indigo-400' : 'bg-amber-400'}`} />
+          집필도 <span className={`font-semibold ${allDone ? 'text-indigo-400' : 'text-amber-300'}`}>{writingProgress}%</span>
         </span>
         <span>{totalWordCount.toLocaleString()}자</span>
         <span>약 {readingTimeMin}분 분량</span>
-        <span className="text-[10px] text-paper-400 bg-paper-100 px-2 py-0.5 rounded">
+        <span className="text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">
           원고 이력 {JOHN_MANUSCRIPT_VERSIONS.length}개
         </span>
         {emptySections.length > 0 && (
-          <span className="text-amber-600">{emptySections.length}개 섹션 미작성</span>
+          <span className="text-amber-300">{emptySections.length}개 섹션 미작성</span>
         )}
         {allDone && (
-          <span className="text-green-600 font-medium">원고 정리 완료</span>
+          <span className="text-indigo-400 font-medium">원고 정리 완료</span>
         )}
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={onGoToPrep}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-teal-300 rounded-lg px-3 py-1.5 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-teal-500/30 rounded-xl px-3 py-1.5 transition-colors"
         >
           ← 설교 준비 다시 보기
         </button>
         <button
           onClick={onGoToVersions}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-300 rounded-lg px-3 py-1.5 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded-xl px-3 py-1.5 transition-colors"
         >
           버전 기록
         </button>

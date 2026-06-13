@@ -25,14 +25,14 @@ export default function SaveStatusIndicator({
   minimal?: boolean
 }) {
   let icon = '·'
-  let color = 'text-paper-300'
+  let color = 'text-slate-600'
   let label = ''
 
   if (status === 'saving') { icon = '⟳'; color = 'text-blue-500'; label = '저장 중...' }
-  else if (status === 'saved') { icon = '✓'; color = 'text-green-500'; label = '자동 저장됨' }
+  else if (status === 'saved') { icon = '✓'; color = 'text-indigo-400'; label = '자동 저장됨' }
   else if (status === 'modified') { icon = '●'; color = 'text-amber-500'; label = '수정됨' }
   else if (status === 'error') { icon = '✕'; color = 'text-red-500'; label = '저장 실패' }
-  else { icon = '·'; color = 'text-paper-300'; label = '' }
+  else { icon = '·'; color = 'text-slate-600'; label = '' }
 
   const timeAgo = status === 'saved' && lastSavedAt ? formatTime(lastSavedAt) : null
 
@@ -41,7 +41,7 @@ export default function SaveStatusIndicator({
       <span className={`text-[10px] flex items-center gap-1 ${color}`}>
         <span className={status === 'saving' ? 'animate-spin' : ''}>{icon}</span>
         {label}
-        {timeAgo && <span className="text-paper-400">· {timeAgo}</span>}
+        {timeAgo && <span className="text-slate-500">· {timeAgo}</span>}
       </span>
     )
   }
@@ -51,9 +51,9 @@ export default function SaveStatusIndicator({
       <span className={color}>
         <span className={status === 'saving' ? 'animate-spin inline-block' : ''}>{icon}</span>
       </span>
-      <span className="text-paper-500">{label}</span>
+      <span className="text-slate-400">{label}</span>
       {timeAgo && (
-        <span className="text-paper-300">· {timeAgo}</span>
+        <span className="text-slate-600">· {timeAgo}</span>
       )}
     </div>
   )

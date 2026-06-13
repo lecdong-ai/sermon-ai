@@ -61,9 +61,9 @@ const PREP_STATUS_LABELS: Record<string, string> = {
 }
 
 const PREP_STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-amber-100 text-amber-700',
-  review: 'bg-blue-100 text-blue-700',
-  ready: 'bg-green-100 text-green-700',
+  draft: 'bg-amber-500/10 text-amber-300',
+  review: 'bg-blue-500/10 text-blue-300',
+  ready: 'bg-indigo-500/10 text-indigo-300',
 }
 
 const JOHN_PREP_DATA: PrepData = {
@@ -252,7 +252,7 @@ export default function PrepTab({ project }: Props) {
         onGoToManuscript={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
       />
 
-      <div className="flex flex-1 min-h-0 border-t border-paper-200">
+      <div className="flex flex-1 min-h-0 border-t border-white/5">
         {/* ─── Left: Section Navigator ─── */}
         <PrepNavigator
           sectionProgress={sectionProgress}
@@ -262,7 +262,7 @@ export default function PrepTab({ project }: Props) {
         />
 
         {/* ─── Center: Main Prep Content ─── */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin bg-white">
+        <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
           <div className="max-w-[720px] mx-auto p-8 space-y-10">
 
             {/* Section: 설교 방향 */}
@@ -358,41 +358,41 @@ function PrepContextHeader({
   onGoToManuscript: () => void
 }) {
   return (
-    <div className="bg-white border-b border-paper-200 px-6 py-4 shrink-0">
+    <div className="bg-[#04060f]/60 border-b border-white/5 px-6 py-4 shrink-0">
       <div className="max-w-[1440px] mx-auto">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-paper-800">설교 준비</h2>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${PREP_STATUS_COLORS[prepStatus] || 'bg-paper-100 text-paper-600'}`}>
+              <h2 className="text-sm font-semibold text-white">설교 준비</h2>
+              <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${PREP_STATUS_COLORS[prepStatus] || 'bg-white/5 text-slate-200'}`}>
                 {PREP_STATUS_LABELS[prepStatus] || prepStatus}
               </span>
             </div>
-            <p className="text-xs text-paper-500">연구에서 정리한 내용을 설교 흐름으로 세워가는 단계입니다</p>
+            <p className="text-xs text-slate-400">연구에서 정리한 내용을 설교 흐름으로 세워가는 단계입니다</p>
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="text-paper-600 font-medium">{project.title}</span>
-              <span className="text-paper-300">·</span>
-              <span className="text-paper-500">{project.passage}</span>
-              <span className="text-paper-300">·</span>
-              <span className="text-paper-500">{project.seriesName}</span>
-              <span className="text-paper-300">·</span>
-              <span className="text-paper-400">마지막 수정: {lastSaved}</span>
+              <span className="text-slate-200 font-medium">{project.title}</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-400">{project.passage}</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-400">{project.seriesName}</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-500">마지막 수정: {lastSaved}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onGoToStudy}
-              className="text-xs border border-paper-200 hover:border-teal-300 text-paper-500 hover:text-teal-600 px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs border border-white/5 hover:border-teal-500/30 text-slate-400 hover:text-teal-300 px-3 py-1.5 rounded-xl transition-colors"
             >
               연구 내용 다시 보기
             </button>
             <button
               onClick={onGoToManuscript}
               disabled={!allRequiredDone}
-              className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
+              className={`text-xs px-3 py-1.5 rounded-xl transition-colors font-medium ${
                 allRequiredDone
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-paper-100 text-paper-400 cursor-not-allowed'
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-white/5 text-slate-500 cursor-not-allowed'
               }`}
             >
               설교 작성으로 이어가기
@@ -400,18 +400,18 @@ function PrepContextHeader({
           </div>
         </div>
         <div className="flex items-center gap-3 mt-2">
-          <div className="flex-1 h-1.5 bg-paper-100 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${allRequiredDone ? 'bg-green-500' : 'bg-amber-400'}`}
+              className={`h-full rounded-full transition-all duration-500 ${allRequiredDone ? 'bg-indigo-600' : 'bg-amber-400'}`}
               style={{ width: `${overallProgress}%` }}
             />
           </div>
-          <span className={`text-[10px] font-medium ${allRequiredDone ? 'text-green-600' : 'text-amber-600'}`}>
+          <span className={`text-[10px] font-medium ${allRequiredDone ? 'text-indigo-400' : 'text-amber-300'}`}>
             준비도 {overallProgress}%
           </span>
         </div>
         {allRequiredDone && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-green-600">
+          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-indigo-400">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -442,12 +442,12 @@ function PrepNavigator({
   ]
 
   return (
-    <aside className="w-52 border-r border-paper-200 bg-paper-50/50 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
-      <div className="p-4 border-b border-paper-200">
+    <aside className="w-52 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+      <div className="p-4 border-b border-white/5">
         <AppSectionHeader title="준비 단계" count={`${overallProgress}%`} />
         <div className="adv-progress-bar h-1 mt-2">
           <div
-            className={`adv-progress-fill h-full rounded-full transition-all duration-500 ${overallProgress === 100 ? 'bg-green-500' : 'bg-amber-400'}`}
+            className={`adv-progress-fill h-full rounded-full transition-all duration-500 ${overallProgress === 100 ? 'bg-indigo-600' : 'bg-amber-400'}`}
             style={{ width: `${overallProgress}%` }}
           />
         </div>
@@ -459,18 +459,18 @@ function PrepNavigator({
             <button
               key={id}
               onClick={() => onNavigate(id)}
-              className={`w-full text-left px-3 py-2.5 rounded-md text-xs transition-colors ${
+              className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-colors ${
                 activeSection === id
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'text-paper-600 hover:bg-paper-100'
+                  ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                  : 'text-slate-200 hover:bg-white/5'
               }`}
             >
               <div className="flex items-center gap-2.5">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${
-                  prog.done ? 'bg-green-500' : prog.filled > 0 ? 'bg-amber-400' : 'bg-paper-300'
+                  prog.done ? 'bg-indigo-600' : prog.filled > 0 ? 'bg-amber-400' : 'bg-slate-600'
                 }`} />
                 <span className="flex-1 truncate">{label}</span>
-                <span className={`text-[9px] ${prog.done ? 'text-green-500' : 'text-paper-400'}`}>
+                <span className={`text-[9px] ${prog.done ? 'text-indigo-400' : 'text-slate-500'}`}>
                   {prog.filled}/{prog.total}
                 </span>
               </div>
@@ -478,8 +478,8 @@ function PrepNavigator({
           )
         })}
       </div>
-      <div className="mt-auto p-4 border-t border-paper-200">
-        <div className="text-[10px] text-paper-400 leading-relaxed">
+      <div className="mt-auto p-4 border-t border-white/5">
+        <div className="text-[10px] text-slate-500 leading-relaxed">
           <p>필수 항목을 모두 채우면</p>
           <p>작성 단계로 넘어갈 수 있습니다</p>
         </div>
@@ -501,59 +501,59 @@ function DirectionSection({
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-green-400 pl-5 ${isActive ? 'bg-green-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}>
+      className={`border-l-4 border-l-indigo-500 pl-5 ${isActive ? 'bg-indigo-500/[0.07] -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
-        <span className="w-6 h-6 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center justify-center">1</span>
-        <h3 className="text-base font-semibold text-paper-800">설교 방향</h3>
-        <span className="text-[10px] text-paper-400 ml-auto">설교 전체를 묶는 중심축입니다</span>
+        <span className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold flex items-center justify-center">1</span>
+        <h3 className="text-base font-semibold text-white">설교 방향</h3>
+        <span className="text-[10px] text-slate-500 ml-auto">설교 전체를 묶는 중심축입니다</span>
       </div>
 
       <div className="space-y-4">
         {/* Sermon Title */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">설교 제목 (가안)</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">설교 제목 (가안)</label>
           <input
             value={data.sermonTitle}
             onChange={e => onUpdate('sermonTitle', e.target.value)}
-            className="w-full text-sm font-serif font-medium text-paper-800 bg-paper-50 rounded-lg border border-paper-200 px-4 py-2.5 outline-none focus:border-green-300 focus:bg-white transition-colors"
+            className="w-full text-sm font-serif font-medium text-white bg-[#04060f]/60 rounded-xl border border-white/5 px-4 py-2.5 outline-none focus:border-indigo-500/30 focus:bg-[#04060f]/60 transition-colors"
             placeholder="설교 제목을 적어보세요 (확정되지 않아도 괜찮습니다)"
           />
         </div>
 
         {/* Core Message */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">중심명제</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">중심명제</label>
           <textarea
             value={data.coreMessage}
             onChange={e => onUpdate('coreMessage', e.target.value)}
-            className="w-full min-h-[72px] text-sm font-serif text-paper-700 bg-amber-50/50 border border-amber-200/60 rounded-lg p-4 outline-none resize-none focus:border-amber-300 focus:bg-white transition-colors leading-relaxed"
+            className="w-full min-h-[72px] text-sm font-serif text-slate-100 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 outline-none resize-none focus:border-amber-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed"
             placeholder="이 설교를 듣는 회중이 기억해야 할 한 문장은 무엇인가요?"
             rows={2}
           />
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[10px] text-amber-600">설교 전체를 관통하는 핵심 명제를 한 문장으로 정리하세요</span>
-            <span className="text-[10px] text-paper-400">{data.coreMessage.length}자</span>
+            <span className="text-[10px] text-amber-300">설교 전체를 관통하는 핵심 명제를 한 문장으로 정리하세요</span>
+            <span className="text-[10px] text-slate-500">{data.coreMessage.length}자</span>
           </div>
         </div>
 
         {/* Sermon Purpose & Expected Response */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">설교 목적</label>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">설교 목적</label>
             <textarea
               value={data.sermonPurpose}
               onChange={e => onUpdate('sermonPurpose', e.target.value)}
-              className="w-full min-h-[80px] text-xs text-paper-600 bg-paper-50 rounded-lg border border-paper-200 p-3 outline-none resize-none focus:border-green-300 focus:bg-white transition-colors leading-relaxed"
+              className="w-full min-h-[80px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-indigo-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed"
               placeholder="이 설교를 통해 회중이 무엇을 깨닫고 결단하게 하려는가?"
               rows={3}
             />
           </div>
           <div>
-            <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">기대 반응</label>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">기대 반응</label>
             <textarea
               value={data.expectedResponse}
               onChange={e => onUpdate('expectedResponse', e.target.value)}
-              className="w-full min-h-[80px] text-xs text-paper-600 bg-paper-50 rounded-lg border border-paper-200 p-3 outline-none resize-none focus:border-green-300 focus:bg-white transition-colors leading-relaxed"
+              className="w-full min-h-[80px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-indigo-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed"
               placeholder="회중이 이 말씀을 듣고 어떻게 반응하기를 기대하는가?"
               rows={3}
             />
@@ -578,29 +578,29 @@ function PassageFlowSection({
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-teal-400 pl-5 ${isActive ? 'bg-teal-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}>
+      className={`border-l-4 border-l-teal-400 pl-5 ${isActive ? 'bg-teal-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
-        <span className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold flex items-center justify-center">2</span>
-        <h3 className="text-base font-semibold text-paper-800">본문 핵심 흐름</h3>
-        <span className="text-[10px] text-paper-400 ml-auto">연구에서 확인한 핵심을 설교를 위해 선별합니다</span>
+        <span className="w-6 h-6 rounded-full bg-teal-500/10 text-teal-300 text-xs font-bold flex items-center justify-center">2</span>
+        <h3 className="text-base font-semibold text-white">본문 핵심 흐름</h3>
+        <span className="text-[10px] text-slate-500 ml-auto">연구에서 확인한 핵심을 설교를 위해 선별합니다</span>
       </div>
 
       {/* Research Connection Banner */}
-      <div className="bg-teal-50/70 border border-teal-200/60 rounded-lg p-3 mb-5">
+      <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 mb-5">
         <div className="flex items-center gap-1.5 mb-2">
-          <svg className="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5 text-teal-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
-          <span className="text-[10px] font-semibold text-teal-700 uppercase tracking-widest">연구에서 가져온 내용</span>
+          <span className="text-[10px] font-semibold text-teal-300 uppercase tracking-widest">연구에서 가져온 내용</span>
         </div>
-        <div className="space-y-1 text-[11px] text-teal-700 leading-relaxed">
+        <div className="space-y-1 text-[11px] text-teal-300 leading-relaxed">
           <p>본문 구조: 요한 1:1-5 — 말씀의 선재성(1-2절) → 창조와 생명(3-4절) → 빛과 어둠의 긴장(5절)</p>
           <p>핵심 원어: λόγος(말씀), ζωή(생명), φῶς(빛), σκοτία(어둠) — 각 단어의 문맥적 의미가 연구에서 확인됨</p>
           <p>반복 주제: 말씀·생명·빛·어둠 — 창세기 1장의 새 창조 맥락</p>
         </div>
         <button
           onClick={onGoToStudy}
-          className="mt-2 text-[10px] text-teal-600 hover:text-teal-700 underline underline-offset-2 transition-colors"
+          className="mt-2 text-[10px] text-teal-300 hover:text-teal-300 underline underline-offset-2 transition-colors"
         >
           연구 내용 다시 보기 →
         </button>
@@ -609,18 +609,18 @@ function PassageFlowSection({
       <div className="space-y-4">
         {/* Passage Structure */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">본문 구조 요약</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">본문 구조 요약</label>
           <textarea
             value={data.passageStructure}
             onChange={e => onUpdate('passageStructure', e.target.value)}
-            className="w-full min-h-[80px] text-sm text-paper-700 bg-paper-50 rounded-lg border border-paper-200 p-4 outline-none resize-none focus:border-teal-300 focus:bg-white transition-colors leading-relaxed font-serif"
+            className="w-full min-h-[80px] text-sm text-slate-100 bg-[#04060f]/60 rounded-xl border border-white/5 p-4 outline-none resize-none focus:border-teal-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed font-serif"
             rows={3}
           />
         </div>
 
         {/* Context Points */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-2 block">문맥 포인트</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">문맥 포인트</label>
           <div className="space-y-1.5">
             {data.contextPoints.map((point, i) => (
               <div key={i} className="flex items-start gap-2">
@@ -632,13 +632,13 @@ function PassageFlowSection({
                     next[i] = e.target.value
                     onUpdate('contextPoints', next)
                   }}
-                  className="flex-1 text-xs text-paper-600 bg-transparent border-none outline-none py-0.5"
+                  className="flex-1 text-xs text-slate-200 bg-transparent border-none outline-none py-0.5"
                 />
               </div>
             ))}
             <button
               onClick={() => onUpdate('contextPoints', [...data.contextPoints, ''])}
-              className="text-[10px] text-teal-600 hover:text-teal-700 mt-1 transition-colors"
+              className="text-[10px] text-teal-300 hover:text-teal-300 mt-1 transition-colors"
             >
               + 문맥 포인트 추가
             </button>
@@ -647,16 +647,16 @@ function PassageFlowSection({
 
         {/* Key Words */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-2 block">핵심 단어 / 원어</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">핵심 단어 / 원어</label>
           <div className="space-y-2">
             {data.keyWords.map((kw, i) => (
-              <div key={i} className="bg-paper-50 rounded-lg border border-paper-200 p-3">
+              <div key={i} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm text-paper-700 font-greek">{kw.word}</span>
-                  <span className="text-[10px] text-paper-400">·</span>
-                  <span className="text-[11px] text-paper-500">{kw.meaning}</span>
+                  <span className="text-sm text-slate-100 font-greek">{kw.word}</span>
+                  <span className="text-[10px] text-slate-500">·</span>
+                  <span className="text-[11px] text-slate-400">{kw.meaning}</span>
                 </div>
-                <p className="text-[11px] text-paper-500 leading-relaxed">{kw.note}</p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">{kw.note}</p>
               </div>
             ))}
           </div>
@@ -664,10 +664,10 @@ function PassageFlowSection({
 
         {/* Research Insights */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-2 block">연구 통찰 요약</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">연구 통찰 요약</label>
           <div className="space-y-1.5">
             {data.researchInsights.map((insight, i) => (
-              <div key={i} className="flex items-start gap-2 bg-blue-50/40 border border-blue-100/40 rounded-lg p-3">
+              <div key={i} className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
                 <svg className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
@@ -678,7 +678,7 @@ function PassageFlowSection({
                     next[i] = e.target.value
                     onUpdate('researchInsights', next)
                   }}
-                  className="flex-1 text-xs text-paper-600 bg-transparent border-none outline-none resize-none leading-relaxed"
+                  className="flex-1 text-xs text-slate-200 bg-transparent border-none outline-none resize-none leading-relaxed"
                   rows={2}
                 />
               </div>
@@ -686,7 +686,7 @@ function PassageFlowSection({
           </div>
           <button
             onClick={() => onUpdate('researchInsights', [...data.researchInsights, ''])}
-            className="text-[10px] text-teal-600 hover:text-teal-700 mt-1 transition-colors"
+            className="text-[10px] text-teal-300 hover:text-teal-300 mt-1 transition-colors"
           >
             + 통찰 추가
           </button>
@@ -696,7 +696,7 @@ function PassageFlowSection({
         <div className="text-right">
           <button
             onClick={onGoToStudy}
-            className="text-[10px] text-teal-600 hover:text-teal-700 border border-teal-200 hover:border-teal-300 px-3 py-1.5 rounded transition-colors"
+            className="text-[10px] text-teal-300 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/30 px-3 py-1.5 rounded transition-colors"
           >
             연구 전체 보기
           </button>
@@ -719,68 +719,68 @@ function OutlineSection({
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-amber-400 pl-5 ${isActive ? 'bg-amber-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}>
+      className={`border-l-4 border-l-amber-400 pl-5 ${isActive ? 'bg-amber-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center">3</span>
-          <h3 className="text-base font-semibold text-paper-800">대지 구조</h3>
+          <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold flex items-center justify-center">3</span>
+          <h3 className="text-base font-semibold text-white">대지 구조</h3>
         </div>
-        <span className="text-xs text-paper-400">{outlines.length}개 대지</span>
+        <span className="text-xs text-slate-500">{outlines.length}개 대지</span>
       </div>
 
       <div className="space-y-5">
         {outlines.map((outline, i) => (
-          <div key={outline.id} className="bg-paper-50 rounded-lg border border-paper-200 overflow-hidden">
+          <div key={outline.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center gap-2.5 px-4 py-3 bg-white border-b border-paper-200">
-              <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2.5 px-4 py-3 bg-[#04060f]/60 border-b border-white/5">
+              <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold flex items-center justify-center shrink-0">
                 {i + 1}
               </span>
               <input
                 value={outline.title}
                 onChange={e => onUpdate(outline.id, 'title', e.target.value)}
-                className="flex-1 text-sm font-medium text-paper-800 bg-transparent border-none outline-none"
+                className="flex-1 text-sm font-medium text-white bg-transparent border-none outline-none"
                 placeholder="대지 제목"
               />
-              <span className="text-[10px] text-paper-400 bg-paper-100 px-2 py-0.5 rounded">{outline.relatedVerse}</span>
+              <span className="text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">{outline.relatedVerse}</span>
             </div>
 
             {/* Body */}
             <div className="p-4 space-y-3">
               <div>
-                <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1 block">설명</label>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 block">설명</label>
                 <textarea
                   value={outline.description}
                   onChange={e => onUpdate(outline.id, 'description', e.target.value)}
-                  className="w-full text-xs text-paper-600 bg-white rounded-lg border border-paper-200 p-3 outline-none resize-none focus:border-amber-300 transition-colors leading-relaxed"
+                  className="w-full text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-amber-500/30 transition-colors leading-relaxed"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1 block">관련 절</label>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 block">관련 절</label>
                 <input
                   value={outline.relatedVerse}
                   onChange={e => onUpdate(outline.id, 'relatedVerse', e.target.value)}
-                  className="w-full text-xs text-paper-600 bg-white rounded-lg border border-paper-200 px-3 py-1.5 outline-none focus:border-amber-300 transition-colors"
+                  className="w-full text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 px-3 py-1.5 outline-none focus:border-amber-500/30 transition-colors"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1 block">적용 메모</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 block">적용 메모</label>
                   <textarea
                     value={outline.applicationNote}
                     onChange={e => onUpdate(outline.id, 'applicationNote', e.target.value)}
-                    className="w-full text-[10px] text-paper-500 bg-white rounded-lg border border-paper-200 p-2 outline-none resize-none focus:border-green-300 transition-colors leading-relaxed"
+                    className="w-full text-[10px] text-slate-400 bg-[#04060f]/60 rounded-xl border border-white/5 p-2 outline-none resize-none focus:border-indigo-500/30 transition-colors leading-relaxed"
                     rows={2}
                     placeholder="이 대지를 통해 회중이 받을 적용"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1 block">전환 메모</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 block">전환 메모</label>
                   <textarea
                     value={outline.transitionNote}
                     onChange={e => onUpdate(outline.id, 'transitionNote', e.target.value)}
-                    className="w-full text-[10px] text-paper-500 bg-white rounded-lg border border-paper-200 p-2 outline-none resize-none focus:border-blue-300 transition-colors leading-relaxed"
+                    className="w-full text-[10px] text-slate-400 bg-[#04060f]/60 rounded-xl border border-white/5 p-2 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
                     rows={2}
                     placeholder="다음 대지로의 연결"
                   />
@@ -807,41 +807,41 @@ function ApplicationSection({
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-blue-400 pl-5 ${isActive ? 'bg-blue-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}>
+      className={`border-l-4 border-l-blue-400 pl-5 ${isActive ? 'bg-blue-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
-        <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">4</span>
-        <h3 className="text-base font-semibold text-paper-800">적용과 회중 연결</h3>
-        <span className="text-[10px] text-paper-400 ml-auto">말씀이 오늘의 회중에게 어떻게 들려야 하는가</span>
+        <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-300 text-xs font-bold flex items-center justify-center">4</span>
+        <h3 className="text-base font-semibold text-white">적용과 회중 연결</h3>
+        <span className="text-[10px] text-slate-500 ml-auto">말씀이 오늘의 회중에게 어떻게 들려야 하는가</span>
       </div>
 
       <div className="space-y-3">
         {points.map((app, i) => (
-          <div key={app.id} className="bg-paper-50 rounded-lg border border-paper-200 p-4">
+          <div key={app.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-medium flex items-center justify-center shrink-0">
+              <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-300 text-[10px] font-medium flex items-center justify-center shrink-0">
                 {i + 1}
               </span>
               <input
                 value={app.audienceTag}
                 onChange={e => onUpdate(app.id, 'audienceTag', e.target.value)}
-                className="text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5 outline-none focus:border-blue-300"
+                className="text-[10px] font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5 outline-none focus:border-blue-500/30"
               />
             </div>
             <textarea
               value={app.point}
               onChange={e => onUpdate(app.id, 'point', e.target.value)}
-              className="w-full text-sm text-paper-700 bg-transparent border-none outline-none resize-none leading-relaxed font-serif"
+              className="w-full text-sm text-slate-100 bg-transparent border-none outline-none resize-none leading-relaxed font-serif"
               rows={2}
             />
-            <div className="mt-2 pt-2 border-t border-paper-200">
+            <div className="mt-2 pt-2 border-t border-white/5">
               <div className="flex items-start gap-1.5">
-                <svg className="w-3 h-3 text-paper-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
                 <textarea
                   value={app.pastoralNote}
                   onChange={e => onUpdate(app.id, 'pastoralNote', e.target.value)}
-                  className="flex-1 text-[10px] text-paper-500 bg-transparent border-none outline-none resize-none leading-relaxed"
+                  className="flex-1 text-[10px] text-slate-400 bg-transparent border-none outline-none resize-none leading-relaxed"
                   rows={2}
                   placeholder="목회적 분별 메모..."
                 />
@@ -867,42 +867,42 @@ function DeliverySection({
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-purple-400 pl-5 ${isActive ? 'bg-purple-50/30 -mx-5 px-5 py-4 rounded-lg' : ''}`}>
+      className={`border-l-4 border-l-purple-400 pl-5 ${isActive ? 'bg-purple-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
-        <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex items-center justify-center">5</span>
-        <h3 className="text-base font-semibold text-paper-800">전달 흐름</h3>
-        <span className="text-[10px] text-paper-400 ml-auto">원고가 아닌 전달 설계입니다</span>
+        <span className="w-6 h-6 rounded-full bg-purple-500/10 text-purple-300 text-xs font-bold flex items-center justify-center">5</span>
+        <h3 className="text-base font-semibold text-white">전달 흐름</h3>
+        <span className="text-[10px] text-slate-500 ml-auto">원고가 아닌 전달 설계입니다</span>
       </div>
 
       <div className="space-y-4">
         {/* Introduction */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">도입 방향</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">도입 방향</label>
           <textarea
             value={data.deliveryIntro}
             onChange={e => onUpdate('deliveryIntro', e.target.value)}
-            className="w-full min-h-[72px] text-sm text-paper-700 bg-paper-50 rounded-lg border border-paper-200 p-4 outline-none resize-none focus:border-purple-300 focus:bg-white transition-colors leading-relaxed font-serif italic"
+            className="w-full min-h-[72px] text-sm text-slate-100 bg-[#04060f]/60 rounded-xl border border-white/5 p-4 outline-none resize-none focus:border-purple-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed font-serif italic"
             rows={3}
           />
         </div>
 
         {/* Flow */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">전개 흐름</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">전개 흐름</label>
           <textarea
             value={data.deliveryFlow}
             onChange={e => onUpdate('deliveryFlow', e.target.value)}
-            className="w-full min-h-[72px] text-sm text-paper-700 bg-paper-50 rounded-lg border border-paper-200 p-4 outline-none resize-none focus:border-purple-300 focus:bg-white transition-colors leading-relaxed"
+            className="w-full min-h-[72px] text-sm text-slate-100 bg-[#04060f]/60 rounded-xl border border-white/5 p-4 outline-none resize-none focus:border-purple-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed"
             rows={3}
           />
         </div>
 
         {/* Transitions */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-2 block">전환 지점</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">전환 지점</label>
           <div className="space-y-2">
             {data.deliveryTransitions.map((t, i) => (
-              <div key={i} className="flex items-start gap-2 bg-purple-50/40 border border-purple-100/40 rounded-lg p-3">
+              <div key={i} className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
                 <span className="text-[10px] text-purple-500 font-medium w-16 shrink-0 mt-0.5">
                   {i === 0 ? '도입→1' : i === data.deliveryTransitions.length - 1 ? `${i}→결론` : `${i}→${i + 1}`}
                 </span>
@@ -913,7 +913,7 @@ function DeliverySection({
                     next[i] = e.target.value
                     onUpdate('deliveryTransitions', next)
                   }}
-                  className="flex-1 text-xs text-paper-600 bg-transparent border-none outline-none resize-none leading-relaxed"
+                  className="flex-1 text-xs text-slate-200 bg-transparent border-none outline-none resize-none leading-relaxed"
                   rows={2}
                 />
               </div>
@@ -923,11 +923,11 @@ function DeliverySection({
 
         {/* Conclusion */}
         <div>
-          <label className="text-[10px] font-semibold text-paper-500 uppercase tracking-widest mb-1.5 block">마무리 방향</label>
+          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">마무리 방향</label>
           <textarea
             value={data.deliveryConclusion}
             onChange={e => onUpdate('deliveryConclusion', e.target.value)}
-            className="w-full min-h-[72px] text-sm text-paper-700 bg-paper-50 rounded-lg border border-paper-200 p-4 outline-none resize-none focus:border-purple-300 focus:bg-white transition-colors leading-relaxed font-serif"
+            className="w-full min-h-[72px] text-sm text-slate-100 bg-[#04060f]/60 rounded-xl border border-white/5 p-4 outline-none resize-none focus:border-purple-300 focus:bg-[#04060f]/60 transition-colors leading-relaxed font-serif"
             rows={3}
           />
         </div>
@@ -940,29 +940,29 @@ function DeliverySection({
 
 function RecentPrepActivity() {
   return (
-    <div className="bg-white rounded-xl border border-paper-200 overflow-hidden">
-      <div className="px-5 py-3 border-b border-paper-200 bg-paper-50/50">
+    <div className="bg-[#04060f]/60 rounded-xl border border-white/5 overflow-hidden">
+      <div className="px-5 py-3 border-b border-white/5 bg-[#04060f]/60">
         <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-paper-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">최근 작업</span>
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">최근 작업</span>
         </div>
       </div>
-      <div className="divide-y divide-paper-100">
+      <div className="divide-y divide-white/5">
         {RECENT_ACTIVITY.map((entry, i) => (
           <div key={i} className="flex items-center gap-3 px-5 py-2.5">
             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
               entry.section === 'prep' ? 'bg-amber-400' :
-              entry.section === 'manuscript' ? 'bg-green-400' :
+              entry.section === 'manuscript' ? 'bg-indigo-400' :
               'bg-teal-400'
             }`} />
-            <span className="text-[10px] text-paper-400 w-14 shrink-0 font-mono">{entry.time}</span>
-            <span className="text-xs text-paper-600 flex-1">{entry.description}</span>
+            <span className="text-[10px] text-slate-500 w-14 shrink-0 font-mono">{entry.time}</span>
+            <span className="text-xs text-slate-200 flex-1">{entry.description}</span>
             <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
-              entry.section === 'prep' ? 'bg-amber-100 text-amber-700' :
-              entry.section === 'manuscript' ? 'bg-green-100 text-green-700' :
-              'bg-teal-100 text-teal-700'
+              entry.section === 'prep' ? 'bg-amber-500/10 text-amber-300' :
+              entry.section === 'manuscript' ? 'bg-indigo-500/10 text-indigo-300' :
+              'bg-teal-500/10 text-teal-300'
             }`}>
               {entry.section === 'prep' ? '준비' : entry.section === 'manuscript' ? '작성' : '연구'}
             </span>
@@ -990,36 +990,36 @@ function PrepStatusBar({
   onGoToManuscript: () => void
 }) {
   return (
-    <div className="bg-white border-t border-paper-200 px-5 py-2.5 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-4 text-[11px] text-paper-500">
+    <div className="bg-[#04060f]/60 border-t border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-4 text-[11px] text-slate-400">
         <span className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${allRequiredDone ? 'bg-green-400' : 'bg-amber-400'}`} />
-          준비도 <span className={`font-semibold ${allRequiredDone ? 'text-green-600' : 'text-amber-600'}`}>{overallProgress}%</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${allRequiredDone ? 'bg-indigo-400' : 'bg-amber-400'}`} />
+          준비도 <span className={`font-semibold ${allRequiredDone ? 'text-indigo-400' : 'text-amber-300'}`}>{overallProgress}%</span>
         </span>
         <span>대지 {outlineCount}개</span>
         <span>적용 {appCount}건</span>
         <span>대지 본문 {totalOutlineWords.toLocaleString()}자</span>
-        <span className="text-[10px] text-paper-400 bg-paper-100 px-2 py-0.5 rounded">
+        <span className="text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">
           준비 이력 {PREP_VERSIONS.length}개
         </span>
         {allRequiredDone && (
-          <span className="text-green-600 font-medium">작성으로 넘길 준비가 되었습니다</span>
+          <span className="text-indigo-400 font-bold">작성으로 넘길 준비가 되었습니다</span>
         )}
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={onGoToStudy}
-          className="text-[11px] text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-300 rounded-lg px-3 py-1.5 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/5 rounded-xl px-3 py-1.5 transition-colors"
         >
           ← 연구로 돌아가기
         </button>
         <button
           onClick={onGoToManuscript}
           disabled={!allRequiredDone}
-          className={`text-[11px] rounded-lg px-3 py-1.5 transition-colors font-medium ${
+          className={`text-[11px] rounded-xl px-3 py-1.5 transition-colors font-medium ${
             allRequiredDone
-              ? 'bg-green-500 hover:bg-green-600 text-white'
-              : 'bg-paper-100 text-paper-400 cursor-not-allowed'
+              ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              : 'bg-white/5 text-slate-500 cursor-not-allowed'
           }`}
         >
           이 구조로 원고 쓰기 →

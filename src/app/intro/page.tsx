@@ -19,7 +19,7 @@ export default function IntroPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-paper-800 -mt-16">
+    <div className="min-h-screen bg-[#050814] text-slate-200 -mt-16">
       {/* ─── Hero ─── */}
       <HeroSection />
 
@@ -72,22 +72,22 @@ function HeroSection() {
           backgroundSize: '40px 40px'
         }} />
       </div>
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-green-500/5 blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-teal-500/5 blur-3xl" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-3xl" />
 
       <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-20 sm:pt-28 sm:pb-28">
         <div className="max-w-3xl">
           {/* Identity tag */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="text-[11px] text-white/60 font-medium tracking-wide">목회자를 위한 고급 설교 작업실</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+            <span className="text-[11px] text-white/60 font-bold tracking-wide">목회자를 위한 고급 설교 작업실</span>
           </div>
 
           {/* Headline */}
           <h1 className="text-[clamp(1.75rem,5vw,3rem)] font-serif font-bold text-white leading-[1.2] mb-6">
             설교를 쓰는 도구를 넘어,
             <br />
-            <span className="text-green-400">설교를 준비하는 작업실</span>
+            <span className="text-indigo-400">설교를 준비하는 작업실</span>
           </h1>
 
           {/* Sub text */}
@@ -100,7 +100,7 @@ function HeroSection() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => router.push('/advanced')}
-              className="text-sm bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-md transition-colors font-medium"
+              className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl transition-colors font-bold shadow-lg shadow-indigo-600/15"
             >
               데모 보기
             </button>
@@ -142,8 +142,8 @@ function HeroSection() {
                 {/* Hero card mockup */}
                 <div className="col-span-2 bg-white/5 rounded-lg border border-white/5 p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[9px] text-green-400/70 uppercase tracking-wider">진행 중</span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-[9px] text-indigo-400/70 uppercase tracking-wider font-bold">진행 중</span>
                     <span className="text-[9px] text-white/20 ml-auto">v3 · 3,240자</span>
                   </div>
                   <div className="text-sm font-serif font-bold text-white/80 mb-1">은혜 위에 은혜를 더하여</div>
@@ -154,7 +154,7 @@ function HeroSection() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-[9px] bg-green-500/20 text-green-400/70 px-2 py-1 rounded">프로젝트 계속하기</span>
+                    <span className="text-[9px] bg-indigo-500/20 text-indigo-400/70 px-2 py-1 rounded font-bold">프로젝트 계속하기</span>
                     <span className="text-[9px] bg-white/5 text-white/30 px-2 py-1 rounded">성경 연구</span>
                     <span className="text-[9px] bg-white/5 text-white/30 px-2 py-1 rounded">원고 작성</span>
                   </div>
@@ -203,7 +203,7 @@ function HeroSection() {
             </div>
           </div>
           {/* Glow behind mockup */}
-          <div className="absolute -inset-4 bg-green-500/5 blur-2xl -z-10 rounded-2xl" />
+          <div className="absolute -inset-4 bg-indigo-500/5 blur-2xl -z-10 rounded-2xl" />
         </div>
       </div>
     </section>
@@ -219,11 +219,11 @@ function ProblemSection() {
     <section className="py-20 sm:py-28">
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-14">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">왜 이 도구가 필요한가</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">왜 이 도구가 필요한가</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             설교 준비는 종종 흩어집니다
           </h2>
-          <p className="text-sm text-paper-500 leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm text-slate-400 leading-relaxed max-w-xl mx-auto font-medium">
             목회자는 매주 설교를 준비하지만, 그 과정이 하나의 공간에서 이어지지 않을 때가 많습니다.
           </p>
         </div>
@@ -259,10 +259,10 @@ function ProblemCard({ number, title, description }: {
   number: string; title: string; description: string
 }) {
   return (
-    <div className="bg-white rounded-xl border border-paper-200 p-6">
-      <span className="text-[10px] text-paper-300 font-mono font-bold">{number}</span>
-      <h3 className="text-sm font-semibold text-paper-800 mt-2 mb-2">{title}</h3>
-      <p className="text-xs text-paper-500 leading-relaxed">{description}</p>
+    <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-6">
+      <span className="text-[10px] text-slate-600 font-mono font-bold">{number}</span>
+      <h3 className="text-sm font-bold text-white mt-2 mb-2">{title}</h3>
+      <p className="text-xs text-slate-400 leading-relaxed font-medium">{description}</p>
     </div>
   )
 }
@@ -324,30 +324,30 @@ function WorkflowSection() {
   ]
 
   return (
-    <section id="workflow" className="py-20 sm:py-28 bg-white border-y border-paper-200">
+    <section id="workflow" className="py-20 sm:py-28 bg-[#04060f]/30 border-y border-white/5">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-14">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">작업 흐름</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">작업 흐름</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             설교가 준비되고 축적되는 과정
           </h2>
-          <p className="text-sm text-paper-500 leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm text-slate-400 leading-relaxed max-w-xl mx-auto font-medium">
             연구에서 작성, 아카이브, 연결까지. 설교의 전 과정이 자연스럽게 이어집니다.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {steps.map((s, i) => (
-            <div key={s.step} className="relative bg-paper-50 rounded-xl border border-paper-200 p-6 hover:border-paper-300 transition-colors">
+            <div key={s.step} className="relative bg-[#04060f]/60 rounded-2xl border border-white/5 p-6 hover:border-indigo-500/30 transition-colors">
               <div className="flex items-center gap-2 mb-3">
                 <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-                <span className="text-[10px] text-paper-400 font-mono">{s.step}</span>
-                <span className="text-[10px] text-paper-400 ml-auto">{s.label}</span>
+                <span className="text-[10px] text-slate-500 font-mono font-bold">{s.step}</span>
+                <span className="text-[10px] text-slate-500 font-bold ml-auto">{s.label}</span>
               </div>
-              <h3 className="text-sm font-semibold text-paper-800 mb-2">{s.title}</h3>
-              <p className="text-xs text-paper-500 leading-relaxed">{s.description}</p>
+              <h3 className="text-sm font-bold text-white mb-2">{s.title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">{s.description}</p>
               {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 text-paper-200">
+                <div className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 text-slate-700">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                   </svg>
@@ -454,26 +454,26 @@ function FeatureSection() {
     <section className="py-20 sm:py-28">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-14">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">주요 기능</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">주요 기능</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             설교 사역의 전체를 다루는 도구
           </h2>
-          <p className="text-sm text-paper-500 leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm text-slate-400 leading-relaxed max-w-xl mx-auto font-medium">
             각 기능은 독립적으로 작동하지 않습니다. 서로 연결되어 설교의 흐름을 만듭니다.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {features.map((f, i) => (
-            <div key={f.title} className="bg-white rounded-xl border border-paper-200 p-6 hover:border-paper-300 transition-colors group">
+            <div key={f.title} className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-6 hover:border-indigo-500/30 transition-colors group">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-paper-100 flex items-center justify-center text-paper-500 shrink-0 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                   {f.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-paper-800 mb-1">{f.title}</h3>
-                  <p className="text-xs text-paper-500 leading-relaxed mb-2">{f.description}</p>
-                  <p className="text-[10px] text-green-600/70 font-medium">{f.meaning}</p>
+                  <h3 className="text-sm font-bold text-white mb-1">{f.title}</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-2 font-medium">{f.description}</p>
+                  <p className="text-[10px] text-indigo-400/70 font-bold">{f.meaning}</p>
                 </div>
               </div>
             </div>
@@ -518,7 +518,7 @@ function DifferentiatorSection() {
           {items.map((item, i) => (
             <div key={i} className="flex gap-6 items-start">
               <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                <span className="text-xs text-green-400 font-bold">{i + 1}</span>
+                <span className="text-xs text-indigo-400 font-bold">{i + 1}</span>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-white mb-1.5">{item.title}</h3>
@@ -563,11 +563,11 @@ function PreviewSection() {
   ]
 
   return (
-    <section className="py-20 sm:py-28 bg-white border-y border-paper-200">
+    <section className="py-20 sm:py-28 bg-[#04060f]/30 border-y border-white/5">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-12">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">화면 미리보기</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">화면 미리보기</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             차분하고 구조화된 작업 환경
           </h2>
         </div>
@@ -578,10 +578,10 @@ function PreviewSection() {
             <button
               key={p.label}
               onClick={() => setActivePreview(i)}
-              className={`text-xs px-4 py-2 rounded-md transition-colors ${
+              className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${
                 activePreview === i
-                  ? 'bg-navy-900 text-white'
-                  : 'text-paper-500 hover:text-paper-700 hover:bg-paper-100'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
             >
               {p.label}
@@ -605,7 +605,7 @@ function PreviewSection() {
             {previews[activePreview].content}
           </div>
         </div>
-        <p className="text-center text-xs text-paper-400 mt-4">
+        <p className="text-center text-xs text-slate-500 font-medium mt-4">
           {previews[activePreview].description}
         </p>
       </div>
@@ -629,7 +629,7 @@ function DashboardPreview() {
           <p className="text-[8px] text-white/30 italic">&ldquo;말씀이 육신이 되어 우리 가운데 거하시니...&rdquo;</p>
         </div>
         <div className="flex gap-1.5">
-          <span className="text-[8px] bg-green-500/20 text-green-400/60 px-1.5 py-0.5 rounded">계속하기</span>
+          <span className="text-[8px] bg-indigo-500/20 text-indigo-400/60 px-1.5 py-0.5 rounded font-bold">계속하기</span>
           <span className="text-[8px] bg-white/5 text-white/25 px-1.5 py-0.5 rounded">연구</span>
           <span className="text-[8px] bg-white/5 text-white/25 px-1.5 py-0.5 rounded">작성</span>
         </div>
@@ -675,7 +675,7 @@ function BibleStudyPreview() {
             <div className="text-[9px] text-white/40">λόγος (로고스) — 말씀, 이성, 의미</div>
           </div>
           <div className="bg-white/5 rounded-lg border border-white/5 p-2.5">
-            <div className="text-[8px] text-gold-400/60 uppercase mb-1">주석 참조</div>
+            <div className="text-[8px] text-amber-400/60 uppercase mb-1">주석 참조</div>
             <div className="text-[9px] text-white/40">칼뱅, 바르트, 몰트만...</div>
           </div>
         </div>
@@ -775,7 +775,7 @@ function GraphPreview() {
       <div className="absolute bottom-2 left-3 flex gap-3 text-[8px] text-white/25">
         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400/50" />설교</span>
         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400/50" />본문</span>
-        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gold-400/50" />주제</span>
+        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400/50" />주제</span>
         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-400/40" />시리즈</span>
       </div>
     </div>
@@ -791,13 +791,13 @@ function ValueSection() {
     <section className="py-20 sm:py-28">
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-14">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">왜 의미 있는가</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">왜 의미 있는가</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             시간 절약이 아니라, 사고의 축적
           </h2>
         </div>
 
-        <div className="bg-white rounded-xl border border-paper-200 p-8 sm:p-10">
+        <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-8 sm:p-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <ValueItem
               icon={
@@ -838,11 +838,11 @@ function ValueItem({ icon, title, description }: {
 }) {
   return (
     <div className="text-center">
-      <div className="w-12 h-12 rounded-xl bg-paper-100 flex items-center justify-center text-paper-500 mx-auto mb-3">
+      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto mb-3">
         {icon}
       </div>
-      <h3 className="text-sm font-semibold text-paper-800 mb-2">{title}</h3>
-      <p className="text-xs text-paper-500 leading-relaxed">{description}</p>
+      <h3 className="text-sm font-bold text-white mb-2">{title}</h3>
+      <p className="text-xs text-slate-400 leading-relaxed font-medium">{description}</p>
     </div>
   )
 }
@@ -853,11 +853,11 @@ function ValueItem({ icon, title, description }: {
 
 function AudienceSection() {
   return (
-    <section className="py-20 sm:py-28 bg-white border-y border-paper-200">
+    <section className="py-20 sm:py-28 bg-[#04060f]/30 border-y border-white/5">
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-12">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">누구를 위한 도구인가</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3 mb-4">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">누구를 위한 도구인가</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3 mb-4">
             설교를 체계적으로 준비하는 사역자를 위해
           </h2>
         </div>
@@ -889,9 +889,9 @@ function AudienceCard({ title, description }: {
   title: string; description: string
 }) {
   return (
-    <div className="bg-paper-50 rounded-xl border border-paper-200 p-5">
-      <h3 className="text-sm font-semibold text-paper-800 mb-1">{title}</h3>
-      <p className="text-xs text-paper-500 leading-relaxed">{description}</p>
+    <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-5">
+      <h3 className="text-sm font-bold text-white mb-1">{title}</h3>
+      <p className="text-xs text-slate-400 leading-relaxed font-medium">{description}</p>
     </div>
   )
 }
@@ -930,22 +930,22 @@ function FAQSection() {
     <section className="py-20 sm:py-28">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-12">
-          <span className="text-[11px] text-paper-400 uppercase tracking-widest font-semibold">자주 묻는 질문</span>
-          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-serif font-bold text-paper-900 mt-3">
+          <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">자주 묻는 질문</span>
+          <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-bold text-white mt-3">
             궁금한 점이 있으신가요
           </h2>
         </div>
 
         <div className="space-y-2">
           {faqs.map((faq, i) => (
-            <div key={i} className="bg-white rounded-xl border border-paper-200 overflow-hidden">
+            <div key={i} className="bg-[#04060f]/60 rounded-2xl border border-white/5 overflow-hidden">
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-paper-50 transition-colors"
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors"
               >
-                <span className="text-sm font-medium text-paper-800 pr-4">{faq.q}</span>
+                <span className="text-sm font-bold text-white pr-4">{faq.q}</span>
                 <svg
-                  className={`w-4 h-4 text-paper-400 shrink-0 transition-transform ${openIndex === i ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${openIndex === i ? 'rotate-180' : ''}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -953,7 +953,7 @@ function FAQSection() {
               </button>
               {openIndex === i && (
                 <div className="px-5 pb-5">
-                  <p className="text-xs text-paper-500 leading-relaxed">{faq.a}</p>
+                  <p className="text-xs text-slate-400 leading-relaxed font-medium">{faq.a}</p>
                 </div>
               )}
             </div>
@@ -984,7 +984,7 @@ function FinalCTASection() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button
             onClick={() => router.push('/advanced')}
-            className="text-sm bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-md transition-colors font-medium"
+            className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl transition-colors font-bold shadow-lg shadow-indigo-600/15"
           >
             데모 보기
           </button>

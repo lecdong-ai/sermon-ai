@@ -4,6 +4,10 @@ import { useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ARCHIVE_SERMONS, getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
+import { 
+  Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw, 
+  ArrowRight, BookOpen, Star, Sparkles, FolderOpen, Heart, MessageSquare
+} from 'lucide-react'
 
 type ViewMode = 'card' | 'list'
 type SortMode = 'recent' | 'relevance' | 'referenced' | 'reused'
@@ -87,11 +91,11 @@ export default function ArchivePage() {
   }), [allSermons])
 
   const filterSections: { key: string; label: string; options: string[] }[] = [
-    { key: 'books', label: '성경 책', options: filterOptions.books },
-    { key: 'themes', label: '주제', options: filterOptions.themes },
+    { key: 'books', label: '성경 권별', options: filterOptions.books },
+    { key: 'themes', label: '주제/테마', options: filterOptions.themes },
     { key: 'series', label: '시리즈', options: filterOptions.series },
-    { key: 'seasons', label: '절기', options: filterOptions.seasons },
-    { key: 'audiences', label: '회중', options: filterOptions.audiences },
+    { key: 'seasons', label: '교회 절기', options: filterOptions.seasons },
+    { key: 'audiences', label: '청중 유형', options: filterOptions.audiences },
   ]
 
   const quickFilters = [
@@ -116,7 +120,7 @@ export default function ArchivePage() {
   }, [router])
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden bg-[#070a16]/20">
       {/* ─── Left Filter Panel ─── */}
       <ArchiveFilterPanel
         filterSections={filterSections}
@@ -130,7 +134,7 @@ export default function ArchivePage() {
       />
 
       {/* ─── Main Content ─── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Search Bar */}
         <ArchiveSearchBar
           searchQuery={searchQuery}
@@ -145,8 +149,8 @@ export default function ArchivePage() {
         />
 
         {/* Sermon List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="p-5">
+        <div className="flex-1 overflow-y-auto scrollbar-thin relative z-10">
+          <div className="p-6 space-y-6">
             {sorted.length === 0 ? (
               <ArchiveEmptyState
                 searchQuery={searchQuery}
@@ -155,7 +159,7 @@ export default function ArchivePage() {
                 onQuickFilter={q => setSearchQuery(q)}
               />
             ) : viewMode === 'card' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {sorted.map(sermon => (
                   <SermonArchiveCard
                     key={sermon.id}
@@ -168,7 +172,7 @@ export default function ArchivePage() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2.5">
                 {sorted.map(sermon => (
                   <SermonArchiveListItem
                     key={sermon.id}
@@ -230,61 +234,63 @@ function ArchiveFilterPanel({
 }) {
   const router = useRouter()
   return (
-    <aside className="w-56 shrink-0 border-r border-paper-200 bg-paper-50 flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-paper-200">
-        <div className="flex items-center gap-1 text-[10px] text-paper-400 mb-2">
-          <button onClick={() => router.push('/advanced')} className="hover:text-green-600 transition-colors">말씀 사역</button>
-          <span className="text-paper-300">/</span>
-          <span className="text-paper-600 font-medium">설교 아카이브</span>
+    <aside className="w-56 shrink-0 border-r border-white/5 bg-[#04060f]/60 backdrop-blur-md flex flex-col overflow-hidden relative z-10">
+      <div className="p-4 border-b border-white/5">
+        <div className="flex items-center gap-1 text-[10px] text-slate-500 mb-2.5 font-bold">
+          <button onClick={() => router.push('/advanced')} className="hover:text-indigo-400 transition-colors">말씀 사역</button>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-300 font-extrabold">설교 아카이브</span>
         </div>
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-paper-500">총 설교</span>
-          <span className="font-bold text-paper-800">{stats.total}편</span>
+        <div className="flex items-center justify-between text-[11px] mb-1.5 text-slate-400 font-bold">
+          <span>총 아카이브</span>
+          <span className="font-extrabold text-white">{stats.total}편</span>
         </div>
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-paper-500">누적 분량</span>
-          <span className="font-medium text-paper-700">{(stats.totalWords / 10000).toFixed(1)}만 자</span>
+        <div className="flex items-center justify-between text-[11px] mb-1.5 text-slate-400 font-bold">
+          <span>누적 어휘량</span>
+          <span className="font-extrabold text-slate-300">{(stats.totalWords / 10000).toFixed(1)}만 자</span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-paper-500">올해 설교</span>
-          <span className="font-medium text-green-600">{stats.thisYear}편</span>
+        <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold">
+          <span>올해의 설교</span>
+          <span className="font-extrabold text-indigo-400">{stats.thisYear}편</span>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         {filterSections.map(section => (
-          <div key={section.key} className="border-b border-paper-150">
+          <div key={section.key} className="border-b border-white/5">
             <button
               onClick={() => onSetActiveFilter(activeFilter === section.key ? null : section.key)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-paper-100 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
             >
-              <span className="text-[11px] font-medium text-paper-600">{section.label}</span>
-              <div className="flex items-center gap-1">
+              <span className="text-[11px] font-bold text-slate-400">{section.label}</span>
+              <div className="flex items-center gap-1.5">
                 {filters[section.key]?.length > 0 && (
-                  <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[9px] bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">
                     {filters[section.key].length}
                   </span>
                 )}
-                <svg className={`w-3.5 h-3.5 text-paper-400 transition-transform ${activeFilter === section.key ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-300 ${activeFilter === section.key ? 'rotate-180' : ''}`} />
               </div>
             </button>
             {activeFilter === section.key && (
-              <div className="px-3 pb-2 space-y-0.5">
-                {section.options.map(option => (
-                  <button
-                    key={option}
-                    onClick={() => onToggleFilter(section.key, option)}
-                    className={`w-full text-left text-[11px] px-2 py-1 rounded transition-colors ${
-                      filters[section.key]?.includes(option)
-                        ? 'bg-green-100 text-green-700 font-medium'
-                        : 'text-paper-500 hover:bg-paper-100'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div className="px-3 pb-3 space-y-1">
+                {section.options.map(option => {
+                  const isSelected = filters[section.key]?.includes(option)
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => onToggleFilter(section.key, option)}
+                      className={`w-full text-left text-[11px] px-2 py-1.5 rounded-lg transition-colors flex items-center justify-between font-medium ${
+                        isSelected
+                          ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                          : 'text-slate-400 hover:bg-white/[0.02] hover:text-slate-200'
+                      }`}
+                    >
+                      <span>{option}</span>
+                      {isSelected && <Check className="w-3 h-3 text-indigo-400" />}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -292,23 +298,24 @@ function ArchiveFilterPanel({
       </div>
 
       {activeFilterCount > 0 && (
-        <div className="p-3 border-t border-paper-200">
+        <div className="p-3 border-t border-white/5">
           <button
             onClick={onClearFilters}
-            className="w-full text-[11px] text-paper-500 hover:text-paper-700 py-1.5 rounded border border-paper-200 hover:border-paper-300 transition-colors"
+            className="w-full text-[11px] text-slate-400 hover:text-white py-2 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-1.5 font-bold"
           >
-            필터 초기화 ({activeFilterCount})
+            <RefreshCw className="w-3 h-3" />
+            <span>필터 초기화 ({activeFilterCount})</span>
           </button>
         </div>
       )}
 
       {/* Top Themes */}
-      <div className="p-3 border-t border-paper-200">
-        <div className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest mb-2">자주 다룬 주제</div>
+      <div className="p-4 border-t border-white/5 space-y-3">
+        <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">자주 다룬 사역 키워드</div>
         <div className="flex flex-wrap gap-1">
           {stats.topThemes.map(([theme, count]) => (
-            <span key={theme} className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-gold-700">
-              {theme} <span className="opacity-60">{count}</span>
+            <span key={theme} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              {theme} <span className="opacity-50">{count}</span>
             </span>
           ))}
         </div>
@@ -334,50 +341,46 @@ function ArchiveSearchBar({
   totalCount: number
 }) {
   const sortLabels: Record<SortMode, string> = {
-    recent: '최신순',
-    relevance: '관련도순',
-    referenced: '참조 많은 순',
-    reused: '재사용 순',
+    recent: '최신 일자순',
+    relevance: '텍스트 분량순',
+    referenced: '연계 참조순',
+    reused: '재사용 빈도순',
   }
 
   return (
-    <div className="bg-white border-b border-paper-200 px-5 py-3 shrink-0">
-      <div className="flex items-center gap-3 mb-2">
+    <div className="bg-[#050814]/80 backdrop-blur-md border-b border-white/5 px-6 py-4 shrink-0 space-y-3 relative z-10">
+      <div className="flex items-center gap-4">
         {/* Search Input */}
         <div className="flex-1 relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-paper-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
-            placeholder="설교 제목, 본문, 주제, 태그로 검색..."
-            className="w-full text-sm bg-paper-50 border border-paper-200 rounded-lg pl-9 pr-4 py-2 outline-none focus:border-green-300 focus:bg-white transition-colors placeholder:text-paper-400"
+            placeholder="설교 요약, 본문 주석, 사역 태그로 보관소 정밀 검색..."
+            className="w-full text-[13px] bg-[#0c1020] border border-white/5 rounded-xl pl-9 pr-4 py-2 text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
           />
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex rounded-md overflow-hidden border border-paper-200">
+        <div className="flex rounded-xl overflow-hidden border border-white/5 p-0.5 bg-[#090d20]">
           <button
             onClick={() => onViewModeChange('card')}
-            className={`text-[11px] px-2.5 py-1.5 transition-colors ${
-              viewMode === 'card' ? 'bg-navy-600 text-white' : 'bg-white text-paper-500 hover:bg-paper-50'
+            className={`p-1.5 rounded-lg transition-colors ${
+              viewMode === 'card' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'
             }`}
+            title="카드 형태로 보기"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
+            <LayoutGrid className="w-4 h-4" />
           </button>
           <button
             onClick={() => onViewModeChange('list')}
-            className={`text-[11px] px-2.5 py-1.5 transition-colors ${
-              viewMode === 'list' ? 'bg-navy-600 text-white' : 'bg-white text-paper-500 hover:bg-paper-50'
+            className={`p-1.5 rounded-lg transition-colors ${
+              viewMode === 'list' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'
             }`}
+            title="리스트 형태로 보기"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <List className="w-4 h-4" />
           </button>
         </div>
 
@@ -385,7 +388,7 @@ function ArchiveSearchBar({
         <select
           value={sortMode}
           onChange={e => onSortModeChange(e.target.value as SortMode)}
-          className="text-[11px] border border-paper-200 rounded-md px-2 py-1.5 outline-none focus:border-green-300 bg-white text-paper-600"
+          className="text-[12px] border border-white/5 rounded-xl px-3 py-2 outline-none focus:border-indigo-500/50 bg-[#0c1020] text-slate-300 font-bold cursor-pointer"
         >
           {Object.entries(sortLabels).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>
@@ -394,23 +397,25 @@ function ArchiveSearchBar({
       </div>
 
       {/* Quick Filters */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-paper-400">빠른 검색:</span>
-        {quickFilters.map(f => (
-          <button
-            key={f.query}
-            onClick={() => onSearchChange(f.query)}
-            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
-              searchQuery === f.query
-                ? 'bg-green-100 text-green-700 font-medium'
-                : 'bg-paper-100 text-paper-500 hover:bg-paper-150'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-        <span className="text-[10px] text-paper-400 ml-auto">
-          {resultCount === totalCount ? `${resultCount}편` : `${totalCount}편 중 ${resultCount}편`}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-slate-500 font-bold">빠른 키워드 필터:</span>
+        <div className="flex flex-wrap gap-1">
+          {quickFilters.map(f => (
+            <button
+              key={f.query}
+              onClick={() => onSearchChange(f.query)}
+              className={`text-[10px] px-2.5 py-1 rounded-lg transition-all font-semibold ${
+                searchQuery === f.query
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                  : 'bg-white/5 border border-white/[0.02] text-slate-400 hover:text-white'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-[10px] text-slate-500 font-bold ml-auto">
+          {resultCount === totalCount ? `${resultCount}편 전체` : `필터결과 ${resultCount}편 / 총 ${totalCount}편`}
         </span>
       </div>
     </div>
@@ -430,70 +435,76 @@ function SermonArchiveCard({
 }) {
   return (
     <div
-      className={`rounded-xl border transition-all cursor-pointer ${
+      className={`rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[240px] p-5 relative overflow-hidden group ${
         isSelected
-          ? 'border-green-300 bg-green-50/40 shadow-sm'
-          : 'border-paper-200 bg-white hover:border-paper-300 hover:shadow-sm'
+          ? 'border-indigo-500/40 bg-indigo-950/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
+          : 'border-white/5 bg-[#04060f]/60 hover:border-white/10 hover:bg-[#04060f]/80'
       }`}
       onClick={onSelect}
     >
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-sm font-semibold text-paper-800 line-clamp-1">{sermon.title}</h3>
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[14px] font-bold text-white group-hover:text-indigo-400 transition-colors leading-snug line-clamp-1">
+            {sermon.title}
+          </h3>
           {sermon.seriesName && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 shrink-0 ml-2">
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 shrink-0 font-bold">
               {sermon.seriesName}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-paper-500 mb-2">
-          <span className="font-medium text-paper-700 bg-paper-100 px-1.5 py-0.5 rounded">{sermon.passage}</span>
+        <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold">
+          <span className="text-indigo-300 font-extrabold bg-indigo-500/10 px-2 py-0.5 rounded">{sermon.passage}</span>
           <span>{sermon.sermonDate}</span>
         </div>
 
-        <p className="text-[11px] text-paper-500 line-clamp-2 mb-3 leading-relaxed">{sermon.coreMessage}</p>
+        <p className="text-[12px] text-slate-400 line-clamp-3 leading-relaxed font-medium">
+          {sermon.coreMessage}
+        </p>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {sermon.themeNames.slice(0, 3).map(t => (
-            <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold-100 text-gold-700">{t}</span>
+        <div className="flex flex-wrap gap-1">
+          {sermon.themeNames.slice(0, 2).map(t => (
+            <span key={t} className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">{t}</span>
           ))}
           {sermon.tagNames.slice(0, 2).map(t => (
-            <span key={t} className="text-[9px] px-1.5 py-0.5 rounded bg-paper-100 text-paper-500">#{t}</span>
+            <span key={t} className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/[0.02]">#{t}</span>
           ))}
         </div>
-
-        {/* Meta */}
-          <div className="flex items-center justify-between text-[10px] text-paper-400 pt-2 border-t border-paper-100">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-green-400" />
-              <span>{sermon.wordCount.toLocaleString()}자 · {sermon.outlineTitles.length}대지</span>
-            </div>
-            <span>관련 {sermon.relatedIds.length}개</span>
-          </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex border-t border-paper-150">
-        <button
-          onClick={e => { e.stopPropagation(); onOpen() }}
-          className="flex-1 text-[10px] text-paper-500 hover:text-green-600 hover:bg-green-50/50 py-1.5 transition-colors border-r border-paper-150"
-        >
-          열기
-        </button>
-        <button
-          onClick={e => { e.stopPropagation(); onReuse() }}
-          className="flex-1 text-[10px] text-paper-500 hover:text-green-600 hover:bg-green-50/50 py-1.5 transition-colors border-r border-paper-150"
-        >
-          복제
-        </button>
-        <button
-          onClick={e => { e.stopPropagation(); onSelect() }}
-          className="flex-1 text-[10px] text-paper-500 hover:text-green-600 hover:bg-green-50/50 py-1.5 transition-colors"
-        >
-          상세
-        </button>
+      <div className="space-y-3 pt-3 border-t border-white/5 mt-4">
+        {/* Meta */}
+        <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+            {sermon.wordCount.toLocaleString()}자 · {sermon.outlineTitles.length}대지
+          </span>
+          <span>연계 {sermon.relatedIds.length}건</span>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="flex gap-1.5 pt-1">
+          <button
+            onClick={e => { e.stopPropagation(); onOpen() }}
+            className="flex-1 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"
+          >
+            <span>열기</span>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onReuse() }}
+            className="flex-1 text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white py-1.5 rounded-lg transition-colors border border-white/5"
+          >
+            <span>복제</span>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onSelect() }}
+            className="flex-1 text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white py-1.5 rounded-lg transition-colors border border-white/5"
+          >
+            <span>상세</span>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -512,51 +523,51 @@ function SermonArchiveListItem({
 }) {
   return (
     <div
-      className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all cursor-pointer ${
+      className={`flex items-center gap-4 px-5 py-3 rounded-2xl border transition-all duration-300 cursor-pointer ${
         isSelected
-          ? 'border-green-300 bg-green-50/40'
-          : 'border-transparent hover:bg-paper-50'
+          ? 'border-indigo-500/40 bg-indigo-950/20'
+          : 'border-white/5 bg-[#04060f]/60 hover:bg-[#04060f]/80'
       }`}
       onClick={onSelect}
     >
-      <div className="w-10 h-10 rounded-lg bg-paper-100 flex items-center justify-center text-[10px] font-bold text-paper-500 shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-extrabold text-indigo-300 shrink-0">
         {sermon.book.slice(0, 2)}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-paper-800 truncate">{sermon.title}</span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-sm font-bold text-white truncate">{sermon.title}</span>
           {sermon.seriesName && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 shrink-0">
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 shrink-0 font-bold">
               {sermon.seriesName}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-paper-500 mt-0.5">
-          <span className="font-medium text-paper-600">{sermon.passage}</span>
-          <span className="text-paper-300">·</span>
+        <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1 font-bold">
+          <span className="font-extrabold text-indigo-300">{sermon.passage}</span>
+          <span className="text-slate-600">·</span>
           <span>{sermon.sermonDate}</span>
-          <span className="text-paper-300">·</span>
+          <span className="text-slate-600">·</span>
           <span>{sermon.audience.join(', ')}</span>
         </div>
       </div>
       <div className="flex flex-wrap gap-1 shrink-0 max-w-[200px]">
         {sermon.themeNames.slice(0, 2).map(t => (
-          <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold-100 text-gold-700">{t}</span>
+          <span key={t} className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">{t}</span>
         ))}
       </div>
-      <div className="text-[10px] text-paper-400 shrink-0 w-16 text-right">
+      <div className="text-[11px] text-slate-400 font-bold shrink-0 w-16 text-right">
         {sermon.wordCount.toLocaleString()}자
       </div>
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={e => { e.stopPropagation(); onOpen() }}
-          className="text-[10px] text-paper-400 hover:text-green-600 px-2 py-1 rounded transition-colors"
+          className="text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-colors"
         >
           열기
         </button>
         <button
           onClick={e => { e.stopPropagation(); onReuse() }}
-          className="text-[10px] text-paper-400 hover:text-green-600 px-2 py-1 rounded transition-colors"
+          className="text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-white/5 transition-colors"
         >
           복제
         </button>
@@ -582,164 +593,148 @@ function ArchivePreviewPanel({
   const [activeTab, setActiveTab] = useState<'detail' | 'related'>('detail')
 
   return (
-    <aside className="w-80 shrink-0 border-l border-paper-200 bg-white overflow-y-auto scrollbar-thin">
+    <aside className="w-80 shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin relative z-10 flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-paper-200 flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold text-paper-400 uppercase tracking-widest">설교 상세</h3>
-        <button onClick={onClose} className="text-paper-400 hover:text-paper-600 p-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+      <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+        <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Sermon Inspector</h3>
+        <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
+          <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-paper-200">
+      <div className="flex border-b border-white/5 shrink-0 bg-[#090d20]">
         <button
           onClick={() => setActiveTab('detail')}
-          className={`flex-1 text-[11px] py-2 font-medium transition-colors ${
-            activeTab === 'detail' ? 'text-paper-800 border-b-2 border-green-500' : 'text-paper-400 hover:text-paper-600'
+          className={`flex-1 text-[11px] py-2.5 font-bold transition-all ${
+            activeTab === 'detail' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          상세
+          상세 정보
         </button>
         <button
           onClick={() => setActiveTab('related')}
-          className={`flex-1 text-[11px] py-2 font-medium transition-colors ${
-            activeTab === 'related' ? 'text-paper-800 border-b-2 border-green-500' : 'text-paper-400 hover:text-paper-600'
+          className={`flex-1 text-[11px] py-2.5 font-bold transition-all ${
+            activeTab === 'related' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          관련 ({relatedSermons.length})
+          연관 아카이브 ({relatedSermons.length})
         </button>
       </div>
 
-      {activeTab === 'detail' ? (
-        <div className="p-4 space-y-4">
-          {/* Title & Passage */}
-          <div>
-            <h2 className="text-sm font-bold text-paper-900 font-serif">{sermon.title}</h2>
-            <div className="flex items-center gap-2 mt-1 text-xs text-paper-500">
-              <span className="font-medium text-paper-700 bg-paper-100 px-2 py-0.5 rounded">{sermon.passage}</span>
-              <span>{sermon.sermonDate}</span>
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
+        {activeTab === 'detail' ? (
+          <div className="space-y-5">
+            {/* Title & Passage */}
+            <div className="space-y-1.5">
+              <h2 className="text-sm font-bold text-white font-sans">{sermon.title}</h2>
+              <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
+                <span className="font-extrabold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">{sermon.passage}</span>
+                <span>{sermon.sermonDate}</span>
+              </div>
             </div>
-          </div>
 
-          {/* Core Message */}
-          <div className="bg-green-50/60 border border-green-200/60 rounded-lg p-3">
-            <div className="text-[9px] font-semibold text-green-600 uppercase tracking-wider mb-1">핵심 메시지</div>
-            <p className="text-xs text-green-800 leading-relaxed italic">&ldquo;{sermon.coreMessage}&rdquo;</p>
-          </div>
-
-          {/* Meta */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <MetaItem label="회중" value={sermon.audience.join(', ')} />
-            <MetaItem label="유형" value={sermon.sermonType} />
-            <MetaItem label="분량" value={`${sermon.wordCount.toLocaleString()}자`} />
-            <MetaItem label="대지" value={`${sermon.outlineTitles.length}개`} />
-            <MetaItem label="설교일" value={sermon.sermonDate} />
-          </div>
-
-          {/* Series */}
-          {sermon.seriesName && (
-            <div>
-              <div className="text-[9px] font-semibold text-paper-400 uppercase tracking-wider mb-1">시리즈</div>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{sermon.seriesName}</span>
+            {/* Core Message */}
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4">
+              <div className="text-[9px] font-extrabold text-indigo-400 uppercase tracking-widest mb-1.5">핵심 메세지 (Core Message)</div>
+              <p className="text-[12px] text-indigo-200 leading-relaxed font-semibold italic">&ldquo;{sermon.coreMessage}&rdquo;</p>
             </div>
-          )}
 
-          {/* Outline */}
-          <div>
-            <div className="text-[9px] font-semibold text-paper-400 uppercase tracking-wider mb-1.5">대지</div>
-            <div className="space-y-1">
-              {sermon.outlineTitles.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-paper-600">
-                  <span className="w-4 h-4 rounded-full bg-paper-150 text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                  <span>{t}</span>
-                </div>
-              ))}
+            {/* Meta */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <MetaItem label="대상 청중" value={sermon.audience.join(', ')} />
+              <MetaItem label="예배 유형" value={sermon.sermonType} />
+              <MetaItem label="누적 자수" value={`${sermon.wordCount.toLocaleString()}자`} />
+              <MetaItem label="구조화 대지" value={`${sermon.outlineTitles.length}개`} />
             </div>
-          </div>
 
-          {/* Themes & Tags */}
-          <div>
-            <div className="text-[9px] font-semibold text-paper-400 uppercase tracking-wider mb-1.5">주제</div>
-            <div className="flex flex-wrap gap-1">
-              {sermon.themeNames.map(t => (
-                <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-gold-100 text-gold-700">{t}</span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-semibold text-paper-400 uppercase tracking-wider mb-1.5">태그</div>
-            <div className="flex flex-wrap gap-1">
-              {sermon.tagNames.map(t => (
-                <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-paper-100 text-paper-500">#{t}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="space-y-1.5 pt-2 border-t border-paper-200">
-            <button
-              onClick={onOpen}
-              className="w-full text-xs bg-green-500 hover:bg-green-600 text-white py-2 rounded-md transition-colors font-medium"
-            >
-              프로젝트 열기
-            </button>
-            <button
-              onClick={onReuse}
-              className="w-full text-xs border border-paper-200 hover:border-green-300 text-paper-600 hover:text-green-600 py-2 rounded-md transition-colors"
-            >
-              새 프로젝트로 복제
-            </button>
+            {/* Series */}
             {sermon.seriesName && (
-              <button
-                onClick={() => {
-                  const seriesId = sermon.relatedIds.find(id => id.startsWith('ser-'))
-                  if (seriesId) router.push(`/advanced/series/${seriesId}`)
-                }}
-                className="w-full text-xs border border-paper-200 hover:border-green-300 text-paper-500 hover:text-green-600 py-1.5 rounded-md transition-colors"
-              >
-                시리즈에서 보기 →
-              </button>
+              <div className="space-y-1">
+                <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">강해 시리즈</div>
+                <span className="inline-block text-[11px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg font-bold">{sermon.seriesName}</span>
+              </div>
             )}
-            <button
-              onClick={() => router.push('/advanced/graph')}
-              className="w-full text-xs border border-paper-200 hover:border-green-300 text-paper-500 hover:text-green-600 py-1.5 rounded-md transition-colors"
-            >
-              그래프에서 보기 →
-            </button>
-            <button
-              onClick={() => router.push('/advanced/notes')}
-              className="w-full text-xs border border-paper-200 hover:border-green-300 text-paper-500 hover:text-green-600 py-1.5 rounded-md transition-colors"
-            >
-              관련 노트 보기 →
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="p-4 space-y-2">
-          {relatedSermons.length > 0 ? (
-            relatedSermons.map(rs => (
-              <button
-                key={rs.id}
-                onClick={() => onNavigate(rs.id)}
-                className="w-full text-left p-3 rounded-lg border border-paper-150 hover:border-green-200 hover:bg-green-50/20 transition-colors"
-              >
-                <div className="text-xs font-medium text-paper-800">{rs.title}</div>
-                <div className="text-[10px] text-paper-400 mt-0.5">{rs.passage} · {rs.sermonDate}</div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {rs.themeNames.slice(0, 2).map(t => (
-                    <span key={t} className="text-[9px] px-1 py-0.5 rounded bg-gold-100 text-gold-700">{t}</span>
+
+            {/* Outline */}
+            <div className="space-y-2">
+              <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">설교 전개 개요 (Outline)</div>
+              <div className="space-y-1.5">
+                {sermon.outlineTitles.map((t, i) => (
+                  <div key={i} className="flex items-start gap-2.5 text-[11.5px] text-slate-300 font-medium leading-snug">
+                    <span className="w-4 h-4 rounded-full bg-white/5 border border-white/10 text-[9px] font-extrabold flex items-center justify-center shrink-0 mt-0.5 text-indigo-300">{i + 1}</span>
+                    <span>{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Themes & Tags */}
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">연구 주제 테마</div>
+                <div className="flex flex-wrap gap-1">
+                  {sermon.themeNames.map(t => (
+                    <span key={t} className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">{t}</span>
                   ))}
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">색인 태그</div>
+                <div className="flex flex-wrap gap-1">
+                  {sermon.tagNames.map(t => (
+                    <span key={t} className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/[0.02]">#{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2 pt-4 border-t border-white/5 shrink-0">
+              <button
+                onClick={onOpen}
+                className="w-full text-[12px] bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl transition-all font-bold shadow-lg shadow-indigo-600/15"
+              >
+                설교 프로젝트 열기
               </button>
-            ))
-          ) : (
-            <div className="text-xs text-paper-400 text-center py-8">관련 설교가 없습니다.</div>
-          )}
-        </div>
-      )}
+              <button
+                onClick={onReuse}
+                className="w-full text-[12px] border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white py-2.5 rounded-xl transition-all font-bold"
+              >
+                새 프로젝트로 복제
+              </button>
+              <button
+                onClick={() => router.push('/advanced')}
+                className="w-full text-[11px] border border-white/5 hover:border-white/10 text-slate-400 hover:text-white py-2 rounded-xl transition-all font-bold"
+              >
+                인텔리전스 그래프 연동 →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {relatedSermons.length > 0 ? (
+              relatedSermons.map(rs => (
+                <button
+                  key={rs.id}
+                  onClick={() => onNavigate(rs.id)}
+                  className="w-full text-left p-4 rounded-2xl border border-white/5 hover:border-indigo-500/30 bg-[#04060f]/40 hover:bg-[#04060f]/80 transition-all space-y-2"
+                >
+                  <div className="text-[12px] font-bold text-slate-200">{rs.title}</div>
+                  <div className="text-[10px] text-slate-400 font-bold">{rs.passage} · {rs.sermonDate}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {rs.themeNames.slice(0, 2).map(t => (
+                      <span key={t} className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">{t}</span>
+                    ))}
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="text-[11px] text-slate-500 text-center py-10 font-bold">연계 설정된 설교 파일이 없습니다.</div>
+            )}
+          </div>
+        )}
+      </div>
     </aside>
   )
 }
@@ -755,27 +750,29 @@ function ArchiveEmptyState({
   onQuickFilter: (q: string) => void
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <svg className="w-12 h-12 mb-4 text-paper-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-      <h3 className="text-sm font-medium text-paper-700 mb-1">
-        {searchQuery ? `"${searchQuery}"에 대한 결과가 없습니다` : '아카이브가 비어 있습니다'}
-      </h3>
-      <p className="text-xs text-paper-400 mb-4">
-        {searchQuery ? '다른 검색어를 시도하거나 필터를 초기화하세요' : '설교를 작성하면 아카이브에 자동으로 저장됩니다'}
-      </p>
+    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-500 border border-white/5">
+        <FolderOpen className="w-6 h-6" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-bold text-white">
+          {searchQuery ? `"${searchQuery}" 검색 결과 없음` : '아카이브가 비어 있습니다'}
+        </h3>
+        <p className="text-xs text-slate-500 font-medium">
+          {searchQuery ? '질문어나 필터를 변경하거나 초기화해보세요.' : '설교 작성 완료 시 원고가 자동 보관됩니다.'}
+        </p>
+      </div>
       {searchQuery && (
-        <button onClick={onClearFilters} className="text-xs text-green-600 hover:underline mb-4 font-medium">
-          필터 초기화
+        <button onClick={onClearFilters} className="text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors">
+          검색어 및 필터 초기화
         </button>
       )}
-      <div className="flex flex-wrap gap-1.5 justify-center">
+      <div className="flex flex-wrap gap-1.5 justify-center max-w-sm pt-2">
         {quickFilters.map(f => (
           <button
             key={f.query}
             onClick={() => onQuickFilter(f.query)}
-            className="text-[10px] px-2 py-1 rounded bg-paper-100 text-paper-500 hover:bg-paper-150 transition-colors"
+            className="text-[10px] px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/[0.02] text-slate-400 hover:text-white transition-all font-semibold"
           >
             {f.label}
           </button>
@@ -793,57 +790,53 @@ function ArchiveInsightSummary({ stats }: {
   const topBooks = Object.entries(stats.byBook).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   return (
-    <div className="mt-8 pt-6 border-t border-paper-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[11px] font-semibold text-paper-500 uppercase tracking-widest">설교 자료 분석</h3>
-        <span className="text-[10px] text-paper-400 bg-paper-100 px-2 py-0.5 rounded font-medium">총 {stats.total}편</span>
+    <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">설교 데이터 통계 분석</h3>
+        <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded font-bold">전체 {stats.total}편 기준</span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Top Books */}
-        <div className="bg-white rounded-xl border border-paper-200 p-4">
-          <div className="text-[10px] font-semibold text-paper-400 uppercase tracking-wider mb-2">주요 설교 성경</div>
-          <div className="space-y-1.5">
+        <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-4 space-y-3">
+          <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">다독 연구 성경 권수</div>
+          <div className="space-y-2">
             {topBooks.map(([book, count]) => (
-              <div key={book} className="flex items-center justify-between text-xs">
-                <span className="text-paper-600">{book}</span>
-                <span className="font-medium text-paper-700">{count}편</span>
+              <div key={book} className="flex items-center justify-between text-xs font-medium">
+                <span className="text-slate-400">{book}</span>
+                <span className="font-extrabold text-slate-200">{count}편</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Season Distribution */}
-        <div className="bg-white rounded-xl border border-paper-200 p-4">
-          <div className="text-[10px] font-semibold text-paper-400 uppercase tracking-wider mb-2">절기별 설교 분포</div>
-          <div className="space-y-1.5">
+        <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-4 space-y-3">
+          <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">교회 절기별 통계</div>
+          <div className="space-y-2">
             {Object.entries(stats.bySeason).map(([season, count]) => (
-              <div key={season} className="flex items-center justify-between text-xs">
-                <span className="text-paper-600">{season}</span>
-                <span className="font-medium text-paper-700">{count}편</span>
+              <div key={season} className="flex items-center justify-between text-xs font-medium">
+                <span className="text-slate-400">{season}</span>
+                <span className="font-extrabold text-slate-200">{count}편</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Asset Flow */}
-        <div className="bg-white rounded-xl border border-paper-200 p-4">
-          <div className="text-[10px] font-semibold text-paper-400 uppercase tracking-wider mb-2">설교 자료 현황</div>
+        <div className="bg-[#04060f]/60 rounded-2xl border border-white/5 p-4 space-y-3">
+          <div className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">텍스트 메트릭 현황</div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-paper-500">전체 설교</span>
-              <span className="font-bold text-paper-800">{stats.total}편</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-500">전체 원고 분량</span>
+              <span className="font-extrabold text-slate-200">{(stats.totalWords).toLocaleString()}자</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-paper-500">누적 분량</span>
-              <span className="font-medium text-paper-700">{(stats.totalWords / 10000).toFixed(1)}만 자</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-500">평균 단어 규모</span>
+              <span className="font-extrabold text-indigo-400">{Math.round(stats.totalWords / stats.total).toLocaleString()}자</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-paper-500">올해 설교</span>
-              <span className="font-medium text-green-600">{stats.thisYear}편</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-paper-500">평균 분량</span>
-              <span className="font-medium text-paper-700">{Math.round(stats.totalWords / stats.total).toLocaleString()}자</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-500">올해 사역 비중</span>
+              <span className="font-extrabold text-indigo-400">{Math.round((stats.thisYear / stats.total) * 100)}%</span>
             </div>
           </div>
         </div>
@@ -856,9 +849,9 @@ function ArchiveInsightSummary({ stats }: {
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-paper-50 rounded-lg p-2">
-      <div className="text-[9px] text-paper-400">{label}</div>
-      <div className="text-[11px] font-medium text-paper-700 mt-0.5">{value}</div>
+    <div className="bg-white/5 rounded-xl border border-white/[0.02] p-2.5 space-y-0.5">
+      <div className="text-[9.5px] text-slate-500 font-bold">{label}</div>
+      <div className="text-[12px] font-bold text-slate-300">{value}</div>
     </div>
   )
 }

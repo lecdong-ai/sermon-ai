@@ -18,15 +18,15 @@ export default function ProjectHeader({ project }: Props) {
   const progressPercent = Math.round((statusIndex / totalSteps) * 100)
 
   return (
-    <div className="bg-white border-b border-paper-200 shrink-0">
+    <div className="bg-[#04060f]/60 border-b border-white/5 shrink-0">
       <div className="max-w-[1440px] mx-auto px-6 py-4">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-1 text-[11px] text-paper-400 mb-2">
-          <button onClick={() => router.push('/advanced')} className="hover:text-green-600 transition-colors">대시보드</button>
-          <span className="text-paper-300">/</span>
-          <button onClick={() => router.push('/advanced/projects')} className="hover:text-green-600 transition-colors">프로젝트</button>
-          <span className="text-paper-300">/</span>
-          <span className="text-paper-600 font-medium truncate max-w-[200px]">{project.title}</span>
+        <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2">
+          <button onClick={() => router.push('/advanced')} className="hover:text-indigo-400 transition-colors">대시보드</button>
+          <span className="text-slate-600">/</span>
+          <button onClick={() => router.push('/advanced/projects')} className="hover:text-indigo-400 transition-colors">프로젝트</button>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-200 font-medium truncate max-w-[200px]">{project.title}</span>
         </div>
 
         {/* 상단: 뒤로가기 + 제목 + 상태 + 버튼 */}
@@ -35,34 +35,34 @@ export default function ProjectHeader({ project }: Props) {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push('/advanced/projects')}
-                className="text-paper-400 hover:text-paper-600 shrink-0 transition-colors p-1 -ml-1"
+                className="text-slate-500 hover:text-slate-200 shrink-0 transition-colors p-1 -ml-1"
                 title="프로젝트 목록"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-lg font-bold text-paper-900 truncate font-serif">
+              <h1 className="text-lg font-bold text-white truncate">
                 {project.title}
               </h1>
               <ProjectStatusBadge status={project.status} />
             </div>
 
             {/* 본문 정보 행 */}
-            <div className="flex items-center gap-2 mt-1.5 text-xs text-paper-500 flex-wrap">
-              <span className="font-medium text-paper-700 bg-paper-100 px-2 py-0.5 rounded">{project.passage}</span>
-              <span className="text-paper-300">·</span>
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400 flex-wrap">
+              <span className="font-medium text-slate-100 bg-white/5 px-2 py-0.5 rounded">{project.passage}</span>
+              <span className="text-slate-600">·</span>
               <span>{project.sermonDate}</span>
-              <span className="text-paper-300">·</span>
+              <span className="text-slate-600">·</span>
               <span>{project.sermonType}</span>
-              <span className="text-paper-300">·</span>
+              <span className="text-slate-600">·</span>
               <span>{project.audience.join(', ')}</span>
               {project.seriesName && (
                 <>
-                  <span className="text-paper-300">·</span>
+                  <span className="text-slate-600">·</span>
                   <button
                     onClick={() => project.seriesId && router.push(`/advanced/series/${project.seriesId}`)}
-                    className="text-green-600 hover:text-green-700 hover:underline"
+                    className="text-indigo-400 hover:text-indigo-400 hover:underline"
                   >
                     {project.seriesName}
                   </button>
@@ -74,7 +74,7 @@ export default function ProjectHeader({ project }: Props) {
             {project.tagNames.length > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
                 {project.tagNames.map(t => (
-                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-paper-100 text-paper-500">
+                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
                     #{t}
                   </span>
                 ))}
@@ -87,7 +87,7 @@ export default function ProjectHeader({ project }: Props) {
             <SaveStatusIndicator status={MOCK_SAVE_STATE.status} lastSavedAt={MOCK_SAVE_STATE.lastSavedAt} minimal />
             <button
               onClick={() => router.push(`/advanced/graph?focus=${project.id}`)}
-              className="text-xs text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded-md px-3 py-1.5 transition-colors"
+              className="text-xs text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded-xl px-3 py-1.5 transition-colors"
             >
               <svg className="w-3.5 h-3.5 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
@@ -97,11 +97,11 @@ export default function ProjectHeader({ project }: Props) {
             </button>
             <button
               onClick={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
-              className="text-xs text-paper-500 hover:text-paper-700 border border-paper-200 hover:border-paper-400 rounded-md px-3 py-1.5 transition-colors"
+              className="text-xs text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded-xl px-3 py-1.5 transition-colors"
             >
               미리보기
             </button>
-            <button className="text-xs bg-green-500 hover:bg-green-600 text-white rounded-md px-4 py-1.5 transition-colors font-medium">
+            <button className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-4 py-1.5 transition-colors font-medium">
               저장
             </button>
           </div>
@@ -113,12 +113,12 @@ export default function ProjectHeader({ project }: Props) {
             <StatusTimeline currentStatus={project.status} />
             <div className="adv-progress-bar h-1 mt-1.5">
               <div
-                className="adv-progress-fill bg-green-500 h-full rounded-full transition-all"
+                className="adv-progress-fill bg-indigo-600 h-full rounded-full transition-all"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
-          <span className="text-[11px] text-paper-400 shrink-0">
+          <span className="text-[11px] text-slate-500 shrink-0">
             v{project.version} · {project.wordCount.toLocaleString()}자
           </span>
         </div>

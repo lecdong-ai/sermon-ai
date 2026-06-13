@@ -47,13 +47,13 @@ export const NOTE_TYPE_DESCRIPTIONS: Record<NoteType, string> = {
 }
 
 export const NOTE_TYPE_COLORS: Record<NoteType, string> = {
-  insight: 'bg-emerald-100 text-emerald-700',
-  research: 'bg-blue-100 text-blue-700',
-  application: 'bg-violet-100 text-violet-700',
-  question: 'bg-amber-100 text-amber-700',
-  pastoral: 'bg-rose-100 text-rose-700',
-  illustration: 'bg-cyan-100 text-cyan-700',
-  warning: 'bg-red-100 text-red-700',
+  insight: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+  research: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  application: 'bg-violet-500/10 text-violet-300 border-violet-500/20',
+  question: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+  pastoral: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
+  illustration: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+  warning: 'bg-red-500/10 text-red-300 border-red-500/20',
 }
 
 export const NOTE_TYPE_DOTS: Record<NoteType, string> = {

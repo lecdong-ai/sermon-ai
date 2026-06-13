@@ -34,11 +34,11 @@ export default function RecentChangesPanel({ changes, maxItems = 5 }: { changes:
         <div key={i} className="flex items-start gap-2">
           <span className="text-[11px] shrink-0 mt-0.5">{TYPE_ICONS[change.type] || '•'}</span>
           <div className="flex-1 min-w-0">
-            <div className="text-[11px] text-paper-700 leading-relaxed">{change.description}</div>
+            <div className="text-[11px] text-slate-100 leading-relaxed">{change.description}</div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[9px] text-paper-400">{formatTime(change.timestamp)}</span>
-              <span className="text-paper-300">·</span>
-              <span className="text-[9px] px-1 py-0.5 rounded bg-paper-100 text-paper-500">
+              <span className="text-[9px] text-slate-500">{formatTime(change.timestamp)}</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-[9px] px-1 py-0.5 rounded bg-white/5 text-slate-400">
                 {SECTION_LABELS[change.section] || change.section}
               </span>
             </div>

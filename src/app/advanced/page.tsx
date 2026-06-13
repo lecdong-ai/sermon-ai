@@ -1,541 +1,548 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  mockTodayProject,
-  mockProjects,
-  mockRecentPassages,
-  mockNotes,
-  mockRecommendations,
-  mockQuickStats,
-  mockGraphData,
-} from '@/lib/advanced/mockData'
-import { PROJECT_STATUS_ORDER, PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
-import { NextStepCard, SaveStatusIndicator, AppSectionHeader, ProjectStatusBadge } from '@/components/advanced/shared'
-import { MOCK_SAVE_STATE } from '@/lib/advanced/statusData'
+import { 
+  Search, Sparkles, BookOpen, FileText, Network, Archive, Settings, 
+  Users, Zap, Globe, Star, ArrowRight, BrainCircuit, MessageSquare, 
+  HelpCircle, Presentation, FileCheck, Loader2, X, Play, ShieldAlert,
+  ThumbsUp, Compass
+} from 'lucide-react'
+import { ARCHIVE_SERMONS } from '@/lib/advanced/archiveData'
+import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 
-/* ─── Progress Bar ─── */
-
-function ProgressBar({ value, max, color = 'bg-green-500' }: { value: number; max: number; color?: string }) {
-  const pct = Math.min(Math.round((value / max) * 100), 100)
-  return (
-    <div className="adv-progress-bar">
-      <div className={`adv-progress-fill ${color}`} style={{ width: `${pct}%` }} />
-    </div>
-  )
+// 감정 톤 매핑 유틸리티
+const getEmotionalTone = (sermon: ArchivedSermon) => {
+  const title = sermon.title
+  if (title.includes('죄') || title.includes('회개')) return '참회'
+  if (title.includes('사랑') || title.includes('화목')) return '사랑/기쁨'
+  if (title.includes('믿음') || title.includes('의') || title.includes('소망')) return '격려/소망'
+  if (title.includes('명령') || title.includes('부르심')) return '결단/도전'
+  return '일반'
 }
 
-/* ─── Main Dashboard ─── */
+// AI 모의 생성 텍스트 구성 함수
+const getGeneratedContent = (sermon: ArchivedSermon, actionType: string) => {
+  const p = sermon.passage
+  const t = sermon.title
+  switch (actionType) {
+    case 'summary':
+      return `📝 [AI 설교 요약서] - "${t}" (${p})\n\n■ 핵심 명제\n${sermon.coreMessage}\n\n■ 본문 전개 요약\n1. 도입: ${sermon.introduction}\n2. 전개 (대지 요약):\n${sermon.outlineTitles.map((ot, idx) => `   - 대지 ${idx + 1}: ${ot}`).join('\n')}\n3. 결론: ${sermon.conclusion}\n\n■ 사역자 노트\n본 설교는 청중의 삶 속에서의 실천적 적용을 강조하고 있으며, ${sermon.themeNames.join(', ')} 등의 성경적 원리를 내포하고 있습니다.`;
+    case 'questions':
+      return `👥 [소그룹 나눔 질문지] - "${t}"\n\n■ 대상 회중: ${sermon.audience.join(', ')}\n\n1. [도입 질문] 오늘 설교 주제인 '${sermon.themeNames[0] || '은혜'}'와 관련하여, 한 주간 내 삶에 가장 먼저 떠오른 생각은 무엇이었나요?\n\n2. [본문 묵상] 본문 ${p}에 나타난 하나님의 마음에 대해 깊이 나누어 봅시다.\n\n3. [실천적 질문] "${sermon.coreMessage}"라는 메시지를 나의 가정이나 직장 속에서 어떻게 구체화하여 순종할 수 있을까요?\n\n4. [기도 제목] 함께 나눈 말씀을 바탕으로 서로의 연약함을 보듬고 기도할 공동의 기도 제목을 정리해 보세요.`;
+    case 'cardnews':
+      return `✨ [스토리텔링 카드뉴스 기획안]\n\n■ 메인 컨셉: 설교 "${t}"의 핵심 임팩트 비주얼 카드화\n\n- [카드 1: 표지]\n  - 타이틀: ${t}\n  - 비주얼: 어두운 배경 속에서 빛이 스며드는 웅장한 아우라 아트\n  - 서브 텍스트: 본문 ${p}\n\n- [카드 2: 문제 제기]\n  - 핵심 구절: ${sermon.introduction.slice(0, 50)}...\n  - 메시지: 우리가 매일 겪는 연약함과 신앙의 도전들\n\n- [카드 3: 해결책 제시]\n  - 텍스트: ${sermon.coreMessage}\n  - 비주얼: 소망의 하늘빛 컬러 그라데이션\n\n- [카드 4: 적용점]\n  - 텍스트: ${sermon.conclusion.slice(0, 60)}...\n\n- [카드 5: 엔딩 페이지]\n  - CTA: 더 깊은 은혜 속으로 (교회 홈페이지 및 유튜브 채널 링크)`;
+    case 'shorts':
+      return `🎬 [유튜브 쇼츠 60초 스토리보드]\n\n[00:00-00:10] (오프닝 훅)\n- 오디오: "자꾸만 포기하고 싶고 지치는 순간이 있으신가요? 딱 60초만 이 본문을 귀담아 들어보세요."\n- 비주얼: 어둠 속에서 성경이 펴지며 은은하게 불이 켜지는 애니메이션\n\n[00:10-00:35] (본론 요약)\n- 오디오: "오늘 설교 '${t}'에서 전한 핵심입니다. ${sermon.coreMessage.slice(0, 70)}."\n- 비주얼: 자막이 형광 효과와 함께 빠르게 흐름\n\n[00:35-00:50] (실천 제안)\n- 오디오: "더 이상 정죄감과 걱정에 머물지 마세요. 하나님의 사랑은 여러분을 결코 놓지 않습니다."\n- 비주얼: 활짝 웃는 신도의 모습 및 밝은 빛줄기 연출\n\n[00:50-01:00] (클로징)\n- 오디오: "더 많은 설교 말씀과 은혜를 만나시려면 구독과 좋아요를 눌러주세요!"`;
+    case 'ppt':
+      return `📊 [PPT 슬라이드 자동 구성 레이아웃]\n\n■ 템플릿: 테크 다크 오션 (Deep Navy + Indigo Accent)\n\n- [슬라이드 1: 표지]\n  - 타이틀: ${t}\n  - 부제: ${p} | 설교자: ${sermon.preacher}\n\n- [슬라이드 2: 말씀 읽기]\n  - 본문 말씀 구절 요약 텍스트 배치\n\n- [슬라이드 3: 대지 1]\n  - 타이틀: 1. ${sermon.outlineTitles[0] || '하나님의 약속'}\n  - 설명 내용 요약 및 아이콘 배치\n\n- [슬라이드 4: 대지 2]\n  - 타이틀: 2. ${sermon.outlineTitles[1] || '믿음의 반응'}\n  - 설명 내용 요약\n\n- [슬라이드 5: 결론]\n  - 요약 구절: ${sermon.conclusion.slice(0, 80)}`;
+    case 'guide':
+      return `📖 [소그룹 리더용 토론 가이드]\n\n■ 설교: "${t}" (${p})\n■ 작성자: AI 사역 비서\n\n■ 리더 행동 지침:\n- 시작할 때 어색함을 깨는 5분 아이스브레이크를 진행하세요.\n- 나눔 도중 특정 인원이 독점하지 않도록 경청을 유도하세요.\n\n■ 토론 상세 진행 가이드:\n1. 도입: 본문 ${p}이 쓰인 당시의 시대적/신학적 배경을 짧게 설명해 줍니다.\n2. 핵심 메시지 전달: "${sermon.coreMessage}"\n3. 토의 이끌기:\n   - Q: 설교에서 강조된 "${sermon.outlineTitles[0] || '첫 번째 대지'}"는 우리에게 어떤 일상적 순종을 요구할까요?\n4. 마무리: 각자의 나눔 내용을 기반으로 한 합심 기도 데스크 가이드 제공`;
+    default:
+      return '콘텐츠를 준비 중입니다.';
+  }
+}
 
 export default function AdvancedDashboardPage() {
   const router = useRouter()
-  const inProgress = useMemo(() => mockProjects.filter(p => !['completed', 'archived'].includes(p.status)), [])
-  const completedCount = mockProjects.filter(p => p.status === 'completed').length
-  const overallPct = mockProjects.length > 0 ? Math.round((completedCount / mockProjects.length) * 100) : 0
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeActionSermon, setActiveActionSermon] = useState<ArchivedSermon | null>(null)
+  const [activeActionType, setActiveActionType] = useState<string | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [modalOutput, setModalOutput] = useState('')
 
-  const todayWordCount = mockTodayProject.wordCount
-  const todayTarget = 5000
-  const todayPct = Math.min(Math.round((todayWordCount / todayTarget) * 100), 100)
+  // 1. 추천 검색어 리스트
+  const SUGGESTION_CHIPS = [
+    { label: '💡 은혜에 관한 설교', query: '은혜' },
+    { label: '💡 로마서 강해 시리즈', query: '로마서' },
+    { label: '💡 소망에 대한 본문', query: '소망' },
+    { label: '💡 칭의 연구', query: '칭의' },
+  ]
 
-  const daysUntilSermon = useMemo(() => {
-    const today = new Date()
-    const sermon = new Date(mockTodayProject.sermonDate)
-    const diff = Math.ceil((sermon.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-    return diff
-  }, [])
+  // 2. 검색 및 필터링 적용된 설교 목록
+  const filteredSermons = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
+    if (!q) return ARCHIVE_SERMONS.slice(0, 6)
+    return ARCHIVE_SERMONS.filter(s => 
+      s.title.toLowerCase().includes(q) ||
+      s.passage.toLowerCase().includes(q) ||
+      s.book.toLowerCase().includes(q) ||
+      s.coreMessage.toLowerCase().includes(q) ||
+      s.themeNames.some(t => t.toLowerCase().includes(q)) ||
+      s.tagNames.some(t => t.toLowerCase().includes(q))
+    )
+  }, [searchQuery])
+
+  // 3. 지식 그래프 노드 구조 정의 (데스크톱 전용)
+  const GRAPH_NODES = [
+    { id: 'romans', label: '로마서', type: 'book', color: 'rgba(99, 102, 241, 0.8)', glowColor: 'rgba(99, 102, 241, 0.4)', cx: 400, cy: 190, r: 28 },
+    
+    // 설교 노드들
+    { id: 'arc-001', label: '믿음으로 말미암는 의', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 220, cy: 90, r: 16 },
+    { id: 'arc-002', label: '화목하게 된 즐거움', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 580, cy: 90, r: 16 },
+    { id: 'arc-003', label: '죄에 대하여 죽은 자', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 160, cy: 220, r: 16 },
+    { id: 'arc-004', label: '성령 안에 있는 생명', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 640, cy: 220, r: 16 },
+    
+    // 주제 노드들
+    { id: 'theme-grace', label: '은혜', type: 'theme', color: 'rgba(192, 132, 252, 0.8)', glowColor: 'rgba(192, 132, 252, 0.3)', cx: 330, cy: 310, r: 20 },
+    { id: 'theme-faith', label: '믿음', type: 'theme', color: 'rgba(192, 132, 252, 0.8)', glowColor: 'rgba(192, 132, 252, 0.3)', cx: 470, cy: 310, r: 20 },
+    
+    // 시리즈 노드
+    { id: 'series-rom', label: '로마서 강해', type: 'series', color: 'rgba(251, 191, 36, 0.8)', glowColor: 'rgba(251, 191, 36, 0.3)', cx: 400, cy: 50, r: 22 },
+  ]
+
+  const GRAPH_LINKS = [
+    { source: 'romans', target: 'arc-001' },
+    { source: 'romans', target: 'arc-002' },
+    { source: 'romans', target: 'arc-003' },
+    { source: 'romans', target: 'arc-004' },
+    { source: 'romans', target: 'theme-grace' },
+    { source: 'romans', target: 'theme-faith' },
+    { source: 'series-rom', target: 'romans' },
+    { source: 'theme-grace', target: 'arc-001' },
+    { source: 'theme-grace', target: 'arc-004' },
+    { source: 'theme-faith', target: 'arc-001' },
+    { source: 'theme-faith', target: 'arc-002' },
+  ]
+
+  // 4. AI 액션 핸들러
+  const handleAiAction = (sermon: ArchivedSermon, type: string) => {
+    setActiveActionSermon(sermon)
+    setActiveActionType(type)
+    setGenerating(true)
+    setModalOutput('')
+
+    // AI 생성 연출용 시뮬레이션 타이머
+    setTimeout(() => {
+      setGenerating(false)
+      setModalOutput(getGeneratedContent(sermon, type))
+    }, 1500)
+  }
+
+  // 5. 스탯 데이터 계산
+  const totalSermons = ARCHIVE_SERMONS.length
+  const totalBibleStudies = 84
+  const mostStudiedPassage = '로마서 8장 (롬 8:1-39)'
+  const trendingTopics = ['은혜', '성령', '소망', '믿음']
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-        <div className="max-w-[1400px] mx-auto space-y-6">
-          {/* ─── Header ─── */}
-          <div className="flex items-end justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-paper-900 font-serif">말씀 사역</h1>
-              <p className="text-xs text-paper-500 mt-0.5">
-                {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-                {' '}· 김바울 목사
-              </p>
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-thin pb-12">
+      {/* 백그라운드 테크니컬 파티클 구형 렌더링 */}
+      <div className="absolute inset-x-0 top-0 h-[700px] pointer-events-none overflow-hidden z-0 bg-radial-glow opacity-60" />
+
+      <div className="max-w-[1200px] mx-auto px-6 py-8 space-y-10 w-full relative z-10">
+        
+        {/* ─── 1. AI Research Dashboard (Top Layer) ─── */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-indigo-400 animate-pulse" />
+            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">AI Research Dashboard</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* 총 설교 카드 */}
+            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
+              <span className="text-[11px] font-bold text-slate-500">누적 설교 분석</span>
+              <div className="my-2">
+                <span className="text-3xl font-extrabold text-white tracking-tight">{totalSermons}</span>
+                <span className="text-xs text-slate-500 ml-1">편</span>
+              </div>
+              <span className="text-[10px] text-indigo-400 font-semibold">클라우드 통합 완료</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-paper-400 bg-paper-100 px-3 py-1.5 rounded-full">
-                설교까지 <span className="font-semibold text-paper-700">{daysUntilSermon}일</span>
+
+            {/* 총 성경 연구 카드 */}
+            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
+              <span className="text-[11px] font-bold text-slate-500">성경 정밀 연구</span>
+              <div className="my-2">
+                <span className="text-3xl font-extrabold text-white tracking-tight">{totalBibleStudies}</span>
+                <span className="text-xs text-slate-500 ml-1">회</span>
+              </div>
+              <span className="text-[10px] text-purple-400 font-semibold">어휘 및 원어 분석 연동</span>
+            </div>
+
+            {/* 최다 연구 본문 */}
+            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px] lg:col-span-1">
+              <span className="text-[11px] font-bold text-slate-500">이번 주 핵심 본문</span>
+              <div className="my-1.5">
+                <p className="text-[14px] font-bold text-white leading-snug truncate">{mostStudiedPassage}</p>
+              </div>
+              <span className="text-[10px] text-blue-400 font-semibold">로마서 강해 시리즈 연계</span>
+            </div>
+
+            {/* 트렌드 주제 */}
+            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
+              <span className="text-[11px] font-bold text-slate-500">트렌드 주제</span>
+              <div className="flex flex-wrap gap-1 my-2">
+                {trendingTopics.map(topic => (
+                  <span key={topic} className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                    #{topic}
+                  </span>
+                ))}
+              </div>
+              <span className="text-[10px] text-slate-500">총 12개 테마 연관</span>
+            </div>
+
+            {/* AI 실시간 인사이트 */}
+            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px] lg:col-span-1">
+              <span className="text-[11px] font-bold text-slate-500">AI 실시간 통찰</span>
+              <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                최근 칭의와 은혜에 관한 연구 흐름이 35% 증가했습니다.
+              </p>
+              <span className="text-[10px] text-purple-400 font-semibold flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+                분석 보고서 갱신됨
               </span>
             </div>
           </div>
+        </section>
 
-          {/* ─── Row 1: Hero Today's Work + Quick Stats ─── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-            {/* Hero Card: Today's Work */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-paper-200 p-6 ">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">진행 중</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <SaveStatusIndicator status={MOCK_SAVE_STATE.status} lastSavedAt={MOCK_SAVE_STATE.lastSavedAt} minimal />
-                  <span className="text-paper-300">·</span>
-                  <span className="text-[11px] text-paper-400">v{mockTodayProject.version}</span>
-                  <span className="text-paper-300">·</span>
-                  <span className="text-[11px] text-paper-400">{todayWordCount.toLocaleString()}자</span>
-                </div>
-              </div>
-
-              <h2 className="text-lg font-bold text-paper-900 font-serif mb-1">{mockTodayProject.title}</h2>
-              <div className="flex items-center gap-2 text-sm text-paper-500 mb-5">
-                <span className="font-medium text-paper-700">{mockTodayProject.passage}</span>
-                <span className="text-paper-300">·</span>
-                <span>{mockTodayProject.sermonDate}</span>
-                <span className="text-paper-300">·</span>
-                <span>{mockTodayProject.sermonType}</span>
-                {mockTodayProject.seriesName && (
-                  <>
-                    <span className="text-paper-300">·</span>
-                    <span className="text-green-600">{mockTodayProject.seriesName}</span>
-                  </>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-paper-500">원고 진행률</span>
-                  <span className="font-semibold text-paper-700">{todayPct}%</span>
-                </div>
-                <div className="adv-progress-bar h-1.5">
-                  <div
-                    className="adv-progress-fill bg-green-500 h-full rounded-full transition-all"
-                    style={{ width: `${todayPct}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="bg-paper-50 rounded-lg p-3 mb-4">
-                <p className="text-xs text-paper-600 leading-relaxed italic">
-                  &ldquo;{mockTodayProject.coreMessage}&rdquo;
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => router.push(`/advanced/projects/${mockTodayProject.id}`)}
-                  className="text-xs bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors font-medium"
-                >
-                  프로젝트 계속하기
-                </button>
-                <button
-                  onClick={() => router.push(`/advanced/projects/${mockTodayProject.id}?tab=study`)}
-                  className="text-xs border border-paper-200 hover:border-green-300 text-paper-600 hover:text-green-600 px-4 py-2 rounded-md transition-colors"
-                >
-                  성경 연구
-                </button>
-                <button
-                  onClick={() => router.push(`/advanced/projects/${mockTodayProject.id}?tab=manuscript`)}
-                  className="text-xs border border-paper-200 hover:border-green-300 text-paper-600 hover:text-green-600 px-4 py-2 rounded-md transition-colors"
-                >
-                  원고 작성
-                </button>
-              </div>
+        {/* ─── 2. AI Search Experience (Ask SermonAI) ─── */}
+        <section className="relative glass-dark p-8 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+          {/* 글로잉 내부 장식 */}
+          <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="max-w-2xl mx-auto text-center space-y-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold">
+              <Sparkles className="w-3 h-3 text-indigo-400 animate-bounce" />
+              SermonAI Cognitive Search
             </div>
-            <div className="space-y-4">
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader title="사역 현황" />
-                <div className="space-y-3">
-                  <StatRow label="전체 프로젝트" value={mockQuickStats.totalProjects} />
-                  <StatRow label="진행 중" value={mockQuickStats.inProgress} highlight="text-amber-600" />
-                  <StatRow label="완료" value={mockQuickStats.completed} highlight="text-green-600" />
-                  <StatRow label="이달 설교" value={mockQuickStats.thisMonthSermons} />
-                </div>
-                <div className="mt-4 pt-3 border-t border-paper-200">
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-paper-500">누적 원고</span>
-                    <span className="font-semibold text-paper-700">{(mockQuickStats.totalWords / 10000).toFixed(1)}만 자</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-paper-500">총 연구</span>
-                    <span className="font-semibold text-paper-700">{mockQuickStats.totalStudies}회</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader title="상태별" />
-                <div className="space-y-2.5">
-                  {PROJECT_STATUS_ORDER.map(status => {
-                    const count = mockProjects.filter(p => p.status === status).length
-                    const dotColor: Record<string, string> = {
-                      research: 'bg-teal-500',
-                      prepare: 'bg-amber-500',
-                      writing: 'bg-green-500',
-                      review: 'bg-blue-500',
-                      completed: 'bg-paper-400',
-                      archived: 'bg-paper-400',
-                    }
-                    return (
-                      <div key={status} className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${dotColor[status]}`} />
-                          <span className="text-paper-600">{PROJECT_STATUS_LABELS[status]}</span>
-                        </div>
-                        <span className="font-medium text-paper-700">{count}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="mt-3 pt-2.5 border-t border-paper-150">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-paper-500">전체 진행률</span>
-                    <span className="font-semibold text-green-600">{overallPct}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Row 2: Projects + Graph + Notes ─── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-            {/* Main Column: Projects + Recent Passages */}
-            <div className="lg:col-span-2 space-y-5">
-
-              {/* In-Progress Projects */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader
-                  title="진행 중 프로젝트"
-                  action={
-                    <button
-                      onClick={() => router.push('/advanced/projects')}
-                      className="text-[11px] text-paper-400 hover:text-green-600 transition-colors"
-                    >
-                      모두 보기 →
-                    </button>
-                  }
-                />
-                {inProgress.length === 0 ? (
-                  <div className="py-10 text-center">
-                    <p className="text-sm text-paper-400">진행 중인 프로젝트가 없습니다</p>
-                    <button onClick={() => router.push('/advanced/projects/new')}
-                      className="text-xs text-green-600 hover:underline mt-2 inline-block font-medium">
-                      + 새 프로젝트 시작하기
-                    </button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-paper-150">
-                    {inProgress.map(project => {
-                      const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
-                      const totalSteps = PROJECT_STATUS_ORDER.length - 1
-                      const percent = Math.round((statusIndex / totalSteps) * 100)
-                      return (
-                        <div
-                          key={project.id}
-                          className="flex items-center gap-4 py-3 hover:bg-paper-50/50 rounded-lg px-2 -mx-2 cursor-pointer transition-colors"
-                          onClick={() => router.push(`/advanced/projects/${project.id}`)}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-sm font-medium text-paper-800 truncate">{project.title}</span>
-                              <ProjectStatusBadge status={project.status} />
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-paper-500">
-                              <span>{project.passage}</span>
-                              <span className="text-paper-300">·</span>
-                              <span>{project.sermonDate}</span>
-                              {project.seriesName && (
-                                <>
-                                  <span className="text-paper-300">·</span>
-                                  <span className="text-green-600">{project.seriesName}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <div className="shrink-0 w-24">
-                            <ProgressBar value={percent} max={100} color={project.status === 'writing' ? 'bg-green-500' : project.status === 'prepare' ? 'bg-amber-500' : 'bg-teal-500'} />
-                            <div className="text-[10px] text-paper-400 text-right mt-0.5">{percent}%</div>
-                          </div>
-                          <span className="text-xs text-paper-400 shrink-0 w-12 text-right">
-                            v{project.version}
-                          </span>
-                          {project.wordCount > 0 && (
-                            <span className="text-xs text-paper-400 shrink-0 w-16 text-right">
-                              {project.wordCount.toLocaleString()}자
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Recent Passages */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader
-                  title="최근 연구한 본문"
-                  action={
-                    <button
-                      onClick={() => router.push('/advanced/bible')}
-                      className="text-[11px] text-paper-400 hover:text-green-600 transition-colors"
-                    >
-                      본문 연구 →
-                    </button>
-                  }
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {mockRecentPassages.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => router.push('/advanced/bible')}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-paper-150 hover:border-green-200 hover:bg-green-50/30 transition-colors text-left"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-paper-100 flex items-center justify-center text-xs font-bold text-paper-500 shrink-0">
-                        {p.book.slice(0, 2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-paper-800 block truncate">{p.display}</span>
-                        <span className="text-[11px] text-paper-400">연구 {p.studyCount}회 · {p.lastStudied}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">지능형 말씀 사역 탐색</h3>
+              <p className="text-xs text-slate-500 font-medium">
+                키워드 검색을 넘어 인공지능에게 설교 준비에 필요한 데이터 분석을 직접 질문해 보세요.
+              </p>
             </div>
 
-            {/* Right Column: Graph + Notes */}
-            <div className="space-y-5">
-
-              {/* Graph Preview */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader
-                  title="지식 그래프"
-                  action={
-                    <button
-                      onClick={() => router.push('/advanced/graph')}
-                      className="text-[11px] text-paper-400 hover:text-green-600 transition-colors"
-                    >
-                      전체 그래프 →
-                    </button>
-                  }
+            {/* ChatGPT 스타일 인풋창 */}
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25 group-focus-within:opacity-50 transition duration-500" />
+              <div className="relative flex items-center bg-[#070b18] rounded-2xl border border-white/5 overflow-hidden">
+                <Search className="w-5 h-5 text-slate-500 ml-4 shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Ask SermonAI: '은혜에 관한 로마서 설교 중 요약본이 완성된 것들만 보여줘...'"
+                  className="w-full bg-transparent text-[14px] text-slate-100 placeholder:text-slate-600 outline-none px-4 py-4 font-medium"
                 />
-                <div className="relative h-[220px] bg-paper-50 rounded-lg overflow-hidden border border-paper-150">
-                  <GraphPreviewSVG />
-                  <div className="absolute bottom-2 left-3 flex gap-3 text-[9px] text-paper-400">
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500" />설교</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slateblue-500" />본문</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gold-500" />주제</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-400" />시리즈</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Notes */}
-              <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-                <AppSectionHeader
-                  title="최근 통찰 노트"
-                  action={
-                    <button
-                      onClick={() => router.push('/advanced/notes')}
-                      className="text-[11px] text-paper-400 hover:text-green-600 transition-colors"
-                    >
-                      모두 보기 →
-                    </button>
-                  }
-                />
-                <div className="space-y-2.5">
-                  {mockNotes.map(note => (
-                    <button
-                      key={note.id}
-                      onClick={() => router.push('/advanced/notes')}
-                      className="w-full text-left p-3 rounded-lg border border-paper-150 hover:border-gold-200 hover:bg-gold-50/20 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <NoteTypeBadge type={note.noteType} />
-                        <span className="text-[10px] text-paper-400">{note.passage}</span>
-                      </div>
-                      <span className="text-xs font-medium text-paper-800 block truncate">{note.title}</span>
-                      <span className="text-[11px] text-paper-400 line-clamp-1 mt-0.5 block">{note.preview}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Row 3: Recommendations ─── */}
-          <div className="bg-white rounded-xl border border-paper-200 p-5 ">
-            <AppSectionHeader title="관련 설교 자료 · 재사용 추천" />
-            {mockRecommendations.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-xs text-paper-500">아직 충분한 자료가 쌓이지 않았습니다</p>
-                <p className="text-[11px] text-paper-400 mt-1">프로젝트와 노트가 축적되면 관련 설교 자료를 추천해 드립니다</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {mockRecommendations.map(rec => (
-                  <button
-                    key={rec.id}
-                    onClick={() => router.push(
-                      rec.type === 'reuse' ? '/advanced/projects' :
-                      rec.type === 'connection' ? '/advanced/notes' :
-                      '/advanced/bible'
-                    )}
-                    className="text-left p-4 rounded-lg border border-paper-200 hover:border-green-200 hover:bg-green-50/20 transition-colors"
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white mr-2"
                   >
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
-                        rec.type === 'reuse' ? 'bg-green-100 text-green-700' :
-                        rec.type === 'connection' ? 'bg-gold-100 text-gold-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {rec.type === 'reuse' ? '재사용' : rec.type === 'connection' ? '연결' : '추천'}
-                      </span>
-                      <span className="text-[9px] text-paper-400 ml-auto">
-                        {rec.type === 'reuse' ? '프로젝트' : rec.type === 'connection' ? '노트' : '본문'}
-                      </span>
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 추천 칩 리스트 */}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              {SUGGESTION_CHIPS.map(chip => (
+                <button
+                  key={chip.label}
+                  onClick={() => setSearchQuery(chip.query)}
+                  className={`text-[11px] px-3.5 py-1.5 rounded-xl border transition-all duration-300 font-semibold ${
+                    searchQuery === chip.query
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/25'
+                      : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 3. Knowledge Graph Section (Obsidian Style) ─── */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Network className="w-5 h-5 text-purple-400 animate-pulse" />
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Knowledge Network Graph</h2>
+            </div>
+            <span className="text-[10px] text-slate-600 font-medium">노드를 클릭하여 즉시 검색 필터를 적용하세요.</span>
+          </div>
+
+          <div className="relative h-[340px] rounded-3xl border border-white/5 bg-[#04060f]/60 overflow-hidden shadow-2xl">
+            {/* SVG 링크 및 노드 그리기 */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 800 340">
+              <defs>
+                <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* 연결 선 */}
+              {GRAPH_LINKS.map((link, idx) => {
+                const src = GRAPH_NODES.find(n => n.id === link.source)
+                const tgt = GRAPH_NODES.find(n => n.id === link.target)
+                if (!src || !tgt) return null
+                return (
+                  <line
+                    key={idx}
+                    x1={src.cx} y1={src.cy}
+                    x2={tgt.cx} y2={tgt.cy}
+                    stroke="rgba(255, 255, 255, 0.08)"
+                    strokeWidth="1.5"
+                    className="line-trail"
+                  />
+                )
+              })}
+
+              {/* 노드 그래픽 요소 */}
+              {GRAPH_NODES.map((node) => (
+                <g key={node.id}>
+                  {/* 글로우 백그라운드 */}
+                  <circle 
+                    cx={node.cx} 
+                    cy={node.cy} 
+                    r={node.r * 1.8} 
+                    fill="url(#node-glow)" 
+                    opacity="0.3"
+                  />
+                </g>
+              ))}
+            </svg>
+
+            {/* 실제 마우스 클릭을 지원하기 위해 절대좌표 div 노드를 배치 */}
+            {GRAPH_NODES.map((node) => (
+              <button
+                key={node.id}
+                onClick={() => setSearchQuery(node.label)}
+                className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group"
+                style={{ left: `${(node.cx / 800) * 100}%`, top: `${(node.cy / 340) * 100}%` }}
+              >
+                <div 
+                  className="rounded-full flex items-center justify-center border transition-all shadow-lg text-white font-bold"
+                  style={{ 
+                    width: `${node.r * 2}px`, 
+                    height: `${node.r * 2}px`,
+                    backgroundColor: node.color,
+                    borderColor: 'rgba(255, 255, 255, 0.25)',
+                    boxShadow: `0 0 15px ${node.glowColor}`
+                  }}
+                >
+                  <span className="text-[10px] tracking-tight">{node.label.slice(0, 2)}</span>
+                </div>
+                {/* 툴팁/레이블 */}
+                <div className="absolute top-[105%] px-2 py-0.5 rounded bg-[#090d20] border border-white/10 text-[9.5px] font-bold text-slate-300 opacity-80 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
+                  {node.label}
+                </div>
+              </button>
+            ))}
+
+            {/* 그래프 맵 범례 */}
+            <div className="absolute bottom-4 left-5 flex gap-4 text-[10px] text-slate-500 font-bold bg-[#070a16]/80 px-4 py-2 rounded-xl border border-white/5 backdrop-blur-sm">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-500" />성경 권</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500" />설교 원고</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" />사역 주제</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />강해 시리즈</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 4. Sermon Cards Section ─── */}
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Archive className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Sermon Asset Cards</h2>
+            </div>
+            <span className="text-xs text-slate-500 font-bold">
+              {filteredSermons.length}개의 정렬 결과
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSermons.map(sermon => {
+              const tone = getEmotionalTone(sermon)
+              const theme = sermon.themeNames[0] || '은혜'
+              return (
+                <div
+                  key={sermon.id}
+                  className="group relative rounded-2xl glass-dark border border-white/5 p-6 space-y-4 hover:border-indigo-500/30 transition-all duration-500 flex flex-col justify-between min-h-[300px]"
+                  style={{
+                    boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.4)'
+                  }}
+                >
+                  <div className="space-y-3">
+                    {/* 상단 메타 정보 */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500">{sermon.sermonDate}</span>
+                      {sermon.seriesName && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold">
+                          {sermon.seriesName}
+                        </span>
+                      )}
                     </div>
-                    <h4 className="text-sm font-medium text-paper-800 mb-1">{rec.title}</h4>
-                    <p className="text-xs text-paper-500 leading-relaxed">{rec.description}</p>
-                    <div className="flex items-center gap-1 mt-2.5">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={i}
-                            className={`w-2 h-1.5 rounded-sm ${i < Math.round(rec.relevance / 2) ? 'bg-green-300' : 'bg-paper-200'}`}
-                          />
-                        ))}
+
+                    {/* 타이틀 및 성경 구절 */}
+                    <div className="space-y-1">
+                      <h3 className="text-[16px] font-bold text-white group-hover:text-indigo-400 transition-colors leading-snug">
+                        {sermon.title}
+                      </h3>
+                      <div className="inline-block text-[11px] font-extrabold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                        {sermon.passage}
                       </div>
                     </div>
-                  </button>
-                ))}
+
+                    {/* 설교 요약 */}
+                    <p className="text-[12px] text-slate-400 leading-relaxed line-clamp-3 font-medium">
+                      {sermon.coreMessage}
+                    </p>
+                  </div>
+
+                  {/* 🚨 AI 생성 메타데이터 태그 (Theme, Tone, Audience, Keywords) */}
+                  <div className="space-y-3 pt-4 border-t border-white/5">
+                    <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-bold">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-600">주제:</span>
+                        <span className="text-purple-300 font-extrabold">{theme}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-600">감정 톤:</span>
+                        <span className="text-emerald-300 font-extrabold">{tone}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-600">회중:</span>
+                        <span className="text-blue-300 font-extrabold">{sermon.audience.join(', ')}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-600">키워드:</span>
+                        <span className="text-amber-300 font-extrabold truncate">{sermon.tagNames.slice(0, 2).join(', ')}</span>
+                      </div>
+                    </div>
+
+                    {/* 🚀 AI Action Panel (Hover Slide-Up / Grid Action buttons) */}
+                    <div className="pt-2">
+                      <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-600 mb-1.5">AI Action Panel</div>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          onClick={() => handleAiAction(sermon, 'summary')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-indigo-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="설교 요약서 생성"
+                        >
+                          <FileCheck className="w-3 h-3" />
+                          <span>요약</span>
+                        </button>
+                        <button
+                          onClick={() => handleAiAction(sermon, 'questions')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-purple-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="소그룹 질문 생성"
+                        >
+                          <Users className="w-3 h-3" />
+                          <span>질문</span>
+                        </button>
+                        <button
+                          onClick={() => handleAiAction(sermon, 'cardnews')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-pink-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="카드뉴스 템플릿 생성"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>카드</span>
+                        </button>
+                        <button
+                          onClick={() => handleAiAction(sermon, 'shorts')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-blue-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="유튜브 쇼츠 대본"
+                        >
+                          <Globe className="w-3 h-3" />
+                          <span>쇼츠</span>
+                        </button>
+                        <button
+                          onClick={() => handleAiAction(sermon, 'ppt')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-amber-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="PPT 슬라이드 레이아웃 생성"
+                        >
+                          <Presentation className="w-3 h-3" />
+                          <span>PPT</span>
+                        </button>
+                        <button
+                          onClick={() => handleAiAction(sermon, 'guide')}
+                          className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-emerald-600 text-[10px] text-slate-400 hover:text-white transition-all font-bold"
+                          title="토론 가이드 생성"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          <span>가이드</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* ─── AI Generation Modal ─── */}
+      {activeActionSermon && activeActionType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#03050c]/80 backdrop-blur-md">
+          <div className="relative w-full max-w-2xl rounded-3xl glass-dark border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-thin">
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => {
+                setActiveActionSermon(null)
+                setActiveActionType(null)
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* 헤더 */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                <BrainCircuit className="w-5 h-5 text-indigo-400 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-[17px] font-bold text-white">SermonAI 목회 콘텐츠 생성</h4>
+                <p className="text-[11px] text-slate-500 font-semibold">{activeActionSermon.title} · {activeActionSermon.passage}</p>
+              </div>
+            </div>
+
+            {/* 출력 화면 */}
+            <div className="bg-[#060a17] border border-white/5 rounded-2xl p-5 min-h-[250px] relative overflow-hidden flex flex-col justify-center">
+              {generating ? (
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                  <div className="text-center">
+                    <p className="text-[13px] font-bold text-slate-300">인공지능 가공 엔진 작동 중</p>
+                    <p className="text-[10.5px] text-slate-500">본문 문맥을 토대로 최적의 산출물을 조율하고 있습니다...</p>
+                  </div>
+                </div>
+              ) : (
+                <pre className="text-slate-300 text-xs sm:text-[13px] font-medium leading-relaxed font-sans whitespace-pre-wrap select-all">
+                  {modalOutput}
+                </pre>
+              )}
+            </div>
+
+            {/* 풋버튼 */}
+            {!generating && (
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold">
+                  <ThumbsUp className="w-3.5 h-3.5 text-indigo-400" />
+                  텍스트를 드래그하거나 복사하여 즉시 활용할 수 있습니다.
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(modalOutput)
+                    alert('클립보드에 복사되었습니다.')
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[12px] shadow-lg shadow-indigo-600/15 transition-all"
+                >
+                  클립보드 복사
+                </button>
               </div>
             )}
           </div>
-
-          {/* ─── Next Steps Flow ─── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <NextStepCard
-              title="성경 연구 → 설교 준비"
-              description="연구한 원어 분석과 문맥 통찰을 바탕으로 중심명제와 대지를 정리하세요."
-              actions={[
-                { label: '연구 계속', href: `/advanced/projects/${mockTodayProject.id}?tab=study` },
-                { label: '준비로 이동', href: `/advanced/projects/${mockTodayProject.id}?tab=prep`, primary: true },
-              ]}
-            />
-            <NextStepCard
-              title="설교 준비 → 설교 작성"
-              description="중심명제와 대지를 바탕으로 설교 원고를 작성하세요. 준비 단계에서 정리한 내용이 자동 반영됩니다."
-              actions={[
-                { label: '준비 계속', href: `/advanced/projects/${mockTodayProject.id}?tab=prep` },
-                { label: '원고 작성', href: `/advanced/projects/${mockTodayProject.id}?tab=manuscript`, primary: true },
-              ]}
-            />
-            <NextStepCard
-              title="설교 작성 → 아카이브"
-              description="완성된 설교를 아카이브에 저장하고, 그래프와 시리즈에 연결하세요."
-              actions={[
-                { label: '원고 계속', href: `/advanced/projects/${mockTodayProject.id}?tab=manuscript` },
-                { label: '아카이브', href: '/advanced/archive' },
-                { label: '그래프 보기', href: '/advanced/graph' },
-              ]}
-            />
-          </div>
-
-          {/* Bottom spacer */}
-          <div className="h-4" />
         </div>
-      </div>
+      )}
     </div>
-  )
-}
-
-/* ─── Sub-components ─── */
-
-function StatRow({ label, value, highlight }: { label: string; value: number; highlight?: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-paper-500">{label}</span>
-      <span className={`text-lg font-bold ${highlight || 'text-paper-800'}`}>{value}</span>
-    </div>
-  )
-}
-
-function NoteTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { label: string; color: string; bg: string }> = {
-    exegetical: { label: '주석', color: 'text-teal-700', bg: 'bg-teal-100' },
-    theological: { label: '신학', color: 'text-gold-700', bg: 'bg-gold-100' },
-    pastoral: { label: '목회', color: 'text-green-700', bg: 'bg-green-100' },
-  }
-  const c = config[type] || { label: type, color: 'text-paper-600', bg: 'bg-paper-100' }
-  return (
-    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${c.bg} ${c.color}`}>
-      {c.label}
-    </span>
-  )
-}
-
-/* ─── Graph Preview (Deterministic) ─── */
-
-function GraphPreviewSVG() {
-  const nodes = mockGraphData.nodes
-  const links = mockGraphData.links
-
-  // Deterministic positions based on node type and index
-  const positions: Record<string, { x: number; y: number }> = {
-    'proj-001': { x: 120, y: 40 },
-    'proj-002': { x: 280, y: 50 },
-    'proj-004': { x: 200, y: 140 },
-    'proj-005': { x: 60, y: 160 },
-    'pass-008': { x: 100, y: 90 },
-    'pass-005': { x: 260, y: 100 },
-    'pass-013': { x: 180, y: 170 },
-    'pass-024': { x: 150, y: 110 },
-    'pass-ps23': { x: 50, y: 120 },
-    'thm-faith': { x: 300, y: 130 },
-    'thm-spirit': { x: 140, y: 70 },
-    'thm-grace': { x: 220, y: 80 },
-    'thm-hope': { x: 80, y: 180 },
-    'ser-001': { x: 160, y: 20 },
-  }
-
-  return (
-    <svg viewBox="0 0 340 200" className="w-full h-full">
-      {/* Links */}
-      {links.map((link, i) => {
-        const s = positions[link.source]
-        const t = positions[link.target]
-        if (!s || !t) return null
-        return (
-          <line
-            key={i}
-            x1={s.x} y1={s.y} x2={t.x} y2={t.y}
-            stroke="#E4DED4"
-            strokeWidth={Math.max(0.5, link.weight / 4)}
-            strokeOpacity={0.6}
-          />
-        )
-      })}
-      {/* Nodes */}
-      {nodes.map(node => {
-        const pos = positions[node.id]
-        if (!pos) return null
-        const r = node.size / 3
-        return (
-          <g key={node.id}>
-            <circle cx={pos.x} cy={pos.y} r={r} fill={node.color} opacity={0.8} />
-            <text
-              x={pos.x}
-              y={pos.y + r + 10}
-              textAnchor="middle"
-              fontSize="9.5"
-              fill="#6B6358"
-              fontFamily="sans-serif"
-            >
-              {node.label.length > 8 ? node.label.slice(0, 8) + '…' : node.label}
-            </text>
-          </g>
-        )
-      })}
-    </svg>
   )
 }
