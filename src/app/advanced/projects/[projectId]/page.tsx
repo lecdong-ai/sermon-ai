@@ -2,6 +2,9 @@
 
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
+import {
+  Eye, BookOpen, AlignLeft, Pen, Network, History
+} from 'lucide-react'
 import { getMockProjectDetail } from '@/lib/advanced/mockData'
 import ProjectHeader from '@/components/advanced/project/ProjectHeader'
 import RightPanel from '@/components/advanced/project/RightPanel'
@@ -13,22 +16,13 @@ import ConnectionsTab from '@/components/advanced/project/ConnectionsTab'
 import VersionsTab from '@/components/advanced/project/VersionsTab'
 
 const TABS = [
-  { key: 'overview', label: '개요' },
-  { key: 'study', label: '성경 연구' },
-  { key: 'prep', label: '설교 준비' },
-  { key: 'manuscript', label: '설교 작성' },
-  { key: 'connections', label: '연결 보기' },
-  { key: 'versions', label: '버전 기록' },
+  { key: 'overview', label: '개요', icon: Eye },
+  { key: 'study', label: '성경 연구', icon: BookOpen },
+  { key: 'prep', label: '설교 준비', icon: AlignLeft },
+  { key: 'manuscript', label: '설교 작성', icon: Pen },
+  { key: 'connections', label: '연결 보기', icon: Network },
+  { key: 'versions', label: '버전 기록', icon: History },
 ]
-
-const TAB_COLORS: Record<string, string> = {
-  overview: 'border-white/5 text-slate-200',
-  study: 'border-teal-500 text-teal-700',
-  prep: 'border-amber-500 text-amber-700',
-  manuscript: 'border-indigo-600 text-indigo-300',
-  connections: 'border-slateblue-500 text-slateblue-700',
-  versions: 'border-white/5 text-slate-200',
-}
 
 function ProjectContent() {
   const params = useParams()
@@ -50,21 +44,30 @@ function ProjectContent() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {/* Tab Bar */}
-          <div className="bg-[#04060f]/60 border-b border-white/5 px-6 sticky top-0 z-10">
-            <div className="flex max-w-[1440px] mx-auto">
-              {TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => handleTabChange(tab.key)}
-                  className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                    currentTab === tab.key
-                      ? `${TAB_COLORS[tab.key]} border-b-2`
-                      : 'text-slate-500 border-transparent hover:text-slate-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="sticky top-0 z-10 bg-[#04060f]/80 backdrop-blur-md border-b border-white/5">
+            <div className="max-w-[1440px] mx-auto px-6 py-3">
+              <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/5 w-fit">
+                {TABS.map(tab => {
+                  const Icon = tab.icon
+                  const isActive = currentTab === tab.key
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => handleTabChange(tab.key)}
+                      className={`
+                        flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200
+                        ${isActive
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/25'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        }
+                      `}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 

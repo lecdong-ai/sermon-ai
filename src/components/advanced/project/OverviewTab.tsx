@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER } from '@/lib/advanced/types'
 import { useRouter } from 'next/navigation'
+import { BookOpen, AlignLeft, Pen, Network, History } from 'lucide-react'
 import { AppSectionHeader } from '@/components/advanced/shared'
 import StageTransitionCard from '@/components/advanced/shared/StageTransitionCard'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
@@ -81,35 +82,35 @@ export default function OverviewTab({ project }: Props) {
         {/* ─── 빠른 이동 + 버전 기록 ─── */}
         <div className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
           <AppSectionHeader title="작업 영역" />
-          <div className="flex items-center gap-2 flex-wrap mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
             <QuickNavButton
               label="성경 연구"
-              icon={<BookIcon />}
+              icon={BookOpen}
               color="teal"
               onClick={() => router.push(`/advanced/projects/${project.id}?tab=study`)}
             />
             <QuickNavButton
               label="설교 준비"
-              icon={<EditIcon />}
+              icon={AlignLeft}
               color="amber"
               onClick={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
             />
             <QuickNavButton
               label="설교 작성"
-              icon={<PencilIcon />}
-              color="green"
+              icon={Pen}
+              color="indigo"
               onClick={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
             />
             <QuickNavButton
               label="연결 보기"
-              icon={<LinkIcon />}
-              color="slateblue"
+              icon={Network}
+              color="purple"
               onClick={() => router.push(`/advanced/projects/${project.id}?tab=connections`)}
             />
             <QuickNavButton
               label="버전 기록"
-              icon={<HistoryIcon />}
-              color="paper"
+              icon={History}
+              color="slate"
               onClick={() => setShowVersions(true)}
             />
           </div>
@@ -287,39 +288,25 @@ function OverviewStatCard({ value, label, color, subtitle }: {
   )
 }
 
-function QuickNavButton({ label, icon, color, onClick }: {
-  label: string; icon: React.ReactNode; color: string; onClick: () => void
+function QuickNavButton({ label, icon: Icon, color, onClick }: {
+  label: string; icon: any; color: string; onClick: () => void
 }) {
   const colorMap: Record<string, string> = {
-    teal: 'border-teal-200 text-teal-700 bg-teal-50/50 hover:bg-teal-100',
-    amber: 'border-amber-200 text-amber-700 bg-amber-50/50 hover:bg-amber-100',
-    green: 'border-indigo-500/20 text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20',
-    slateblue: 'border-slateblue-200 text-slateblue-700 bg-slateblue-50/50 hover:bg-slateblue-100',
-    paper: 'border-white/5 text-slate-200 bg-[#04060f]/60 hover:bg-white/5',
+    teal: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:border-cyan-400/40 hover:bg-cyan-500/15',
+    amber: 'bg-amber-500/10 text-amber-300 border-amber-500/20 hover:border-amber-400/40 hover:bg-amber-500/15',
+    indigo: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20 hover:border-indigo-400/40 hover:bg-indigo-500/15',
+    purple: 'bg-purple-500/10 text-purple-300 border-purple-500/20 hover:border-purple-400/40 hover:bg-purple-500/15',
+    slate: 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20 hover:bg-white/10',
   }
   return (
     <button
       onClick={onClick}
-      className={`text-xs px-3 py-2 rounded-xl border transition-colors flex items-center gap-1.5 ${colorMap[color] || colorMap.paper}`}
+      className={`flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border transition-all duration-200 group ${colorMap[color] || colorMap.slate}`}
     >
-      <span className="w-4 h-4">{icon}</span>
-      {label}
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+        <Icon className="w-5 h-5" />
+      </div>
+      <span className="text-[11px] font-bold leading-tight">{label}</span>
     </button>
   )
-}
-
-function BookIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
-}
-function EditIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-}
-function PencilIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-}
-function LinkIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-}
-function HistoryIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>
 }
