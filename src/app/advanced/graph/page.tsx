@@ -88,8 +88,7 @@ export default function GraphPage() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [graphTheme, setGraphTheme] = useState<'light' | 'dark'>('dark')
-  const isDark = graphTheme === 'dark'
+  const isDark = true
 
   const focusCenterNode = useMemo(() => {
     if (focusMode === 'passage' || focusMode === 'theme') {
@@ -285,21 +284,12 @@ export default function GraphPage() {
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
-            {/* Theme toggle */}
-            <button onClick={() => setGraphTheme(t => t === 'dark' ? 'light' : 'dark')}
-              className={`p-1.5 rounded transition-colors ${isDark ? 'hover:bg-white/10 text-white/35' : 'hover:bg-paper-100 text-paper-500'}`} title="테마 전환">
-              {graphTheme === 'dark' ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
-            </button>
             <button onClick={() => { const el = containerRef.current?.querySelector('svg'); if (el) el.dispatchEvent(new WheelEvent('wheel', { deltaY: -100 })) }}
-              className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-white/10 text-white/35' : 'hover:bg-paper-100 text-paper-500'}`}>
+              className="p-1 rounded transition-colors hover:bg-white/10 text-white/35">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             </button>
             <button onClick={() => { const el = containerRef.current?.querySelector('svg'); if (el) el.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 })) }}
-              className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-white/10 text-white/35' : 'hover:bg-paper-100 text-paper-500'}`}>
+              className="p-1 rounded transition-colors hover:bg-white/10 text-white/35">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
             </button>
           </div>
@@ -338,7 +328,7 @@ export default function GraphPage() {
             neighborIds={neighborIds}
             onSelectNode={setSelectedNode}
             onHoverNode={setHoveredNode}
-            theme={graphTheme}
+            theme="dark"
           />
         )}
       </div>
@@ -355,7 +345,7 @@ export default function GraphPage() {
             if (n) setSelectedNode(n)
           }}
           router={router}
-          theme={graphTheme}
+          theme="dark"
         />
       )}
     </div>
