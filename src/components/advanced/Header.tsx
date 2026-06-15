@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Plus, Sparkles, Bug } from 'lucide-react'
+import { useAuth } from '@/components/AuthProvider'
 
 function getCookie(name: string): string {
   if (typeof document === 'undefined') return ''
@@ -16,6 +17,7 @@ function setCookie(name: string, value: string) {
 
 export default function AdvancedHeader() {
   const router = useRouter()
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [mockOn, setMockOn] = useState(false)
 
@@ -36,6 +38,9 @@ export default function AdvancedHeader() {
       router.push(`/advanced/projects?search=${encodeURIComponent(query.trim())}`)
     }
   }
+
+  const emailPrefix = user?.email ? user.email.split('@')[0] : '?'
+  const fullEmail = user?.email || '로그인 필요'
 
   return (
     <header className="h-14 border-b border-white/5 bg-[#050814]/80 backdrop-blur-md flex items-center justify-between px-6 shrink-0 relative z-10">
@@ -82,8 +87,15 @@ export default function AdvancedHeader() {
         </button>
 
         {/* 사용자 정보 */}
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-xs font-bold text-indigo-300 shadow-md">
-          K
+        <div
+          className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-[10px] font-bold text-indigo-300 shadow-md cursor-default relative group"
+          title={fullEmail}
+        >
+          {emailPrefix.slice(0, 2).toUpperCase()}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-lg bg-[#0c1020] border border-white/10 text-[10px] text-slate-300 font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
+            {fullEmail}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0c1020]" />
+          </div>
         </div>
       </div>
     </header>
