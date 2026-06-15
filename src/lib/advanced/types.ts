@@ -35,6 +35,14 @@ export interface SaveState {
   message?: string
 }
 
+export interface BiblePassage {
+  book: string
+  chapter: number
+  verseStart: number
+  verseEnd: number | null
+  passage: string
+}
+
 export interface AdvancedProject {
   id: string
   title: string
@@ -43,6 +51,7 @@ export interface AdvancedProject {
   chapter: number
   verseStart: number
   verseEnd: number | null
+  passages?: BiblePassage[]
   status: ProjectStatus
   sermonDate: string
   preacher: string

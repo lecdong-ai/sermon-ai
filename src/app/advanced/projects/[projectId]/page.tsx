@@ -74,7 +74,7 @@ function ProjectContent() {
           {/* Tab Content */}
           <div className="max-w-[1440px] mx-auto p-6 animate-fade-in">
             {currentTab === 'overview' && <OverviewTab project={project} />}
-            {currentTab === 'study' && <BibleStudyTab project={project} />}
+            {currentTab === 'study' && <BibleStudyTab project={project} passages={project.passages} />}
             {currentTab === 'prep' && <PrepTab project={project} />}
             {currentTab === 'manuscript' && <ManuscriptTab project={project} />}
             {currentTab === 'connections' && <ConnectionsTab project={project} />}

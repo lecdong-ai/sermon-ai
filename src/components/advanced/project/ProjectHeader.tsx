@@ -50,7 +50,15 @@ export default function ProjectHeader({ project }: Props) {
 
             {/* 본문 정보 행 */}
             <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400 flex-wrap">
-              <span className="font-medium text-slate-100 bg-white/5 px-2 py-0.5 rounded">{project.passage}</span>
+              <div className="flex items-center gap-1">
+                {project.passages && project.passages.length > 0 ? (
+                  project.passages.map((p, i) => (
+                    <span key={i} className="font-medium text-slate-100 bg-white/5 px-2 py-0.5 rounded">{p.passage}</span>
+                  ))
+                ) : (
+                  <span className="font-medium text-slate-100 bg-white/5 px-2 py-0.5 rounded">{project.passage}</span>
+                )}
+              </div>
               <span className="text-slate-600">·</span>
               <span>{project.sermonDate}</span>
               <span className="text-slate-600">·</span>

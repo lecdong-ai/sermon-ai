@@ -2,6 +2,7 @@
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2, Sparkles, Plus, X, Check } from 'lucide-react'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
@@ -167,9 +168,27 @@ const REQUIRED_FIELDS: Record<SectionId, (keyof PrepData | string)[]> = {
 
 export default function PrepTab({ project }: Props) {
   const router = useRouter()
-  const [prepData, setPrepData] = useState<PrepData>(JOHN_PREP_DATA)
+  const [prepData, setPrepData] = useState<PrepData>(() => ({
+    sermonTitle: project.title || '',
+    coreMessage: project.coreMessage || '',
+    sermonPurpose: '',
+    expectedResponse: '',
+    passageStructure: '',
+    contextPoints: [],
+    keyWords: [],
+    researchInsights: [],
+    outlines: [],
+    applicationPoints: [],
+    deliveryIntro: '',
+    deliveryFlow: '',
+    deliveryTransitions: [],
+    deliveryConclusion: '',
+    prepStatus: 'draft',
+  }))
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [outlineLoading, setOutlineLoading] = useState(false)
+  const [outlineCandidates, setOutlineCandidates] = useState<AiOutlineCandidate[] | null>(null)
 
   useEffect(() => {
     try {
@@ -235,6 +254,71 @@ export default function PrepTab({ project }: Props) {
     setPrepData(prev => ({
       ...prev,
       applicationPoints: prev.applicationPoints.map(a => a.id === id ? { ...a, [field]: value } : a),
+    }))
+  }, [])
+
+  const generateOutlines = useCallback(() => {
+    setOutlineLoading(true)
+    setOutlineCandidates(null)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'outline',
+        data: {
+          book: project.book,
+          chapter: String(project.chapter),
+          verseStart: String(project.verseStart),
+          verseEnd: project.verseEnd ? String(project.verseEnd) : undefined,
+          passage: project.passage,
+          passageStructure: prepData.passageStructure,
+          keyWords: prepData.keyWords,
+          researchInsights: prepData.researchInsights,
+          coreMessage: prepData.coreMessage,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          setOutlineCandidates(parsed.candidates || [])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setOutlineLoading(false))
+  }, [project, prepData])
+
+  const selectOutlineCandidate = useCallback((index: number) => {
+    const candidate = outlineCandidates?.[index]
+    if (!candidate) return
+    const newOutlines: PrepOutline[] = candidate.mainPoints.map((mp, i) => ({
+      id: `outline-${Date.now()}-${i}`,
+      title: mp.title,
+      description: mp.description,
+      relatedVerse: mp.relatedVerse,
+      applicationNote: mp.applicationNote,
+      transitionNote: mp.transitionNote,
+    }))
+    setPrepData(prev => ({ ...prev, outlines: newOutlines }))
+    setOutlineCandidates(null)
+  }, [outlineCandidates])
+
+  const discardOutlineCandidates = useCallback(() => {
+    setOutlineCandidates(null)
+  }, [])
+
+  const addEmptyOutline = useCallback(() => {
+    setPrepData(prev => ({
+      ...prev,
+      outlines: [...prev.outlines, {
+        id: `outline-${Date.now()}`,
+        title: '',
+        description: '',
+        relatedVerse: '',
+        applicationNote: '',
+        transitionNote: '',
+      }],
     }))
   }, [])
 
@@ -335,6 +419,12 @@ export default function PrepTab({ project }: Props) {
               isActive={activeSection === 'outline'}
               onActivate={() => setActiveSection('outline')}
               onUpdate={updateOutline}
+              onGenerateAI={generateOutlines}
+              onAddOutline={addEmptyOutline}
+              aiLoading={outlineLoading}
+              aiCandidates={outlineCandidates}
+              onSelectCandidate={selectOutlineCandidate}
+              onDiscardCandidates={discardOutlineCandidates}
             />
 
             {/* Section: 적용과 회중 연결 */}
@@ -756,14 +846,34 @@ function PassageFlowSection({
 
 /* ─── Outline Section ─── */
 
+interface AiOutlineCandidate {
+  styleTitle: string
+  introductionSuggestion: string
+  mainPoints: {
+    title: string
+    description: string
+    relatedVerse: string
+    applicationNote: string
+    transitionNote: string
+  }[]
+  conclusionSuggestion: string
+}
+
 function OutlineSection({
   outlines, sectionRef, isActive, onActivate, onUpdate,
+  onGenerateAI, onAddOutline, aiLoading, aiCandidates, onSelectCandidate, onDiscardCandidates,
 }: {
   outlines: PrepOutline[]
   sectionRef: (el: HTMLDivElement | null) => void
   isActive: boolean
   onActivate: () => void
   onUpdate: (id: string, field: keyof PrepOutline, value: string) => void
+  onGenerateAI?: () => void
+  onAddOutline?: () => void
+  aiLoading?: boolean
+  aiCandidates?: AiOutlineCandidate[] | null
+  onSelectCandidate?: (index: number) => void
+  onDiscardCandidates?: () => void
 }) {
   return (
     <div ref={sectionRef} onClick={onActivate}
@@ -773,8 +883,78 @@ function OutlineSection({
           <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold flex items-center justify-center">3</span>
           <h3 className="text-base font-semibold text-white">대지 구조</h3>
         </div>
-        <span className="text-xs text-slate-500">{outlines.length}개 대지</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">{outlines.length}개 대지</span>
+          {onAddOutline && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddOutline() }}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
+            >
+              <Plus className="w-3 h-3" />
+              대지 추가
+            </button>
+          )}
+          {onGenerateAI && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onGenerateAI() }}
+              disabled={aiLoading}
+              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 transition-colors border border-amber-500/20 disabled:opacity-50"
+            >
+              {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              AI 대지 생성
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* AI Candidate Selection */}
+      {aiCandidates && aiCandidates.length > 0 && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/5 to-indigo-500/5 border border-amber-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-bold text-white">3가지 스타일 후보가 생성되었습니다. 하나를 선택하세요.</span>
+            </div>
+            {onDiscardCandidates && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDiscardCandidates() }}
+                className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {aiCandidates.map((c, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); onSelectCandidate?.(i) }}
+                className="text-left p-3 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all group"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-bold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">{c.styleTitle}</span>
+                </div>
+                <p className="text-[10px] text-slate-400 mb-1">{c.mainPoints.length}개 대지</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">{c.introductionSuggestion}</p>
+                <div className="mt-2 text-[9px] text-amber-400/60 group-hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100">
+                  클릭하여 적용 →
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {outlines.length === 0 && !aiCandidates && (
+        <div className="text-center py-10 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10 mb-5">
+          <p className="text-sm text-slate-400 mb-1">대지 구조가 비어 있습니다</p>
+          <p className="text-xs text-slate-500">AI로 3가지 스타일의 대지 후보를 생성하거나, 직접 추가해보세요</p>
+        </div>
+      )}
 
       <div className="space-y-5">
         {outlines.map((outline, i) => (

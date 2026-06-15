@@ -8,8 +8,8 @@ import {
   HelpCircle, Zap, Clock, Hash, Layers, Loader2, Lightbulb
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
-import { mockRecentPassages } from '@/lib/advanced/mockData'
-import type { AdvancedProject } from '@/lib/advanced/types'
+import { getCustomProjects, mockProjects } from '@/lib/advanced/mockData'
+import type { AdvancedProject, BiblePassage } from '@/lib/advanced/types'
 
 const SERMON_TYPES = ['주일예배', '수요예배', '금요기도회', '새벽기도회', '특별집회', '부흥회', '수련회', '장례예배', '혼인예배']
 const AUDIENCE_OPTIONS = ['장년', '청년', '학생', '유년', '전체', '남선교회', '여선교회']
@@ -59,6 +59,8 @@ export default function NewProjectPage() {
   const [verseStart, setVerseStart] = useState('')
   const [verseEnd, setVerseEnd] = useState('')
 
+  const [selectedPassages, setSelectedPassages] = useState<BiblePassage[]>([])
+
   const [title, setTitle] = useState('')
   const [sermonDate, setSermonDate] = useState(getNextSunday)
   const [preacher, setPreacher] = useState('김바울')
@@ -83,7 +85,30 @@ export default function NewProjectPage() {
     return `${abbr} ${ch}:${vs}${ve}`
   }, [selectedBook, chapter, verseStart, verseEnd])
 
-  const isFormValid = selectedBook && chapter && verseStart && title.trim()
+  const isFormValid = (selectedPassages.length > 0 || (selectedBook && chapter && verseStart)) && title.trim()
+
+  const recentPassages = useMemo(() => {
+    const projects = [...getCustomProjects(), ...mockProjects]
+    const seen = new Set<string>()
+    return projects
+      .filter(p => p.book && p.chapter)
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())
+      .filter(p => {
+        const key = `${p.book}_${p.chapter}_${p.verseStart}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .slice(0, 5)
+      .map(p => ({
+        id: p.id,
+        display: p.passage,
+        book: p.book,
+        chapter: p.chapter,
+        verseStart: p.verseStart,
+        verseEnd: p.verseEnd,
+      }))
+  }, [])
 
   const handleSuggest = async () => {
     if (!selectedBook) return
@@ -128,27 +153,62 @@ export default function NewProjectPage() {
       setChapter(String(chapterNum))
       setVerseStart(String(vs))
       setVerseEnd(ve ? String(ve) : '')
+      // Also add to selected passages
+      const abbr = found.abbr
+      const p = ve ? `${abbr} ${chapterNum}:${vs}-${ve}` : `${abbr} ${chapterNum}:${vs}`
+      addPassageToSelection(found.name, chapterNum, vs, ve, p)
     }
   }
 
-  const handleCreate = () => {
-    if (!isFormValid || !selectedBook) return
-    const newId = `proj-${Date.now().toString(36)}`
+  const addPassageToSelection = (book: string, chapterNum: number, vs: number, ve: number | null, display: string) => {
+    const newPassage: BiblePassage = { book, chapter: chapterNum, verseStart: vs, verseEnd: ve, passage: display }
+    setSelectedPassages(prev => {
+      const key = `${book}_${chapterNum}_${vs}`
+      if (prev.some(p => `${p.book}_${p.chapter}_${p.verseStart}` === key)) return prev
+      return [...prev, newPassage]
+    })
+  }
 
-    const ch = chapter
-    const vs = verseStart
-    const ve = verseEnd
-    const passageStr = ve ? `${selectedBook.abbr} ${ch}:${vs}-${ve}` : `${selectedBook.abbr} ${ch}:${vs}`
+  const handleAddPassage = () => {
+    if (!selectedBook || !chapter || !verseStart) return
+    const ch = parseInt(chapter)
+    const vs = parseInt(verseStart)
+    const ve = verseEnd ? parseInt(verseEnd) : null
+    const p = ve ? `${selectedBook.abbr} ${ch}:${vs}-${ve}` : `${selectedBook.abbr} ${ch}:${vs}`
+    addPassageToSelection(selectedBook.name, ch, vs, ve, p)
+    // Clear input for next addition
+    setChapter('')
+    setVerseStart('')
+    setVerseEnd('')
+  }
+
+  const handleRemovePassage = (index: number) => {
+    setSelectedPassages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleCreate = () => {
+    if (!isFormValid) return
+    const newId = `proj-${Date.now().toString(36)}`
     const now = new Date().toISOString()
+
+    const passages = selectedPassages.length > 0 ? selectedPassages : []
+    const primaryPassage = passages.length > 0 ? passages[0] : null
+    const ch = primaryPassage ? String(primaryPassage.chapter) : chapter
+    const vs = primaryPassage ? String(primaryPassage.verseStart) : verseStart
+    const ve = primaryPassage ? (primaryPassage.verseEnd ? String(primaryPassage.verseEnd) : undefined) : verseEnd
+    const primaryBook = primaryPassage ? BIBLE_BOOKS.find(b => b.name === primaryPassage.book) : selectedBook
+    const passageStr = primaryPassage ? primaryPassage.passage : (ve ? `${selectedBook?.abbr} ${ch}:${vs}-${ve}` : `${selectedBook?.abbr} ${ch}:${vs}`)
+    const bookName = primaryPassage ? primaryPassage.book : (selectedBook?.name || '')
 
     const newProject: AdvancedProject = {
       id: newId,
       title: title.trim(),
       passage: passageStr,
-      book: selectedBook.name,
-      chapter: parseInt(chapter),
-      verseStart: parseInt(verseStart),
-      verseEnd: verseEnd ? parseInt(verseEnd) : null,
+      book: bookName,
+      chapter: parseInt(ch),
+      verseStart: parseInt(vs),
+      verseEnd: ve ? parseInt(ve) : null,
+      passages: passages.length > 0 ? passages : undefined,
       status: 'research',
       sermonDate,
       preacher,
@@ -349,13 +409,47 @@ export default function NewProjectPage() {
 
                 {/* Passage Preview Badge */}
                 {passageDisplay && (
-                  <div className="ml-2 pb-1">
+                  <div className="ml-2 pb-1 flex items-center gap-2">
                     <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-indigo-300 text-[14px] font-extrabold shadow-lg animate-scale">
                       {passageDisplay}
                     </div>
+                    <button
+                      onClick={handleAddPassage}
+                      className="flex items-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[12px] font-bold transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      추가
+                    </button>
                   </div>
                 )}
               </div>
+
+              {/* Selected Passages List */}
+              {selectedPassages.length > 0 && (
+                <div className="animate-fade-in mt-4 p-4 rounded-xl bg-[#050a18] border border-white/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">선택된 본문 ({selectedPassages.length}개)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedPassages.map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[12px] font-bold"
+                      >
+                        <span className="w-4 h-4 rounded-full bg-indigo-500/20 text-[9px] flex items-center justify-center">{i + 1}</span>
+                        {p.passage}
+                        <button
+                          onClick={() => handleRemovePassage(i)}
+                          className="ml-1 p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -366,7 +460,7 @@ export default function NewProjectPage() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">최근 연구한 본문</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {mockRecentPassages.slice(0, 5).map(p => (
+              {recentPassages.map(p => (
                 <button
                   key={p.id}
                   onClick={() => handleQuickPassage(p.book, p.chapter, p.verseStart, p.verseEnd)}
@@ -651,9 +745,15 @@ export default function NewProjectPage() {
             {/* Creation Summary */}
             <div className="flex flex-wrap items-center gap-3 text-[12px] text-slate-400 font-medium">
               <span className="text-slate-500">요약:</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 font-bold">
-                {passageDisplay || '본문 미선택'}
-              </span>
+              {selectedPassages.length > 0 ? (
+                <span className="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 font-bold">
+                  본문 {selectedPassages.length}개
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 font-bold">
+                  {passageDisplay || '본문 미선택'}
+                </span>
+              )}
               {title && (
                 <span className="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 font-bold">
                   {title}
@@ -678,7 +778,10 @@ export default function NewProjectPage() {
               {isFormValid ? (
                 <>
                   <Zap className="w-5 h-5" />
-                  {aiEnabled ? 'AI와 함께 프로젝트 생성하기' : '프로젝트 생성하기'}
+                  {selectedPassages.length > 0
+                    ? `${selectedPassages.length}개 본문 프로젝트 생성하기`
+                    : aiEnabled ? 'AI와 함께 프로젝트 생성하기' : '프로젝트 생성하기'
+                  }
                   <ChevronRight className="w-5 h-5" />
                 </>
               ) : (

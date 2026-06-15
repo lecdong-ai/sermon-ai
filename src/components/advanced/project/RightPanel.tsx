@@ -37,7 +37,18 @@ export default function RightPanel({ project, activeTab }: Props) {
         <div className="p-4 border-b border-white/5">
           <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">프로젝트 정보</h3>
           <div className="space-y-2">
-            <InfoRow label="본문" value={project.passage} />
+            {project.passages && project.passages.length > 0 ? (
+              <div className="flex items-start gap-2">
+                <span className="text-xs text-slate-500 w-14 shrink-0">본문</span>
+                <div className="flex flex-wrap gap-1">
+                  {project.passages.map((p, i) => (
+                    <span key={i} className="text-xs text-slate-100 bg-white/5 px-2 py-0.5 rounded">{p.passage}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <InfoRow label="본문" value={project.passage} />
+            )}
             <InfoRow label="설교일" value={project.sermonDate} />
             <InfoRow label="유형" value={project.sermonType} />
             <InfoRow label="회중" value={project.audience.join(', ')} />
