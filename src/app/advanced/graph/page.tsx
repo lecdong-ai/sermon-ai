@@ -460,12 +460,12 @@ const GraphCanvas = ({
       const cY = heightRef.current / 2
 
       if (alpha > ALPHA_AT_REST) {
-        entries.forEach(e => { e.vx *= 0.35; e.vy *= 0.35 })
+        entries.forEach(e => { e.vx *= 0.6; e.vy *= 0.6 })
 
-        const REPULSION = 1800
-        const ATTRACTION = 0.006
-        const IDEAL_LENGTH = 100
-        const GRAVITY = 0.003
+        const REPULSION = 1600
+        const ATTRACTION = 0.01
+        const IDEAL_LENGTH = 85
+        const GRAVITY = 0.005
 
         for (let i = 0; i < entries.length; i++) {
           for (let j = i + 1; j < entries.length; j++) {
@@ -505,10 +505,17 @@ const GraphCanvas = ({
 
         alphaRef.current *= ALPHA_DECAY
       } else {
+        // Obsidian-like: almost static, barely perceptible drift
+        const t = frameCount * 0.003
         entries.forEach(e => {
           if (!e.pinned) {
-            e.x += (Math.random() - 0.5) * 0.1
-            e.y += (Math.random() - 0.5) * 0.1
+            const phase = e.id.charCodeAt(3) * 0.7
+            // Tiny direct position offset — no velocity accumulation
+            e.x += Math.sin(t + phase) * 0.03
+            e.y += Math.cos(t * 0.8 + phase) * 0.02
+            // Very gentle centering
+            e.x += (cX - e.x) * 0.0001
+            e.y += (cY - e.y) * 0.0001
           }
         })
       }
@@ -535,7 +542,21 @@ const GraphCanvas = ({
       if (s) {
         dragState.current = { type: 'node', nodeId: id, startX: e.clientX, startY: e.clientY, origX: s.x, origY: s.y }
         s.pinned = true
-        alphaRef.current = Math.max(alphaRef.current, 0.6)
+        // Wake up physics gently — connected nodes follow smoothly
+        alphaRef.current = Math.max(alphaRef.current, 0.8)
+        // Reheat connected nodes' velocities slightly so they respond
+        const connected = new Set<string>()
+        edgesRef.current.forEach(edge => {
+          if (edge.source === id) connected.add(edge.target)
+          if (edge.target === id) connected.add(edge.source)
+        })
+        connected.forEach(cid => {
+          const c = simRef.current.get(cid)
+          if (c && !c.pinned) {
+            c.vx += (Math.random() - 0.5) * 2
+            c.vy += (Math.random() - 0.5) * 2
+          }
+        })
       }
       return
     }
