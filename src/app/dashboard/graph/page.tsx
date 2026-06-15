@@ -1,12 +1,14 @@
 'use client'
 
 import { Suspense, useState, useMemo, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useApp } from '@/lib/dashboard/store'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { buildGraphData } from '@/lib/dashboard/graphUtils'
 import { GraphNode } from '@/lib/dashboard/types'
 import { BIBLE_BOOKS, SEASONS, AUDIENCES } from '@/lib/dashboard/constants'
-import GraphCanvas from '@/components/dashboard/GraphCanvas'
+
+const GraphCanvas = dynamic(() => import('@/components/dashboard/GraphCanvas'), { ssr: false, loading: () => <div className="flex items-center justify-center h-[600px] text-slate-500 text-sm">그래프 로딩 중...</div> })
 
 type GraphViewMode = 'full' | 'sermon-centric' | 'theme-centric' | 'theme' | 'book'
 

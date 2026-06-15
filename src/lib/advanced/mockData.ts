@@ -244,6 +244,7 @@ export const mockGraphData: { nodes: GraphNode[]; links: GraphLink[] } = {
 }
 
 const CUSTOM_PROJECTS_KEY = 'sermonai_custom_projects'
+const DELETED_MOCK_IDS_KEY = 'sermonai_deleted_mock_ids'
 
 export function getCustomProjects(): AdvancedProject[] {
   if (typeof window === 'undefined') return []
@@ -254,8 +255,43 @@ export function getCustomProjects(): AdvancedProject[] {
   }
 }
 
+export function getDeletedMockIds(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    return JSON.parse(localStorage.getItem(DELETED_MOCK_IDS_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
 export function getAllProjects(): AdvancedProject[] {
-  return [...mockProjects, ...getCustomProjects()]
+  const deletedIds = getDeletedMockIds()
+  const filteredMock = mockProjects.filter(p => !deletedIds.includes(p.id))
+  return [...filteredMock, ...getCustomProjects()]
+}
+
+export function deleteProject(id: string): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const custom = getCustomProjects()
+    const isCustom = custom.some(p => p.id === id)
+    if (isCustom) {
+      const filtered = custom.filter(p => p.id !== id)
+      localStorage.setItem(CUSTOM_PROJECTS_KEY, JSON.stringify(filtered))
+      return true
+    }
+    const isMock = mockProjects.some(p => p.id === id)
+    if (isMock) {
+      const deleted = getDeletedMockIds()
+      if (deleted.includes(id)) return false
+      deleted.push(id)
+      localStorage.setItem(DELETED_MOCK_IDS_KEY, JSON.stringify(deleted))
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
 }
 
 function createMinimalProjectDetail(project: AdvancedProject): ProjectDetail {

@@ -1,7 +1,7 @@
 'use client'
 
 import { Copy, Check } from 'lucide-react'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 
 interface Props {
   title: string
@@ -12,7 +12,7 @@ interface Props {
   className?: string
 }
 
-export default function SectionCard({ title, emoji, children, copyText, action, className = '' }: Props) {
+export default memo(function SectionCard({ title, emoji, children, copyText, action, className = '' }: Props) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -60,4 +60,4 @@ export default function SectionCard({ title, emoji, children, copyText, action, 
       </div>
     </section>
   )
-}
+})

@@ -8,8 +8,9 @@ import {
   HelpCircle, Presentation, FileCheck, Loader2, X, Play, ShieldAlert,
   ThumbsUp, Compass
 } from 'lucide-react'
-import { ARCHIVE_SERMONS } from '@/lib/advanced/archiveData'
+import { ARCHIVE_SERMONS, getAllArchivedSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
+import { getAllProjects } from '@/lib/advanced/mockData'
 
 // 감정 톤 매핑 유틸리티
 const getEmotionalTone = (sermon: ArchivedSermon) => {
@@ -60,10 +61,23 @@ export default function AdvancedDashboardPage() {
   ]
 
   // 2. 검색 및 필터링 적용된 설교 목록
+  const completedProjects = getAllProjects()
+    .filter(p => p.status === 'completed')
+    .map(p => ({
+      id: p.id, title: p.title, passage: p.passage, book: p.book, chapter: p.chapter,
+      verseStart: p.verseStart, verseEnd: p.verseEnd, sermonDate: p.sermonDate,
+      preacher: p.preacher, sermonType: p.sermonType, audience: p.audience,
+      season: p.season, coreMessage: p.coreMessage, wordCount: p.wordCount,
+      seriesName: p.seriesName, themeNames: p.themeNames, tagNames: p.tagNames,
+      createdAt: p.createdAt, updatedAt: p.updatedAt,
+    }))
+
+  const allSermons = getAllArchivedSermons(completedProjects)
+
   const filteredSermons = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
-    if (!q) return ARCHIVE_SERMONS.slice(0, 6)
-    return ARCHIVE_SERMONS.filter(s => 
+    if (!q) return allSermons.slice(0, 6)
+    return allSermons.filter(s => 
       s.title.toLowerCase().includes(q) ||
       s.passage.toLowerCase().includes(q) ||
       s.book.toLowerCase().includes(q) ||
@@ -71,7 +85,7 @@ export default function AdvancedDashboardPage() {
       s.themeNames.some(t => t.toLowerCase().includes(q)) ||
       s.tagNames.some(t => t.toLowerCase().includes(q))
     )
-  }, [searchQuery])
+  }, [searchQuery, allSermons])
 
   // 3. 지식 그래프 노드 구조 정의 (데스크톱 전용)
   const GRAPH_NODES = [
@@ -134,7 +148,7 @@ export default function AdvancedDashboardPage() {
   }
 
   // 5. 스탯 데이터 계산
-  const totalSermons = ARCHIVE_SERMONS.length
+  const totalSermons = allSermons.length
   const totalBibleStudies = 84
   const mostStudiedPassage = '로마서 8장 (롬 8:1-39)'
   const trendingTopics = ['은혜', '성령', '소망', '믿음']

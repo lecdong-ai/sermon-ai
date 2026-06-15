@@ -440,13 +440,15 @@ const GraphCanvas = ({
     alphaRef.current = 1
   }, [nodeIds, width, height])
 
-  // Continuous rAF simulation — runs forever, alpha cooling creates Obsidian-like physics
+  // Continuous rAF simulation — pauses when not visible
   useEffect(() => {
     const ALPHA_DECAY = 0.98
     const ALPHA_AT_REST = 0.001
     let frameCount = 0
+    let visible = true
 
     function tick() {
+      if (!visible) { rafRef.current = requestAnimationFrame(tick); return }
       frameCount++
       const currentMap = simRef.current
       if (currentMap.size === 0) {
@@ -530,7 +532,17 @@ const GraphCanvas = ({
     }
 
     rafRef.current = requestAnimationFrame(tick)
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+    }, { threshold: 0.1 })
+
+    if (svgRef.current) observer.observe(svgRef.current)
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      observer.disconnect()
+    }
   }, [])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

@@ -17,7 +17,7 @@ const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr
 const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
 const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
 const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
-import { Cell } from 'recharts'
+const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
 
 const GRADIENTS: Array<[string, string]> = [
   ['#6366f1', '#8b5cf6'],
@@ -139,15 +139,15 @@ export default function StatisticsPage() {
     return series.map((srs) => ({ name: srs.name, count: sermons.filter((s) => s.seriesId === srs.id).length })).filter(s => s.count > 0)
   }, [series, sermons])
 
-  const summaryCards = [
+  const summaryCards = useMemo(() => [
     { icon: '📖', label: '전체 설교', value: totalSermons },
     { icon: '🏷️', label: '사용 태그', value: themes.length },
     { icon: '📚', label: '시리즈', value: series.length },
     { icon: '👤', label: '설교자', value: new Set(sermons.map((s) => s.preacher)).size },
-  ]
+  ], [totalSermons, themes.length, series.length, sermons])
 
-  const axisStyle = { fontSize: 11, fill: '#94a3b8', fontFamily: 'var(--font-noto-sans-kr), sans-serif' }
-  const gridStyle = { stroke: '#f1f5f9', strokeDasharray: '4 4' }
+  const axisStyle = useMemo(() => ({ fontSize: 11, fill: '#94a3b8', fontFamily: 'var(--font-noto-sans-kr), sans-serif' }), [])
+  const gridStyle = useMemo(() => ({ stroke: '#f1f5f9', strokeDasharray: '4 4' }), [])
 
   return (
     <div className="animate-fade-in space-y-6 max-w-6xl">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import { FileDown } from 'lucide-react'
 import SectionCard from './SectionCard'
 import type { Summary } from '@/types'
@@ -88,7 +88,7 @@ export default function SummarySection({ data }: Props) {
   const pdfRef = useRef<HTMLDivElement>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  const sections = SECTIONS.map(({ key, label, bar, tag }, i) => {
+  const sections = useMemo(() => SECTIONS.map(({ key, label, bar, tag }, i) => {
     const raw = data[key]
     if (!raw || typeof raw !== 'string') return null
     const val = key === 'body' ? formatSummaryText(raw) : raw
@@ -101,9 +101,9 @@ export default function SummarySection({ data }: Props) {
         </div>
       </div>
     )
-  })
+  }), [data])
 
-  const fullText = SECTIONS.map(s => s.key === 'body' ? formatSummaryText(data[s.key] || '') : data[s.key]).filter(Boolean).join('\n\n')
+  const fullText = useMemo(() => SECTIONS.map(s => s.key === 'body' ? formatSummaryText(data[s.key] || '') : data[s.key]).filter(Boolean).join('\n\n'), [data])
 
   const handleDownloadPdf = useCallback(async () => {
     setPdfLoading(true)

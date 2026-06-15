@@ -32,6 +32,10 @@ const nextConfig = {
     minimumCacheTTL: 86400,
   },
   compress: true,
+  swcMinify: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'd3-force'],
+  },
   async headers() {
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

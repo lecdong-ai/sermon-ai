@@ -89,6 +89,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
   const [connectedNodes, setConnectedNodes] = useState<{id:string;label:string;type:GraphNode['type']}[]>([])
   const settledRef = useRef(false)
   const nodesRef = useRef<SimNode[]>([])
+  const nodeMapRef = useRef<Map<string, SimNode>>(new Map())
   const linksRef = useRef<SimLink[]>([])
   const dataRef = useRef(data)
   const whRef = useRef(wh)
@@ -98,13 +99,15 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
   const focusNodeIdRef = useRef(focusNodeId)
   const selRef = useRef<GraphNode | null>(null)
 
-  useEffect(() => { dataRef.current = data }, [data])
-  useEffect(() => { whRef.current = wh }, [wh])
-  useEffect(() => { themeRef.current = theme }, [theme])
-  useEffect(() => { sermonCentricRef.current = sermonCentric }, [sermonCentric])
-  useEffect(() => { themeCentricRef.current = themeCentric }, [themeCentric])
-  useEffect(() => { focusNodeIdRef.current = focusNodeId }, [focusNodeId])
-  useEffect(() => { selRef.current = sel }, [sel])
+  useEffect(() => {
+    dataRef.current = data
+    whRef.current = wh
+    themeRef.current = theme
+    sermonCentricRef.current = sermonCentric
+    themeCentricRef.current = themeCentric
+    focusNodeIdRef.current = focusNodeId
+    selRef.current = sel
+  }, [data, wh, theme, sermonCentric, themeCentric, focusNodeId, sel])
 
   useEffect(() => {
     const newNodes = data.nodes.map((n) => ({
@@ -115,6 +118,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       fx: null, fy: null,
     }))
     nodesRef.current = newNodes
+    nodeMapRef.current = new Map(newNodes.map(n => [n.id, n]))
     linksRef.current = data.links.map((l) => ({ source: l.source, target: l.target }))
   }, [data.nodes, data.links])
 
@@ -187,12 +191,13 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     }
   }, [wh, data])
 
-  // Render loop (always-on, reads from refs only)
+  // Render loop (pauses when canvas not visible)
   useEffect(() => {
     let running = true
+    let visible = true
 
     function render() {
-      if (!running) return
+      if (!running || !visible) { rafRef.current = requestAnimationFrame(render); return }
       const canvas = canvasRef.current
       const ctx = ctxRef.current
       if (!canvas || !ctx) { rafRef.current = requestAnimationFrame(render); return }
@@ -205,6 +210,7 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       const v = viewRef.current
       const drag = dragNodeRef.current
       const nodes = nodesRef.current
+      const nodeMap = nodeMapRef.current
       const links = linksRef.current
       const currentData = dataRef.current
 
@@ -311,15 +317,15 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
           else if (!hovered) la = 0
         }
         if (sermonCentricRef.current && !hovered && !activeFocus) {
-          const aNode = nodes.find((n) => n.id === s)
-          const bNode = nodes.find((n) => n.id === t)
+          const aNode = nodeMap.get(s)
+          const bNode = nodeMap.get(t)
           if (aNode?.type !== 'sermon' && bNode?.type !== 'sermon') {
             la = 0.02
           }
         }
         if (themeCentricRef.current && !hovered && !activeFocus) {
-          const aNode = nodes.find((n) => n.id === s)
-          const bNode = nodes.find((n) => n.id === t)
+          const aNode = nodeMap.get(s)
+          const bNode = nodeMap.get(t)
           if (aNode?.type !== 'theme' && bNode?.type !== 'theme') {
             la = 0.02
           }
@@ -331,8 +337,8 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
       ctx.lineCap = 'round'
       for (let i = 0; i < linkData.length; i++) {
         const l = linkData[i]
-        const a = nodes.find((n) => n.id === l.source)
-        const b = nodes.find((n) => n.id === l.target)
+        const a = nodeMap.get(l.source)
+        const b = nodeMap.get(l.target)
         if (!a || !b) continue
         const la = linkAlpha[i]
         if (la < 0.01) continue
@@ -426,7 +432,18 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
 
     rafRef.current = requestAnimationFrame(render)
     console.log('[renderLoop] started')
-    return () => { running = false; cancelAnimationFrame(rafRef.current) }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+    }, { threshold: 0.1 })
+
+    if (canvasRef.current) observer.observe(canvasRef.current)
+
+    return () => {
+      running = false
+      cancelAnimationFrame(rafRef.current)
+      observer.disconnect()
+    }
   }, [])
 
   function findNode(px: number, py: number): SimNode | null {

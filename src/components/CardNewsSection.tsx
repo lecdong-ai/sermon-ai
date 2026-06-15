@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import SectionCard from './SectionCard'
 import { ChevronLeft, ChevronRight, Download, Image } from 'lucide-react'
 import type { CardNews } from '@/types'
@@ -45,24 +45,24 @@ export default function CardNewsSection({ data }: Props) {
     })
   }, [data.slides])
 
-  const goPrev = useCallback(() => {
-    if (currentIdx > 0) {
-      setDirection(-1)
-      setCurrentIdx(prev => prev - 1)
-    }
-  }, [currentIdx])
+  const goPrev = () => {
+    setCurrentIdx(prev => {
+      if (prev > 0) { setDirection(-1); return prev - 1 }
+      return prev
+    })
+  }
 
-  const goNext = useCallback(() => {
-    if (currentIdx < total - 1) {
-      setDirection(1)
-      setCurrentIdx(prev => prev + 1)
-    }
-  }, [currentIdx, total])
+  const goNext = () => {
+    setCurrentIdx(prev => {
+      if (prev < total - 1) { setDirection(1); return prev + 1 }
+      return prev
+    })
+  }
 
-  const goToSlide = useCallback((idx: number) => {
+  const goToSlide = (idx: number) => {
     setDirection(idx > currentIdx ? 1 : -1)
     setCurrentIdx(idx)
-  }, [currentIdx])
+  }
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX

@@ -391,3 +391,30 @@ export function filterSermons(sermons: ArchivedSermon[], filters: {
     return true
   })
 }
+
+export function projectToArchivedSermon(project: {
+  id: string; title: string; passage: string; book: string; chapter: number;
+  verseStart: number; verseEnd: number | null; sermonDate: string; preacher: string;
+  sermonType: string; audience: string[]; season: string; coreMessage: string;
+  wordCount: number; seriesName?: string; themeNames: string[]; tagNames: string[];
+  createdAt: string; updatedAt: string;
+}): ArchivedSermon {
+  return {
+    ...project,
+    introduction: '',
+    conclusion: '',
+    outlineTitles: [],
+    relatedIds: [],
+  }
+}
+
+export function getAllArchivedSermons(completedProjects: {
+  id: string; title: string; passage: string; book: string; chapter: number;
+  verseStart: number; verseEnd: number | null; sermonDate: string; preacher: string;
+  sermonType: string; audience: string[]; season: string; coreMessage: string;
+  wordCount: number; seriesName?: string; themeNames: string[]; tagNames: string[];
+  createdAt: string; updatedAt: string;
+}[]): ArchivedSermon[] {
+  const fromProjects = completedProjects.map(projectToArchivedSermon)
+  return [...ARCHIVE_SERMONS, ...fromProjects]
+}

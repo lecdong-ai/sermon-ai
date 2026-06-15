@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 interface Tab {
   id: string
   label: string
@@ -11,7 +13,7 @@ interface Props {
   onChange: (id: string) => void
 }
 
-export default function ResultTabs({ tabs, activeTab, onChange }: Props) {
+export default memo(function ResultTabs({ tabs, activeTab, onChange }: Props) {
   return (
     <div className="flex gap-1 overflow-x-auto overflow-y-hidden rounded-xl bg-white border border-[#e4e2dd] p-1 -mx-1 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {tabs.map((tab) => {
@@ -32,4 +34,4 @@ export default function ResultTabs({ tabs, activeTab, onChange }: Props) {
       })}
     </div>
   )
-}
+})

@@ -45,8 +45,8 @@ function getMockOutput(type: string, data: any): string {
     case 'bible-study':
       return JSON.stringify({
         passage: '성경 구절',
-        verses: Array.from({ length: Math.min((parseInt(verseEnd)||parseInt(chapter)) - parseInt(verseStart||'1') + 1, 5) }, (_, i) => ({
-          verse: parseInt(verseStart||'1') + i,
+        verses: Array.from({ length: Math.min((parseInt(verseEnd) || parseInt(chapter)) - parseInt(verseStart || '1') + 1, 5) }, (_, i) => ({
+          verse: parseInt(verseStart || '1') + i,
           greek: 'original greek text',
           translit: 'transliteration',
           korean: '한글 번역',
@@ -57,10 +57,10 @@ function getMockOutput(type: string, data: any): string {
           { id: 'w-sample', strong: 'G0000', lemma: 'word', lemmaGreek: 'word', pronunciation: 'pron', transliteration: 'translit', partOfSpeech: '명사', morphology: '형태', basicMeaning: '기본 뜻', contextualMeaning: '문맥상 뜻', simpleExplanation: '쉬운 설명', usage: [{ ref: 'ref', text: 'text' }], sermonNote: '설교 적용', relatedWords: ['related'] },
         ],
         commentaries: [
-          { verse: parseInt(verseStart||'1'), author: '학자명', type: 'exegetical', source: '출처', text: '주석 내용' },
+          { verse: parseInt(verseStart || '1'), author: '학자명', type: 'exegetical', source: '출처', text: '주석 내용' },
         ],
         translationNotes: [
-          { verse: parseInt(verseStart||'1'), versions: ['NIV', 'ESV', 'KRV'], note: '번역 차이 설명' },
+          { verse: parseInt(verseStart || '1'), versions: ['NIV', 'ESV', 'KRV'], note: '번역 차이 설명' },
         ],
         parallelPassages: [
           { ref: '예) 창 1:1', text: '본문', relation: 'thematic', description: '설명' },
@@ -182,8 +182,8 @@ export async function POST(request: NextRequest) {
       const ve = parseInt(verseEnd || verseStart || '1')
       const count = ve - vs + 1
       userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
-      model = 'gpt-5.4-mini'
-      maxTokens = 32000
+      model = 'gpt-4o-mini'
+      maxTokens = 16384
       temperature = 0.3
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
@@ -217,7 +217,14 @@ export async function POST(request: NextRequest) {
     })
 
     let output = res.choices[0]?.message?.content || ''
-    output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
+    // Extract JSON from markdown or surrounding text robustly
+    const start = output.indexOf('{')
+    const end = output.lastIndexOf('}')
+    if (start !== -1 && end > start) {
+      output = output.slice(start, end + 1)
+    } else {
+      output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
+    }
 
     if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline') && output) {
       try {
