@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { cookies } from 'next/headers'
+import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -79,13 +80,14 @@ function getMockOutput(type: string, data: any): string {
 }
 
 const SYSTEM_PROMPTS: Record<string, string> = {
-  'suggest-titles': '당신은 설교 준비를 돕는 AI입니다. 주어진 성경 본문(책, 장, 절)에 어울리는 설교 제목 5개와 각각의 추천 이유를 JSON 배열로 반환하세요. 각 항목은 { title: string, reason: string } 형식입니다. 제목은 한국어로, 20자 이내로 간결하게 작성하세요.',
+  'suggest-titles': '당신은 설교 준비를 돕는 AI입니다. 주어진 성경 본문(책, 장, 절)에 어울리는 설교 제목 5개와 각각의 추천 이유를 JSON 배열로 반환하세요. 각 항목은 { title: string, reason: string } 형식입니다. 제목은 한국어로, 20자 이내로 간결하게 작성하세요. Return ONLY valid JSON, no markdown, no explanation.',
   summary: '당신은 설교 요약을 돕는 AI입니다. 주어진 설교 정보(제목, 본문, 핵심메시지, 도입, 대지, 결론)를 바탕으로 간결하고 명확한 설교 요약서를 한국어로 작성하세요.',
   questions: '당신은 소그룹 리더를 위한 나눔 질문을 만드는 AI입니다. 주어진 설교 정보를 바탕으로 3-4개의 깊이 있는 소그룹 토론 질문을 한국어로 생성하세요.',
   cardnews: '당신은 교회 SNS를 위한 카드뉴스를 기획하는 AI입니다. 주어진 설교 정보를 바탕으로 5장 구성의 카드뉴스 기획안을 한국어로 작성하세요.',
   shorts: '당신은 유튜브 쇼츠 대본을 작성하는 AI입니다. 주어진 설교 정보를 바탕으로 60초 분량의 쇼츠 스토리보드를 한국어로 작성하세요.',
   ppt: '당신은 예배를 위한 PPT 슬라이드를 구성하는 AI입니다. 주어진 설교 정보를 바탕으로 5장 내외의 슬라이드 레이아웃을 한국어로 작성하세요.',
   guide: '당신은 소그룹 리더를 위한 토론 가이드를 만드는 AI입니다. 주어진 설교 정보를 바탕으로 상세한 토론 진행 가이드를 한국어로 작성하세요.',
+  outline: OUTLINE_PROMPT,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -172,6 +174,7 @@ export async function POST(request: NextRequest) {
     let userText: string
     let maxTokens = 2000
     let temperature = 0.3
+    let model = 'gpt-4o-mini'
 
     if (type === 'bible-study') {
       const { book, chapter, verseStart, verseEnd, passage } = data
@@ -179,6 +182,7 @@ export async function POST(request: NextRequest) {
       const ve = parseInt(verseEnd || verseStart || '1')
       const count = ve - vs + 1
       userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
+      model = 'gpt-5.4-mini'
       maxTokens = 32000
       temperature = 0.3
     } else if (type === 'word-lookup') {
@@ -189,6 +193,11 @@ export async function POST(request: NextRequest) {
       userText = `Analyze this English word from a Bible passage and return its definition and analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nReturn ONLY the English word analysis — do NOT convert to Greek.`
       maxTokens = 2000
       temperature = 0.3
+    } else if (type === 'outline') {
+      const { book, chapter, verseStart, verseEnd, passage, passageStructure, keyWords, researchInsights, coreMessage } = data
+      userText = `설교 개요(대지 구조)를 생성해주세요:\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n\n본문 핵심 흐름: ${passageStructure || ''}\n핵심 메시지: ${coreMessage || ''}\n주요 단어: ${(keyWords || []).map((w: any) => w.word || '').filter(Boolean).join(', ')}\n연구 통찰: ${(researchInsights || []).join('\n')}`
+      maxTokens = 4000
+      temperature = 0.5
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
@@ -198,7 +207,7 @@ export async function POST(request: NextRequest) {
     }
 
     const res = await getOpenai().chat.completions.create({
-      model: 'gpt-5.4-mini',
+      model: model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },
@@ -207,7 +216,21 @@ export async function POST(request: NextRequest) {
       max_completion_tokens: maxTokens,
     })
 
-    const output = res.choices[0]?.message?.content || ''
+    let output = res.choices[0]?.message?.content || ''
+    output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
+
+    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline') && output) {
+      try {
+        JSON.parse(output)
+      } catch {
+        console.error(`${type} AI response is not valid JSON, length:`, output.length)
+        return NextResponse.json({
+          success: false,
+          error: `AI 응답이 완전하지 않습니다 (${output.length}자). 다시 시도해주세요.`,
+        }, { status: 422 })
+      }
+    }
+
     return NextResponse.json({ success: true, data: { output } })
   } catch (err: any) {
     console.error('POST /api/advanced/ai error:', err)

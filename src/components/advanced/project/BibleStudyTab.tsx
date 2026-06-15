@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Sparkles } from 'lucide-react'
-import { ProjectDetail } from '@/lib/advanced/types'
+import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import {
   JOHN_VERSES, JOHN_WORDS, JOHN_COMMENTARIES,
   JOHN_TRANSLATION_NOTES, JOHN_PARALLEL_PASSAGES,
@@ -58,7 +58,7 @@ function getStudyData(book: string, chapter: number) {
   return STUDY_DATA_REGISTRY[key] || null
 }
 
-interface Props { project: ProjectDetail }
+interface Props { project: ProjectDetail; passages?: BiblePassage[] }
 
 type ViewMode = 'parallel' | 'focused' | 'compare'
 
@@ -74,8 +74,16 @@ interface EnglishWordDetail {
   sermonNote: string
 }
 
-export default function BibleStudyTab({ project }: Props) {
+export default function BibleStudyTab({ project, passages }: Props) {
   const router = useRouter()
+  const [selectedPassageIndex, setSelectedPassageIndex] = useState(0)
+
+  const currentPassage = passages && passages.length > 1 ? passages[selectedPassageIndex] : null
+  const activeBook = currentPassage?.book || project.book
+  const activeChapter = currentPassage?.chapter ?? project.chapter
+  const activeVerseStart = currentPassage?.verseStart ?? project.verseStart
+  const activeVerseEnd = currentPassage?.verseEnd ?? project.verseEnd
+  const activePassageDisplay = currentPassage?.passage || project.passage
   const [viewMode, setViewMode] = useState<ViewMode>('parallel')
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null)
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
@@ -89,37 +97,41 @@ export default function BibleStudyTab({ project }: Props) {
   })
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
-  const [aiStudyData, setAiStudyData] = useState<any>(null)
+  const [aiStudyData, setAiStudyData] = useState<Record<string, any>>({})
   const [aiStudyLoading, setAiStudyLoading] = useState(false)
+  const [aiStudyError, setAiStudyError] = useState<string | null>(null)
   const [selectedFallbackWord, setSelectedFallbackWord] = useState<{ word: string; clean: string; verse: number; version?: string } | null>(null)
   const [wordLookup, setWordLookup] = useState<Record<string, JohnWordDetail>>({})
   const [lookupLoading, setLookupLoading] = useState(false)
   const [englishLookup, setEnglishLookup] = useState<Record<string, EnglishWordDetail>>({})
   const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
 
+  const passageKey = `${activeBook}_${activeChapter}`
+
   const studyData = useMemo(() => {
-    const registered = getStudyData(project.book, project.chapter)
+    const registered = getStudyData(activeBook, activeChapter)
     if (registered) return registered
-    return aiStudyData
-  }, [project.book, project.chapter, aiStudyData])
+    return aiStudyData[passageKey] || null
+  }, [activeBook, activeChapter, aiStudyData, passageKey])
 
   const allWords = useMemo(() => ({
     ...(studyData?.words || {}),
     ...wordLookup,
   }), [studyData?.words, wordLookup])
 
-  const passageKey = `${project.book}_${project.chapter}`
-
-  useEffect(() => {
-    if (getStudyData(project.book, project.chapter)) return
-    if (aiStudyData) return
+  const fetchAiStudy = useCallback(() => {
+    if (getStudyData(activeBook, activeChapter)) return
+    if (aiStudyData[passageKey]) return
     const cached = localStorage.getItem(`sermonai_study_${passageKey}`)
     if (cached) {
       try {
-        setAiStudyData(JSON.parse(cached))
+        setAiStudyData(prev => ({ ...prev, [passageKey]: JSON.parse(cached) }))
         return
-      } catch {}
+      } catch {
+        localStorage.removeItem(`sermonai_study_${passageKey}`)
+      }
     }
+    setAiStudyError(null)
     setAiStudyLoading(true)
     fetch('/api/advanced/ai', {
       method: 'POST',
@@ -127,36 +139,48 @@ export default function BibleStudyTab({ project }: Props) {
       body: JSON.stringify({
         type: 'bible-study',
         data: {
-          book: project.book,
-          chapter: String(project.chapter),
-          verseStart: String(project.verseStart),
-          verseEnd: project.verseEnd ? String(project.verseEnd) : undefined,
-          passage: project.passage,
+          book: activeBook,
+          chapter: String(activeChapter),
+          verseStart: String(activeVerseStart),
+          verseEnd: activeVerseEnd ? String(activeVerseEnd) : undefined,
+          passage: activePassageDisplay,
         },
       }),
     })
       .then(r => r.json())
       .then(json => {
         if (json.success) {
-          const parsed = JSON.parse(json.data.output)
-          const data = {
-            passage: project.passage,
-            verses: parsed.verses,
-            words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
-            commentaries: parsed.commentaries || [],
-            translationNotes: parsed.translationNotes || [],
-            parallelPassages: parsed.parallelPassages || [],
-            themes: parsed.themes || [],
-            contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
-            wordAlignments: parsed.wordAlignments || [],
+          try {
+            const parsed = JSON.parse(json.data.output)
+            const data = {
+              passage: activePassageDisplay,
+              verses: parsed.verses,
+              words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
+              commentaries: parsed.commentaries || [],
+              translationNotes: parsed.translationNotes || [],
+              parallelPassages: parsed.parallelPassages || [],
+              themes: parsed.themes || [],
+              contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
+              wordAlignments: parsed.wordAlignments || [],
+            }
+            setAiStudyData(prev => ({ ...prev, [passageKey]: data }))
+            localStorage.setItem(`sermonai_study_${passageKey}`, JSON.stringify(data))
+          } catch {
+            setAiStudyError('AI 응답을 해석하는 중 오류가 발생했습니다. 본문이 너무 길거나 응답이 잘렸습니다.')
           }
-          setAiStudyData(data)
-          localStorage.setItem(`sermonai_study_${passageKey}`, JSON.stringify(data))
+        } else {
+          setAiStudyError(json.error || 'AI 분석에 실패했습니다.')
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setAiStudyError('AI 서버에 연결할 수 없습니다. 다시 시도해주세요.')
+      })
       .finally(() => setAiStudyLoading(false))
-  }, [passageKey, project.verseStart, project.verseEnd, project.passage, aiStudyData])
+  }, [passageKey, activeVerseStart, activeVerseEnd, activePassageDisplay, aiStudyData, activeBook, activeChapter])
+
+  useEffect(() => {
+    fetchAiStudy()
+  }, [fetchAiStudy])
 
   const handleWordClick = (wordId: string, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => {
     if (fallbackWord && fallbackWord.version) {
@@ -325,6 +349,26 @@ export default function BibleStudyTab({ project }: Props) {
           lastSaved={lastSaved || undefined}
         />
 
+        {/* Passage Tabs */}
+        {passages && passages.length > 1 && (
+          <div className="flex items-center gap-1.5 px-5 py-3 border-b border-white/5 bg-[#04060f]/40">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider mr-2">본문</span>
+            {passages.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedPassageIndex(i)}
+                className={`text-[12px] px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  selectedPassageIndex === i
+                    ? 'bg-indigo-600 text-white shadow-lg'
+                    : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                }`}
+              >
+                {p.passage}
+              </button>
+            ))}
+          </div>
+        )}
+
         {studyData ? (
           <>
             {/* Research Toolbar */}
@@ -339,70 +383,110 @@ export default function BibleStudyTab({ project }: Props) {
               onSendToPrep={handleSendToPrep}
             />
 
-            {/* Context Explorer */}
+            {/* Context Explorer - always visible */}
             <ContextExplorer
               before={studyData.contextInfo.before}
               after={studyData.contextInfo.after}
               bookStructure={studyData.contextInfo.bookStructure}
             />
 
-            {/* Parallel Passage Panel */}
-            <ParallelPassagePanel
-              verses={studyData.verses}
-              words={allWords}
-              wordAlignments={(studyData as any)?.wordAlignments || []}
-              showTranslations={showTranslations}
-              selectedWordId={selectedWordId}
-              selectedVerse={selectedVerse}
-              onWordClick={handleWordClick}
-              onVerseClick={handleVerseClick}
-            />
+            {/* 병렬 모드: 여러 번역본 나란히 */}
+            {viewMode === 'parallel' && (
+              <ParallelPassagePanel
+                verses={studyData.verses}
+                words={allWords}
+                wordAlignments={(studyData as any)?.wordAlignments || []}
+                showTranslations={showTranslations}
+                selectedWordId={selectedWordId}
+                selectedVerse={selectedVerse}
+                onWordClick={handleWordClick}
+                onVerseClick={handleVerseClick}
+              />
+            )}
 
-            {/* Translation Difference Card */}
-            <TranslationDifferenceCard notes={studyData.translationNotes} />
+            {/* 집중 모드: 원어 분석, 주석에 집중 */}
+            {viewMode === 'focused' && (
+              <>
+                <ParallelPassagePanel
+                  verses={studyData.verses}
+                  words={allWords}
+                  wordAlignments={(studyData as any)?.wordAlignments || []}
+                  showTranslations={showTranslations}
+                  selectedWordId={selectedWordId}
+                  selectedVerse={selectedVerse}
+                  onWordClick={handleWordClick}
+                  onVerseClick={handleVerseClick}
+                />
+                <CommentarySummary
+                  commentaries={studyData.commentaries}
+                  expandedId={expandedCommentary}
+                  onToggleExpand={setExpandedCommentary}
+                  onVerseClick={handleVerseClick}
+                />
+              </>
+            )}
 
-            {/* Commentary Summary */}
-            <CommentarySummary
-              commentaries={studyData.commentaries}
-              expandedId={expandedCommentary}
-              onToggleExpand={setExpandedCommentary}
-              onVerseClick={handleVerseClick}
-            />
-
-            {/* Parallel Passages Section */}
-            <ParallelPassagesSection passages={studyData.parallelPassages} />
-
-            {/* Theme Connections */}
-            <ThemeConnections
-              themes={studyData.themes}
-              selectedTheme={selectedTheme}
-              onThemeClick={handleThemeClick}
-            />
+            {/* 비교 모드: 번역 차이, 평행본문, 주제 연결 */}
+            {viewMode === 'compare' && (
+              <>
+                <TranslationDifferenceCard notes={studyData.translationNotes} />
+                <ParallelPassagesSection passages={studyData.parallelPassages} />
+                <ThemeConnections
+                  themes={studyData.themes}
+                  selectedTheme={selectedTheme}
+                  onThemeClick={handleThemeClick}
+                />
+              </>
+            )}
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-white">
-                {aiStudyLoading ? 'AI가 본문을 분석하고 있습니다' : '분석 준비 중'}
-              </h3>
-              <p className="text-sm text-slate-400 mt-1">{project.passage}</p>
-              <p className="text-sm text-slate-400">
-                {aiStudyLoading
-                  ? '원문 분석, 주석, 번역 비교 등을 생성하는 중입니다 (10-20초 소요)'
-                  : '잠시만 기다려주세요'}
-              </p>
-            </div>
-            {aiStudyLoading && (
-              <div className="w-full max-w-lg space-y-3 animate-pulse">
-                <div className="h-4 bg-white/5 rounded-xl w-3/4" />
-                <div className="h-4 bg-white/5 rounded-xl w-full" />
-                <div className="h-4 bg-white/5 rounded-xl w-5/6" />
-                <div className="h-20 bg-white/5 rounded-xl w-full" />
-                <div className="h-4 bg-white/5 rounded-xl w-2/3" />
-              </div>
+            {aiStudyError ? (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">분석 중 오류 발생</h3>
+                  <p className="text-sm text-slate-400 mt-1">{activePassageDisplay}</p>
+                  <p className="text-sm text-red-400/80 mt-2">{aiStudyError}</p>
+                </div>
+                <button
+                  onClick={fetchAiStudy}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+                >
+                  <Loader2 className="w-4 h-4" />
+                  다시 시도
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">
+                    {aiStudyLoading ? 'AI가 본문을 분석하고 있습니다' : '분석 준비 중'}
+                  </h3>
+                  <p className="text-sm text-slate-400 mt-1">{activePassageDisplay}</p>
+                  <p className="text-sm text-slate-400">
+                    {aiStudyLoading
+                      ? '원문 분석, 주석, 번역 비교 등을 생성하는 중입니다 (10-20초 소요)'
+                      : '잠시만 기다려주세요'}
+                  </p>
+                </div>
+                {aiStudyLoading && (
+                  <div className="w-full max-w-lg space-y-3 animate-pulse">
+                    <div className="h-4 bg-white/5 rounded-xl w-3/4" />
+                    <div className="h-4 bg-white/5 rounded-xl w-full" />
+                    <div className="h-4 bg-white/5 rounded-xl w-5/6" />
+                    <div className="h-20 bg-white/5 rounded-xl w-full" />
+                    <div className="h-4 bg-white/5 rounded-xl w-2/3" />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -441,6 +525,9 @@ export default function BibleStudyTab({ project }: Props) {
           onSendToPrep={handleSendToPrep}
           memoText={memoText}
           memoTags={memoTags}
+          commentaries={studyData?.commentaries || []}
+          verses={studyData?.verses || []}
+          themes={studyData?.themes || []}
         />
       </div>
     </div>
@@ -1017,7 +1104,7 @@ function ResearchNotesEditor({
 
 function RightPanel({
   words, selectedWordId, selectedFallbackWord, lookupLoading, selectedEnglishWord, englishLookup, englishLookupLoading, selectedVerse, selectedTheme, onCloseDetail,
-  onSendToPrep, memoText, memoTags,
+  onSendToPrep, memoText, memoTags, commentaries, verses, themes,
 }: {
   words: Record<string, JohnWordDetail>
   selectedWordId: string | null
@@ -1032,6 +1119,9 @@ function RightPanel({
   onSendToPrep: () => void
   memoText: string
   memoTags: string[]
+  commentaries: any[]
+  verses: any[]
+  themes: any[]
 }) {
   const typeLabel: Record<string, string> = {
     exegetical: '본문',
@@ -1236,8 +1326,8 @@ function RightPanel({
 
   // Verse Commentary
   if (selectedVerse) {
-    const verseCommentaries = JOHN_COMMENTARIES.filter(c => c.verse === selectedVerse)
-    const verseData = JOHN_VERSES.find(v => v.verse === selectedVerse)
+    const verseCommentaries = (commentaries || []).filter((c: any) => c.verse === selectedVerse)
+    const verseData = (verses || []).find((v: any) => v.verse === selectedVerse)
     return (
       <div className="p-5">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
@@ -1277,7 +1367,7 @@ function RightPanel({
 
   // Theme Detail
   if (selectedTheme) {
-    const themeData = JOHN_THEMES.find(t => t.name === selectedTheme)
+    const themeData = (themes || []).find((t: any) => t.name === selectedTheme)
     if (themeData) {
       return (
         <div className="p-5">
@@ -1393,7 +1483,7 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; o
           <div>
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">반복 주제</span>
             <div className="flex flex-wrap gap-2">
-              {themes.map(t => (
+              {themes.map((t: string) => (
                 <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 font-medium">
                   {t}
                 </span>

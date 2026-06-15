@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { BibleStudyData, WordDetail, CommentaryItem, VerseParallel } from '@/lib/advanced/bibleStudyData'
 import { BIBLE_BOOKS } from '@/lib/advanced/bibleBooks'
@@ -10,7 +11,6 @@ type DetailView = 'word' | 'verse' | 'theme' | 'none'
 
 export default function BiblePage() {
   const router = useRouter()
-  const data = MOCK_BIBLE_STUDY as BibleStudyData
 
   const [book, setBook] = useState('로마서')
   const [chapter, setChapter] = useState(8)
@@ -22,12 +22,120 @@ export default function BiblePage() {
 
   const [detailView, setDetailView] = useState<DetailView>('none')
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null)
+  const [selectedFallbackWord, setSelectedFallbackWord] = useState<{ word: string; clean: string; verse: number; version?: string } | null>(null)
+  const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
+
+  const [wordLookup, setWordLookup] = useState<Record<string, WordDetail>>({})
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [englishLookup, setEnglishLookup] = useState<Record<string, any>>({})
+  const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
 
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
     greek: true, krv: true, niv: true, esv: true, translit: false,
   })
+
+  const [data, setData] = useState<BibleStudyData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const passageKey = `${book}_${chapter}`
+
+  useEffect(() => {
+    setDetailView('none')
+    setSelectedWordId(null)
+    setSelectedFallbackWord(null)
+    setSelectedEnglishWord(null)
+    setSelectedVerse(null)
+    setSelectedTheme(null)
+    setWordLookup({})
+    setEnglishLookup({})
+
+    const registeredKey = `${book}_${chapter}`
+    if (registeredKey === '로마서_8') {
+      setData(MOCK_BIBLE_STUDY as BibleStudyData)
+      return
+    }
+    const cached = localStorage.getItem(`sermonai_bible_${registeredKey}`)
+    if (cached) {
+      try {
+        setData(JSON.parse(cached))
+        return
+      } catch {
+        localStorage.removeItem(`sermonai_bible_${registeredKey}`)
+      }
+    }
+    setData(null)
+  }, [book, chapter])
+
+  const handleLoad = useCallback(() => {
+    const key = `${book}_${chapter}`
+    if (key === '로마서_8') {
+      setData(MOCK_BIBLE_STUDY as BibleStudyData)
+      return
+    }
+    setDetailView('none')
+    setSelectedWordId(null)
+    setSelectedFallbackWord(null)
+    setSelectedEnglishWord(null)
+    setSelectedVerse(null)
+    setSelectedTheme(null)
+    setWordLookup({})
+    setEnglishLookup({})
+    setError(null)
+    
+    const cached = localStorage.getItem(`sermonai_bible_${key}`)
+    if (cached) {
+      try {
+        setData(JSON.parse(cached))
+        return
+      } catch {
+        localStorage.removeItem(`sermonai_bible_${key}`)
+      }
+    }
+    
+    setData(null)
+    setIsLoading(true)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'bible-study',
+        data: {
+          book,
+          chapter: String(chapter),
+          verseStart: String(verseStart),
+          verseEnd: String(verseEnd),
+          passage: `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          const studyData: BibleStudyData = {
+            passage: `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
+            verses: parsed.verses || [],
+            words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
+            commentaries: parsed.commentaries || [],
+            translationNotes: parsed.translationNotes || [],
+            parallelPassages: parsed.parallelPassages || [],
+            themes: parsed.themes || [],
+            contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
+          }
+          setData(studyData)
+          localStorage.setItem(`sermonai_bible_${key}`, JSON.stringify(studyData))
+        } else {
+          setError(json.error || 'AI 분석에 실패했습니다.')
+        }
+      })
+      .catch(() => {
+        setError('AI 서버에 연결할 수 없습니다.')
+      })
+      .finally(() => setIsLoading(false))
+  }, [book, chapter, verseStart, verseEnd])
 
   const filteredBooks = useMemo(() => {
     let list = BIBLE_BOOKS.filter(b => b.testament === testament)
@@ -59,19 +167,89 @@ export default function BiblePage() {
     setVerseEnd(11)
   }, [])
 
-  const handleLoad = useCallback(() => {
-    setDetailView('none')
-    setSelectedWordId(null)
-    setSelectedVerse(null)
-    setSelectedTheme(null)
-  }, [])
-
-  const handleWordClick = useCallback((wordId: string, _verse: number) => {
-    setDetailView('word')
-    setSelectedWordId(wordId)
-    setSelectedVerse(null)
-    setSelectedTheme(null)
-  }, [])
+  const handleWordClick = useCallback((wordId: string, verse: number, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => {
+    if (fallbackWord && fallbackWord.version) {
+      const cacheKey = `_englk_${verse}_${fallbackWord.version}_${fallbackWord.clean}`
+      if (englishLookup[cacheKey]) {
+        setSelectedEnglishWord(fallbackWord as { word: string; clean: string; verse: number; version: string })
+        setSelectedWordId(null)
+        setSelectedFallbackWord(null)
+        setSelectedVerse(null)
+        setSelectedTheme(null)
+        setDetailView('word')
+        return
+      }
+      setSelectedEnglishWord(fallbackWord as { word: string; clean: string; verse: number; version: string })
+      setSelectedWordId(null)
+      setSelectedFallbackWord(null)
+      setSelectedVerse(null)
+      setSelectedTheme(null)
+      setDetailView('word')
+      setEnglishLookupLoading(true)
+      fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'english-word',
+          data: { word: fallbackWord.word, context: `${book} ${chapter}:${verse}` },
+        }),
+      })
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) {
+            const parsed = JSON.parse(json.data.output)
+            setEnglishLookup(prev => ({ ...prev, [cacheKey]: parsed }))
+          }
+        })
+        .catch(() => {})
+        .finally(() => setEnglishLookupLoading(false))
+    } else if (fallbackWord) {
+      const cacheKey = `_lookup_${verse}_${fallbackWord.clean}`
+      if (wordLookup[cacheKey]) {
+        setSelectedWordId(cacheKey)
+        setSelectedFallbackWord(null)
+        setSelectedEnglishWord(null)
+        setSelectedVerse(null)
+        setSelectedTheme(null)
+        setDetailView('word')
+        return
+      }
+      setSelectedFallbackWord(fallbackWord)
+      setSelectedWordId(null)
+      setSelectedEnglishWord(null)
+      setSelectedVerse(null)
+      setSelectedTheme(null)
+      setDetailView('word')
+      setLookupLoading(true)
+      fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'word-lookup',
+          data: { word: fallbackWord.word, context: `${book} ${chapter}:${verse}` },
+        }),
+      })
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) {
+            const parsed = JSON.parse(json.data.output)
+            const wd: WordDetail = { id: parsed.id || cacheKey, ...parsed }
+            setWordLookup(prev => ({ ...prev, [cacheKey]: wd }))
+            setSelectedWordId(cacheKey)
+            setSelectedFallbackWord(null)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLookupLoading(false))
+    } else {
+      setSelectedWordId(wordId)
+      setSelectedFallbackWord(null)
+      setSelectedEnglishWord(null)
+      setSelectedVerse(null)
+      setSelectedTheme(null)
+      setDetailView('word')
+    }
+  }, [book, chapter, wordLookup, englishLookup])
 
   const handleVerseClick = useCallback((verse: number) => {
     setDetailView('verse')
@@ -90,13 +268,21 @@ export default function BiblePage() {
   const handleCloseDetail = useCallback(() => {
     setDetailView('none')
     setSelectedWordId(null)
+    setSelectedFallbackWord(null)
+    setSelectedEnglishWord(null)
     setSelectedVerse(null)
     setSelectedTheme(null)
   }, [])
 
   const filteredVerses = useMemo(() => {
+    if (!data) return []
     return data.verses.filter(v => v.verse >= verseStart && v.verse <= verseEnd)
-  }, [data.verses, verseStart, verseEnd])
+  }, [data, verseStart, verseEnd])
+
+  const allWords = useMemo(() => ({
+    ...(data?.words || {}),
+    ...wordLookup,
+  }), [data?.words, wordLookup])
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -121,7 +307,7 @@ export default function BiblePage() {
         onToggleTranslation={key => setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0" key={passageKey}>
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
           <div className="max-w-[900px] mx-auto space-y-6">
             <div className="flex items-center justify-between">
@@ -132,73 +318,140 @@ export default function BiblePage() {
                 </div>
                 <h2 className="text-xl font-extrabold text-white mt-1">성경 연구</h2>
                 <p className="text-xs text-slate-500 font-bold mt-0.5">
-                  {book} {chapter}장 {verseStart}절~{verseEnd}절 &middot; {data.verses.length}절
+                  {book} {chapter}장 {verseStart}절~{verseEnd}절
+                  {data && ` · ${data.verses.length}절`}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-500 font-bold bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl">
-                  원어 {Object.keys(data.words).length}개 &middot; 주석 {data.commentaries.length}건
-                </span>
-              </div>
+              {data && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-500 font-bold bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl">
+                    원어 {Object.keys(data.words).length}개 · 주석 {data.commentaries.length}건
+                  </span>
+                </div>
+              )}
             </div>
 
-            <ContextInfoCard before={data.contextInfo.before} after={data.contextInfo.after} />
-
-            <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 overflow-hidden">
-              <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">본문 연구</span>
-                <span className="text-[10px] text-slate-600 font-bold">원어 단어를 클릭하면 상세 분석을 볼 수 있습니다</span>
+            {isLoading && (
+              <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">AI가 본문을 분석하고 있습니다</h3>
+                  <p className="text-sm text-slate-400 mt-1">{book} {chapter}:{verseStart}{verseEnd > verseStart ? `-${verseEnd}` : ''}</p>
+                  <p className="text-sm text-slate-400">원문 분석, 주석, 번역 비교 등을 생성하는 중입니다 (10-20초 소요)</p>
+                </div>
+                <div className="w-full max-w-lg space-y-3 animate-pulse">
+                  <div className="h-4 bg-white/5 rounded-xl w-3/4" />
+                  <div className="h-4 bg-white/5 rounded-xl w-full" />
+                  <div className="h-4 bg-white/5 rounded-xl w-5/6" />
+                  <div className="h-20 bg-white/5 rounded-xl w-full" />
+                </div>
               </div>
-              <div className="divide-y divide-white/5">
-                {filteredVerses.map(v => (
-                  <VerseRow
-                    key={v.verse}
-                    verse={v}
-                    words={data.words}
-                    showTranslations={showTranslations}
-                    selectedWordId={selectedWordId}
-                    selectedVerse={selectedVerse}
-                    onWordClick={handleWordClick}
-                    onVerseClick={handleVerseClick}
-                  />
-                ))}
+            )}
+
+            {error && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">분석 중 오류 발생</h3>
+                  <p className="text-sm text-red-400/80 mt-2">{error}</p>
+                </div>
+                <button
+                  onClick={handleLoad}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+                >
+                  <Loader2 className="w-4 h-4" />
+                  다시 시도
+                </button>
               </div>
-            </div>
+            )}
 
-            <TranslationNotesSection notes={data.translationNotes} />
+            {!data && !isLoading && !error && (
+              <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">본문을 선택하세요</h3>
+                  <p className="text-sm text-slate-400 mt-1">왼쪽에서 책, 장, 절을 선택한 후<br />"본문 불러오기"를 클릭하면 AI가 분석합니다</p>
+                </div>
+              </div>
+            )}
 
-            <CommentarySection
-              commentaries={data.commentaries}
-              selectedVerse={selectedVerse}
-              onVerseClick={handleVerseClick}
-            />
+            {data && !isLoading && (
+              <>
+                <ContextInfoCard before={data.contextInfo.before} after={data.contextInfo.after} />
 
-            <ParallelPassagesSection passages={data.parallelPassages} router={router} />
+                <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">본문 연구</span>
+                    <span className="text-[10px] text-slate-600 font-bold">원어 단어를 클릭하면 상세 분석을 볼 수 있습니다</span>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {filteredVerses.map(v => (
+                      <VerseRow
+                        key={v.verse}
+                        verse={v}
+                        words={allWords}
+                        showTranslations={showTranslations}
+                        selectedWordId={selectedWordId}
+                        selectedVerse={selectedVerse}
+                        onWordClick={handleWordClick}
+                        onVerseClick={handleVerseClick}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-            <ThemeSection themes={data.themes} onThemeClick={handleThemeClick} selectedTheme={selectedTheme} />
+                <TranslationNotesSection notes={data.translationNotes} />
 
-            <StudyMemoSection value={memoText} onChange={setMemoText} />
+                <CommentarySection
+                  commentaries={data.commentaries}
+                  selectedVerse={selectedVerse}
+                  onVerseClick={handleVerseClick}
+                />
 
-            <div className="flex items-center gap-3 pb-8">
-              <button className="text-[13px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/15">
-                연구 노트 저장
-              </button>
-              <button className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors">
-                새 설교 프로젝트로 시작 →
-              </button>
-            </div>
+                <ParallelPassagesSection passages={data.parallelPassages} router={router} />
+
+                <ThemeSection themes={data.themes} onThemeClick={handleThemeClick} selectedTheme={selectedTheme} />
+
+                <StudyMemoSection value={memoText} onChange={setMemoText} />
+
+                <div className="flex items-center gap-3 pb-8">
+                  <button className="text-[13px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/15">
+                    연구 노트 저장
+                  </button>
+                  <button className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors">
+                    새 설교 프로젝트로 시작 →
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {detailView !== 'none' && (
+      {data && detailView !== 'none' && (
         <DetailPanel
           data={data}
           detailView={detailView}
           selectedWordId={selectedWordId}
+          selectedFallbackWord={selectedFallbackWord}
+          lookupLoading={lookupLoading}
+          selectedEnglishWord={selectedEnglishWord}
+          englishLookup={englishLookup}
+          englishLookupLoading={englishLookupLoading}
           selectedVerse={selectedVerse}
           selectedTheme={selectedTheme}
           onClose={handleCloseDetail}
+          wordLookup={allWords}
         />
       )}
     </div>
@@ -379,10 +632,38 @@ function VerseRow({
   showTranslations: Record<string, boolean>
   selectedWordId: string | null
   selectedVerse: number | null
-  onWordClick: (wordId: string, verse: number) => void
+  onWordClick: (wordId: string, verse: number, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => void
   onVerseClick: (verse: number) => void
 }) {
   const isSelected = selectedVerse === verse.verse
+
+  function normalizeGreek(s: string): string {
+    return s.normalize('NFD').replace(/[\u0300-\u036f\u0313\u0314\u0342\u0345]/g, '').toLowerCase()
+  }
+
+  function renderAlignedText(text: string, version: string) {
+    if (!text) return null
+    const words_arr = text.split(' ')
+    return words_arr.map((word, i) => {
+      const clean = word.replace(/[.,;:'"!?()\[\]{}…·]/g, '').toLowerCase()
+      const wordId = `_eng_${verse.verse}_${version}_${i}`
+      const isSel = selectedWordId === wordId
+      return (
+        <span key={i} className="inline">
+          <button
+            onClick={() => onWordClick(wordId, verse.verse, { word, clean, verse: verse.verse, version })}
+            className={`transition-colors cursor-pointer ${
+              isSel ? 'text-indigo-400 bg-indigo-500/10 rounded px-0.5' : 'hover:text-white/70'
+            }`}
+            title={`${version}: ${clean}`}
+          >
+            {word}
+          </button>
+          {i < words_arr.length - 1 && <span className="text-inherit"> </span>}
+        </span>
+      )
+    })
+  }
 
   return (
     <div className={`px-5 py-4 transition-colors ${isSelected ? 'bg-indigo-500/10' : 'hover:bg-white/[0.02]'}`}>
@@ -403,26 +684,46 @@ function VerseRow({
               <span className="text-[9px] font-extrabold text-indigo-400 w-8 shrink-0 mt-1 uppercase tracking-wider">원문</span>
               <p className="text-sm text-slate-200 leading-relaxed font-greek flex-1">
                 {verse.greek.split(' ').map((word, i) => {
+                  const clean = word.replace(/[.,;:'"!?()\[\]{}…·]/g, '')
+                  const normalized = normalizeGreek(clean)
                   const matchedEntry = Object.entries(words).find(([_, w]) =>
-                    w.lemmaGreek && word.includes(w.lemmaGreek.slice(0, 4))
+                    w.lemmaGreek && normalized.includes(normalizeGreek(w.lemmaGreek.slice(0, 4)))
                   )
                   if (matchedEntry) {
+                    const isSel = selectedWordId === matchedEntry[0]
                     return (
-                      <button
-                        key={i}
-                        onClick={() => onWordClick(matchedEntry[0], verse.verse)}
-                        className={`hover:text-indigo-300 transition-colors cursor-pointer border-b border-dotted ${
-                          selectedWordId === matchedEntry[0]
-                            ? 'text-indigo-300 border-indigo-400 bg-indigo-500/10 rounded px-0.5'
-                            : 'border-slate-600 hover:border-indigo-400'
-                        }`}
-                        title={matchedEntry[1].basicMeaning}
-                      >
-                        {word}{' '}
-                      </button>
+                      <span key={i} className="inline">
+                        <button
+                          onClick={() => onWordClick(matchedEntry[0], verse.verse)}
+                          className={`transition-colors cursor-pointer border-b border-dotted ${
+                            isSel
+                              ? 'text-indigo-300 border-indigo-400 bg-indigo-500/10 rounded px-0.5'
+                              : 'border-slate-600 hover:border-indigo-400 hover:text-indigo-300'
+                          }`}
+                          title={matchedEntry[1].basicMeaning}
+                        >
+                          {word}
+                        </button>
+                        {' '}
+                      </span>
                     )
                   }
-                  return <span key={i}>{word} </span>
+                  const wordId = `_gk_${verse.verse}_${i}`
+                  const isSel = selectedWordId === wordId
+                  return (
+                    <span key={i} className="inline">
+                      <button
+                        onClick={() => onWordClick(wordId, verse.verse, { word, clean, verse: verse.verse })}
+                        className={`transition-colors cursor-pointer ${
+                          isSel ? 'text-indigo-400 bg-indigo-500/10 rounded px-0.5' : 'hover:text-white/70'
+                        }`}
+                        title={clean}
+                      >
+                        {word}
+                      </button>
+                      {' '}
+                    </span>
+                  )
                 })}
               </p>
             </div>
@@ -439,13 +740,13 @@ function VerseRow({
           {showTranslations.niv && (
             <div className="flex items-start gap-2">
               <span className="text-[9px] font-extrabold text-sky-500 w-8 shrink-0 mt-0.5">NIV</span>
-              <p className="text-xs text-slate-400 leading-relaxed">{verse.niv}</p>
+              <span className="text-xs text-slate-400 leading-relaxed">{renderAlignedText(verse.niv, 'NIV')}</span>
             </div>
           )}
           {showTranslations.esv && (
             <div className="flex items-start gap-2">
               <span className="text-[9px] font-extrabold text-amber-500 w-8 shrink-0 mt-0.5">ESV</span>
-              <p className="text-xs text-slate-400 leading-relaxed">{verse.esv}</p>
+              <span className="text-xs text-slate-400 leading-relaxed">{renderAlignedText(verse.esv, 'ESV')}</span>
             </div>
           )}
         </div>
@@ -640,17 +941,132 @@ function StudyMemoSection({ value, onChange }: { value: string; onChange: (v: st
 /* ─── Detail Panel ─── */
 
 function DetailPanel({
-  data, detailView, selectedWordId, selectedVerse, selectedTheme, onClose,
+  data, detailView, selectedWordId, selectedFallbackWord, lookupLoading,
+  selectedEnglishWord, englishLookup, englishLookupLoading,
+  selectedVerse, selectedTheme, onClose, wordLookup,
 }: {
   data: BibleStudyData
   detailView: DetailView
   selectedWordId: string | null
+  selectedFallbackWord: { word: string; clean: string; verse: number; version?: string } | null
+  lookupLoading: boolean
+  selectedEnglishWord: { word: string; clean: string; verse: number; version: string } | null
+  englishLookup: Record<string, any>
+  englishLookupLoading: boolean
   selectedVerse: number | null
   selectedTheme: string | null
   onClose: () => void
+  wordLookup: Record<string, WordDetail>
 }) {
+  if (selectedFallbackWord) {
+    return (
+      <aside className="w-[380px] shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin">
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+            <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+              원어 단어 ({selectedFallbackWord.verse}절)
+            </h3>
+            <button onClick={onClose} className="text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="space-y-4">
+            <div className="text-center py-6 bg-white/5 rounded-2xl">
+              <p className="text-2xl font-greek text-white">{selectedFallbackWord.word}</p>
+              <p className="text-sm text-slate-400 mt-1">{selectedFallbackWord.clean}</p>
+            </div>
+            {lookupLoading ? (
+              <div className="flex flex-col items-center py-6 space-y-3">
+                <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+              </div>
+            ) : (
+              <div className="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20">
+                <p className="text-xs text-indigo-200 text-center">이 단어를 클릭하면 AI가 분석합니다</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+    )
+  }
+
+  if (selectedEnglishWord) {
+    const cacheKey = `_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`
+    const wordData = englishLookup[cacheKey]
+    if (englishLookupLoading && !wordData) {
+      return (
+        <aside className="w-[380px] shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+              <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})
+              </h3>
+              <button onClick={onClose} className="text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-col items-center py-10 space-y-3">
+              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+              <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+            </div>
+          </div>
+        </aside>
+      )
+    }
+    if (wordData) {
+      return (
+        <aside className="w-[380px] shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+              <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})
+              </h3>
+              <button onClick={onClose} className="text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="text-center py-4 bg-white/5 rounded-2xl">
+                <p className="text-2xl font-bold text-white font-serif">{wordData.word}</p>
+                <p className="text-sm text-slate-400 mt-1">{wordData.pronunciation}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 text-xs">
+                <InfoBox label="품사" value={wordData.partOfSpeech} />
+              </div>
+              <SectionBox title="기본 의미" className="bg-white/5">
+                {wordData.basicMeaning}
+              </SectionBox>
+              <SectionBox title="문맥상 의미" className="bg-indigo-500/10 border border-indigo-500/20">
+                {wordData.contextualMeaning}
+              </SectionBox>
+              <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20">
+                <h4 className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest mb-1.5">쉽게 설명하면</h4>
+                <p className="text-xs text-amber-200 leading-relaxed">{wordData.simpleExplanation}</p>
+              </div>
+              {wordData.sermonNote && (
+                <SectionBox title="설교적 의미" className="bg-white/5 border-l-2 border-indigo-500">
+                  {wordData.sermonNote}
+                </SectionBox>
+              )}
+            </div>
+          </div>
+        </aside>
+      )
+    }
+  }
+
   return (
     <aside className="w-[380px] shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin">
+      {detailView === 'word' && selectedWordId && wordLookup[selectedWordId] && (
+        <WordDetailView word={wordLookup[selectedWordId]} onClose={onClose} />
+      )}
       {detailView === 'word' && selectedWordId && data.words[selectedWordId] && (
         <WordDetailView word={data.words[selectedWordId]} onClose={onClose} />
       )}
@@ -798,6 +1214,7 @@ function ThemeDetailView({ theme, onClose }: {
   theme: { name: string; description: string; connectedSermons: number } | null
   onClose: () => void
 }) {
+  const router = useRouter()
   if (!theme) return null
   return (
     <div>
@@ -813,7 +1230,10 @@ function ThemeDetailView({ theme, onClose }: {
           <span className="font-bold">연결된 설교</span>
           <span className="font-extrabold text-slate-300">{theme.connectedSermons}편</span>
         </div>
-        <button className="w-full text-xs font-bold text-indigo-400 border border-indigo-500/30 rounded-xl py-2.5 hover:bg-indigo-500/10 transition-colors">
+        <button
+          onClick={() => router.push(`/dashboard/sermons?search=${encodeURIComponent(theme.name)}`)}
+          className="w-full text-xs font-bold text-indigo-400 border border-indigo-500/30 rounded-xl py-2.5 hover:bg-indigo-500/10 transition-colors"
+        >
           이 주제로 설교 검색 →
         </button>
       </div>
