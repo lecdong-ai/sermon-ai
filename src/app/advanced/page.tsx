@@ -106,17 +106,31 @@ export default function AdvancedDashboardPage() {
   ]
 
   // 4. AI 액션 핸들러
-  const handleAiAction = (sermon: ArchivedSermon, type: string) => {
+  const handleAiAction = async (sermon: ArchivedSermon, type: string) => {
     setActiveActionSermon(sermon)
     setActiveActionType(type)
     setGenerating(true)
     setModalOutput('')
 
-    // AI 생성 연출용 시뮬레이션 타이머
-    setTimeout(() => {
-      setGenerating(false)
-      setModalOutput(getGeneratedContent(sermon, type))
-    }, 1500)
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          data: { sermon },
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setModalOutput(json.data.output)
+      } else {
+        setModalOutput(`오류: ${json.error}`)
+      }
+    } catch (e: any) {
+      setModalOutput(`요청 실패: ${e.message}`)
+    }
+    setGenerating(false)
   }
 
   // 5. 스탯 데이터 계산

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo, useCallback } from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
@@ -170,6 +170,50 @@ export default function PrepTab({ project }: Props) {
   const [prepData, setPrepData] = useState<PrepData>(JOHN_PREP_DATA)
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  useEffect(() => {
+    try {
+      let studyData: any = null
+      // 1) global variable buffer (synchronous, same-page transition)
+      const buffer = (window as any).__prepDataBuffer
+      if (buffer) {
+        studyData = buffer
+        ;(window as any).__prepDataBuffer = null
+        console.log('[PrepTab] Loaded from global buffer:', studyData)
+      }
+      // 2) sessionStorage
+      if (!studyData) {
+        const ss = sessionStorage.getItem(`sermonai_study_to_prep_${project.id}`)
+        if (ss) {
+          studyData = JSON.parse(ss)
+          sessionStorage.removeItem(`sermonai_study_to_prep_${project.id}`)
+          console.log('[PrepTab] Loaded from sessionStorage:', studyData)
+        }
+      }
+      // 3) localStorage fallback
+      if (!studyData) {
+        const ls = localStorage.getItem(`sermonai_study_to_prep_${project.id}`)
+        if (ls) {
+          studyData = JSON.parse(ls)
+          localStorage.removeItem(`sermonai_study_to_prep_${project.id}`)
+          console.log('[PrepTab] Loaded from localStorage:', studyData)
+        }
+      }
+      if (studyData) {
+        setPrepData(prev => ({
+          ...prev,
+          passageStructure: studyData.passageStructure || prev.passageStructure,
+          contextPoints: studyData.contextPoints?.length ? studyData.contextPoints : prev.contextPoints,
+          keyWords: studyData.keyWords?.length ? studyData.keyWords : prev.keyWords,
+          researchInsights: studyData.researchInsights?.length ? studyData.researchInsights : prev.researchInsights,
+        }))
+      } else {
+        console.log('[PrepTab] No study data found for key:', `sermonai_study_to_prep_${project.id}`)
+      }
+    } catch (e) {
+      console.error('[PrepTab] Failed to load study data:', e)
+    }
+  }, [project.id])
 
   const scrollToSection = useCallback((id: SectionId) => {
     setActiveSection(id)
@@ -594,9 +638,13 @@ function PassageFlowSection({
           <span className="text-[10px] font-semibold text-teal-300 uppercase tracking-widest">연구에서 가져온 내용</span>
         </div>
         <div className="space-y-1 text-[11px] text-teal-300 leading-relaxed">
-          <p>본문 구조: 요한 1:1-5 — 말씀의 선재성(1-2절) → 창조와 생명(3-4절) → 빛과 어둠의 긴장(5절)</p>
-          <p>핵심 원어: λόγος(말씀), ζωή(생명), φῶς(빛), σκοτία(어둠) — 각 단어의 문맥적 의미가 연구에서 확인됨</p>
-          <p>반복 주제: 말씀·생명·빛·어둠 — 창세기 1장의 새 창조 맥락</p>
+          <p>본문 구조: {data.passageStructure.slice(0, 120)}{data.passageStructure.length > 120 ? '...' : ''}</p>
+          {data.keyWords.length > 0 && (
+            <p>핵심 원어: {data.keyWords.map(k => k.word.replace(/\(.*?\)/g, '').trim()).slice(0, 6).join(', ')} — 각 단어의 문맥적 의미가 연구에서 확인됨</p>
+          )}
+          {data.contextPoints.length > 0 && (
+            <p>문맥 포인트: {data.contextPoints.slice(0, 3).join(' · ')}</p>
+          )}
         </div>
         <button
           onClick={onGoToStudy}

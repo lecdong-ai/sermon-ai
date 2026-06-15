@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { mockProjects, mockQuickStats } from '@/lib/advanced/mockData'
+import { mockProjects, mockQuickStats, getAllProjects } from '@/lib/advanced/mockData'
 import { PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
 import type { ProjectStatus, AdvancedProject } from '@/lib/advanced/types'
 import {
@@ -20,6 +20,15 @@ const STATUS_COLORS: Record<ProjectStatus, { bg: string; text: string; border: s
   completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-300', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
   archived:  { bg: 'bg-slate-500/10',   text: 'text-slate-400',   border: 'border-slate-500/30',   dot: 'bg-slate-500' },
 }
+
+const STATUS_FILTERS: { key: 'all' | ProjectStatus; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'research', label: '연구 중' },
+  { key: 'prepare', label: '준비 중' },
+  { key: 'writing', label: '작성 중' },
+  { key: 'review', label: '검토 중' },
+  { key: 'completed', label: '완료' },
+]
 
 const STATUS_ICONS: Record<ProjectStatus, any> = {
   research: BookOpen,
@@ -186,17 +195,24 @@ function ProjectsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
+  const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return mockProjects
-    const q = searchQuery.toLowerCase()
-    return mockProjects.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.passage.toLowerCase().includes(q) ||
-      p.coreMessage.toLowerCase().includes(q) ||
-      p.sermonType.toLowerCase().includes(q)
-    )
-  }, [searchQuery])
+    let list = getAllProjects()
+    if (statusFilter !== 'all') {
+      list = list.filter(p => p.status === statusFilter)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      list = list.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.passage.toLowerCase().includes(q) ||
+        p.coreMessage.toLowerCase().includes(q) ||
+        p.sermonType.toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [searchQuery, statusFilter])
 
   const stats = mockQuickStats
   const inProgress = filtered.filter(p => !['completed','archived'].includes(p.status))
@@ -241,6 +257,39 @@ function ProjectsContent() {
           </div>
         )}
 
+        {/* ── 상태 필터 탭 ── */}
+        {!searchQuery && (
+          <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/5 w-fit">
+            {STATUS_FILTERS.map(f => {
+              const isActive = statusFilter === f.key
+              const allProjects = getAllProjects()
+              const count = f.key === 'all'
+                ? allProjects.length
+                : allProjects.filter(p => p.status === f.key).length
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setStatusFilter(f.key)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200
+                    ${isActive
+                      ? f.key === 'all'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+                        : `${STATUS_COLORS[f.key].bg} ${STATUS_COLORS[f.key].text} border ${STATUS_COLORS[f.key].border}`
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  {f.label}
+                  <span className={`text-[10px] font-bold ${isActive ? 'opacity-70' : 'text-slate-600'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* ── 진행 중인 프로젝트 ── */}
         {filtered.length === 0 ? (
           <div className="glass-dark rounded-3xl p-16 text-center space-y-4">
@@ -248,7 +297,11 @@ function ProjectsContent() {
               <FileText className="w-7 h-7 text-slate-500" />
             </div>
             <p className="text-sm font-bold text-white">
-              {searchQuery ? `"${searchQuery}"에 대한 결과가 없습니다` : '아직 설교 프로젝트가 없습니다'}
+              {searchQuery
+                ? `"${searchQuery}"에 대한 결과가 없습니다`
+                : statusFilter !== 'all'
+                ? `'${STATUS_FILTERS.find(f => f.key === statusFilter)?.label}' 상태의 프로젝트가 없습니다`
+                : '아직 설교 프로젝트가 없습니다'}
             </p>
             <p className="text-xs text-slate-500 font-medium">새 프로젝트를 시작하여 AI와 함께 설교를 준비해 보세요.</p>
             <button

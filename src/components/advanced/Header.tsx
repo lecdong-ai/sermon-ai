@@ -1,12 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, User, Sparkles } from 'lucide-react'
+import { Search, Plus, Sparkles, Bug } from 'lucide-react'
+
+function getCookie(name: string): string {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
+  return match ? decodeURIComponent(match[2]) : ''
+}
+
+function setCookie(name: string, value: string) {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=86400`
+}
 
 export default function AdvancedHeader() {
   const router = useRouter()
   const [query, setQuery] = useState('')
+  const [mockOn, setMockOn] = useState(false)
+
+  useEffect(() => {
+    setMockOn(getCookie('use_mock') === 'true')
+  }, [])
+
+  const toggleMock = () => {
+    const next = !mockOn
+    setMockOn(next)
+    setCookie('use_mock', next ? 'true' : 'false')
+    window.location.reload()
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +57,20 @@ export default function AdvancedHeader() {
           <Sparkles className="w-3 h-3 text-indigo-400 animate-pulse" />
           AI Engine Online
         </div>
+
+        {/* Mock 토글 */}
+        <button
+          onClick={toggleMock}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border ${
+            mockOn
+              ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
+              : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/10'
+          }`}
+          title={mockOn ? 'Mock 데이터 사용 중 (클릭 시 해제)' : 'Mock 데이터 사용 (클릭 시 활성화)'}
+        >
+          <Bug className={`w-3 h-3 ${mockOn ? 'text-amber-400 animate-pulse' : ''}`} />
+          {mockOn ? 'Mock' : 'Mock'}
+        </button>
 
         {/* 새 프로젝트 버튼 */}
         <button

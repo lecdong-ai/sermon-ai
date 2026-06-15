@@ -243,7 +243,47 @@ export const mockGraphData: { nodes: GraphNode[]; links: GraphLink[] } = {
   ],
 }
 
+const CUSTOM_PROJECTS_KEY = 'sermonai_custom_projects'
+
+export function getCustomProjects(): AdvancedProject[] {
+  if (typeof window === 'undefined') return []
+  try {
+    return JSON.parse(localStorage.getItem(CUSTOM_PROJECTS_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
+export function getAllProjects(): AdvancedProject[] {
+  return [...mockProjects, ...getCustomProjects()]
+}
+
+function createMinimalProjectDetail(project: AdvancedProject): ProjectDetail {
+  return {
+    ...project,
+    outlinePoints: [],
+    introduction: '',
+    conclusion: '',
+    applicationPoints: [],
+    titleCandidates: [],
+    manuscriptContent: '',
+    observations: '',
+    backgroundNotes: '',
+    interpretationNotes: '',
+    illustrationNotes: '',
+    versions: [],
+    recentActivity: [
+      { type: 'create', description: '프로젝트 생성', timestamp: project.createdAt }
+    ],
+    relatedSermons: [],
+  }
+}
+
 export function getMockProjectDetail(id: string): ProjectDetail {
+  const customProjects = getCustomProjects()
+  const foundCustom = customProjects.find(p => p.id === id)
+  if (foundCustom) return createMinimalProjectDetail(foundCustom)
+
   const base = [...mockProjects, mockTodayProject].find(p => p.id === id) || mockTodayProject
 
   return {

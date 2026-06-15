@@ -5,8 +5,6 @@ export const ADVANCED_MENUS: MenuItem[] = [
   { key: 'dashboard', label: '대시보드 홈', href: '/advanced', icon: '◈', section: 'main' },
   { key: 'projects', label: '설교 프로젝트', href: '/advanced/projects', icon: '◆', section: 'main' },
   { key: 'bible', label: '성경 연구', href: '/advanced/bible', icon: '◇', section: 'ministry' },
-  { key: 'prepare', label: '설교 준비', href: '/advanced/prepare', icon: '◇', section: 'ministry' },
-  { key: 'manuscript', label: '설교 작성', href: '/advanced/manuscript', icon: '◇', section: 'ministry' },
   { key: 'archive', label: '설교 아카이브', href: '/advanced/archive', icon: '◇', section: 'ministry' },
   { key: 'graph', label: '그래프', href: '/advanced/graph', icon: '◇', section: 'knowledge' },
   { key: 'notes', label: '노트/통찰', href: '/advanced/notes', icon: '◇', section: 'knowledge' },

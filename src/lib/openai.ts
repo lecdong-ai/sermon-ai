@@ -44,13 +44,13 @@ async function callAI<T>(
   temperature = 0.3,
 ): Promise<T> {
   const res = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.4-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `다음 설교 원고를 바탕으로 작업해주세요:\n\n${truncate(userText)}` },
     ],
     temperature,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     response_format: schema,
   })
 

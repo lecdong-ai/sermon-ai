@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
     }
 
     const res = await getOpenai().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.4-mini',
       messages: [
         { role: 'system', content: SUGGEST_SYSTEM_PROMPT },
         { role: 'user', content: userText },
       ],
       temperature: 0.3,
-      max_tokens: 500,
+      max_completion_tokens: 500,
     })
 
     const suggestion = res.choices[0].message.content || ''

@@ -211,13 +211,13 @@ const DRAFT_SCHEMA = {
 
 async function callAI<T>(systemPrompt: string, userText: string, schema: any, maxTokens = 4000): Promise<T> {
   const res = await getOpenai().chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.4-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userText },
     ],
     temperature: 0.3,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     response_format: schema,
   })
 
@@ -333,7 +333,7 @@ export async function generateAdvancedDraft(input: DraftInput): Promise<string> 
       { role: 'user', content: userText },
     ],
     temperature: 0.7,
-    max_tokens: 16000,
+    max_completion_tokens: 16000,
   })
 
   return res.choices[0]?.message?.content || ''

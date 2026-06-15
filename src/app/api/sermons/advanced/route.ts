@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
           { role: 'user', content: userText },
         ],
         temperature: 0.7,
-        max_tokens: 16000,
+        max_completion_tokens: 16000,
       })
 
       await consumeWorkspaceUsage(user.id).catch(() => {})
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         { role: 'user', content: userText },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
     })
 
     const raw = res.choices[0]?.message?.content || ''

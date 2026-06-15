@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
   Plus, X, BookOpen, Calendar, User, ChevronRight,
   Sparkles, MessageSquare, BrainCircuit, Check, ArrowLeft,
-  HelpCircle, Zap, Clock, Hash, Layers
+  HelpCircle, Zap, Clock, Hash, Layers, Loader2, Lightbulb
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
 import { mockRecentPassages } from '@/lib/advanced/mockData'
+import type { AdvancedProject } from '@/lib/advanced/types'
 
 const SERMON_TYPES = ['주일예배', '수요예배', '금요기도회', '새벽기도회', '특별집회', '부흥회', '수련회', '장례예배', '혼인예배']
 const AUDIENCE_OPTIONS = ['장년', '청년', '학생', '유년', '전체', '남선교회', '여선교회']
@@ -66,6 +67,8 @@ export default function NewProjectPage() {
   const [season, setSeason] = useState('일반주일')
 
   const [aiEnabled, setAiEnabled] = useState(true)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
 
   const books = useMemo(() => getBooksByTestament(testament), [testament])
 
@@ -82,18 +85,40 @@ export default function NewProjectPage() {
 
   const isFormValid = selectedBook && chapter && verseStart && title.trim()
 
-  const suggestedTitles = useMemo(() => {
-    if (!selectedBook) return []
-    const bookName = selectedBook.name
-    const ch = chapter || '?'
-    const vs = verseStart || '?'
-    const ve = verseEnd || ''
-    return [
-      `${bookName} ${ch}:${vs}${ve ? '-' + ve : ''} 말씀 연구`,
-      `${bookName} ${ch}장 강해`,
-      `${bookName} ${ch}:${vs}${ve ? '-' + ve : ''}을 중심으로`,
-    ]
-  }, [selectedBook, chapter, verseStart, verseEnd])
+  const handleSuggest = async () => {
+    if (!selectedBook) return
+    setSuggesting(true)
+    setShowSuggestions(true)
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'suggest-titles',
+          data: {
+            book: selectedBook.name,
+            passage: passageDisplay,
+            chapter,
+            verseStart,
+            verseEnd,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        try {
+          setSuggestions(JSON.parse(json.data.output))
+        } catch {
+          setSuggestions([])
+        }
+      }
+    } catch (e) {
+      console.error('AI suggest failed:', e)
+    }
+    setSuggesting(false)
+  }
+
+  const [suggestions, setSuggestions] = useState<{ title: string; reason: string }[]>([])
 
   const handleQuickPassage = (book: string, chapterNum: number, vs: number, ve: number | null) => {
     const found = BIBLE_BOOKS.find(b => b.name === book)
@@ -107,8 +132,44 @@ export default function NewProjectPage() {
   }
 
   const handleCreate = () => {
-    if (!isFormValid) return
+    if (!isFormValid || !selectedBook) return
     const newId = `proj-${Date.now().toString(36)}`
+
+    const ch = chapter
+    const vs = verseStart
+    const ve = verseEnd
+    const passageStr = ve ? `${selectedBook.abbr} ${ch}:${vs}-${ve}` : `${selectedBook.abbr} ${ch}:${vs}`
+    const now = new Date().toISOString()
+
+    const newProject: AdvancedProject = {
+      id: newId,
+      title: title.trim(),
+      passage: passageStr,
+      book: selectedBook.name,
+      chapter: parseInt(chapter),
+      verseStart: parseInt(verseStart),
+      verseEnd: verseEnd ? parseInt(verseEnd) : null,
+      status: 'research',
+      sermonDate,
+      preacher,
+      sermonType,
+      audience: [audience],
+      season,
+      coreMessage: '',
+      wordCount: 0,
+      version: 1,
+      themeIds: [],
+      themeNames: [],
+      tagNames: [],
+      studyCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    const existing = JSON.parse(localStorage.getItem('sermonai_custom_projects') || '[]')
+    existing.push(newProject)
+    localStorage.setItem('sermonai_custom_projects', JSON.stringify(existing))
+
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)
   }
 
@@ -349,28 +410,69 @@ export default function NewProjectPage() {
                   placeholder="설교 제목을 입력하거나 AI 추천을 받아보세요"
                   className="flex-1 text-[13px] bg-[#0c1020] border border-white/5 rounded-xl px-4 py-2.5 text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
                 />
-                {suggestedTitles.length > 0 && (
+                {selectedBook && (
                   <button
-                    onClick={() => setTitle(suggestedTitles[0])}
+                    onClick={handleSuggest}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold transition-all shrink-0"
-                    title="AI 추천 제목 사용"
+                    title="AI 제목 추천"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     AI 추천
                   </button>
                 )}
               </div>
-              {suggestedTitles.length > 0 && !title && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {suggestedTitles.map((s, i) => (
+
+              {/* AI 추천 패널 */}
+              {showSuggestions && selectedBook && (
+                <div className="animate-fade-in mt-3 rounded-2xl bg-[#060b1a] border border-indigo-500/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      <span className="text-[11px] font-extrabold text-slate-300">AI 제목 추천 5가지</span>
+                    </div>
                     <button
-                      key={i}
-                      onClick={() => setTitle(s)}
-                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/20 text-[11px] text-slate-500 hover:text-indigo-300 font-medium transition-all"
+                      onClick={() => setShowSuggestions(false)}
+                      className="p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
                     >
-                      {s}
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  ))}
+                  </div>
+
+                  {suggesting ? (
+                    <div className="flex items-center justify-center gap-2 py-6">
+                      <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                      <span className="text-[12px] text-slate-500 font-medium">본문을 분석하여 제목을 추천 중...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setTitle(s.title); setShowSuggestions(false) }}
+                          className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/30 transition-all group"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                  {i + 1}
+                                </span>
+                                <span className="text-[13px] font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">
+                                  {s.title}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 mt-1.5 ml-7 leading-relaxed">
+                                {s.reason}
+                              </p>
+                            </div>
+                            <div className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                              적용
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
