@@ -51,15 +51,6 @@ export default function PPTSection({ data, sermonId }: Props) {
     }
   }
 
-  const slide = slides[currentIdx]
-  const theme = SLIDE_THEMES[currentIdx % SLIDE_THEMES.length]
-  const isFirst = currentIdx === 0
-  const isLast = currentIdx === total - 1
-  const bulletPoints = (slide?.content || '')
-    .split('\n')
-    .map((l) => l.replace(/^[•\-*]\s*/, '').trim())
-    .filter(Boolean)
-
   if (total === 0) {
     return (
       <SectionCard title="PPT 개요" emoji="📊">
@@ -72,6 +63,10 @@ export default function PPTSection({ data, sermonId }: Props) {
   const theme = SLIDE_THEMES[currentIdx % SLIDE_THEMES.length]
   const isFirst = currentIdx === 0
   const isLast = currentIdx === total - 1
+  const bulletPoints = (slide?.content || '')
+    .split('\n')
+    .map((l) => l.replace(/^[•\-*]\s*/, '').trim())
+    .filter(Boolean)
 
   return (
     <SectionCard
