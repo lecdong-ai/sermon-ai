@@ -380,7 +380,7 @@ export default function BiblePage() {
                 </div>
                 <div className="text-center">
                   <h3 className="text-lg font-bold text-white">본문을 선택하세요</h3>
-                  <p className="text-sm text-slate-400 mt-1">왼쪽에서 책, 장, 절을 선택한 후<br />"본문 불러오기"를 클릭하면 AI가 분석합니다</p>
+                  <p className="text-sm text-slate-400 mt-1">왼쪽에서 책, 장, 절을 선택한 후<br />&quot;본문 불러오기&quot;를 클릭하면 AI가 분석합니다</p>
                 </div>
               </div>
             )}

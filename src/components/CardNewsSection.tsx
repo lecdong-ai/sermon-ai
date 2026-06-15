@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import SectionCard from './SectionCard'
 import { ChevronLeft, ChevronRight, Download, Image } from 'lucide-react'
 import type { CardNews } from '@/types'
