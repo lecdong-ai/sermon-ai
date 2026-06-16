@@ -605,7 +605,7 @@ export default function ManuscriptTab({ project }: Props) {
     const typeMap: Record<string, string> = {
       introduction: 'manuscript-introduction',
       conclusion: 'manuscript-conclusion',
-      application: 'manuscript-application',
+      application: 'manuscript-application-reconstruct',
       body: 'manuscript-body',
     }
     const apiType = typeMap[sectionType]
@@ -627,10 +627,23 @@ export default function ManuscriptTab({ project }: Props) {
       payload.expectedResponse = ''
       payload.deliveryConclusion = ''
     } else if (sectionType === 'application') {
+      const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+      const prepAppPoints = prepRaw?.applicationPoints || []
+      const congregationProfile = prepRaw?.congregationProfile || null
+
       payload.outlines = manuscript.outlinePoints.map(o => ({ title: o.title, description: o.content }))
-      payload.applicationPoints = (section.researchPoints || []).map((p, i) => ({
-        id: `app-${i}`, point: p, audienceTag: '', pastoralNote: '',
-      }))
+      payload.applicationPoints = prepAppPoints.length > 0
+        ? prepAppPoints.map((a: any) => ({
+            id: a.id || `app-${Math.random()}`,
+            point: a.point || '',
+            audienceTag: a.audienceTag || '전체',
+            pastoralNote: a.pastoralNote || '',
+          }))
+        : (section.researchPoints || []).map((p, i) => ({
+            id: `app-${i}`, point: p, audienceTag: '', pastoralNote: '',
+          }))
+      payload.congregationProfile = congregationProfile
+      payload.existingContent = section.content.trim() ? section.content.slice(0, 500) : ''
     } else if (sectionType === 'body') {
       const bodySections = manuscript.sections.filter(s => s.type === 'body')
       const bodyIdx = bodySections.indexOf(section)
@@ -1529,6 +1542,7 @@ function SermonSectionBlock({
   const hasContent = section.content.trim().length > 0
   const isEmpty = status === 'empty'
   const canAiGenerate = section.type === 'introduction' || section.type === 'conclusion' || section.type === 'application' || section.type === 'body'
+  const aiButtonLabel = section.type === 'application' ? '재구성' : 'AI 추천'
 
   const handleAiGenerate = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -1560,7 +1574,7 @@ function SermonSectionBlock({
               className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition-colors border border-indigo-500/20 disabled:opacity-50"
             >
               {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              {aiLoading ? '생성 중...' : 'AI 추천'}
+              {aiLoading ? '재구성 중...' : aiButtonLabel}
             </button>
           )}
           <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${STATUS_COLORS[status]}`}>
