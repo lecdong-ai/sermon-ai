@@ -78,7 +78,31 @@ const EMPTY_GUIDANCE: Record<string, { message: string; hint: string }> = {
   },
 }
 
+/** Levenshtein distance — used for fuzzy title matching between prep outlines and manuscript sections */
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  )
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0),
+      )
+  return dp[m][n]
+}
+
+/** Similarity score 0-1 between two strings (normalized Levenshtein) */
+function similarity(a: string, b: string): number {
+  const maxLen = Math.max(a.length, b.length)
+  if (maxLen === 0) return 1
+  return 1 - levenshtein(a, b) / maxLen
+}
+
 /** Sync an already-loaded manuscript with the latest prep outlines.
+ *  - Smart matching: uses title similarity (Levenshtein) instead of index.
  *  - If prep has more outlines than body-sections → appends new empty sections.
  *  - If prep has fewer outlines → keeps extra sections that have content.
  *  - Updates labels, passages, prepInsights, and outlinePoints from prep. */
@@ -89,18 +113,37 @@ function syncManuscriptWithPrep(ms: JohnManuscriptData, prepRaw: any): JohnManus
   const bodySections = ms.sections.filter(s => s.type === 'body')
   const fixedSections = ms.sections.filter(s => s.type !== 'body')
 
-  // Map prep outlines to body sections by index (preserving content)
-  const synced: SermonSection[] = outlines.map((o: any, i: number) => {
-    const existing = bodySections[i]
-    const label = `${i + 1}. ${o.title || ''}`
-    if (existing) {
-      return { ...existing, id: `body-${i + 1}`, label, passage: o.relatedVerse || existing.passage || '' }
+  // Smart matching: find best existing section for each outline by title similarity
+  const usedIdx = new Set<number>()
+  const synced: SermonSection[] = outlines.map((o: any, _i: number) => {
+    const outlineTitle = o.title || ''
+    let bestIdx = -1
+    let bestScore = 0
+
+    bodySections.forEach((s, idx) => {
+      if (usedIdx.has(idx)) return
+      const secTitle = s.label.replace(/^\d+\.\s*/, '')
+      const score = similarity(outlineTitle, secTitle)
+      // Also check passage match as tiebreaker
+      const passageBonus = o.relatedVerse && s.passage === o.relatedVerse ? 0.2 : 0
+      if (score + passageBonus > bestScore) {
+        bestScore = score + passageBonus
+        bestIdx = idx
+      }
+    })
+
+    const label = `${_i + 1}. ${outlineTitle}`
+    if (bestIdx >= 0 && bestScore > 0.3) {
+      usedIdx.add(bestIdx)
+      const existing = bodySections[bestIdx]
+      return { ...existing, id: `body-${_i + 1}`, label, passage: o.relatedVerse || existing.passage || '' }
     }
-    return { id: `body-${i + 1}`, type: 'body' as const, label, passage: o.relatedVerse || '', content: '', aiGenerated: false }
+    // No match → new empty section
+    return { id: `body-${_i + 1}`, type: 'body' as const, label, passage: o.relatedVerse || '', content: '', aiGenerated: false }
   })
 
   // Keep extra body sections that have user content (don't delete their work)
-  const extras = bodySections.slice(outlines.length).filter(s => s.content.trim())
+  const extras = bodySections.filter((_, idx) => !usedIdx.has(idx) && bodySections[idx].content.trim())
 
   const prepInsights: string[] = [
     ...(prepRaw?.researchInsights || []),
@@ -250,6 +293,8 @@ export default function ManuscriptTab({ project }: Props) {
   const [showPrepPanel, setShowPrepPanel] = useState(true)
   const [showVersions, setShowVersions] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [lastPrepSyncAt, setLastPrepSyncAt] = useState<number | null>(null)
+  const [hasPrepData, setHasPrepData] = useState(false)
   const [rehearsalPhase, setRehearsalPhase] = useState<'idle' | 'setup' | 'running' | 'finished'>('idle')
   const [rehearsalDuration, setRehearsalDuration] = useState(20)
   const [rehearsalElapsed, setRehearsalElapsed] = useState(0)
@@ -317,6 +362,85 @@ export default function ManuscriptTab({ project }: Props) {
     [manuscript.sections, sectionStatuses],
   )
 
+  /* ─── Manuscript Health Score (0-100) ─── */
+
+  const healthScore = useMemo(() => {
+    const sections = manuscript.sections
+    const intro = sections.find(s => s.type === 'introduction')
+    const bodies = sections.filter(s => s.type === 'body')
+    const conclusion = sections.find(s => s.type === 'conclusion')
+    const application = sections.find(s => s.type === 'application')
+
+    let score = 0
+    const details: { label: string; ok: boolean; note: string }[] = []
+
+    // 1. Introduction (15 pts)
+    if (intro?.content.trim()) {
+      score += 15
+      details.push({ label: '도입', ok: true, note: `${intro.content.replace(/\s/g, '').length}자` })
+    } else {
+      details.push({ label: '도입', ok: false, note: '내용 없음' })
+    }
+
+    // 2. Body sections (40 pts total, 10 each, max 4)
+    const bodyCount = Math.min(bodies.length, 4)
+    bodies.slice(0, 4).forEach((s, i) => {
+      if (s.content.trim()) {
+        score += 10
+        details.push({ label: `본론 ${i + 1}`, ok: true, note: `${s.content.replace(/\s/g, '').length}자` })
+      } else {
+        details.push({ label: `본론 ${i + 1}`, ok: false, note: '내용 없음' })
+      }
+    })
+
+    // 3. Research/Application direction in bodies (15 pts)
+    const bodiesWithResearch = bodies.filter(s =>
+      (s.researchPoints?.length || 0) > 0 || s.applicationDirection
+    ).length
+    if (bodiesWithResearch > 0) {
+      const researchScore = Math.min(15, bodiesWithResearch * 5)
+      score += researchScore
+      details.push({ label: '연구/적용 방향', ok: true, note: `${bodiesWithResearch}개 섹션` })
+    } else if (bodies.length > 0) {
+      details.push({ label: '연구/적용 방향', ok: false, note: '추가 권장' })
+    }
+
+    // 4. Conclusion (10 pts)
+    if (conclusion?.content.trim()) {
+      score += 10
+      details.push({ label: '결론', ok: true, note: `${conclusion.content.replace(/\s/g, '').length}자` })
+    } else {
+      details.push({ label: '결론', ok: false, note: '내용 없음' })
+    }
+
+    // 5. Application (10 pts)
+    if (application?.content.trim()) {
+      score += 10
+      details.push({ label: '적용', ok: true, note: `${application.content.replace(/\s/g, '').length}자` })
+    } else {
+      details.push({ label: '적용', ok: false, note: '내용 없음' })
+    }
+
+    // 6. Scripture references (10 pts)
+    const sectionsWithPassage = sections.filter(s => s.passage?.trim()).length
+    if (sectionsWithPassage > 0) {
+      const refScore = Math.min(10, sectionsWithPassage * 3)
+      score += refScore
+      details.push({ label: '성경 참조', ok: true, note: `${sectionsWithPassage}개 섹션` })
+    }
+
+    return { score: Math.min(100, score), details }
+  }, [manuscript.sections])
+
+  /* ─── Empty state detection ─── */
+
+  const isCompletelyEmpty = useMemo(() => {
+    const allSectionsEmpty = manuscript.sections.every(s => !s.content.trim())
+    const noPrepInsights = manuscript.prepInsights.length === 0
+    const noOutlines = manuscript.outlinePoints.length === 0
+    return allSectionsEmpty && noPrepInsights && noOutlines
+  }, [manuscript.sections, manuscript.prepInsights, manuscript.outlinePoints])
+
   /* ─── Load saved manuscript or prep handoff on mount ─── */
   // Priority: saved manuscript (synced with prep) > build from prep > empty template
   // This effect runs *after* PrepTab's unmount cleanup, so `prep_{id}` is always current.
@@ -324,6 +448,8 @@ export default function ManuscriptTab({ project }: Props) {
   useEffect(() => {
     const saved = getStorageItem<any | null>(`manuscript_${project.id}`, null)
     const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const prepSavedAt = (prepRaw as any)?._savedAt ?? null
+    setHasPrepData(!!(prepRaw?.outlines?.length || prepRaw?.coreMessage))
 
     if (saved && saved.title) {
       const { _savedAt, ...restored } = saved
@@ -331,6 +457,7 @@ export default function ManuscriptTab({ project }: Props) {
         ? syncManuscriptWithPrep(restored as JohnManuscriptData, prepRaw)
         : (restored as JohnManuscriptData)
       setManuscript(ms)
+      setLastPrepSyncAt(prepSavedAt)
       if (_savedAt) {
         setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
       }
@@ -342,10 +469,32 @@ export default function ManuscriptTab({ project }: Props) {
     if (prepRaw?.outlines?.length) {
       const fromPrep = buildManuscriptFromPrep(project, prepRaw)
       setManuscript(fromPrep)
+      setLastPrepSyncAt(prepSavedAt)
     }
 
     manuscriptLoadedRef.current = true
   }, [project.id])
+
+  /* ─── Manual sync with latest prep data ─── */
+
+  const handleSyncPrep = useCallback(() => {
+    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    if (!prepRaw?.outlines?.length) return
+    const prepSavedAt = (prepRaw as any)?._savedAt ?? null
+    const ms = syncManuscriptWithPrep(manuscript, prepRaw)
+    setManuscript(ms)
+    setLastPrepSyncAt(prepSavedAt)
+  }, [manuscript, project.id])
+
+  /* ─── Check if prep has been updated since last sync ─── */
+
+  const prepNeedsSync = useMemo(() => {
+    if (!hasPrepData) return false
+    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const prepSavedAt = (prepRaw as any)?._savedAt ?? null
+    if (!prepSavedAt) return false
+    return !lastPrepSyncAt || prepSavedAt > lastPrepSyncAt
+  }, [hasPrepData, lastPrepSyncAt, project.id])
 
   /* ─── Auto-save (debounced, also persists to localStorage) ─── */
 
@@ -1002,6 +1151,33 @@ export default function ManuscriptTab({ project }: Props) {
         {/* Center: Sermon Editor */}
         <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
           <div className="max-w-[720px] mx-auto p-8 space-y-10">
+            {/* Empty State: first visit with no prep data */}
+            {isCompletelyEmpty && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6">
+                  <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-serif font-bold text-white mb-2">아직 작성된 원고가 없습니다</h3>
+                <p className="text-sm text-slate-400 mb-1">먼저 설교 준비 탭에서 다음을 정리하세요:</p>
+                <ul className="text-xs text-slate-500 space-y-1 mb-6">
+                  <li>1. 핵심 메시지</li>
+                  <li>2. 대지 구조 (2-4개)</li>
+                  <li>3. 적용 포인트</li>
+                </ul>
+                <button
+                  onClick={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  설교 준비 탭으로 이동
+                </button>
+              </div>
+            )}
+
             {manuscript.sections.map(section => (
               <SermonSectionBlock
                 key={section.id}
@@ -1038,6 +1214,9 @@ export default function ManuscriptTab({ project }: Props) {
           <PrepSummaryPanel
             manuscript={manuscript}
             onGoToPrep={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
+            prepNeedsSync={prepNeedsSync}
+            onSyncPrep={handleSyncPrep}
+            healthScore={healthScore}
           />
         )}
       </div>
@@ -1481,7 +1660,15 @@ function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
 
 /* ─── Prep Summary Panel ─── */
 
-function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscriptData; onGoToPrep?: () => void }) {
+function PrepSummaryPanel({
+  manuscript, onGoToPrep, prepNeedsSync, onSyncPrep, healthScore,
+}: {
+  manuscript: JohnManuscriptData
+  onGoToPrep?: () => void
+  prepNeedsSync: boolean
+  onSyncPrep: () => void
+  healthScore: { score: number; details: { label: string; ok: boolean; note: string }[] }
+}) {
   return (
     <aside className="w-80 border-l border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
 
@@ -1512,6 +1699,59 @@ function PrepSummaryPanel({ manuscript, onGoToPrep }: { manuscript: JohnManuscri
           </span>
         </div>
         <p className="text-[10px] text-indigo-400 mt-0.5">준비 단계에서 정리한 구조가 원고 작성에 반영됩니다</p>
+      </div>
+
+      {/* PrepSync Badge */}
+      {prepNeedsSync && (
+        <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[10px] text-amber-300">
+              <svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="font-medium">준비 단계 업데이트 있음</span>
+            </div>
+            <button
+              onClick={onSyncPrep}
+              className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition-colors font-medium"
+            >
+              동기화
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Manuscript Health Score */}
+      <div className="p-4 border-b border-white/5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원고 건강도</span>
+          <span className={`text-xs font-bold ${
+            healthScore.score >= 80 ? 'text-green-400' :
+            healthScore.score >= 50 ? 'text-amber-400' :
+            'text-red-400'
+          }`}>{healthScore.score}/100</span>
+        </div>
+        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              healthScore.score >= 80 ? 'bg-green-500' :
+              healthScore.score >= 50 ? 'bg-amber-500' :
+              'bg-red-500'
+            }`}
+            style={{ width: `${healthScore.score}%` }}
+          />
+        </div>
+        <div className="space-y-1">
+          {healthScore.details.map((d, i) => (
+            <div key={i} className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${d.ok ? 'bg-green-400' : 'bg-white/10'}`} />
+                <span className="text-slate-400">{d.label}</span>
+              </div>
+              <span className={d.ok ? 'text-slate-500' : 'text-slate-600'}>{d.note}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Core Message (from prep) */}
