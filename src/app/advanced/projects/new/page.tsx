@@ -146,13 +146,23 @@ export default function NewProjectPage() {
       if (json.success) {
         try {
           let output = json.data.output.trim()
+          // Remove markdown code blocks
           if (output.startsWith('```')) {
             output = output.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
           }
-          const parsed = JSON.parse(output)
-          setSuggestions(Array.isArray(parsed) ? parsed : [])
+          // Extract array from text (find first '[' and last ']')
+          const startIdx = output.indexOf('[')
+          const endIdx = output.lastIndexOf(']')
+          if (startIdx !== -1 && endIdx > startIdx) {
+            const jsonStr = output.slice(startIdx, endIdx + 1)
+            const parsed = JSON.parse(jsonStr)
+            setSuggestions(Array.isArray(parsed) ? parsed : [])
+          } else {
+            console.error('No array found in output:', output)
+            setSuggestions([])
+          }
         } catch (e) {
-          console.error('Suggestion parse error:', e, json.data.output)
+          console.error('Suggestion parse error:', e)
           setSuggestions([])
         }
       } else {

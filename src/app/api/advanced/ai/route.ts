@@ -203,6 +203,8 @@ export async function POST(request: NextRequest) {
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
+      model = 'gpt-5.4-mini'
+      maxTokens = 128000
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
@@ -220,15 +222,18 @@ export async function POST(request: NextRequest) {
     })
 
     let output = res.choices[0]?.message?.content || ''
-    // Extract JSON robustly by counting braces to find the root object
-    const start = output.indexOf('{')
+    // Extract JSON robustly — handle both {} objects and [] arrays
+    const isArrayType = type === 'suggest-titles'
+    const openChar = isArrayType ? '[' : '{'
+    const closeChar = isArrayType ? ']' : '}'
+    const start = output.indexOf(openChar)
     if (start !== -1) {
-      let braceCount = 0
+      let count = 0
       let end = -1
       for (let i = start; i < output.length; i++) {
-        if (output[i] === '{') braceCount++
-        else if (output[i] === '}') braceCount--
-        if (braceCount === 0) {
+        if (output[i] === openChar) count++
+        else if (output[i] === closeChar) count--
+        if (count === 0) {
           end = i
           break
         }
