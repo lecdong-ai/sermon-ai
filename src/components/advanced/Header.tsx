@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Sparkles, Bug, User, CreditCard, LogOut, LayoutDashboard } from 'lucide-react'
+import { Search, Plus, Sparkles, Bug, User, CreditCard, LogOut, LayoutDashboard, BookOpen } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
+import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 
 function getCookie(name: string): string {
   if (typeof document === 'undefined') return ''
@@ -21,6 +22,7 @@ export default function AdvancedHeader() {
   const [query, setQuery] = useState('')
   const [mockOn, setMockOn] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showSavedNotes, setShowSavedNotes] = useState(false)
   const [plan, setPlan] = useState<string>('Free')
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -70,6 +72,7 @@ export default function AdvancedHeader() {
   const fullEmail = user?.email || '로그인 필요'
 
   return (
+    <>
     <header className="h-14 border-b border-white/5 bg-[#050814]/80 backdrop-blur-md flex items-center justify-between px-6 shrink-0 relative z-10">
       <form onSubmit={handleSearch} className="flex-1 max-w-sm">
         <div className="relative group">
@@ -102,6 +105,15 @@ export default function AdvancedHeader() {
         >
           <Bug className={`w-3 h-3 ${mockOn ? 'text-amber-400 animate-pulse' : ''}`} />
           {mockOn ? 'Mock' : 'Mock'}
+        </button>
+
+        {/* 연구 노트 버튼 */}
+        <button
+          onClick={() => setShowSavedNotes(true)}
+          className="text-[12px] bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 border border-white/5 hover:border-white/20"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          연구 노트
         </button>
 
         {/* 새 프로젝트 버튼 */}
@@ -172,5 +184,9 @@ export default function AdvancedHeader() {
         </div>
       </div>
     </header>
+
+    {/* Saved Notes Modal */}
+    {showSavedNotes && <SavedNotesModal onClose={() => setShowSavedNotes(false)} />}
+    </>
   )
 }
