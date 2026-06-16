@@ -107,24 +107,6 @@ export default function AdvancedHeader() {
           {mockOn ? 'Mock' : 'Mock'}
         </button>
 
-        {/* 연구 노트 버튼 */}
-        <button
-          onClick={() => setShowSavedNotes(true)}
-          className="text-[12px] bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 border border-white/5 hover:border-white/20"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          연구 노트
-        </button>
-
-        {/* 새 프로젝트 버튼 */}
-        <button
-          onClick={() => router.push('/advanced/projects/new')}
-          className="text-[12px] bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/25 hover:-translate-y-0.5"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          새 프로젝트
-        </button>
-
         {/* 사용자 아바타 */}
         <div className="relative" ref={menuRef}>
           <button
@@ -149,6 +131,24 @@ export default function AdvancedHeader() {
                     {plan}
                   </span>
                 </div>
+              </div>
+
+              {/* 빠른 작업 */}
+              <div className="p-1.5 space-y-0.5 border-b border-white/5">
+                <button
+                  onClick={() => { setShowMenu(false); setShowSavedNotes(true) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  연구 노트
+                </button>
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/advanced/projects/new') }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-indigo-300 hover:bg-white/5 hover:text-indigo-200 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  새 프로젝트
+                </button>
               </div>
 
               {/* 메뉴 항목 */}
