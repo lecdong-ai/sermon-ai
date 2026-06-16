@@ -66,7 +66,7 @@ const EMPTY_GUIDANCE: Record<string, { message: string; hint: string }> = {
   },
   body: {
     message: '아직 본론 원고가 작성되지 않았습니다',
-    hint: '준비 단계에서 정리한 대지 구조의 제목과 설명을 바탕으로 각 대지를 풀어가세요. 연구에서 확인한 원어 의미와 주석을 설교 문장으로 자연스럽게 녹여보십시오',
+    hint: '준비 단계에서 정리한 대지 구조의 제목과 설명을 바탕으로 각 대지를 풀어가세요. 연구에서 확인한 원어 의미와 주석을 설교 문장으로 자연스럽게 녹여보십시오. 우측 상단의 AI 추천 버튼을 활용하면 대지 초안을 빠르게 생성할 수 있습니다.',
   },
   conclusion: {
     message: '아직 결론 초안이 정리되지 않았습니다',
@@ -606,6 +606,7 @@ export default function ManuscriptTab({ project }: Props) {
       introduction: 'manuscript-introduction',
       conclusion: 'manuscript-conclusion',
       application: 'manuscript-application',
+      body: 'manuscript-body',
     }
     const apiType = typeMap[sectionType]
     if (!apiType) return ''
@@ -630,6 +631,33 @@ export default function ManuscriptTab({ project }: Props) {
       payload.applicationPoints = (section.researchPoints || []).map((p, i) => ({
         id: `app-${i}`, point: p, audienceTag: '', pastoralNote: '',
       }))
+    } else if (sectionType === 'body') {
+      const bodySections = manuscript.sections.filter(s => s.type === 'body')
+      const bodyIdx = bodySections.indexOf(section)
+      const outlinePoint = manuscript.outlinePoints[bodyIdx] || null
+      const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+      const researchInsights = prepRaw?.researchInsights || []
+      const passageStructure = prepRaw?.passageStructure || ''
+      const congregationProfile = prepRaw?.congregationProfile || null
+
+      // Get content of previous sections for flow continuity
+      const prevSections = manuscript.sections.filter(s => {
+        const idx = manuscript.sections.indexOf(s)
+        return idx < manuscript.sections.indexOf(section) && s.content.trim()
+      })
+      const previousContent = prevSections.map(s => `[${s.label}]\n${s.content.slice(0, 200)}${s.content.length > 200 ? '...' : ''}`).join('\n\n')
+
+      payload.outlinePoint = outlinePoint ? {
+        title: outlinePoint.title,
+        content: outlinePoint.content,
+        passage: outlinePoint.passage,
+      } : { title: section.label.replace(/^\d+\.\s*/, ''), content: '', passage: section.passage || '' }
+      payload.passageStructure = passageStructure
+      payload.researchInsights = researchInsights
+      payload.congregationProfile = congregationProfile
+      payload.sectionPosition = bodyIdx + 1
+      payload.totalSections = bodySections.length
+      payload.previousContent = previousContent
     }
 
     const res = await fetch('/api/advanced/ai', {
@@ -1479,7 +1507,7 @@ function SermonSectionBlock({
   }
   const hasContent = section.content.trim().length > 0
   const isEmpty = status === 'empty'
-  const canAiGenerate = section.type === 'introduction' || section.type === 'conclusion' || section.type === 'application'
+  const canAiGenerate = section.type === 'introduction' || section.type === 'conclusion' || section.type === 'application' || section.type === 'body'
 
   const handleAiGenerate = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -1571,7 +1599,7 @@ function SermonSectionBlock({
           section.type === 'introduction' ? '도입을 작성하세요 — 회중의 관심을 열고 본문으로 인도하는 첫 문장을 적어보세요...' :
           section.type === 'conclusion' ? '결론을 작성하세요 — 중심명제를 다시 강조하고 회중을 향한 최종 초청을 적어보세요...' :
           section.type === 'application' ? '적용을 작성하세요 — 오늘의 회중에게 이 말씀이 어떻게 구체적으로 다가가야 하는지 문장을 정리해보세요...' :
-          '본문 원고를 작성하세요 — 준비 단계의 대지 구조를 바탕으로 설교 문장을 구체화해보세요...'
+          '본문 원고를 작성하세요 — 대지의 제목과 설명을 바탕으로 설교 문장을 구체화하거나 AI 추천을 활용해보세요...'
         }
       />
 
