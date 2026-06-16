@@ -1209,16 +1209,18 @@ export default function ManuscriptTab({ project }: Props) {
 
       {/* ─── Main Layout ─── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Left: Outline Navigator with per-section status */}
-        <ManuscriptNavigator
-          sections={manuscript.sections}
-          sectionStatuses={sectionStatuses}
-          activeSectionId={activeSectionId}
-          onNavigate={scrollToSection}
-          writingProgress={writingProgress}
-          emptyCount={emptySections.length}
-          draftCount={draftSections.length}
-        />
+        {/* Left: Outline Navigator with per-section status (sticky) */}
+        <div className="sticky top-0 self-start shrink-0">
+          <ManuscriptNavigator
+            sections={manuscript.sections}
+            sectionStatuses={sectionStatuses}
+            activeSectionId={activeSectionId}
+            onNavigate={scrollToSection}
+            writingProgress={writingProgress}
+            emptyCount={emptySections.length}
+            draftCount={draftSections.length}
+          />
+        </div>
 
         {/* Center: Sermon Editor */}
         <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
