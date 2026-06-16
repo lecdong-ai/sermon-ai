@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'suggest-titles' || type === 'outline') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'outline') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''

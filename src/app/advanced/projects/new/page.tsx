@@ -145,7 +145,8 @@ export default function NewProjectPage() {
       const json = await res.json()
       if (json.success) {
         try {
-          setSuggestions(JSON.parse(json.data.output))
+          const parsed = JSON.parse(json.data.output)
+          setSuggestions(Array.isArray(parsed) ? parsed : [])
         } catch {
           setSuggestions([])
         }
