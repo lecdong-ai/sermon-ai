@@ -4,22 +4,16 @@ import React, { createContext, useContext, useReducer, useCallback, useMemo, use
 import { Sermon, Theme, Series } from './types'
 import { sampleThemes, sampleSeries } from './data'
 import { SERMON_TYPES, AUDIENCES, SEASONS } from './constants'
+import { getStorageItem, setStorageItem } from '@/lib/storage'
 
-const LS_KEY = 'sermon-options'
+const LS_KEY = 'options'
 
 function loadOptions() {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return null
+  return getStorageItem<Record<string, any> | null>(LS_KEY, null)
 }
 
 function saveOptions(data: { sermonTypes: string[]; audiences: string[]; preachers: string[]; seasons: string[]; seminars: string[] }) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(data))
-  } catch {}
+  setStorageItem(LS_KEY, data)
 }
 
 interface AppState {
@@ -189,7 +183,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = loadOptions()
     if (saved) {
-      dispatch({ type: 'SET_OPTIONS', payload: saved })
+      dispatch({ type: 'SET_OPTIONS', payload: saved as any })
     }
   }, [])
 

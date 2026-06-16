@@ -7,6 +7,7 @@ import { ArrowLeft, Lightbulb, Loader2, Sparkles, Settings2, Trash2 } from 'luci
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
 import ManageOptionsModal from '@/components/dashboard/ManageOptionsModal'
+import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import {
   BIBLE_BOOKS,
   MAJOR_THEMES,
@@ -180,9 +181,9 @@ function NewSermonForm() {
       }
     }
     try {
-      const saved = localStorage.getItem('sermon-draft')
+      const saved = getStorageItem<Record<string, any> | null>('draft', null)
       if (saved) {
-        const parsed = JSON.parse(saved)
+        const parsed = saved
         if (parsed.outlinePoint1 !== undefined) {
           parsed.outlinePoints = [
             parsed.outlinePoint1 || '',
@@ -304,7 +305,7 @@ function NewSermonForm() {
     }
 
     if (result) {
-      localStorage.removeItem('sermon-draft')
+      removeStorageItem('draft')
       router.push(`/dashboard/sermons/${result.id}`)
     } else {
       alert('저장에 실패했습니다.')
@@ -312,7 +313,7 @@ function NewSermonForm() {
   }
 
   const handleSaveDraft = () => {
-    localStorage.setItem('sermon-draft', JSON.stringify(form))
+    setStorageItem('draft', form)
     alert('임시저장되었습니다.')
   }
 

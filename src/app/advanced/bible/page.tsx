@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { BibleStudyData, WordDetail, CommentaryItem, VerseParallel } from '@/lib/advanced/bibleStudyData'
 import { BIBLE_BOOKS } from '@/lib/advanced/bibleBooks'
+import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 
 type DetailView = 'word' | 'verse' | 'theme' | 'none'
 
@@ -52,26 +53,22 @@ export default function BiblePage() {
     setWordLookup({})
     setEnglishLookup({})
 
-    const registeredKey = `${book}_${chapter}`
-    if (registeredKey === '로마서_8') {
+    const registeredKey = `bible_${book}_${chapter}`
+    if (registeredKey === 'bible_로마서_8') {
       setData(MOCK_BIBLE_STUDY as BibleStudyData)
       return
     }
-    const cached = localStorage.getItem(`sermonai_bible_${registeredKey}`)
+    const cached = getStorageItem<BibleStudyData | null>(registeredKey, null)
     if (cached) {
-      try {
-        setData(JSON.parse(cached))
-        return
-      } catch {
-        localStorage.removeItem(`sermonai_bible_${registeredKey}`)
-      }
+      setData(cached)
+      return
     }
     setData(null)
   }, [book, chapter])
 
   const handleLoad = useCallback(() => {
-    const key = `${book}_${chapter}`
-    if (key === '로마서_8') {
+    const key = `bible_${book}_${chapter}`
+    if (key === 'bible_로마서_8') {
       setData(MOCK_BIBLE_STUDY as BibleStudyData)
       return
     }
@@ -85,14 +82,10 @@ export default function BiblePage() {
     setEnglishLookup({})
     setError(null)
     
-    const cached = localStorage.getItem(`sermonai_bible_${key}`)
+    const cached = getStorageItem<BibleStudyData | null>(key, null)
     if (cached) {
-      try {
-        setData(JSON.parse(cached))
-        return
-      } catch {
-        localStorage.removeItem(`sermonai_bible_${key}`)
-      }
+      setData(cached)
+      return
     }
     
     setData(null)
@@ -126,7 +119,7 @@ export default function BiblePage() {
             contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
           }
           setData(studyData)
-          localStorage.setItem(`sermonai_bible_${key}`, JSON.stringify(studyData))
+          setStorageItem(key, studyData)
         } else {
           setError(json.error || 'AI 분석에 실패했습니다.')
         }

@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Sparkles } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
+import { getStorageItem, setStorageItem } from '@/lib/storage'
 import {
   JOHN_VERSES, JOHN_WORDS, JOHN_COMMENTARIES,
   JOHN_TRANSLATION_NOTES, JOHN_PARALLEL_PASSAGES,
@@ -122,14 +123,10 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const fetchAiStudy = useCallback(() => {
     if (getStudyData(activeBook, activeChapter)) return
     if (aiStudyData[passageKey]) return
-    const cached = localStorage.getItem(`sermonai_study_${passageKey}`)
+    const cached = getStorageItem<Record<string, any> | null>(`study_${passageKey}`, null)
     if (cached) {
-      try {
-        setAiStudyData(prev => ({ ...prev, [passageKey]: JSON.parse(cached) }))
-        return
-      } catch {
-        localStorage.removeItem(`sermonai_study_${passageKey}`)
-      }
+      setAiStudyData(prev => ({ ...prev, [passageKey]: cached }))
+      return
     }
     setAiStudyError(null)
     setAiStudyLoading(true)
@@ -164,7 +161,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
               wordAlignments: parsed.wordAlignments || [],
             }
             setAiStudyData(prev => ({ ...prev, [passageKey]: data }))
-            localStorage.setItem(`sermonai_study_${passageKey}`, JSON.stringify(data))
+            setStorageItem(`study_${passageKey}`, data)
           } catch {
             setAiStudyError('AI 응답을 해석하는 중 오류가 발생했습니다. 본문이 너무 길거나 응답이 잘렸습니다.')
           }
@@ -322,7 +319,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
       memoTags,
     }
     console.log('[BibleStudyTab] Saving to prep:', prepPayload)
-    localStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
+    setStorageItem(`study_to_prep_${project.id}`, prepPayload)
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload
     router.push(`/advanced/projects/${project.id}?tab=prep`)

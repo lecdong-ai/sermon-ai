@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
 import { getCustomProjects, mockProjects } from '@/lib/advanced/mockData'
+import { setStorageItem } from '@/lib/storage'
 import type { AdvancedProject, BiblePassage } from '@/lib/advanced/types'
 
 const SERMON_TYPES = ['주일예배', '수요예배', '금요기도회', '새벽기도회', '특별집회', '부흥회', '수련회', '장례예배', '혼인예배']
@@ -226,9 +227,9 @@ export default function NewProjectPage() {
       updatedAt: now,
     }
 
-    const existing = JSON.parse(localStorage.getItem('sermonai_custom_projects') || '[]')
+    const existing = getCustomProjects()
     existing.push(newProject)
-    localStorage.setItem('sermonai_custom_projects', JSON.stringify(existing))
+    setStorageItem('custom_projects', existing)
 
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)
   }

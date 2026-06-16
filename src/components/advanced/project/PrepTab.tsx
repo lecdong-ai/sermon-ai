@@ -8,6 +8,7 @@ import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shar
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import type { PrepVersion } from '@/lib/advanced/johnVersionData'
 import { PREP_VERSIONS, RECENT_ACTIVITY } from '@/lib/advanced/johnVersionData'
+import { getStorageItem, removeStorageItem } from '@/lib/storage'
 
 interface Props { project: ProjectDetail }
 
@@ -211,10 +212,10 @@ export default function PrepTab({ project }: Props) {
       }
       // 3) localStorage fallback
       if (!studyData) {
-        const ls = localStorage.getItem(`sermonai_study_to_prep_${project.id}`)
+        const ls = getStorageItem<Record<string, any> | null>(`study_to_prep_${project.id}`, null)
         if (ls) {
-          studyData = JSON.parse(ls)
-          localStorage.removeItem(`sermonai_study_to_prep_${project.id}`)
+          studyData = ls
+          removeStorageItem(`study_to_prep_${project.id}`)
           console.log('[PrepTab] Loaded from localStorage:', studyData)
         }
       }

@@ -243,25 +243,17 @@ export const mockGraphData: { nodes: GraphNode[]; links: GraphLink[] } = {
   ],
 }
 
-const CUSTOM_PROJECTS_KEY = 'sermonai_custom_projects'
-const DELETED_MOCK_IDS_KEY = 'sermonai_deleted_mock_ids'
+import { getStorageItem, setStorageItem } from '@/lib/storage'
+
+const CUSTOM_PROJECTS_KEY = 'custom_projects'
+const DELETED_MOCK_IDS_KEY = 'deleted_mock_ids'
 
 export function getCustomProjects(): AdvancedProject[] {
-  if (typeof window === 'undefined') return []
-  try {
-    return JSON.parse(localStorage.getItem(CUSTOM_PROJECTS_KEY) || '[]')
-  } catch {
-    return []
-  }
+  return getStorageItem<AdvancedProject[]>(CUSTOM_PROJECTS_KEY, [])
 }
 
 export function getDeletedMockIds(): string[] {
-  if (typeof window === 'undefined') return []
-  try {
-    return JSON.parse(localStorage.getItem(DELETED_MOCK_IDS_KEY) || '[]')
-  } catch {
-    return []
-  }
+  return getStorageItem<string[]>(DELETED_MOCK_IDS_KEY, [])
 }
 
 export function getAllProjects(): AdvancedProject[] {
@@ -271,13 +263,12 @@ export function getAllProjects(): AdvancedProject[] {
 }
 
 export function deleteProject(id: string): boolean {
-  if (typeof window === 'undefined') return false
   try {
     const custom = getCustomProjects()
     const isCustom = custom.some(p => p.id === id)
     if (isCustom) {
       const filtered = custom.filter(p => p.id !== id)
-      localStorage.setItem(CUSTOM_PROJECTS_KEY, JSON.stringify(filtered))
+      setStorageItem(CUSTOM_PROJECTS_KEY, filtered)
       return true
     }
     const isMock = mockProjects.some(p => p.id === id)
@@ -285,7 +276,7 @@ export function deleteProject(id: string): boolean {
       const deleted = getDeletedMockIds()
       if (deleted.includes(id)) return false
       deleted.push(id)
-      localStorage.setItem(DELETED_MOCK_IDS_KEY, JSON.stringify(deleted))
+      setStorageItem(DELETED_MOCK_IDS_KEY, deleted)
       return true
     }
     return false
