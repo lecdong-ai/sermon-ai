@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Sparkles, Bug } from 'lucide-react'
+import { Search, Plus, Sparkles, Bug, User, CreditCard, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 
 function getCookie(name: string): string {
@@ -17,13 +17,35 @@ function setCookie(name: string, value: string) {
 
 export default function AdvancedHeader() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const [query, setQuery] = useState('')
   const [mockOn, setMockOn] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [plan, setPlan] = useState<string>('Free')
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMockOn(getCookie('use_mock') === 'true')
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      fetch('/api/usage')
+        .then(r => r.json())
+        .then(d => { if (!d.error) setPlan(d.plan?.name || d.plan || 'Free') })
+        .catch(() => {})
+    }
+  }, [user])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMenu])
 
   const toggleMock = () => {
     const next = !mockOn
@@ -37,6 +59,11 @@ export default function AdvancedHeader() {
     if (query.trim()) {
       router.push(`/advanced/projects?search=${encodeURIComponent(query.trim())}`)
     }
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
   }
 
   const emailPrefix = user?.email ? user.email.split('@')[0] : '?'
@@ -86,16 +113,62 @@ export default function AdvancedHeader() {
           새 프로젝트
         </button>
 
-        {/* 사용자 정보 */}
-        <div
-          className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-[10px] font-bold text-indigo-300 shadow-md cursor-default relative group"
-          title={fullEmail}
-        >
-          {emailPrefix.slice(0, 2).toUpperCase()}
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-lg bg-[#0c1020] border border-white/10 text-[10px] text-slate-300 font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
-            {fullEmail}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0c1020]" />
-          </div>
+        {/* 사용자 아바타 */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setShowMenu(v => !v)}
+            className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-[10px] font-bold text-indigo-300 shadow-md hover:border-indigo-500/40 transition-colors"
+          >
+            {emailPrefix.slice(0, 2).toUpperCase()}
+          </button>
+
+          {/* 드롭다운 메뉴 */}
+          {showMenu && (
+            <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-[#0c1020] border border-white/10 shadow-2xl overflow-hidden animate-in-fast z-50">
+              {/* 사용자 정보 */}
+              <div className="px-4 py-3 border-b border-white/5">
+                <p className="text-[13px] font-bold text-white truncate">{fullEmail}</p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    plan === 'Free' ? 'bg-slate-500/20 text-slate-400' :
+                    plan === 'Pro' ? 'bg-indigo-500/20 text-indigo-300' :
+                    'bg-amber-500/20 text-amber-300'
+                  }`}>
+                    {plan}
+                  </span>
+                </div>
+              </div>
+
+              {/* 메뉴 항목 */}
+              <div className="p-1.5 space-y-0.5">
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/mypage') }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  마이페이지
+                </button>
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/pricing') }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  요금제 관리
+                </button>
+              </div>
+
+              {/* 로그아웃 */}
+              <div className="p-1.5 border-t border-white/5">
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
