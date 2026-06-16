@@ -1208,19 +1208,17 @@ export default function ManuscriptTab({ project }: Props) {
       />
 
       {/* ─── Main Layout ─── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         {/* Left: Outline Navigator with per-section status (sticky) */}
-        <div className="sticky top-0 self-start shrink-0">
-          <ManuscriptNavigator
-            sections={manuscript.sections}
-            sectionStatuses={sectionStatuses}
-            activeSectionId={activeSectionId}
-            onNavigate={scrollToSection}
-            writingProgress={writingProgress}
-            emptyCount={emptySections.length}
-            draftCount={draftSections.length}
-          />
-        </div>
+        <ManuscriptNavigator
+          sections={manuscript.sections}
+          sectionStatuses={sectionStatuses}
+          activeSectionId={activeSectionId}
+          onNavigate={scrollToSection}
+          writingProgress={writingProgress}
+          emptyCount={emptySections.length}
+          draftCount={draftSections.length}
+        />
 
         {/* Center: Sermon Editor */}
         <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
@@ -1455,7 +1453,7 @@ function ManuscriptNavigator({
   }
 
   return (
-    <aside className="w-56 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+    <aside className="w-56 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin sticky top-0 self-start h-fit max-h-screen">
       <div className="p-4 border-b border-white/5">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원고 구조</span>

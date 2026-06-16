@@ -366,14 +366,12 @@ export default function PrepTab({ project }: Props) {
 
       <div className="flex flex-1 min-h-0 border-t border-white/5">
         {/* ─── Left: Section Navigator (sticky) ─── */}
-        <div className="sticky top-0 self-start shrink-0">
-          <PrepNavigator
-            sectionProgress={sectionProgress}
-            activeSection={activeSection}
-            onNavigate={scrollToSection}
-            overallProgress={overallProgress}
-          />
-        </div>
+        <PrepNavigator
+          sectionProgress={sectionProgress}
+          activeSection={activeSection}
+          onNavigate={scrollToSection}
+          overallProgress={overallProgress}
+        />
 
         {/* ─── Center: Main Prep Content ─── */}
         <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
@@ -569,7 +567,7 @@ function PrepNavigator({
   ]
 
   return (
-    <aside className="w-52 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+    <aside className="w-52 border-r border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin sticky top-0 self-start h-fit max-h-screen">
       <div className="p-4 border-b border-white/5">
         <AppSectionHeader title="준비 단계" count={`${overallProgress}%`} />
         <div className="adv-progress-bar h-1 mt-2">
