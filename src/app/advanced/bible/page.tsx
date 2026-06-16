@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Loader2, BookOpen } from 'lucide-react'
 import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { BibleStudyData, WordDetail, CommentaryItem, VerseParallel } from '@/lib/advanced/bibleStudyData'
 import { BIBLE_BOOKS } from '@/lib/advanced/bibleBooks'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
+import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 
 type DetailView = 'word' | 'verse' | 'theme' | 'none'
 
@@ -20,6 +21,7 @@ export default function BiblePage() {
   const [testament, setTestament] = useState<'OT' | 'NT'>('NT')
   const [memoText, setMemoText] = useState('')
   const [savingMemo, setSavingMemo] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const [detailView, setDetailView] = useState<DetailView>('none')
@@ -158,6 +160,31 @@ export default function BiblePage() {
   const handleStartProject = () => {
     router.push(`/advanced/projects/new?book=${book}&chapter=${chapter}&vs=${verseStart}&ve=${verseEnd}`)
   }
+
+  const searchParams = useSearchParams()
+  const loadNoteId = searchParams.get('loadNote')
+
+  useEffect(() => {
+    if (loadNoteId) {
+      fetch(`/api/bible/notes?id=${loadNoteId}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) {
+            const note = json.data
+            const b = BIBLE_BOOKS.find(bb => bb.name === note.book)
+            if (b) {
+              setBook(note.book)
+              setTestament(b.testament as 'OT' | 'NT')
+              setChapter(note.chapter)
+              setVerseStart(note.verse_start)
+              setVerseEnd(note.verse_end || note.verse_start)
+              setMemoText(note.memo || '')
+            }
+          }
+        })
+        .catch(() => {})
+    }
+  }, [loadNoteId])
 
   const filteredBooks = useMemo(() => {
     let list = BIBLE_BOOKS.filter(b => b.testament === testament)
@@ -455,6 +482,13 @@ export default function BiblePage() {
                     {savingMemo ? '저장 중...' : '연구 노트 저장'}
                   </button>
                   <button
+                    onClick={() => setShowNotes(true)}
+                    className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors flex items-center gap-1.5"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    내 연구 노트
+                  </button>
+                  <button
                     onClick={handleStartProject}
                     className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors"
                   >
@@ -483,6 +517,8 @@ export default function BiblePage() {
           wordLookup={allWords}
         />
       )}
+
+      {showNotes && <SavedNotesModal onClose={() => setShowNotes(false)} />}
     </div>
   )
 }
