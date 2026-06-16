@@ -145,11 +145,18 @@ export default function NewProjectPage() {
       const json = await res.json()
       if (json.success) {
         try {
-          const parsed = JSON.parse(json.data.output)
+          let output = json.data.output.trim()
+          if (output.startsWith('```')) {
+            output = output.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
+          }
+          const parsed = JSON.parse(output)
           setSuggestions(Array.isArray(parsed) ? parsed : [])
-        } catch {
+        } catch (e) {
+          console.error('Suggestion parse error:', e, json.data.output)
           setSuggestions([])
         }
+      } else {
+        console.error('AI suggest API error:', json.error)
       }
     } catch (e) {
       console.error('AI suggest failed:', e)
@@ -550,6 +557,16 @@ export default function NewProjectPage() {
                     <div className="flex items-center justify-center gap-2 py-6">
                       <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
                       <span className="text-[12px] text-slate-500 font-medium">본문을 분석하여 제목을 추천 중...</span>
+                    </div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-[12px] text-slate-400 font-medium">추천 제목을 생성하지 못했습니다.</p>
+                      <button
+                        onClick={handleSuggest}
+                        className="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                      >
+                        다시 시도
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
