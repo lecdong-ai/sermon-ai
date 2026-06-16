@@ -90,28 +90,9 @@ export default function ProjectHeader({ project }: Props) {
             )}
           </div>
 
-          {/* 우측 버튼 */}
+          {/* 우측: 저장 상태 */}
           <div className="flex items-center gap-2 shrink-0 ml-4">
             <SaveStatusIndicator status={MOCK_SAVE_STATE.status} lastSavedAt={MOCK_SAVE_STATE.lastSavedAt} minimal />
-            <button
-              onClick={() => router.push(`/advanced/graph?focus=${project.id}`)}
-              className="text-xs text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded-xl px-3 py-1.5 transition-colors"
-            >
-              <svg className="w-3.5 h-3.5 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.101 1.101" />
-              </svg>
-              그래프
-            </button>
-            <button
-              onClick={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
-              className="text-xs text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded-xl px-3 py-1.5 transition-colors"
-            >
-              미리보기
-            </button>
-            <button className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-4 py-1.5 transition-colors font-medium">
-              저장
-            </button>
           </div>
         </div>
 

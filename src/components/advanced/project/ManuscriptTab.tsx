@@ -1143,6 +1143,50 @@ export default function ManuscriptTab({ project }: Props) {
       currentVersion={JOHN_MANUSCRIPT_VERSIONS.find(v => v.isCurrent) || null}
     />
 
+      {/* ─── Tab Action Bar (sticky below header) ─── */}
+      <div className="sticky top-0 z-20 bg-[#04060f]/90 backdrop-blur-md border-b border-white/5 px-5 py-2 flex items-center gap-2 shrink-0">
+        <button
+          onClick={manualSave}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 transition-colors font-medium"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          저장
+          <span className="text-[9px] text-indigo-400/60">⌘S</span>
+        </button>
+        <div className="w-px h-4 bg-white/10" />
+        <button
+          onClick={() => setViewMode('preview')}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/20 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          미리보기
+        </button>
+        <button
+          onClick={() => setViewMode('presentation')}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/20 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          발표
+        </button>
+        <div className="w-px h-4 bg-white/10" />
+        <button
+          onClick={() => setRehearsalPhase('setup')}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-300 border border-green-500/20 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          리허설
+        </button>
+      </div>
+
       {/* ─── Version History Drawer ─── */}
       <VersionHistoryDrawer
         isOpen={showVersions}
@@ -1259,7 +1303,6 @@ export default function ManuscriptTab({ project }: Props) {
         warningPoints={manuscript.warningPoints}
         onGoToVersions={() => router.push(`/advanced/projects/${project.id}?tab=versions`)}
         onGoToPrep={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
-        onStartRehearsal={() => setRehearsalPhase('setup')}
       />
     </div>
   )
@@ -1328,34 +1371,12 @@ function WritingContextHeader({
 
       <div className="flex items-center gap-2">
         <button
-          onClick={onManualSave}
-          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 border border-indigo-500/20 transition-colors"
-        >
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
-          저장
-          <span className="text-[8px] text-indigo-400/60 hidden sm:inline">⌘S</span>
-        </button>
-        <button
           onClick={onShowPrepToggle}
           className={`text-[11px] px-2.5 py-1 rounded transition-colors ${
             showPrepPanel ? 'bg-indigo-500/10 text-indigo-300' : 'bg-white/5 text-slate-400'
           }`}
         >
           준비 요약
-        </button>
-        <button
-          onClick={() => onViewModeChange('preview')}
-          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
-        >
-          미리보기
-        </button>
-        <button
-          onClick={() => onViewModeChange('presentation')}
-          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
-        >
-          발표용 보기
         </button>
         <button
           onClick={onGoToVersions}
@@ -1947,7 +1968,7 @@ function ManuscriptRecentActivity() {
 
 function WritingStatusBar({
   writingProgress, totalWordCount, readingTimeMin, sections, sectionStatuses, warningPoints,
-  onGoToVersions, onGoToPrep, onStartRehearsal,
+  onGoToVersions, onGoToPrep,
 }: {
   writingProgress: number
   totalWordCount: number
@@ -1957,7 +1978,6 @@ function WritingStatusBar({
   warningPoints: string[]
   onGoToVersions: () => void
   onGoToPrep: () => void
-  onStartRehearsal?: () => void
 }) {
   const versionCount = JOHN_MANUSCRIPT_VERSIONS.length
   const emptySections = sections.filter(s => sectionStatuses[s.id] === 'empty')
@@ -1983,13 +2003,6 @@ function WritingStatusBar({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={(e) => { e.stopPropagation(); onStartRehearsal?.() }}
-          className="flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-300 hover:text-green-200 border border-green-500/20 transition-colors"
-        >
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          리허설 시작
-        </button>
         <button
           onClick={onGoToPrep}
           className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-teal-500/30 rounded-xl px-3 py-1.5 transition-colors"
