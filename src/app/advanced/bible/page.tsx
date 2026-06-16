@@ -19,6 +19,7 @@ export default function BiblePage() {
   const [verseEnd, setVerseEnd] = useState(11)
   const [testament, setTestament] = useState<'OT' | 'NT'>('NT')
   const [memoText, setMemoText] = useState('')
+  const [savingMemo, setSavingMemo] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const [detailView, setDetailView] = useState<DetailView>('none')
@@ -129,6 +130,34 @@ export default function BiblePage() {
       })
       .finally(() => setIsLoading(false))
   }, [book, chapter, verseStart, verseEnd])
+
+  const handleSaveMemo = async () => {
+    if (!data) return
+    setSavingMemo(true)
+    try {
+      const res = await fetch('/api/bible/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          book, chapter, verseStart, verseEnd,
+          passage: `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
+          studyData: data,
+          memo: memoText,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) alert('연구 노트가 저장되었습니다.')
+      else alert('저장 실패: ' + (json.error || '알 수 없는 오류'))
+    } catch {
+      alert('저장 중 오류가 발생했습니다.')
+    } finally {
+      setSavingMemo(false)
+    }
+  }
+
+  const handleStartProject = () => {
+    router.push(`/advanced/projects/new?book=${book}&chapter=${chapter}&vs=${verseStart}&ve=${verseEnd}`)
+  }
 
   const filteredBooks = useMemo(() => {
     let list = BIBLE_BOOKS.filter(b => b.testament === testament)
@@ -418,10 +447,17 @@ export default function BiblePage() {
                 <StudyMemoSection value={memoText} onChange={setMemoText} />
 
                 <div className="flex items-center gap-3 pb-8">
-                  <button className="text-[13px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/15">
-                    연구 노트 저장
+                  <button
+                    onClick={handleSaveMemo}
+                    disabled={savingMemo}
+                    className="text-[13px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/15 disabled:opacity-50"
+                  >
+                    {savingMemo ? '저장 중...' : '연구 노트 저장'}
                   </button>
-                  <button className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors">
+                  <button
+                    onClick={handleStartProject}
+                    className="text-[13px] font-bold border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl transition-colors"
+                  >
                     새 설교 프로젝트로 시작 →
                   </button>
                 </div>

@@ -104,11 +104,9 @@ const SYSTEM_PROMPTS: Record<string, string> = {
 IMPORTANT: 
 1. Return ONLY valid JSON, no markdown, no explanation.
 2. Generate EVERY single verse in the passage — do not skip or truncate any verse.
-3. Generate 3-7 key words (focus on theologically significant terms), 6-10 commentaries, 2-3 translation notes, 5-8 parallel passages, 3-5 themes.
+3. Generate 3-7 key words (focus on theologically significant terms), 2-4 commentaries, 2-3 translation notes, 2-3 parallel passages, 3-5 themes.
 4. All text content in Korean except original Greek and English translations.
-5. wordAlignments: For each word in the \"words\" array, add one or more wordAlignment entries mapping the Greek word to its English translation in the NIV text. Include entries for EVERY verse where that Greek word appears. The englishWord should match the exact word as it appears in the verse's NIV text (case-sensitive, matching the NIV string).
-6. commentaries: Generate 6-10 rich, detailed commentary entries. Each commentary should be at least 3-5 sentences long, covering historical background, theological nuance, original language insights, and pastoral application. Include diverse types: exegetical (본문 분석), theological (신학적 의미), historical (역사적 배경), and pastoral (목회적 적용). Use well-known scholarly perspectives and cite sources appropriately.
-7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection and relevance to the current passage.`,
+5. wordAlignments: For each word in the \"words\" array, add one or more wordAlignment entries mapping the Greek word to its English translation in the NIV text. Include entries for EVERY verse where that Greek word appears. The englishWord should match the exact word as it appears in the verse's NIV text (case-sensitive, matching the NIV string).`,
   'word-lookup': `You are a Bible word analysis AI. Given a word (Greek or English) and its passage context, identify the corresponding Greek word in the original text and return a JSON object with the word's detailed analysis following this exact structure:
 {
   "id": "w_looked_up",
@@ -184,8 +182,8 @@ export async function POST(request: NextRequest) {
       const ve = parseInt(verseEnd || verseStart || '1')
       const count = ve - vs + 1
       userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
-      model = 'gpt-5.4-mini'
-      maxTokens = 128000
+      model = 'gpt-4o-mini'
+      maxTokens = 16384
       temperature = 0.3
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
@@ -216,7 +214,6 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'suggest-titles' || type === 'outline') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''

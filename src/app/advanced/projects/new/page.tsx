@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Plus, X, BookOpen, Calendar, User, ChevronRight,
   Sparkles, MessageSquare, BrainCircuit, Check, ArrowLeft,
@@ -53,12 +53,13 @@ const StepIndicator = ({ step, current, label }: { step: number; current: number
 
 export default function NewProjectPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [testament, setTestament] = useState<'OT' | 'NT'>('NT')
   const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null)
-  const [chapter, setChapter] = useState('')
-  const [verseStart, setVerseStart] = useState('')
-  const [verseEnd, setVerseEnd] = useState('')
+  const [chapter, setChapter] = useState(searchParams.get('chapter') || '')
+  const [verseStart, setVerseStart] = useState(searchParams.get('vs') || '')
+  const [verseEnd, setVerseEnd] = useState(searchParams.get('ve') || '')
 
   const [selectedPassages, setSelectedPassages] = useState<BiblePassage[]>([])
 
@@ -74,6 +75,17 @@ export default function NewProjectPage() {
   const [suggesting, setSuggesting] = useState(false)
 
   const books = useMemo(() => getBooksByTestament(testament), [testament])
+
+  useEffect(() => {
+    const bookParam = searchParams.get('book')
+    if (bookParam) {
+      const b = BIBLE_BOOKS.find(bb => bb.name === bookParam)
+      if (b) {
+        setTestament(b.testament as 'OT' | 'NT')
+        setSelectedBook(b)
+      }
+    }
+  }, [searchParams])
 
   const passageDisplay = useMemo(() => {
     if (!selectedBook) return ''
