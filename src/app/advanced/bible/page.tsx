@@ -41,7 +41,7 @@ export default function BiblePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const passageKey = `${book}_${chapter}`
+  const passageKey = `${book}_${chapter}_${verseStart}_${verseEnd}`
 
   useEffect(() => {
     setDetailView('none')
@@ -53,8 +53,8 @@ export default function BiblePage() {
     setWordLookup({})
     setEnglishLookup({})
 
-    const registeredKey = `bible_${book}_${chapter}`
-    if (registeredKey === 'bible_로마서_8') {
+    const registeredKey = `bible_${book}_${chapter}_${verseStart}_${verseEnd}`
+    if (registeredKey === 'bible_로마서_8_1_11') {
       setData(MOCK_BIBLE_STUDY as BibleStudyData)
       return
     }
@@ -64,11 +64,11 @@ export default function BiblePage() {
       return
     }
     setData(null)
-  }, [book, chapter])
+  }, [book, chapter, verseStart, verseEnd])
 
   const handleLoad = useCallback(() => {
-    const key = `bible_${book}_${chapter}`
-    if (key === 'bible_로마서_8') {
+    const key = `bible_${book}_${chapter}_${verseStart}_${verseEnd}`
+    if (key === 'bible_로마서_8_1_11') {
       setData(MOCK_BIBLE_STUDY as BibleStudyData)
       return
     }
