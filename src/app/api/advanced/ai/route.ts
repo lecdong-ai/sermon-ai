@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { cookies } from 'next/headers'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
+import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
+import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
+import { SYSTEM_PROMPT as DELIVERY_PROMPT } from '@/lib/ai/prompts/delivery'
+import { SYSTEM_PROMPT as MANUSCRIPT_INTRO_PROMPT } from '@/lib/ai/prompts/manuscript-introduction'
+import { SYSTEM_PROMPT as MANUSCRIPT_CONCLUSION_PROMPT } from '@/lib/ai/prompts/manuscript-conclusion'
+import { SYSTEM_PROMPT as MANUSCRIPT_APPLICATION_PROMPT } from '@/lib/ai/prompts/manuscript-application'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -88,6 +94,14 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   ppt: '당신은 예배를 위한 PPT 슬라이드를 구성하는 AI입니다. 주어진 설교 정보를 바탕으로 5장 내외의 슬라이드 레이아웃을 한국어로 작성하세요.',
   guide: '당신은 소그룹 리더를 위한 토론 가이드를 만드는 AI입니다. 주어진 설교 정보를 바탕으로 상세한 토론 진행 가이드를 한국어로 작성하세요.',
   outline: OUTLINE_PROMPT,
+  'core-message': CORE_MESSAGE_PROMPT,
+  'delivery': DELIVERY_PROMPT,
+  'manuscript-introduction': MANUSCRIPT_INTRO_PROMPT,
+  'manuscript-conclusion': MANUSCRIPT_CONCLUSION_PROMPT,
+  'manuscript-application': MANUSCRIPT_APPLICATION_PROMPT,
+  'application': APP_PROMPT,
+  'application-direction': DIRECTION_PROMPT,
+  'application-generate': GENERATE_PROMPT,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -195,11 +209,46 @@ export async function POST(request: NextRequest) {
       userText = `Analyze this English word from a Bible passage and return its definition and analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nReturn ONLY the English word analysis — do NOT convert to Greek.`
       maxTokens = 2000
       temperature = 0.3
+    } else if (type === 'core-message') {
+      const { passage, book, chapter, verseStart, verseEnd, passageStructure, sermonTitle } = data
+      userText = `설교 중심명제 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n설교 제목(가안): ${sermonTitle || ''}\n본문 구조: ${passageStructure || ''}`
+      maxTokens = 1000
+      temperature = 0.5
+    } else if (type === 'delivery') {
+      const { passage, coreMessage, outlines, applicationPoints, congregationProfile } = data
+      userText = `설교 전달 설계도 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n중심명제: ${coreMessage || ''}\n대지: ${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n적용 포인트: ${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n대지 개수: ${(outlines || []).length}개`
+      maxTokens = 3000
+      temperature = 0.5
+    } else if (type === 'application-direction') {
+      const { passage, coreMessage, outlines, congregationProfile } = data
+      userText = `설교 적용 방향을 제안해주세요:\n\n본문: ${passage || ''}\n중심명제: ${coreMessage || ''}\n대지 구조: ${(outlines || []).map((o: any) => `- ${o.title}: ${o.description}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}`
+      maxTokens = 2000
+      temperature = 0.5
+    } else if (type === 'application-generate') {
+      const { passage, coreMessage, outlines, congregationProfile, directions } = data
+      userText = `아래 적용 방향에 따라 구체적인 적용 포인트를 생성해주세요:\n\n본문: ${passage || ''}\n중심명제: ${coreMessage || ''}\n대지 구조: ${(outlines || []).map((o: any) => `- ${o.title}: ${o.description}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 선택된 적용 방향\n${(directions || []).map((d: any) => `- [${d.audienceTag}] ${d.direction}: ${d.reason || ''}`).join('\n')}`
+      maxTokens = 3000
+      temperature = 0.5
     } else if (type === 'outline') {
       const { book, chapter, verseStart, verseEnd, passage, passageStructure, keyWords, researchInsights, coreMessage } = data
       userText = `설교 개요(대지 구조)를 생성해주세요:\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n\n본문 핵심 흐름: ${passageStructure || ''}\n핵심 메시지: ${coreMessage || ''}\n주요 단어: ${(keyWords || []).map((w: any) => w.word || '').filter(Boolean).join(', ')}\n연구 통찰: ${(researchInsights || []).join('\n')}`
       maxTokens = 4000
       temperature = 0.5
+    } else if (type === 'manuscript-introduction') {
+      const { passage, coreMessage, sermonTitle, sermonPurpose, passageStructure, congregationProfile, deliveryIntro } = data
+      userText = `설교 서론을 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n## 전달 도입 방향\n${deliveryIntro || ''}`
+      maxTokens = 2000
+      temperature = 0.7
+    } else if (type === 'manuscript-conclusion') {
+      const { coreMessage, outlines, applicationPoints, sermonPurpose, expectedResponse, deliveryConclusion } = data
+      userText = `설교 결론을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트\n${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 기대 반응\n${expectedResponse || ''}\n\n## 전달 마무리 방향\n${deliveryConclusion || ''}`
+      maxTokens = 2000
+      temperature = 0.7
+    } else if (type === 'manuscript-application') {
+      const { coreMessage, outlines, applicationPoints, congregationProfile } = data
+      userText = `설교 적용 문장을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트 (준비 단계에서 정리된 목록)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}`
+      maxTokens = 2000
+      temperature = 0.7
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
@@ -218,7 +267,7 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'outline') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''
@@ -245,7 +294,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline') && output) {
+    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery') && output) {
       try {
         JSON.parse(output)
       } catch (e) {

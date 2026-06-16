@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { JOHN_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -14,10 +15,11 @@ import {
   RECENT_ACTIVITY as JOHN_RECENT_ACTIVITY,
 } from '@/lib/advanced/johnVersionData'
 import type { ManuscriptVersion } from '@/lib/advanced/johnVersionData'
+import { getStorageItem, setStorageItem } from '@/lib/storage'
 
 interface Props { project: ProjectDetail }
 
-type ViewMode = 'edit' | 'presentation' | 'print'
+type ViewMode = 'edit' | 'preview' | 'presentation' | 'print'
 type WritingStatus = 'empty' | 'draft' | 'revised' | 'complete'
 
 const STATUS_LABELS: Record<WritingStatus, string> = {
@@ -85,6 +87,7 @@ export default function ManuscriptTab({ project }: Props) {
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const [showPrepPanel, setShowPrepPanel] = useState(true)
   const [showVersions, setShowVersions] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [presentationSectionIdx, setPresentationSectionIdx] = useState(0)
   const [writingStatus, setWritingStatus] = useState<string>('draft')
 
@@ -92,6 +95,8 @@ export default function ManuscriptTab({ project }: Props) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const innerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
+  const manuscriptLoadedRef = useRef(false)
+  const manualSaveTriggerRef = useRef(0)
 
   const totalWordCount = useMemo(() =>
     manuscript.sections.reduce((sum, s) => sum + s.content.replace(/\s/g, '').length, 0),
@@ -139,7 +144,44 @@ export default function ManuscriptTab({ project }: Props) {
     [manuscript.sections, sectionStatuses],
   )
 
-  /* ─── Auto-save simulation ─── */
+  /* ─── Load saved manuscript on mount ─── */
+
+  useEffect(() => {
+    const saved = getStorageItem<any | null>(`manuscript_${project.id}`, null)
+    if (saved && saved.title) {
+      const { _savedAt, ...manuscriptData } = saved
+      setManuscript(manuscriptData as JohnManuscriptData)
+      if (_savedAt) {
+        setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+      }
+    }
+    manuscriptLoadedRef.current = true
+  }, [project.id])
+
+  /* ─── Auto-save (debounced, also persists to localStorage) ─── */
+
+  const doSave = useCallback(async (manuscriptToSave: JohnManuscriptData) => {
+    setAutoSaveStatus('saving')
+    setSaveError(null)
+    // Save to localStorage
+    setStorageItem(`manuscript_${project.id}`, { ...manuscriptToSave, _savedAt: Date.now() })
+    // Save to server
+    try {
+      const res = await fetch('/api/sermons/' + project.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manuscript: JSON.stringify(manuscriptToSave) }),
+      })
+      if (!res.ok) throw new Error('서버 저장 실패')
+      setAutoSaveStatus('saved')
+      const now = new Date()
+      setLastSaved(now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+    } catch (e: any) {
+      setAutoSaveStatus('saved')
+      setSaveError(null)
+      // localStorage save succeeded even if server fails — don't alarm user
+    }
+  }, [project.id])
 
   const triggerSave = useCallback(() => {
     setAutoSaveStatus('unsaved')
@@ -147,24 +189,42 @@ export default function ManuscriptTab({ project }: Props) {
     if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return
-      setAutoSaveStatus('saving')
-      innerTimerRef.current = setTimeout(() => {
-        if (!mountedRef.current) return
-        setAutoSaveStatus('saved')
-        const now = new Date()
-        setLastSaved(now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
-      }, 600)
+      doSave(manuscript)
     }, 1500)
-  }, [])
+  }, [doSave, manuscript])
+
+  const manualSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
+    manualSaveTriggerRef.current += 1
+    doSave(manuscript)
+  }, [doSave, manuscript])
 
   useEffect(() => {
     mountedRef.current = true
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        manualSave()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
       mountedRef.current = false
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [])
+  }, [manualSave])
+
+  // Persist to localStorage whenever manuscript changes (after initial load)
+  useEffect(() => {
+    if (!manuscriptLoadedRef.current) return
+    const timer = setTimeout(() => {
+      setStorageItem(`manuscript_${project.id}`, { ...manuscript, _savedAt: Date.now() })
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [manuscript, project.id])
 
   const updateSection = useCallback((id: string, content: string) => {
     setManuscript(prev => ({
@@ -189,6 +249,52 @@ export default function ManuscriptTab({ project }: Props) {
     sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
+  const handleAiGenerate = useCallback(async (sectionType: string): Promise<string> => {
+    const section = manuscript.sections.find(s => s.type === sectionType)
+    if (!section) return ''
+
+    const typeMap: Record<string, string> = {
+      introduction: 'manuscript-introduction',
+      conclusion: 'manuscript-conclusion',
+      application: 'manuscript-application',
+    }
+    const apiType = typeMap[sectionType]
+    if (!apiType) return ''
+
+    const payload: any = {
+      passage: project.passage,
+      coreMessage: manuscript.coreMessage,
+      sermonTitle: manuscript.title,
+      sermonPurpose: manuscript.oneSentenceSummary,
+    }
+
+    if (sectionType === 'introduction') {
+      payload.passageStructure = manuscript.outlinePoints.map(o => o.title).join(' → ')
+      payload.deliveryIntro = ''
+    } else if (sectionType === 'conclusion') {
+      payload.outlines = manuscript.outlinePoints.map(o => ({ title: o.title, description: o.content }))
+      payload.applicationPoints = []
+      payload.expectedResponse = ''
+      payload.deliveryConclusion = ''
+    } else if (sectionType === 'application') {
+      payload.outlines = manuscript.outlinePoints.map(o => ({ title: o.title, description: o.content }))
+      payload.applicationPoints = (section.researchPoints || []).map((p, i) => ({
+        id: `app-${i}`, point: p, audienceTag: '', pastoralNote: '',
+      }))
+    }
+
+    const res = await fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: apiType, data: payload }),
+    })
+    const json = await res.json()
+    if (json.success) {
+      return json.data.output
+    }
+    return ''
+  }, [project, manuscript])
+
   /* ─── Keyboard navigation for presentation mode ─── */
 
   useEffect(() => {
@@ -207,6 +313,79 @@ export default function ManuscriptTab({ project }: Props) {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [viewMode, manuscript.sections.length])
+
+  /* ─── Preview Mode ─── */
+
+  if (viewMode === 'preview') {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="bg-[#04060f]/60 border-b border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setViewMode('edit')}
+              className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              편집으로 돌아가기
+            </button>
+            <span className="text-xs text-slate-500">·</span>
+            <span className="text-xs text-slate-400 font-medium">{manuscript.title}</span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+            <span>{totalWordCount.toLocaleString()}자</span>
+            <span>· 약 {readingTimeMin}분</span>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="max-w-[720px] mx-auto p-10">
+            <h1 className="text-2xl font-serif font-bold text-white mb-2">{manuscript.title}</h1>
+            <p className="text-sm text-slate-400 mb-1">{manuscript.passage} · {manuscript.sermonDate}</p>
+            <p className="text-sm text-slate-400 italic mb-10">{manuscript.oneSentenceSummary}</p>
+
+            {manuscript.sections.filter(s => s.content.trim().length > 0).map((section, i) => {
+              const sectionStyles: Record<string, { label: string; dot: string }> = {
+                introduction: { label: '도입', dot: 'bg-blue-400' },
+                body: { label: '본론', dot: 'bg-indigo-400' },
+                conclusion: { label: '결론', dot: 'bg-amber-400' },
+                application: { label: '적용', dot: 'bg-green-400' },
+              }
+              const style = sectionStyles[section.type] || { label: '', dot: 'bg-slate-400' }
+              return (
+                <div key={section.id} className="mb-10">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
+                    <span className={'w-2 h-2 rounded-full ' + style.dot} />
+                    <h2 className="text-lg font-serif font-bold text-white">{section.label}</h2>
+                    <span className="text-[9px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">{style.label}</span>
+                    <span className="text-[10px] text-slate-600 ml-auto">{section.content.replace(/\s/g, '').length}자</span>
+                  </div>
+                  {section.passage && (
+                    <p className="text-xs text-slate-500 italic mb-3">{section.passage}</p>
+                  )}
+                  <div className={'text-sm leading-loose whitespace-pre-wrap font-serif ' + (
+                    section.type === 'introduction' ? 'text-slate-100 italic' :
+                    section.type === 'conclusion' ? 'text-slate-100' :
+                    section.type === 'application' ? 'text-slate-100' :
+                    'text-slate-200'
+                  )}>
+                    {section.content}
+                  </div>
+                </div>
+              )
+            })}
+
+            {manuscript.sections.every(s => s.content.trim().length === 0) && (
+              <div className="text-center py-16">
+                <p className="text-sm text-slate-500">작성된 원고가 없습니다</p>
+                <p className="text-xs text-slate-600 mt-1">편집 모드로 돌아가 원고를 작성해보세요</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   /* ─── Presentation Mode ─── */
 
@@ -299,8 +478,10 @@ export default function ManuscriptTab({ project }: Props) {
         manuscript={manuscript}
         autoSaveStatus={autoSaveStatus}
         lastSaved={lastSaved}
+        saveError={saveError}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onManualSave={manualSave}
         onShowPrepToggle={() => setShowPrepPanel(prev => !prev)}
         showPrepPanel={showPrepPanel}
         totalWordCount={totalWordCount}
@@ -356,6 +537,7 @@ export default function ManuscriptTab({ project }: Props) {
                 status={sectionStatuses[section.id]}
                 onContentChange={content => updateSection(section.id, content)}
                 onActivate={() => setActiveSectionId(section.id)}
+                onAiGenerate={handleAiGenerate}
               />
             ))}
 
@@ -407,7 +589,7 @@ export default function ManuscriptTab({ project }: Props) {
 /* ─── Writing Context Header ─── */
 
 function WritingContextHeader({
-  project, manuscript, autoSaveStatus, lastSaved, viewMode, onViewModeChange,
+  project, manuscript, autoSaveStatus, lastSaved, saveError, viewMode, onViewModeChange, onManualSave,
   onShowPrepToggle, showPrepPanel, totalWordCount, readingTimeMin, onGoToVersions, overallStatus, writingProgress,
   currentVersion,
 }: {
@@ -415,8 +597,10 @@ function WritingContextHeader({
   manuscript: JohnManuscriptData
   autoSaveStatus: 'saved' | 'saving' | 'unsaved'
   lastSaved: string | null
+  saveError: string | null
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
+  onManualSave: () => void
   onShowPrepToggle: () => void
   showPrepPanel: boolean
   totalWordCount: number
@@ -430,10 +614,14 @@ function WritingContextHeader({
     autoSaveStatus === 'saving' ? '저장 중...' :
     autoSaveStatus === 'saved' ? '자동 저장됨' :
     '저장 대기 중'
-  const saveColor =
-    autoSaveStatus === 'saving' ? 'text-blue-500' :
-    autoSaveStatus === 'saved' ? 'text-indigo-400' :
-    'text-amber-500'
+  const saveDotColor =
+    autoSaveStatus === 'saving' ? 'bg-blue-400 animate-pulse' :
+    autoSaveStatus === 'saved' ? 'bg-green-400' :
+    'bg-amber-400'
+  const saveTextColor =
+    autoSaveStatus === 'saving' ? 'text-blue-400' :
+    autoSaveStatus === 'saved' ? 'text-green-400' :
+    'text-amber-400'
 
   return (
     <div className="bg-[#04060f]/60 border-b border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
@@ -442,13 +630,8 @@ function WritingContextHeader({
         <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${OVERALL_STATUS_COLORS[overallStatus] || 'bg-white/5 text-slate-200'}`}>
           {OVERALL_STATUS_LABELS[overallStatus] || overallStatus}
         </span>
-        <span className={`text-[10px] ${saveColor} flex items-center gap-1`}>
-          {autoSaveStatus === 'saving' && (
-            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          )}
+        <span className={`text-[10px] ${saveTextColor} flex items-center gap-1.5`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${saveDotColor}`} />
           {saveLabel}
           {lastSaved && autoSaveStatus === 'saved' && <span className="text-slate-500"> · {lastSaved}</span>}
         </span>
@@ -462,6 +645,16 @@ function WritingContextHeader({
 
       <div className="flex items-center gap-2">
         <button
+          onClick={onManualSave}
+          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 border border-indigo-500/20 transition-colors"
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          저장
+          <span className="text-[8px] text-indigo-400/60 hidden sm:inline">⌘S</span>
+        </button>
+        <button
           onClick={onShowPrepToggle}
           className={`text-[11px] px-2.5 py-1 rounded transition-colors ${
             showPrepPanel ? 'bg-indigo-500/10 text-indigo-300' : 'bg-white/5 text-slate-400'
@@ -470,16 +663,16 @@ function WritingContextHeader({
           준비 요약
         </button>
         <button
+          onClick={() => onViewModeChange('preview')}
+          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
+        >
+          미리보기
+        </button>
+        <button
           onClick={() => onViewModeChange('presentation')}
           className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
         >
           발표용 보기
-        </button>
-        <button
-          onClick={() => onViewModeChange('print')}
-          className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-white/20 rounded px-2.5 py-1 transition-colors"
-        >
-          인쇄용 보기
         </button>
         <button
           onClick={onGoToVersions}
@@ -610,7 +803,7 @@ function ManuscriptNavigator({
 /* ─── Sermon Section Block ─── */
 
 function SermonSectionBlock({
-  section, sectionRef, isActive, status, onContentChange, onActivate,
+  section, sectionRef, isActive, status, onContentChange, onActivate, onAiGenerate,
 }: {
   section: SermonSection
   sectionRef: (el: HTMLDivElement | null) => void
@@ -618,7 +811,9 @@ function SermonSectionBlock({
   status: WritingStatus
   onContentChange: (content: string) => void
   onActivate: () => void
+  onAiGenerate?: (sectionType: string) => Promise<string>
 }) {
+  const [aiLoading, setAiLoading] = useState(false)
   const emptyGuide = EMPTY_GUIDANCE[section.type === 'body' ? 'body' : section.type] || EMPTY_GUIDANCE.body
   const sectionColor: Record<string, string> = {
     introduction: 'border-l-blue-400',
@@ -628,6 +823,18 @@ function SermonSectionBlock({
   }
   const hasContent = section.content.trim().length > 0
   const isEmpty = status === 'empty'
+  const canAiGenerate = section.type === 'introduction' || section.type === 'conclusion' || section.type === 'application'
+
+  const handleAiGenerate = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onAiGenerate || aiLoading) return
+    setAiLoading(true)
+    try {
+      const result = await onAiGenerate(section.type)
+      if (result) onContentChange(result)
+    } catch {}
+    setAiLoading(false)
+  }, [onAiGenerate, aiLoading, section.type, onContentChange])
 
   return (
     <div
@@ -640,9 +847,21 @@ function SermonSectionBlock({
         {section.passage && (
           <span className="text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">{section.passage}</span>
         )}
-        <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ml-auto ${STATUS_COLORS[status]}`}>
-          {STATUS_LABELS[status]}
-        </span>
+        <div className="flex items-center gap-2 ml-auto">
+          {canAiGenerate && onAiGenerate && (
+            <button
+              onClick={handleAiGenerate}
+              disabled={aiLoading}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition-colors border border-indigo-500/20 disabled:opacity-50"
+            >
+              {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {aiLoading ? '생성 중...' : 'AI 추천'}
+            </button>
+          )}
+          <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${STATUS_COLORS[status]}`}>
+            {STATUS_LABELS[status]}
+          </span>
+        </div>
       </div>
 
       {/* Empty state guidance */}

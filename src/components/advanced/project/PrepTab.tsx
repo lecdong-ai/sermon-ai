@@ -2,13 +2,13 @@
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, Plus, X, Check } from 'lucide-react'
-import { ProjectDetail } from '@/lib/advanced/types'
+import { Loader2, Sparkles, Plus, X, Users, Settings2 } from 'lucide-react'
+import { ProjectDetail, CongregationProfile, DEFAULT_CONGREGATION_PROFILE, AGE_GROUP_OPTIONS, FAITH_MATURITY_OPTIONS } from '@/lib/advanced/types'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import type { PrepVersion } from '@/lib/advanced/johnVersionData'
 import { PREP_VERSIONS, RECENT_ACTIVITY } from '@/lib/advanced/johnVersionData'
-import { getStorageItem, removeStorageItem } from '@/lib/storage'
+import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 
 interface Props { project: ProjectDetail }
 
@@ -19,6 +19,17 @@ interface PrepOutline {
   relatedVerse: string
   applicationNote: string
   transitionNote: string
+}
+
+interface DeliveryBlueprintCandidate {
+  archetype: string
+  description: string
+  deliveryIntro: string
+  deliveryFlow: string
+  transitions: { label: string; text: string }[]
+  deliveryConclusion: string
+  emotionCurve: string
+  timeAllocation: { intro: string; bodySections: string[]; conclusion: string }
 }
 
 interface ApplicationPoint {
@@ -39,6 +50,7 @@ interface PrepData {
   researchInsights: string[]
   outlines: PrepOutline[]
   applicationPoints: ApplicationPoint[]
+  congregationProfile: CongregationProfile
   deliveryIntro: string
   deliveryFlow: string
   deliveryTransitions: string[]
@@ -68,94 +80,7 @@ const PREP_STATUS_COLORS: Record<string, string> = {
   ready: 'bg-indigo-500/10 text-indigo-300',
 }
 
-const JOHN_PREP_DATA: PrepData = {
-  sermonTitle: '말씀은 생명이요 빛이시다',
-  coreMessage: '태초부터 계신 말씀은 생명과 빛으로 어둠 속의 사람을 비추신다',
-  sermonPurpose: '회중이 예수 그리스도를 추상적 진리가 아닌 생명과 빛의 주로 다시 바라보게 한다',
-  expectedResponse: '익숙한 본문을 다시 현재의 삶에 연결해 듣게 하고, 그리스도의 선재성과 생명 되심을 고백하게 한다',
-  passageStructure: '요한은 창세기 1:1을 의도적으로 연상시키며 시작한다 — "태초에 말씀이 계시니라." 프롤로그(1:1-18)의 서두로서, 1-5절은 말씀의 선재성(1-2절), 창조와 생명(3-4절), 빛과 어둠의 긴장(5절)으로 전개된다. 전체 구조는 하강(선재성 → 성육신)과 상승(십자가 → 영광)의 큰 흐름 속에서 이 서론이 우주의 시작을 선포한다.',
-  contextPoints: [
-    '창세기 1:1의 "태초에"(bereshit)를 의도적으로 인용 — 새 창조의 서막',
-    '요한 공동체의 상황: 예수님의 신성에 대한 도전에 응답',
-    '영지주의적 경향에 대한 반박 — 로고스는 인격적 그리스도',
-    '시내산 율법과 대비 — 말씀이 육신이 되어 우리 가운데 거하심',
-  ],
-  keyWords: [
-    { word: 'λόγος (로고스)', meaning: '말씀, 말, 이성', note: '하나님의 자기 계시의 궁극적 표현 — 인격적 그리스도. 헬라 철학의 보편적 이성이 아니라, 살아 계신 말씀' },
-    { word: 'ζωή (조에)', meaning: '생명', note: '생물학적 생명(bios)이 아닌, 하나님께로부터 오는 영원한 생명. 예수님 안에 그 생명이 있었다' },
-    { word: 'φῶς (포스)', meaning: '빛', note: '계시, 진리, 구원의 상징. 빛은 어둠을 이기며, 사람들에게 하나님을 드러낸다' },
-    { word: 'σκοτία (스코티아)', meaning: '어둠', note: '영적 무지, 죄, 하나님으로부터의 단절. 그러나 빛이 비췄고 어둠은 이기지 못했다' },
-    { word: 'σάρξ (사륵스)', meaning: '육신', note: '14절로 이어지는 성육신의 핵심 개념. 말씀이 육신이 되셨다' },
-  ],
-  researchInsights: [
-    '요한의 프롤로그는 창세기 1장과 잠언 8장의 지혜 전통을 함께 담고 있음',
-    '"말씀"(λόγος)은 구약의 "다바르"(דבר) 개념과 헬라 철학의 로고스 개념이 교차하는 지점',
-    '5절 "어둠이 깨닫지 못하더라"는 "이해하지 못했다"와 "정복하지 못했다"는 중의적 의미',
-    '바울의 그리스도 찬송(빌 2:6-11, 골 1:15-20)과 요한의 프롤로그는 초기 교회의 그리스도론적 찬송 전통을 반영',
-  ],
-  outlines: [
-    {
-      id: 'outline-1',
-      title: '말씀은 태초부터 하나님과 함께 계셨다',
-      description: '요한은 창세기 1:1을 의도적으로 연상시키며, 예수님이 시간과 창조의 시작 이전에 이미 존재하셨음을 선포한다. "함께 계셨다"(πρός)는 단순한 공존이 아니라 친밀한 교제와 인격적 구별을 나타낸다.',
-      relatedVerse: '요 1:1-2',
-      applicationNote: '우리의 신앙은 시간의 우연이 아니라 영원 전부터 계신 그리스도에 기초한다. 창조 이전의 사랑, 그 사랑이 오늘 나를 향하고 있다.',
-      transitionNote: '이 선재하신 말씀이 우리와 어떤 관계를 맺으시는가? 3-4절이 그 답을 준다.',
-    },
-    {
-      id: 'outline-2',
-      title: '말씀 안에 생명이 있었다',
-      description: '만물이 그로 말미암아 지은 바 되었다. 그 안에 생명(ζωή)이 있었고, 그 생명은 사람들의 빛이었다. 예수님은 창조의 매개자이시며, 생명의 근원이시다. 이 생명은 단순한 존재가 아니라 하나님과의 교제 안에서 누리는 영원한 생명이다.',
-      relatedVerse: '요 1:3-4',
-      applicationNote: '예수님이 생명의 근원이시므로, 우리는 그분 안에서만 참된 생명을 찾을 수 있다. 세상의 것들(성공, 물질, 관계)에서 생명을 찾으려 하지 말라.',
-      transitionNote: '그런데 이 생명이 어둠 가운데 있는 세상에 어떻게 비추어졌는가?',
-    },
-    {
-      id: 'outline-3',
-      title: '그 생명은 사람들의 빛이었다',
-      description: '빛이 어둠에 비치되 어둠이 깨닫지 못하더라(οὐ κατέλαβεν). 어둠은 빛을 이해하지도 못했고, 정복하지도 못했다. 그리스도의 빛은 지속적으로 비추고 있으며(φαίνει, 현재형), 어떤 어둠도 이길 수 없다.',
-      relatedVerse: '요 1:5',
-      applicationNote: '오늘의 어둠(죄책감, 두려움, 절망)이 그리스도의 빛을 이길 수 없다. 이 소망을 붙들라. 어둠이 깊을수록 빛은 더 선명하게 드러난다.',
-      transitionNote: '이 빛이 구체적으로 어떻게 이 땅에 찾아오셨는가? 14절이 선포한다: 말씀이 육신이 되어 우리 가운데 거하셨다.',
-    },
-  ],
-  applicationPoints: [
-    {
-      id: 'app-1',
-      point: '익숙한 본문을 새롭게 듣는 훈련 — 아침마다 요한 1:1-5를 읽고 "이 말씀이 오늘 나에게 하시는 말씀은 무엇인가" 질문하기',
-      audienceTag: '전체 회중',
-      pastoralNote: '익숙함이 경외감을 대체하지 않도록. 본문이 너무 유명해서 오히려 무디어질 위험이 있다.',
-    },
-    {
-      id: 'app-2',
-      point: '빛을 지식으로만 이해하지 않도록 — 예수님을 아는 것(지식)과 예수님 안에 거하는 것(생명)을 구분하여 적용',
-      audienceTag: '신앙 성숙자',
-      pastoralNote: '신학 지식이 많은 성도일수록 "말씀"을 개념으로만 소비할 위험이 있다. 생명으로 연결되게 해야 한다.',
-    },
-    {
-      id: 'app-3',
-      point: '삶의 어둠(질병, 실직, 관계의 어려움) 앞에서 그리스도의 빛이 여전히 비추고 있음을 선포하도록',
-      audienceTag: '고난 중인 성도',
-      pastoralNote: '고난을 부정하거나 경시하지 않으면서도, 그 고난보다 더 큰 빛이 있음을 선포해야 한다. 위로는 진실해야 한다.',
-    },
-    {
-      id: 'app-4',
-      point: '"태초에"의 의미를 창조와 새 삶의 시작으로 연결 — 세례 교육, 새가족 환영에 활용',
-      audienceTag: '새가족 · 교육부',
-      pastoralNote: '새로운 시작을 앞둔 이들에게 이 본문은 "하나님이 당신의 이야기를 시작하신다"는 선포가 될 수 있다.',
-    },
-  ],
-  deliveryIntro: '익숙한 본문일수록 가장 신선하게 전해야 한다. "태초에 말씀이 계시니라" — 이 구절을 한 번도 들어본 적이 없는 사람처럼, 그러나 평생 붙들어 온 사람의 무게로 선포할 것. 도입에서 너무 많은 설명을 하지 말고, 본문의 장엄함이 스스로 말하게 하라.',
-  deliveryFlow: '선재성(1-2절) → 창조와 생명(3-4절) → 빛과 어둠의 긴장(5절)으로 전개. 각 대지는 이전 대지의 긴장을 다음 대지가 해소하는 방식으로 연결. 특히 3-4절에서 "생명"과 "빛"의 연결은 요한 신학의 핵심이므로 충분히 무게를 두고 전개할 것.',
-  deliveryTransitions: [
-    '도입 → 1대지: "이 말씀이 오늘 우리에게 무엇을 말하는지 함께 살펴보겠습니다"',
-    '1대지 → 2대지: "그런데 이 말씀, 이 로고스가 우리와 무슨 상관이 있을까요?"',
-    '2대지 → 3대지: "생명의 근원이신 그분이 이 땅에 찾아오셨습니다. 그런데 세상은 어떻게 반응했을까요?"',
-    '3대지 → 결론: "이 빛이 오늘도 비추고 있습니다. 그리고 그 빛은 결코 꺼지지 않습니다"',
-  ],
-  deliveryConclusion: '회중이 다시 그리스도를 생명의 주로 바라보게 하는 초청으로 마무리할 것. 결론은 새로운 정보를 추가하지 말고, 선포된 말씀이 회중의 삶을 어떻게 변화시킬지 선언하는 형태로. 요한 1:14(말씀이 육신이 되어)로 자연스럽게 연결되는 시사점을 남길 것.',
-  prepStatus: 'draft',
-}
+
 
 /* ─── Required section keys for progress ─── */
 
@@ -180,6 +105,7 @@ export default function PrepTab({ project }: Props) {
     researchInsights: [],
     outlines: [],
     applicationPoints: [],
+    congregationProfile: DEFAULT_CONGREGATION_PROFILE,
     deliveryIntro: '',
     deliveryFlow: '',
     deliveryTransitions: [],
@@ -190,6 +116,19 @@ export default function PrepTab({ project }: Props) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [outlineLoading, setOutlineLoading] = useState(false)
   const [outlineCandidates, setOutlineCandidates] = useState<AiOutlineCandidate[] | null>(null)
+  const [lastSaved, setLastSaved] = useState<string | null>(null)
+  const prepLoadedRef = useRef(false)
+
+  // Auto-save: debounced save to localStorage whenever prepData changes
+  useEffect(() => {
+    if (!prepLoadedRef.current) return
+    const timer = setTimeout(() => {
+      const now = Date.now()
+      setStorageItem(`prep_${project.id}`, { ...prepData, _savedAt: now })
+      setLastSaved(new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [prepData, project.id])
 
   useEffect(() => {
     try {
@@ -233,6 +172,38 @@ export default function PrepTab({ project }: Props) {
     } catch (e) {
       console.error('[PrepTab] Failed to load study data:', e)
     }
+
+    // 4) saved prep data from auto-save (if no fresh study handoff came in)
+    const raw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    if (raw && raw.coreMessage) {
+      const { _savedAt, ...savedPrep } = raw
+      setPrepData(prev => {
+        const hasStudyData = prev.passageStructure.length > 0
+        return {
+          ...(hasStudyData ? prev : savedPrep),
+          ...(hasStudyData ? {
+            passageStructure: prev.passageStructure || savedPrep.passageStructure,
+            contextPoints: prev.contextPoints.length ? prev.contextPoints : savedPrep.contextPoints,
+            keyWords: prev.keyWords.length ? prev.keyWords : savedPrep.keyWords,
+            researchInsights: prev.researchInsights.length ? prev.researchInsights : savedPrep.researchInsights,
+          } : {}),
+          outlines: prev.outlines.length ? prev.outlines : (savedPrep.outlines || []),
+          applicationPoints: prev.applicationPoints.length ? prev.applicationPoints : (savedPrep.applicationPoints || []),
+          congregationProfile: savedPrep.congregationProfile || DEFAULT_CONGREGATION_PROFILE,
+          deliveryIntro: prev.deliveryIntro || savedPrep.deliveryIntro,
+          deliveryFlow: prev.deliveryFlow || savedPrep.deliveryFlow,
+          deliveryTransitions: prev.deliveryTransitions.length ? prev.deliveryTransitions : (savedPrep.deliveryTransitions || []),
+          deliveryConclusion: prev.deliveryConclusion || savedPrep.deliveryConclusion,
+          prepStatus: savedPrep.prepStatus || 'draft',
+        }
+      })
+      if (_savedAt) {
+        setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+      }
+      console.log('[PrepTab] Restored saved prep data')
+    }
+
+    prepLoadedRef.current = true
   }, [project.id])
 
   const scrollToSection = useCallback((id: SectionId) => {
@@ -358,7 +329,7 @@ export default function PrepTab({ project }: Props) {
     [prepData.outlines],
   )
 
-  const lastSavedDisplay = '오전 11:24'
+  const lastSavedDisplay = lastSaved || '방금 전'
 
   return (
     <div className="flex flex-col h-full">
@@ -397,6 +368,7 @@ export default function PrepTab({ project }: Props) {
             {/* Section: 설교 방향 */}
             <DirectionSection
               data={prepData}
+              project={project}
               sectionRef={el => { sectionRefs.current['direction'] = el }}
               isActive={activeSection === 'direction'}
               onActivate={() => setActiveSection('direction')}
@@ -431,15 +403,21 @@ export default function PrepTab({ project }: Props) {
             {/* Section: 적용과 회중 연결 */}
             <ApplicationSection
               points={prepData.applicationPoints}
+              congregationProfile={prepData.congregationProfile}
+              project={project}
+              prepData={prepData}
               sectionRef={el => { sectionRefs.current['application'] = el }}
               isActive={activeSection === 'application'}
               onActivate={() => setActiveSection('application')}
               onUpdate={updateApplication}
+              onUpdateProfile={profile => updateField('congregationProfile', profile)}
+              onSetPoints={points => updateField('applicationPoints', points)}
             />
 
             {/* Section: 전달 흐름 */}
             <DeliverySection
               data={prepData}
+              project={project}
               sectionRef={el => { sectionRefs.current['delivery'] = el }}
               isActive={activeSection === 'delivery'}
               onActivate={() => setActiveSection('delivery')}
@@ -626,14 +604,53 @@ function PrepNavigator({
 /* ─── Direction Section ─── */
 
 function DirectionSection({
-  data, sectionRef, isActive, onActivate, onUpdate,
+  data, project, sectionRef, isActive, onActivate, onUpdate,
 }: {
   data: PrepData
+  project: ProjectDetail
   sectionRef: (el: HTMLDivElement | null) => void
   isActive: boolean
   onActivate: () => void
   onUpdate: <K extends keyof PrepData>(key: K, value: PrepData[K]) => void
 }) {
+  const [loadingCore, setLoadingCore] = useState(false)
+  const [coreCandidates, setCoreCandidates] = useState<{ style: string; coreMessage: string; reason: string }[] | null>(null)
+
+  const generateCoreMessages = useCallback(() => {
+    setLoadingCore(true)
+    setCoreCandidates(null)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'core-message',
+        data: {
+          passage: project.passage,
+          book: project.book,
+          chapter: String(project.chapter),
+          verseStart: String(project.verseStart),
+          verseEnd: project.verseEnd ? String(project.verseEnd) : undefined,
+          passageStructure: data.passageStructure,
+          sermonTitle: data.sermonTitle,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          setCoreCandidates(parsed.candidates || [])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCore(false))
+  }, [project, data.passageStructure, data.sermonTitle])
+
+  const selectCoreMessage = useCallback((msg: string) => {
+    onUpdate('coreMessage', msg)
+    setCoreCandidates(null)
+  }, [onUpdate])
+
   return (
     <div ref={sectionRef} onClick={onActivate}
       className={`border-l-4 border-l-indigo-500 pl-5 ${isActive ? 'bg-indigo-500/[0.07] -mx-5 px-5 py-4 rounded-xl' : ''}`}>
@@ -657,7 +674,57 @@ function DirectionSection({
 
         {/* Core Message */}
         <div>
-          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">중심명제</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">중심명제</label>
+            <button
+              onClick={(e) => { e.stopPropagation(); generateCoreMessages() }}
+              disabled={loadingCore}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 transition-colors border border-amber-500/20 disabled:opacity-50"
+            >
+              {loadingCore ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              AI 추천
+            </button>
+          </div>
+
+          {loadingCore && (
+            <div className="flex items-center gap-2 py-4 justify-center bg-[#04060f]/40 rounded-xl border border-dashed border-white/10 mb-2">
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+              <span className="text-xs text-slate-400">본문을 분석해 3가지 스타일의 중심명제를 생성 중...</span>
+            </div>
+          )}
+
+          {coreCandidates && coreCandidates.length > 0 && (
+            <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/5 to-indigo-500/5 border border-amber-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold text-white">3가지 중심명제 후보</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCoreCandidates(null) }}
+                  className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                {coreCandidates.map((c, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); selectCoreMessage(c.coreMessage) }}
+                    className="w-full text-left p-2.5 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all group"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-300 text-[8px] font-bold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-300">{c.style}</span>
+                    </div>
+                    <p className="text-xs text-slate-100 leading-relaxed font-serif">&ldquo;{c.coreMessage}&rdquo;</p>
+                    <p className="text-[9px] text-slate-500 mt-1">{c.reason}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <textarea
             value={data.coreMessage}
             onChange={e => onUpdate('coreMessage', e.target.value)}
@@ -1025,15 +1092,120 @@ function OutlineSection({
 
 /* ─── Application Section ─── */
 
+interface AiDirection {
+  audienceTag: string
+  direction: string
+  reason: string
+}
+
+interface AiDirectionCandidate {
+  styleTitle: string
+  styleDescription: string
+  directions: AiDirection[]
+}
+
 function ApplicationSection({
-  points, sectionRef, isActive, onActivate, onUpdate,
+  points, congregationProfile, project, prepData,
+  sectionRef, isActive, onActivate, onUpdate, onUpdateProfile, onSetPoints,
 }: {
   points: ApplicationPoint[]
+  congregationProfile: CongregationProfile
+  project: ProjectDetail
+  prepData: PrepData
   sectionRef: (el: HTMLDivElement | null) => void
   isActive: boolean
   onActivate: () => void
   onUpdate: (id: string, field: keyof ApplicationPoint, value: string) => void
+  onUpdateProfile: (profile: CongregationProfile) => void
+  onSetPoints: (points: ApplicationPoint[]) => void
 }) {
+  const [showProfileEditor, setShowProfileEditor] = useState(false)
+  const [genStep, setGenStep] = useState<'idle' | 'loading-directions' | 'selecting' | 'loading-points'>('idle')
+  const [directionCandidates, setDirectionCandidates] = useState<AiDirectionCandidate[] | null>(null)
+  const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null)
+
+  const generateDirections = useCallback(() => {
+    setGenStep('loading-directions')
+    setDirectionCandidates(null)
+    setSelectedCandidate(null)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'application-direction',
+        data: {
+          passage: project.passage,
+          coreMessage: prepData.coreMessage,
+          outlines: prepData.outlines,
+          congregationProfile,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          setDirectionCandidates(parsed.candidates || [parsed])
+          setGenStep('selecting')
+        } else {
+          setGenStep('idle')
+        }
+      })
+      .catch(() => setGenStep('idle'))
+  }, [project, prepData, congregationProfile])
+
+  const confirmDirections = useCallback((candidateIndex: number) => {
+    setSelectedCandidate(candidateIndex)
+    setGenStep('loading-points')
+    const candidate = directionCandidates?.[candidateIndex]
+    if (!candidate) { setGenStep('idle'); return }
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'application-generate',
+        data: {
+          passage: project.passage,
+          coreMessage: prepData.coreMessage,
+          outlines: prepData.outlines,
+          congregationProfile,
+          directions: candidate.directions,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          const newPoints: ApplicationPoint[] = (parsed.applications || []).map((a: any, i: number) => ({
+            id: `app-${Date.now()}-${i}`,
+            point: a.point,
+            audienceTag: a.audienceTag,
+            pastoralNote: a.pastoralNote || '',
+          }))
+          if (newPoints.length > 0) {
+            onSetPoints(newPoints)
+          }
+        }
+        setGenStep('idle')
+        setDirectionCandidates(null)
+        setSelectedCandidate(null)
+      })
+      .catch(() => {
+        setGenStep('idle')
+        setDirectionCandidates(null)
+        setSelectedCandidate(null)
+      })
+  }, [project, prepData, congregationProfile, directionCandidates, onSetPoints])
+
+  const discardDirections = useCallback(() => {
+    setDirectionCandidates(null)
+    setSelectedCandidate(null)
+    setGenStep('idle')
+  }, [])
+
+  const hasProfile = congregationProfile.dominantAgeGroups.length > 0
+
   return (
     <div ref={sectionRef} onClick={onActivate}
       className={`border-l-4 border-l-blue-400 pl-5 ${isActive ? 'bg-blue-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
@@ -1043,7 +1215,131 @@ function ApplicationSection({
         <span className="text-[10px] text-slate-500 ml-auto">말씀이 오늘의 회중에게 어떻게 들려야 하는가</span>
       </div>
 
+      {/* Congregation Profile Banner */}
+      <div className={`rounded-xl p-3 mb-4 border transition-colors ${
+        hasProfile
+          ? 'bg-blue-500/10 border-blue-500/20'
+          : 'bg-amber-500/10 border-amber-500/20'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="w-3.5 h-3.5 text-blue-300" />
+            <span className="text-[10px] font-semibold text-blue-300 uppercase tracking-widest">회중 프로필</span>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowProfileEditor(true) }}
+            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
+          >
+            <Settings2 className="w-3 h-3" />
+            {hasProfile ? '편집' : '설정'}
+          </button>
+        </div>
+        {hasProfile ? (
+          <div className="mt-2 text-[11px] text-slate-300 leading-relaxed">
+            <p>연령대: {congregationProfile.dominantAgeGroups.join(', ')}</p>
+            <p>신앙 수준: {FAITH_MATURITY_OPTIONS.find(o => o.value === congregationProfile.faithMaturity)?.label || congregationProfile.faithMaturity}</p>
+            {congregationProfile.churchContext && <p>교회 상황: {congregationProfile.churchContext}</p>}
+          </div>
+        ) : (
+          <p className="mt-2 text-[11px] text-amber-300">회중 프로필을 설정하면 AI가 더 정확한 적용을 생성할 수 있습니다</p>
+        )}
+      </div>
+
+      {/* AI Application Generation */}
+      {genStep === 'idle' && !directionCandidates && (
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs text-slate-500">{points.length}개 적용 포인트</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); generateDirections() }}
+              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 hover:text-blue-200 transition-colors border border-blue-500/20"
+            >
+              <Sparkles className="w-3 h-3" />
+              AI 적용 생성
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const newId = `app-${Date.now()}`
+                onSetPoints([...points, { id: newId, point: '', audienceTag: '', pastoralNote: '' }])
+              }}
+              className="flex items-center gap-1 text-[10px] px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
+            >
+              <Plus className="w-3 h-3" />
+              수동 추가
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Directions */}
+      {genStep === 'loading-directions' && (
+        <div className="flex items-center gap-2 py-6 justify-center">
+          <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+          <span className="text-xs text-slate-400">회중 프로필과 본문을 분석해 적용 방향을 생성 중...</span>
+        </div>
+      )}
+
+      {/* Direction Selection */}
+      {directionCandidates && directionCandidates.length > 0 && genStep === 'selecting' && (
+        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-indigo-500/5 border border-blue-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-xs font-bold text-white">적용 방향을 선택하세요</span>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); discardDirections() }}
+              className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {directionCandidates.map((c, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); confirmDirections(i) }}
+                disabled={false}
+                className="text-left p-3 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all group disabled:opacity-50"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-bold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <span className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">{c.styleTitle}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mb-2">{c.styleDescription}</p>
+                <div className="space-y-1">
+                  {c.directions.map((d, di) => (
+                    <div key={di} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-300 shrink-0">{d.audienceTag}</span>
+                      <span className="text-slate-400">{d.direction}</span>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loading Points */}
+      {genStep === 'loading-points' && (
+        <div className="flex items-center gap-2 py-6 justify-center">
+          <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+          <span className="text-xs text-slate-400">선택한 방향으로 구체적인 적용 포인트를 생성 중...</span>
+        </div>
+      )}
+
+      {/* Application Points List */}
       <div className="space-y-3">
+        {points.length === 0 && genStep === 'idle' && (
+          <div className="text-center py-8 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
+            <p className="text-sm text-slate-400 mb-1">적용 포인트가 없습니다</p>
+            <p className="text-xs text-slate-500">회중 프로필을 설정하고 AI로 생성하거나, 직접 추가해보세요</p>
+          </div>
+        )}
         {points.map((app, i) => (
           <div key={app.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -1054,6 +1350,7 @@ function ApplicationSection({
                 value={app.audienceTag}
                 onChange={e => onUpdate(app.id, 'audienceTag', e.target.value)}
                 className="text-[10px] font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5 outline-none focus:border-blue-500/30"
+                placeholder="대상 그룹"
               />
             </div>
             <textarea
@@ -1061,6 +1358,7 @@ function ApplicationSection({
               onChange={e => onUpdate(app.id, 'point', e.target.value)}
               className="w-full text-sm text-slate-100 bg-transparent border-none outline-none resize-none leading-relaxed font-serif"
               rows={2}
+              placeholder="적용 포인트를 입력하세요"
             />
             <div className="mt-2 pt-2 border-t border-white/5">
               <div className="flex items-start gap-1.5">
@@ -1079,6 +1377,150 @@ function ApplicationSection({
           </div>
         ))}
       </div>
+
+      {/* Congregation Profile Editor Modal */}
+      {showProfileEditor && (
+        <CongregationProfileEditor
+          profile={congregationProfile}
+          onSave={(profile) => {
+            onUpdateProfile(profile)
+            setShowProfileEditor(false)
+          }}
+          onClose={() => setShowProfileEditor(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ─── Congregation Profile Editor ─── */
+
+function CongregationProfileEditor({
+  profile, onSave, onClose,
+}: {
+  profile: CongregationProfile
+  onSave: (profile: CongregationProfile) => void
+  onClose: () => void
+}) {
+  const [local, setLocal] = useState<CongregationProfile>({ ...profile })
+
+  const toggleAgeGroup = (group: string) => {
+    setLocal(prev => ({
+      ...prev,
+      dominantAgeGroups: prev.dominantAgeGroups.includes(group)
+        ? prev.dominantAgeGroups.filter(g => g !== group)
+        : [...prev.dominantAgeGroups, group],
+    }))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-lg bg-[#0a0e1a] border border-white/10 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-400" />
+            <h3 className="text-sm font-bold text-white">회중 프로필 설정</h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto scrollbar-thin">
+          {/* Age Groups */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">주요 연령대 (중복 선택 가능)</label>
+            <div className="flex flex-wrap gap-1.5">
+              {AGE_GROUP_OPTIONS.map(group => (
+                <button
+                  key={group}
+                  onClick={() => toggleAgeGroup(group)}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg border transition-colors ${
+                    local.dominantAgeGroups.includes(group)
+                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {group}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Faith Maturity */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">신앙 성숙도 분포</label>
+            <div className="flex flex-wrap gap-1.5">
+              {FAITH_MATURITY_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setLocal(prev => ({ ...prev, faithMaturity: opt.value as CongregationProfile['faithMaturity'] }))}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg border transition-colors ${
+                    local.faithMaturity === opt.value
+                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Church Context */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">교회 상황 / 특징</label>
+            <textarea
+              value={local.churchContext}
+              onChange={e => setLocal(prev => ({ ...prev, churchContext: e.target.value }))}
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              placeholder="예: 도심형 대형교회, 농촌 소형교회, 개척 3년차, 교회 분열 중..."
+              rows={2}
+            />
+          </div>
+
+          {/* Pastoral Priorities */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">목회적 우선순위</label>
+            <textarea
+              value={local.pastoralPriorities}
+              onChange={e => setLocal(prev => ({ ...prev, pastoralPriorities: e.target.value }))}
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              placeholder="예: 제자양육 중심, 전도와 부흥, 성도 간 회복과 화해..."
+              rows={2}
+            />
+          </div>
+
+          {/* Season Note */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">시즌 / 특이사항</label>
+            <textarea
+              value={local.seasonNote}
+              onChange={e => setLocal(prev => ({ ...prev, seasonNote: e.target.value }))}
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              placeholder="예: 사순절, 부활절, 추수감사절, 교회 창립기념일, 성탄절..."
+              rows={2}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/5">
+          <button
+            onClick={onClose}
+            className="text-[11px] px-3 py-1.5 rounded-xl text-slate-400 hover:text-slate-200 border border-white/5 hover:border-white/10 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            onClick={() => onSave(local)}
+            className="text-[11px] px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-medium"
+          >
+            저장
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1086,14 +1528,58 @@ function ApplicationSection({
 /* ─── Delivery Section ─── */
 
 function DeliverySection({
-  data, sectionRef, isActive, onActivate, onUpdate,
+  data, project, sectionRef, isActive, onActivate, onUpdate,
 }: {
   data: PrepData
+  project: ProjectDetail
   sectionRef: (el: HTMLDivElement | null) => void
   isActive: boolean
   onActivate: () => void
   onUpdate: <K extends keyof PrepData>(key: K, value: PrepData[K]) => void
 }) {
+  const [loading, setLoading] = useState(false)
+  const [candidates, setCandidates] = useState<DeliveryBlueprintCandidate[] | null>(null)
+
+  const generateBlueprints = useCallback(() => {
+    setLoading(true)
+    setCandidates(null)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'delivery',
+        data: {
+          passage: project.passage,
+          coreMessage: data.coreMessage,
+          outlines: data.outlines,
+          applicationPoints: data.applicationPoints,
+          congregationProfile: data.congregationProfile,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const parsed = JSON.parse(json.data.output)
+          setCandidates(parsed.candidates || [])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [project, data.coreMessage, data.outlines, data.applicationPoints, data.congregationProfile])
+
+  const applyBlueprint = useCallback((candidate: DeliveryBlueprintCandidate) => {
+    onUpdate('deliveryIntro', candidate.deliveryIntro)
+    onUpdate('deliveryFlow', candidate.deliveryFlow)
+    onUpdate('deliveryTransitions', (candidate.transitions || []).map(t => t.text))
+    onUpdate('deliveryConclusion', candidate.deliveryConclusion)
+    setCandidates(null)
+  }, [onUpdate])
+
+  const discard = useCallback(() => {
+    setCandidates(null)
+  }, [])
+
   return (
     <div ref={sectionRef} onClick={onActivate}
       className={`border-l-4 border-l-purple-400 pl-5 ${isActive ? 'bg-purple-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
@@ -1104,6 +1590,64 @@ function DeliverySection({
       </div>
 
       <div className="space-y-4">
+        {/* AI Generation */}
+        {!loading && !candidates && (
+          <div className="flex justify-end">
+            <button
+              onClick={(e) => { e.stopPropagation(); generateBlueprints() }}
+              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 transition-colors border border-purple-500/20"
+            >
+              <Sparkles className="w-3 h-3" />
+              AI 전달 설계도 생성
+            </button>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center gap-2 py-6 justify-center bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
+            <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+            <span className="text-xs text-slate-400">3가지 전달 아키타입(선포형/대화형/서사형)을 분석 중...</span>
+          </div>
+        )}
+
+        {/* Candidates */}
+        {candidates && candidates.length > 0 && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/5 to-pink-500/5 border border-purple-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-bold text-white">3가지 전달 설계도</span>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); discard() }}
+                className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {candidates.map((c, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); applyBlueprint(c) }}
+                  className="text-left p-3 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-purple-500/40 hover:bg-purple-500/5 transition-all group"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 text-[9px] font-bold flex items-center justify-center">{i + 1}</span>
+                    <span className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">{c.archetype}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed mb-2">{c.description}</p>
+                  <div className="flex items-center gap-2 text-[9px] text-slate-500">
+                    <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300">{c.emotionCurve}</span>
+                    <span>도입 {c.timeAllocation?.intro} · 결론 {c.timeAllocation?.conclusion}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Introduction */}
         <div>
           <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">도입 방향</label>
@@ -1128,10 +1672,28 @@ function DeliverySection({
 
         {/* Transitions */}
         <div>
-          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 block">전환 지점</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">전환 지점</label>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onUpdate('deliveryTransitions', [...data.deliveryTransitions, ''])
+              }}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
+            >
+              <Plus className="w-3 h-3" />
+              전환 추가
+            </button>
+          </div>
           <div className="space-y-2">
+            {data.deliveryTransitions.length === 0 && (
+              <div className="text-center py-6 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
+                <p className="text-xs text-slate-500">대지 사이의 전환 문장을 추가해보세요</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">예: &ldquo;그렇다면 우리는 어떻게 반응해야 할까요?&rdquo;</p>
+              </div>
+            )}
             {data.deliveryTransitions.map((t, i) => (
-              <div key={i} className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
+              <div key={i} className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 group">
                 <span className="text-[10px] text-purple-500 font-medium w-16 shrink-0 mt-0.5">
                   {i === 0 ? '도입→1' : i === data.deliveryTransitions.length - 1 ? `${i}→결론` : `${i}→${i + 1}`}
                 </span>
@@ -1144,7 +1706,18 @@ function DeliverySection({
                   }}
                   className="flex-1 text-xs text-slate-200 bg-transparent border-none outline-none resize-none leading-relaxed"
                   rows={2}
+                  placeholder="다음 단계로 이어지는 전환 문장을 적어보세요"
                 />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    const next = data.deliveryTransitions.filter((_, idx) => idx !== i)
+                    onUpdate('deliveryTransitions', next)
+                  }}
+                  className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
             ))}
           </div>

@@ -169,6 +169,39 @@ export interface Recommendation {
   relevance: number
 }
 
+export interface CongregationProfile {
+  dominantAgeGroups: string[]
+  faithMaturity: 'mostly_new' | 'mixed' | 'mostly_mature' | 'diverse'
+  churchContext: string
+  pastoralPriorities: string
+  seasonNote: string
+}
+
+export const DEFAULT_CONGREGATION_PROFILE: CongregationProfile = {
+  dominantAgeGroups: [],
+  faithMaturity: 'mixed',
+  churchContext: '',
+  pastoralPriorities: '',
+  seasonNote: '',
+}
+
+export const AGE_GROUP_OPTIONS = [
+  '청년 (20-30대)',
+  '장년 (40-50대)',
+  '시니어 (60대 이상)',
+  '대학생',
+  '청소년',
+  '새가족',
+  '온가족 (혼합)',
+]
+
+export const FAITH_MATURITY_OPTIONS = [
+  { value: 'mostly_new', label: '초신자 중심' },
+  { value: 'mixed', label: '혼합 (초신자~성숙)' },
+  { value: 'mostly_mature', label: '성숙한 성도 중심' },
+  { value: 'diverse', label: '다양한 수준 분포' },
+]
+
 export interface QuickStats {
   totalProjects: number
   inProgress: number
