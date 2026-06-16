@@ -611,26 +611,50 @@ export default function ManuscriptTab({ project }: Props) {
     const apiType = typeMap[sectionType]
     if (!apiType) return ''
 
+    // Load prep data once
+    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const congregationProfile = prepRaw?.congregationProfile || null
+    const deliveryIntro = prepRaw?.deliveryIntro || ''
+    const deliveryConclusion = prepRaw?.deliveryConclusion || ''
+    const prepAppPoints = prepRaw?.applicationPoints || []
+    const researchInsights = prepRaw?.researchInsights || []
+    const passageStructure = prepRaw?.passageStructure || ''
+
     const payload: any = {
       passage: project.passage,
       coreMessage: manuscript.coreMessage,
       sermonTitle: manuscript.title,
       sermonPurpose: manuscript.oneSentenceSummary,
+      congregationProfile,
     }
 
     if (sectionType === 'introduction') {
-      payload.passageStructure = manuscript.outlinePoints.map(o => o.title).join(' → ')
-      payload.deliveryIntro = ''
+      payload.passageStructure = passageStructure || manuscript.outlinePoints.map(o => o.title).join(' → ')
+      payload.deliveryIntro = deliveryIntro
+      // Next sections preview
+      const bodySections = manuscript.sections.filter(s => s.type === 'body')
+      payload.nextSections = bodySections.map(s => s.label).join(' → ') + ' → 결론 → 적용'
+
     } else if (sectionType === 'conclusion') {
       payload.outlines = manuscript.outlinePoints.map(o => ({ title: o.title, description: o.content }))
-      payload.applicationPoints = []
+      payload.applicationPoints = prepAppPoints.length > 0
+        ? prepAppPoints.map((a: any) => ({
+            id: a.id || `app-${Math.random()}`,
+            point: a.point || '',
+            audienceTag: a.audienceTag || '전체',
+            pastoralNote: a.pastoralNote || '',
+          }))
+        : []
       payload.expectedResponse = ''
-      payload.deliveryConclusion = ''
-    } else if (sectionType === 'application') {
-      const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
-      const prepAppPoints = prepRaw?.applicationPoints || []
-      const congregationProfile = prepRaw?.congregationProfile || null
+      payload.deliveryConclusion = deliveryConclusion
+      // Previous content summary
+      const prevContent = manuscript.sections
+        .filter(s => s.content.trim() && s.type !== 'conclusion' && s.type !== 'application')
+        .map(s => `[${s.label}]\n${s.content.slice(0, 300)}${s.content.length > 300 ? '...' : ''}`)
+        .join('\n\n')
+      payload.previousContent = prevContent || '(아직 작성된 내용 없음)'
 
+    } else if (sectionType === 'application') {
       payload.outlines = manuscript.outlinePoints.map(o => ({ title: o.title, description: o.content }))
       payload.applicationPoints = prepAppPoints.length > 0
         ? prepAppPoints.map((a: any) => ({
@@ -642,23 +666,31 @@ export default function ManuscriptTab({ project }: Props) {
         : (section.researchPoints || []).map((p, i) => ({
             id: `app-${i}`, point: p, audienceTag: '', pastoralNote: '',
           }))
-      payload.congregationProfile = congregationProfile
       payload.existingContent = section.content.trim() ? section.content.slice(0, 500) : ''
+      // Previous content (conclusion summary)
+      const conclusionSection = manuscript.sections.find(s => s.type === 'conclusion')
+      payload.previousContent = conclusionSection?.content.trim()
+        ? `[결론]\n${conclusionSection.content.slice(0, 300)}${conclusionSection.content.length > 300 ? '...' : ''}`
+        : '(아직 결론이 작성되지 않음)'
+
     } else if (sectionType === 'body') {
       const bodySections = manuscript.sections.filter(s => s.type === 'body')
       const bodyIdx = bodySections.indexOf(section)
       const outlinePoint = manuscript.outlinePoints[bodyIdx] || null
-      const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
-      const researchInsights = prepRaw?.researchInsights || []
-      const passageStructure = prepRaw?.passageStructure || ''
-      const congregationProfile = prepRaw?.congregationProfile || null
 
-      // Get content of previous sections for flow continuity
+      // Previous sections content
       const prevSections = manuscript.sections.filter(s => {
         const idx = manuscript.sections.indexOf(s)
         return idx < manuscript.sections.indexOf(section) && s.content.trim()
       })
       const previousContent = prevSections.map(s => `[${s.label}]\n${s.content.slice(0, 200)}${s.content.length > 200 ? '...' : ''}`).join('\n\n')
+
+      // Next sections preview
+      const remainingBodies = bodySections.slice(bodyIdx + 1)
+      const nextSections = remainingBodies.map(s => s.label).join(' → ')
+      const nextPlan = nextSections
+        ? `${nextSections} → 결론 → 적용`
+        : bodySections.length > 1 ? '결론 → 적용' : '결론 → 적용'
 
       payload.outlinePoint = outlinePoint ? {
         title: outlinePoint.title,
@@ -667,10 +699,10 @@ export default function ManuscriptTab({ project }: Props) {
       } : { title: section.label.replace(/^\d+\.\s*/, ''), content: '', passage: section.passage || '' }
       payload.passageStructure = passageStructure
       payload.researchInsights = researchInsights
-      payload.congregationProfile = congregationProfile
       payload.sectionPosition = bodyIdx + 1
       payload.totalSections = bodySections.length
-      payload.previousContent = previousContent
+      payload.previousContent = previousContent || '(이전 섹션 내용 없음)'
+      payload.nextSections = nextPlan
     }
 
     const res = await fetch('/api/advanced/ai', {
