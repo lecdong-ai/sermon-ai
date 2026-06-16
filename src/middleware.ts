@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/intro']
-const publicPrefixes = ['/share/', '/api/']
+const publicPrefixes = ['/share/', '/api/auth']
 
 const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -44,6 +44,14 @@ export async function middleware(request: NextRequest) {
   )
 
   let { data: { user } } = await supabase.auth.getUser()
+
+  // Protect /advanced/* routes — require authentication
+  if (pathname.startsWith('/advanced') && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(url)
+  }
 
   if (!isPublic && !user && !pathname.startsWith('/advanced')) {
     const url = request.nextUrl.clone()

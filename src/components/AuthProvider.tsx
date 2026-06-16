@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { resetUserCache } from '@/lib/storage'
 import type { User, SupabaseClient } from '@supabase/supabase-js'
 
 interface AuthValue {
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (supabaseRef.current) {
       await supabaseRef.current.auth.signOut()
     }
+    resetUserCache()
     setUser(null)
   }, [])
 
