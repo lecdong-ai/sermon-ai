@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Loader2, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
-import { JOHN_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
+import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
 import type { SermonSection, IllustrationNote, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import { AppSectionHeader } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
@@ -78,9 +78,171 @@ const EMPTY_GUIDANCE: Record<string, { message: string; hint: string }> = {
   },
 }
 
+/** Sync an already-loaded manuscript with the latest prep outlines.
+ *  - If prep has more outlines than body-sections → appends new empty sections.
+ *  - If prep has fewer outlines → keeps extra sections that have content.
+ *  - Updates labels, passages, prepInsights, and outlinePoints from prep. */
+function syncManuscriptWithPrep(ms: JohnManuscriptData, prepRaw: any): JohnManuscriptData {
+  const outlines = prepRaw?.outlines || []
+  if (outlines.length === 0) return ms
+
+  const bodySections = ms.sections.filter(s => s.type === 'body')
+  const fixedSections = ms.sections.filter(s => s.type !== 'body')
+
+  // Map prep outlines to body sections by index (preserving content)
+  const synced: SermonSection[] = outlines.map((o: any, i: number) => {
+    const existing = bodySections[i]
+    const label = `${i + 1}. ${o.title || ''}`
+    if (existing) {
+      return { ...existing, id: `body-${i + 1}`, label, passage: o.relatedVerse || existing.passage || '' }
+    }
+    return { id: `body-${i + 1}`, type: 'body' as const, label, passage: o.relatedVerse || '', content: '', aiGenerated: false }
+  })
+
+  // Keep extra body sections that have user content (don't delete their work)
+  const extras = bodySections.slice(outlines.length).filter(s => s.content.trim())
+
+  const prepInsights: string[] = [
+    ...(prepRaw?.researchInsights || []),
+    ...(prepRaw?.passageStructure ? [prepRaw.passageStructure] : []),
+    ...(prepRaw?.applicationPoints || []).map((ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`),
+  ]
+  const outlinePoints = outlines.map((o: any) => ({
+    title: o.title || '', passage: o.relatedVerse || '', content: o.description || '',
+  }))
+
+  // Re-assemble in canonical order
+  const intro = fixedSections.find(s => s.id === 'intro')
+  const conclusion = fixedSections.find(s => s.id === 'conclusion')
+  const application = fixedSections.find(s => s.id === 'application')
+
+  return {
+    ...ms,
+    sections: [intro!, ...synced, ...extras, conclusion!, application!].filter(Boolean),
+    coreMessage: prepRaw?.coreMessage || ms.coreMessage,
+    audience: (() => {
+      if (prepRaw?.congregationProfile) {
+        const p = prepRaw.congregationProfile
+        return [p.ageGroup, p.faithMaturity].filter(Boolean).join(' · ')
+      }
+      return ms.audience
+    })(),
+    prepInsights,
+    outlinePoints,
+  }
+}
+
+function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManuscriptData {
+  const sections: SermonSection[] = []
+
+  sections.push({
+    id: 'intro',
+    type: 'introduction',
+    label: '서론',
+    content: prepRaw?.deliveryIntro || '',
+    aiGenerated: false,
+  })
+
+  const outlines = prepRaw?.outlines || []
+  if (outlines.length > 0) {
+    outlines.forEach((o: any, i: number) => {
+      sections.push({
+        id: `body-${i + 1}`,
+        type: 'body',
+        label: o.title ? `${i + 1}. ${o.title}` : `${i + 1}. 본론`,
+        passage: o.relatedVerse || '',
+        content: '',
+        aiGenerated: false,
+      })
+    })
+  } else {
+    for (let i = 0; i < 3; i++) {
+      sections.push({
+        id: `body-${i + 1}`,
+        type: 'body',
+        label: `${i + 1}. 본론`,
+        content: '',
+        aiGenerated: false,
+      })
+    }
+  }
+
+  sections.push({
+    id: 'conclusion',
+    type: 'conclusion',
+    label: '결론',
+    content: prepRaw?.deliveryConclusion || '',
+    aiGenerated: false,
+  })
+
+  sections.push({
+    id: 'application',
+    type: 'application',
+    label: '적용',
+    content: '',
+    aiGenerated: false,
+  })
+
+  const outlinePoints = outlines.map((o: any) => ({
+    title: o.title || '',
+    passage: o.relatedVerse || '',
+    content: o.description || '',
+  }))
+
+  const prepInsights: string[] = [
+    ...(prepRaw?.researchInsights || []),
+    ...(prepRaw?.passageStructure ? [prepRaw.passageStructure] : []),
+    ...(prepRaw?.applicationPoints || []).map(
+      (ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`
+    ),
+  ]
+
+  let audience = ''
+  if (prepRaw?.congregationProfile) {
+    const p = prepRaw.congregationProfile
+    audience = [p.ageGroup, p.faithMaturity].filter(Boolean).join(' · ')
+  }
+  if (!audience && Array.isArray(project.audience)) {
+    audience = project.audience.join(', ')
+  }
+
+  return {
+    title: prepRaw?.sermonTitle || project.title || '',
+    oneSentenceSummary: '',
+    passage: project.passage || '',
+    sermonDate: project.sermonDate || '',
+    audience,
+    tone: '',
+    sections,
+    illustrationNotes: [],
+    referenceNotes: [],
+    coreMessage: prepRaw?.coreMessage || project.coreMessage || '',
+    outlinePoints,
+    prepInsights,
+    warningPoints: [],
+    greekWords: [],
+    relatedPassages: [],
+  }
+}
+
 export default function ManuscriptTab({ project }: Props) {
   const router = useRouter()
-  const [manuscript, setManuscript] = useState<JohnManuscriptData>(JOHN_MANUSCRIPT)
+  const [manuscript, setManuscript] = useState<JohnManuscriptData>(() => ({
+    ...EMPTY_MANUSCRIPT,
+    title: project.title || '',
+    passage: project.passage || '',
+    sermonDate: project.sermonDate || '',
+    coreMessage: project.coreMessage || '',
+    audience: Array.isArray(project.audience) ? project.audience.join(', ') : project.audience || '',
+    sections: [
+      { id: 'intro', type: 'introduction' as const, label: '서론', content: '', aiGenerated: false },
+      { id: 'body-1', type: 'body' as const, label: '1. 본론', content: '', aiGenerated: false },
+      { id: 'body-2', type: 'body' as const, label: '2. 본론', content: '', aiGenerated: false },
+      { id: 'body-3', type: 'body' as const, label: '3. 본론', content: '', aiGenerated: false },
+      { id: 'conclusion', type: 'conclusion' as const, label: '결론', content: '', aiGenerated: false },
+      { id: 'application', type: 'application' as const, label: '적용', content: '', aiGenerated: false },
+    ],
+  }))
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('edit')
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
@@ -88,6 +250,14 @@ export default function ManuscriptTab({ project }: Props) {
   const [showPrepPanel, setShowPrepPanel] = useState(true)
   const [showVersions, setShowVersions] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [rehearsalPhase, setRehearsalPhase] = useState<'idle' | 'setup' | 'running' | 'finished'>('idle')
+  const [rehearsalDuration, setRehearsalDuration] = useState(20)
+  const [rehearsalElapsed, setRehearsalElapsed] = useState(0)
+  const [rehearsalPaused, setRehearsalPaused] = useState(false)
+  const [sectionTimings, setSectionTimings] = useState<{ id: string; label: string; reachedAt: number | null }[]>([])
+  const rehearsalContainerRef = useRef<HTMLDivElement>(null)
+  const rehearsalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const rehearsalAnimRef = useRef<number | null>(null)
   const [presentationSectionIdx, setPresentationSectionIdx] = useState(0)
   const [writingStatus, setWritingStatus] = useState<string>('draft')
 
@@ -96,6 +266,8 @@ export default function ManuscriptTab({ project }: Props) {
   const innerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
   const manuscriptLoadedRef = useRef(false)
+  const manuscriptRef = useRef(manuscript)
+  manuscriptRef.current = manuscript
   const manualSaveTriggerRef = useRef(0)
 
   const totalWordCount = useMemo(() =>
@@ -115,6 +287,7 @@ export default function ManuscriptTab({ project }: Props) {
     manuscript.sections.forEach(s => {
       const len = s.content.replace(/\s/g, '').length
       if (len === 0) map[s.id] = 'empty'
+      else if (s.aiGenerated) map[s.id] = 'complete'
       else if (len < 100) map[s.id] = 'draft'
       else if (len < 300) map[s.id] = 'revised'
       else map[s.id] = 'complete'
@@ -144,17 +317,33 @@ export default function ManuscriptTab({ project }: Props) {
     [manuscript.sections, sectionStatuses],
   )
 
-  /* ─── Load saved manuscript on mount ─── */
+  /* ─── Load saved manuscript or prep handoff on mount ─── */
+  // Priority: saved manuscript (synced with prep) > build from prep > empty template
+  // This effect runs *after* PrepTab's unmount cleanup, so `prep_{id}` is always current.
 
   useEffect(() => {
     const saved = getStorageItem<any | null>(`manuscript_${project.id}`, null)
+    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+
     if (saved && saved.title) {
-      const { _savedAt, ...manuscriptData } = saved
-      setManuscript(manuscriptData as JohnManuscriptData)
+      const { _savedAt, ...restored } = saved
+      const ms = (prepRaw?.outlines?.length)
+        ? syncManuscriptWithPrep(restored as JohnManuscriptData, prepRaw)
+        : (restored as JohnManuscriptData)
+      setManuscript(ms)
       if (_savedAt) {
         setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
       }
+      manuscriptLoadedRef.current = true
+      return
     }
+
+    // Build from prep data (first visit, no saved manuscript yet)
+    if (prepRaw?.outlines?.length) {
+      const fromPrep = buildManuscriptFromPrep(project, prepRaw)
+      setManuscript(fromPrep)
+    }
+
     manuscriptLoadedRef.current = true
   }, [project.id])
 
@@ -217,6 +406,15 @@ export default function ManuscriptTab({ project }: Props) {
     }
   }, [manualSave])
 
+  // Flush save immediately on unmount (tab switch) to avoid losing debounced writes
+  useEffect(() => {
+    return () => {
+      if (manuscriptLoadedRef.current) {
+        setStorageItem(`manuscript_${project.id}`, { ...manuscriptRef.current, _savedAt: Date.now() })
+      }
+    }
+  }, [project.id])
+
   // Persist to localStorage whenever manuscript changes (after initial load)
   useEffect(() => {
     if (!manuscriptLoadedRef.current) return
@@ -229,7 +427,9 @@ export default function ManuscriptTab({ project }: Props) {
   const updateSection = useCallback((id: string, content: string) => {
     setManuscript(prev => ({
       ...prev,
-      sections: prev.sections.map(s => s.id === id ? { ...s, content } : s),
+      sections: prev.sections.map(s =>
+        s.id === id ? { ...s, content, aiGenerated: content.trim() ? s.aiGenerated : false } : s
+      ),
     }))
     triggerSave()
   }, [triggerSave])
@@ -290,10 +490,68 @@ export default function ManuscriptTab({ project }: Props) {
     })
     const json = await res.json()
     if (json.success) {
+      setManuscript(prev => ({
+        ...prev,
+        sections: prev.sections.map(s =>
+          s.id === section.id ? { ...s, content: json.data.output, aiGenerated: true } : s
+        ),
+      }))
       return json.data.output
     }
     return ''
   }, [project, manuscript])
+
+  const startRehearsal = useCallback((minutes: number) => {
+    setRehearsalDuration(minutes)
+    setRehearsalElapsed(0)
+    setRehearsalPaused(false)
+    setRehearsalPhase('running')
+    setSectionTimings(
+      manuscript.sections
+        .filter(s => s.content.trim().length > 0)
+        .map(s => ({ id: s.id, label: s.label, reachedAt: null }))
+    )
+    setTimeout(() => {
+      rehearsalTimerRef.current = setInterval(() => {
+        setRehearsalElapsed(prev => prev + 1)
+      }, 1000)
+    }, 100)
+  }, [manuscript.sections])
+
+  const pauseRehearsal = useCallback(() => {
+    setRehearsalPaused(prev => {
+      if (!prev) {
+        if (rehearsalTimerRef.current) clearInterval(rehearsalTimerRef.current)
+        if (rehearsalAnimRef.current) cancelAnimationFrame(rehearsalAnimRef.current)
+      } else {
+        rehearsalTimerRef.current = setInterval(() => {
+          setRehearsalElapsed(prev => prev + 1)
+        }, 1000)
+      }
+      return !prev
+    })
+  }, [])
+
+  const finishRehearsal = useCallback(() => {
+    setSectionTimings(prev => {
+      const updated = [...prev]
+      const remaining = updated.filter(t => t.reachedAt === null)
+      const now = Math.floor(rehearsalElapsed)
+      remaining.forEach(t => { t.reachedAt = now })
+      return updated
+    })
+    if (rehearsalTimerRef.current) clearInterval(rehearsalTimerRef.current)
+    if (rehearsalAnimRef.current) cancelAnimationFrame(rehearsalAnimRef.current)
+    setRehearsalPhase('finished')
+  }, [rehearsalElapsed])
+
+  const resetRehearsal = useCallback(() => {
+    if (rehearsalTimerRef.current) clearInterval(rehearsalTimerRef.current)
+    if (rehearsalAnimRef.current) cancelAnimationFrame(rehearsalAnimRef.current)
+    setRehearsalPhase('idle')
+    setRehearsalElapsed(0)
+    setRehearsalPaused(false)
+  }, [])
 
   /* ─── Keyboard navigation for presentation mode ─── */
 
@@ -313,6 +571,222 @@ export default function ManuscriptTab({ project }: Props) {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [viewMode, manuscript.sections.length])
+
+  /* ─── Rehearsal Studio Mode ─── */
+
+  if (rehearsalPhase === 'running' || rehearsalPhase === 'setup' || rehearsalPhase === 'finished') {
+    const emptySectionIds = new Set(manuscript.sections.filter(s => s.content.trim().length === 0).map(s => s.id))
+    const contentSections = manuscript.sections.filter(s => s.content.trim().length > 0)
+    const totalContentHeight = contentSections.length * 300 // rough estimate
+    const scrollSpeed = rehearsalDuration > 0 && totalContentHeight > 0
+      ? totalContentHeight / (rehearsalDuration * 60 * 1000)
+      : 0 // pixels per ms
+    const avgWpm = rehearsalElapsed > 0 ? Math.round(totalWordCount / (rehearsalElapsed / 60)) : 0
+    const targetSeconds = rehearsalDuration * 60
+    const timeRatio = targetSeconds > 0 ? Math.min(1, rehearsalElapsed / targetSeconds) : 0
+    const progressPct = Math.round(timeRatio * 100)
+
+    if (rehearsalPhase === 'setup') {
+      return (
+        <div className="fixed inset-0 z-50 bg-navy-900/95 flex items-center justify-center">
+          <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
+            <h2 className="text-lg font-bold text-white mb-2">리허설 시작</h2>
+            <p className="text-sm text-slate-400 mb-6">목표 설교 시간을 선택하세요</p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[10, 15, 20, 25, 30, 40].map(m => (
+                <button
+                  key={m}
+                  onClick={() => startRehearsal(m)}
+                  className={`py-3 rounded-xl text-sm font-medium border transition-colors ${
+                    rehearsalDuration === m
+                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/20'
+                  }`}
+                >
+                  {m}분
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setRehearsalPhase('idle')}
+              className="w-full text-[11px] py-2 rounded-xl text-slate-400 hover:text-slate-200 border border-white/5 hover:border-white/20 transition-colors"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    if (rehearsalPhase === 'finished') {
+      const sectionCount = contentSections.length
+      const perSectionAvg = sectionCount > 0 ? Math.round(rehearsalElapsed / sectionCount) : 0
+      return (
+        <div className="fixed inset-0 z-50 bg-navy-900/95 flex items-center justify-center overflow-y-auto">
+          <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl p-8 w-full max-w-md my-8">
+            <div className="flex items-center gap-2 mb-1">
+              <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h2 className="text-lg font-bold text-white">리허설 완료</h2>
+            </div>
+            <p className="text-xs text-slate-500 mb-6">설교 전달 연습이 종료되었습니다</p>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-[#04060f]/60 rounded-xl p-4 border border-white/5">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-white">{Math.floor(rehearsalElapsed / 60)}:{String(rehearsalElapsed % 60).padStart(2, '0')}</div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">실제 시간</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-indigo-400">{rehearsalDuration}:00</div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">목표 시간</div>
+                  </div>
+                  <div>
+                    <div className={'text-2xl font-bold ' + (Math.abs(rehearsalElapsed - targetSeconds) <= 60 ? 'text-green-400' : 'text-amber-400')}>
+                      {Math.abs(rehearsalElapsed - targetSeconds) <= 60 ? '✓' : Math.round(Math.abs(rehearsalElapsed - targetSeconds) / 60) + '분'}
+                    </div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">차이</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#04060f]/60 rounded-xl p-4 border border-white/5">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">전달 통계</div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">분당 글자 수</span>
+                    <span className="text-white font-medium">{avgWpm}자/분</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">전체 분량</span>
+                    <span className="text-white font-medium">{totalWordCount.toLocaleString()}자</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">평균 섹션당</span>
+                    <span className="text-white font-medium">{perSectionAvg}초 ({Math.round(perSectionAvg / 60 * 10) / 10}분)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#04060f]/60 rounded-xl p-4 border border-white/5">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">섹션별 분석</div>
+                <div className="space-y-1.5">
+                  {sectionTimings.map((st, i) => {
+                    const prevTime = i === 0 ? 0 : (sectionTimings[i - 1].reachedAt || 0)
+                    const sectionTime = st.reachedAt ? st.reachedAt - prevTime : 0
+                    const section = manuscript.sections.find(s => s.id === st.id)
+                    const charCount = section ? section.content.replace(/\s/g, '').length : 0
+                    return (
+                      <div key={st.id} className="flex items-center gap-2 text-xs">
+                        <span className={'w-1.5 h-1.5 rounded-full shrink-0 ' + (
+                          st.id.includes('intro') ? 'bg-blue-400' :
+                          st.id.includes('concl') ? 'bg-amber-400' :
+                          st.id.includes('app') ? 'bg-green-400' : 'bg-indigo-400'
+                        )} />
+                        <span className="text-slate-400 w-16 truncate">{st.label}</span>
+                        <span className="text-white font-medium w-14 text-right">{Math.floor(sectionTime / 60)}:{String(sectionTime % 60).padStart(2, '0')}</span>
+                        <span className="text-slate-500 text-[9px]">{charCount}자</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-[#04060f]/60 rounded-xl p-4 border border-white/5">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">시간 분배 피드백</div>
+                <div className="space-y-1.5 text-xs text-slate-300">
+                  {timeRatio < 0.8 && <p>• 목표 시간보다 일찍 끝났습니다 ({Math.round((1 - timeRatio) * 100)}% 단축). 더 천천히, 여유 있게 전달해보세요.</p>}
+                  {timeRatio > 1.2 && <p>• 목표 시간을 초과했습니다 ({Math.round((timeRatio - 1) * 100)}% 초과). 각 대지를 더 간결하게 정리해보세요.</p>}
+                  {timeRatio >= 0.8 && timeRatio <= 1.2 && <p>• 목표 시간에 알맞게 전달했습니다. 시간 감각이 좋습니다.</p>}
+                  {avgWpm > 400 && <p>• 분당 글자 수가 빠릅니다({avgWpm}자). 말하는 속도를 조금 늦추면 청중의 이해도가 높아집니다.</p>}
+                  {avgWpm < 200 && <p>• 분당 글자 수가 느립니다({avgWpm}자). 좀 더 역동적인 전달을 고려해보세요.</p>}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={resetRehearsal}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+            >
+              편집으로 돌아가기
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    // Running state
+    return (
+      <div className="fixed inset-0 z-50 bg-navy-900 text-white flex flex-col">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">리허설</span>
+            <span className="text-xs text-slate-400 font-medium">{manuscript.title}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-mono text-indigo-300 font-bold">
+              {Math.floor(rehearsalElapsed / 60)}:{String(rehearsalElapsed % 60).padStart(2, '0')}
+              <span className="text-slate-500"> / {rehearsalDuration}:00</span>
+            </span>
+            <button
+              onClick={pauseRehearsal}
+              className="flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors border border-white/10"
+            >
+              {rehearsalPaused ? (
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+              )}
+              {rehearsalPaused ? '계속' : '일시 정지'}
+            </button>
+            <button
+              onClick={finishRehearsal}
+              className="text-[11px] px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors font-medium"
+            >
+              리허설 종료
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div
+          ref={rehearsalContainerRef}
+          className="flex-1 overflow-y-auto scrollbar-thin px-6 py-8"
+        >
+          <div className="max-w-[720px] mx-auto">
+            <h1 className="text-xl font-serif font-bold text-white mb-1">{manuscript.title}</h1>
+            <p className="text-xs text-slate-500 mb-8">{manuscript.passage} · {manuscript.oneSentenceSummary}</p>
+
+            {contentSections.map((section, i) => (
+              <div key={section.id} className="mb-8" data-section-id={section.id}>
+                <h2 className="text-base font-serif font-bold text-white mb-2 pb-1 border-b border-white/5">{section.label}</h2>
+                {section.passage && (
+                  <p className="text-xs text-slate-500 italic mb-3">{section.passage}</p>
+                )}
+                <div className={'text-sm leading-loose whitespace-pre-wrap font-serif ' + (
+                  section.type === 'introduction' ? 'text-slate-100 italic' :
+                  section.type === 'application' ? 'text-slate-100' : 'text-slate-200'
+                )}>
+                  {section.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Progress bar at bottom */}
+        <div className="h-1 bg-white/5 shrink-0">
+          <div
+            className="h-full bg-indigo-600 transition-all duration-1000 ease-linear"
+            style={{ width: Math.min(100, progressPct) + '%' }}
+          />
+        </div>
+      </div>
+    )
+  }
 
   /* ─── Preview Mode ─── */
 
@@ -538,6 +1012,7 @@ export default function ManuscriptTab({ project }: Props) {
                 onContentChange={content => updateSection(section.id, content)}
                 onActivate={() => setActiveSectionId(section.id)}
                 onAiGenerate={handleAiGenerate}
+                prepHints={section.type === 'application' ? manuscript.prepInsights : undefined}
               />
             ))}
 
@@ -577,6 +1052,7 @@ export default function ManuscriptTab({ project }: Props) {
         warningPoints={manuscript.warningPoints}
         onGoToVersions={() => router.push(`/advanced/projects/${project.id}?tab=versions`)}
         onGoToPrep={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
+        onStartRehearsal={() => setRehearsalPhase('setup')}
       />
     </div>
   )
@@ -803,7 +1279,7 @@ function ManuscriptNavigator({
 /* ─── Sermon Section Block ─── */
 
 function SermonSectionBlock({
-  section, sectionRef, isActive, status, onContentChange, onActivate, onAiGenerate,
+  section, sectionRef, isActive, status, onContentChange, onActivate, onAiGenerate, prepHints,
 }: {
   section: SermonSection
   sectionRef: (el: HTMLDivElement | null) => void
@@ -812,6 +1288,7 @@ function SermonSectionBlock({
   onContentChange: (content: string) => void
   onActivate: () => void
   onAiGenerate?: (sectionType: string) => Promise<string>
+  prepHints?: string[]
 }) {
   const [aiLoading, setAiLoading] = useState(false)
   const emptyGuide = EMPTY_GUIDANCE[section.type === 'body' ? 'body' : section.type] || EMPTY_GUIDANCE.body
@@ -893,13 +1370,13 @@ function SermonSectionBlock({
       )}
 
       {/* Application section: show prep application hints */}
-      {section.type === 'application' && isEmpty && (
+      {section.type === 'application' && isEmpty && prepHints && prepHints.length > 0 && (
         <div className="mb-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">
           <div className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mb-1">준비 단계의 적용 포인트</div>
           <ul className="text-xs text-indigo-300 leading-relaxed space-y-1">
-            <li>• 익숙한 본문을 새롭게 듣는 훈련 — 말씀을 현재의 삶에 연결하기</li>
-            <li>• 빛을 지식으로만 이해하지 않도록 — 생명으로 연결되게</li>
-            <li>• 고난 중에도 그리스도의 빛이 비추고 있음을 선포</li>
+            {prepHints.map((hint, i) => (
+              <li key={i}>• {hint}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -1202,7 +1679,7 @@ function ManuscriptRecentActivity() {
 
 function WritingStatusBar({
   writingProgress, totalWordCount, readingTimeMin, sections, sectionStatuses, warningPoints,
-  onGoToVersions, onGoToPrep,
+  onGoToVersions, onGoToPrep, onStartRehearsal,
 }: {
   writingProgress: number
   totalWordCount: number
@@ -1212,6 +1689,7 @@ function WritingStatusBar({
   warningPoints: string[]
   onGoToVersions: () => void
   onGoToPrep: () => void
+  onStartRehearsal?: () => void
 }) {
   const versionCount = JOHN_MANUSCRIPT_VERSIONS.length
   const emptySections = sections.filter(s => sectionStatuses[s.id] === 'empty')
@@ -1237,6 +1715,13 @@ function WritingStatusBar({
         )}
       </div>
       <div className="flex items-center gap-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onStartRehearsal?.() }}
+          className="flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-300 hover:text-green-200 border border-green-500/20 transition-colors"
+        >
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          리허설 시작
+        </button>
         <button
           onClick={onGoToPrep}
           className="text-[11px] text-slate-400 hover:text-slate-100 border border-white/5 hover:border-teal-500/30 rounded-xl px-3 py-1.5 transition-colors"

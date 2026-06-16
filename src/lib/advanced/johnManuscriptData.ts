@@ -7,6 +7,7 @@ export interface SermonSection {
   researchPoints?: string[]
   applicationDirection?: string
   wordCount?: number
+  aiGenerated?: boolean
 }
 
 export interface IllustrationNote {
@@ -40,6 +41,24 @@ export interface JohnManuscriptData {
   warningPoints: string[]
   greekWords: { word: string; greek: string; meaning: string; note: string }[]
   relatedPassages: { ref: string; text: string; reason: string }[]
+}
+
+export const EMPTY_MANUSCRIPT: JohnManuscriptData = {
+  title: '',
+  oneSentenceSummary: '',
+  passage: '',
+  sermonDate: '',
+  audience: '',
+  tone: '',
+  sections: [],
+  illustrationNotes: [],
+  referenceNotes: [],
+  coreMessage: '',
+  outlinePoints: [],
+  prepInsights: [],
+  warningPoints: [],
+  greekWords: [],
+  relatedPassages: [],
 }
 
 export const JOHN_MANUSCRIPT: JohnManuscriptData = {

@@ -118,6 +118,18 @@ export default function PrepTab({ project }: Props) {
   const [outlineCandidates, setOutlineCandidates] = useState<AiOutlineCandidate[] | null>(null)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const prepLoadedRef = useRef(false)
+  const prepDataRef = useRef(prepData)
+  prepDataRef.current = prepData
+
+  // Flush save immediately on unmount (tab switch) to avoid losing debounced writes.
+  // The ManuscriptTab mount effect runs *after* this cleanup, so localStorage is always up to date.
+  useEffect(() => {
+    return () => {
+      if (prepLoadedRef.current) {
+        setStorageItem(`prep_${project.id}`, { ...prepDataRef.current, _savedAt: Date.now() })
+      }
+    }
+  }, [project.id])
 
   // Auto-save: debounced save to localStorage whenever prepData changes
   useEffect(() => {
@@ -1120,9 +1132,12 @@ function ApplicationSection({
   onSetPoints: (points: ApplicationPoint[]) => void
 }) {
   const [showProfileEditor, setShowProfileEditor] = useState(false)
-  const [genStep, setGenStep] = useState<'idle' | 'loading-directions' | 'selecting' | 'loading-points'>('idle')
+  const [genStep, setGenStep] = useState<'idle' | 'loading-directions' | 'selecting' | 'loading-points' | 'review-points'>('idle')
   const [directionCandidates, setDirectionCandidates] = useState<AiDirectionCandidate[] | null>(null)
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null)
+  const [pendingPoints, setPendingPoints] = useState<ApplicationPoint[]>([])
+  const [selectedPendingIds, setSelectedPendingIds] = useState<Set<string>>(new Set())
+  const [mergeMode, setMergeMode] = useState<'append' | 'replace'>('append')
 
   const generateDirections = useCallback(() => {
     setGenStep('loading-directions')
@@ -1184,19 +1199,27 @@ function ApplicationSection({
             pastoralNote: a.pastoralNote || '',
           }))
           if (newPoints.length > 0) {
-            onSetPoints(newPoints)
+            setPendingPoints(newPoints)
+            setSelectedPendingIds(new Set(newPoints.map(p => p.id)))
+            setMergeMode(points.length > 0 ? 'append' : 'append')
+            setGenStep('review-points')
+          } else {
+            setGenStep('idle')
+            setDirectionCandidates(null)
+            setSelectedCandidate(null)
           }
+        } else {
+          setGenStep('idle')
+          setDirectionCandidates(null)
+          setSelectedCandidate(null)
         }
-        setGenStep('idle')
-        setDirectionCandidates(null)
-        setSelectedCandidate(null)
       })
       .catch(() => {
         setGenStep('idle')
         setDirectionCandidates(null)
         setSelectedCandidate(null)
       })
-  }, [project, prepData, congregationProfile, directionCandidates, onSetPoints])
+  }, [project, prepData, congregationProfile, directionCandidates, points, onSetPoints])
 
   const discardDirections = useCallback(() => {
     setDirectionCandidates(null)
@@ -1332,6 +1355,124 @@ function ApplicationSection({
         </div>
       )}
 
+      {/* Review Generated Points */}
+      {genStep === 'review-points' && pendingPoints.length > 0 && (
+        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-indigo-500/5 to-blue-500/5 border border-indigo-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs font-bold text-white">생성된 적용 포인트</span>
+              <span className="text-[10px] text-slate-500">({pendingPoints.length}개)</span>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setGenStep('idle'); setDirectionCandidates(null); setSelectedCandidate(null); setPendingPoints([]) }}
+              className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Merge mode toggle — only when existing points exist */}
+          {points.length > 0 && (
+            <div className="flex items-center gap-2 mb-3 bg-[#04060f]/60 rounded-xl p-2 border border-white/5">
+              <span className="text-[10px] text-slate-400 mr-1">적용 방식:</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setMergeMode('append') }}
+                className={`text-[10px] px-2 py-1 rounded-lg transition-colors ${mergeMode === 'append' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                기존 목록에 추가
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setMergeMode('replace') }}
+                className={`text-[10px] px-2 py-1 rounded-lg transition-colors ${mergeMode === 'replace' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                전체 교체
+              </button>
+            </div>
+          )}
+
+          {/* Generated point cards with checkboxes */}
+          <div className="space-y-2 mb-3">
+            {pendingPoints.map((app, i) => (
+              <div
+                key={app.id}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedPendingIds(prev => {
+                    const next = new Set(prev)
+                    if (next.has(app.id)) { next.delete(app.id) } else { next.add(app.id) }
+                    return next
+                  })
+                }}
+                className={`rounded-xl p-3 border cursor-pointer transition-all ${
+                  selectedPendingIds.has(app.id)
+                    ? 'bg-indigo-500/10 border-indigo-500/30'
+                    : 'bg-[#04060f]/60 border-white/5 hover:border-white/10'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-4 h-4 rounded border-2 mt-0.5 flex items-center justify-center shrink-0 transition-colors ${
+                    selectedPendingIds.has(app.id)
+                      ? 'bg-indigo-500 border-indigo-500'
+                      : 'border-white/20'
+                  }`}>
+                    {selectedPendingIds.has(app.id) && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-300 text-[9px] font-bold flex items-center justify-center">{i + 1}</span>
+                      {app.audienceTag && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{app.audienceTag}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-100 leading-relaxed font-serif">{app.point}</p>
+                    {app.pastoralNote && (
+                      <p className="text-[9px] text-slate-500 mt-1 italic">{app.pastoralNote}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const selected = pendingPoints.filter(p => selectedPendingIds.has(p.id))
+                if (selected.length === 0) return
+                if (mergeMode === 'replace') {
+                  onSetPoints(selected)
+                } else {
+                  onSetPoints([...points, ...selected])
+                }
+                setGenStep('idle')
+                setDirectionCandidates(null)
+                setSelectedCandidate(null)
+                setPendingPoints([])
+              }}
+              disabled={selectedPendingIds.size === 0}
+              className="flex-1 text-[11px] py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-40"
+            >
+              {mergeMode === 'replace' ? '교체 적용' : '목록에 추가'} ({selectedPendingIds.size}개)
+            </button>
+            {selectedPendingIds.size < pendingPoints.length && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelectedPendingIds(new Set(pendingPoints.map(p => p.id))) }}
+                className="text-[11px] px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 transition-colors"
+              >
+                모두 선택
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Application Points List */}
       <div className="space-y-3">
         {points.length === 0 && genStep === 'idle' && (
@@ -1341,7 +1482,7 @@ function ApplicationSection({
           </div>
         )}
         {points.map((app, i) => (
-          <div key={app.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
+          <div key={app.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group">
             <div className="flex items-center gap-2 mb-2">
               <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-300 text-[10px] font-medium flex items-center justify-center shrink-0">
                 {i + 1}
@@ -1352,6 +1493,55 @@ function ApplicationSection({
                 className="text-[10px] font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5 outline-none focus:border-blue-500/30"
                 placeholder="대상 그룹"
               />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setGenStep('loading-points')
+                  fetch('/api/advanced/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      type: 'application-generate',
+                      data: {
+                        passage: project.passage,
+                        coreMessage: prepData.coreMessage,
+                        outlines: prepData.outlines,
+                        congregationProfile,
+                        directions: [{ audienceTag: app.audienceTag, direction: app.point, reason: '' }],
+                      },
+                    }),
+                  })
+                    .then(r => r.json())
+                    .then(json => {
+                      if (json.success) {
+                        const parsed = JSON.parse(json.data.output)
+                        const newPoints: ApplicationPoint[] = (parsed.applications || []).map((a: any, idx: number) => ({
+                          id: `app-${Date.now()}-${idx}`,
+                          point: a.point,
+                          audienceTag: a.audienceTag || app.audienceTag,
+                          pastoralNote: a.pastoralNote || '',
+                        }))
+                        if (newPoints.length > 0) {
+                          setPendingPoints(newPoints)
+                          setSelectedPendingIds(new Set(newPoints.map(p => p.id)))
+                          setMergeMode('replace')
+                          setGenStep('review-points')
+                        } else {
+                          setGenStep('idle')
+                        }
+                      } else {
+                        setGenStep('idle')
+                      }
+                    })
+                    .catch(() => setGenStep('idle'))
+                }}
+                className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+                title="이 포인트 다시 생성"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
             <textarea
               value={app.point}
