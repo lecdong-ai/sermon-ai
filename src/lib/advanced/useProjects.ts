@@ -56,6 +56,8 @@ export interface UseProjectsResult {
   error: string | null
   deleteProject: (id: string) => Promise<boolean>
   refetch: () => void
+  /** Number of real (non-mock) projects — useful for new-user detection */
+  totalRealCount: number
 }
 
 export function useProjects(): UseProjectsResult {
@@ -113,6 +115,10 @@ export function useProjects(): UseProjectsResult {
     )
   }, [apiProjects, refreshKey])
 
+  const totalRealCount = useMemo(() => {
+    return apiProjects.length + getCustomProjects().length
+  }, [apiProjects, refreshKey])
+
   const stats: QuickStats = useMemo(() => ({
     totalProjects: projects.length,
     inProgress: projects.filter(p => !['completed', 'archived'].includes(p.status)).length,
@@ -155,5 +161,5 @@ export function useProjects(): UseProjectsResult {
     }
   }, [refetch])
 
-  return { projects, stats, loading, error, deleteProject, refetch }
+  return { projects, stats, loading, error, deleteProject, refetch, totalRealCount }
 }

@@ -10,7 +10,8 @@ import {
 } from 'lucide-react'
 import { ARCHIVE_SERMONS, getAllArchivedSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
-import { getAllProjects } from '@/lib/advanced/mockData'
+import { useProjects } from '@/lib/advanced/useProjects'
+import NewUserLanding from '@/components/advanced/NewUserLanding'
 
 // 감정 톤 매핑 유틸리티
 const getEmotionalTone = (sermon: ArchivedSermon) => {
@@ -46,11 +47,30 @@ const getGeneratedContent = (sermon: ArchivedSermon, actionType: string) => {
 
 export default function AdvancedDashboardPage() {
   const router = useRouter()
+  const { projects, loading, totalRealCount } = useProjects()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeActionSermon, setActiveActionSermon] = useState<ArchivedSermon | null>(null)
   const [activeActionType, setActiveActionType] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [modalOutput, setModalOutput] = useState('')
+
+  // ── New user detection ──
+  if (loading) {
+    return (
+      <div className="min-h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className="text-[12px] text-slate-500 font-bold">대시보드 로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (totalRealCount === 0) {
+    return <NewUserLanding />
+  }
+
+  // ── Existing user dashboard ──
 
   // 1. 추천 검색어 리스트
   const SUGGESTION_CHIPS = [
@@ -61,7 +81,7 @@ export default function AdvancedDashboardPage() {
   ]
 
   // 2. 검색 및 필터링 적용된 설교 목록
-  const completedProjects = getAllProjects()
+  const completedProjects = projects
     .filter(p => p.status === 'completed')
     .map(p => ({
       id: p.id, title: p.title, passage: p.passage, book: p.book, chapter: p.chapter,
