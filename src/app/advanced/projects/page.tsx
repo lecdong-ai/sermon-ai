@@ -2,13 +2,14 @@
 
 import { useState, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { mockProjects, mockQuickStats, getAllProjects, deleteProject } from '@/lib/advanced/mockData'
+import { useProjects } from '@/lib/advanced/useProjects'
 import { PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
 import type { ProjectStatus, AdvancedProject } from '@/lib/advanced/types'
 import {
   Plus, Search, Flame, CheckCircle, BookOpen, FileText,
   Clock, Pen, Eye, Archive, ChevronRight, Sparkles, Zap,
-  BarChart2, Calendar, AlignLeft, ArrowRight, Trash2
+  BarChart2, Calendar, AlignLeft, ArrowRight, Trash2,
+  Loader2, RefreshCw, AlertTriangle,
 } from 'lucide-react'
 
 /* ── 상태별 색상 매핑 ── */
@@ -209,16 +210,15 @@ function ProjectsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
-  const [, setRefresh] = useState(0)
+  const { projects, stats, loading, error, deleteProject, refetch } = useProjects()
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return
-    deleteProject(id)
-    setRefresh(prev => prev + 1)
+    await deleteProject(id)
   }
 
   const filtered = useMemo(() => {
-    let list = getAllProjects()
+    let list = projects
     if (statusFilter !== 'all') {
       list = list.filter(p => p.status === statusFilter)
     }
@@ -232,11 +232,42 @@ function ProjectsContent() {
       )
     }
     return list
-  }, [searchQuery, statusFilter])
+  }, [projects, searchQuery, statusFilter])
 
-  const stats = mockQuickStats
   const inProgress = filtered.filter(p => !['completed','archived'].includes(p.status))
   const done = filtered.filter(p => p.status === 'completed')
+
+  if (loading) {
+    return (
+      <div className="min-h-full pb-16 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className="text-[12px] text-slate-500 font-bold">프로젝트 로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-full pb-16 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-sm text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+            <AlertTriangle className="w-7 h-7 text-red-400" />
+          </div>
+          <p className="text-sm font-bold text-white">프로젝트를 불러오지 못했습니다</p>
+          <p className="text-[12px] text-slate-500 font-medium">{error}</p>
+          <button
+            onClick={refetch}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            다시 시도
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-full pb-16">
@@ -258,13 +289,22 @@ function ProjectsContent() {
                 : '진행 중인 설교 원고와 완료된 사역 자료를 관리합니다'}
             </p>
           </div>
-          <button
-            onClick={() => router.push('/advanced/projects/new')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold transition-all shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 hover:shadow-indigo-600/30"
-          >
-            <Plus className="w-4 h-4" />
-            새 프로젝트
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refetch}
+              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white transition-all"
+              title="새로고침"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => router.push('/advanced/projects/new')}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold transition-all shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 hover:shadow-indigo-600/30"
+            >
+              <Plus className="w-4 h-4" />
+              새 프로젝트
+            </button>
+          </div>
         </div>
 
         {/* ── 통계 카드 ── */}
@@ -282,10 +322,9 @@ function ProjectsContent() {
           <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/5 w-fit">
             {STATUS_FILTERS.map(f => {
               const isActive = statusFilter === f.key
-              const allProjects = getAllProjects()
               const count = f.key === 'all'
-                ? allProjects.length
-                : allProjects.filter(p => p.status === f.key).length
+                ? projects.length
+                : projects.filter(p => p.status === f.key).length
               return (
                 <button
                   key={f.key}
@@ -310,7 +349,7 @@ function ProjectsContent() {
           </div>
         )}
 
-        {/* ── 진행 중인 프로젝트 ── */}
+        {/* ── 프로젝트 목록 ── */}
         {filtered.length === 0 ? (
           <div className="glass-dark rounded-3xl p-16 text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mx-auto">
@@ -334,7 +373,6 @@ function ProjectsContent() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* 진행 중 */}
             {inProgress.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -356,7 +394,6 @@ function ProjectsContent() {
               </section>
             )}
 
-            {/* 완료된 */}
             {done.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2">

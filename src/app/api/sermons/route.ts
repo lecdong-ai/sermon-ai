@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { checkUsage } from '@/lib/usage'
 
 async function getUser(request: NextRequest) {
+  if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK === 'true') {
+    return { id: '25721757-65b2-474c-8668-e762ae319b4e', email: 'mock@example.com' } as any
+  }
   const sb = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
