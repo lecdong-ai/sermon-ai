@@ -26,6 +26,7 @@ export interface Sermon {
   createdAt: string
   updatedAt: string
   status?: 'draft' | 'in_progress' | 'completed'
+  result?: Record<string, any>
 }
 
 export interface Theme {

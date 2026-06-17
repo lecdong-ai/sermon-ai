@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
         themeIds: body.themeIds || [],
         tagIds: body.tagIds || [],
         relatedSermonIds: body.relatedSermonIds || [],
+        ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
       },
     }
 

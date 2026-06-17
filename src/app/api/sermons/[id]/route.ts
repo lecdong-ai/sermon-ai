@@ -68,6 +68,7 @@ function toSermon(row: any) {
       sermonScript: result.sermonScript || null,
       shortsScript: result.shortsScript || null,
       pptData: result.pptData || null,
+      wizardSnapshot: result.wizardSnapshot || null,
     },
     raw_text: row.raw_text || '',
   }
@@ -138,6 +139,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...(body.themeIds !== undefined && { themeIds: body.themeIds }),
       ...(body.tagIds !== undefined && { tagIds: body.tagIds }),
       ...(body.relatedSermonIds !== undefined && { relatedSermonIds: body.relatedSermonIds }),
+      ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
     }
     updates.result = resultUpdate
 

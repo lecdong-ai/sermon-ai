@@ -54,25 +54,7 @@ export default function AdvancedDashboardPage() {
   const [generating, setGenerating] = useState(false)
   const [modalOutput, setModalOutput] = useState('')
 
-  // ── New user detection ──
-  if (loading) {
-    return (
-      <div className="min-h-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-          <p className="text-[12px] text-slate-500 font-bold">대시보드 로딩 중...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (totalRealCount === 0) {
-    return <NewUserLanding />
-  }
-
-  // ── Existing user dashboard ──
-
-  // 1. 추천 검색어 리스트
+  // ── Computed data (before early returns to satisfy rules-of-hooks) ──
   const SUGGESTION_CHIPS = [
     { label: '💡 은혜에 관한 설교', query: '은혜' },
     { label: '💡 로마서 강해 시리즈', query: '로마서' },
@@ -80,7 +62,6 @@ export default function AdvancedDashboardPage() {
     { label: '💡 칭의 연구', query: '칭의' },
   ]
 
-  // 2. 검색 및 필터링 적용된 설교 목록
   const completedProjects = projects
     .filter(p => p.status === 'completed')
     .map(p => ({
@@ -106,6 +87,24 @@ export default function AdvancedDashboardPage() {
       s.tagNames.some(t => t.toLowerCase().includes(q))
     )
   }, [searchQuery, allSermons])
+
+  // ── New user detection ──
+  if (loading) {
+    return (
+      <div className="min-h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className="text-[12px] text-slate-500 font-bold">대시보드 로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (totalRealCount === 0) {
+    return <NewUserLanding />
+  }
+
+  // ── Existing user dashboard ──
 
   // 3. 지식 그래프 노드 구조 정의 (데스크톱 전용)
   const GRAPH_NODES = [

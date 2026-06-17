@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import JSON5 from 'json5'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
+import { PROMPTS } from '@/lib/dashboard/sermonWizardPrompts'
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
@@ -117,12 +118,37 @@ export async function POST(request: NextRequest) {
     if (usage?.plan !== 'pro' && proOnlyFeatures) {
       return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
     }
-    const { title, passage, coreMessage, pointIndex } = body
+    const { title, passage, coreMessage, pointIndex, mode, context, bibleText: bibleTextInput, pointTitle, length: msLength } = body
 
     let systemPrompt: string
     let userText: string
 
-    if (title && !passage) {
+    // ── Wizard mode handlers ──
+    if (mode === 'wizard-titles') {
+      const p = PROMPTS.suggestTitles(passage || '', bibleTextInput || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-core-message') {
+      const p = PROMPTS.coreMessage(context || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-outline') {
+      const p = PROMPTS.outline(context || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-body-section') {
+      const p = PROMPTS.bodySection(context || '', typeof pointIndex === 'number' ? pointIndex : 0, pointTitle || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-intro-conclusion') {
+      const p = PROMPTS.introConclusion(context || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-manuscript') {
+      const p = PROMPTS.manuscript(context || '', msLength || '30분')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (title && !passage) {
       systemPrompt = '당신은 설교 준비를 돕는 AI입니다. 주어진 설교 제목에 가장 적합한 성경본문(책 장:절) 5가지를 추천하고, 각각을 추천하는 이유를 한 문장씩 설명하세요. 반드시 JSON 배열로만 응답하세요.'
       userText = `설교 제목: ${title}\n\n[{"value": "본문1", "reason": "추천 이유1"}, {"value": "본문2", "reason": "추천 이유2"}, {"value": "본문5", "reason": "추천 이유5"}] 형식으로 5가지를 추천해주세요.`
     } else if (passage && !title) {
@@ -333,15 +359,26 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },
       ],
-      temperature: body.generateManuscript ? 0.7 : 0.3,
-      presence_penalty: body.generateManuscript ? 0.6 : 0,
-      max_completion_tokens: body.generateManuscript
-        ? body.length === '10분' ? 3000
-        : body.length === '20분' ? 6000
-        : body.length === '30분' ? 10000
-        : body.length === '40분' ? 14000
-        : body.length === '50분' ? 18000
-        : 22000
+      temperature: mode === 'wizard-manuscript' || body.generateManuscript ? 0.7 : mode === 'wizard-body-section' || mode === 'wizard-intro-conclusion' ? 0.5 : 0.3,
+      presence_penalty: mode === 'wizard-manuscript' || body.generateManuscript ? 0.6 : 0,
+      max_completion_tokens: mode === 'wizard-manuscript'
+        ? msLength === '10분' ? 3000
+        : msLength === '15분' ? 4000
+        : msLength === '20분' ? 6000
+        : msLength === '25분' ? 8000
+        : msLength === '30분' ? 10000
+        : msLength === '40분' ? 14000
+        : 10000
+        : body.generateManuscript
+          ? body.length === '10분' ? 3000
+          : body.length === '20분' ? 6000
+          : body.length === '30분' ? 10000
+          : body.length === '40분' ? 14000
+          : body.length === '50분' ? 18000
+          : 22000
+        : mode === 'wizard-outline' ? 2000
+        : mode === 'wizard-body-section' ? 1500
+        : mode === 'wizard-intro-conclusion' ? 1500
         : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 1000,
     })
 
@@ -352,6 +389,26 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     } catch (parseErr: any) {
       console.error('[suggest] parse error:', parseErr.message)
       return NextResponse.json({ success: false, error: parseErr.message || 'JSON 파싱 실패', rawResponse: raw.slice(0, 300) }, { status: 500 })
+    }
+
+    // ── Wizard mode responses (return raw parsed data as-is) ──
+    if (mode === 'wizard-titles' || mode === 'wizard-core-message') {
+      const items = Array.isArray(parsed)
+        ? parsed
+        : parsed.suggestions || []
+      return NextResponse.json({ success: true, suggestions: items })
+    }
+    if (mode === 'wizard-outline') {
+      return NextResponse.json({ success: true, data: parsed })
+    }
+    if (mode === 'wizard-body-section') {
+      return NextResponse.json({ success: true, data: parsed })
+    }
+    if (mode === 'wizard-intro-conclusion') {
+      return NextResponse.json({ success: true, data: parsed })
+    }
+    if (mode === 'wizard-manuscript') {
+      return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
 
     let items: { value: string; reason: string }[] = Array.isArray(parsed)
