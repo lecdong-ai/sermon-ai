@@ -7,7 +7,7 @@ import {
   Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard, 
   ArrowRight, CheckCircle, Star, Shield, Zap, Globe, 
   ChevronDown, ChevronUp, Play, Users, FileCheck, BrainCircuit, 
-  ArrowUpRight, Heart, LockKeyhole, X, HardDrive, Cross
+  ArrowUpRight, Heart, X, HardDrive, Cross
 } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import { useAuth } from '@/components/AuthProvider'
@@ -616,19 +616,19 @@ export default function HomePage() {
               </Link>
             ) : (
               <Link
-                href="/support"
+                href="/preview"
                 onClick={() => setShowDashboardPopup(false)}
-                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] opacity-60 hover:opacity-100 transition-all duration-200"
+                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:border-indigo-500/20 hover:bg-white/[0.04] transition-all duration-200"
               >
-                <div className="w-11 h-11 rounded-xl bg-slate-700/50 flex items-center justify-center shrink-0">
-                  <LockKeyhole className="w-5 h-5 text-slate-500" />
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-indigo-300/60" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-[15px] font-bold text-slate-400">말씀 연구실</h4>
-                  <p className="text-[12px] text-slate-500 mt-0.5">후원회원 전용 · 프로젝트 · 성경 연구</p>
+                  <h4 className="text-[15px] font-bold text-slate-300 group-hover:text-indigo-300 transition-colors">말씀 연구실</h4>
+                  <p className="text-[12px] text-slate-500 mt-0.5">구경하기 · 프로젝트 · 성경 연구</p>
                 </div>
-                <span className="text-[11px] font-bold text-amber-400/80 border border-amber-400/20 bg-amber-400/5 rounded-lg px-2.5 py-1 mt-1.5 shrink-0">
-                  이용하기
+                <span className="text-[11px] font-bold text-indigo-300/80 border border-indigo-400/20 bg-indigo-400/5 rounded-lg px-2.5 py-1 mt-1.5 shrink-0">
+                  체험하기
                 </span>
               </Link>
             )}

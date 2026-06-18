@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import AdvancedSidebar from '@/components/advanced/Sidebar'
 import AdvancedHeader from '@/components/advanced/Header'
@@ -10,11 +10,22 @@ import { Loader2 } from 'lucide-react'
 export default function AdvancedLayoutClient({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [checking, setChecking] = useState(true)
   const [isSupporter, setIsSupporter] = useState(false)
 
+  const isPreview = pathname?.startsWith('/advanced/preview')
+
   useEffect(() => {
+    // Preview mode: skip all checks, render immediately
+    if (isPreview) {
+      setChecking(false)
+      setIsSupporter(true)
+      return
+    }
+
     if (authLoading) return
+
     if (!user) {
       router.push('/login?redirect=/advanced')
       return
@@ -37,7 +48,7 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
       })
       .catch(() => router.push('/support'))
       .finally(() => setChecking(false))
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, isPreview])
 
   if (authLoading || checking) {
     return (

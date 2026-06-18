@@ -102,7 +102,7 @@ export default function SettingsPage() {
           <h3 className="text-sm font-semibold text-foreground">앱 정보</h3>
           <div className="mt-3 space-y-2 text-sm text-muted">
             <p>버전: 1.0.0</p>
-            <p>제작: 설교 대시보드 팀</p>
+            <p>제작: 거창 전집사</p>
           </div>
         </div>
       </div>
