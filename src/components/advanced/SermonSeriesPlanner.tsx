@@ -281,7 +281,7 @@ export default function SermonSeriesPlanner({ frequentTopics }: { frequentTopics
               </div>
               <div>
                 <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider mb-1">핵심 구절</p>
-                <p className="text-[11px] text-indigo-200/80 italic leading-relaxed">"{week.keyVerse}"</p>
+                <p className="text-[11px] text-indigo-200/80 italic leading-relaxed">&ldquo;{week.keyVerse}&rdquo;</p>
               </div>
               <div>
                 <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider mb-1">적용</p>
