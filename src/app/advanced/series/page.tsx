@@ -4,10 +4,20 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { SERIES_DATA } from '@/lib/advanced/seriesData'
 import type { SeriesData } from '@/lib/advanced/seriesData'
+import SermonSeriesPlanner from '@/components/advanced/SermonSeriesPlanner'
+import { Sparkles, X } from 'lucide-react'
 
 export default function SeriesPage() {
   const router = useRouter()
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all')
+  const [showPlanner, setShowPlanner] = useState(false)
+
+  const allThemes = useMemo(() => SERIES_DATA.flatMap(s => s.themeNames), [])
+  const themeCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    allThemes.forEach(t => { counts[t] = (counts[t] || 0) + 1 })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([label, count]) => ({ label, count }))
+  }, [allThemes])
 
   const filtered = useMemo(() => {
     if (filterStatus === 'active') return SERIES_DATA.filter(s => s.completedSermons < s.totalSermons)
@@ -23,6 +33,13 @@ export default function SeriesPage() {
           <h1 className="text-lg font-bold text-white">설교 시리즈</h1>
           <p className="text-xs text-slate-500 font-bold mt-1">연속 설교를 계획하고 관리합니다 · 총 {SERIES_DATA.length}개 시리즈</p>
         </div>
+        <button
+          onClick={() => setShowPlanner(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-[13px] font-bold shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5"
+        >
+          <Sparkles className="w-4 h-4" />
+          AI로 시리즈 만들기
+        </button>
       </div>
 
       {/* Status Filter */}
@@ -51,6 +68,30 @@ export default function SeriesPage() {
           <SeriesCard key={series.id} series={series} onClick={() => router.push(`/advanced/series/${series.id}`)} />
         ))}
       </div>
+      )}
+
+      {/* AI Series Planner Modal */}
+      {showPlanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#03050c]/80 backdrop-blur-md">
+          <div className="relative w-full max-w-lg rounded-3xl bg-[#0a0e1a] border border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-[14px] font-bold text-white">설교 시리즈 플래너</h3>
+              </div>
+              <button
+                onClick={() => setShowPlanner(false)}
+                className="p-1.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <SermonSeriesPlanner frequentTopics={themeCounts} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Loader2, Sparkles, Download, BookOpen, Cross, ChevronRight, Calendar, Music } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Loader2, Download, BookOpen, Cross, ChevronRight, Calendar, Music, Sparkles, Pencil, Lightbulb, BarChart3 } from 'lucide-react'
 
 interface SeriesWeek {
   weekNumber: number
@@ -25,35 +25,56 @@ interface SeriesData {
   suggestedHymns: string[]
 }
 
-const THEMES = [
-  { id: 'grace', label: '은혜', icon: '💎', desc: '값없이 주시는 하나님의 선물' },
-  { id: 'faith', label: '믿음', icon: '✝️', desc: '의지와 신뢰' },
-  { id: 'love', label: '사랑', icon: '❤️', desc: '아가페, 자기희생적 사랑' },
-  { id: 'hope', label: '소망', icon: '🌅', desc: '미래를 향한 확신' },
-  { id: 'spirit', label: '성령', icon: '🕊️', desc: '내주하시는 하나님' },
-  { id: 'repentance', label: '회개', icon: '🙏', desc: '마음의 전환' },
-  { id: 'salvation', label: '구원', icon: '🛡️', desc: '죄에서 해방' },
-  { id: 'kingdom', label: '하나님 나라', icon: '👑', desc: '통치와 다스리심' },
+// 자주 쓰는 주제 아이콘 매핑
+const THEME_ICONS: Record<string, string> = {
+  '은혜': '💎', '믿음': '✝️', '사랑': '❤️', '소망': '🌅',
+  '성령': '🕊️', '회개': '🙏', '구원': '🛡️', '하나님 나라': '👑',
+  '기도': '🤲', '십자가': '✝️', '부활': '🌟', '칭의': '⚖️',
+  '성화': '🌱', '교회': '⛪', '선교': '🌍', '말씀': '📖',
+  '창조': '🌌', '언약': '📜', '심판': '⚡', '위로': '💝',
+}
+
+// AI 추천 주제 (아직 다루지 않은 주요 성경 주제)
+const AI_SUGGESTED_TOPICS = [
+  { label: '요한계시록', desc: '종말과 새 창조' },
+  { label: '시편 묵상', desc: '기도와 찬양' },
+  { label: '팔복', desc: '천국 시민의 윤리' },
+  { label: '포도나무', desc: '그리스도 안의 거함' },
+  { label: '언약', desc: '하나님의 신실하신 약속' },
+  { label: '하나님의 속성', desc: '거룩, 사랑, 공의' },
+  { label: '제자도', desc: '그리스도를 따르는 삶' },
+  { label: '가정과 신앙', desc: '그리스도인의 가정' },
 ]
 
-export default function SermonSeriesPlanner() {
+export default function SermonSeriesPlanner({ frequentTopics }: { frequentTopics?: { label: string; count: number }[] }) {
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
+  const [customTheme, setCustomTheme] = useState('')
   const [loading, setLoading] = useState(false)
   const [series, setSeries] = useState<SeriesData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleGenerate = async (themeId: string) => {
-    setSelectedTheme(themeId)
+  // 자주 다룬 주제 (props로 받음)
+  const frequentTopicsData = frequentTopics || []
+
+  // 아직 다루지 않은 주제 (AI 추천)
+  const uncoveredTopics = useMemo(() => {
+    if (frequentTopicsData.length === 0) return AI_SUGGESTED_TOPICS.slice(0, 4)
+    const covered = new Set(frequentTopicsData.map(t => t.label))
+    return AI_SUGGESTED_TOPICS.filter(t => !covered.has(t.label)).slice(0, 4)
+  }, [frequentTopicsData])
+
+  const handleGenerate = async (theme: string) => {
+    if (!theme.trim()) return
+    setSelectedTheme(theme)
     setLoading(true)
     setError(null)
     setSeries(null)
 
     try {
-      const themeLabel = THEMES.find(t => t.id === themeId)?.label || themeId
       const res = await fetch('/api/advanced/series', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: themeLabel }),
+        body: JSON.stringify({ theme: theme.trim() }),
       })
 
       const data = await res.json()
@@ -83,27 +104,98 @@ export default function SermonSeriesPlanner() {
 
   if (!selectedTheme) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          <h3 className="text-sm font-bold text-white">설교 시리즈 플래너</h3>
-        </div>
-        <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
-          주제를 선택하면 AI가 4주 설교 시리즈를 자동 구성합니다.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {THEMES.map(theme => (
+      <div className="p-5 space-y-5">
+        {/* 1. 자주 다룬 주제 */}
+        {frequentTopicsData.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <BarChart3 className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">자주 다룬 주제</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {frequentTopicsData.map(topic => (
+                <button
+                  key={topic.label}
+                  onClick={() => handleGenerate(topic.label)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-semibold hover:bg-indigo-500/20 transition-colors"
+                >
+                  <span>{THEME_ICONS[topic.label] || '📌'}</span>
+                  <span>{topic.label}</span>
+                  <span className="text-[9px] text-indigo-400/60">{topic.count}회</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 2. 직접 입력 */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <Pencil className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">직접 입력</span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customTheme}
+              onChange={e => setCustomTheme(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleGenerate(customTheme) }}
+              placeholder="예: 십자가, 시편, 요한계시록..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-colors"
+            />
             <button
-              key={theme.id}
-              onClick={() => handleGenerate(theme.id)}
-              className="text-left p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-indigo-500/30 transition-all group"
+              onClick={() => handleGenerate(customTheme)}
+              disabled={!customTheme.trim()}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-bold transition-colors"
             >
-              <span className="text-lg block mb-1">{theme.icon}</span>
-              <span className="text-[12px] font-semibold text-slate-300 group-hover:text-white transition-colors">{theme.label}</span>
-              <span className="text-[9px] text-slate-600 block mt-0.5">{theme.desc}</span>
+              생성
             </button>
-          ))}
+          </div>
         </div>
+
+        {/* 3. AI 추천 */}
+        {uncoveredTopics.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">AI 추천 · 아직 안 다룬 주제</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {uncoveredTopics.map(topic => (
+                <button
+                  key={topic.label}
+                  onClick={() => handleGenerate(topic.label)}
+                  className="text-left p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-amber-500/20 transition-all group"
+                >
+                  <span className="text-[11px] font-semibold text-slate-300 group-hover:text-white transition-colors">{topic.label}</span>
+                  <span className="text-[9px] text-slate-600 block mt-0.5">{topic.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 기본 주제 (자주 다룬 주제가 없을 때 폴백) */}
+        {frequentTopicsData.length === 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">주제 선택</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(THEME_ICONS).map(([label, icon]) => (
+                <button
+                  key={label}
+                  onClick={() => handleGenerate(label)}
+                  className="text-left p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-indigo-500/20 transition-all group"
+                >
+                  <span className="text-lg block mb-0.5">{icon}</span>
+                  <span className="text-[11px] font-semibold text-slate-300 group-hover:text-white transition-colors">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }

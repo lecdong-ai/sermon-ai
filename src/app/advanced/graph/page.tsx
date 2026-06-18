@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
-import SermonSeriesPlanner from '@/components/advanced/SermonSeriesPlanner'
 import { GRAPH_NODES, GRAPH_EDGES, NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
 
@@ -22,7 +21,7 @@ const FOCUS_MODE_DESCRIPTIONS: Record<FocusMode, string> = {
   full: '모든 노드를 표시합니다',
   project: '현재 작업 중인 설교와 연결된 노드만 표시합니다',
   passage: '선택한 본문과 연결된 노드만 표시합니다',
-  theme: 'AI가 4주 설교 시리즈를 자동 구성합니다',
+  theme: '선택한 주제와 연결된 노드만 표시합니다',
 }
 
 /* ─── Helpers ─── */
@@ -90,6 +89,16 @@ export default function GraphPage() {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const isDark = true
+
+  // Reset focusCenterId when focusMode changes
+  const handleFocusMode = useCallback((mode: FocusMode) => {
+    setFocusMode(mode)
+    if (mode === 'passage') {
+      setFocusCenterId('passage-rom8')
+    } else if (mode === 'theme') {
+      setFocusCenterId('theme-grace')
+    }
+  }, [])
 
   const focusCenterNode = useMemo(() => {
     if (focusMode === 'passage' || focusMode === 'theme') {
@@ -203,7 +212,7 @@ export default function GraphPage() {
           <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>집중 모드</h3>
           <div className="space-y-1">
             {(Object.keys(FOCUS_MODE_LABELS) as FocusMode[]).map(mode => (
-              <button key={mode} onClick={() => setFocusMode(mode)}
+              <button key={mode} onClick={() => handleFocusMode(mode)}
                 className={`w-full text-xs px-3 py-2 rounded-lg transition-colors text-left ${
                   focusMode === mode ? (isDark ? 'bg-green-900/30 text-green-400 font-medium' : 'bg-green-100 text-green-700 font-medium') : (isDark ? 'text-white/50 hover:bg-white/5' : 'text-paper-600 hover:bg-paper-100')
                 }`}>
@@ -213,11 +222,11 @@ export default function GraphPage() {
           </div>
         </div>
 
-        {/* Focus center selector for passage / Sermon Series Planner for theme */}
-        {focusMode === 'passage' && (
+        {/* Focus center selector for passage/theme */}
+        {(focusMode === 'passage' || focusMode === 'theme') && (
           <div className={`p-4 border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
             <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>
-              본문 선택
+              {focusMode === 'passage' ? '본문 선택' : '주제 선택'}
             </h3>
             <select value={focusCenterId} onChange={e => setFocusCenterId(e.target.value)}
               className={`w-full text-xs border rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-green-400 ${isDark ? 'border-white/10 bg-[#1a1a28] text-white/60' : 'border-paper-200 bg-white text-paper-700'}`}>
@@ -228,12 +237,6 @@ export default function GraphPage() {
             {focusCenterNode && (
               <p className={`text-[10px] mt-1.5 leading-relaxed ${isDark ? 'text-white/25' : 'text-paper-400'}`}>{focusCenterNode.detail.slice(0, 60)}…</p>
             )}
-          </div>
-        )}
-
-        {focusMode === 'theme' && (
-          <div className={`border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
-            <SermonSeriesPlanner />
           </div>
         )}
 
@@ -275,7 +278,7 @@ export default function GraphPage() {
           {/* Focus mode tabs */}
           <div className={`flex items-center gap-0.5 rounded-lg p-0.5 ${isDark ? 'bg-white/5' : 'bg-paper-100'}`}>
             {(Object.keys(FOCUS_MODE_LABELS) as FocusMode[]).map(mode => (
-              <button key={mode} onClick={() => setFocusMode(mode)}
+              <button key={mode} onClick={() => handleFocusMode(mode)}
                 className={`text-[10px] px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
                   focusMode === mode ? (isDark ? 'bg-[#1a1a28] text-green-400 font-medium shadow-sm' : 'bg-white text-green-700 font-medium shadow-sm') : (isDark ? 'text-white/35 hover:text-white/50' : 'text-paper-500 hover:text-paper-700')
                 }`}>
