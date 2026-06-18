@@ -1,7 +1,7 @@
 export const PPT_THEME = {
   cover: {
-    bg: '1a3a6b',
-    accentBg: '254e8a',
+    bg: '0F1B3D',
+    accentBg: '1A3A6B',
     titleColor: 'FFFFFF',
     subtitleColor: 'B0C4DF',
     dateColor: '8BA4C7',
@@ -21,23 +21,37 @@ export const PPT_THEME = {
     itemColor: '2D3748',
     accentColor: '3182F6',
   },
-  scripture: {
-    bg: '1a3a6b',
-    titleColor: 'FFFFFF',
-    bodyColor: 'E2EDFF',
-    verseColor: 'F6E05E',
-  },
   end: {
-    bg: '1a3a6b',
+    bg: '0F1B3D',
     titleColor: 'FFFFFF',
     subtitleColor: 'B0C4DF',
     iconColor: 'F6E05E',
   },
-  apply: {
-    bg: 'F0F4FA',
-    titleColor: '1a3a6b',
-    bodyColor: '2D3748',
-    accentColor: '3182F6',
+  styles: {
+    list: {
+      bg: 'FFFFFF',
+      titleColor: '1a3a6b',
+      bodyColor: '2D3748',
+      accentBar: '3182F6',
+    },
+    scripture: {
+      bg: '0F1B3D',
+      titleColor: 'F6E05E',
+      bodyColor: 'E2EDFF',
+      accentBar: 'F6E05E',
+    },
+    highlight: {
+      bg: 'EBF4FF',
+      titleColor: '1a3a6b',
+      bodyColor: '1A3A6B',
+      accentBar: '3182F6',
+    },
+    apply: {
+      bg: 'F0FFF4',
+      titleColor: '276749',
+      bodyColor: '22543D',
+      accentBar: '38A169',
+    },
   },
   font: {
     face: 'Noto Sans KR',
@@ -54,12 +68,12 @@ export const PPT_THEME = {
     scriptureBody: 24,
   },
   layout: {
-    slideWidth: 10,
+    slideWidth: 13.333,
     slideHeight: 7.5,
-    marginX: 0.6,
+    marginX: 0.8,
     marginY: 0.3,
-    contentWidth: 8.8,
-    centerX: 5,
+    contentWidth: 11.733,
+    centerX: 6.667,
     contentHeight: 5.2,
     titleHeight: 0.7,
     titleTop: 0.3,

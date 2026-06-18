@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import PptxGenJS from 'pptxgenjs'
 import { PPT_THEME as T } from '@/lib/pptTheme'
+import type { PPTShare } from '@/types'
 
 const MAX_CHARS_PER_SLIDE = 400
 
@@ -13,7 +14,6 @@ function splitContent(content: string): string[] {
 
   const parts: string[] = []
   const lines = trimmed.split(/\n/)
-
   let current = ''
   for (const line of lines) {
     if ((current + '\n' + line).trim().length > MAX_CHARS_PER_SLIDE && current) {
@@ -24,23 +24,20 @@ function splitContent(content: string): string[] {
     }
   }
   if (current.trim()) parts.push(current.trim())
-
   return parts
 }
 
-function isScriptureSlide(index: number): boolean {
-  return index === 1
-}
-
-function isApplySlide(title: string): boolean {
-  const keywords = ['적용', '실천', '결단']
-  return keywords.some((k) => title.includes(k))
+function getBulletItems(content: string): string[] {
+  return content
+    .split('\n')
+    .map(l => l.replace(/^[•\-*]\s*/, '').trim())
+    .filter(Boolean)
 }
 
 function addSlideNumber(s: any, num: number, total: number) {
   s.addText(`${num} / ${total}`, {
     x: T.layout.marginX,
-    y: 6.5,
+    y: T.layout.slideHeight - 0.5,
     w: T.layout.contentWidth,
     h: 0.4,
     fontSize: T.font.tiny,
@@ -48,6 +45,18 @@ function addSlideNumber(s: any, num: number, total: number) {
     align: 'center',
     fontFace: T.font.face,
   })
+}
+
+const ICON_MAP: Record<string, string> = {
+  heart: '❤',
+  cross: '✝',
+  book: '📖',
+  star: '⭐',
+  lightbulb: '💡',
+  check: '✓',
+  quote: '"',
+  bible: '📖',
+  pray: '🙏',
 }
 
 export async function GET(
@@ -82,7 +91,7 @@ export async function GET(
 
     const title = data.title || '설교'
     const passage = data.passage || ''
-    const rawSlides: { title?: string; content?: string }[] =
+    const rawSlides: PPTShare[] =
       data.result?.pptData?.slides || data.result?.ppt?.slides || []
 
     if (rawSlides.length === 0) {
@@ -90,12 +99,12 @@ export async function GET(
     }
 
     const pptx = new PptxGenJS()
-    pptx.defineLayout({ name: 'CUSTOM_4x3', width: 10, height: 7.5 })
-    pptx.layout = 'CUSTOM_4x3'
-    pptx.author = '목회자 AI 솔루션'
+    pptx.defineLayout({ name: 'WIDE_16x9', width: 13.333, height: 7.5 })
+    pptx.layout = 'WIDE_16x9'
+    pptx.author = 'Bunker 목양'
     pptx.title = title
     pptx.subject = passage
-    pptx.company = '목회자 AI 솔루션'
+    pptx.company = 'Bunker 목양'
 
     const SW = T.layout.slideWidth
     const CX = T.layout.centerX
@@ -107,25 +116,25 @@ export async function GET(
     const cover = pptx.addSlide()
     cover.background = { fill: T.cover.bg }
     cover.addShape(pptx.ShapeType.rect, {
-      x: 0, y: 0, w: SW, h: 0.14,
+      x: 0, y: 0, w: SW, h: 0.12,
       fill: { color: T.cover.accentBg } as any,
     })
     cover.addShape(pptx.ShapeType.rect, {
-      x: 0, y: 0.14, w: SW, h: 0.05,
+      x: 0, y: 0.12, w: SW, h: 0.04,
       fill: { color: T.content.accentColor } as any,
     })
     cover.addText('✝', {
-      x: CX - 1.2, y: 0.8, w: 2.4, h: 1.0,
-      fontSize: 40, color: T.cover.subtitleColor, align: 'center', fontFace: T.font.face,
+      x: CX - 1.5, y: 0.6, w: 3, h: 1.0,
+      fontSize: 44, color: T.cover.subtitleColor, align: 'center', fontFace: T.font.face,
     })
     cover.addText(title, {
-      x: MX, y: 1.9, w: CW, h: 1.8,
+      x: MX, y: 1.7, w: CW, h: 2.0,
       fontSize: T.font.coverTitle, color: T.cover.titleColor, bold: true, align: 'center',
       fontFace: T.font.face, shrinkText: true,
     })
     if (passage) {
       cover.addShape(pptx.ShapeType.rect, {
-        x: CX - 1.5, y: 3.9, w: 3, h: 0.05,
+        x: CX - 1.5, y: 3.9, w: 3, h: 0.04,
         fill: { color: T.content.accentColor } as any,
       })
       cover.addText(passage, {
@@ -134,8 +143,8 @@ export async function GET(
         fontFace: T.font.face, shrinkText: true,
       })
     }
-    cover.addText('목회자 AI 솔루션', {
-      x: MX, y: 5.8, w: CW, h: 0.6,
+    cover.addText('Bunker 목양', {
+      x: MX, y: 6.0, w: CW, h: 0.6,
       fontSize: T.font.small, color: T.cover.dateColor, align: 'center', fontFace: T.font.face,
     })
 
@@ -151,13 +160,13 @@ export async function GET(
       fontSize: T.font.tocTitle, bold: true, color: T.toc.titleColor, fontFace: T.font.face,
     })
     toc.addShape(pptx.ShapeType.rect, {
-      x: MX, y: 1.2, w: 1.2, h: 0.05,
+      x: MX, y: 1.2, w: 1.2, h: 0.04,
       fill: { color: T.content.accentColor } as any,
     })
     const tocItems = rawSlides.slice(0, 10).map((s, i) => `${i + 1}.  ${s.title || ''}`)
     toc.addText(tocItems.join('\n'), {
-      x: MX, y: 1.4, w: CW, h: 4.8,
-      fontSize: T.font.tocItem, color: T.toc.itemColor, lineSpacing: 34,
+      x: MX, y: 1.4, w: CW, h: 5.0,
+      fontSize: T.font.tocItem, color: T.toc.itemColor, lineSpacing: 36,
       fontFace: T.font.face, paraSpaceAfter: 6, shrinkText: true,
     })
 
@@ -168,54 +177,99 @@ export async function GET(
     for (let idx = 0; idx < totalDisplaySlides.length; idx++) {
       const slide = totalDisplaySlides[idx]
       const parts = splitContent(slide.content || '')
-      const isScripture = isScriptureSlide(idx)
-      const isApply = isApplySlide(slide.title || '')
+      const style = slide.style || 'list'
+      const st = T.styles[style]
+      const icon = ICON_MAP[slide.icon || ''] || ''
 
       for (let pi = 0; pi < parts.length; pi++) {
         slideNumber++
         const s = pptx.addSlide()
+        s.background = { fill: st.bg }
 
-        if (isScripture) {
-          s.background = { fill: T.scripture.bg }
-          s.addShape(pptx.ShapeType.rect, {
-            x: 0, y: 0, w: SW, h: T.layout.accentBar,
-            fill: { color: T.content.accentColor } as any,
-          })
-          s.addText('📖 ' + (slide.title || ''), {
-            x: MX, y: T.layout.titleTop, w: CW, h: T.layout.titleHeight,
-            fontSize: T.font.scriptureTitle, bold: true, color: T.scripture.titleColor,
-            fontFace: T.font.face, shrinkText: true,
+        // 상단 악센트 바
+        s.addShape(pptx.ShapeType.rect, {
+          x: 0, y: 0, w: SW, h: T.layout.accentBar,
+          fill: { color: st.accentBar } as any,
+        })
+
+        if (style === 'scripture') {
+          // 성경 스타일 — 따옴표 + 중앙 정렬
+          if (icon) {
+            s.addText(icon, {
+              x: CX - 0.6, y: 1.0, w: 1.2, h: 0.8,
+              fontSize: 36, color: st.accentBar, align: 'center', fontFace: T.font.face,
+            })
+          }
+          s.addText(slide.title || '', {
+            x: MX + 1, y: 1.8, w: CW - 2, h: 0.8,
+            fontSize: T.font.scriptureTitle, bold: true, color: st.titleColor,
+            fontFace: T.font.face, align: 'center', shrinkText: true,
           })
           s.addText(parts[pi], {
-            x: MX + 0.2, y: T.layout.contentTop, w: CW - 0.4, h: T.layout.contentHeight,
-            fontSize: T.font.scriptureBody, color: T.scripture.bodyColor, lineSpacing: 34,
+            x: MX + 1.2, y: 2.7, w: CW - 2.4, h: 3.5,
+            fontSize: T.font.scriptureBody, color: st.bodyColor, lineSpacing: 38,
+            fontFace: T.font.face, align: 'center', valign: 'top', paraSpaceAfter: 10, shrinkText: true,
+          })
+        } else if (style === 'highlight') {
+          // 강조 스타일 — 큰 텍스트 + 중앙 정렬
+          if (icon) {
+            s.addText(icon, {
+              x: MX + 0.3, y: T.layout.titleTop + 0.1, w: 0.6, h: 0.6,
+              fontSize: 24, color: st.accentBar, fontFace: T.font.face,
+            })
+          }
+          s.addText(slide.title || '', {
+            x: MX + 1.0, y: T.layout.titleTop, w: CW - 1.0, h: T.layout.titleHeight,
+            fontSize: T.font.title, bold: true, color: st.titleColor,
+            fontFace: T.font.face, shrinkText: true,
+          })
+          const bullets = getBulletItems(parts[pi])
+          const bulletHtml = bullets.map(b => `•  ${b}`).join('\n')
+          s.addText(bulletHtml, {
+            x: MX + 0.5, y: T.layout.contentTop + 0.2, w: CW - 1.0, h: T.layout.contentHeight - 0.2,
+            fontSize: T.font.body + 4, color: st.bodyColor, lineSpacing: 42,
+            fontFace: T.font.face, valign: 'top', paraSpaceAfter: 10, bold: true, shrinkText: true,
+          })
+        } else if (style === 'apply') {
+          // 적용 스타일 — 체크리스트 형태
+          if (icon) {
+            s.addText(icon, {
+              x: MX + 0.3, y: T.layout.titleTop + 0.1, w: 0.6, h: 0.6,
+              fontSize: 24, color: st.accentBar, fontFace: T.font.face,
+            })
+          }
+          s.addText(slide.title || '', {
+            x: MX + 1.0, y: T.layout.titleTop, w: CW - 1.0, h: T.layout.titleHeight,
+            fontSize: T.font.title, bold: true, color: st.titleColor,
+            fontFace: T.font.face, shrinkText: true,
+          })
+          const bullets = getBulletItems(parts[pi])
+          const checkHtml = bullets.map(b => `✓  ${b}`).join('\n')
+          s.addText(checkHtml, {
+            x: MX + 0.5, y: T.layout.contentTop + 0.2, w: CW - 1.0, h: T.layout.contentHeight - 0.2,
+            fontSize: T.font.body, color: st.bodyColor, lineSpacing: 38,
             fontFace: T.font.face, valign: 'top', paraSpaceAfter: 8, shrinkText: true,
           })
         } else {
-          s.background = { fill: isApply ? T.apply.bg : T.content.bg }
-
-          const colors = [T.content.accentColor, '38A169', 'D69E2E', '9F7AEA', 'E53E3E']
-          const barColor = colors[idx % colors.length]
+          // 기본 list 스타일
+          if (icon) {
+            s.addText(icon, {
+              x: MX + 0.3, y: T.layout.titleTop + 0.1, w: 0.6, h: 0.6,
+              fontSize: 24, color: st.accentBar, fontFace: T.font.face,
+            })
+          }
           s.addShape(pptx.ShapeType.rect, {
-            x: 0, y: 0, w: SW, h: T.layout.accentBar,
-            fill: { color: barColor } as any,
+            x: MX + 1, y: T.layout.titleTop + 0.15, w: 0.06, h: 0.45,
+            fill: { color: st.accentBar } as any,
           })
-          s.addShape(pptx.ShapeType.rect, {
-            x: MX, y: T.layout.titleTop + 0.05, w: 0.08, h: 0.5,
-            fill: { color: barColor } as any,
-          })
-
-          const titleColor = isApply ? T.apply.titleColor : T.content.titleColor
-          const bodyColor = isApply ? T.apply.bodyColor : T.content.bodyColor
-
           s.addText(slide.title || '', {
-            x: MX + 0.25, y: T.layout.titleTop, w: CW - 0.25, h: T.layout.titleHeight,
-            fontSize: T.font.title, bold: true, color: titleColor,
+            x: MX + 1.2, y: T.layout.titleTop, w: CW - 1.2, h: T.layout.titleHeight,
+            fontSize: T.font.title, bold: true, color: st.titleColor,
             fontFace: T.font.face, shrinkText: true,
           })
           s.addText(parts[pi], {
-            x: MX + 0.25, y: T.layout.contentTop, w: CW - 0.5, h: T.layout.contentHeight,
-            fontSize: T.font.body, color: bodyColor, lineSpacing: 36,
+            x: MX + 0.5, y: T.layout.contentTop, w: CW - 1.0, h: T.layout.contentHeight,
+            fontSize: T.font.body, color: st.bodyColor, lineSpacing: 36,
             fontFace: T.font.face, valign: 'top', paraSpaceAfter: 8, shrinkText: true,
           })
         }
@@ -229,33 +283,28 @@ export async function GET(
     slideNumber++
     end.background = { fill: T.end.bg }
     end.addShape(pptx.ShapeType.rect, {
-      x: 0, y: 0, w: SW, h: 0.14,
-      fill: { color: T.end.subtitleColor } as any,
+      x: 0, y: 0, w: SW, h: 0.12,
+      fill: { color: T.cover.subtitleColor } as any,
     })
     end.addShape(pptx.ShapeType.rect, {
-      x: 0, y: 0.14, w: SW, h: 0.05,
+      x: 0, y: 0.12, w: SW, h: 0.04,
       fill: { color: T.content.accentColor } as any,
     })
     end.addText('✝', {
-      x: CX - 1.2, y: 1.2, w: 2.4, h: 1.0,
-      fontSize: 40, color: T.cover.subtitleColor, align: 'center', fontFace: T.font.face,
-    })
-    end.addText('감사합니다', {
-      x: MX, y: 2.3, w: CW, h: 1.5,
-      fontSize: T.font.coverTitle, color: T.end.titleColor, bold: true, align: 'center',
-      fontFace: T.font.face, shrinkText: true,
-    })
-    end.addShape(pptx.ShapeType.rect, {
-      x: CX - 1.0, y: 3.9, w: 2.0, h: 0.05,
-      fill: { color: T.end.iconColor } as any,
+      x: CX - 1.5, y: 1.0, w: 3, h: 1.0,
+      fontSize: 44, color: T.cover.subtitleColor, align: 'center', fontFace: T.font.face,
     })
     end.addText('은혜로운 설교 되셨기를 바랍니다', {
-      x: MX, y: 4.1, w: CW, h: 0.9,
+      x: MX, y: 2.2, w: CW, h: 1.0,
       fontSize: T.font.subtitle, color: T.end.subtitleColor, align: 'center',
       fontFace: T.font.face, shrinkText: true,
     })
-    end.addText('목회자 AI 솔루션', {
-      x: MX, y: 5.8, w: CW, h: 0.6,
+    end.addShape(pptx.ShapeType.rect, {
+      x: CX - 1.0, y: 3.4, w: 2.0, h: 0.04,
+      fill: { color: T.end.iconColor } as any,
+    })
+    end.addText('Bunker 목양', {
+      x: MX, y: 5.5, w: CW, h: 0.6,
       fontSize: T.font.small, color: T.cover.dateColor, align: 'center', fontFace: T.font.face,
     })
 
