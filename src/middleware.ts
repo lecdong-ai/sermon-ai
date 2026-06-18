@@ -41,13 +41,6 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next({ request })
 
-  // CSP: production only (dev mode needs relaxed CSP for webpack HMR)
-  if (process.env.NODE_ENV === 'production') {
-    const nonce = generateNonce()
-    response.headers.set('Content-Security-Policy', buildCsp(nonce))
-    response.headers.set('x-nonce', nonce)
-  }
-
   if (!hasSupabaseConfig) {
     if (!isPublic && !pathname.startsWith('/advanced')) {
       const url = request.nextUrl.clone()
