@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
+import SermonSeriesPlanner from '@/components/advanced/SermonSeriesPlanner'
 import { GRAPH_NODES, GRAPH_EDGES, NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
 
@@ -21,7 +22,7 @@ const FOCUS_MODE_DESCRIPTIONS: Record<FocusMode, string> = {
   full: '모든 노드를 표시합니다',
   project: '현재 작업 중인 설교와 연결된 노드만 표시합니다',
   passage: '선택한 본문과 연결된 노드만 표시합니다',
-  theme: '선택한 주제와 연결된 노드만 표시합니다',
+  theme: 'AI가 4주 설교 시리즈를 자동 구성합니다',
 }
 
 /* ─── Helpers ─── */
@@ -212,11 +213,11 @@ export default function GraphPage() {
           </div>
         </div>
 
-        {/* Focus center selector for passage/theme */}
-        {(focusMode === 'passage' || focusMode === 'theme') && (
+        {/* Focus center selector for passage / Sermon Series Planner for theme */}
+        {focusMode === 'passage' && (
           <div className={`p-4 border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
             <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>
-              {focusMode === 'passage' ? '본문 선택' : '주제 선택'}
+              본문 선택
             </h3>
             <select value={focusCenterId} onChange={e => setFocusCenterId(e.target.value)}
               className={`w-full text-xs border rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-green-400 ${isDark ? 'border-white/10 bg-[#1a1a28] text-white/60' : 'border-paper-200 bg-white text-paper-700'}`}>
@@ -227,6 +228,12 @@ export default function GraphPage() {
             {focusCenterNode && (
               <p className={`text-[10px] mt-1.5 leading-relaxed ${isDark ? 'text-white/25' : 'text-paper-400'}`}>{focusCenterNode.detail.slice(0, 60)}…</p>
             )}
+          </div>
+        )}
+
+        {focusMode === 'theme' && (
+          <div className={`border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
+            <SermonSeriesPlanner />
           </div>
         )}
 
