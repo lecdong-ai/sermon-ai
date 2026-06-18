@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Script from 'next/script'
 import { Loader2, Share2, Copy, Check, AlertCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react'
 import type { SermonRecord } from '@/types'
 import Toast from '@/components/Toast'
@@ -17,28 +18,6 @@ export default function SharePage() {
   const [kakaoLoaded, setKakaoLoaded] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(true)
   const [previewSection, setPreviewSection] = useState<'summary' | 'cardnews' | 'shorts'>('summary')
-
-  useEffect(() => {
-    const loadKakao = async () => {
-      if (typeof window !== 'undefined' && !(window as any).Kakao) {
-        const script = document.createElement('script')
-        script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'
-        script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4'
-        script.crossOrigin = 'anonymous'
-        script.onload = () => {
-          const key = process.env.NEXT_PUBLIC_KAKAO_KEY
-          if (key && !(window as any).Kakao.isInitialized()) {
-            ;(window as any).Kakao.init(key)
-          }
-          setKakaoLoaded(true)
-        }
-        document.head.appendChild(script)
-      } else {
-        setKakaoLoaded(true)
-      }
-    }
-    loadKakao()
-  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -122,6 +101,19 @@ export default function SharePage() {
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slower" />
 
       <div className="max-w-3xl mx-auto z-10 relative">
+        {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
+          <Script
+            src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+            strategy="lazyOnload"
+            crossOrigin="anonymous"
+            onLoad={() => {
+              if (typeof window !== 'undefined' && typeof (window as any).Kakao !== 'undefined' && !(window as any).Kakao.isInitialized()) {
+                ;(window as any).Kakao.init(process.env.NEXT_PUBLIC_KAKAO_KEY!)
+                setKakaoLoaded(true)
+              }
+            }}
+          />
+        ) : null}
         {/* 헤더 */}
         <div className="animate-in mb-8 p-6 glass-panel glass-border-neon rounded-2xl shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />

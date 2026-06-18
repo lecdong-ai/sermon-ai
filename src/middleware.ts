@@ -8,11 +8,43 @@ const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+function generateNonce(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  for (let i = 0; i < 16; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+function buildCsp(nonce: string): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://t1.kakaocdn.net`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' blob: data: https://*.kakaocdn.net`,
+    `font-src 'self'`,
+    `connect-src 'self' ${supabaseUrl} https://api.openai.com https://api.tosspayments.com`,
+    `frame-src 'none'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+  ].join('; ')
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isPublic = publicRoutes.some((route) => pathname === route) ||
     publicPrefixes.some((prefix) => pathname.startsWith(prefix))
+
+  const nonce = generateNonce()
+  const response = NextResponse.next({ request })
+
+  // CSP with nonce (replaces unsafe-inline)
+  response.headers.set('Content-Security-Policy', buildCsp(nonce))
+  response.headers.set('x-nonce', nonce)
 
   if (!hasSupabaseConfig) {
     if (!isPublic && !pathname.startsWith('/advanced')) {
@@ -21,10 +53,8 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
-    return NextResponse.next({ request })
+    return response
   }
-
-  const response = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +66,11 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            response.cookies.set(name, value, {
+              ...options,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            }),
           )
         },
       },

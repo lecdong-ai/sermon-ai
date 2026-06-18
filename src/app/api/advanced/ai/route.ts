@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { cookies } from 'next/headers'
+import { getUserFromRequest } from '@/lib/auth'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
 import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
@@ -171,6 +172,11 @@ IMPORTANT:
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request)
+    if (!user) {
+      return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
     const cookieStore = cookies()
     const useMock = cookieStore.get('use_mock')?.value === 'true'
 

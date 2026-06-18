@@ -1,22 +1,7 @@
 /** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV === 'development'
-
-const cspHeader = isDev
-  ? ''
-  : `
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' https://t1.kakaocdn.net;
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https://*.kakaocdn.net;
-  font-src 'self';
-  connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ''} https://api.openai.com https://api.tosspayments.com;
-  frame-src 'none';
-  object-src 'none';
-  base-uri 'self';
-  form-action 'self';
-`.replace(/\s{2,}/g, ' ').trim()
 
 const nextConfig = {
+  metadataBase: new URL('https://bunker.ai.kr'),
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -46,9 +31,6 @@ const nextConfig = {
       { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
       { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
     ]
-    if (cspHeader) {
-      securityHeaders.push({ key: 'Content-Security-Policy', value: cspHeader })
-    }
     return [
       {
         source: '/(.*)',
