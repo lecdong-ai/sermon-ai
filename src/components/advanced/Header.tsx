@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Sparkles, Bug, User, CreditCard, LogOut, LayoutDashboard, BookOpen } from 'lucide-react'
+import { Search, Plus, Sparkles, Bug, User, Heart, LogOut, LayoutDashboard, BookOpen } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 
@@ -161,11 +161,11 @@ export default function AdvancedHeader() {
                   마이페이지
                 </button>
                 <button
-                  onClick={() => { setShowMenu(false); router.push('/pricing') }}
+                  onClick={() => { setShowMenu(false); router.push('/support') }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
                 >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  요금제 관리
+                  <Heart className="w-3.5 h-3.5" />
+                  후원 안내
                 </button>
               </div>
 

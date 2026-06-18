@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { getUsageInfo, checkFeatureAccess } from '@/lib/usage'
+import { ensureUsage } from '@/lib/usage'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,19 +24,27 @@ async function getUser(request: NextRequest) {
   return data.user
 }
 
-// GET /api/usage - 사용량 조회 + 기능 접근 권한
+async function getSupporterUntil(userId: string): Promise<string | null> {
+  const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId).catch(() => ({ data: null }))
+  const meta = (user?.user?.app_metadata as any) || {}
+  if (meta.supporter_until) return meta.supporter_until
+  return null
+}
+
 export async function GET(request: NextRequest) {
   const user = await getUser(request)
   if (!user) {
     return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
   }
 
-  const usage = await getUsageInfo(user.id)
+  await ensureUsage(user.id)
+  const supporter_until = await getSupporterUntil(user.id)
+  const supporterActive = supporter_until
+    ? new Date(supporter_until) > new Date()
+    : false
 
-  const features = [
-    await checkFeatureAccess(user.id, 'generate'),
-    await checkFeatureAccess(user.id, 'workspace'),
-  ]
-
-  return NextResponse.json({ ...usage, features })
+  return NextResponse.json({
+    supporter: supporterActive,
+    supporter_until,
+  })
 }

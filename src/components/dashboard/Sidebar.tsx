@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const MENUS = [
   { key: 'dashboard', label: '대시보드', icon: '◈', href: '/dashboard' },
@@ -15,51 +16,44 @@ const MENUS = [
   { key: 'settings', label: '설정', icon: '◇', href: '/dashboard/settings' },
 ]
 
-function UsageBadge() {
-  const [usage, setUsage] = useState<{ plan: string; trial?: { used: number; limit: number; remaining: number }; monthly?: { used: number; limit: number; remaining: number } } | null>(null)
+function SupporterBadge() {
+  const [data, setData] = useState<{ supporter: boolean; supporter_until: string | null } | null>(null)
 
   useEffect(() => {
     fetch('/api/usage')
       .then(r => r.json())
-      .then(d => { if (!d.error) setUsage(d) })
+      .then(d => { if (!d.error) setData(d) })
       .catch(() => {})
   }, [])
 
-  if (!usage) return null
-
-  const trial = usage.trial
-  const monthly = usage.monthly
-  const remaining = trial?.remaining ?? monthly?.remaining ?? 0
-  const limit = trial?.limit ?? monthly?.limit ?? 0
-  const used = trial?.used ?? monthly?.used ?? 0
-  const pct = limit > 0 ? (used / limit) * 100 : 0
-  const barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#10b981'
+  if (!data) return null
 
   return (
     <div className="px-5 py-3 border-b border-white/10">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">사용량</span>
-        <span className="text-[10px] text-white/50">
-          <span style={{ color: barColor, fontWeight: 600 }}>{remaining}</span>
-          <span className="text-white/30">/{limit}</span>
-        </span>
-      </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}
-        />
-      </div>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-[9px] text-white/25">
-          {usage.plan === 'pro' ? 'Pro 플랜' : trial ? '무료체험' : '월간'}
-        </span>
-        {usage.plan === 'pro' ? (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-medium">무제한</span>
-        ) : (
-          <span className="text-[9px] text-white/25">AI 분석</span>
-        )}
-      </div>
+      {data.supporter ? (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <span className="text-[14px]">🏅</span>
+          <div>
+            <p className="text-[12px] font-bold text-amber-300">후원회원</p>
+            {data.supporter_until && (
+              <p className="text-[9px] text-amber-400/60">
+                ~{new Date(data.supporter_until).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <Link
+          href="/support"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+        >
+          <span className="text-[14px]">❤️</span>
+          <div>
+            <p className="text-[12px] font-semibold text-white/70">지금 후원하기</p>
+            <p className="text-[9px] text-white/30">일반회원</p>
+          </div>
+        </Link>
+      )}
     </div>
   )
 }
@@ -87,7 +81,7 @@ export default function Sidebar() {
           설교를 저장하고, 연결하고,<br />다시 찾는 목회 지식 지도
         </p>
       </div>
-      <UsageBadge />
+      <SupporterBadge />
       <nav className="flex-1 py-3 overflow-y-auto">
         {MENUS.map((menu) => {
           const isActive =

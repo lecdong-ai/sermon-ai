@@ -35,16 +35,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const { data: usage } = await supabaseAdmin
-      .from('user_usage')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single()
-
-    if (usage?.plan !== 'pro') {
-      return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
-    }
-
     const body = await request.json()
     const { manuscript, coreMessage, outlinePoints, title, passage, allThemes } = body
 
@@ -56,7 +46,7 @@ export async function POST(request: NextRequest) {
     const themeOptions = themeList.map((t: any) => `{"id": "${t.id}", "name": "${t.name}"}`).join(', ')
 
     const systemPrompt = `당신은 설교문을 분석하여 가장 적합한 태그를 선택하는 AI입니다.
-주어진 설교문의 내용, 핵심 메시지, 대지를 분석하여 아래 태그 목록에서 가장 잘 맞는 태그 ID를 4~6개 선택하세요.
+주어진 설교문의 내용, 핵심 메시지, 대지를 분석하여 아래 태그 목록에서 가장 잘 맞는 태그 ID를 3개 선택하세요.
 
 사용 가능한 태그 목록:
 ${themeOptions}
@@ -69,10 +59,10 @@ ${themeOptions}
 대지: ${Array.isArray(outlinePoints) ? outlinePoints.filter(Boolean).join(' / ') : ''}
 설교 원고: ${manuscript || ''}
 
-위 내용을 분석하여 가장 적합한 태그 ID를 4~6개 선택하세요.`
+위 내용을 분석하여 가장 적합한 태그 ID를 3개 선택하세요.`
 
     const res = await getOpenai().chat.completions.create({
-      model: 'gpt-5.4-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },

@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateAll } from '@/lib/openai'
 import { getMockResult } from '@/lib/mock'
-import { checkUsage, consumeUsage } from '@/lib/usage'
+
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
@@ -48,15 +48,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ success: false, error: '원고 텍스트가 없습니다.' }, { status: 400 })
     }
 
-    const usageInfo = await checkUsage(user.id)
-    if (!usageInfo.can_generate) {
-      const errorMsg =
-        usageInfo.block_reason === 'trial_expired' ? '무료체험 기간이 만료되었습니다.' :
-        usageInfo.block_reason === 'trial_exhausted' ? '무료 분석 횟수를 모두 사용했습니다.' :
-        '사용 한도를 초과했습니다.'
-      return NextResponse.json({ success: false, error: errorMsg, usage_limit: true }, { status: 403 })
-    }
-
     let result
     try {
       const useMock = request.cookies.get('use_mock')?.value === 'true'
@@ -70,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ success: false, error: err.message || 'AI 생성 중 오류가 발생했습니다.' })
     }
 
-    await consumeUsage(user.id).catch(() => {})
+
 
     const existingResult = sermon.result || {}
     const mergedResult = { ...existingResult, ...result }

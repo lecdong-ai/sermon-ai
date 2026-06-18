@@ -7,10 +7,9 @@ import {
   Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard, 
   ArrowRight, CheckCircle, Star, Shield, Zap, Globe, 
   ChevronDown, ChevronUp, Play, Users, FileCheck, BrainCircuit, 
-  ArrowUpRight, Heart, Calendar
+  ArrowUpRight, Heart, LockKeyhole, X, HardDrive, Cross
 } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
-import UsageBadge from '@/components/UsageBadge'
 import { useAuth } from '@/components/AuthProvider'
 
 // 4-Step 워크플로우 상수
@@ -68,7 +67,7 @@ const STATS = [
 
 const TRUST_BADGES = [
   { icon: Shield, text: 'SSL 암호화 전송 및 데이터 보호' },
-  { icon: Calendar, text: '신규 회원 15일 무료 체험 혜택' },
+  { icon: HardDrive, text: '설교 원고 무제한 보관' },
   { icon: Zap, text: '최신 거대 언어 모델(LLM) 탑재' },
 ]
 
@@ -90,6 +89,8 @@ export default function HomePage() {
   const { user, loading } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
+  const [showDashboardPopup, setShowDashboardPopup] = useState(false)
+  const [supporter, setSupporter] = useState<boolean | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
@@ -119,6 +120,14 @@ export default function HomePage() {
     return () => observerRef.current?.disconnect()
   }, [])
 
+  useEffect(() => {
+    if (!mounted || loading || !user) return
+    fetch('/api/usage')
+      .then(r => r.json())
+      .then(d => { if (!d.error) setSupporter(d.supporter) })
+      .catch(() => setSupporter(false))
+  }, [mounted, loading, user])
+
   const handleUploadSuccess = (sermonId: string) => {
     router.push(`/workspace?id=${sermonId}`)
   }
@@ -144,8 +153,8 @@ export default function HomePage() {
             {/* 좌측 콘텐츠 */}
             <div className="lg:col-span-6 text-left space-y-6 sm:space-y-8">
               <div className="reveal inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-[13px] font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                설교 준비의 완전한 지능형 세대 교체
+                <Cross className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                Bunker 목양 — AI 기반 설교 설계 도구
               </div>
 
               <h1 className="reveal text-[clamp(2.25rem,5.5vw,3.75rem)] font-extrabold tracking-tight leading-[1.15] text-white">
@@ -170,14 +179,14 @@ export default function HomePage() {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 ) : (
-                  <Link
-                    href="/dashboard"
+                  <button
+                    onClick={() => setShowDashboardPopup(true)}
                     className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-lg shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
                   >
                     <LayoutDashboard className="w-4 h-4" />
                     대시보드로 이동
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  </button>
                 )}
                 <a
                   href="#transformation"
@@ -444,50 +453,40 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. 메인 업로드 & 대시보드 온보딩 영역 */}
+      {/* 6. 메인 업로드 영역 */}
       <section className="relative py-24 sm:py-32 z-10">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="max-w-2xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-10">
             <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white mb-3">
               지금 직접 설교를 분석해보세요
             </h2>
             <p className="reveal text-[14px] sm:text-[15px] text-slate-400 font-medium">
-              간단히 파일을 업로드하는 것으로 목회의 지능화 여정이 시작됩니다.
+              파일 하나로 AI가 설교를 다각도로 분석합니다
             </p>
           </div>
 
           <div className="reveal">
             {isLoggedIn ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                <div className="md:col-span-2">
-                  <div className="rounded-3xl glass-dark border border-white/10 shadow-2xl p-1 h-full">
-                    {/* 내장 업로드 컴포넌트는 light-themed 카드이므로 내부 스타일 커스터마이징을 위해 상위 래퍼에서 관리 */}
-                    <div className="text-slate-900 bg-white rounded-[20px] overflow-hidden">
-                      <FileUpload onSuccess={handleUploadSuccess} />
-                    </div>
-                  </div>
-                </div>
-                <div className="md:col-span-1">
-                  <div className="rounded-3xl glass-dark border border-white/10 shadow-2xl p-6 h-full flex flex-col items-center justify-center">
-                    <UsageBadge />
-                  </div>
-                </div>
-              </div>
+              <FileUpload onSuccess={handleUploadSuccess} dark />
             ) : (
-              <div className="relative overflow-hidden rounded-3xl glass-dark border border-white/10 p-8 sm:p-12 text-center shadow-2xl shadow-indigo-950/20">
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-10 sm:p-14 text-center">
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-[-50%] left-[-50%] w-full h-full rounded-full bg-indigo-500/3 blur-[100px]" />
+                  <div className="absolute bottom-[-50%] right-[-50%] w-full h-full rounded-full bg-purple-500/3 blur-[100px]" />
+                </div>
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-5 border border-indigo-500/20">
-                    <Upload className="w-6 h-6 text-indigo-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
+                    <Upload className="w-7 h-7 text-white/50" />
                   </div>
-                  <h3 className="text-[18px] sm:text-[22px] font-bold text-white mb-2">
-                    원고 업로드를 위해 로그인이 필요합니다
+                  <h3 className="text-[18px] sm:text-[20px] font-bold text-white/90 mb-2">
+                    로그인하고 설교를 분석하세요
                   </h3>
-                  <p className="text-[13.5px] sm:text-[14.5px] text-slate-400 mb-6 max-w-md mx-auto">
-                    간단한 회원가입(이메일 또는 소셜) 즉시 15일간 매일 생성 서비스를 이용하실 수 있습니다.
+                  <p className="text-[14px] text-white/40 mb-6 max-w-sm mx-auto">
+                    회원가입 즉시 AI 분석, 소그룹 자료, 카드뉴스 등 6종 콘텐츠를 이용하실 수 있습니다
                   </p>
                   <Link
                     href="/login?redirect=/"
-                    className="group inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+                    className="group inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
                   >
                     로그인 및 가입하기
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -559,12 +558,83 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 9. 고정 푸터 */}
-      <footer className="relative bg-[#050814]/90 backdrop-blur-md border-t border-white/10 py-6 text-center text-[12px] text-slate-400 z-50">
-        <div className="max-w-7xl mx-auto px-5">
-          로스터 768-19-00582 · 전정우 · 경남 거창군 거창읍 거열로1길 86. 상가동 202호 · 070-8925-7400
+
+
+      {/* 대시보드 선택 팝업 */}
+      {showDashboardPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setShowDashboardPopup(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl glass-dark border border-white/10 p-8 shadow-2xl shadow-indigo-950/40"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 팝업 헤더 */}
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[17px] font-bold text-white">어디로 이동할까요?</h3>
+              <button
+                onClick={() => setShowDashboardPopup(false)}
+                className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+            <p className="text-[13px] text-slate-400 mb-6">목적에 맞는 공간을 선택하세요</p>
+
+            {/* 설교 대시보드 카드 */}
+            <Link
+              href="/dashboard"
+              onClick={() => setShowDashboardPopup(false)}
+              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10">
+                <LayoutDashboard className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
+                <p className="text-[12px] text-slate-400 mt-0.5">설교 관리 · 통계 · 시리즈</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+            </Link>
+
+            {/* 말씀 연구실 카드 */}
+            {supporter ? (
+              <Link
+                href="/advanced"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-200"
+              >
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/10">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[15px] font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
+                  <p className="text-[12px] text-slate-400 mt-0.5">프로젝트 · 성경 연구 · 원고</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+              </Link>
+            ) : (
+              <Link
+                href="/support"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] opacity-60 hover:opacity-100 transition-all duration-200"
+              >
+                <div className="w-11 h-11 rounded-xl bg-slate-700/50 flex items-center justify-center shrink-0">
+                  <LockKeyhole className="w-5 h-5 text-slate-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[15px] font-bold text-slate-400">말씀 연구실</h4>
+                  <p className="text-[12px] text-slate-500 mt-0.5">후원회원 전용 · 프로젝트 · 성경 연구</p>
+                </div>
+                <span className="text-[11px] font-bold text-amber-400/80 border border-amber-400/20 bg-amber-400/5 rounded-lg px-2.5 py-1 mt-1.5 shrink-0">
+                  이용하기
+                </span>
+              </Link>
+            )}
+          </div>
         </div>
-      </footer>
+      )}
 
       <style jsx>{`
         .reveal {

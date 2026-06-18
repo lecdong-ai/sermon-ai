@@ -99,25 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const { data: usage } = await supabaseAdmin
-      .from('user_usage')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single()
-
     const body = await request.json()
-
-    const proOnlyFeatures = [
-      body.generateApplication,
-      body.generateIntroduction,
-      body.generateConclusion,
-      body.generateIllustration,
-      body.generateManuscript,
-    ].some(Boolean)
-
-    if (usage?.plan !== 'pro' && proOnlyFeatures) {
-      return NextResponse.json({ success: false, error: 'Pro 플랜에서만 이용 가능합니다.' }, { status: 403 })
-    }
     const { title, passage, coreMessage, pointIndex, mode, context, bibleText: bibleTextInput, pointTitle, length: msLength } = body
 
     let systemPrompt: string
@@ -354,7 +336,7 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     }
 
     const res = await getOpenai().chat.completions.create({
-      model: 'gpt-5.4-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },

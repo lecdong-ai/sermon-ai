@@ -12,16 +12,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const { data: usage } = await supabaseAdmin
-      .from('user_usage')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single()
-
-    if (usage?.plan !== 'pro') {
-      return NextResponse.json({ success: false, error: '실전형 설교 워크스페이스는 Pro 플랜에서 사용 가능합니다.' }, { status: 403 })
-    }
-
     const { data: sermon, error } = await supabaseAdmin
       .from('sermons')
       .select('id, user_id, passage, title, sermon_date, series, church_context, audience')

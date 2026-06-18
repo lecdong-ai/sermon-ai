@@ -8,16 +8,13 @@ export interface UserProfile {
   created_at: string
 }
 
-// ─── Usage / Rate Limit Types ───
-
-export type PlanType = 'none' | 'basic' | 'pro'
-export type UserStatus = 'trial' | 'trial_expired' | 'active' | 'past_due' | 'canceled'
+// ─── Usage Types ───
 
 export interface UserUsage {
   id: string
   user_id: string
-  plan: PlanType
-  user_status: UserStatus
+  plan: string
+  user_status: string
   trial_used: number
   trial_limit: number
   trial_start_at: string
@@ -27,61 +24,9 @@ export interface UserUsage {
   workspace_used: number
   workspace_limit: number
   last_reset_month: string
-  subscription_id?: string
+  supporter_until?: string | null
   created_at: string
   updated_at: string
-}
-
-export interface UsageInfo {
-  plan: PlanType
-  user_status: UserStatus
-  trial: {
-    used: number
-    limit: number
-    remaining: number
-    ends_at: string | null
-    expired: boolean
-  }
-  monthly: {
-    used: number
-    limit: number
-    remaining: number
-    period_start: string
-    period_end: string
-  }
-  workspace: {
-    used: number
-    limit: number
-    remaining: number
-  }
-  can_generate: boolean
-  block_reason?: 'trial_expired' | 'trial_exhausted' | 'monthly_exhausted' | 'past_due' | 'canceled'
-}
-
-export interface FeatureAccess {
-  key: string
-  name: string
-  available: boolean
-  required_plan?: PlanType
-  remaining?: number
-}
-
-export const PLAN_LIMITS: Record<PlanType, { trial: number; monthly: number; workspace_limit: number }> = {
-  none: { trial: 3, monthly: 0, workspace_limit: 0 },
-  basic: { trial: 0, monthly: 10, workspace_limit: 10 },
-  pro: { trial: 0, monthly: 20, workspace_limit: 20 },
-}
-
-export const PLAN_LABELS: Record<PlanType, string> = {
-  none: '무료체험',
-  basic: 'Basic',
-  pro: 'Pro',
-}
-
-export const PLAN_PRICES: Record<PlanType, number> = {
-  none: 0,
-  basic: 9900,
-  pro: 19800,
 }
 
 // ─── Core Result Types ───

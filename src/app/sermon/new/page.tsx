@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -92,6 +92,23 @@ export default function NewSermonPage() {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [recentTitles, setRecentTitles] = useState<string[]>([])
+  const [recentPassages, setRecentPassages] = useState<string[]>([])
+  const [loadingRecent, setLoadingRecent] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/sermons')
+      .then(r => r.json())
+      .then(data => {
+        const sermons = data.data || data.sermons || []
+        const titles = Array.from(new Set(sermons.map((s: any) => s.title).filter(Boolean))).slice(0, 5) as string[]
+        const passages = Array.from(new Set(sermons.map((s: any) => s.normalizedPassage || s.passage).filter(Boolean))).slice(0, 5) as string[]
+        setRecentTitles(titles)
+        setRecentPassages(passages)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingRecent(false))
+  }, [])
   const [suggesting, setSuggesting] = useState<'title' | 'passage' | null>(null)
   const [suggestions, setSuggestions] = useState<{
     field: 'title' | 'passage'
@@ -196,8 +213,8 @@ export default function NewSermonPage() {
 
               <div className="max-w-2xl">
                 <h1 className="text-balance font-outfit text-[clamp(1.7rem,4vw,3rem)] font-extrabold leading-[1.15] text-slate-900">
-                  설교 한 편을 가장
-                  <br /><span className="text-gradient">빠르게 시작하는 화면</span>
+목회자의 묵상과 말씀 준비를 돕는
+          <br /><span className="text-gradient">지혜로운 설교 파트너</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-500 sm:text-[16px]">
                   제목과 성경 본문, 설교 날짜만 정리하면 바로 설교 워크스페이스로 이어집니다.
@@ -312,18 +329,37 @@ export default function NewSermonPage() {
                     autoFocus
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 placeholder:text-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {QUICK_TITLES.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setTitle(item)}
-                        className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
+                  {recentTitles.length > 0 && (
+                    <div className="mt-3">
+                      <p className="mb-1.5 text-[11px] font-semibold text-slate-400">최근 입력한 제목</p>
+                      <div className="flex flex-wrap gap-2">
+                        {recentTitles.map((item) => (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setTitle(item)}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {recentTitles.length === 0 && !loadingRecent && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {QUICK_TITLES.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setTitle(item)}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {suggestions?.field === 'title' && (
                     <div className="mt-3 space-y-2">
                       {suggestions.items.map((item, i) => (
@@ -354,18 +390,37 @@ export default function NewSermonPage() {
                     placeholder="예: 마태복음 11:28-30"
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 placeholder:text-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {QUICK_PASSAGES.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setPassage(item)}
-                        className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
+                  {recentPassages.length > 0 && (
+                    <div className="mt-3">
+                      <p className="mb-1.5 text-[11px] font-semibold text-slate-400">최근 입력한 본문</p>
+                      <div className="flex flex-wrap gap-2">
+                        {recentPassages.map((item) => (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setPassage(item)}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {recentPassages.length === 0 && !loadingRecent && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {QUICK_PASSAGES.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setPassage(item)}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {suggestions?.field === 'passage' && (
                     <div className="mt-3 space-y-2">
                       {suggestions.items.map((item, i) => (

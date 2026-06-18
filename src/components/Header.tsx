@@ -3,7 +3,7 @@
 import { useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Bug, LogIn, User, LogOut, LayoutDashboard, Cross, CreditCard } from 'lucide-react'
+import { Bug, LogIn, User, LogOut, LayoutDashboard, Cross, Heart } from 'lucide-react'
 import { useAuth } from './AuthProvider'
 
 function getCookie(name: string): string | null {
@@ -23,7 +23,7 @@ export default memo(function Header() {
   const isHome = pathname === '/'
   const [mockOn, setMockOn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [plan, setPlan] = useState<string | null>(null)
+  const [supporter, setSupporter] = useState<{ active: boolean; until: string | null } | null>(null)
 
   useEffect(() => {
     setMockOn(getCookie('use_mock') === 'true')
@@ -33,7 +33,7 @@ export default memo(function Header() {
     if (user) {
       fetch('/api/usage')
         .then(r => r.json())
-        .then(d => { if (!d.error) setPlan(d.plan) })
+        .then(d => { if (!d.error) setSupporter({ active: d.supporter, until: d.supporter_until }) })
         .catch(() => {})
     }
   }, [user])
@@ -59,7 +59,7 @@ export default memo(function Header() {
     }`}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         
-        {/* SermonAI 로고 브랜딩 */}
+        {/* Bunker 목양 로고 브랜딩 */}
         <Link href="/" className="flex items-center gap-2.5 group ml-[0.5cm]">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
             isHome 
@@ -71,7 +71,7 @@ export default memo(function Header() {
           <span className={`text-[18px] font-bold tracking-tight transition-colors duration-200 ${
             isHome ? 'text-white' : 'text-[#2c2a29]'
           }`}>
-            SermonAI
+            Bunker 목양
           </span>
         </Link>
 
@@ -97,35 +97,31 @@ export default memo(function Header() {
             <div className={`w-8 h-8 rounded-full animate-pulse ${isHome ? 'bg-white/10' : 'bg-[#e4e2dd]'}`} />
           ) : user ? (
             <>
-              {/* 요금제 배지 */}
-              {plan && (
-                <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-bold ${
-                  plan === 'pro'
+              {/* 후원 상태 */}
+              {supporter && (
+                <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-bold ${
+                  supporter.active
                     ? isHome
-                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                      : 'bg-[#eae7e0] text-[#8d7a5b] border border-[#d4d1c9]'
-                    : plan === 'none'
-                    ? isHome
-                      ? 'bg-white/10 text-slate-300 border border-white/10'
-                      : 'bg-[#f5f4f0] text-[#8a8580] border border-[#e4e2dd]'
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                      : 'bg-rose-50 text-rose-700 border border-rose-200'
                     : isHome
                     ? 'bg-white/10 text-slate-300 border border-white/10'
-                    : 'bg-[#f5f4f0] text-[#6b6764] border border-[#e4e2dd]'
+                    : 'bg-[#f5f4f0] text-[#8a8580] border border-[#e4e2dd]'
                 }`}>
-                  {plan === 'pro' ? '✦ Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
+                  {supporter.active ? '🏅 후원회원' : '일반회원'}
                 </span>
               )}
 
               <Link
-                href="/pricing"
+                href="/support"
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                   isHome 
                     ? 'text-slate-300 hover:text-white hover:bg-white/10' 
                     : 'text-[#6b6764] hover:text-[#2c2a29] hover:bg-[#f5f4f0]'
                 }`}
               >
-                <CreditCard className="w-4 h-4" />
-                요금제
+                <Heart className="w-4 h-4" />
+                후원하기
               </Link>
               <div className="relative">
                 <button
@@ -151,27 +147,25 @@ export default memo(function Header() {
                       <div className="px-4 py-2.5 border-b border-[#e4e2dd]/60 mb-1.5">
                         <p className="text-[12px] text-[#8a8580] font-medium">로그인 정보</p>
                         <p className="text-[13px] font-bold text-[#2c2a29] truncate mt-0.5">{user.email}</p>
-                        {plan && (
+                        {supporter && (
                           <div className="mt-1.5">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
-                              plan === 'pro'
-                                ? 'bg-[#eae7e0] text-[#8d7a5b]'
-                                : plan === 'none'
-                                ? 'bg-[#f5f4f0] text-[#8a8580]'
-                                : 'bg-[#f5f4f0] text-[#6b6764]'
+                              supporter.active
+                                ? 'bg-rose-50 text-rose-700'
+                                : 'bg-[#f5f4f0] text-[#8a8580]'
                             }`}>
-                              {plan === 'pro' ? '✦ Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
+                              {supporter.active ? '🏅 후원회원' : '일반회원'}
                             </span>
                           </div>
                         )}
                       </div>
                       <Link
-                        href="/pricing"
+                        href="/support"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#4a4744] hover:text-[#2c2a29] hover:bg-[#f5f4f0] transition-all"
                       >
-                        <CreditCard className="w-4 h-4 text-[#8d7a5b]" />
-                        요금제
+                        <Heart className="w-4 h-4 text-rose-500" />
+                        후원 안내
                       </Link>
                       <Link
                         href="/dashboard"

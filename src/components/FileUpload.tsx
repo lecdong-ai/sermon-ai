@@ -1,33 +1,60 @@
 'use client'
 
-import { useState, useRef, memo, type DragEvent } from 'react'
+import { useState, useRef, memo, useEffect, type DragEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, FileText, AlertCircle, CheckCircle, ChevronDown, ChevronUp, X, Loader2, Pencil } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, X, Loader2, Sparkles, ArrowRight, BookOpen, Users, Image, Film, Presentation } from 'lucide-react'
 
 interface Props {
   onSuccess?: (sermonId: string) => void
+  dark?: boolean
 }
 
-export default memo(function FileUpload({ onSuccess }: Props) {
+const VALUE_PROPS = [
+  { icon: BookOpen, label: '요약' },
+  { icon: Users, label: '소그룹 자료' },
+  { icon: Image, label: '카드뉴스' },
+  { icon: Film, label: '설교 대본' },
+  { icon: Presentation, label: 'PPT' },
+]
+
+export default memo(function FileUpload({ onSuccess, dark }: Props) {
   const router = useRouter()
   const [isDragging, setIsDragging] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'uploading' | 'parsing' | 'done' | 'error'>('idle')
+  const [progress, setProgress] = useState(0)
   const [fileName, setFileName] = useState('')
   const [fileSize, setFileSize] = useState(0)
   const [preview, setPreview] = useState('')
   const [fullText, setFullText] = useState('')
-  const [previewOpen, setPreviewOpen] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [warningMsg, setWarningMsg] = useState<string | null>(null)
   const [sermonId, setSermonId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<File | null>(null)
+  const progressRef = useRef<number>(0)
+
+  useEffect(() => {
+    if (phase === 'uploading' && progress < 90) {
+      const timer = setInterval(() => {
+        progressRef.current += Math.random() * 15 + 5
+        if (progressRef.current > 90) progressRef.current = 90
+        setProgress(Math.round(progressRef.current))
+      }, 400)
+      return () => clearInterval(timer)
+    }
+  }, [phase, progress])
+
+  useEffect(() => {
+    if (phase === 'done' || phase === 'error') {
+      setProgress(100)
+      progressRef.current = 0
+    }
+  }, [phase])
 
   const handleFile = async (file: File) => {
     setErrorMsg(null)
     setWarningMsg(null)
     setPreview('')
-    setPreviewOpen(false)
     const ext = file.name.split('.').pop()?.toLowerCase()
 
     if (ext === 'doc') {
@@ -48,13 +75,14 @@ export default memo(function FileUpload({ onSuccess }: Props) {
     fileRef.current = file
     setFileName(file.name)
     setFileSize(file.size)
+    progressRef.current = 0
+    setProgress(0)
     setPhase('uploading')
 
     const formData = new FormData()
     formData.append('file', file)
 
     try {
-      setPhase('parsing')
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
 
@@ -86,12 +114,13 @@ export default memo(function FileUpload({ onSuccess }: Props) {
     setFileName('')
     setFileSize(0)
     setPreview('')
-    setPreviewOpen(false)
     setErrorMsg(null)
     setWarningMsg(null)
     setFullText('')
     setSermonId(null)
     fileRef.current = null
+    progressRef.current = 0
+    setProgress(0)
   }
 
   const formatSize = (bytes: number) => {
@@ -100,128 +129,207 @@ export default memo(function FileUpload({ onSuccess }: Props) {
     return `${(bytes / 1024 / 1024).toFixed(1)}MB`
   }
 
+  const accent = dark ? 'indigo' : 'primary'
+  const theme = dark ? 'dark' : 'light'
+
   return (
     <div>
       {phase === 'idle' || phase === 'error' ? (
-        <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-          className={`relative rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
-            isDragging
-              ? 'border-2 border-primary-500 bg-primary-50/80 scale-[1.02]'
-              : phase === 'error'
-                ? 'border-2 border-red-300 bg-red-50/50'
-                : 'border-2 border-dashed border-[#d1d6db] bg-white hover:border-primary-400 hover:bg-primary-50/30 hover:shadow-lg hover:-translate-y-0.5'
-          }`}
-        >
-          {/* 배경 그라데이션 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary-50/0 to-primary-50/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={onDrop}
+            onClick={() => inputRef.current?.click()}
+            className={`relative rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-500 overflow-hidden ${
+              theme === 'dark'
+                ? isDragging
+                  ? 'border-2 border-indigo-400 bg-indigo-500/10 scale-[1.02]'
+                  : phase === 'error'
+                    ? 'border border-red-400/30 bg-red-500/5'
+                    : 'border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-indigo-500/5'
+                : isDragging
+                  ? 'border-2 border-primary-500 bg-primary-50/80 scale-[1.02]'
+                  : phase === 'error'
+                    ? 'border-2 border-red-300 bg-red-50/50'
+                    : 'border-2 border-dashed border-[#d1d6db] bg-white hover:border-primary-400 hover:bg-primary-50/30 hover:shadow-lg hover:-translate-y-0.5'
+            }`}
+          >
+            {theme === 'dark' && !isDragging && phase !== 'error' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-[-50%] left-[-50%] w-full h-full rounded-full bg-indigo-500/3 blur-[100px]" />
+                <div className="absolute bottom-[-50%] right-[-50%] w-full h-full rounded-full bg-purple-500/3 blur-[100px]" />
+              </div>
+            )}
 
-          <div className="relative">
-            <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-all duration-300 ${
-              isDragging ? 'bg-primary-500 scale-110 shadow-lg' : 'bg-[#f0f4ff]'
-            }`}>
-              <Upload className={`w-7 h-7 transition-all duration-300 ${
-                isDragging ? 'text-white' : 'text-primary-500'
-              }`} />
+            <div className="relative">
+              <div className={`w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center transition-all duration-500 ${
+                isDragging
+                  ? theme === 'dark' ? 'bg-indigo-500/20 scale-110' : 'bg-primary-500 scale-110 shadow-lg'
+                  : theme === 'dark' ? 'bg-white/[0.06]' : 'bg-[#f0f4ff]'
+              }`}>
+                <Upload className={`w-7 h-7 transition-all duration-300 ${
+                  isDragging
+                    ? theme === 'dark' ? 'text-indigo-300' : 'text-white'
+                    : theme === 'dark' ? 'text-white/50' : 'text-primary-500'
+                }`} />
+              </div>
+
+              <p className={`font-bold text-[18px] sm:text-[20px] mb-1.5 transition-colors ${
+                isDragging
+                  ? theme === 'dark' ? 'text-indigo-300' : 'text-primary-600'
+                  : theme === 'dark' ? 'text-white/90' : 'text-[#191f28]'
+              }`}>
+                {isDragging ? '파일을 놓으세요' : '설교 원고를 업로드하세요'}
+              </p>
+              <p className={`text-[14px] sm:text-[15px] ${theme === 'dark' ? 'text-white/40' : 'text-[#8b95a1]'}`}>
+                PDF · TXT · DOCX 지원 (최대 20MB)
+              </p>
             </div>
-            <p className={`font-bold text-[17px] mb-1 transition-colors ${
-              isDragging ? 'text-primary-600' : 'text-[#191f28]'
-            }`}>
-              {isDragging ? '파일을 놓으세요' : '설교 원고를 업로드하세요'}
-            </p>
-            <p className="text-[15px] text-[#8b95a1]">PDF, TXT, DOCX 지원 (최대 20MB)</p>
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".txt,.pdf,.docx"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+            />
           </div>
 
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".txt,.pdf,.docx"
-            className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
-          />
+          {theme === 'dark' && phase === 'idle' && (
+            <div className="mt-6 text-center">
+              <p className="text-[13px] text-white/30 mb-3">업로드하면 AI가 6종 콘텐츠를 자동 생성합니다</p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {VALUE_PROPS.map((v, i) => {
+                  const Icon = v.icon
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-white/50 text-[12px] font-medium"
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {v.label}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className={`mt-3 flex items-start gap-3 p-4 rounded-xl ${
+              theme === 'dark' ? 'bg-red-500/10 border border-red-400/20' : 'bg-red-50 border border-red-200'
+            }`}>
+              <AlertCircle className={`w-4 h-4 mt-0.5 shrink-0 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`} />
+              <div>
+                <p className={`text-[14px] font-medium ${theme === 'dark' ? 'text-red-300' : 'text-red-700'} mb-0.5`}>업로드 오류</p>
+                <p className={`text-[14px] ${theme === 'dark' ? 'text-red-400/80' : 'text-red-600/80'}`}>{errorMsg}</p>
+              </div>
+            </div>
+          )}
+
+          {warningMsg && (
+            <div className={`mt-3 flex items-start gap-3 p-4 rounded-xl ${
+              theme === 'dark' ? 'bg-amber-500/10 border border-amber-400/20' : 'bg-amber-50 border border-amber-200'
+            }`}>
+              <AlertCircle className={`w-4 h-4 mt-0.5 shrink-0 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-500'}`} />
+              <p className={`text-[14px] ${theme === 'dark' ? 'text-amber-300' : 'text-amber-700'}`}>{warningMsg}</p>
+            </div>
+          )}
         </div>
       ) : phase === 'uploading' || phase === 'parsing' ? (
-        <div className="rounded-2xl border border-[#e5e8eb] bg-white p-8 text-center animate-scale">
-          <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
-          </div>
-          <p className="font-bold text-[17px] mb-1">{fileName}</p>
-          <p className="text-[15px] text-[#4e5968]">
-            {phase === 'uploading' ? (
-              <span className="flex items-center justify-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '300ms' }} />
-                업로드 중
-              </span>
+        <div className={`rounded-2xl p-8 text-center ${
+          theme === 'dark'
+            ? 'bg-white/[0.03] border border-white/10'
+            : 'border border-[#e5e8eb] bg-white'
+        }`}>
+          <div className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center ${
+            theme === 'dark' ? 'bg-white/[0.06]' : 'bg-primary-50'
+          }`}>
+            {phase === 'parsing' ? (
+              <Sparkles className={`w-6 h-6 ${theme === 'dark' ? 'text-indigo-400' : 'text-primary-500'} animate-pulse`} />
             ) : (
-              <span className="flex items-center justify-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" style={{ animationDelay: '300ms' }} />
-                AI 분석 중
-              </span>
+              <Loader2 className={`w-6 h-6 ${theme === 'dark' ? 'text-white/60' : 'text-primary-500'} animate-spin`} />
             )}
+          </div>
+          <p className={`font-bold text-[17px] mb-1 ${theme === 'dark' ? 'text-white/90' : 'text-[#191f28]'}`}>{fileName}</p>
+          <p className={`text-[14px] mb-4 ${theme === 'dark' ? 'text-white/50' : 'text-[#4e5968]'}`}>
+            {phase === 'uploading' ? '업로드 중...' : 'AI가 설교를 분석하고 있습니다'}
           </p>
+          <div className={`h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
+            <div
+              className={`h-full rounded-full transition-all duration-500 ease-out ${
+                theme === 'dark'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                  : 'bg-gradient-to-r from-primary-400 to-primary-600'
+              }`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className={`text-[11px] mt-2 ${theme === 'dark' ? 'text-white/20' : 'text-slate-400'}`}>{progress}%</p>
         </div>
       ) : phase === 'done' ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50/50 p-5 animate-scale">
+          <div className={`rounded-2xl p-5 ${
+            theme === 'dark'
+              ? 'bg-emerald-500/10 border border-emerald-400/20'
+              : 'border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50/50'
+          }`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-emerald-500/20' : 'bg-green-100'
+                }`}>
+                  <CheckCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-emerald-400' : 'text-green-600'}`} />
                 </div>
                 <div>
-                  <p className="font-bold text-[16px] text-[#191f28]">{fileName}</p>
-                  <p className="text-[14px] text-[#4e5968]">{formatSize(fileSize)} · 텍스트 추출 완료</p>
+                  <p className={`font-bold text-[16px] ${theme === 'dark' ? 'text-white/90' : 'text-[#191f28]'}`}>{fileName}</p>
+                  <p className={`text-[13px] ${theme === 'dark' ? 'text-white/40' : 'text-[#4e5968]'}`}>{formatSize(fileSize)} · 텍스트 추출 완료</p>
                 </div>
               </div>
-              <button onClick={reset} className="w-7 h-7 rounded-lg hover:bg-green-100/50 flex items-center justify-center transition-colors">
-                <X className="w-4 h-4 text-[#8b95a1]" />
+              <button onClick={reset} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                theme === 'dark' ? 'hover:bg-white/[0.06]' : 'hover:bg-green-100/50'
+              }`}>
+                <X className={`w-4 h-4 ${theme === 'dark' ? 'text-white/30' : 'text-[#8b95a1]'}`} />
               </button>
             </div>
           </div>
-          <div className="rounded-2xl border border-[#e5e8eb] bg-white p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Pencil className="w-4 h-4 text-[#8b95a1]" />
-              <span className="font-medium text-[15px] text-[#191f28]">추출된 텍스트</span>
-              <span className="text-[13px] text-[#8b95a1]">({fullText.length.toLocaleString()}자)</span>
+
+          {preview && (
+            <div className={`rounded-2xl p-5 ${
+              theme === 'dark' ? 'bg-white/[0.03] border border-white/10' : 'border border-[#e5e8eb] bg-white'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className={`w-4 h-4 ${theme === 'dark' ? 'text-white/30' : 'text-[#8b95a1]'}`} />
+                <span className={`font-medium text-[15px] ${theme === 'dark' ? 'text-white/70' : 'text-[#191f28]'}`}>추출된 텍스트 미리보기</span>
+                <span className={`text-[12px] ${theme === 'dark' ? 'text-white/20' : 'text-[#8b95a1]'}`}>({fullText.length.toLocaleString()}자)</span>
+              </div>
+              <div className={`max-h-48 overflow-y-auto rounded-xl p-4 text-[13px] leading-relaxed ${
+                theme === 'dark' ? 'bg-black/20 text-white/50' : 'bg-slate-50 text-[#4e5968]'
+              }`}>
+                {preview}
+              </div>
             </div>
-            <textarea
-              value={fullText}
-              onChange={(e) => setFullText(e.target.value)}
-              className="w-full h-64 p-4 border border-[#e5e8eb] rounded-xl text-[14px] text-[#4e5968] leading-relaxed resize-y focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-200"
-            />
-          </div>
+          )}
+
           <button
-            onClick={() => sermonId && onSuccess?.(sermonId)}
-            className="w-full py-3 bg-primary-500 text-white rounded-xl font-bold text-[15px] hover:bg-primary-600 transition-colors"
+            onClick={() => {
+              if (sermonId) {
+                if (onSuccess) { onSuccess(sermonId); return }
+                router.push(`/dashboard/sermons/uploaded/${sermonId}`)
+              }
+            }}
+            className={`w-full py-3.5 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 ${
+              theme === 'dark'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0'
+                : 'bg-primary-500 text-white hover:bg-primary-600'
+            }`}
           >
             분석 결과 보러가기
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       ) : null}
-
-      {errorMsg && (
-        <div className="mt-3 flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 animate-slide-down">
-          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-[15px] font-medium text-red-700 mb-0.5">업로드 오류</p>
-            <p className="text-[15px] text-red-600/80">{errorMsg}</p>
-          </div>
-        </div>
-      )}
-
-      {warningMsg && (
-        <div className="mt-3 flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 animate-slide-down">
-          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-          <p className="text-[15px] text-amber-700">{warningMsg}</p>
-        </div>
-      )}
     </div>
   )
 })

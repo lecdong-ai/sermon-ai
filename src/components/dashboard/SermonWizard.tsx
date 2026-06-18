@@ -7,8 +7,8 @@ import { Sermon } from '@/lib/dashboard/types'
 import { buildWizardContext, PROMPTS } from '@/lib/dashboard/sermonWizardPrompts'
 import { ALL_THEMES, MAJOR_THEMES, SITUATION_TAGS, EMOTION_TAGS } from '@/lib/dashboard/constants'
 import {
-  ArrowLeft, Sparkles, Loader2, Check, Lock, ChevronDown, ChevronRight,
-  BookOpen, MessageSquare, Layers, FileText, Pen, Compass, Zap, Tags, Network, X,
+  ArrowLeft, Sparkles, Loader2, Check, ChevronDown, ChevronRight,
+  BookOpen, MessageSquare, Layers, FileText, Pen, Compass, Zap, Tags, Network, X, Eye, Users,
 } from 'lucide-react'
 
 /* ─── Types ─── */
@@ -21,6 +21,10 @@ interface WizardState {
   bibleText: string
   title: string
   coreMessage: string
+  observationNotes: string
+  audienceProfile: string
+  audienceNeeds: string
+  applicationDirection: string
   outlinePoints: string[]
   outlineDetails: string[]
   gospelConnections: string[]
@@ -33,6 +37,8 @@ interface WizardState {
 const EMPTY: WizardState = {
   bibleBook: '', chapterStart: '', verseStart: '', chapterEnd: '', verseEnd: '',
   bibleText: '', title: '', coreMessage: '',
+  observationNotes: '',
+  audienceProfile: '', audienceNeeds: '', applicationDirection: '',
   outlinePoints: ['', '', ''], outlineDetails: ['', '', ''], gospelConnections: ['', '', ''],
   bodySections: [{ exegesis: '', illustration: '', application: '' }, { exegesis: '', illustration: '', application: '' }, { exegesis: '', illustration: '', application: '' }],
   introduction: '', conclusion: '', manuscript: '',
@@ -41,31 +47,37 @@ const EMPTY: WizardState = {
 /* ─── Step completion checks ─── */
 function stepDone(s: WizardState, step: number): boolean {
   switch (step) {
-    case 1: return !!s.bibleBook && !!s.title
+    case 1: return !!s.bibleBook
     case 2: return stepDone(s, 1) && !!s.coreMessage
-    case 3: return stepDone(s, 2) && s.outlinePoints.every(p => !!p.trim())
-    case 4: return stepDone(s, 3) && s.bodySections.every(b => !!b.exegesis)
-    case 5: return stepDone(s, 4) && !!s.introduction && !!s.conclusion
-    case 6: return stepDone(s, 5) && !!s.manuscript
-    case 7: return stepDone(s, 6)  // optional metadata step
+    case 3: return stepDone(s, 2) && !!s.audienceProfile
+    case 4: return stepDone(s, 3) && s.outlinePoints.every(p => !!p.trim())
+    case 5: return stepDone(s, 4) && s.bodySections.every(b => !!b.exegesis)
+    case 6: return stepDone(s, 5) && !!s.introduction && !!s.conclusion
+    case 7: return stepDone(s, 6) && !!s.manuscript
+    case 8: return stepDone(s, 7)
     default: return false
   }
 }
 
 /* ─── Step components ─── */
-function StepContainer({ num, title, icon: Icon, isActive, isDone, isLocked, children }: {
-  num: number; title: string; icon: any; isActive: boolean; isDone: boolean; isLocked: boolean; children: React.ReactNode
+function StepContainer({ num, title, icon: Icon, isActive, isDone, onSelect, children }: {
+  num: number; title: string; icon: any; isActive: boolean; isDone: boolean; onSelect: () => void; children: React.ReactNode
 }) {
   return (
     <div className={`border rounded-lg transition-all duration-300 ${isActive ? 'border-primary shadow-sm' : isDone ? 'border-green-200 bg-green-50/30' : 'border-border bg-white/50'}`}>
-      <div className={`flex items-center gap-3 px-5 py-3.5 ${isActive ? '' : 'cursor-pointer'}`}>
+      <div className="flex items-center gap-3 px-5 py-3.5 cursor-pointer hover:bg-black/[0.02] transition-colors" onClick={onSelect}>
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isDone ? 'bg-green-500 text-white' : isActive ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
-          {isDone ? <Check className="w-4 h-4" /> : isLocked ? <Lock className="w-3.5 h-3.5" /> : num}
+          {isDone ? <Check className="w-4 h-4" /> : num}
         </div>
         <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : isDone ? 'text-green-600' : 'text-gray-400'}`} />
         <span className={`text-sm font-semibold ${isActive ? 'text-foreground' : isDone ? 'text-green-700' : 'text-gray-400'}`}>{title}</span>
         {isDone && <span className="text-[11px] text-green-600 font-medium ml-auto">완료</span>}
         {isActive && <span className="text-[11px] text-primary font-medium ml-auto">현재 단계</span>}
+        {!isActive && !isDone && (
+          <span className="text-[11px] text-gray-400 font-medium ml-auto flex items-center gap-0.5">
+            <ChevronDown className="w-3 h-3" /> 펼치기
+          </span>
+        )}
       </div>
       {isActive && <div className="px-5 pb-5 pt-1 border-t border-border">{children}</div>}
     </div>
@@ -73,7 +85,6 @@ function StepContainer({ num, title, icon: Icon, isActive, isDone, isLocked, chi
 }
 
 function parsePassageString(passage: string): Partial<WizardState> {
-  // e.g. "이사야 40:28-31" → { bibleBook: "이사야", chapterStart: "40", verseStart: "28", verseEnd: "31" }
   const match = passage.match(/^(.+?)\s*(\d+)\s*:\s*(\d+)\s*(-\s*(\d+))?$/)
   if (match) {
     return {
@@ -84,7 +95,6 @@ function parsePassageString(passage: string): Partial<WizardState> {
       chapterEnd: '',
     }
   }
-  // e.g. "시편 23" (chapter only)
   const chapterOnly = passage.match(/^(.+?)\s*(\d+)$/)
   if (chapterOnly) {
     return {
@@ -123,6 +133,8 @@ function sermonToWizardState(sermon: Sermon, snapshot?: any): WizardState {
     bibleText: '',
     title: sermon.title || '',
     coreMessage: sermon.coreMessage || '',
+    observationNotes: '',
+    audienceProfile: '', audienceNeeds: '', applicationDirection: '',
     outlinePoints: pts as [string, string, string],
     outlineDetails: dets as [string, string, string],
     gospelConnections: ['', '', ''],
@@ -230,15 +242,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
 
   const update = useCallback((patch: Partial<WizardState>) => setS(prev => ({ ...prev, ...patch })), [])
 
-  const lock = (step: number) => {
-    if (step === 1) return false
-    return !stepDone(s, step - 1)
-  }
-
-  const goTo = (step: number) => {
-    if (lock(step)) return
-    setActiveStep(step)
-  }
+  const goTo = (step: number) => setActiveStep(step)
 
   const buildContext = () => buildWizardContext(s)
 
@@ -254,12 +258,13 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }, [])
 
   const handleGenerateTitles = async () => {
-    setLoading(1)
+    setLoading(2)
     try {
       const json = await aiSuggest({
         mode: 'wizard-titles',
         passage: `${s.bibleBook} ${s.chapterStart}:${s.verseStart}${s.verseEnd ? '-' + s.verseEnd : ''}`,
         bibleText: s.bibleText,
+        coreMessage: s.coreMessage,
       })
       if (json.suggestions?.length) {
         const titles = json.suggestions.map((s: any) => s.value).filter(Boolean)
@@ -287,7 +292,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }
 
   const handleGenerateOutline = async () => {
-    setLoading(3)
+    setLoading(4)
     try {
       const json = await aiSuggest({
         mode: 'wizard-outline',
@@ -306,7 +311,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }
 
   const handleGenerateBodySection = async (idx: number, title: string) => {
-    setLoading(4)
+    setLoading(5)
     try {
       const json = await aiSuggest({
         mode: 'wizard-body-section',
@@ -324,10 +329,10 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }
 
   const handleGenerateAllBodySections = async () => {
-    setLoading(4)
+    setLoading(5)
     const ctx = buildContext()
     const results: WizardState['bodySections'] = []
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < s.outlinePoints.length; i++) {
       try {
         const json = await aiSuggest({
           mode: 'wizard-body-section',
@@ -345,7 +350,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }
 
   const handleGenerateIntroConclusion = async () => {
-    setLoading(5)
+    setLoading(6)
     try {
       const json = await aiSuggest({
         mode: 'wizard-intro-conclusion',
@@ -363,7 +368,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   }
 
   const handleGenerateManuscript = async () => {
-    setLoading(6)
+    setLoading(7)
     try {
       const json = await aiSuggest({
         mode: 'wizard-manuscript',
@@ -378,9 +383,30 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     finally { setLoading(null) }
   }
 
+  const addPoint = () => {
+    setS(prev => ({
+      ...prev,
+      outlinePoints: [...prev.outlinePoints, ''],
+      outlineDetails: [...prev.outlineDetails, ''],
+      gospelConnections: [...prev.gospelConnections, ''],
+      bodySections: [...prev.bodySections, { exegesis: '', illustration: '', application: '' }],
+    }))
+  }
+
+  const removePoint = (idx: number) => {
+    if (s.outlinePoints.length <= 1) return
+    setS(prev => ({
+      ...prev,
+      outlinePoints: prev.outlinePoints.filter((_, i) => i !== idx),
+      outlineDetails: prev.outlineDetails.filter((_, i) => i !== idx),
+      gospelConnections: prev.gospelConnections.filter((_, i) => i !== idx),
+      bodySections: prev.bodySections.filter((_, i) => i !== idx),
+    }))
+  }
+
   /* ── Save ── */
   const handleSave = async () => {
-    if (!stepDone(s, 6)) {
+    if (!stepDone(s, 7)) {
       alert('모든 단계를 완료한 후 저장할 수 있습니다.')
       return
     }
@@ -471,17 +497,18 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </button>
         <h2 className="text-xl font-bold">{editId ? '설교 수정' : '설교 작업실'}</h2>
         <div className="flex items-center gap-1 ml-auto text-[11px] text-muted">
-          {[1,2,3,4,5,6,7].map(st => (
-            <div key={st} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${stepDone(s, st) ? 'bg-green-500 text-white' : activeStep === st ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
+          {[1,2,3,4,5,6,7,8].map(st => (
+            <div key={st} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold cursor-pointer hover:opacity-80 transition-opacity ${stepDone(s, st) ? 'bg-green-500 text-white' : activeStep === st ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}
+              onClick={() => goTo(st)}>
               {stepDone(s, st) ? <Check className="w-3 h-3" /> : st}
             </div>
           ))}
         </div>
       </div>
 
-      {/* ═══ Step 1: 본문과 제목 ═══ */}
-      <StepContainer num={1} title="본문과 제목" icon={BookOpen}
-        isActive={activeStep === 1} isDone={stepDone(s, 1)} isLocked={false}>
+      {/* ═══ Step 1: 본문 & 관찰 ═══ */}
+      <StepContainer num={1} title="본문 & 관찰" icon={BookOpen}
+        isActive={activeStep === 1} isDone={stepDone(s, 1)} onSelect={() => goTo(1)}>
         <div className="space-y-4">
           <div className="grid grid-cols-4 gap-2">
             <div className="col-span-2">
@@ -516,7 +543,56 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-medium text-muted mb-1.5">📖 본문 관찰</label>
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-md p-3 mb-2 space-y-1.5 text-[12px] text-indigo-700">
+              <p className="font-medium text-indigo-800">본문을 천천히 읽으며 관찰해보세요:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>반복되는 단어나 표현이 있나요?</li>
+                <li>이 본문이 하나님에 대해 무엇을 말하나요?</li>
+                <li>이 본문이 인간(청중)에 대해 무엇을 말하나요?</li>
+                <li>명령 / 약속 / 경고 / 위로 중 어떤 요소가 있나요?</li>
+              </ul>
+            </div>
+            <textarea value={s.observationNotes} onChange={e => update({ observationNotes: e.target.value })}
+              rows={4} placeholder="관찰한 내용을 자유롭게 기록하세요..."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button type="button" onClick={() => goTo(2)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors">
+              다음 단계 <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </StepContainer>
+
+      {/* ═══ Step 2: 핵심 메시지 & 제목 ═══ */}
+      <StepContainer num={2} title="핵심 메시지 & 제목" icon={MessageSquare}
+        isActive={activeStep === 2} isDone={stepDone(s, 2)} onSelect={() => goTo(2)}>
+        <div className="space-y-4">
+          <p className="text-[12px] text-muted leading-relaxed">
+            회중이 오늘 기억해야 할 한마디는 무엇인가요? 본문의 중심 진리를 간결하게 선포하세요.
+            핵심 메시지가 정해지면 그에 맞는 제목을 추천받을 수 있습니다.
+          </p>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-muted">핵심 메시지</label>
+              <button type="button" onClick={async () => {
+                const result = await handleGenerateCoreMessage()
+                if (result?.[0]) update({ coreMessage: result[0].value })
+              }} disabled={loading === 2}
+                className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
+                {loading === 2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                AI 추천
+              </button>
+            </div>
+            <textarea value={s.coreMessage} onChange={e => update({ coreMessage: e.target.value })}
+              rows={3} placeholder="설교의 핵심 메시지를 한 문단으로 요약하세요."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-medium text-muted">설교 제목</label>
               <button type="button" onClick={async () => {
                 const result = await handleGenerateTitles()
@@ -524,47 +600,18 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
                   const chosen = result.titles[0]
                   if (chosen) update({ title: chosen })
                 }
-              }} disabled={loading === 1 || !s.bibleBook}
+              }} disabled={loading === 2 || !s.coreMessage}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-                {loading === 1 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {loading === 2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                 AI 제목 추천
               </button>
             </div>
             <input type="text" value={s.title} onChange={e => update({ title: e.target.value })}
-              placeholder="설교 제목을 입력하거나 AI 추천을 받으세요"
+              placeholder="핵심 메시지에 기반한 설교 제목"
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light" />
           </div>
-
-          <div className="flex justify-end pt-2">
-            <button type="button" onClick={() => { if (stepDone(s, 1)) goTo(2) }}
-              disabled={!stepDone(s, 1)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
-              다음 단계 <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </StepContainer>
-
-      {/* ═══ Step 2: 핵심 메시지 ═══ */}
-      <StepContainer num={2} title="핵심 메시지" icon={MessageSquare}
-        isActive={activeStep === 2} isDone={stepDone(s, 2)} isLocked={lock(2)}>
-        <div className="space-y-3">
-          <p className="text-[12px] text-muted leading-relaxed">회중이 오늘 기억해야 할 한마디는 무엇인가요? 본문의 중심 진리를 간결하게 선포하세요.</p>
-          <div className="flex justify-end">
-            <button type="button" onClick={async () => {
-              const result = await handleGenerateCoreMessage()
-              if (result?.[0]) update({ coreMessage: result[0].value })
-            }} disabled={loading === 2}
-              className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              AI 추천
-            </button>
-          </div>
-          <textarea value={s.coreMessage} onChange={e => update({ coreMessage: e.target.value })}
-            rows={3} placeholder="설교의 핵심 메시지를 한 문단으로 요약하세요."
-            className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
           <div className="flex justify-end pt-1">
-            <button type="button" onClick={() => { if (stepDone(s, 2)) goTo(3) }}
+            <button type="button" onClick={() => goTo(3)}
               disabled={!stepDone(s, 2)}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
               다음 단계 <ChevronRight className="w-4 h-4" />
@@ -573,25 +620,82 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </div>
       </StepContainer>
 
-      {/* ═══ Step 3: 3대지 구조 ═══ */}
-      <StepContainer num={3} title="3대지 구조" icon={Layers}
-        isActive={activeStep === 3} isDone={stepDone(s, 3)} isLocked={lock(3)}>
+      {/* ═══ Step 3: 청중 분석 & 적용 방향 ═══ */}
+      <StepContainer num={3} title="청중 분석 & 적용 방향" icon={Users}
+        isActive={activeStep === 3} isDone={stepDone(s, 3)} onSelect={() => goTo(3)}>
+        <div className="space-y-4">
+          <div className="bg-emerald-50/50 border border-emerald-100 rounded-md p-3 space-y-1.5 text-[12px] text-emerald-700">
+            <p className="font-medium text-emerald-800">🎯 청중을 고려할수록 설교가 살아납니다:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>내일 주일, 내 교회 성도들은 어떤 마음으로 예배드리러 올까요?</li>
+              <li>그들이 현재 가장 고민하는 것은 무엇일까요?</li>
+              <li>이 본문이 그들의 삶에 어떤 질문을 던질까요?</li>
+              <li>이 설교를 듣고 그들이 어떻게 변하길 바라나요?</li>
+            </ul>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1">누구에게 설교하는가? (청중 프로필)</label>
+            <textarea value={s.audienceProfile} onChange={e => update({ audienceProfile: e.target.value })}
+              rows={2} placeholder="예: 30-40대 직장인 위주, 신앙생활 5년 미만 초신자, 주중 바쁜 생활..."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1">청중의 현재 상황 · 질문 · 아픔</label>
+            <textarea value={s.audienceNeeds} onChange={e => update({ audienceNeeds: e.target.value })}
+              rows={3} placeholder="예: 직장에서의 신앙 정체성 고민, 육아와 신앙의 균형, 불안과 염려..."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1">이 설교를 통해 청중이 얻길 바라는 적용 방향</label>
+            <textarea value={s.applicationDirection} onChange={e => update({ applicationDirection: e.target.value })}
+              rows={2} placeholder="예: 삶의 현장에서 구체적인 순종, 두려움을 믿음으로 전환..."
+              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+          </div>
+          <div className="flex justify-end pt-1">
+            <button type="button" onClick={() => goTo(4)}
+              disabled={!stepDone(s, 3)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
+              다음 단계 <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </StepContainer>
+
+      {/* ═══ Step 4: 3대지 구조 ═══ */}
+      <StepContainer num={4} title="3대지 구조" icon={Layers}
+        isActive={activeStep === 4} isDone={stepDone(s, 4)} onSelect={() => goTo(4)}>
         <div className="space-y-4">
           <p className="text-[12px] text-muted leading-relaxed">본문의 흐름을 따라 3대지를 세웁니다. 각 대지는 문장형으로, 서로 중복되지 않고 논리적으로 연결되어야 합니다.</p>
           <div className="flex justify-end">
             <button type="button" onClick={async () => {
               const result = await handleGenerateOutline()
-              if (result) update({ outlinePoints: result.points, outlineDetails: result.details, gospelConnections: result.gospels })
-            }} disabled={loading === 3}
+              if (result) {
+                const len = result.points.length
+                const sections = [...s.bodySections]
+                while (sections.length < len) sections.push({ exegesis: '', illustration: '', application: '' })
+                update({
+                  outlinePoints: result.points,
+                  outlineDetails: result.details,
+                  gospelConnections: result.gospels,
+                  bodySections: sections.slice(0, len),
+                })
+              }
+            }} disabled={loading === 4}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 3 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {loading === 4 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
               3대지 AI 추천
             </button>
           </div>
-          {[0,1,2].map(idx => (
+          {s.outlinePoints.map((_, idx) => (
             <div key={idx} className="border border-border rounded-md p-3 space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">대지 {idx + 1}</span>
+                {s.outlinePoints.length > 1 && (
+                  <button type="button" onClick={() => removePoint(idx)}
+                    className="text-[11px] text-rose-500 hover:text-rose-700 transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
               <input type="text" value={s.outlinePoints[idx] || ''} onChange={e => {
                 const pts = [...s.outlinePoints]; pts[idx] = e.target.value; update({ outlinePoints: pts })
@@ -603,9 +707,13 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
                 className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
             </div>
           ))}
+          <button type="button" onClick={addPoint}
+            className="w-full py-2.5 border-2 border-dashed border-border rounded-md text-sm font-medium text-muted hover:text-primary hover:border-primary transition-colors flex items-center justify-center gap-1.5">
+            + 대지 추가
+          </button>
           <div className="flex justify-end pt-1">
-            <button type="button" onClick={() => { if (stepDone(s, 3)) goTo(4) }}
-              disabled={!stepDone(s, 3)}
+            <button type="button" onClick={() => goTo(5)}
+              disabled={!stepDone(s, 4)}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
               다음 단계 <ChevronRight className="w-4 h-4" />
             </button>
@@ -613,34 +721,34 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </div>
       </StepContainer>
 
-      {/* ═══ Step 4: 대지별 전개 ═══ */}
-      <StepContainer num={4} title="대지별 전개 (본문해설 · 예화 · 적용)" icon={Pen}
-        isActive={activeStep === 4} isDone={stepDone(s, 4)} isLocked={lock(4)}>
+      {/* ═══ Step 5: 대지별 전개 ═══ */}
+      <StepContainer num={5} title="대지별 전개 (본문해설 · 예화 · 적용)" icon={Pen}
+        isActive={activeStep === 5} isDone={stepDone(s, 5)} onSelect={() => goTo(5)}>
         <div className="space-y-4">
           <p className="text-[12px] text-muted leading-relaxed">각 대지를 본문해설, 예화, 적용으로 발전시킵니다. AI가 모든 대지를 한 번에 생성할 수 있습니다.</p>
           <div className="flex justify-end">
-            <button type="button" onClick={handleGenerateAllBodySections} disabled={loading === 4}
+            <button type="button" onClick={handleGenerateAllBodySections} disabled={loading === 5}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 4 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+              {loading === 5 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
               모든 대지 AI 생성
             </button>
           </div>
-          {[0,1,2].map(idx => (
+          {s.outlinePoints.map((pt, idx) => (
             <div key={idx} className="border border-border rounded-md p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                  대지 {idx + 1}: {s.outlinePoints[idx] || '(제목 없음)'}
+                  대지 {idx + 1}: {pt || '(제목 없음)'}
                 </span>
                 <button type="button" onClick={async () => {
-                  const result = await handleGenerateBodySection(idx, s.outlinePoints[idx] || '')
+                  const result = await handleGenerateBodySection(idx, pt || '')
                   if (result) {
                     const sections = [...s.bodySections]
                     sections[idx] = result
                     update({ bodySections: sections })
                   }
-                }} disabled={loading === 4}
+                }} disabled={loading === 5}
                   className="text-[11px] text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-                  {loading === 4 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {loading === 5 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                   AI 생성
                 </button>
               </div>
@@ -668,8 +776,8 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
             </div>
           ))}
           <div className="flex justify-end pt-1">
-            <button type="button" onClick={() => { if (stepDone(s, 4)) goTo(5) }}
-              disabled={!stepDone(s, 4)}
+            <button type="button" onClick={() => goTo(6)}
+              disabled={!stepDone(s, 5)}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
               다음 단계 <ChevronRight className="w-4 h-4" />
             </button>
@@ -677,15 +785,15 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </div>
       </StepContainer>
 
-      {/* ═══ Step 5: 서론과 결론 ═══ */}
-      <StepContainer num={5} title="서론과 결론" icon={FileText}
-        isActive={activeStep === 5} isDone={stepDone(s, 5)} isLocked={lock(5)}>
+      {/* ═══ Step 6: 서론 & 결론 ═══ */}
+      <StepContainer num={6} title="서론 & 결론" icon={FileText}
+        isActive={activeStep === 6} isDone={stepDone(s, 6)} onSelect={() => goTo(6)}>
         <div className="space-y-4">
           <p className="text-[12px] text-muted leading-relaxed">모든 내용을 바탕으로 서론과 결론을 작성합니다.</p>
           <div className="flex justify-end">
-            <button type="button" onClick={handleGenerateIntroConclusion} disabled={loading === 5}
+            <button type="button" onClick={handleGenerateIntroConclusion} disabled={loading === 6}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 5 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {loading === 6 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
               AI 생성
             </button>
           </div>
@@ -702,24 +810,24 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
           </div>
           <div className="flex justify-end pt-1">
-            <button type="button" onClick={() => { if (stepDone(s, 5)) goTo(6) }}
-              disabled={!stepDone(s, 5)}
+            <button type="button" onClick={() => goTo(7)}
+              disabled={!stepDone(s, 6)}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
-              마지막 단계 <ChevronRight className="w-4 h-4" />
+              다음 단계 <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </StepContainer>
 
-      {/* ═══ Step 6: 완성 원고 ═══ */}
-      <StepContainer num={6} title="완성 원고" icon={FileText}
-        isActive={activeStep === 6} isDone={stepDone(s, 6)} isLocked={lock(6)}>
+      {/* ═══ Step 7: 완성 원고 ═══ */}
+      <StepContainer num={7} title="완성 원고" icon={FileText}
+        isActive={activeStep === 7} isDone={stepDone(s, 7)} onSelect={() => goTo(7)}>
         <div className="space-y-4">
           <p className="text-[12px] text-muted leading-relaxed">지금까지 준비한 모든 내용을 하나의 완성된 설교 원고로 조립합니다. AI가 통합 원고를 생성하거나 직접 작성하세요.</p>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={handleGenerateManuscript} disabled={loading === 6}
+            <button type="button" onClick={handleGenerateManuscript} disabled={loading === 7}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 6 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {loading === 7 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
               AI 원고 생성
             </button>
           </div>
@@ -727,8 +835,8 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
             rows={16} placeholder="완성된 설교 원고가 여기에 표시됩니다."
             className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed" />
           <div className="flex justify-end pt-2">
-            <button type="button" onClick={() => goTo(7)}
-              disabled={!stepDone(s, 6)}
+            <button type="button" onClick={() => goTo(8)}
+              disabled={!stepDone(s, 7)}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
               태그 설정하기 <ChevronRight className="w-4 h-4" />
             </button>
@@ -736,9 +844,9 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </div>
       </StepContainer>
 
-      {/* ═══ Step 7: 태그 & 저장 ═══ */}
-      <StepContainer num={7} title="태그 & 저장" icon={Tags}
-        isActive={activeStep === 7} isDone={stepDone(s, 7)} isLocked={lock(7)}>
+      {/* ═══ Step 8: 태그 & 저장 ═══ */}
+      <StepContainer num={8} title="태그 & 저장" icon={Tags}
+        isActive={activeStep === 8} isDone={stepDone(s, 8)} onSelect={() => goTo(8)}>
         <div className="space-y-5">
           <p className="text-[12px] text-muted leading-relaxed">
             설교 내용을 분석하여 관련 태그를 선택하면 지식 그래프에 자동 연결됩니다.
@@ -843,7 +951,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
 
           {/* 저장 버튼 */}
           <div className="flex justify-end pt-2 border-t border-border">
-            <button type="button" onClick={handleSave} disabled={saving || !stepDone(s, 6)}
+            <button type="button" onClick={handleSave} disabled={saving || !stepDone(s, 7)}
               className="flex items-center gap-1.5 px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {saving ? '저장 중...' : (editId ? '수정 완료' : '설교 원고 저장하기')}

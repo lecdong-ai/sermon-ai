@@ -14,8 +14,12 @@ export function buildWizardContext(state: Record<string, any>): string {
     parts.push(`[성경 본문] ${passageRef}`)
   }
   if (state.bibleText) parts.push(`[본문 전문]\n${state.bibleText}`)
+  if (state.observationNotes) parts.push(`[본문 관찰]\n${state.observationNotes}`)
   if (state.title) parts.push(`[설교 제목] ${state.title}`)
   if (state.coreMessage) parts.push(`[핵심 메시지] ${state.coreMessage}`)
+  if (state.audienceProfile) parts.push(`[청중 프로필] ${state.audienceProfile}`)
+  if (state.audienceNeeds) parts.push(`[청중 상황/질문] ${state.audienceNeeds}`)
+  if (state.applicationDirection) parts.push(`[적용 방향] ${state.applicationDirection}`)
   if (state.outlinePoints?.length) {
     const outlineStr = state.outlinePoints.map((t: string, i: number) => {
       const detail = state.outlineDetails?.[i] || ''
@@ -98,6 +102,7 @@ ${PRINCIPLES}
 1. 본문해설 (exegesis): 이 대지가 본문의 어느 부분에 해당하는지 설명하고, 원어의 의미나 문맥을 풀어주세요. (200~300자)
 2. 예화 (illustration): 회중이 공감할 수 있는 실제적인 이야기나 사례를 들어주세요. (150~250자)
 3. 구체적 적용 (application): "이번 주, 오늘" 회중이 어떻게 살아야 할지 구체적으로 제시하세요. (150~250자)
+- [청중 프로필], [청중 상황/질문], [적용 방향]이 제공된 경우 적용과 예화에 적극 반영하라
 
 반드시 JSON 객체 형식으로 응답하세요.`,
     user: `${context}\n\n이것이 ${pointIndex + 1}번째 대지 "${pointTitle}"입니다. 위 형식으로 전개해 주세요.\n\n{"exegesis": "본문해설", "illustration": "예화", "application": "적용"}`,
@@ -111,6 +116,7 @@ ${PRINCIPLES}
 [서론 원칙]
 - 회중의 관심을 끌고 본문으로 자연스럽게 인도하라
 - 본문의 배경이나 상황을 간략히 소개하라
+- [청중 프로필], [청중 상황/질문]이 제공된 경우 서론에 청중의 현실을 반영하라
 - 3~5문장으로 간결하게
 - 설교형 문장으로 선포하듯 써라
 
@@ -118,6 +124,7 @@ ${PRINCIPLES}
 - 3대지를 요약하고 핵심 메시지로 수렴하라
 - 그리스도의 은혜와 복음으로 마무리하라
 - 회중이 오늘날 어떻게 살아야 할지 구체적으로 도전하라
+- [적용 방향]이 제공된 경우 결론에 반영하라
 - 기도나 고백으로 마무리할 수 있다
 - 4~6문장으로
 
@@ -140,9 +147,7 @@ ${PRINCIPLES}
 
 [원고 구조]
 **서론** (본문 배경, 설교 주제 제시)
-**대지 1** (본문해설 → 예화 → 복음연결 → 적용)
-**대지 2** (본문해설 → 예화 → 복음연결 → 적용)
-**대지 3** (본문해설 → 예화 → 복음연결 → 적용)
+**각 대지** (본문해설 → 예화 → 복음연결 → 적용) — 대지 개수는 아래 [3대지 구조]를 따를 것
 **결론** (핵심 요약, 복음 재선포, 구체적 도전, 축도)
 
 [필수 지침]
@@ -150,6 +155,7 @@ ${PRINCIPLES}
 - 매우 상세하고 풍성하게 작성하라
 - 분량은 반드시 ${target}를 충족해야 한다
 - 설교형 문장으로 강단에서 선포하듯 생동감 있게 써라
+- [청중 프로필], [청중 상황/질문], [적용 방향]이 제공된 경우, 이를 적극 반영하여 적용 부분을 구체적으로 작성하라
 
 반드시 JSON 객체 형식으로 응답하세요.`,
       user: `${context}\n\n{"value": "완전한 설교 원고 전문"}`,

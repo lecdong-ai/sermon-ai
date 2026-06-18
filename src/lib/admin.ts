@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase'
 import type { User } from '@supabase/supabase-js'
+import { grantSupporter } from './donations'
 
 const ADMIN_EMAILS = ['lecdong@gmail.com']
 
@@ -7,10 +8,50 @@ function isAdminFromMeta(user: User): boolean {
   return !!(user.app_metadata as any)?.is_admin || ADMIN_EMAILS.includes(user.email || '')
 }
 
+export async function ensureAdminSupporter(userId: string): Promise<void> {
+  try {
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
+    const meta = (user?.user?.app_metadata as any) || {}
+    if (meta.supporter_until && new Date(meta.supporter_until) > new Date()) return
+  } catch {
+    // fallback
+  }
+
+  try {
+    const { data: usage } = await supabaseAdmin
+      .from('user_usage')
+      .select('supporter_until')
+      .eq('user_id', userId)
+      .single()
+    if (usage?.supporter_until && new Date(usage.supporter_until) > new Date()) return
+  } catch {
+    // column may not exist
+  }
+
+  await grantSupporter(userId, 3650)
+}
+
 export async function isAdmin(userId: string): Promise<boolean> {
-  const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
-  if (!user?.user) return false
-  return isAdminFromMeta(user.user)
+  const { data: profile } = await supabaseAdmin
+    .from('user_profiles')
+    .select('role, email')
+    .eq('id', userId)
+    .single()
+
+  let admin = false
+
+  if (profile?.role === 'admin') admin = true
+  else if (profile?.email && ADMIN_EMAILS.includes(profile.email)) admin = true
+  else {
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId).catch(() => ({ data: null }))
+    if (user?.user && isAdminFromMeta(user.user)) admin = true
+  }
+
+  if (admin) {
+    await ensureAdminSupporter(userId).catch(() => {})
+  }
+
+  return admin
 }
 
 export async function setAdminRole(userId: string): Promise<boolean> {
@@ -35,6 +76,7 @@ export async function getAllUsers() {
     email: u.email,
     name: profileMap.get(u.id)?.name || null,
     role: isAdminFromMeta(u) ? 'admin' : 'user',
+    supporter_until: (u.app_metadata as any)?.supporter_until || null,
     created_at: u.created_at,
     last_sign_in_at: u.last_sign_in_at,
     confirmed_at: u.confirmed_at,
@@ -47,22 +89,39 @@ export async function getUserStats() {
 
   const adminCount = authUsers?.users.filter(u => isAdminFromMeta(u)).length || 0
 
-  const { data: subscriptions } = await supabaseAdmin
-    .from('subscriptions')
-    .select('plan, status')
+  const now = new Date().toISOString()
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const monthStartStr = monthStart.toISOString()
 
-  const { data: paymentSum } = await supabaseAdmin
-    .from('payment_history')
-    .select('amount, status')
+  const activeSupporters = authUsers?.users.filter(u => {
+    const until = (u.app_metadata as any)?.supporter_until
+    return until && new Date(until) > new Date()
+  }).length || 0
 
-  const activeSubs = subscriptions?.filter(s => s.status === 'active') || []
-  const totalRevenue = paymentSum?.filter(p => p.status === 'succeeded').reduce((s, p) => s + p.amount, 0) || 0
-  const activeSubscriptions = activeSubs.length
-  const proUsers = activeSubs.filter(s => s.plan === 'pro').length
-  const basicUsers = activeSubs.filter(s => s.plan === 'basic').length
-  const trialUsers = Math.max(0, totalUsers - adminCount - proUsers - basicUsers)
+  const newUsersThisMonth = authUsers?.users.filter(u => u.created_at >= monthStartStr).length || 0
 
-  return { totalUsers, totalRevenue, activeSubscriptions, adminCount, planDistribution: { pro: proUsers, basic: basicUsers, trial: trialUsers } }
+  const { count: totalSermons } = await supabaseAdmin
+    .from('sermons')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: sermonsThisMonth } = await supabaseAdmin
+    .from('sermons')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', monthStartStr)
+
+  const supporterRate = totalUsers > 0 ? Math.round((activeSupporters / totalUsers) * 100) : 0
+
+  return {
+    totalUsers,
+    adminCount,
+    activeSupporters,
+    newUsersThisMonth,
+    totalSermons: totalSermons || 0,
+    sermonsThisMonth: sermonsThisMonth || 0,
+    supporterRate,
+  }
 }
 
 export async function getUsageLogs(limit = 50, offset = 0) {

@@ -1,0 +1,60 @@
+import { supabaseAdmin } from './supabase'
+
+export async function checkSupporterAccess(userId: string): Promise<boolean> {
+  let meta: Record<string, any> = {}
+  try {
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
+    meta = (user?.user?.app_metadata as any) || {}
+  } catch {
+    meta = {}
+  }
+  if (meta.supporter_until) {
+    return new Date(meta.supporter_until) > new Date()
+  }
+
+  try {
+    const { data } = await supabaseAdmin
+      .from('user_usage')
+      .select('supporter_until')
+      .eq('user_id', userId)
+      .single()
+    if (data?.supporter_until) {
+      return new Date(data.supporter_until) > new Date()
+    }
+  } catch {
+    // column may not exist yet
+  }
+  return false
+}
+
+export async function grantSupporter(
+  userId: string,
+  days: number,
+): Promise<boolean> {
+  const now = new Date()
+  const until = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+
+  let metaOk = false
+  try {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      app_metadata: { supporter_until: until } as any,
+    })
+    metaOk = !error
+    if (error) console.error('grantSupporter (app_metadata) error:', error)
+  } catch (e) {
+    console.error('grantSupporter (app_metadata) error:', e)
+  }
+
+  try {
+    await supabaseAdmin
+      .from('user_usage')
+      .upsert(
+        { user_id: userId, supporter_until: until },
+        { onConflict: 'user_id' },
+      )
+  } catch (e) {
+    console.error('grantSupporter (user_usage) error:', e)
+  }
+
+  return metaOk
+}

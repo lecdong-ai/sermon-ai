@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getUserFromRequest } from '@/lib/auth'
 import { generateStudyGuide } from '@/lib/openai'
-import { checkUsage, consumeWorkspaceUsage } from '@/lib/usage'
+
 import type { StudyGuideInput } from '@/types'
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -24,11 +24,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     if (existing.user_id !== user.id) {
       return NextResponse.json({ success: false, error: '접근 권한이 없습니다.' }, { status: 403 })
-    }
-
-    const usageInfo = await checkUsage(user.id)
-    if (usageInfo.workspace.remaining <= 0) {
-      return NextResponse.json({ success: false, error: '설교원고제작 사용 한도를 초과했습니다.' }, { status: 403 })
     }
 
     const input = existing.input_data as StudyGuideInput
@@ -56,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     if (error) throw error
 
-    await consumeWorkspaceUsage(user.id).catch(() => {})
+
 
     return NextResponse.json({ success: true, data })
   } catch (err: any) {

@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       const ve = parseInt(verseEnd || verseStart || '1')
       const count = ve - vs + 1
       userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
-      model = 'gpt-5.4-mini'
+      model = 'gpt-4o-mini'
       maxTokens = 128000
       temperature = 0.3
     } else if (type === 'word-lookup') {
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
-      model = 'gpt-5.4-mini'
+      model = 'gpt-4o-mini'
       maxTokens = 128000
     } else {
       const s = data.sermon

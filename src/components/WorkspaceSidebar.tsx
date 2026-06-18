@@ -3,7 +3,6 @@
 import { X, Share2, FileDown, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload } from 'lucide-react'
 import Link from 'next/link'
 import type { SermonRecord } from '@/types'
-import UsageSidebarBadge from './UsageSidebarBadge'
 
 interface NavItem {
   id: string
@@ -73,9 +72,6 @@ export default function WorkspaceSidebar({
               <X className="w-3.5 h-3.5 text-[#4a4744]" />
             </button>
           </div>
-
-          {/* 사용량 */}
-          <UsageSidebarBadge />
 
           {/* 업로드된 설교 버튼 */}
           <div className="px-5 pt-3">

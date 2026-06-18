@@ -4,7 +4,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { validateFile, parseFile } from '@/lib/parsers'
 import { generateAll } from '@/lib/openai'
 import { getMockResult } from '@/lib/mock'
-import { checkUsage, consumeUsage } from '@/lib/usage'
 import { generateWithDeduction } from '@/lib/generation'
 
 function getSupabaseAdmin(request: NextRequest) {
@@ -77,21 +76,7 @@ export async function POST(request: NextRequest) {
     }
     const userId = user.id
 
-    // 3. 사용량 체크
-    const usageInfo = await checkUsage(userId)
-    if (!usageInfo.can_generate) {
-      const errorMsg = usageInfo.block_reason === 'trial_expired' ? '무료체험 기간이 만료되었습니다.' :
-        usageInfo.block_reason === 'trial_exhausted' ? '무료 분석 횟수를 모두 사용했습니다.' :
-        '사용 한도를 초과했습니다.'
-      return NextResponse.json({
-        success: false,
-        error: errorMsg,
-        usage_limit: true,
-        block_reason: usageInfo.block_reason,
-      }, { status: 403 })
-    }
-
-    // 4. Supabase에 저장
+    // 3. Supabase에 저장
     const { data: sermon, error: insertError } = await supabaseAdmin
       .from('sermons')
       .insert({
@@ -138,8 +123,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 6. 사용량 차감
-    await consumeUsage(userId).catch(() => {})
+
 
     // 7. 결과 업데이트 (재시도 포함)
     const updates: Record<string, any> = { result }
@@ -218,13 +202,10 @@ export async function PUT(request: NextRequest) {
     })
 
     if (!genResult.success) {
-      const status = genResult.block_reason ? 403 : 500
       return NextResponse.json({
         success: false,
         error: genResult.error,
-        block_reason: genResult.block_reason,
-        deduction: genResult.deduction,
-      }, { status })
+      }, { status: 500 })
     }
 
     // 기존 결과와 병합
@@ -240,8 +221,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       ...genResult.data,
-      deduction: genResult.deduction,
-      remaining: genResult.remaining,
     })
   } catch (err: any) {
     console.error('Regenerate error:', err)
