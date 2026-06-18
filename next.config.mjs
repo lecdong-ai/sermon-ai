@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  metadataBase: new URL('https://bunker.ai.kr'),
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [

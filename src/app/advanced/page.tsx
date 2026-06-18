@@ -243,7 +243,7 @@ export default function AdvancedDashboardPage() {
           </div>
         </section>
 
-        {/* ─── 2. AI Search Experience (Ask SermonAI) ─── */}
+        {/* ─── 2. AI Search Experience (Ask Bunker 목양) ─── */}
         <section className="relative glass-dark p-8 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
           {/* 글로잉 내부 장식 */}
           <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -251,7 +251,7 @@ export default function AdvancedDashboardPage() {
           <div className="max-w-2xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold">
               <Sparkles className="w-3 h-3 text-indigo-400 animate-bounce" />
-              SermonAI Cognitive Search
+              Bunker 목양 Cognitive Search
             </div>
             
             <div className="space-y-2">
@@ -270,7 +270,7 @@ export default function AdvancedDashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Ask SermonAI: '은혜에 관한 로마서 설교 중 요약본이 완성된 것들만 보여줘...'"
+                  placeholder="Bunker 목양에게 물어보세요: '은혜에 관한 로마서 설교 중 요약본이 완성된 것들만 보여줘...'"
                   className="w-full bg-transparent text-[14px] text-slate-100 placeholder:text-slate-600 outline-none px-4 py-4 font-medium"
                 />
                 {searchQuery && (
@@ -547,7 +547,7 @@ export default function AdvancedDashboardPage() {
                 <BrainCircuit className="w-5 h-5 text-indigo-400 animate-pulse" />
               </div>
               <div>
-                <h4 className="text-[17px] font-bold text-white">SermonAI 목회 콘텐츠 생성</h4>
+                <h4 className="text-[17px] font-bold text-white">Bunker 목양 컨텐츠 생성</h4>
                 <p className="text-[11px] text-slate-500 font-semibold">{activeActionSermon.title} · {activeActionSermon.passage}</p>
               </div>
             </div>

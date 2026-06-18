@@ -39,12 +39,14 @@ export async function middleware(request: NextRequest) {
   const isPublic = publicRoutes.some((route) => pathname === route) ||
     publicPrefixes.some((prefix) => pathname.startsWith(prefix))
 
-  const nonce = generateNonce()
   const response = NextResponse.next({ request })
 
-  // CSP with nonce (replaces unsafe-inline)
-  response.headers.set('Content-Security-Policy', buildCsp(nonce))
-  response.headers.set('x-nonce', nonce)
+  // CSP: production only (dev mode needs relaxed CSP for webpack HMR)
+  if (process.env.NODE_ENV === 'production') {
+    const nonce = generateNonce()
+    response.headers.set('Content-Security-Policy', buildCsp(nonce))
+    response.headers.set('x-nonce', nonce)
+  }
 
   if (!hasSupabaseConfig) {
     if (!isPublic && !pathname.startsWith('/advanced')) {
