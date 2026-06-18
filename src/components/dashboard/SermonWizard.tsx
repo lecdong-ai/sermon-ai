@@ -370,16 +370,41 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const handleGenerateManuscript = async () => {
     setLoading(7)
     try {
+      const ctx = buildContext()
+      console.log('[Manuscript] Context length:', ctx.length)
       const json = await aiSuggest({
         mode: 'wizard-manuscript',
-        context: buildContext(),
+        context: ctx,
         length: '30분',
       })
       const text = json.text || json.data?.value || json.value || ''
       if (text) {
         update({ manuscript: text })
+      } else {
+        alert('AI가 원고를 생성하지 못했습니다. 이전 단계 내용을 확인해주세요.')
       }
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) {
+      console.error('[Manuscript] Error:', e)
+      alert(e.message || '원고 생성 중 오류가 발생했습니다.')
+    }
+    finally { setLoading(null) }
+  }
+
+  const handleAnalyzeAudience = async () => {
+    setLoading(3)
+    try {
+      const json = await aiSuggest({
+        mode: 'wizard-audience-analysis',
+        context: buildContext(),
+      })
+      const data = json.data || {}
+      if (data.audienceProfile) update({ audienceProfile: data.audienceProfile })
+      if (data.audienceNeeds) update({ audienceNeeds: Array.isArray(data.audienceNeeds) ? data.audienceNeeds.join('\n') : data.audienceNeeds })
+      if (data.applicationDirection) update({ applicationDirection: data.applicationDirection })
+    } catch (e: any) {
+      console.error('[Audience] Error:', e)
+      alert(e.message || '청중 분석 중 오류가 발생했습니다.')
+    }
     finally { setLoading(null) }
   }
 
@@ -624,14 +649,21 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
       <StepContainer num={3} title="청중 분석 & 적용 방향" icon={Users}
         isActive={activeStep === 3} isDone={stepDone(s, 3)} onSelect={() => goTo(3)}>
         <div className="space-y-4">
-          <div className="bg-emerald-50/50 border border-emerald-100 rounded-md p-3 space-y-1.5 text-[12px] text-emerald-700">
-            <p className="font-medium text-emerald-800">🎯 청중을 고려할수록 설교가 살아납니다:</p>
-            <ul className="list-disc pl-4 space-y-0.5">
-              <li>내일 주일, 내 교회 성도들은 어떤 마음으로 예배드리러 올까요?</li>
-              <li>그들이 현재 가장 고민하는 것은 무엇일까요?</li>
-              <li>이 본문이 그들의 삶에 어떤 질문을 던질까요?</li>
-              <li>이 설교를 듣고 그들이 어떻게 변하길 바라나요?</li>
-            </ul>
+          <div className="flex items-center justify-between">
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-md p-3 space-y-1.5 text-[12px] text-emerald-700">
+              <p className="font-medium text-emerald-800">🎯 청중을 고려할수록 설교가 살아납니다:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>내일 주일, 내 교회 성도들은 어떤 마음으로 예배드리러 올까요?</li>
+                <li>그들이 현재 가장 고민하는 것은 무엇일까요?</li>
+                <li>이 본문이 그들의 삶에 어떤 질문을 던질까요?</li>
+                <li>이 설교를 듣고 그들이 어떻게 변하길 바라나요?</li>
+              </ul>
+            </div>
+            <button type="button" onClick={handleAnalyzeAudience} disabled={loading === 3}
+              className="ml-3 shrink-0 text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
+              {loading === 3 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              AI 청중 분석
+            </button>
           </div>
           <div>
             <label className="block text-xs font-medium text-muted mb-1">누구에게 설교하는가? (청중 프로필)</label>
