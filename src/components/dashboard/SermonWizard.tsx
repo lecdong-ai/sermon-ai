@@ -8,7 +8,7 @@ import { buildWizardContext, PROMPTS } from '@/lib/dashboard/sermonWizardPrompts
 import { ALL_THEMES, MAJOR_THEMES, SITUATION_TAGS, EMOTION_TAGS } from '@/lib/dashboard/constants'
 import {
   ArrowLeft, Sparkles, Loader2, Check, ChevronDown, ChevronRight,
-  BookOpen, MessageSquare, Layers, FileText, Pen, Compass, Zap, Tags, Network, X, Eye, Users,
+  BookOpen, MessageSquare, Layers, FileText, Pen, Compass, Zap, Tags, Network, X, Eye, Users, Lightbulb,
 } from 'lucide-react'
 
 /* ─── Types ─── */
@@ -497,6 +497,86 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     finally { setReviewLoading(false) }
   }
 
+  const handleReSuggestPoint = async (idx: number) => {
+    const key = `point-${idx}`
+    setSuggestionsLoading(key)
+    setSuggestionsOpen(key)
+    try {
+      const json = await aiSuggest({
+        mode: 'wizard-outline-point',
+        context: buildContext(),
+        pointIndex: idx,
+        pointTitle: s.outlinePoints[idx] || '',
+      })
+      const data = json.data || {}
+      if (data.title || data.key_sentence || data.gospel_connection) {
+        const suggestions: { value: string; reason: string }[] = []
+        if (data.title) suggestions.push({ value: data.title, reason: data.reason || '' })
+        if (data.key_sentence) suggestions.push({ value: `📌 ${data.key_sentence}`, reason: '핵심 문장' })
+        if (data.gospel_connection) suggestions.push({ value: `✝️ ${data.gospel_connection}`, reason: '복음 연결' })
+        setSuggestionsCache(prev => ({ ...prev, [key]: suggestions }))
+      }
+    } catch (e: any) {
+      console.error('[ReSuggest] Error:', e)
+      alert(e.message || '재추천 중 오류가 발생했습니다.')
+    }
+    finally { setSuggestionsLoading(null) }
+  }
+
+  const handleSuggestPointTitle = async (idx: number) => {
+    const sentence = s.outlineDetails[idx] || ''
+    if (!sentence.trim()) { alert('먼저 핵심 문장을 입력해주세요'); return }
+    const key = `title-${idx}`
+    setSuggestionsLoading(key)
+    setSuggestionsOpen(key)
+    try {
+      const json = await aiSuggest({ mode: 'wizard-point-title', context: buildContext(), sentence })
+      const items = json.suggestions || []
+      setSuggestionsCache(prev => ({ ...prev, [key]: items }))
+    } catch (e: any) {
+      console.error('[PointTitle] Error:', e)
+      alert(e.message || '제목 추천 중 오류가 발생했습니다.')
+    }
+    finally { setSuggestionsLoading(null) }
+  }
+
+  const handleVariationPoint = async (idx: number) => {
+    const key = `var-${idx}`
+    setSuggestionsLoading(key)
+    setSuggestionsOpen(key)
+    try {
+      const json = await aiSuggest({
+        mode: 'wizard-point-variation',
+        context: buildContext(),
+        pointTitle: s.outlinePoints[idx] || '',
+        pointDetail: s.outlineDetails[idx] || '',
+      })
+      const items = json.suggestions || []
+      setSuggestionsCache(prev => ({ ...prev, [key]: items }))
+    } catch (e: any) {
+      console.error('[Variation] Error:', e)
+      alert(e.message || '변형 생성 중 오류가 발생했습니다.')
+    }
+    finally { setSuggestionsLoading(null) }
+  }
+
+  const handlePickPointResult = (key: string, value: string, idx: number) => {
+    setSuggestionsOpen(null)
+    if (value.startsWith('📌 ')) {
+      const dets = [...s.outlineDetails]
+      dets[idx] = value.slice(2).trim()
+      update({ outlineDetails: dets })
+    } else if (value.startsWith('✝️ ')) {
+      const gospels = [...s.gospelConnections]
+      gospels[idx] = value.slice(2).trim()
+      update({ gospelConnections: gospels })
+    } else {
+      const pts = [...s.outlinePoints]
+      pts[idx] = value
+      update({ outlinePoints: pts })
+    }
+  }
+
   const addPoint = () => {
     setS(prev => ({
       ...prev,
@@ -834,15 +914,36 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
             </button>
           </div>
           {s.outlinePoints.map((_, idx) => (
-            <div key={idx} className="border border-border rounded-md p-3 space-y-2">
+            <div key={idx} className="relative border border-border rounded-md p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">대지 {idx + 1}</span>
-                {s.outlinePoints.length > 1 && (
-                  <button type="button" onClick={() => removePoint(idx)}
-                    className="text-[11px] text-rose-500 hover:text-rose-700 transition-colors">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <div className="flex items-center gap-1">
+                  {(['point', 'title', 'var'] as const).map(action => {
+                    const key = `${action}-${idx}`
+                    const isLoading = suggestionsLoading === key
+                    const disabled = action === 'title' && !(s.outlineDetails[idx] || '').trim()
+                    const labels = { point: '재추천', title: '제목 추천', var: '변형' }
+                    const icons = { point: Sparkles, title: Lightbulb, var: Zap }
+                    const Icon = icons[action]
+                    return (
+                      <button key={action} type="button" onClick={() => {
+                        if (action === 'point') handleReSuggestPoint(idx)
+                        else if (action === 'title') handleSuggestPointTitle(idx)
+                        else handleVariationPoint(idx)
+                      }} disabled={isLoading || (action === 'title' && disabled)}
+                        className="text-[11px] text-primary hover:text-primary-dark transition-colors disabled:opacity-30 flex items-center gap-0.5"
+                        title={labels[action]}>
+                        {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Icon className="w-3 h-3" />}
+                      </button>
+                    )
+                  })}
+                  {s.outlinePoints.length > 1 && (
+                    <button type="button" onClick={() => removePoint(idx)}
+                      className="text-[11px] text-rose-500 hover:text-rose-700 transition-colors ml-1">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
               <input type="text" value={s.outlinePoints[idx] || ''} onChange={e => {
                 const pts = [...s.outlinePoints]; pts[idx] = e.target.value; update({ outlinePoints: pts })
@@ -852,6 +953,21 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
                 const dets = [...s.outlineDetails]; dets[idx] = e.target.value; update({ outlineDetails: dets })
               }} placeholder="이 대지의 핵심 문장" rows={2}
                 className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+              {(['point', 'title', 'var'] as const).map(action => {
+                const key = `${action}-${idx}`
+                if (suggestionsOpen !== key || !suggestionsCache[key]?.length) return null
+                return (
+                  <div key={key} className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-1 max-h-56 overflow-y-auto">
+                    {suggestionsCache[key].map((item, i) => (
+                      <button key={i} type="button" onClick={() => handlePickPointResult(key, item.value, idx)}
+                        className="w-full text-left p-2 rounded-md hover:bg-indigo-50 transition-colors text-xs">
+                        <span className="font-medium text-slate-800">{item.value}</span>
+                        {item.reason && <span className="block text-[11px] text-slate-500 mt-0.5">{item.reason}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )
+              })}
             </div>
           ))}
           <button type="button" onClick={addPoint}

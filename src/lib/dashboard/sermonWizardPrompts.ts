@@ -225,4 +225,50 @@ ${PRINCIPLES}
 반드시 JSON 객체 형식으로 응답하세요.`,
     user: `${context}\n\n[설교 원고 전문]\n[MANUSCRIPT_PLACEHOLDER]\n\n{"gospel_centered": {"score": 4, "feedback": "...", "suggestion": "..."}, "biblical_faithfulness": {...}, "application_specificity": {...}, "logical_flow": {...}, "overall": {"score": 4, "summary": "..."}}`,
   }),
+
+  outlinePoint: (context: string, index: number, pointTitle: string) => ({
+    system: `당신은 개혁주의 설교 조수입니다. 아래 설교 맥락에서 "${pointTitle || (index + 1) + '번째'}" 대지 하나만 추천하세요.
+
+${PRINCIPLES}
+
+[대지 원칙]
+1. 본문의 구조와 문맥에서 도출하라
+2. 핵심 메시지를 분명하게 뒷받침해야 한다
+3. 명사형이 아니라 설교형 문장으로 작성하라
+4. 문장은 짧고 분명하며 회중이 기억하기 쉽게 써라
+5. 그리스도와의 연결점을 gospel_connection 필드에 한 문장으로 명시하라
+
+반드시 JSON 객체 형식으로 응답하세요.`,
+    user: `${context}\n\n이것은 ${index + 1}번째 대지입니다. 기존에 이미 다른 대지가 있다면 그것과 중복되지 않게 하세요.\n\n{"title": "대지 제목 (설교형 문장)", "key_sentence": "이 대지의 핵심 문장", "gospel_connection": "그리스도와의 연결점", "reason": "추천 이유"}`,
+  }),
+
+  pointTitleFromSentence: (context: string, sentence: string) => ({
+    system: `당신은 개혁주의 설교 조수입니다. 주어진 핵심 문장에 가장 적합한 설교 대지 제목 3가지를 추천하세요.
+
+${PRINCIPLES}
+
+[지침]
+- 핵심 문장의 내용을 그대로 반영하라
+- 설교형 문장으로 작성하라 (명사형 금지)
+- 회중이 기억하기 쉽게 짧고 분명하게
+- 각 제목의 특징(선언형/초청형/긴장-해소형)을 reason에 표시
+
+반드시 JSON 배열로만 응답하세요.`,
+    user: `${context}\n\n핵심 문장: "${sentence}"\n\n[{"value": "대지 제목1", "reason": "스타일과 추천 이유"}, ...] 형식으로 3가지를 추천하세요.`,
+  }),
+
+  pointVariation: (context: string, title: string, detail: string) => ({
+    system: `당신은 개혁주의 설교 조수입니다. 아래 대지의 내용을 유지하면서 표현만 다른 3가지 변형을 제안하세요.
+
+${PRINCIPLES}
+
+[변형 원칙]
+- 핵심 내용(신학적 진리)은 그대로 유지하라
+- 같은 진리를 다른 각도에서 표현하라
+- 첫 번째는 더 간결하게, 두 번째는 더 회중 친화적으로, 세 번째는 더 선포형으로
+- 각 변형의 특징을 reason에 간략히 설명하라
+
+반드시 JSON 배열로만 응답하세요.`,
+    user: `${context}\n\n[현재 대지]\n제목: ${title}\n핵심 문장: ${detail}\n\n[{"value": "변형 제목1", "reason": "변형 특징"}, ...] 형식으로 3가지를 추천하세요.`,
+  }),
 }

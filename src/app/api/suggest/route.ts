@@ -142,6 +142,20 @@ export async function POST(request: NextRequest) {
       const p = PROMPTS.applicationDirection(context || '')
       systemPrompt = p.system
       userText = p.user
+    } else if (mode === 'wizard-outline-point') {
+      const p = PROMPTS.outlinePoint(context || '', typeof pointIndex === 'number' ? pointIndex : 0, pointTitle || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-point-title') {
+      const sentence = body.sentence || ''
+      const p = PROMPTS.pointTitleFromSentence(context || '', sentence)
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-point-variation') {
+      const detail = body.pointDetail || ''
+      const p = PROMPTS.pointVariation(context || '', pointTitle || '', detail)
+      systemPrompt = p.system
+      userText = p.user
     } else if (title && !passage) {
       systemPrompt = '당신은 설교 준비를 돕는 AI입니다. 주어진 설교 제목에 가장 적합한 성경본문(책 장:절) 5가지를 추천하고, 각각을 추천하는 이유를 한 문장씩 설명하세요. 반드시 JSON 배열로만 응답하세요.'
       userText = `설교 제목: ${title}\n\n[{"value": "본문1", "reason": "추천 이유1"}, {"value": "본문2", "reason": "추천 이유2"}, {"value": "본문5", "reason": "추천 이유5"}] 형식으로 5가지를 추천해주세요.`
@@ -405,6 +419,15 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
     if (mode === 'wizard-audience-profile' || mode === 'wizard-audience-needs' || mode === 'wizard-application-direction') {
+      const items = Array.isArray(parsed)
+        ? parsed
+        : parsed.suggestions || []
+      return NextResponse.json({ success: true, suggestions: items })
+    }
+    if (mode === 'wizard-outline-point') {
+      return NextResponse.json({ success: true, data: parsed })
+    }
+    if (mode === 'wizard-point-title' || mode === 'wizard-point-variation') {
       const items = Array.isArray(parsed)
         ? parsed
         : parsed.suggestions || []
