@@ -18,6 +18,10 @@ export interface IllustrationNote {
   source?: string
   category?: string
   connection?: string
+  tags?: string[]
+  relatedVerses?: string[]
+  applicationTip?: string
+  linkedSectionId?: string
 }
 
 export interface ReferenceNote {
@@ -25,6 +29,10 @@ export interface ReferenceNote {
   title: string
   content: string
   category: 'commentary' | 'theology' | 'historical' | 'pastoral' | 'warning'
+  author?: string
+  book?: string
+  tags?: string[]
+  linkedSectionId?: string
 }
 
 export interface JohnManuscriptData {

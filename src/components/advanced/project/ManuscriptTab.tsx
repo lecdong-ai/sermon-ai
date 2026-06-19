@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Loader2, Sparkles, Plus, X, Trash2 } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Trash2, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -16,6 +16,7 @@ import {
 } from '@/lib/advanced/johnVersionData'
 import type { ManuscriptVersion } from '@/lib/advanced/johnVersionData'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
+import ManuscriptStudio from './ManuscriptStudio'
 
 interface Props { project: ProjectDetail }
 
@@ -359,6 +360,8 @@ export default function ManuscriptTab({ project }: Props) {
   const [presentationSectionIdx, setPresentationSectionIdx] = useState(0)
   const [writingStatus, setWritingStatus] = useState<string>('draft')
   const [boostingSections, setBoostingSections] = useState<Set<string>>(new Set())
+  const [showStudio, setShowStudio] = useState(false)
+  const [weavingRefId, setWeavingRefId] = useState<string | null>(null)
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -544,6 +547,24 @@ export default function ManuscriptTab({ project }: Props) {
     if (saved) {
       const { _savedAt, ...restored } = saved
 
+      // 중복된 예화/참고 메모 제거 (title + content 기준)
+      const deduplicateNotes = <T extends { title: string; content: string }>(notes: T[]): T[] => {
+        const seen = new Set<string>()
+        return notes.filter(note => {
+          const key = `${note.title}|||${note.content}`
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+      }
+
+      if (restored.illustrationNotes) {
+        restored.illustrationNotes = deduplicateNotes(restored.illustrationNotes)
+      }
+      if (restored.referenceNotes) {
+        restored.referenceNotes = deduplicateNotes(restored.referenceNotes)
+      }
+
       // 저장된 manuscript가 비어있고 prep 데이터가 있다면 prep에서 빌드
       const allSectionsEmpty = !restored.sections || restored.sections.every((s: any) => !s.content?.trim())
       const hasPrepData = prepRaw?.outlines?.length > 0
@@ -569,6 +590,9 @@ export default function ManuscriptTab({ project }: Props) {
         ]
       }
       setManuscriptSafe(restored as JohnManuscriptData)
+
+      // 중복 제거된 데이터로 localStorage 업데이트
+      setStorageItem(`manuscript_${project.id}`, { ...restored, _savedAt: Date.now() })
 
       setLastPrepSyncAt(prepSavedAt)
       if (_savedAt) {
@@ -725,7 +749,10 @@ export default function ManuscriptTab({ project }: Props) {
   /* ─── Illustration Notes Handlers ─── */
   const addIllustration = useCallback((note: IllustrationNote) => {
     setManuscriptSafe(prev => {
-      const exists = prev.illustrationNotes.some(n => n.id === note.id)
+      const exists = prev.illustrationNotes.some(n =>
+        n.id === note.id ||
+        (n.title === note.title && n.content === note.content)
+      )
       if (exists) return prev
       const next = { ...prev, illustrationNotes: [...prev.illustrationNotes, note] }
       manuscriptRef.current = next
@@ -752,21 +779,18 @@ export default function ManuscriptTab({ project }: Props) {
   }, [triggerSave, project.id])
 
   const insertIllustrationToSection = useCallback((note: IllustrationNote, sectionId: string) => {
-    const section = manuscriptRef.current.sections.find(s => s.id === sectionId);
-    if (!section) return;
-    const insertText = `\n\n[예화: ${note.title}]\n${note.content}\n`;
     const next = {
       ...manuscriptRef.current,
-      sections: manuscriptRef.current.sections.map(s =>
-        s.id === sectionId ? { ...s, content: s.content + insertText } : s
+      illustrationNotes: manuscriptRef.current.illustrationNotes.map(n =>
+        n.id === note.id ? { ...n, linkedSectionId: sectionId } : n
       ),
     };
     manuscriptRef.current = next;
     setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
     setManuscriptSafe(prev => ({
       ...prev,
-      sections: prev.sections.map(s =>
-        s.id === sectionId ? { ...s, content: s.content + insertText } : s
+      illustrationNotes: prev.illustrationNotes.map(n =>
+        n.id === note.id ? { ...n, linkedSectionId: sectionId } : n
       ),
     }));
     triggerSave();
@@ -775,7 +799,10 @@ export default function ManuscriptTab({ project }: Props) {
   /* ─── Reference Notes Handlers ─── */
   const addReference = useCallback((note: ReferenceNote) => {
     setManuscriptSafe(prev => {
-      const exists = prev.referenceNotes.some(n => n.id === note.id)
+      const exists = prev.referenceNotes.some(n =>
+        n.id === note.id ||
+        (n.title === note.title && n.content === note.content)
+      )
       if (exists) return prev
       const next = { ...prev, referenceNotes: [...prev.referenceNotes, note] }
       manuscriptRef.current = next
@@ -792,6 +819,34 @@ export default function ManuscriptTab({ project }: Props) {
     setManuscriptSafe(prev => ({ ...prev, referenceNotes: prev.referenceNotes.filter(n => n.id !== id) }));
     triggerSave();
   }, [triggerSave, project.id])
+
+  const handleWeaveReference = useCallback(async (note: ReferenceNote, sectionId: string) => {
+    setWeavingRefId(note.id)
+    try {
+      const section = manuscriptRef.current.sections.find(s => s.id === sectionId)
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'reference-weave',
+          data: {
+            sectionContent: section?.content || '',
+            referenceContent: note.content,
+            referenceAuthor: note.author,
+            referenceBook: note.book,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const wovenText = json.data.output
+        const currentContent = manuscriptRef.current.sections.find(s => s.id === sectionId)?.content || ''
+        const newContent = currentContent + '\n\n' + wovenText
+        updateSection(sectionId, newContent)
+      }
+    } catch { /* ignore */ }
+    setWeavingRefId(null)
+  }, [updateSection])
 
   const scrollToSection = useCallback((id: string) => {
     setActiveSectionId(id)
@@ -1425,6 +1480,14 @@ export default function ManuscriptTab({ project }: Props) {
         </button>
         <div className="w-px h-4 bg-white/10" />
         <button
+          onClick={() => setShowStudio(true)}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-colors"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          원고 스튜디오
+        </button>
+        <div className="w-px h-4 bg-white/10" />
+        <button
           onClick={() => setViewMode('preview')}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/20 transition-colors"
         >
@@ -1529,6 +1592,10 @@ export default function ManuscriptTab({ project }: Props) {
                 onActivate={() => setActiveSectionId(section.id)}
                 onAiGenerate={handleAiGenerate}
                 prepHints={section.type === 'application' ? manuscript.prepInsights : undefined}
+                linkedIllustrations={manuscript.illustrationNotes.filter(n => n.linkedSectionId === section.id)}
+                linkedReferences={manuscript.referenceNotes.filter(n => n.linkedSectionId === section.id)}
+                onWeaveReference={handleWeaveReference}
+                weavingRefId={weavingRefId}
               />
             ))}
 
@@ -1582,6 +1649,18 @@ export default function ManuscriptTab({ project }: Props) {
         onGoToVersions={() => router.push(`/advanced/projects/${project.id}?tab=versions`)}
         onGoToPrep={() => router.push(`/advanced/projects/${project.id}?tab=prep`)}
       />
+
+      {/* ─── Manuscript Studio ─── */}
+      {showStudio && (
+        <ManuscriptStudio
+          manuscript={manuscript}
+          projectId={project.id}
+          referenceNotes={manuscript.referenceNotes}
+          illustrationNotes={manuscript.illustrationNotes}
+          onUpdateSection={updateSection}
+          onClose={() => setShowStudio(false)}
+        />
+      )}
     </div>
   )
 }
@@ -1786,6 +1865,9 @@ function ManuscriptNavigator({
 
 function SermonSectionBlock({
   section, sectionRef, isActive, status, onContentChange, onActivate, onAiGenerate, prepHints,
+  linkedIllustrations = [],
+  linkedReferences = [],
+  onWeaveReference,
 }: {
   section: SermonSection
   sectionRef: (el: HTMLDivElement | null) => void
@@ -1795,6 +1877,10 @@ function SermonSectionBlock({
   onActivate: () => void
   onAiGenerate?: (sectionType: string) => Promise<string>
   prepHints?: string[]
+  linkedIllustrations?: IllustrationNote[]
+  linkedReferences?: ReferenceNote[]
+  onWeaveReference?: (note: ReferenceNote, sectionId: string) => void
+  weavingRefId?: string | null
 }) {
   const [aiLoading, setAiLoading] = useState(false)
   const emptyGuide = EMPTY_GUIDANCE[section.type === 'body' ? 'body' : section.type] || EMPTY_GUIDANCE.body
@@ -1928,6 +2014,48 @@ function SermonSectionBlock({
         </div>
       )}
 
+      {/* Linked Illustrations */}
+      {linkedIllustrations.length > 0 && (
+        <div className="mb-4 bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            연결된 예화
+          </div>
+          {linkedIllustrations.map(note => (
+            <div key={note.id} className="text-xs text-slate-300 leading-relaxed border-l-2 border-amber-500/30 pl-3">
+              <span className="text-amber-200 font-medium">{note.title}:</span> {note.content}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Linked References */}
+      {linkedReferences.length > 0 && (
+        <div className="mb-4 bg-teal-500/5 border border-teal-500/20 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            연결된 참고
+          </div>
+          {linkedReferences.map(note => (
+            <div key={note.id} className="text-xs text-slate-300 leading-relaxed border-l-2 border-teal-500/30 pl-3 flex items-start justify-between gap-2">
+              <div>
+                <span className="text-teal-200 font-medium">{note.title}:</span> {note.content}
+              </div>
+              {onWeaveReference && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onWeaveReference(note, section.id) }}
+                  disabled={weavingRefId === note.id}
+                  className="shrink-0 text-[9px] px-2 py-1 rounded bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 transition-colors font-medium disabled:opacity-50"
+                  title="원고에 자연스럽게 녹여 넣기"
+                >
+                  {weavingRefId === note.id ? <Loader2 className="w-3 h-3 animate-spin" /> : '✨ 녹이기'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Content Editor */}
       <textarea
         value={section.content}
@@ -1979,6 +2107,9 @@ function IllustrationNotesSection({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newNote, setNewNote] = useState({ title: '', content: '', source: '' })
   const [aiSuggestions, setAiSuggestions] = useState<IllustrationNote[]>([])
+  const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
   const statusColors: Record<string, string> = {
     '사용': 'bg-indigo-500/10 text-indigo-300',
     '보류': 'bg-amber-500/10 text-amber-300',
@@ -1990,6 +2121,7 @@ function IllustrationNotesSection({
     '성경인물': '📖',
     '현대사례': '🌍',
     '교회사': '⛪',
+    '과학/자연': '🔬',
   }
 
   const handleAiGenerate = async () => {
@@ -2016,13 +2148,16 @@ function IllustrationNotesSection({
       if (json.success) {
         const parsed = JSON.parse(json.data.output)
         setAiSuggestions(parsed.map((item: any, i: number) => ({
-          id: `ill-ai-${Date.now()}-${i}`,
+          id: `ill-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
           title: item.title,
           content: item.content,
           status: '검토중' as const,
           source: item.source || '',
           category: item.category,
-          connection: item.connection,
+          tags: item.tags || [],
+          relatedVerses: item.relatedVerses || [],
+          applicationTip: item.applicationTip || '',
+          linkedSectionId: activeSection?.id,
         })))
       }
     } catch { /* ignore */ }
@@ -2032,7 +2167,7 @@ function IllustrationNotesSection({
   const handleAddManual = () => {
     if (!newNote.title.trim() || !newNote.content.trim()) return
     onAdd({
-      id: `ill-manual-${Date.now()}`,
+      id: `ill-manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: newNote.title,
       content: newNote.content,
       status: '검토중',
@@ -2042,10 +2177,16 @@ function IllustrationNotesSection({
     setShowAddForm(false)
   }
 
+  const filteredNotes = notes.filter(n => {
+    const matchesCategory = filterCategory === 'all' || n.category === filterCategory
+    const matchesSearch = searchQuery === '' || n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.content.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+
   return (
     <div className="border-t border-white/5 pt-8">
       <div className="flex items-center justify-between mb-4">
-        <AppSectionHeader title="예화 메모" />
+        <AppSectionHeader title="예화 메모" count={`${notes.length}개`} />
         <div className="flex items-center gap-2">
           <button
             onClick={handleAiGenerate}
@@ -2065,6 +2206,32 @@ function IllustrationNotesSection({
         </div>
       </div>
 
+      {/* Filters & Search */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {['all', '일상', '역사', '성경인물', '현대사례', '교회사', '과학/자연'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap ${
+                filterCategory === cat
+                  ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
+                  : 'bg-[#04060f]/60 border-white/5 text-slate-400 hover:border-white/20'
+              }`}
+            >
+              {cat === 'all' ? '전체' : `${categoryIcons[cat] || ''} ${cat}`}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          placeholder="예화 검색..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="flex-1 min-w-[120px] text-[11px] bg-[#04060f]/60 border border-white/5 rounded-lg px-3 py-1.5 outline-none focus:border-indigo-500/30 text-slate-200"
+        />
+      </div>
+
       {/* AI 추천 예화 */}
       {aiSuggestions.length > 0 && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/5 to-indigo-500/5 border border-amber-500/20">
@@ -2077,26 +2244,55 @@ function IllustrationNotesSection({
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {aiSuggestions.map((note) => (
-              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-300`}>{note.category}</span>
-                      <h4 className="text-xs font-medium text-white">{note.title}</h4>
-                    </div>
-                    <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
-                    {note.connection && <p className="text-[10px] text-indigo-400 mt-1.5 italic">🔗 {note.connection}</p>}
-                    {note.source && <p className="text-[10px] text-slate-500 mt-1">— {note.source}</p>}
+              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{categoryIcons[note.category as string] || '💡'}</span>
+                    <h4 className="text-sm font-medium text-white">{note.title}</h4>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">{note.category}</span>
                   </div>
-                  <button
-                    onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
-                    className="text-[10px] px-2 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors shrink-0"
-                  >
-                    저장
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <select
+                      onChange={(e) => e.target.value && onInsertToSection(note, e.target.value)}
+                      className="text-[10px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1 text-slate-300 outline-none"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>섹션에 삽입</option>
+                      {manuscript.sections.map(s => (
+                        <option key={s.id} value={s.id}>{s.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+                    >
+                      저장
+                    </button>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
+                {note.applicationTip && (
+                  <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
+                    💡 적용 팁: {note.applicationTip}
+                  </p>
+                )}
+                {note.relatedVerses && note.relatedVerses.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    {note.relatedVerses.map((v, i) => (
+                      <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{v}</span>
+                    ))}
+                  </div>
+                )}
+                {note.tags && note.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {note.tags.map((t, i) => (
+                      <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
+                    ))}
+                  </div>
+                )}
+                {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
               </div>
             ))}
           </div>
@@ -2137,7 +2333,7 @@ function IllustrationNotesSection({
       )}
 
       {/* 저장된 예화 목록 */}
-      {notes.length === 0 && !aiSuggestions.length && (
+      {filteredNotes.length === 0 && !aiSuggestions.length && (
         <div className="text-center py-8 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
           <p className="text-sm text-slate-500">아직 예화 메모가 없습니다</p>
           <p className="text-xs text-slate-600 mt-1">AI 추천으로 예화를 찾거나 직접 추가해보세요</p>
@@ -2145,11 +2341,17 @@ function IllustrationNotesSection({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {notes.map(note => (
+        {filteredNotes.map(note => (
           <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group hover:border-white/10 transition-colors">
             <div className="flex items-start justify-between gap-2 mb-2">
-              <h4 className="text-sm font-medium text-white flex-1">{note.title}</h4>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-base">{categoryIcons[note.category as string] || '💡'}</span>
+                <h4 className="text-sm font-medium text-white truncate">{note.title}</h4>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${statusColors[note.status]}`}>
+                  {note.status}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
                 <select
                   value={note.status}
                   onChange={e => onStatusChange(note.id, e.target.value as IllustrationNote['status'])}
@@ -2167,7 +2369,26 @@ function IllustrationNotesSection({
                 </button>
               </div>
             </div>
-            <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+            <p className="text-xs text-slate-200 leading-relaxed mb-2 line-clamp-3">{note.content}</p>
+            {note.applicationTip && (
+              <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
+                💡 적용: {note.applicationTip}
+              </p>
+            )}
+            {note.relatedVerses && note.relatedVerses.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {note.relatedVerses.map((v, i) => (
+                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{v}</span>
+                ))}
+              </div>
+            )}
+            {note.tags && note.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {note.tags.map((t, i) => (
+                  <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
+                ))}
+              </div>
+            )}
             {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
           </div>
         ))}
@@ -2192,7 +2413,10 @@ function ReferenceNotesSection({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<ReferenceNote[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newNote, setNewNote] = useState({ title: '', content: '', category: 'commentary' as ReferenceNote['category'] })
+  const [newNote, setNewNote] = useState({ title: '', content: '', category: 'commentary' as ReferenceNote['category'], author: '', book: '' })
+  const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
   const categoryColors: Record<string, string> = {
     commentary: 'bg-teal-500/10 text-teal-300',
     theology: 'bg-amber-500/10 text-amber-300',
@@ -2232,10 +2456,14 @@ function ReferenceNotesSection({
       if (json.success) {
         const parsed = JSON.parse(json.data.output)
         setAiSuggestions(parsed.map((item: any, i: number) => ({
-          id: `ref-ai-${Date.now()}-${i}`,
+          id: `ref-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
           title: item.title,
           content: item.content,
           category: item.category as ReferenceNote['category'],
+          author: item.author || '',
+          book: item.book || '',
+          tags: item.tags || [],
+          linkedSectionId: activeSection?.id,
         })))
       }
     } catch { /* ignore */ }
@@ -2245,19 +2473,27 @@ function ReferenceNotesSection({
   const handleAddManual = () => {
     if (!newNote.title.trim() || !newNote.content.trim()) return
     onAdd({
-      id: `ref-manual-${Date.now()}`,
+      id: `ref-manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: newNote.title,
       content: newNote.content,
       category: newNote.category,
+      author: newNote.author,
+      book: newNote.book,
     })
-    setNewNote({ title: '', content: '', category: 'commentary' })
+    setNewNote({ title: '', content: '', category: 'commentary', author: '', book: '' })
     setShowAddForm(false)
   }
+
+  const filteredNotes = notes.filter(n => {
+    const matchesCategory = filterCategory === 'all' || n.category === filterCategory
+    const matchesSearch = searchQuery === '' || n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.content.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
 
   return (
     <div className="border-t border-white/5 pt-8">
       <div className="flex items-center justify-between mb-4">
-        <AppSectionHeader title="참고 메모" />
+        <AppSectionHeader title="참고 메모" count={`${notes.length}개`} />
         <div className="flex items-center gap-2">
           <button
             onClick={handleAiGenerate}
@@ -2277,6 +2513,32 @@ function ReferenceNotesSection({
         </div>
       </div>
 
+      {/* Filters & Search */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {['all', 'commentary', 'theology', 'historical', 'pastoral', 'warning'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap ${
+                filterCategory === cat
+                  ? `${categoryColors[cat]} border-current`
+                  : 'bg-[#04060f]/60 border-white/5 text-slate-400 hover:border-white/20'
+              }`}
+            >
+              {cat === 'all' ? '전체' : categoryLabels[cat]}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          placeholder="참고 메모 검색..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="flex-1 min-w-[120px] text-[11px] bg-[#04060f]/60 border border-white/5 rounded-lg px-3 py-1.5 outline-none focus:border-indigo-500/30 text-slate-200"
+        />
+      </div>
+
       {/* AI 추천 참고 메모 */}
       {aiSuggestions.length > 0 && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-teal-500/5 to-indigo-500/5 border border-teal-500/20">
@@ -2289,26 +2551,36 @@ function ReferenceNotesSection({
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {aiSuggestions.map((note) => (
-              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
-                        {categoryLabels[note.category]}
-                      </span>
-                      <h4 className="text-xs font-medium text-white">{note.title}</h4>
-                    </div>
-                    <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
+                      {categoryLabels[note.category]}
+                    </span>
+                    <h4 className="text-sm font-medium text-white">{note.title}</h4>
                   </div>
                   <button
                     onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
-                    className="text-[10px] px-2 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors shrink-0"
+                    className="text-[10px] px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors shrink-0"
                   >
                     저장
                   </button>
                 </div>
+                <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
+                {note.author && (
+                  <p className="text-[10px] text-slate-300 mb-1">
+                    👤 {note.author} {note.book ? `· 《${note.book}》` : ''}
+                  </p>
+                )}
+                {note.tags && note.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {note.tags.map((t, i) => (
+                      <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -2331,7 +2603,7 @@ function ReferenceNotesSection({
             rows={3}
             placeholder="참고 내용"
           />
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <select
               value={newNote.category}
               onChange={e => setNewNote(prev => ({ ...prev, category: e.target.value as ReferenceNote['category'] }))}
@@ -2341,20 +2613,32 @@ function ReferenceNotesSection({
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowAddForm(false)} className="text-[11px] px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors">
-                취소
-              </button>
-              <button onClick={handleAddManual} className="text-[11px] px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-                추가
-              </button>
-            </div>
+            <input
+              value={newNote.author}
+              onChange={e => setNewNote(prev => ({ ...prev, author: e.target.value }))}
+              className="flex-1 text-[11px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1.5 text-slate-300 outline-none"
+              placeholder="저자"
+            />
+            <input
+              value={newNote.book}
+              onChange={e => setNewNote(prev => ({ ...prev, book: e.target.value }))}
+              className="flex-1 text-[11px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1.5 text-slate-300 outline-none"
+              placeholder="책 이름"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <button onClick={() => setShowAddForm(false)} className="text-[11px] px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors">
+              취소
+            </button>
+            <button onClick={handleAddManual} className="text-[11px] px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+              추가
+            </button>
           </div>
         </div>
       )}
 
       {/* 저장된 참고 메모 목록 */}
-      {notes.length === 0 && !aiSuggestions.length && (
+      {filteredNotes.length === 0 && !aiSuggestions.length && (
         <div className="text-center py-8 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
           <p className="text-sm text-slate-500">아직 참고 메모가 없습니다</p>
           <p className="text-xs text-slate-600 mt-1">AI 추천으로 참고 자료를 찾거나 직접 추가해보세요</p>
@@ -2362,17 +2646,29 @@ function ReferenceNotesSection({
       )}
 
       <div className="space-y-2">
-        {notes.map(note => (
-          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3 group hover:border-white/10 transition-colors">
+        {filteredNotes.map(note => (
+          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group hover:border-white/10 transition-colors">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
                     {categoryLabels[note.category]}
                   </span>
-                  <h4 className="text-xs font-medium text-white">{note.title}</h4>
+                  <h4 className="text-sm font-medium text-white">{note.title}</h4>
                 </div>
-                <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+                <p className="text-xs text-slate-200 leading-relaxed mb-1">{note.content}</p>
+                {note.author && (
+                  <p className="text-[10px] text-slate-400">
+                    👤 {note.author} {note.book ? `· 《${note.book}》` : ''}
+                  </p>
+                )}
+                {note.tags && note.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {note.tags.map((t, i) => (
+                      <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => onDelete(note.id)}

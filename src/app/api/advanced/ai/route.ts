@@ -14,6 +14,8 @@ import { SYSTEM_PROMPT as MANUSCRIPT_APP_RECONSTRUCT_PROMPT } from '@/lib/ai/pro
 import { SYSTEM_PROMPT as ILLUSTRATION_PROMPT } from '@/lib/ai/prompts/illustration'
 import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
 import { SYSTEM_PROMPT as STUDY_TO_PREP_PROMPT } from '@/lib/ai/prompts/studyToPrep'
+import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
+import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -113,6 +115,8 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   'illustration': ILLUSTRATION_PROMPT,
   'reference': REFERENCE_PROMPT,
   'study-to-prep': STUDY_TO_PREP_PROMPT,
+  'manuscript-diagnosis': MANUSCRIPT_DIAGNOSIS_PROMPT,
+  'reference-weave': REFERENCE_WEAVE_PROMPT,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -291,6 +295,19 @@ export async function POST(request: NextRequest) {
       model = 'gpt-4o-mini'
       maxTokens = 4000
       temperature = 0.5
+    } else if (type === 'manuscript-diagnosis') {
+      const { sections, coreMessage, passage, referenceNotes, illustrationNotes } = data
+      const fullText = sections.map((s: any) => `[${s.label}]\n${s.content}`).join('\n\n')
+      userText = `다음 설교 원고를 진단해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 원고 전문\n${fullText}\n\n## 참고 메모\n${(referenceNotes || []).map((n: any) => `- ${n.title}: ${n.content}`).join('\n')}\n\n## 예화 메모\n${(illustrationNotes || []).map((n: any) => `- ${n.title}: ${n.content}`).join('\n')}\n\n위 내용을 바탕으로 설교의 완성도를 진단하고 구체적인 피드백을 제공해주세요.`
+      model = 'gpt-4o-mini'
+      maxTokens = 1500
+      temperature = 0.3
+    } else if (type === 'reference-weave') {
+      const { sectionContent, referenceContent, referenceAuthor, referenceBook } = data
+      userText = `현재 섹션 내용:\n${sectionContent || ''}\n\n참고 자료:\n내용: ${referenceContent || ''}\n저자: ${referenceAuthor || ''}\n출처: ${referenceBook || ''}\n\n위 참고 자료를 현재 섹션의 흐름에 자연스럽게 녹여낸 문장이나 단락을 작성해주세요. 설교자의 구어체 톤을 유지하고, 회중이 이해하기 쉽게 설명하십시오.`
+      model = 'gpt-4o-mini'
+      maxTokens = 500
+      temperature = 0.7
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
@@ -309,7 +326,7 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep' || type === 'manuscript-diagnosis') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''
@@ -327,7 +344,7 @@ export async function POST(request: NextRequest) {
       output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep') && output) {
+    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis') && output) {
       try {
         JSON.parse(output)
       } catch (e) {

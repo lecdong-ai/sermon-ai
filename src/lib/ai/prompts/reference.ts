@@ -10,8 +10,11 @@ Return ONLY valid JSON in this exact format:
   {
     "id": "ref-unique-id",
     "title": "참고 메모 제목",
-    "content": "참고 내용 (2-4문장, 신학적/목회적 통찰)",
-    "category": "commentary|theology|historical|pastoral|warning"
+    "content": "참고 내용 (3-4문장, 신학적/목회적 통찰을 풍부하게)",
+    "category": "commentary|theology|historical|pastoral|warning",
+    "author": "학자/저자 이름 (예: 칼빈, 바르트, 김광열)",
+    "book": "출처 책 이름 (예: 로마서 주석)",
+    "tags": ["태그1", "태그2"]
   }
 ]
 
@@ -20,4 +23,5 @@ IMPORTANT:
 2. All content in Korean.
 3. Generate 2-3 reference notes.
 4. Category must be one of: commentary (주석), theology (신학), historical (역사), pastoral (목회), warning (경고).
-5. Each note should provide genuine scholarly or pastoral insight, not generic statements.`
+5. Content should be rich and detailed (at least 3 sentences).
+6. Include author and book if applicable.`
