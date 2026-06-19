@@ -167,6 +167,9 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const [activeStep, setActiveStep] = useState(1)
   const [loading, setLoading] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [suggestionsOpen, setSuggestionsOpen] = useState<string | null>(null)
+  const [suggestionsCache, setSuggestionsCache] = useState<Record<string, { value: string; reason: string }[]>>({})
+  const [suggestionsLoading, setSuggestionsLoading] = useState<string | null>(null)
 
   // ── Tag selection state ──
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -390,22 +393,25 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     finally { setLoading(null) }
   }
 
-  const handleAnalyzeAudience = async () => {
-    setLoading(3)
+  const handleAudienceSuggest = async (field: 'profile' | 'needs' | 'application') => {
+    const modeMap = { profile: 'wizard-audience-profile', needs: 'wizard-audience-needs', application: 'wizard-application-direction' } as const
+    setSuggestionsLoading(field)
+    setSuggestionsOpen(field)
     try {
-      const json = await aiSuggest({
-        mode: 'wizard-audience-analysis',
-        context: buildContext(),
-      })
-      const data = json.data || {}
-      if (data.audienceProfile) update({ audienceProfile: data.audienceProfile })
-      if (data.audienceNeeds) update({ audienceNeeds: Array.isArray(data.audienceNeeds) ? data.audienceNeeds.join('\n') : data.audienceNeeds })
-      if (data.applicationDirection) update({ applicationDirection: data.applicationDirection })
+      const json = await aiSuggest({ mode: modeMap[field], context: buildContext() })
+      const items = json.suggestions || []
+      setSuggestionsCache(prev => ({ ...prev, [field]: items }))
     } catch (e: any) {
-      console.error('[Audience] Error:', e)
-      alert(e.message || '청중 분석 중 오류가 발생했습니다.')
+      console.error(`[Audience ${field}] Error:`, e)
+      alert(e.message || '추천 로딩 중 오류가 발생했습니다.')
     }
-    finally { setLoading(null) }
+    finally { setSuggestionsLoading(null) }
+  }
+
+  const pickAudienceSuggestion = (field: 'profile' | 'needs' | 'application', value: string) => {
+    const keyMap = { profile: 'audienceProfile', needs: 'audienceNeeds', application: 'applicationDirection' } as const
+    update({ [keyMap[field]]: value })
+    setSuggestionsOpen(null)
   }
 
   const addPoint = () => {
@@ -649,40 +655,48 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
       <StepContainer num={3} title="청중 분석 & 적용 방향" icon={Users}
         isActive={activeStep === 3} isDone={stepDone(s, 3)} onSelect={() => goTo(3)}>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="bg-emerald-50/50 border border-emerald-100 rounded-md p-3 space-y-1.5 text-[12px] text-emerald-700">
-              <p className="font-medium text-emerald-800">🎯 청중을 고려할수록 설교가 살아납니다:</p>
-              <ul className="list-disc pl-4 space-y-0.5">
-                <li>내일 주일, 내 교회 성도들은 어떤 마음으로 예배드리러 올까요?</li>
-                <li>그들이 현재 가장 고민하는 것은 무엇일까요?</li>
-                <li>이 본문이 그들의 삶에 어떤 질문을 던질까요?</li>
-                <li>이 설교를 듣고 그들이 어떻게 변하길 바라나요?</li>
-              </ul>
-            </div>
-            <button type="button" onClick={handleAnalyzeAudience} disabled={loading === 3}
-              className="ml-3 shrink-0 text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-              {loading === 3 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              AI 청중 분석
-            </button>
+          <div className="bg-emerald-50/50 border border-emerald-100 rounded-md p-3 space-y-1.5 text-[12px] text-emerald-700">
+            <p className="font-medium text-emerald-800">🎯 청중을 고려할수록 설교가 살아납니다:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>내일 주일, 내 교회 성도들은 어떤 마음으로 예배드리러 올까요?</li>
+              <li>그들이 현재 가장 고민하는 것은 무엇일까요?</li>
+              <li>이 본문이 그들의 삶에 어떤 질문을 던질까요?</li>
+              <li>이 설교를 듣고 그들이 어떻게 변하길 바라나요?</li>
+            </ul>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-muted mb-1">누구에게 설교하는가? (청중 프로필)</label>
-            <textarea value={s.audienceProfile} onChange={e => update({ audienceProfile: e.target.value })}
-              rows={2} placeholder="예: 30-40대 직장인 위주, 신앙생활 5년 미만 초신자, 주중 바쁜 생활..."
-              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-muted mb-1">청중의 현재 상황 · 질문 · 아픔</label>
-            <textarea value={s.audienceNeeds} onChange={e => update({ audienceNeeds: e.target.value })}
-              rows={3} placeholder="예: 직장에서의 신앙 정체성 고민, 육아와 신앙의 균형, 불안과 염려..."
-              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-muted mb-1">이 설교를 통해 청중이 얻길 바라는 적용 방향</label>
-            <textarea value={s.applicationDirection} onChange={e => update({ applicationDirection: e.target.value })}
-              rows={2} placeholder="예: 삶의 현장에서 구체적인 순종, 두려움을 믿음으로 전환..."
-              className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
-          </div>
+          {([['profile', '누구에게 설교하는가? (청중 프로필)', '예: 30-40대 직장인 위주, 신앙생활 5년 미만 초신자, 주중 바쁜 생활...', 2, s.audienceProfile],
+             ['needs', '청중의 현재 상황 · 질문 · 아픔', '예: 직장에서의 신앙 정체성 고민, 육아와 신앙의 균형, 불안과 염려...', 3, s.audienceNeeds],
+             ['application', '이 설교를 통해 청중이 얻길 바라는 적용 방향', '예: 삶의 현장에서 구체적인 순종, 두려움을 믿음으로 전환...', 2, s.applicationDirection],
+          ] as const).map(([field, label, placeholder, rows, value]) => {
+            const keyMap = { profile: 'audienceProfile' as const, needs: 'audienceNeeds' as const, application: 'applicationDirection' as const }
+            return (
+              <div key={field} className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-muted">{label}</label>
+                  <button type="button" onClick={() => handleAudienceSuggest(field)}
+                    disabled={suggestionsLoading === field}
+                    className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
+                    {suggestionsLoading === field ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    AI 추천
+                  </button>
+                </div>
+                <textarea value={value} onChange={e => update({ [keyMap[field]]: e.target.value })}
+                  rows={rows} placeholder={placeholder}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+                {suggestionsOpen === field && suggestionsCache[field]?.length > 0 && (
+                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-1 max-h-56 overflow-y-auto">
+                    {suggestionsCache[field].map((item, i) => (
+                      <button key={i} type="button" onClick={() => pickAudienceSuggestion(field, item.value)}
+                        className="w-full text-left p-2 rounded-md hover:bg-indigo-50 transition-colors text-xs">
+                        <span className="font-medium text-slate-800">{item.value}</span>
+                        {item.reason && <span className="block text-[11px] text-slate-500 mt-0.5">{item.reason}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
           <div className="flex justify-end pt-1">
             <button type="button" onClick={() => goTo(4)}
               disabled={!stepDone(s, 3)}

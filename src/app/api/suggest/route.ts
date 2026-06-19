@@ -130,8 +130,16 @@ export async function POST(request: NextRequest) {
       const p = PROMPTS.manuscript(context || '', msLength || '30분')
       systemPrompt = p.system
       userText = p.user
-    } else if (mode === 'wizard-audience-analysis') {
-      const p = PROMPTS.audienceAnalysis(context || '')
+    } else if (mode === 'wizard-audience-profile') {
+      const p = PROMPTS.audienceProfile(context || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-audience-needs') {
+      const p = PROMPTS.audienceNeeds(context || '')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-application-direction') {
+      const p = PROMPTS.applicationDirection(context || '')
       systemPrompt = p.system
       userText = p.user
     } else if (title && !passage) {
@@ -396,8 +404,11 @@ ${illustration ? `\n예화: ${illustration}` : ''}
     if (mode === 'wizard-manuscript') {
       return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
     }
-    if (mode === 'wizard-audience-analysis') {
-      return NextResponse.json({ success: true, data: parsed })
+    if (mode === 'wizard-audience-profile' || mode === 'wizard-audience-needs' || mode === 'wizard-application-direction') {
+      const items = Array.isArray(parsed)
+        ? parsed
+        : parsed.suggestions || []
+      return NextResponse.json({ success: true, suggestions: items })
     }
 
     let items: { value: string; reason: string }[] = Array.isArray(parsed)
