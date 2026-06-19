@@ -172,6 +172,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const [suggestionsLoading, setSuggestionsLoading] = useState<string | null>(null)
   const [reviewResult, setReviewResult] = useState<any>(null)
   const [reviewLoading, setReviewLoading] = useState(false)
+  const [bibleLoading, setBibleLoading] = useState(false)
 
   // ── Tag selection state ──
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -395,6 +396,25 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     finally { setLoading(null) }
   }
 
+  const handleFetchBible = async () => {
+    setBibleLoading(true)
+    try {
+      const book = s.bibleBook
+      const ch = s.chapterStart
+      const vs = s.verseStart
+      const ve = s.verseEnd || vs
+      if (!book || !ch) { alert('성경 책과 장을 입력해주세요'); return }
+      const res = await fetch(`/api/bible?book=${encodeURIComponent(book)}&chapter=${ch}&verseStart=${vs || 1}&verseEnd=${ve}`)
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || '불러오기 실패')
+      update({ bibleText: json.text })
+    } catch (e: any) {
+      console.error('[Bible fetch] Error:', e)
+      alert(e.message || '본문을 불러오지 못했습니다')
+    }
+    finally { setBibleLoading(false) }
+  }
+
   const handleAudienceSuggest = async (field: 'profile' | 'needs' | 'application') => {
     const modeMap = { profile: 'wizard-audience-profile', needs: 'wizard-audience-needs', application: 'wizard-application-direction' } as const
     setSuggestionsLoading(field)
@@ -588,12 +608,17 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center justify-between">
             <label className="block text-xs font-medium text-muted mb-1.5">성경 본문</label>
-            <textarea value={s.bibleText} onChange={e => update({ bibleText: e.target.value })}
+            <button type="button" onClick={handleFetchBible} disabled={bibleLoading || !s.bibleBook || !s.chapterStart}
+              className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
+              {bibleLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
+              본문 불러오기
+            </button>
+          </div>
+          <textarea value={s.bibleText} onChange={e => update({ bibleText: e.target.value })}
               rows={4} placeholder="성경 본문을 직접 입력하세요."
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed" />
-          </div>
 
           <div>
             <label className="block text-xs font-medium text-muted mb-1.5">📖 본문 관찰</label>

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/intro', '/preview']
-const publicPrefixes = ['/share/', '/api/auth']
+const publicPrefixes = ['/share/', '/api/auth', '/api/bible']
 
 const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

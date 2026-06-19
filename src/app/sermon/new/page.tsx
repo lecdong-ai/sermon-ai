@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   CalendarDays,
@@ -195,14 +193,6 @@ export default function NewSermonPage() {
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-        <button
-          onClick={() => router.push('/sermon')}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-[13px] font-semibold text-slate-500 shadow-sm backdrop-blur hover:text-slate-800"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          설교 준비 목록으로
-        </button>
-
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           <div className="space-y-6">
             <section className="glass-panel glass-border-neon rounded-[32px] p-6 sm:p-8 lg:p-10">
