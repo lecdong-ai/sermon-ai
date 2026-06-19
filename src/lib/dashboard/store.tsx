@@ -226,6 +226,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'ADD_SERMON', payload: data.data })
         return data.data
       }
+      if (res.status === 409 && data.existingId) {
+        const existingRes = await fetch(`/api/sermons/${data.existingId}`)
+        const existingData = await existingRes.json()
+        if (existingData.success) {
+          dispatch({ type: 'ADD_SERMON', payload: existingData.data })
+          return existingData.data
+        }
+      }
     } catch (err) {
       console.error('Failed to create sermon:', err)
     }

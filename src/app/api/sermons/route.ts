@@ -90,6 +90,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '설교 제목을 입력해주세요.' }, { status: 400 })
     }
 
+    // 중복 생성 방지: 같은 user_id + title + sermon_date의 존재하는 레코드가 있으면 충돌
+    if (body.date) {
+      const { data: existing } = await supabaseAdmin
+        .from('sermons')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', body.title)
+        .eq('sermon_date', body.date)
+        .maybeSingle()
+
+      if (existing) {
+        return NextResponse.json({
+          success: false,
+          error: '같은 제목과 날짜의 설교가 이미 존재합니다.',
+          existingId: existing.id,
+        }, { status: 409 })
+      }
+    }
+
     const sermonData = {
       user_id: user.id,
       title: body.title,
