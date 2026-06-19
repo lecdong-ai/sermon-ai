@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/lib/dashboard/store'
 import { Sermon } from '@/lib/dashboard/types'
@@ -112,6 +112,7 @@ function sermonToWizardState(sermon: Sermon, snapshot?: any): WizardState {
   if (snapshot) {
     return { ...EMPTY, ...snapshot }
   }
+  const r = sermon.result || {}
   const pts: string[] = []
   const dets: string[] = []
   ;[sermon.outlinePoint1 || '', sermon.outlinePoint2 || '', sermon.outlinePoint3 || ''].forEach(p => {
@@ -130,22 +131,24 @@ function sermonToWizardState(sermon: Sermon, snapshot?: any): WizardState {
     verseStart: String(sermon.verseStart || ''),
     chapterEnd: String(sermon.chapterEnd || ''),
     verseEnd: String(sermon.verseEnd || ''),
-    bibleText: '',
+    bibleText: r.bibleText || '',
     title: sermon.title || '',
-    coreMessage: sermon.coreMessage || '',
-    observationNotes: '',
-    audienceProfile: '', audienceNeeds: '', applicationDirection: '',
+    coreMessage: sermon.coreMessage || r.coreMessage || '',
+    observationNotes: r.observationNotes || '',
+    audienceProfile: r.audienceProfile || '',
+    audienceNeeds: r.audienceNeeds || '',
+    applicationDirection: r.applicationDirection || '',
     outlinePoints: pts as [string, string, string],
     outlineDetails: dets as [string, string, string],
-    gospelConnections: ['', '', ''],
-    bodySections: [
+    gospelConnections: (r.gospelConnections as [string, string, string]) || ['', '', ''],
+    bodySections: (r.bodySections as WizardState['bodySections']) || [
       { exegesis: '', illustration: '', application: '' },
       { exegesis: '', illustration: '', application: '' },
       { exegesis: '', illustration: '', application: '' },
     ],
-    introduction: sermon.outlineIntro || '',
-    conclusion: sermon.outlineConclusion || '',
-    manuscript: sermon.manuscript || '',
+    introduction: sermon.outlineIntro || r.introduction || '',
+    conclusion: sermon.outlineConclusion || r.conclusion || '',
+    manuscript: sermon.manuscript || r.manuscript || '',
   }
 }
 
@@ -173,6 +176,93 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const [reviewResult, setReviewResult] = useState<any>(null)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [bibleLoading, setBibleLoading] = useState(false)
+  const [manuscriptLength, setManuscriptLength] = useState('30분')
+  const [manuscriptStyle, setManuscriptStyle] = useState('강해식')
+  const [manuscriptHistory, setManuscriptHistory] = useState<string[]>([])
+
+  // ── Draft / Auto-save ──
+  const DRAFT_KEY = editId ? `sermon-wizard-${editId}` : `sermon-wizard-new`
+  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [draftRestored, setDraftRestored] = useState(false)
+  const [draftTimestamp, setDraftTimestamp] = useState<number | null>(null)
+
+  const saveDraft = useCallback(() => {
+    try {
+      const data = { state: s, activeStep, updatedAt: Date.now() }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(data))
+    } catch { /* quota exceeded – silently fail */ }
+  }, [s, activeStep, DRAFT_KEY])
+
+  const loadDraft = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (parsed && parsed.state && typeof parsed.updatedAt === 'number') return parsed
+      return null
+    } catch { return null }
+  }, [DRAFT_KEY])
+
+  const clearDraft = useCallback(() => {
+    try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+  }, [DRAFT_KEY])
+
+  const handleAutoSave = useCallback(async () => {
+    if (!editId) return // 새 설교는 localStorage에만 저장, 서버 생성 안 함
+    try {
+      await fetch(`/api/sermons/${editId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: s.title,
+          normalizedPassage: `${s.bibleBook} ${s.chapterStart}:${s.verseStart}${s.verseEnd ? '-' + s.verseEnd : ''}`,
+          bibleBook: s.bibleBook,
+          chapterStart: Number(s.chapterStart) || 0,
+          chapterEnd: Number(s.chapterEnd) || Number(s.chapterStart) || 0,
+          verseStart: Number(s.verseStart) || 0,
+          verseEnd: Number(s.verseEnd) || 0,
+          date: initialDate || new Date().toISOString().slice(0, 10),
+          status: 'draft',
+          coreMessage: s.coreMessage,
+          outlineIntro: s.introduction,
+          outlinePoint1: s.outlinePoints[0] ? `${s.outlinePoints[0]} — ${s.outlineDetails[0] || ''}` : '',
+          outlinePoint2: s.outlinePoints[1] ? `${s.outlinePoints[1]} — ${s.outlineDetails[1] || ''}` : '',
+          outlinePoint3: s.outlinePoints[2] ? `${s.outlinePoints[2]} — ${s.outlineDetails[2] || ''}` : '',
+          outlineConclusion: s.conclusion,
+          manuscript: s.manuscript,
+          result: { wizardSnapshot: { ...s } },
+        }),
+      })
+    } catch (e) {
+      console.error('[AutoSave] Server save failed:', e)
+    }
+  }, [s, editId, initialDate])
+
+  // Auto-save timer (5 min)
+  useEffect(() => {
+    autoSaveTimerRef.current = setInterval(() => {
+      saveDraft()
+      handleAutoSave()
+    }, 5 * 60 * 1000)
+    return () => { if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current) }
+  }, [saveDraft, handleAutoSave])
+
+  // Save on beforeunload
+  useEffect(() => {
+    const handler = () => { saveDraft() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [saveDraft])
+
+  // Auto-save on meaningful state change (debounced)
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
+    autoSaveRef.current = setTimeout(() => {
+      saveDraft()
+    }, 30000) // 30s debounce for local draft
+    return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current) }
+  }, [s, saveDraft])
 
   // ── Tag selection state ──
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -209,11 +299,22 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
 
   // ── Load existing sermon for editing ──
   useEffect(() => {
-    if (!editId) {
-      setEditLoaded(true)
-      return
-    }
     ;(async () => {
+      // 1. Try localStorage draft first
+      const draft = loadDraft()
+      if (draft) {
+        setS({ ...EMPTY, ...draft.state })
+        if (draft.activeStep) setActiveStep(draft.activeStep)
+        setDraftRestored(true)
+        setDraftTimestamp(draft.updatedAt)
+        setEditLoaded(true)
+        return
+      }
+      // 2. No draft – try server data
+      if (!editId) {
+        setEditLoaded(true)
+        return
+      }
       try {
         const found = getSermon(editId)
         if (found && found.result?.wizardSnapshot) {
@@ -244,11 +345,15 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         setEditLoaded(true)
       }
     })()
-  }, [editId, getSermon])
+  }, [editId, getSermon, loadDraft])
 
   const update = useCallback((patch: Partial<WizardState>) => setS(prev => ({ ...prev, ...patch })), [])
 
-  const goTo = (step: number) => setActiveStep(step)
+  const goTo = (step: number) => {
+    saveDraft()
+    handleAutoSave()
+    setActiveStep(step)
+  }
 
   const buildContext = () => buildWizardContext(s)
 
@@ -378,12 +483,16 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     try {
       const ctx = buildContext()
       console.log('[Manuscript] Context length:', ctx.length)
+      // save current to history
+      if (s.manuscript) setManuscriptHistory(prev => [...prev, s.manuscript])
       const json = await aiSuggest({
         mode: 'wizard-manuscript',
         context: ctx,
-        length: '30분',
+        length: manuscriptLength,
+        style: manuscriptStyle,
       })
-      const text = json.text || json.data?.value || json.value || ''
+      const raw = json.text || json.data?.value || json.value || ''
+      const text = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2)
       if (text) {
         update({ manuscript: text })
       } else {
@@ -392,6 +501,32 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     } catch (e: any) {
       console.error('[Manuscript] Error:', e)
       alert(e.message || '원고 생성 중 오류가 발생했습니다.')
+    }
+    finally { setLoading(null) }
+  }
+
+  const handleRegenerateSection = async (pointTitle: string) => {
+    setLoading(7)
+    try {
+      const ctx = buildContext()
+      // save current to history
+      if (s.manuscript) setManuscriptHistory(prev => [...prev, s.manuscript])
+      const json = await aiSuggest({
+        mode: 'wizard-manuscript-section',
+        context: ctx,
+        pointTitle,
+        existingManuscript: s.manuscript,
+      })
+      const raw = json.text || json.data?.value || json.value || ''
+      const text = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2)
+      if (text) {
+        update({ manuscript: text })
+      } else {
+        alert('AI가 해당 대지를 다시 생성하지 못했습니다.')
+      }
+    } catch (e: any) {
+      console.error('[ManuscriptSection] Error:', e)
+      alert(e.message || '부분 재생성 중 오류가 발생했습니다.')
     }
     finally { setLoading(null) }
   }
@@ -645,6 +780,8 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         }
         const result = await updateSermon(patched)
         if (result) {
+          clearDraft()
+          cleanupDrafts()
           router.push(`/dashboard/sermons/${editId}`)
         } else {
           alert('수정에 실패했습니다.')
@@ -655,6 +792,8 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
           result: { wizardSnapshot },
         })
         if (result) {
+          clearDraft()
+          cleanupDrafts()
           router.push(`/dashboard/sermons/${result.id}`)
         } else {
           alert('저장에 실패했습니다.')
@@ -663,6 +802,24 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     } catch { alert('저장 중 오류가 발생했습니다.') }
     finally { setSaving(false) }
   }
+
+  const cleanupDrafts = async () => {
+    try {
+      const res = await fetch(`/api/sermons?title=${encodeURIComponent(s.title)}&status=draft`)
+      const json = await res.json()
+      if (json.success && json.data?.length) {
+        for (const d of json.data) {
+          if (d.id !== editId) {
+            await fetch(`/api/sermons/${d.id}`, { method: 'DELETE' })
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Cleanup] Draft cleanup failed:', e)
+    }
+  }
+
+  /* ── Auto-save helpers ── */
 
   /* ─── Render Steps ─── */
   if (!editLoaded) {
@@ -699,6 +856,14 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
           ))}
         </div>
       </div>
+
+      {draftRestored && draftTimestamp && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+          <span>🔄 {new Date(draftTimestamp).toLocaleString()}에 자동 저장된 임시 데이터를 불러왔습니다.</span>
+          <button type="button" onClick={() => { clearDraft(); setDraftRestored(false) }}
+            className="underline hover:text-amber-800">닫기</button>
+        </div>
+      )}
 
       {/* ═══ Step 1: 본문 & 관찰 ═══ */}
       <StepContainer num={1} title="본문 & 관찰" icon={BookOpen}
@@ -873,9 +1038,9 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
                         {item.reason && <span className="block text-[11px] text-slate-500 mt-0.5">{item.reason}</span>}
                       </button>
                     ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
             )
           })}
           <div className="flex justify-end pt-1">
@@ -1087,18 +1252,70 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         isActive={activeStep === 7} isDone={stepDone(s, 7)} onSelect={() => goTo(7)}>
         <div className="space-y-4">
           <p className="text-[12px] text-muted leading-relaxed">지금까지 준비한 모든 내용을 하나의 완성된 설교 원고로 조립합니다. AI가 통합 원고를 생성하거나 직접 작성하세요.</p>
-          <div className="flex justify-end gap-2">
+
+          {/* 설정 행: 스타일 · 분량 · 생성 버튼 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-muted font-medium">스타일</span>
+              <select value={manuscriptStyle} onChange={e => setManuscriptStyle(e.target.value)}
+                className="text-xs border border-border rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-light">
+                <option value="강해식">강해식</option>
+                <option value="선포식">선포식</option>
+                <option value="대화식">대화식</option>
+                <option value="이야기식">이야기식</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-muted font-medium">분량</span>
+              <select value={manuscriptLength} onChange={e => setManuscriptLength(e.target.value)}
+                className="text-xs border border-border rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-light">
+                <option value="10분">10분</option>
+                <option value="20분">20분</option>
+                <option value="30분">30분</option>
+                <option value="40분">40분</option>
+              </select>
+            </div>
             <button type="button" onClick={handleGenerateManuscript} disabled={loading === 7}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
               {loading === 7 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
               AI 원고 생성
             </button>
           </div>
+
           <textarea value={s.manuscript} onChange={e => update({ manuscript: e.target.value })}
             rows={16} placeholder="완성된 설교 원고가 여기에 표시됩니다."
             className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed" />
+
           {s.manuscript && (
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <>
+              {/* 글자수 · 예상 시간 · 되돌리기 · 부분 재생성 */}
+              <div className="flex items-center gap-3 flex-wrap text-[11px] text-muted">
+                <span>📝 {s.manuscript.replace(/\s/g, '').length.toLocaleString()}자</span>
+                <span>⏱ 약 {Math.round(s.manuscript.replace(/\s/g, '').length / 170)}분</span>
+                {manuscriptHistory.length > 0 && (
+                  <button type="button" onClick={() => {
+                    const prev = manuscriptHistory[manuscriptHistory.length - 1]
+                    setManuscriptHistory(prev => prev.slice(0, -1))
+                    setManuscriptHistory(h => [...h, s.manuscript])
+                    update({ manuscript: prev })
+                  }}
+                    className="text-primary hover:text-primary-dark underline underline-offset-2">
+                    ↩ 되돌리기 ({manuscriptHistory.length})
+                  </button>
+                )}
+                <div className="flex items-center gap-1 ml-auto">
+                  <span className="font-medium">부분 재생성:</span>
+                  {s.outlinePoints.filter(Boolean).map((pt, i) => (
+                    <button key={i} type="button" onClick={() => handleRegenerateSection(pt)}
+                      disabled={loading === 7}
+                      className="text-xs px-1.5 py-0.5 rounded border border-border hover:bg-slate-100 disabled:opacity-50 transition-colors">
+                      {i + 1}대지
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
                 <span className="text-xs font-medium text-slate-600">📋 설교 원고 검증</span>
                 <button type="button" onClick={handleReviewManuscript} disabled={reviewLoading}
@@ -1146,6 +1363,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
                 </div>
               )}
             </div>
+            </>
           )}
           <div className="flex justify-end pt-2">
             <button type="button" onClick={() => goTo(8)}

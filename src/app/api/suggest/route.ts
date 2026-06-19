@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, passage, coreMessage, pointIndex, mode, context, bibleText: bibleTextInput, pointTitle, length: msLength } = body
+    const { title, passage, coreMessage, pointIndex, mode, context, bibleText: bibleTextInput, pointTitle, length: msLength, pointDetail, sentence, existingManuscript, style: msStyle } = body
 
     let systemPrompt: string
     let userText: string
@@ -127,7 +127,11 @@ export async function POST(request: NextRequest) {
       systemPrompt = p.system
       userText = p.user
     } else if (mode === 'wizard-manuscript') {
-      const p = PROMPTS.manuscript(context || '', msLength || '30분')
+      const p = PROMPTS.manuscript(context || '', msLength || '30분', msStyle || '강해식')
+      systemPrompt = p.system
+      userText = p.user
+    } else if (mode === 'wizard-manuscript-section') {
+      const p = PROMPTS.manuscriptSection(context || '', pointTitle || '', existingManuscript || '')
       systemPrompt = p.system
       userText = p.user
     } else if (mode === 'wizard-audience-profile') {
@@ -416,7 +420,14 @@ ${illustration ? `\n예화: ${illustration}` : ''}
       return NextResponse.json({ success: true, data: parsed })
     }
     if (mode === 'wizard-manuscript') {
-      return NextResponse.json({ success: true, text: parsed.value || parsed.text || '' })
+      const raw = parsed.value || parsed.text || ''
+      const text = typeof raw === 'string' ? raw : typeof raw === 'object' ? JSON.stringify(raw, null, 2) : String(raw)
+      return NextResponse.json({ success: true, text })
+    }
+    if (mode === 'wizard-manuscript-section') {
+      const raw = parsed.value || parsed.text || ''
+      const text = typeof raw === 'string' ? raw : typeof raw === 'object' ? JSON.stringify(raw, null, 2) : String(raw)
+      return NextResponse.json({ success: true, text })
     }
     if (mode === 'wizard-audience-profile' || mode === 'wizard-audience-needs' || mode === 'wizard-application-direction') {
       const items = Array.isArray(parsed)

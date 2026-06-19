@@ -10,6 +10,7 @@ export function buildGraphData(
     seasons?: string[]
     audiences?: string[]
     seriesIds?: string[]
+    book?: string
   }
 ): GraphData {
   const nodesMap = new Map<string, GraphNode>()
@@ -60,15 +61,24 @@ export function buildGraphData(
         filters.seriesIds!.includes(s.seriesId)
       )
     }
+    if (filters.book) {
+      filteredSermons = filteredSermons.filter((s) =>
+        s.bibleBook === filters.book
+      )
+    }
   }
 
   for (const sermon of filteredSermons) {
-    addNode(`sermon-${sermon.id}`, sermon.title, 'sermon')
+    addNode(`sermon-${sermon.id}`, sermon.title || '(제목 없음)', 'sermon')
 
-    const passageLabel = sermon.normalizedPassage
-    const passageId = `passage-${sermon.bibleBook}-${sermon.chapterStart}`
-    addNode(passageId, passageLabel, 'passage')
-    addLink(`sermon-${sermon.id}`, passageId, 'passage')
+    // Passage node — use full verse range for unique ID
+    if (sermon.bibleBook && sermon.chapterStart) {
+      const vs = sermon.verseStart || 1
+      const ve = sermon.verseEnd || vs
+      const passageId = `passage-${sermon.bibleBook}-${sermon.chapterStart}-${vs}-${ve}`
+      addNode(passageId, sermon.normalizedPassage || `${sermon.bibleBook} ${sermon.chapterStart}:${vs}${ve !== vs ? '-' + ve : ''}`, 'passage')
+      addLink(`sermon-${sermon.id}`, passageId, 'passage')
+    }
 
     for (const themeId of sermon.themeIds) {
       const theme = themes.find((t) => t.id === themeId)
@@ -154,11 +164,6 @@ export function buildSermonCentricGraph(
   }
 
   const relevantSermons = sermons.filter((s) => relevantIds.has(s.id))
-
-  const allSermons = sermons
-  const temp = allSermons
-  allSermons.length = 0
-  allSermons.push(...sermons)
 
   return buildGraphData(relevantSermons, themes, series)
 }

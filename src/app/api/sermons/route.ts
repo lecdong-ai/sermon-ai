@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url)
     const sourceFilter = url.searchParams.get('source')
+    const statusFilter = url.searchParams.get('status')
+    const titleFilter = url.searchParams.get('title')
 
     let query = supabaseAdmin
       .from('sermons')
@@ -20,8 +22,14 @@ export async function GET(request: NextRequest) {
 
     if (sourceFilter === 'upload') {
       query = query.eq('source', 'upload')
-    } else {
+    } else if (sourceFilter !== 'all') {
       query = query.neq('source', 'upload')
+    }
+    if (statusFilter) {
+      query = query.eq('status', statusFilter)
+    }
+    if (titleFilter) {
+      query = query.eq('title', titleFilter)
     }
 
     const { data, error } = await query

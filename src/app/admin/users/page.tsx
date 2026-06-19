@@ -812,13 +812,16 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleGrant(m.id, 30)}
-                            className="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold hover:bg-rose-100 transition-colors"
-                            title="30일 후원 부여"
-                          >
-                            <Heart className="w-3 h-3" />
-                          </button>
+                          {GRANT_PRESETS.map(p => (
+                            <button
+                              key={p.days}
+                              onClick={() => handleGrant(m.id, p.days)}
+                              className="px-1.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-100 transition-colors"
+                              title={`${p.label} 후원 부여`}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
                           <button
                             onClick={() => setDeleteTarget(m)}
                             className="px-2 py-1 rounded-lg bg-slate-100 text-slate-400 text-[11px] font-bold hover:bg-rose-50 hover:text-rose-500 transition-colors"

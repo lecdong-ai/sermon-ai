@@ -132,7 +132,7 @@ ${PRINCIPLES}
     user: `${context}\n\n{"introduction": "서론 전문", "conclusion": "결론 전문"}`,
   }),
 
-  manuscript: (context: string, lengthInMin: string) => {
+  manuscript: (context: string, lengthInMin: string, style?: string) => {
     const lengthMap: Record<string, string> = {
       '10분': '1,400~1,700자',
       '20분': '2,800~3,400자',
@@ -140,10 +140,18 @@ ${PRINCIPLES}
       '40분': '5,600~6,800자',
     }
     const target = lengthMap[lengthInMin] || '4,200~5,100자'
+    const styleGuide: Record<string, string> = {
+      강해식: '본문의 문맥과 원어 의미를 충실히 설명하며 설교하라',
+      선포식: '선지자처럼 담대하게 진리를 선포하라 — 청중의 결단을 촉구하라',
+      대화식: '회중과 대화하듯 부드럽고 친근한 어조로 풀어가라',
+      이야기식: '본문의 이야기를 생생하게 재구성하여 청중이 장면 속으로 들어오게 하라',
+    }
+    const styleText = style && styleGuide[style] ? `\n\n[설교 스타일]\n${styleGuide[style]}` : ''
     return {
       system: `당신은 개혁주의 설교 조수입니다. 아래 모든 자료를 종합하여 강단에서 바로 선포할 수 있는 완전한 설교 원고를 작성하세요.
 
 ${PRINCIPLES}
+${styleText}
 
 [원고 구조]
 **서론** (본문 배경, 설교 주제 제시)
@@ -161,6 +169,22 @@ ${PRINCIPLES}
       user: `${context}\n\n{"value": "완전한 설교 원고 전문"}`,
     }
   },
+
+  manuscriptSection: (context: string, pointTitle: string, existingManuscript: string) => ({
+    system: `당신은 개혁주의 설교 조수입니다. 아래 설교 맥락과 기존 원고를 참고하여, "${pointTitle}" 대지 부분만 새로 작성하세요.
+
+${PRINCIPLES}
+
+[지침]
+- "${pointTitle}" 대지의 내용만 새로 쓰고, 나머지 부분(서론, 다른 대지, 결론)은 기존 원고를 그대로 유지하라
+- 새로 쓴 대지는 본문해설 → 예화 → 복음연결 → 적용의 구조를 따를 것
+- 기존 원고의 다른 대지들과 논리적으로 연결되어야 한다
+- 기존 원고와 비슷한 분량과 톤으로 작성하라
+- 설교형 문장으로 생동감 있게 써라
+
+반드시 JSON 객체 형식으로 응답하세요.`,
+    user: `${context}\n\n[기존 원고]\n${existingManuscript}\n\n위 원고에서 "${pointTitle}" 대지 부분만 새로 작성하세요.\n\n{"value": "${pointTitle} 대지만 새로 쓴 전체 원고"}`,
+  }),
 
   audienceProfile: (context: string) => ({
     system: `당신은 개혁주의 설교 조수입니다. 아래 설교 준비 자료를 바탕으로 이 설교에 가장 적합한 청중 프로필 5가지를 추천하세요.

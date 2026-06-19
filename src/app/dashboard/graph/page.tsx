@@ -1,12 +1,13 @@
 'use client'
 
-import { Suspense, useState, useMemo, useEffect } from 'react'
+import { Suspense, useState, useMemo, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { useApp } from '@/lib/dashboard/store'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { buildGraphData } from '@/lib/dashboard/graphUtils'
 import { GraphNode } from '@/lib/dashboard/types'
-import { BIBLE_BOOKS, SEASONS, AUDIENCES } from '@/lib/dashboard/constants'
+import { BIBLE_BOOKS, SEASONS, AUDIENCES, ALL_THEMES } from '@/lib/dashboard/constants'
+import { Loader2, Sparkles } from 'lucide-react'
 
 const GraphCanvas = dynamic(() => import('@/components/dashboard/GraphCanvas'), { ssr: false, loading: () => <div className="flex items-center justify-center h-[600px] text-slate-500 text-sm">그래프 로딩 중...</div> })
 
@@ -26,16 +27,72 @@ function GraphContent() {
   const [filterBook, setFilterBook] = useState('')
   const [filterSeason, setFilterSeason] = useState('')
   const [filterAudience, setFilterAudience] = useState('')
+  const [showDrafts, setShowDrafts] = useState(false)
   useEffect(() => {
     setViewMode(focusId ? 'sermon-centric' : 'full')
   }, [focusId])
 
+  const visibleSermons = useMemo(() =>
+    showDrafts ? state.sermons : state.sermons.filter(s => s.status !== 'draft'),
+  [state.sermons, showDrafts])
+
+  const draftCount = useMemo(() =>
+    state.sermons.filter(s => s.status === 'draft').length,
+  [state.sermons])
+
   const graphData = useMemo(() => {
-    return buildGraphData(state.sermons, state.themes, state.series, {
+    return buildGraphData(visibleSermons, state.themes, state.series, {
       seasons: filterSeason ? [filterSeason] : undefined,
       audiences: filterAudience ? [filterAudience] : undefined,
+      book: filterBook || undefined,
     })
-  }, [state.sermons, state.themes, state.series, filterSeason, filterAudience])
+  }, [visibleSermons, state.themes, state.series, filterSeason, filterAudience, filterBook])
+
+  const unanalyzedCount = useMemo(() =>
+    state.sermons.filter(s => !s.themeIds?.length && (s.manuscript || s.coreMessage)).length,
+  [state.sermons])
+
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analyzeProgress, setAnalyzeProgress] = useState('')
+
+  const handleBatchAnalyze = useCallback(async () => {
+    const targets = state.sermons.filter(s =>
+      !s.themeIds?.length && (s.manuscript || s.coreMessage)
+    )
+    if (!targets.length) return
+    setAnalyzing(true)
+    let done = 0
+    for (const sermon of targets) {
+      setAnalyzeProgress(`${done + 1}/${targets.length}: ${sermon.title || sermon.id.slice(0, 8)}`)
+      try {
+        const res = await fetch('/api/analyze-tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manuscript: sermon.manuscript,
+            coreMessage: sermon.coreMessage,
+            title: sermon.title,
+            passage: sermon.normalizedPassage,
+            allThemes: ALL_THEMES.map(t => ({ id: t.id, name: t.name, category: t.category })),
+          }),
+        })
+        const json = await res.json()
+        if (json.success && json.tags?.length) {
+          await fetch(`/api/sermons/${sermon.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ themeIds: json.tags }),
+          })
+        }
+      } catch (e) {
+        console.error(`[BatchAnalyze] ${sermon.id} failed:`, e)
+      }
+      done++
+    }
+    setAnalyzeProgress('')
+    setAnalyzing(false)
+    window.location.reload()
+  }, [state.sermons])
 
   const handleNodeClick = (node: GraphNode) => {
     // Panel handles navigation
@@ -75,7 +132,26 @@ function GraphContent() {
           <option value="">모든 회중</option>
           {AUDIENCES.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-
+        <div className="w-px h-5 bg-border mx-1" />
+        {draftCount > 0 && (
+          <button onClick={() => setShowDrafts(p => !p)}
+            className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${showDrafts ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-white border-border text-muted hover:text-foreground'}`}>
+            {showDrafts ? '✓ 임시 저장 표시' : `임시 저장 ${draftCount}개 숨김`}
+          </button>
+        )}
+        <div className="w-px h-5 bg-border mx-1" />
+        {unanalyzedCount > 0 && !analyzing && (
+          <button type="button" onClick={handleBatchAnalyze}
+            className="text-xs px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> AI 주제 분석 ({unanalyzedCount})
+          </button>
+        )}
+        {analyzing && (
+          <div className="flex items-center gap-2 text-xs text-amber-700">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            {analyzeProgress || '분석 중...'}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0">
