@@ -170,6 +170,8 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const [suggestionsOpen, setSuggestionsOpen] = useState<string | null>(null)
   const [suggestionsCache, setSuggestionsCache] = useState<Record<string, { value: string; reason: string }[]>>({})
   const [suggestionsLoading, setSuggestionsLoading] = useState<string | null>(null)
+  const [reviewResult, setReviewResult] = useState<any>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
 
   // ── Tag selection state ──
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -412,6 +414,26 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     const keyMap = { profile: 'audienceProfile', needs: 'audienceNeeds', application: 'applicationDirection' } as const
     update({ [keyMap[field]]: value })
     setSuggestionsOpen(null)
+  }
+
+  const handleReviewManuscript = async () => {
+    setReviewLoading(true)
+    setReviewResult(null)
+    try {
+      const ctx = buildContext()
+      const res = await fetch('/api/review-manuscript', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manuscript: s.manuscript, context: ctx }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || '검증 실패')
+      setReviewResult(json.review)
+    } catch (e: any) {
+      console.error('[Review] Error:', e)
+      alert(e.message || '원고 검증 중 오류가 발생했습니다.')
+    }
+    finally { setReviewLoading(false) }
   }
 
   const addPoint = () => {
@@ -880,6 +902,56 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
           <textarea value={s.manuscript} onChange={e => update({ manuscript: e.target.value })}
             rows={16} placeholder="완성된 설교 원고가 여기에 표시됩니다."
             className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none font-mono leading-relaxed" />
+          {s.manuscript && (
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <span className="text-xs font-medium text-slate-600">📋 설교 원고 검증</span>
+                <button type="button" onClick={handleReviewManuscript} disabled={reviewLoading}
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
+                  {reviewLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI 검증
+                </button>
+              </div>
+              {reviewResult && (
+                <div className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: 'gospel_centered', label: '복음 중심성', icon: '✝️', border: 'border-rose-100', bg: 'bg-rose-50/30' },
+                      { key: 'biblical_faithfulness', label: '본문 충실성', icon: '📖', border: 'border-indigo-100', bg: 'bg-indigo-50/30' },
+                      { key: 'application_specificity', label: '적용 구체성', icon: '🎯', border: 'border-emerald-100', bg: 'bg-emerald-50/30' },
+                      { key: 'logical_flow', label: '흐름의 논리성', icon: '🔗', border: 'border-amber-100', bg: 'bg-amber-50/30' },
+                    ].map(({ key, label, icon, border, bg }) => {
+                      const item = reviewResult[key] || {}
+                      const score = item.score || 0
+                      return (
+                        <div key={key} className={`p-3 rounded-lg border ${border} ${bg}`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-semibold text-slate-700">{icon} {label}</span>
+                            <span className="text-sm font-bold">{'★'.repeat(score)}{'☆'.repeat(5 - score)}</span>
+                          </div>
+                          {item.feedback && <p className="text-[11px] text-slate-600 mb-1">{item.feedback}</p>}
+                          {item.suggestion && (
+                            <p className="text-[11px] text-slate-500 italic border-t border-slate-200 pt-1 mt-1">
+                              💡 {item.suggestion}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {reviewResult.overall && (
+                    <div className="p-3 bg-slate-100 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-slate-700">📊 종합 평가</span>
+                        <span className="text-sm font-bold">{'★'.repeat(reviewResult.overall.score || 0)}{'☆'.repeat(5 - (reviewResult.overall.score || 0))}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">{reviewResult.overall.summary}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex justify-end pt-2">
             <button type="button" onClick={() => goTo(8)}
               disabled={!stepDone(s, 7)}

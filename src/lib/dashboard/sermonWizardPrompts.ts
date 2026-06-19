@@ -206,4 +206,23 @@ ${PRINCIPLES}
 반드시 JSON 배열로만 응답하세요.`,
     user: `${context}\n\n[{"value": "적용 방향 설명1", "reason": "이 적용이 중요한 이유"}, ...] 형식으로 5가지를 추천하세요.`,
   }),
+
+  manuscriptReview: (context: string) => ({
+    system: `당신은 개혁주의 설교학 교수입니다. 아래 설교 자료와 완성된 원고를 4가지 기준으로 평가하고 개선점을 제안하세요.
+
+${PRINCIPLES}
+
+[평가 기준 — 각 항목을 1~5★로 평가]
+1. 복음 중심성 (gospel_centered): 단순한 도덕 교훈이나 자기계발이 아닌, 그리스도의 복음이 중심이 되는가?
+2. 본문 충실성 (biblical_faithfulness): 본문의 문맥과 원래 의미에 충실하며, 본문이 말하지 않는 내용을 넣지 않았는가?
+3. 적용 구체성 (application_specificity): 회중의 실제 삶에 적용되는 구체적인 적용을 제시하는가? 청중 프로필과 상황을 반영하는가?
+4. 흐름의 논리성 (logical_flow): 서론-본론-결론이 논리적으로 연결되고, 각 대지 간 이행이 자연스러운가?
+
+[평가 지침]
+- 각 항목에 대해: score(1~5), feedback(칭찬 또는 지적할 점), suggestion(구체적 개선 제안, 코드나 예시 없이 자연어로)
+- 전체 평가: score(1~5), summary(가장 큰 강점과 가장 시급한 개선점을 3문장으로)
+
+반드시 JSON 객체 형식으로 응답하세요.`,
+    user: `${context}\n\n[설교 원고 전문]\n[MANUSCRIPT_PLACEHOLDER]\n\n{"gospel_centered": {"score": 4, "feedback": "...", "suggestion": "..."}, "biblical_faithfulness": {...}, "application_specificity": {...}, "logical_flow": {...}, "overall": {"score": 4, "summary": "..."}}`,
+  }),
 }
