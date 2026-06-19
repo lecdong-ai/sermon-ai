@@ -32,9 +32,17 @@ function GraphContent() {
     setViewMode(focusId ? 'sermon-centric' : 'full')
   }, [focusId])
 
-  const visibleSermons = useMemo(() =>
-    showDrafts ? state.sermons : state.sermons.filter(s => s.status !== 'draft'),
-  [state.sermons, showDrafts])
+  const visibleSermons = useMemo(() => {
+    const filtered = showDrafts ? state.sermons : state.sermons.filter(s => s.status !== 'draft')
+    const map = new Map<string, typeof state.sermons[0]>()
+    for (const s of filtered) {
+      const key = s.title.trim().toLowerCase()
+      if (!map.has(key) || new Date(s.updatedAt) > new Date(map.get(key)!.updatedAt)) {
+        map.set(key, s)
+      }
+    }
+    return Array.from(map.values())
+  }, [state.sermons, showDrafts])
 
   const draftCount = useMemo(() =>
     state.sermons.filter(s => s.status === 'draft').length,
