@@ -47,6 +47,7 @@ export default function OverviewTab({ project }: Props) {
             <StageTransitionCard
               currentStatus={project.status}
               onTransition={(to) => router.push(`/advanced/projects/${project.id}?status=${to}`)}
+              projectId={project.id}
             />
           </div>
         </div>

@@ -11,6 +11,9 @@ import { SYSTEM_PROMPT as MANUSCRIPT_CONCLUSION_PROMPT } from '@/lib/ai/prompts/
 import { SYSTEM_PROMPT as MANUSCRIPT_APPLICATION_PROMPT } from '@/lib/ai/prompts/manuscript-application'
 import { SYSTEM_PROMPT as MANUSCRIPT_BODY_PROMPT } from '@/lib/ai/prompts/manuscript-body'
 import { SYSTEM_PROMPT as MANUSCRIPT_APP_RECONSTRUCT_PROMPT } from '@/lib/ai/prompts/manuscript-application-reconstruct'
+import { SYSTEM_PROMPT as ILLUSTRATION_PROMPT } from '@/lib/ai/prompts/illustration'
+import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
+import { SYSTEM_PROMPT as STUDY_TO_PREP_PROMPT } from '@/lib/ai/prompts/studyToPrep'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -107,6 +110,9 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   'application': APP_PROMPT,
   'application-direction': DIRECTION_PROMPT,
   'application-generate': GENERATE_PROMPT,
+  'illustration': ILLUSTRATION_PROMPT,
+  'reference': REFERENCE_PROMPT,
+  'study-to-prep': STUDY_TO_PREP_PROMPT,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -209,7 +215,7 @@ export async function POST(request: NextRequest) {
       const count = ve - vs + 1
       userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
       model = 'gpt-4o-mini'
-      maxTokens = 128000
+      maxTokens = 8000
       temperature = 0.3
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
@@ -269,11 +275,27 @@ export async function POST(request: NextRequest) {
       userText = `설교 적용 문장을 재구성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 준비 단계에서 정리한 적용 포인트 (반드시 모두 포함)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag || '전체'}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 결론에서 작성된 내용 (적용이 이 흐름에서 자연스럽게 이어질 것)\n${previousContent || '(아직 결론이 작성되지 않음)'}\n\n## 기존 적용 원고 (연속성 유지 참고)\n${existingContent || '(기존 내용 없음)'}\n\n위 적용 포인트들을 하나의 완성된 설교 적용 문장으로 재구성해주세요. PrepTab에서 설교자가辛辛苦苦 작성한 적용 포인트를 반드시 모두 포함하고, 새로운 적용을 추가하거나 기존 포인트를 삭제하지 마십시오. 결론의 흐름에서 자연스럽게 이어지도록 하십시오.`
       maxTokens = 3000
       temperature = 0.7
+    } else if (type === 'illustration') {
+      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme } = data
+      userText = `설교 섹션 내용을 분석해 관련 예화 3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}\n\n위 내용을 바탕으로 이 섹션에 어울리는 예화 3가지를 생성해주세요.`
+      maxTokens = 2000
+      temperature = 0.7
+    } else if (type === 'reference') {
+      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme } = data
+      userText = `설교 섹션 내용을 분석해 관련 참고 메모 2-3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}\n\n위 내용을 바탕으로 이 섹션에 깊이와 통찰을 더할 참고 메모 2-3가지를 생성해주세요.`
+      maxTokens = 1500
+      temperature = 0.5
+    } else if (type === 'study-to-prep') {
+      const { passage, themes, commentaries, words, contextInfo, memoText } = data
+      userText = `연구 결과를 설교 준비 자료로 변환해주세요:\n\n## 본문\n${passage || ''}\n\n## 문맥 정보\n앞 문맥: ${contextInfo?.before || ''}\n뒤 문맥: ${contextInfo?.after || ''}\n책 구조: ${contextInfo?.bookStructure || ''}\n\n## 주제\n${(themes || []).map((t: any) => `- ${t.name}: ${t.description}`).join('\n')}\n\n## 주석 통찰\n${(commentaries || []).slice(0, 6).map((c: any) => `- ${c.author}: ${c.text}`).join('\n')}\n\n## 원어 연구\n${Object.values(words || {}).slice(0, 5).map((w: any) => `- ${w.lemmaGreek || w.word}: ${w.basicMeaning}`).join('\n')}\n\n## 연구 메모\n${memoText || '(없음)'}\n\n위 연구 결과를 바탕으로 설교 준비 자료 전체를 생성해주세요.`
+      model = 'gpt-4o-mini'
+      maxTokens = 4000
+      temperature = 0.5
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
       model = 'gpt-4o-mini'
-      maxTokens = 1000
+      maxTokens = 600
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
@@ -287,44 +309,44 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''
     // Extract JSON robustly — handle both {} objects and [] arrays
-    const isArrayType = type === 'suggest-titles'
+    const isArrayType = type === 'suggest-titles' || type === 'illustration' || type === 'reference'
     const openChar = isArrayType ? '[' : '{'
     const closeChar = isArrayType ? ']' : '}'
-    const start = output.indexOf(openChar)
-    if (start !== -1) {
-      let count = 0
-      let end = -1
-      for (let i = start; i < output.length; i++) {
-        if (output[i] === openChar) count++
-        else if (output[i] === closeChar) count--
-        if (count === 0) {
-          end = i
-          break
-        }
-      }
-      if (end !== -1) {
-        output = output.slice(start, end + 1)
-      } else {
-        output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
-      }
+    // Improved JSON extraction: find first { and last }
+    const firstOpen = output.indexOf(openChar)
+    const lastClose = output.lastIndexOf(closeChar)
+    if (firstOpen !== -1 && lastClose > firstOpen) {
+      output = output.slice(firstOpen, lastClose + 1)
+    } else {
+      // Fallback to markdown removal
+      output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery') && output) {
+    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep') && output) {
       try {
         JSON.parse(output)
       } catch (e) {
-        console.error(`${type} AI response is not valid JSON, length:`, output.length)
-        console.error(`${type} AI response preview:`, output.slice(0, 500))
-        console.error(`${type} AI response tail:`, output.slice(-200))
-        return NextResponse.json({
-          success: false,
-          error: `AI 응답이 완전하지 않습니다 (${output.length}자). 다시 시도해주세요.`,
-        }, { status: 422 })
+        // Attempt to fix common JSON issues
+        let fixed = output
+          .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+          .replace(/'/g, '"') // Replace single quotes with double quotes
+          .replace(/\n/g, '\\n') // Escape newlines
+        try {
+          JSON.parse(fixed)
+          output = fixed
+        } catch (e2) {
+          console.error(`${type} AI response is not valid JSON, length:`, output.length)
+          console.error(`${type} AI response preview:`, output.slice(0, 500))
+          return NextResponse.json({
+            success: false,
+            error: `AI 응답이 완전하지 않습니다 (${output.length}자). 다시 시도해주세요.`,
+          }, { status: 422 })
+        }
       }
     }
 

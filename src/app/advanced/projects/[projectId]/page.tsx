@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 import {
   Eye, BookOpen, AlignLeft, Pen, Network, History
 } from 'lucide-react'
-import { getMockProjectDetail } from '@/lib/advanced/mockData'
+import { useProjectDetail } from '@/lib/advanced/useProjectDetail'
 import ProjectHeader from '@/components/advanced/project/ProjectHeader'
 import RightPanel from '@/components/advanced/project/RightPanel'
 import OverviewTab from '@/components/advanced/project/OverviewTab'
@@ -30,10 +30,36 @@ function ProjectContent() {
   const router = useRouter()
   const currentTab = searchParams.get('tab') || 'overview'
 
-  const project = getMockProjectDetail(params.projectId as string)
+  const { project, loading, error } = useProjectDetail(params.projectId as string)
 
   const handleTabChange = (tab: string) => {
     router.push(`/advanced/projects/${params.projectId}?tab=${tab}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-400 font-bold">프로젝트 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !project) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center max-w-sm">
+          <p className="text-sm text-red-400 font-bold mb-2">{error || '프로젝트를 찾을 수 없습니다'}</p>
+          <button
+            onClick={() => router.push('/advanced/projects')}
+            className="text-xs px-4 py-2 rounded-xl bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+            프로젝트 목록으로 돌아가기
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

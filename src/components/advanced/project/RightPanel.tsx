@@ -88,6 +88,7 @@ export default function RightPanel({ project, activeTab }: Props) {
           <StageTransitionCard
             currentStatus={project.status}
             onTransition={(to) => router.push(`/advanced/projects/${project.id}?status=${to}`)}
+            projectId={project.id}
           />
         </div>
 

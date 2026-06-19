@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -105,13 +105,15 @@ function similarity(a: string, b: string): number {
  *  - Smart matching: uses title similarity (Levenshtein) instead of index.
  *  - If prep has more outlines than body-sections → appends new empty sections.
  *  - If prep has fewer outlines → keeps extra sections that have content.
- *  - Updates labels, passages, prepInsights, and outlinePoints from prep. */
+ *  - Updates labels, passages, prepInsights, outlinePoints, researchPoints, applicationDirection from prep. */
 function syncManuscriptWithPrep(ms: JohnManuscriptData, prepRaw: any): JohnManuscriptData {
   const outlines = prepRaw?.outlines || []
   if (outlines.length === 0) return ms
 
   const bodySections = ms.sections.filter(s => s.type === 'body')
   const fixedSections = ms.sections.filter(s => s.type !== 'body')
+  const researchInsights = prepRaw?.researchInsights || []
+  const applicationPoints = prepRaw?.applicationPoints || []
 
   // Smart matching: find best existing section for each outline by title similarity
   const usedIdx = new Set<number>()
@@ -133,13 +135,38 @@ function syncManuscriptWithPrep(ms: JohnManuscriptData, prepRaw: any): JohnManus
     })
 
     const label = `${_i + 1}. ${outlineTitle}`
+    // Prep 데이터 매핑
+    const sectionResearch = researchInsights.length > 0
+      ? researchInsights.filter((_: any, idx: number) => idx % outlines.length === _i)
+      : []
+    const sectionApp = applicationPoints.length > 0
+      ? applicationPoints.filter((_: any, idx: number) => idx % outlines.length === _i)
+          .map((ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`)
+      : []
+
     if (bestIdx >= 0 && bestScore > 0.3) {
       usedIdx.add(bestIdx)
       const existing = bodySections[bestIdx]
-      return { ...existing, id: `body-${_i + 1}`, label, passage: o.relatedVerse || existing.passage || '' }
+      return {
+        ...existing,
+        id: `body-${_i + 1}`,
+        label,
+        passage: o.relatedVerse || existing.passage || '',
+        researchPoints: sectionResearch.length > 0 ? sectionResearch : existing.researchPoints,
+        applicationDirection: sectionApp.length > 0 ? sectionApp.join('\n') : existing.applicationDirection,
+      }
     }
-    // No match → new empty section
-    return { id: `body-${_i + 1}`, type: 'body' as const, label, passage: o.relatedVerse || '', content: '', aiGenerated: false }
+    // No match → new empty section with prep data
+    return {
+      id: `body-${_i + 1}`,
+      type: 'body' as const,
+      label,
+      passage: o.relatedVerse || '',
+      content: '',
+      aiGenerated: false,
+      researchPoints: sectionResearch,
+      applicationDirection: sectionApp.length > 0 ? sectionApp.join('\n') : undefined,
+    }
   })
 
   // Keep extra body sections that have user content (don't delete their work)
@@ -159,9 +186,16 @@ function syncManuscriptWithPrep(ms: JohnManuscriptData, prepRaw: any): JohnManus
   const conclusion = fixedSections.find(s => s.id === 'conclusion')
   const application = fixedSections.find(s => s.id === 'application')
 
+  // 적용 섹션에 Prep의 적용 포인트 전체 전달
+  const allAppPoints = applicationPoints.map((ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`).join('\n')
+  const updatedApplication = application ? {
+    ...application,
+    applicationDirection: allAppPoints || application.applicationDirection,
+  } : application
+
   return {
     ...ms,
-    sections: [intro!, ...synced, ...extras, conclusion!, application!].filter(Boolean),
+    sections: [intro!, ...synced, ...extras, conclusion!, updatedApplication!].filter(Boolean),
     coreMessage: prepRaw?.coreMessage || ms.coreMessage,
     audience: (() => {
       if (prepRaw?.congregationProfile) {
@@ -187,8 +221,21 @@ function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManu
   })
 
   const outlines = prepRaw?.outlines || []
+  const researchInsights = prepRaw?.researchInsights || []
+  const applicationPoints = prepRaw?.applicationPoints || []
+
   if (outlines.length > 0) {
     outlines.forEach((o: any, i: number) => {
+      // Prep의 연구 통찰을 각 대지에 분배
+      const sectionResearch = researchInsights.length > 0
+        ? researchInsights.filter((_: any, idx: number) => idx % outlines.length === i)
+        : []
+      // Prep의 적용 포인트를 각 대지에 분배
+      const sectionApp = applicationPoints.length > 0
+        ? applicationPoints.filter((_: any, idx: number) => idx % outlines.length === i)
+            .map((ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`)
+        : []
+
       sections.push({
         id: `body-${i + 1}`,
         type: 'body',
@@ -196,6 +243,8 @@ function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManu
         passage: o.relatedVerse || '',
         content: '',
         aiGenerated: false,
+        researchPoints: sectionResearch,
+        applicationDirection: sectionApp.length > 0 ? sectionApp.join('\n') : undefined,
       })
     })
   } else {
@@ -206,6 +255,7 @@ function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManu
         label: `${i + 1}. 본론`,
         content: '',
         aiGenerated: false,
+        researchPoints: researchInsights.length > 0 ? [researchInsights[i % researchInsights.length]] : [],
       })
     }
   }
@@ -218,12 +268,15 @@ function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManu
     aiGenerated: false,
   })
 
+  // 적용 섹션에 Prep의 적용 포인트 전체 전달
+  const allAppPoints = applicationPoints.map((ap: any) => `[${ap.audienceTag || '전체'}] ${ap.point}`).join('\n')
   sections.push({
     id: 'application',
     type: 'application',
     label: '적용',
     content: '',
     aiGenerated: false,
+    applicationDirection: allAppPoints || undefined,
   })
 
   const outlinePoints = outlines.map((o: any) => ({
@@ -305,6 +358,7 @@ export default function ManuscriptTab({ project }: Props) {
   const rehearsalAnimRef = useRef<number | null>(null)
   const [presentationSectionIdx, setPresentationSectionIdx] = useState(0)
   const [writingStatus, setWritingStatus] = useState<string>('draft')
+  const [boostingSections, setBoostingSections] = useState<Set<string>>(new Set())
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -312,7 +366,13 @@ export default function ManuscriptTab({ project }: Props) {
   const mountedRef = useRef(true)
   const manuscriptLoadedRef = useRef(false)
   const manuscriptRef = useRef(manuscript)
-  manuscriptRef.current = manuscript
+
+  // 상태 업데이트 시 Ref도 즉시 동기화하여 탭 이동 시 최신 데이터 저장 보장
+  const setManuscriptSafe = useCallback((updater: React.SetStateAction<JohnManuscriptData>) => {
+    const next = typeof updater === 'function' ? (updater as Function)(manuscriptRef.current) : updater
+    manuscriptRef.current = next
+    setManuscript(() => next)
+  }, [])
   const manualSaveTriggerRef = useRef(0)
 
   const totalWordCount = useMemo(() =>
@@ -372,53 +432,83 @@ export default function ManuscriptTab({ project }: Props) {
     const application = sections.find(s => s.type === 'application')
 
     let score = 0
-    const details: { label: string; ok: boolean; note: string }[] = []
+    const details: { label: string; ok: boolean; note: string; tip?: string }[] = []
 
     // 1. Introduction (15 pts)
-    if (intro?.content.trim()) {
-      score += 15
-      details.push({ label: '도입', ok: true, note: `${intro.content.replace(/\s/g, '').length}자` })
+    const introLen = intro?.content.replace(/\s/g, '').length || 0
+    if (introLen > 0) {
+      const introPts = introLen >= 150 ? 15 : introLen >= 50 ? 10 : 5
+      score += introPts
+      details.push({
+        label: '도입',
+        ok: introPts === 15,
+        note: `${introLen}자`,
+        tip: introPts < 15 ? '150자 이상이면 만점입니다' : undefined,
+      })
     } else {
-      details.push({ label: '도입', ok: false, note: '내용 없음' })
+      details.push({ label: '도입', ok: false, note: '내용 없음', tip: 'AI 추천으로 초안을 생성해보세요' })
     }
 
-    // 2. Body sections (40 pts total, 10 each, max 4)
-    const bodyCount = Math.min(bodies.length, 4)
-    bodies.slice(0, 4).forEach((s, i) => {
-      if (s.content.trim()) {
-        score += 10
-        details.push({ label: `본론 ${i + 1}`, ok: true, note: `${s.content.replace(/\s/g, '').length}자` })
-      } else {
-        details.push({ label: `본론 ${i + 1}`, ok: false, note: '내용 없음' })
-      }
-    })
+    // 2. Body sections (30 pts total, based on content length)
+    const totalBodyLen = bodies.reduce((sum, s) => sum + s.content.replace(/\s/g, '').length, 0)
+    const avgBodyLen = bodies.length > 0 ? totalBodyLen / bodies.length : 0
+    if (avgBodyLen > 0) {
+      const bodyPts = Math.min(30, Math.round((avgBodyLen / 200) * 30))
+      score += bodyPts
+      details.push({
+        label: '본론',
+        ok: bodyPts >= 25,
+        note: `평균 ${Math.round(avgBodyLen)}자/섹션`,
+        tip: bodyPts < 25 ? '섹션당 200자 이상이면 만점입니다' : undefined,
+      })
+    } else {
+      details.push({ label: '본론', ok: false, note: '작성 전', tip: 'AI 추천으로 각 대지를 작성해보세요' })
+    }
 
-    // 3. Research/Application direction in bodies (15 pts)
-    const bodiesWithResearch = bodies.filter(s =>
-      (s.researchPoints?.length || 0) > 0 || s.applicationDirection
-    ).length
-    if (bodiesWithResearch > 0) {
-      const researchScore = Math.min(15, bodiesWithResearch * 5)
-      score += researchScore
-      details.push({ label: '연구/적용 방향', ok: true, note: `${bodiesWithResearch}개 섹션` })
-    } else if (bodies.length > 0) {
-      details.push({ label: '연구/적용 방향', ok: false, note: '추가 권장' })
+    // 3. Prep data integration (15 pts) — 연구/적용 방향 대신 Prep 데이터 연동 평가
+    const hasPrepInsights = manuscript.prepInsights.length > 0
+    const hasOutlines = manuscript.outlinePoints.length > 0
+    const prepPts = (hasPrepInsights ? 8 : 0) + (hasOutlines ? 7 : 0)
+    score += prepPts
+    if (prepPts > 0) {
+      details.push({
+        label: '준비 데이터',
+        ok: prepPts === 15,
+        note: hasPrepInsights && hasOutlines ? '연구+대지 연동' : hasPrepInsights ? '연구 연동' : '대지 연동',
+        tip: prepPts < 15 ? '설교 준비 탭에서 대지 구조를 작성하세요' : undefined,
+      })
+    } else {
+      details.push({ label: '준비 데이터', ok: false, note: '연동 없음', tip: '설교 준비 탭에서 내용을 작성하면 자동 연동됩니다' })
     }
 
     // 4. Conclusion (10 pts)
-    if (conclusion?.content.trim()) {
-      score += 10
-      details.push({ label: '결론', ok: true, note: `${conclusion.content.replace(/\s/g, '').length}자` })
+    const conclLen = conclusion?.content.replace(/\s/g, '').length || 0
+    if (conclLen > 0) {
+      const conclPts = conclLen >= 100 ? 10 : conclLen >= 40 ? 6 : 3
+      score += conclPts
+      details.push({
+        label: '결론',
+        ok: conclPts === 10,
+        note: `${conclLen}자`,
+        tip: conclPts < 10 ? '100자 이상이면 만점입니다' : undefined,
+      })
     } else {
-      details.push({ label: '결론', ok: false, note: '내용 없음' })
+      details.push({ label: '결론', ok: false, note: '내용 없음', tip: 'AI 추천으로 초청 문장을 생성해보세요' })
     }
 
     // 5. Application (10 pts)
-    if (application?.content.trim()) {
-      score += 10
-      details.push({ label: '적용', ok: true, note: `${application.content.replace(/\s/g, '').length}자` })
+    const appLen = application?.content.replace(/\s/g, '').length || 0
+    if (appLen > 0) {
+      const appPts = appLen >= 100 ? 10 : appLen >= 40 ? 6 : 3
+      score += appPts
+      details.push({
+        label: '적용',
+        ok: appPts === 10,
+        note: `${appLen}자`,
+        tip: appPts < 10 ? '100자 이상이면 만점입니다' : undefined,
+      })
     } else {
-      details.push({ label: '적용', ok: false, note: '내용 없음' })
+      details.push({ label: '적용', ok: false, note: '내용 없음', tip: 'AI 재구성으로 적용을 생성해보세요' })
     }
 
     // 6. Scripture references (10 pts)
@@ -426,11 +516,11 @@ export default function ManuscriptTab({ project }: Props) {
     if (sectionsWithPassage > 0) {
       const refScore = Math.min(10, sectionsWithPassage * 3)
       score += refScore
-      details.push({ label: '성경 참조', ok: true, note: `${sectionsWithPassage}개 섹션` })
+      details.push({ label: '성경 참조', ok: refScore >= 9, note: `${sectionsWithPassage}개 섹션` })
     }
 
     return { score: Math.min(100, score), details }
-  }, [manuscript.sections])
+  }, [manuscript.sections, manuscript.prepInsights, manuscript.outlinePoints])
 
   /* ─── Empty state detection ─── */
 
@@ -451,24 +541,48 @@ export default function ManuscriptTab({ project }: Props) {
     const prepSavedAt = (prepRaw as any)?._savedAt ?? null
     setHasPrepData(!!(prepRaw?.outlines?.length || prepRaw?.coreMessage))
 
-    if (saved && saved.title) {
+    if (saved) {
       const { _savedAt, ...restored } = saved
-      const ms = (prepRaw?.outlines?.length)
-        ? syncManuscriptWithPrep(restored as JohnManuscriptData, prepRaw)
-        : (restored as JohnManuscriptData)
-      setManuscript(ms)
+
+      // 저장된 manuscript가 비어있고 prep 데이터가 있다면 prep에서 빌드
+      const allSectionsEmpty = !restored.sections || restored.sections.every((s: any) => !s.content?.trim())
+      const hasPrepData = prepRaw?.outlines?.length > 0
+
+      if (allSectionsEmpty && hasPrepData) {
+        console.log('[ManuscriptTab] Saved manuscript is empty, building from prep')
+        const fromPrep = buildManuscriptFromPrep(project, prepRaw)
+        setManuscriptSafe(fromPrep)
+        setLastPrepSyncAt(prepSavedAt)
+        manuscriptLoadedRef.current = true
+        return
+      }
+
+      console.log('[ManuscriptTab] Loading saved manuscript directly', restored.title)
+
+      // sections가 비어있으면 기본 구조 생성
+      if (!restored.sections || restored.sections.length === 0) {
+        restored.sections = [
+          { id: 'intro', type: 'introduction', label: '서론', content: '', aiGenerated: false },
+          { id: 'body-1', type: 'body', label: '1. 본론', content: '', aiGenerated: false },
+          { id: 'conclusion', type: 'conclusion', label: '결론', content: '', aiGenerated: false },
+          { id: 'application', type: 'application', label: '적용', content: '', aiGenerated: false },
+        ]
+      }
+      setManuscriptSafe(restored as JohnManuscriptData)
+
       setLastPrepSyncAt(prepSavedAt)
       if (_savedAt) {
         setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
       }
       manuscriptLoadedRef.current = true
+      console.log('[ManuscriptTab] Loaded saved manuscript')
       return
     }
 
     // Build from prep data (first visit, no saved manuscript yet)
     if (prepRaw?.outlines?.length) {
       const fromPrep = buildManuscriptFromPrep(project, prepRaw)
-      setManuscript(fromPrep)
+      setManuscriptSafe(fromPrep)
       setLastPrepSyncAt(prepSavedAt)
     }
 
@@ -482,7 +596,7 @@ export default function ManuscriptTab({ project }: Props) {
     if (!prepRaw?.outlines?.length) return
     const prepSavedAt = (prepRaw as any)?._savedAt ?? null
     const ms = syncManuscriptWithPrep(manuscript, prepRaw)
-    setManuscript(ms)
+    setManuscriptSafe(ms)
     setLastPrepSyncAt(prepSavedAt)
   }, [manuscript, project.id])
 
@@ -527,16 +641,16 @@ export default function ManuscriptTab({ project }: Props) {
     if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return
-      doSave(manuscript)
+      doSave(manuscriptRef.current)
     }, 1500)
-  }, [doSave, manuscript])
+  }, [doSave])
 
   const manualSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
     manualSaveTriggerRef.current += 1
-    doSave(manuscript)
-  }, [doSave, manuscript])
+    doSave(manuscriptRef.current)
+  }, [doSave])
 
   useEffect(() => {
     mountedRef.current = true
@@ -574,7 +688,16 @@ export default function ManuscriptTab({ project }: Props) {
   }, [manuscript, project.id])
 
   const updateSection = useCallback((id: string, content: string) => {
-    setManuscript(prev => ({
+    // 1. Ref를 먼저 동기적으로 업데이트 (언마운트 시 최신 데이터 저장 보장)
+    manuscriptRef.current = {
+      ...manuscriptRef.current,
+      sections: manuscriptRef.current.sections.map(s =>
+        s.id === id ? { ...s, content, aiGenerated: content.trim() ? s.aiGenerated : false } : s
+      ),
+    }
+    
+    // 2. React 상태 업데이트
+    setManuscriptSafe(prev => ({
       ...prev,
       sections: prev.sections.map(s =>
         s.id === id ? { ...s, content, aiGenerated: content.trim() ? s.aiGenerated : false } : s
@@ -584,14 +707,91 @@ export default function ManuscriptTab({ project }: Props) {
   }, [triggerSave])
 
   const updateTitle = useCallback((title: string) => {
-    setManuscript(prev => ({ ...prev, title }))
-    triggerSave()
-  }, [triggerSave])
+    const next = { ...manuscriptRef.current, title };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({ ...prev, title }));
+    triggerSave();
+  }, [triggerSave, project.id])
 
   const updateSummary = useCallback((summary: string) => {
-    setManuscript(prev => ({ ...prev, oneSentenceSummary: summary }))
+    const next = { ...manuscriptRef.current, oneSentenceSummary: summary };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({ ...prev, oneSentenceSummary: summary }));
+    triggerSave();
+  }, [triggerSave, project.id])
+
+  /* ─── Illustration Notes Handlers ─── */
+  const addIllustration = useCallback((note: IllustrationNote) => {
+    setManuscriptSafe(prev => {
+      const exists = prev.illustrationNotes.some(n => n.id === note.id)
+      if (exists) return prev
+      const next = { ...prev, illustrationNotes: [...prev.illustrationNotes, note] }
+      manuscriptRef.current = next
+      setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() })
+      return next
+    })
     triggerSave()
-  }, [triggerSave])
+  }, [triggerSave, project.id])
+
+  const deleteIllustration = useCallback((id: string) => {
+    const next = { ...manuscriptRef.current, illustrationNotes: manuscriptRef.current.illustrationNotes.filter(n => n.id !== id) };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({ ...prev, illustrationNotes: prev.illustrationNotes.filter(n => n.id !== id) }));
+    triggerSave();
+  }, [triggerSave, project.id])
+
+  const updateIllustrationStatus = useCallback((id: string, status: IllustrationNote['status']) => {
+    const next = { ...manuscriptRef.current, illustrationNotes: manuscriptRef.current.illustrationNotes.map(n => n.id === id ? { ...n, status } : n) };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({ ...prev, illustrationNotes: prev.illustrationNotes.map(n => n.id === id ? { ...n, status } : n) }));
+    triggerSave();
+  }, [triggerSave, project.id])
+
+  const insertIllustrationToSection = useCallback((note: IllustrationNote, sectionId: string) => {
+    const section = manuscriptRef.current.sections.find(s => s.id === sectionId);
+    if (!section) return;
+    const insertText = `\n\n[예화: ${note.title}]\n${note.content}\n`;
+    const next = {
+      ...manuscriptRef.current,
+      sections: manuscriptRef.current.sections.map(s =>
+        s.id === sectionId ? { ...s, content: s.content + insertText } : s
+      ),
+    };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({
+      ...prev,
+      sections: prev.sections.map(s =>
+        s.id === sectionId ? { ...s, content: s.content + insertText } : s
+      ),
+    }));
+    triggerSave();
+  }, [triggerSave, project.id])
+
+  /* ─── Reference Notes Handlers ─── */
+  const addReference = useCallback((note: ReferenceNote) => {
+    setManuscriptSafe(prev => {
+      const exists = prev.referenceNotes.some(n => n.id === note.id)
+      if (exists) return prev
+      const next = { ...prev, referenceNotes: [...prev.referenceNotes, note] }
+      manuscriptRef.current = next
+      setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() })
+      return next
+    })
+    triggerSave()
+  }, [triggerSave, project.id])
+
+  const deleteReference = useCallback((id: string) => {
+    const next = { ...manuscriptRef.current, referenceNotes: manuscriptRef.current.referenceNotes.filter(n => n.id !== id) };
+    manuscriptRef.current = next;
+    setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() });
+    setManuscriptSafe(prev => ({ ...prev, referenceNotes: prev.referenceNotes.filter(n => n.id !== id) }));
+    triggerSave();
+  }, [triggerSave, project.id])
 
   const scrollToSection = useCallback((id: string) => {
     setActiveSectionId(id)
@@ -712,16 +912,39 @@ export default function ManuscriptTab({ project }: Props) {
     })
     const json = await res.json()
     if (json.success) {
-      setManuscript(prev => ({
-        ...prev,
-        sections: prev.sections.map(s =>
+      const next = {
+        ...manuscriptRef.current,
+        sections: manuscriptRef.current.sections.map(s =>
           s.id === section.id ? { ...s, content: json.data.output, aiGenerated: true } : s
         ),
-      }))
+      }
+      manuscriptRef.current = next
+      setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() })
+      setManuscriptSafe(next)
       return json.data.output
     }
     return ''
   }, [project, manuscript])
+
+  /* ─── 원클릭 건강도 높이기 ─── */
+  const handleBoostHealth = useCallback(async () => {
+    const emptySections = manuscript.sections.filter(s => !s.content.trim() && (s.type === 'introduction' || s.type === 'body' || s.type === 'conclusion' || s.type === 'application'))
+    if (emptySections.length === 0) return
+
+    const sectionIds = new Set(emptySections.map(s => s.id))
+    setBoostingSections(sectionIds)
+
+    for (const section of emptySections) {
+      try {
+        const result = await handleAiGenerate(section.type)
+        if (result) {
+          updateSection(section.id, result)
+        }
+      } catch { /* continue */ }
+    }
+
+    setBoostingSections(new Set())
+  }, [manuscript.sections, handleAiGenerate, updateSection])
 
   const startRehearsal = useCallback((minutes: number) => {
     setRehearsalDuration(minutes)
@@ -1312,11 +1535,19 @@ export default function ManuscriptTab({ project }: Props) {
             {/* Illustration Notes */}
             <IllustrationNotesSection
               notes={manuscript.illustrationNotes}
+              manuscript={manuscript}
+              onAdd={addIllustration}
+              onDelete={deleteIllustration}
+              onStatusChange={updateIllustrationStatus}
+              onInsertToSection={insertIllustrationToSection}
             />
 
             {/* Reference Notes */}
             <ReferenceNotesSection
               notes={manuscript.referenceNotes}
+              manuscript={manuscript}
+              onAdd={addReference}
+              onDelete={deleteReference}
             />
 
             {/* ─── 최근 작업 활동 ─── */}
@@ -1334,6 +1565,8 @@ export default function ManuscriptTab({ project }: Props) {
             prepNeedsSync={prepNeedsSync}
             onSyncPrep={handleSyncPrep}
             healthScore={healthScore}
+            onBoostHealth={handleBoostHealth}
+            boostingSections={boostingSections}
           />
         )}
       </div>
@@ -1576,6 +1809,36 @@ function SermonSectionBlock({
   const canAiGenerate = section.type === 'introduction' || section.type === 'conclusion' || section.type === 'application' || section.type === 'body'
   const aiButtonLabel = section.type === 'application' ? '재구성' : 'AI 추천'
 
+  // AI 코칭 팁 생성
+  const coachingTip = useMemo(() => {
+    const len = section.content.replace(/\s/g, '').length
+    if (len === 0) {
+      return { label: '시작 전', message: 'AI 추천으로 초안을 생성하거나 직접 작성해보세요', color: 'text-slate-500' }
+    }
+    if (section.type === 'body') {
+      if (!section.researchPoints?.length && !section.applicationDirection) {
+        return { label: '연구 연결 권장', message: '설교 준비 탭의 연구 데이터가 이 섹션에 아직 연결되지 않았습니다. 준비 탭에서 내용을 추가하면 자동 연동됩니다.', color: 'text-amber-400' }
+      }
+      if (len < 150) {
+        return { label: '확장 권장', message: '150자 이상으로 본문을 풀면 더 풍부한 설교가 됩니다', color: 'text-blue-400' }
+      }
+      return { label: '좋음', message: '연구 데이터가 연결되어 있습니다', color: 'text-green-400' }
+    }
+    if (section.type === 'introduction') {
+      if (len < 100) return { label: '도입 확장', message: '100자 이상으로 청중의 관심을 더 끌어보세요', color: 'text-blue-400' }
+      return { label: '좋음', message: '충분한 도입 분량입니다', color: 'text-green-400' }
+    }
+    if (section.type === 'conclusion') {
+      if (len < 80) return { label: '결론 강화', message: '80자 이상으로 명확한 초청을 추가해보세요', color: 'text-blue-400' }
+      return { label: '좋음', message: '명확한 결론입니다', color: 'text-green-400' }
+    }
+    if (section.type === 'application') {
+      if (len < 80) return { label: '적용 구체화', message: '80자 이상으로 구체적인 실천 방안을 적어보세요', color: 'text-blue-400' }
+      return { label: '좋음', message: '구체적인 적용입니다', color: 'text-green-400' }
+    }
+    return null
+  }, [section.content, section.type, section.researchPoints, section.applicationDirection])
+
   const handleAiGenerate = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!onAiGenerate || aiLoading) return
@@ -1614,6 +1877,16 @@ function SermonSectionBlock({
           </span>
         </div>
       </div>
+
+      {/* AI 코칭 팁 */}
+      {coachingTip && hasContent && (
+        <div className={`mb-3 flex items-start gap-2 text-[11px] ${coachingTip.color}`}>
+          <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{coachingTip.message}</span>
+        </div>
+      )}
 
       {/* Empty state guidance */}
       {isEmpty && (
@@ -1687,24 +1960,212 @@ function SermonSectionBlock({
 
 /* ─── Illustration Notes Section ─── */
 
-function IllustrationNotesSection({ notes }: { notes: IllustrationNote[] }) {
+function IllustrationNotesSection({
+  notes,
+  manuscript,
+  onAdd,
+  onDelete,
+  onStatusChange,
+  onInsertToSection,
+}: {
+  notes: IllustrationNote[]
+  manuscript: JohnManuscriptData
+  onAdd: (note: IllustrationNote) => void
+  onDelete: (id: string) => void
+  onStatusChange: (id: string, status: IllustrationNote['status']) => void
+  onInsertToSection: (note: IllustrationNote, sectionId: string) => void
+}) {
+  const [aiLoading, setAiLoading] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newNote, setNewNote] = useState({ title: '', content: '', source: '' })
+  const [aiSuggestions, setAiSuggestions] = useState<IllustrationNote[]>([])
   const statusColors: Record<string, string> = {
     '사용': 'bg-indigo-500/10 text-indigo-300',
     '보류': 'bg-amber-500/10 text-amber-300',
     '검토중': 'bg-blue-500/10 text-blue-300',
   }
+  const categoryIcons: Record<string, string> = {
+    '일상': '🏠',
+    '역사': '📜',
+    '성경인물': '📖',
+    '현대사례': '🌍',
+    '교회사': '⛪',
+  }
+
+  const handleAiGenerate = async () => {
+    setAiLoading(true)
+    setAiSuggestions([])
+    try {
+      const activeSection = manuscript.sections.find(s => s.content.trim())
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'illustration',
+          data: {
+            sectionContent: activeSection?.content || '',
+            sectionType: activeSection?.type || '',
+            sectionLabel: activeSection?.label || '',
+            coreMessage: manuscript.coreMessage,
+            passage: manuscript.passage,
+            theme: manuscript.title,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const parsed = JSON.parse(json.data.output)
+        setAiSuggestions(parsed.map((item: any, i: number) => ({
+          id: `ill-ai-${Date.now()}-${i}`,
+          title: item.title,
+          content: item.content,
+          status: '검토중' as const,
+          source: item.source || '',
+          category: item.category,
+          connection: item.connection,
+        })))
+      }
+    } catch { /* ignore */ }
+    setAiLoading(false)
+  }
+
+  const handleAddManual = () => {
+    if (!newNote.title.trim() || !newNote.content.trim()) return
+    onAdd({
+      id: `ill-manual-${Date.now()}`,
+      title: newNote.title,
+      content: newNote.content,
+      status: '검토중',
+      source: newNote.source,
+    })
+    setNewNote({ title: '', content: '', source: '' })
+    setShowAddForm(false)
+  }
 
   return (
     <div className="border-t border-white/5 pt-8">
-      <AppSectionHeader title="예화 메모" />
+      <div className="flex items-center justify-between mb-4">
+        <AppSectionHeader title="예화 메모" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAiGenerate}
+            disabled={aiLoading}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition-colors disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            AI 예화 추천
+          </button>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            직접 추가
+          </button>
+        </div>
+      </div>
+
+      {/* AI 추천 예화 */}
+      {aiSuggestions.length > 0 && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/5 to-indigo-500/5 border border-amber-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              AI가 추천하는 예화 ({aiSuggestions.length}개)
+            </span>
+            <button onClick={() => setAiSuggestions([])} className="p-1 rounded hover:bg-white/10 text-slate-500">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {aiSuggestions.map((note) => (
+              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-300`}>{note.category}</span>
+                      <h4 className="text-xs font-medium text-white">{note.title}</h4>
+                    </div>
+                    <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+                    {note.connection && <p className="text-[10px] text-indigo-400 mt-1.5 italic">🔗 {note.connection}</p>}
+                    {note.source && <p className="text-[10px] text-slate-500 mt-1">— {note.source}</p>}
+                  </div>
+                  <button
+                    onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
+                    className="text-[10px] px-2 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors shrink-0"
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 직접 추가 폼 */}
+      {showAddForm && (
+        <div className="mb-4 bg-[#04060f]/60 border border-white/10 rounded-xl p-4 space-y-3">
+          <input
+            value={newNote.title}
+            onChange={e => setNewNote(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full text-sm text-white bg-transparent border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/30"
+            placeholder="예화 제목"
+          />
+          <textarea
+            value={newNote.content}
+            onChange={e => setNewNote(prev => ({ ...prev, content: e.target.value }))}
+            className="w-full text-xs text-slate-200 bg-transparent border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/30 resize-none"
+            rows={3}
+            placeholder="예화 내용"
+          />
+          <input
+            value={newNote.source}
+            onChange={e => setNewNote(prev => ({ ...prev, source: e.target.value }))}
+            className="w-full text-xs text-slate-400 bg-transparent border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/30"
+            placeholder="출처 (선택)"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <button onClick={() => setShowAddForm(false)} className="text-[11px] px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors">
+              취소
+            </button>
+            <button onClick={handleAddManual} className="text-[11px] px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+              추가
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 저장된 예화 목록 */}
+      {notes.length === 0 && !aiSuggestions.length && (
+        <div className="text-center py-8 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
+          <p className="text-sm text-slate-500">아직 예화 메모가 없습니다</p>
+          <p className="text-xs text-slate-600 mt-1">AI 추천으로 예화를 찾거나 직접 추가해보세요</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {notes.map(note => (
-          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-white">{note.title}</h4>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${statusColors[note.status]}`}>
-                {note.status}
-              </span>
+          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group hover:border-white/10 transition-colors">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h4 className="text-sm font-medium text-white flex-1">{note.title}</h4>
+              <div className="flex items-center gap-1 shrink-0">
+                <select
+                  value={note.status}
+                  onChange={e => onStatusChange(note.id, e.target.value as IllustrationNote['status'])}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-medium border-0 outline-none cursor-pointer ${statusColors[note.status]}`}
+                >
+                  <option value="사용">사용</option>
+                  <option value="보류">보류</option>
+                  <option value="검토중">검토중</option>
+                </select>
+                <button
+                  onClick={() => onDelete(note.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-slate-600 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
             {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
@@ -1717,7 +2178,21 @@ function IllustrationNotesSection({ notes }: { notes: IllustrationNote[] }) {
 
 /* ─── Reference Notes Section ─── */
 
-function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
+function ReferenceNotesSection({
+  notes,
+  manuscript,
+  onAdd,
+  onDelete,
+}: {
+  notes: ReferenceNote[]
+  manuscript: JohnManuscriptData
+  onAdd: (note: ReferenceNote) => void
+  onDelete: (id: string) => void
+}) {
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState<ReferenceNote[]>([])
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newNote, setNewNote] = useState({ title: '', content: '', category: 'commentary' as ReferenceNote['category'] })
   const categoryColors: Record<string, string> = {
     commentary: 'bg-teal-500/10 text-teal-300',
     theology: 'bg-amber-500/10 text-amber-300',
@@ -1733,19 +2208,179 @@ function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
     warning: '경고',
   }
 
+  const handleAiGenerate = async () => {
+    setAiLoading(true)
+    setAiSuggestions([])
+    try {
+      const activeSection = manuscript.sections.find(s => s.content.trim())
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'reference',
+          data: {
+            sectionContent: activeSection?.content || '',
+            sectionType: activeSection?.type || '',
+            sectionLabel: activeSection?.label || '',
+            coreMessage: manuscript.coreMessage,
+            passage: manuscript.passage,
+            theme: manuscript.title,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const parsed = JSON.parse(json.data.output)
+        setAiSuggestions(parsed.map((item: any, i: number) => ({
+          id: `ref-ai-${Date.now()}-${i}`,
+          title: item.title,
+          content: item.content,
+          category: item.category as ReferenceNote['category'],
+        })))
+      }
+    } catch { /* ignore */ }
+    setAiLoading(false)
+  }
+
+  const handleAddManual = () => {
+    if (!newNote.title.trim() || !newNote.content.trim()) return
+    onAdd({
+      id: `ref-manual-${Date.now()}`,
+      title: newNote.title,
+      content: newNote.content,
+      category: newNote.category,
+    })
+    setNewNote({ title: '', content: '', category: 'commentary' })
+    setShowAddForm(false)
+  }
+
   return (
     <div className="border-t border-white/5 pt-8">
-      <AppSectionHeader title="참고 메모" />
+      <div className="flex items-center justify-between mb-4">
+        <AppSectionHeader title="참고 메모" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAiGenerate}
+            disabled={aiLoading}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/20 transition-colors disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            AI 참고 추천
+          </button>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            직접 추가
+          </button>
+        </div>
+      </div>
+
+      {/* AI 추천 참고 메모 */}
+      {aiSuggestions.length > 0 && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-teal-500/5 to-indigo-500/5 border border-teal-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-teal-400" />
+              AI가 추천하는 참고 메모 ({aiSuggestions.length}개)
+            </span>
+            <button onClick={() => setAiSuggestions([])} className="p-1 rounded hover:bg-white/10 text-slate-500">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {aiSuggestions.map((note) => (
+              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
+                        {categoryLabels[note.category]}
+                      </span>
+                      <h4 className="text-xs font-medium text-white">{note.title}</h4>
+                    </div>
+                    <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+                  </div>
+                  <button
+                    onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
+                    className="text-[10px] px-2 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors shrink-0"
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 직접 추가 폼 */}
+      {showAddForm && (
+        <div className="mb-4 bg-[#04060f]/60 border border-white/10 rounded-xl p-4 space-y-3">
+          <input
+            value={newNote.title}
+            onChange={e => setNewNote(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full text-sm text-white bg-transparent border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/30"
+            placeholder="참고 메모 제목"
+          />
+          <textarea
+            value={newNote.content}
+            onChange={e => setNewNote(prev => ({ ...prev, content: e.target.value }))}
+            className="w-full text-xs text-slate-200 bg-transparent border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/30 resize-none"
+            rows={3}
+            placeholder="참고 내용"
+          />
+          <div className="flex items-center justify-between">
+            <select
+              value={newNote.category}
+              onChange={e => setNewNote(prev => ({ ...prev, category: e.target.value as ReferenceNote['category'] }))}
+              className="text-[11px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1.5 text-slate-300 outline-none"
+            >
+              {Object.entries(categoryLabels).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowAddForm(false)} className="text-[11px] px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors">
+                취소
+              </button>
+              <button onClick={handleAddManual} className="text-[11px] px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 저장된 참고 메모 목록 */}
+      {notes.length === 0 && !aiSuggestions.length && (
+        <div className="text-center py-8 bg-[#04060f]/40 rounded-xl border border-dashed border-white/10">
+          <p className="text-sm text-slate-500">아직 참고 메모가 없습니다</p>
+          <p className="text-xs text-slate-600 mt-1">AI 추천으로 참고 자료를 찾거나 직접 추가해보세요</p>
+        </div>
+      )}
+
       <div className="space-y-2">
         {notes.map(note => (
-          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
-                {categoryLabels[note.category]}
-              </span>
-              <h4 className="text-xs font-medium text-white">{note.title}</h4>
+          <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3 group hover:border-white/10 transition-colors">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
+                    {categoryLabels[note.category]}
+                  </span>
+                  <h4 className="text-xs font-medium text-white">{note.title}</h4>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
+              </div>
+              <button
+                onClick={() => onDelete(note.id)}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-slate-600 hover:text-red-400 transition-all shrink-0"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
             </div>
-            <p className="text-xs text-slate-200 leading-relaxed">{note.content}</p>
           </div>
         ))}
       </div>
@@ -1756,16 +2391,47 @@ function ReferenceNotesSection({ notes }: { notes: ReferenceNote[] }) {
 /* ─── Prep Summary Panel ─── */
 
 function PrepSummaryPanel({
-  manuscript, onGoToPrep, prepNeedsSync, onSyncPrep, healthScore,
+  manuscript, onGoToPrep, prepNeedsSync, onSyncPrep, healthScore, onBoostHealth, boostingSections,
 }: {
   manuscript: JohnManuscriptData
   onGoToPrep?: () => void
   prepNeedsSync: boolean
   onSyncPrep: () => void
-  healthScore: { score: number; details: { label: string; ok: boolean; note: string }[] }
+  healthScore: { score: number; details: { label: string; ok: boolean; note: string; tip?: string }[] }
+  onBoostHealth?: () => void
+  boostingSections?: Set<string>
 }) {
+  const emptySections = manuscript.sections.filter(s => !s.content.trim())
+  const canBoost = emptySections.length > 0 || healthScore.score < 80
+
   return (
     <aside className="w-80 border-l border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
+
+      {/* ✨ 건강도 높이기 버튼 */}
+      {canBoost && (
+        <div className="px-4 py-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-b border-indigo-500/20">
+          <button
+            onClick={onBoostHealth}
+            disabled={boostingSections?.size === 0 && !canBoost}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+          >
+            {boostingSections && boostingSections.size > 0 ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {boostingSections.size}개 섹션 생성 중...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                ✨ 건강도 높이기 ({healthScore.score} → {Math.min(100, healthScore.score + 20)} 예상)
+              </>
+            )}
+          </button>
+          <p className="text-[9px] text-indigo-400/70 mt-1.5 text-center">
+            빈 섹션 AI 생성 + 연구 데이터 자동 연결
+          </p>
+        </div>
+      )}
 
       {/* Stage Connection Badge */}
       <div className="px-4 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20">

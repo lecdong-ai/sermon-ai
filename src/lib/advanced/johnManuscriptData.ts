@@ -16,6 +16,8 @@ export interface IllustrationNote {
   content: string
   status: '사용' | '보류' | '검토중'
   source?: string
+  category?: string
+  connection?: string
 }
 
 export interface ReferenceNote {

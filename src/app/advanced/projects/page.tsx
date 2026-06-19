@@ -11,6 +11,8 @@ import {
   BarChart2, Calendar, AlignLeft, ArrowRight, Trash2,
   Loader2, RefreshCw, AlertTriangle,
 } from 'lucide-react'
+import { getStorageItem } from '@/lib/storage'
+import type { JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 
 /* ── 상태별 색상 매핑 ── */
 const STATUS_COLORS: Record<ProjectStatus, { bg: string; text: string; border: string; dot: string }> = {
@@ -41,11 +43,22 @@ const STATUS_ICONS: Record<ProjectStatus, any> = {
 }
 
 /* ── 진행률 계산 ── */
-function getProgress(status: ProjectStatus): number {
+function getProgress(project: AdvancedProject): number {
+  // 1. localStorage에서 실제 manuscript 데이터 확인
+  try {
+    const ms = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
+    if (ms?.sections && ms.sections.length > 0) {
+      const total = ms.sections.length
+      const filled = ms.sections.filter(s => s.content?.trim().length > 0).length
+      if (total > 0) return Math.round((filled / total) * 100)
+    }
+  } catch { /* ignore */ }
+
+  // 2. fallback: 상태 기반 추정
   const map: Record<ProjectStatus, number> = {
-    research: 15, prepare: 35, writing: 65, review: 85, completed: 100, archived: 100,
+    research: 10, prepare: 35, writing: 65, review: 85, completed: 100, archived: 100,
   }
-  return map[status]
+  return map[project.status]
 }
 
 /* ── 상태 뱃지 ── */
@@ -62,7 +75,7 @@ function DarkStatusBadge({ status }: { status: ProjectStatus }) {
 
 /* ── 프로젝트 카드 ── */
 function ProjectCard({ project, onClick, onDelete }: { project: AdvancedProject; onClick: () => void; onDelete?: () => void }) {
-  const progress = getProgress(project.status)
+  const progress = getProgress(project)
   const c = STATUS_COLORS[project.status]
   const daysLeft = Math.ceil((new Date(project.sermonDate).getTime() - Date.now()) / 86400000)
 

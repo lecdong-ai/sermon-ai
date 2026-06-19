@@ -187,7 +187,7 @@ export default function PrepTab({ project }: Props) {
 
     // 4) saved prep data from auto-save (if no fresh study handoff came in)
     const raw = getStorageItem<any | null>(`prep_${project.id}`, null)
-    if (raw && raw.coreMessage) {
+    if (raw) {
       const { _savedAt, ...savedPrep } = raw
       setPrepData(prev => {
         const hasStudyData = prev.passageStructure.length > 0
@@ -199,6 +199,11 @@ export default function PrepTab({ project }: Props) {
             keyWords: prev.keyWords.length ? prev.keyWords : savedPrep.keyWords,
             researchInsights: prev.researchInsights.length ? prev.researchInsights : savedPrep.researchInsights,
           } : {}),
+          // Preserve user input or load from saved
+          sermonTitle: prev.sermonTitle || savedPrep.sermonTitle || '',
+          coreMessage: prev.coreMessage || savedPrep.coreMessage || '',
+          sermonPurpose: prev.sermonPurpose || savedPrep.sermonPurpose || '',
+          expectedResponse: prev.expectedResponse || savedPrep.expectedResponse || '',
           outlines: prev.outlines.length ? prev.outlines : (savedPrep.outlines || []),
           applicationPoints: prev.applicationPoints.length ? prev.applicationPoints : (savedPrep.applicationPoints || []),
           congregationProfile: savedPrep.congregationProfile || DEFAULT_CONGREGATION_PROFILE,

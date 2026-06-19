@@ -13,6 +13,7 @@ import {
 import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { JohnWordDetail, JohnCommentary } from '@/lib/advanced/johnStudyData'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
+import StudyCompleteModal from '@/components/advanced/shared/StudyCompleteModal'
 
 const STUDY_DATA_REGISTRY: Record<string, {
   passage: string
@@ -106,6 +107,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [lookupLoading, setLookupLoading] = useState(false)
   const [englishLookup, setEnglishLookup] = useState<Record<string, EnglishWordDetail>>({})
   const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
+  const [showStudyComplete, setShowStudyComplete] = useState(false)
 
   const passageKey = `${activeBook}_${activeChapter}`
 
@@ -333,6 +335,36 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setMemoTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }, [])
 
+  const handleCopyStudyResults = useCallback(() => {
+    if (!studyData) return
+    const words = studyData?.words || {}
+    const wordList = Object.values(words).slice(0, 5)
+    const commentaries = studyData?.commentaries || []
+    const themes = studyData?.themes || []
+
+    let text = `# ${studyData.passage} 연구 결과\n\n`
+    text += `## 본문 구조\n${studyData.contextInfo?.bookStructure || ''}\n\n`
+    text += `## 원어 연구\n`
+    wordList.forEach((w: any) => {
+      text += `- ${w.lemmaGreek || w.word}: ${w.basicMeaning}\n`
+    })
+    text += `\n## 주석 통찰\n`
+    commentaries.slice(0, 5).forEach((c: any) => {
+      text += `- ${c.author}: ${c.text}\n`
+    })
+    text += `\n## 주제\n`
+    themes.forEach((t: any) => {
+      text += `- ${t.name}: ${t.description}\n`
+    })
+    if (memoText) text += `\n## 연구 메모\n${memoText}\n`
+
+    navigator.clipboard.writeText(text)
+  }, [studyData, memoText])
+
+  const handleViewFullChapter = useCallback(() => {
+    window.open(`/advanced/study/${activeBook}/${activeChapter}`, '_blank')
+  }, [activeBook, activeChapter])
+
   return (
     <div className="flex gap-0 h-full">
       {/* ─── Main Content ─── */}
@@ -525,8 +557,23 @@ export default function BibleStudyTab({ project, passages }: Props) {
           commentaries={studyData?.commentaries || []}
           verses={studyData?.verses || []}
           themes={studyData?.themes || []}
+          onCopyResults={handleCopyStudyResults}
+          onViewFullChapter={handleViewFullChapter}
+          onStudyComplete={() => setShowStudyComplete(true)}
         />
       </div>
+
+      {/* Study Complete Modal */}
+      <StudyCompleteModal
+        isOpen={showStudyComplete}
+        onClose={() => setShowStudyComplete(false)}
+        studyData={studyData}
+        projectId={project.id}
+        onSendToPrep={() => {
+          setShowStudyComplete(false)
+          handleSendToPrep()
+        }}
+      />
     </div>
   )
 }
@@ -1102,6 +1149,7 @@ function ResearchNotesEditor({
 function RightPanel({
   words, selectedWordId, selectedFallbackWord, lookupLoading, selectedEnglishWord, englishLookup, englishLookupLoading, selectedVerse, selectedTheme, onCloseDetail,
   onSendToPrep, memoText, memoTags, commentaries, verses, themes,
+  onCopyResults, onViewFullChapter, onStudyComplete,
 }: {
   words: Record<string, JohnWordDetail>
   selectedWordId: string | null
@@ -1119,6 +1167,9 @@ function RightPanel({
   commentaries: any[]
   verses: any[]
   themes: any[]
+  onCopyResults?: () => void
+  onViewFullChapter?: () => void
+  onStudyComplete?: () => void
 }) {
   const typeLabel: Record<string, string> = {
     exegetical: '본문',
@@ -1407,10 +1458,22 @@ function RightPanel({
           >
             설교 준비 탭으로 보내기 →
           </button>
-          <button className="w-full text-left text-xs text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl px-3 py-2 transition-colors">
+          <button
+            onClick={onStudyComplete}
+            className="w-full text-left text-xs text-emerald-400 hover:bg-emerald-500/10 rounded-xl px-3 py-2 transition-colors font-medium border border-emerald-500/20"
+          >
+            ✨ 연구 완료 — 설교 자료 생성
+          </button>
+          <button
+            onClick={onCopyResults}
+            className="w-full text-left text-xs text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl px-3 py-2 transition-colors"
+          >
             연구 결과 복사
           </button>
-          <button className="w-full text-left text-xs text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl px-3 py-2 transition-colors">
+          <button
+            onClick={onViewFullChapter}
+            className="w-full text-left text-xs text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl px-3 py-2 transition-colors"
+          >
             전체 장 보기
           </button>
         </div>
