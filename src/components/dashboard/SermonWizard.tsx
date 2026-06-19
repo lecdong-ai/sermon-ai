@@ -415,6 +415,41 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     finally { setBibleLoading(false) }
   }
 
+  const handleSuggestCoreMessages = async () => {
+    const key = 'coreMessage'
+    setSuggestionsLoading(key)
+    setSuggestionsOpen(key)
+    try {
+      const json = await aiSuggest({ mode: 'wizard-core-message', context: buildContext() })
+      const items = json.suggestions || []
+      setSuggestionsCache(prev => ({ ...prev, [key]: items }))
+    } catch (e: any) {
+      console.error('[CoreMsg] Error:', e)
+      alert(e.message || '추천 로딩 중 오류가 발생했습니다.')
+    }
+    finally { setSuggestionsLoading(null) }
+  }
+
+  const handleSuggestTitles = async () => {
+    const key = 'title'
+    setSuggestionsLoading(key)
+    setSuggestionsOpen(key)
+    try {
+      const json = await aiSuggest({
+        mode: 'wizard-titles',
+        passage: `${s.bibleBook} ${s.chapterStart}:${s.verseStart}${s.verseEnd ? '-' + s.verseEnd : ''}`,
+        bibleText: s.bibleText,
+        coreMessage: s.coreMessage,
+      })
+      const items = json.suggestions || []
+      setSuggestionsCache(prev => ({ ...prev, [key]: items }))
+    } catch (e: any) {
+      console.error('[Titles] Error:', e)
+      alert(e.message || '추천 로딩 중 오류가 발생했습니다.')
+    }
+    finally { setSuggestionsLoading(null) }
+  }
+
   const handleAudienceSuggest = async (field: 'profile' | 'needs' | 'application') => {
     const modeMap = { profile: 'wizard-audience-profile', needs: 'wizard-audience-needs', application: 'wizard-application-direction' } as const
     setSuggestionsLoading(field)
@@ -433,6 +468,12 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const pickAudienceSuggestion = (field: 'profile' | 'needs' | 'application', value: string) => {
     const keyMap = { profile: 'audienceProfile', needs: 'audienceNeeds', application: 'applicationDirection' } as const
     update({ [keyMap[field]]: value })
+    setSuggestionsOpen(null)
+  }
+
+  const pickSuggestion = (key: 'coreMessage' | 'title', value: string) => {
+    const keyMap = { coreMessage: 'coreMessage' as const, title: 'title' as const }
+    update({ [keyMap[key]]: value })
     setSuggestionsOpen(null)
   }
 
@@ -653,40 +694,53 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
             회중이 오늘 기억해야 할 한마디는 무엇인가요? 본문의 중심 진리를 간결하게 선포하세요.
             핵심 메시지가 정해지면 그에 맞는 제목을 추천받을 수 있습니다.
           </p>
-          <div>
+          <div className="relative">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-medium text-muted">핵심 메시지</label>
-              <button type="button" onClick={async () => {
-                const result = await handleGenerateCoreMessage()
-                if (result?.[0]) update({ coreMessage: result[0].value })
-              }} disabled={loading === 2}
+              <button type="button" onClick={handleSuggestCoreMessages} disabled={suggestionsLoading === 'coreMessage'}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-                {loading === 2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {suggestionsLoading === 'coreMessage' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                 AI 추천
               </button>
             </div>
             <textarea value={s.coreMessage} onChange={e => update({ coreMessage: e.target.value })}
               rows={3} placeholder="설교의 핵심 메시지를 한 문단으로 요약하세요."
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light resize-none" />
+            {suggestionsOpen === 'coreMessage' && suggestionsCache.coreMessage?.length > 0 && (
+              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-1 max-h-56 overflow-y-auto">
+                {suggestionsCache.coreMessage.map((item, i) => (
+                  <button key={i} type="button" onClick={() => pickSuggestion('coreMessage', item.value)}
+                    className="w-full text-left p-2 rounded-md hover:bg-indigo-50 transition-colors text-xs">
+                    <span className="font-medium text-slate-800">{item.value}</span>
+                    {item.reason && <span className="block text-[11px] text-slate-500 mt-0.5">{item.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div>
+          <div className="relative">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-medium text-muted">설교 제목</label>
-              <button type="button" onClick={async () => {
-                const result = await handleGenerateTitles()
-                if (result) {
-                  const chosen = result.titles[0]
-                  if (chosen) update({ title: chosen })
-                }
-              }} disabled={loading === 2 || !s.coreMessage}
+              <button type="button" onClick={handleSuggestTitles} disabled={suggestionsLoading === 'title' || !s.coreMessage}
                 className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50">
-                {loading === 2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {suggestionsLoading === 'title' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                 AI 제목 추천
               </button>
             </div>
             <input type="text" value={s.title} onChange={e => update({ title: e.target.value })}
               placeholder="핵심 메시지에 기반한 설교 제목"
               className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light" />
+            {suggestionsOpen === 'title' && suggestionsCache.title?.length > 0 && (
+              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-1 max-h-56 overflow-y-auto">
+                {suggestionsCache.title.map((item, i) => (
+                  <button key={i} type="button" onClick={() => pickSuggestion('title', item.value)}
+                    className="w-full text-left p-2 rounded-md hover:bg-indigo-50 transition-colors text-xs">
+                    <span className="font-medium text-slate-800">{item.value}</span>
+                    {item.reason && <span className="block text-[11px] text-slate-500 mt-0.5">{item.reason}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex justify-end pt-1">
             <button type="button" onClick={() => goTo(3)}
