@@ -8,7 +8,7 @@ import {
   HelpCircle, Presentation, FileCheck, Loader2, X, Play, ShieldAlert,
   ThumbsUp
 } from 'lucide-react'
-import { ARCHIVE_SERMONS, getAllArchivedSermons } from '@/lib/advanced/archiveData'
+import { getAllArchivedSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 import { useProjects } from '@/lib/advanced/useProjects'
 import NewUserLanding from '@/components/advanced/NewUserLanding'

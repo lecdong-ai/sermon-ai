@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ARCHIVE_SERMONS, getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
+import { getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 import { 
   Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw, 
-  ArrowRight, BookOpen, Star, Sparkles, FolderOpen, Heart, MessageSquare
+  ArrowRight, BookOpen, Star, Sparkles, FolderOpen, Heart, MessageSquare, Archive
 } from 'lucide-react'
 
 type ViewMode = 'card' | 'list'
@@ -14,7 +14,8 @@ type SortMode = 'recent' | 'relevance' | 'referenced' | 'reused'
 
 export default function ArchivePage() {
   const router = useRouter()
-  const allSermons = ARCHIVE_SERMONS
+  const [allSermons, setAllSermons] = useState<ArchivedSermon[]>([])
+  const [loading, setLoading] = useState(true)
   const filterOptions = getFilterOptions(allSermons)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -26,6 +27,16 @@ export default function ArchivePage() {
   })
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [showInsights, setShowInsights] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/archive')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setAllSermons(json.data)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   const searched = useMemo(() => searchSermons(allSermons, searchQuery), [allSermons, searchQuery])
   const filtered = useMemo(() => filterSermons(searched, {
@@ -151,7 +162,24 @@ export default function ArchivePage() {
         {/* Sermon List */}
         <div className="flex-1 overflow-y-auto scrollbar-thin relative z-10">
           <div className="p-6 space-y-6">
-            {sorted.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+              </div>
+            ) : allSermons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <Archive className="w-12 h-12 text-slate-600 mb-4" />
+                <p className="text-slate-400 font-medium mb-2">아직 완료된 설교가 없습니다</p>
+                <p className="text-xs text-slate-500 mb-6">첫 설교 프로젝트를 완료하고 아카이브에 보관하세요</p>
+                <button
+                  onClick={() => router.push('/advanced/projects/new')}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors"
+                >
+                  <span>+</span>
+                  <span>새 설교 프로젝트 시작</span>
+                </button>
+              </div>
+            ) : sorted.length === 0 ? (
               <ArchiveEmptyState
                 searchQuery={searchQuery}
                 onClearFilters={clearFilters}
