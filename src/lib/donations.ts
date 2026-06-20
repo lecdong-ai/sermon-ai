@@ -55,11 +55,20 @@ export async function grantSupporter(
     console.error('grantSupporter (app_metadata) error:', e)
   }
 
+  // user_usage 테이블에 supporter_until + plan 업그레이드
   try {
     await supabaseAdmin
       .from('user_usage')
       .upsert(
-        { user_id: userId, supporter_until: until },
+        {
+          user_id: userId,
+          supporter_until: until,
+          plan: 'basic',
+          user_status: 'active',
+          monthly_limit: 10,
+          workspace_limit: 10,
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: 'user_id' },
       )
   } catch (e) {
