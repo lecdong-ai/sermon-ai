@@ -1868,6 +1868,7 @@ function SermonSectionBlock({
   linkedIllustrations = [],
   linkedReferences = [],
   onWeaveReference,
+  weavingRefId,
 }: {
   section: SermonSection
   sectionRef: (el: HTMLDivElement | null) => void

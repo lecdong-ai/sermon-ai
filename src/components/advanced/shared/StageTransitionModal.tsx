@@ -166,20 +166,20 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
               <div className="bg-[#04060f]/60 rounded-xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">완료도</span>
-                  <span className={`text-sm font-bold ${passRate >= checklist.minPassRate ? 'text-green-400' : 'text-amber-400'}`}>
+                  <span className={`text-sm font-bold ${passRate >= (checklist?.minPassRate ?? 0) ? 'text-green-400' : 'text-amber-400'}`}>
                     {Math.round(passRate * 100)}%
                   </span>
                 </div>
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${passRate >= checklist.minPassRate ? 'bg-green-500' : 'bg-amber-400'}`}
+                    className={`h-full rounded-full transition-all duration-500 ${passRate >= (checklist?.minPassRate ?? 0) ? 'bg-green-500' : 'bg-amber-400'}`}
                     style={{ width: `${passRate * 100}%` }}
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2">
-                  {passRate >= checklist.minPassRate
+                  {passRate >= (checklist?.minPassRate ?? 0)
                     ? '다음 단계로 넘어갈 준비가 되었습니다!'
-                    : `${Math.round(checklist.minPassRate * 100)}% 이상 필요합니다`}
+                    : `${Math.round((checklist?.minPassRate ?? 0) * 100)}% 이상 필요합니다`}
                 </p>
               </div>
 
@@ -257,7 +257,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
               }}
               className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors"
             >
-              {passRate >= checklist.minPassRate ? '다음 단계로' : '그래도 넘어가기'}
+              {passRate >= (checklist?.minPassRate ?? 0) ? '다음 단계로' : '그래도 넘어가기'}
             </button>
           </div>
         )}
