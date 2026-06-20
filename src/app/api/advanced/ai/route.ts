@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { cookies } from 'next/headers'
 import { getUserFromRequest } from '@/lib/auth'
+import { mapBookName } from '@/lib/bible/bookMap'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
 import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
@@ -25,6 +26,16 @@ function getOpenai() {
     _openai = new OpenAI({ apiKey: key })
   }
   return _openai
+}
+
+const BIBLE_CDN_URL = 'https://cdn.jsdelivr.net/gh/stranger828/bibleAPI@main/bible_structured.json'
+let _bibleData: any[] | null = null
+async function loadBibleData(): Promise<any[]> {
+  if (_bibleData) return _bibleData
+  const res = await fetch(BIBLE_CDN_URL)
+  if (!res.ok) throw new Error('Failed to load bible data')
+  _bibleData = await res.json()
+  return _bibleData!
 }
 
 function getMockOutput(type: string, data: any): string {
@@ -63,7 +74,6 @@ function getMockOutput(type: string, data: any): string {
           verse: parseInt(verseStart || '1') + i,
           greek: 'original greek text',
           translit: 'transliteration',
-          korean: '한글 번역',
           niv: 'NIV translation',
           esv: 'ESV translation',
         })),
@@ -120,7 +130,7 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
-  "verses": [{ "verse": number, "greek": "original greek text", "translit": "transliteration", "korean": "개역개정 Korean", "niv": "NIV English", "esv": "ESV English" }],
+  "verses": [{ "verse": number, "greek": "original greek text", "translit": "transliteration", "niv": "NIV English", "esv": "ESV English" }],
   "words": [{ "id": "w-uniqueid", "strong": "G####", "lemma": "lemma", "lemmaGreek": "Greek lemma", "pronunciation": "pronunciation", "transliteration": "transliteration", "partOfSpeech": "Korean POS", "morphology": "morphology info", "basicMeaning": "basic meaning in Korean", "contextualMeaning": "contextual meaning in Korean", "simpleExplanation": "easy explanation in Korean", "usage": [{ "ref": "Book ch:vs", "text": "usage text" }], "sermonNote": "preaching application note in Korean", "relatedWords": ["related1", "related2"] }],
   "commentaries": [{ "verse": number, "author": "scholar name in Korean", "text": "commentary text in Korean", "type": "exegetical|theological|historical|pastoral", "source": "source name" }],
   "translationNotes": [{ "verse": number, "versions": ["NIV","ESV","KRV"], "note": "translation difference explanation in Korean" }],
@@ -135,7 +145,8 @@ IMPORTANT:
 2. Generate EVERY single verse in the passage — do not skip or truncate any verse.
 3. Generate 3-7 key words (focus on theologically significant terms), 6-10 commentaries, 2-3 translation notes, 5-8 parallel passages, 3-5 themes.
 4. All text content in Korean except original Greek and English translations.
-5. wordAlignments: For each word in the \"words\" array, add one or more wordAlignment entries mapping the Greek word to its English translation in the NIV text. Include entries for EVERY verse where that Greek word appears. The englishWord should match the exact word as it appears in the verse's NIV text (case-sensitive, matching the NIV string).
+5. The Korean (개역개정) verse text will be provided separately — do NOT generate it. The "korean" field in verses will be filled in externally after generation.
+6. wordAlignments: For each word in the \"words\" array, add one or more wordAlignment entries mapping the Greek word to its English translation in the NIV text. Include entries for EVERY verse where that Greek word appears. The englishWord should match the exact word as it appears in the verse's NIV text (case-sensitive, matching the NIV string).
 6. commentaries: Generate 6-10 rich, detailed commentary entries. Each commentary should be at least 3-5 sentences long, covering historical background, theological nuance, original language insights, and pastoral application. Include diverse types: exegetical (본문 분석), theological (신학적 의미), historical (역사적 배경), and pastoral (목회적 적용). Use well-known scholarly perspectives and cite sources appropriately.
 7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection and relevance to the current passage.`,
   'word-lookup': `You are a Bible word analysis AI. Given a word (Greek or English) and its passage context, identify the corresponding Greek word in the original text and return a JSON object with the word's detailed analysis following this exact structure:
@@ -211,13 +222,34 @@ export async function POST(request: NextRequest) {
     let maxTokens = 2000
     let temperature = 0.3
     let model = 'gpt-4o-mini'
+    let bibleActualVerses: Map<number, string> | null = null
 
     if (type === 'bible-study') {
       const { book, chapter, verseStart, verseEnd, passage } = data
       const vs = parseInt(verseStart || '1')
       const ve = parseInt(verseEnd || verseStart || '1')
       const count = ve - vs + 1
-      userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, korean, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.`
+
+      let bibleRefText = ''
+      try {
+        const shortName = book ? mapBookName(book) : null
+        if (shortName && chapter) {
+          const ch = parseInt(chapter)
+          const allData = await loadBibleData()
+          const matches = allData.filter(
+            (v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve
+          ).sort((a: any, b: any) => a.verse - b.verse)
+          if (matches.length > 0) {
+            bibleActualVerses = new Map(matches.map((v: any) => [v.verse, v.content]))
+            bibleRefText = '\n\nHere is the actual 개역개정 text for this passage — use it for analysis but do NOT include it in the output:\n' +
+              matches.map((v: any) => `  [${v.verse}절] ${v.content}`).join('\n')
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load bible data:', e)
+      }
+
+      userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.${bibleRefText}`
       model = 'gpt-4o-mini'
       maxTokens = 5000
       temperature = 0.3
@@ -364,6 +396,22 @@ export async function POST(request: NextRequest) {
             error: `AI 응답이 완전하지 않습니다 (${output.length}자). 다시 시도해주세요.`,
           }, { status: 422 })
         }
+      }
+    }
+
+    // Replace AI-generated korean with actual 개역개정 text
+    if (type === 'bible-study' && bibleActualVerses && output) {
+      try {
+        const parsed = JSON.parse(output)
+        if (parsed.verses) {
+          parsed.verses = parsed.verses.map((v: any) => ({
+            ...v,
+            korean: bibleActualVerses.get(v.verse) || '',
+          }))
+          output = JSON.stringify(parsed)
+        }
+      } catch (e) {
+        // Fallback: keep AI output as-is
       }
     }
 
