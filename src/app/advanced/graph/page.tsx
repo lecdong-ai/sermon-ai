@@ -108,25 +108,9 @@ export default function GraphPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Merge real + mock: use real data, fall back to mock for word/note nodes
-  const allNodes = useMemo(() => {
-    if (realNodes.length === 0 && !loading) return GRAPH_NODES // fallback to mock
-    const realIds = new Set(realNodes.map(n => n.id))
-    const mockWordNotes = GRAPH_NODES.filter(n => n.type === 'word' || n.type === 'note')
-    const extras = mockWordNotes.filter(n => !realIds.has(n.id))
-    return [...realNodes, ...extras]
-  }, [realNodes, loading])
-
-  const allEdges = useMemo(() => {
-    if (realEdges.length === 0 && !loading) return GRAPH_EDGES
-    const realIds = new Set(realNodes.map(n => n.id))
-    const mockEdges = GRAPH_EDGES.filter(e => {
-      const sourceReal = realIds.has(e.source)
-      const targetReal = realIds.has(e.target)
-      return sourceReal !== targetReal // edge connects real to mock (word/note)
-    })
-    return [...realEdges, ...mockEdges]
-  }, [realEdges, realNodes, loading])
+  // All data comes from the API; no mock fallback
+  const allNodes = realNodes
+  const allEdges = realEdges
 
   // Set first real sermon as default for 'project' focus
   const firstRealSermonId = useMemo(() => {
