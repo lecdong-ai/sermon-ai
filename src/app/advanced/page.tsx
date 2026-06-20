@@ -6,7 +6,7 @@ import {
   Search, Sparkles, BookOpen, FileText, Network, Archive, Settings, 
   Users, Zap, Globe, Star, ArrowRight, BrainCircuit, MessageSquare, 
   HelpCircle, Presentation, FileCheck, Loader2, X, Play, ShieldAlert,
-  ThumbsUp, Compass
+  ThumbsUp
 } from 'lucide-react'
 import { ARCHIVE_SERMONS, getAllArchivedSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
@@ -166,84 +166,13 @@ export default function AdvancedDashboardPage() {
     setGenerating(false)
   }
 
-  // 5. 스탯 데이터 계산
-  const totalSermons = allSermons.length
-  const totalBibleStudies = 84
-  const mostStudiedPassage = '로마서 8장 (롬 8:1-39)'
-  const trendingTopics = ['은혜', '성령', '소망', '믿음']
-
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-thin pb-12">
       {/* 백그라운드 테크니컬 파티클 구형 렌더링 */}
       <div className="absolute inset-x-0 top-0 h-[700px] pointer-events-none overflow-hidden z-0 bg-radial-glow opacity-60" />
 
       <div className="max-w-[1200px] mx-auto px-6 py-8 space-y-10 w-full relative z-10">
-        
-        {/* ─── 1. AI Research Dashboard (Top Layer) ─── */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-indigo-400 animate-pulse" />
-            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">AI Research Dashboard</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* 총 설교 카드 */}
-            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
-              <span className="text-[11px] font-bold text-slate-500">누적 설교 분석</span>
-              <div className="my-2">
-                <span className="text-3xl font-extrabold text-white tracking-tight">{totalSermons}</span>
-                <span className="text-xs text-slate-500 ml-1">편</span>
-              </div>
-              <span className="text-[10px] text-indigo-400 font-semibold">클라우드 통합 완료</span>
-            </div>
-
-            {/* 총 성경 연구 카드 */}
-            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
-              <span className="text-[11px] font-bold text-slate-500">성경 정밀 연구</span>
-              <div className="my-2">
-                <span className="text-3xl font-extrabold text-white tracking-tight">{totalBibleStudies}</span>
-                <span className="text-xs text-slate-500 ml-1">회</span>
-              </div>
-              <span className="text-[10px] text-purple-400 font-semibold">어휘 및 원어 분석 연동</span>
-            </div>
-
-            {/* 최다 연구 본문 */}
-            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px] lg:col-span-1">
-              <span className="text-[11px] font-bold text-slate-500">이번 주 핵심 본문</span>
-              <div className="my-1.5">
-                <p className="text-[14px] font-bold text-white leading-snug truncate">{mostStudiedPassage}</p>
-              </div>
-              <span className="text-[10px] text-blue-400 font-semibold">로마서 강해 시리즈 연계</span>
-            </div>
-
-            {/* 트렌드 주제 */}
-            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px]">
-              <span className="text-[11px] font-bold text-slate-500">트렌드 주제</span>
-              <div className="flex flex-wrap gap-1 my-2">
-                {trendingTopics.map(topic => (
-                  <span key={topic} className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                    #{topic}
-                  </span>
-                ))}
-              </div>
-              <span className="text-[10px] text-slate-500">총 12개 테마 연관</span>
-            </div>
-
-            {/* AI 실시간 인사이트 */}
-            <div className="glass-dark glass-dark-hover p-5 rounded-2xl flex flex-col justify-between min-h-[120px] lg:col-span-1">
-              <span className="text-[11px] font-bold text-slate-500">AI 실시간 통찰</span>
-              <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
-                최근 칭의와 은혜에 관한 연구 흐름이 35% 증가했습니다.
-              </p>
-              <span className="text-[10px] text-purple-400 font-semibold flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
-                분석 보고서 갱신됨
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── 2. AI Search Experience (Ask Bunker 목양) ─── */}
+        {/* ─── 1. AI Search Experience (Ask Bunker 목양) ─── */}
         <section className="relative glass-dark p-8 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
           {/* 글로잉 내부 장식 */}
           <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
