@@ -69,6 +69,11 @@ export async function getAllUsers() {
     .from('user_profiles')
     .select('*')
 
+  const { data: usageList } = await supabaseAdmin
+    .from('user_usage')
+    .select('user_id, supporter_until')
+
+  const usageMap = new Map(usageList?.map(u => [u.user_id, u.supporter_until]) || [])
   const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
 
   return authUsers.users.map(u => ({
@@ -76,7 +81,7 @@ export async function getAllUsers() {
     email: u.email,
     name: profileMap.get(u.id)?.name || null,
     role: isAdminFromMeta(u) ? 'admin' : 'user',
-    supporter_until: (u.app_metadata as any)?.supporter_until || null,
+    supporter_until: (u.app_metadata as any)?.supporter_until || usageMap.get(u.id) || null,
     created_at: u.created_at,
     last_sign_in_at: u.last_sign_in_at,
     confirmed_at: u.confirmed_at,
@@ -95,10 +100,18 @@ export async function getUserStats() {
   monthStart.setHours(0, 0, 0, 0)
   const monthStartStr = monthStart.toISOString()
 
-  const activeSupporters = authUsers?.users.filter(u => {
-    const until = (u.app_metadata as any)?.supporter_until
-    return until && new Date(until) > new Date()
-  }).length || 0
+  const activeSupporters = Math.max(
+    authUsers?.users.filter(u => {
+      const until = (u.app_metadata as any)?.supporter_until
+      return until && new Date(until) > new Date()
+    }).length || 0,
+    // user_usage 테이블에서 추가 supporter 확인
+    (await supabaseAdmin
+      .from('user_usage')
+      .select('supporter_until')
+      .gt('supporter_until', new Date().toISOString())
+    ).data?.length || 0,
+  )
 
   const newUsersThisMonth = authUsers?.users.filter(u => u.created_at >= monthStartStr).length || 0
 

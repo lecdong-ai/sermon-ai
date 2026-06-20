@@ -31,8 +31,18 @@ export async function grantSupporter(
   userId: string,
   days: number,
 ): Promise<boolean> {
-  const now = new Date()
-  const until = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+  // 현재 supporter_until 조회 (있으면 연장, 없으면 오늘부터)
+  let currentDate = new Date()
+  try {
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
+    const meta = (user?.user?.app_metadata as any) || {}
+    if (meta.supporter_until) {
+      const parsed = new Date(meta.supporter_until)
+      if (parsed > currentDate) currentDate = parsed
+    }
+  } catch {}
+
+  const until = new Date(currentDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
 
   let metaOk = false
   try {
