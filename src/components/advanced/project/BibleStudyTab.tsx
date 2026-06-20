@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, BookOpen, PenLine, Check, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
+import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import {
   JOHN_VERSES, JOHN_WORDS, JOHN_COMMENTARIES,
   JOHN_TRANSLATION_NOTES, JOHN_PARALLEL_PASSAGES,
@@ -108,6 +109,33 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [englishLookup, setEnglishLookup] = useState<Record<string, EnglishWordDetail>>({})
   const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
   const [showStudyComplete, setShowStudyComplete] = useState(false)
+  const [citingCommentary, setCitingCommentary] = useState<JohnCommentary | null>(null)
+  const [citeSuccessMsg, setCiteSuccessMsg] = useState<string | null>(null)
+  const [citeLoading, setCiteLoading] = useState(false)
+
+  const loadManuscriptSections = useCallback((): SermonSection[] => {
+    const saved = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
+    return saved?.sections || []
+  }, [project.id])
+
+  const saveReferenceToManuscript = useCallback((commentary: JohnCommentary) => {
+    const saved = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
+    if (!saved) return
+    const newNote: ReferenceNote = {
+      id: `ref_${commentary.author}_${commentary.verse}_${Date.now()}`,
+      title: `${commentary.author} - ${commentary.verse}절 주석`,
+      content: commentary.text,
+      category: commentary.type === 'exegetical' ? 'commentary' : commentary.type as any,
+      author: commentary.author,
+      book: commentary.source,
+      tags: [commentary.type],
+    }
+    const updated = {
+      ...saved,
+      referenceNotes: [...(saved.referenceNotes || []), newNote],
+    }
+    setStorageItem(`manuscript_${project.id}`, { ...updated, _savedAt: Date.now() })
+  }, [project.id])
 
   const passageKey = `${activeBook}_${activeChapter}`
 
@@ -451,6 +479,12 @@ export default function BibleStudyTab({ project, passages }: Props) {
                   expandedId={expandedCommentary}
                   onToggleExpand={setExpandedCommentary}
                   onVerseClick={handleVerseClick}
+                  onSaveReference={(c) => {
+                    saveReferenceToManuscript(c)
+                    setCiteSuccessMsg(`"${c.author}" 주석이 설교 자료의 참고 메모에 저장되었습니다`)
+                    setTimeout(() => setCiteSuccessMsg(null), 3000)
+                  }}
+                  onCiteInManuscript={setCitingCommentary}
                 />
               </>
             )}
@@ -574,6 +608,308 @@ export default function BibleStudyTab({ project, passages }: Props) {
           handleSendToPrep()
         }}
       />
+
+      {/* Citation Dialog */}
+      {citingCommentary && (
+        <CitationDialog
+          commentary={citingCommentary}
+          sections={loadManuscriptSections()}
+          projectId={project.id}
+          onClose={() => setCitingCommentary(null)}
+          onCiteToSection={async (sectionId, sectionLabel) => {
+            setCiteLoading(true)
+            try {
+              const res = await fetch('/api/advanced/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'reference-weave',
+                  data: {
+                    sectionContent: '',
+                    referenceContent: citingCommentary!.text,
+                    referenceAuthor: citingCommentary!.author,
+                    referenceBook: citingCommentary!.source,
+                  },
+                }),
+              })
+              const json = await res.json()
+              let woven = json.data?.output || ''
+              const firstOpen = woven.indexOf('{')
+              const lastClose = woven.lastIndexOf('}')
+              if (firstOpen !== -1 && lastClose > firstOpen) {
+                try {
+                  woven = JSON.parse(woven.slice(firstOpen, lastClose + 1))
+                  woven = woven.text || woven.content || woven
+                } catch {}
+              }
+
+              const saved = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
+              if (saved) {
+                const newNote: ReferenceNote = {
+                  id: `ref_${citingCommentary!.author}_${citingCommentary!.verse}_${Date.now()}`,
+                  title: `${citingCommentary!.author} - ${citingCommentary!.verse}절 주석`,
+                  content: citingCommentary!.text,
+                  category: citingCommentary!.type === 'exegetical' ? 'commentary' : citingCommentary!.type as any,
+                  author: citingCommentary!.author,
+                  book: citingCommentary!.source,
+                  tags: [citingCommentary!.type],
+                  linkedSectionId: sectionId,
+                }
+                const updatedSections = saved.sections.map(s =>
+                  s.id === sectionId
+                    ? { ...s, content: s.content + (s.content ? '\n\n' : '') + (typeof woven === 'string' ? woven : citingCommentary!.text) }
+                    : s
+                )
+                setStorageItem(`manuscript_${project.id}`, {
+                  ...saved,
+                  sections: updatedSections,
+                  referenceNotes: [...(saved.referenceNotes || []), newNote],
+                  _savedAt: Date.now(),
+                })
+                setCitingCommentary(null)
+                setCiteSuccessMsg(`"${citingCommentary!.author}" 주석이 [${sectionLabel}]에 인용되었습니다`)
+                setTimeout(() => setCiteSuccessMsg(null), 4000)
+              }
+            } catch {
+              setCiteSuccessMsg('인용 중 오류가 발생했습니다')
+              setTimeout(() => setCiteSuccessMsg(null), 3000)
+            }
+            setCiteLoading(false)
+          }}
+          onCreateSection={async () => {
+            setCiteLoading(true)
+            try {
+              const res = await fetch('/api/advanced/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'commentary-to-section',
+                  data: {
+                    author: citingCommentary!.author,
+                    text: citingCommentary!.text,
+                    source: citingCommentary!.source,
+                    type: citingCommentary!.type,
+                  },
+                }),
+              })
+              const json = await res.json()
+              let sectionData = json.data?.output || ''
+              const firstBrace = sectionData.indexOf('{')
+              const lastBrace = sectionData.lastIndexOf('}')
+              if (firstBrace !== -1 && lastBrace > firstBrace) {
+                try {
+                  const parsed = JSON.parse(sectionData.slice(firstBrace, lastBrace + 1))
+                  sectionData = parsed
+                } catch {
+                  sectionData = { label: `${citingCommentary!.author} 주석 중심`, content: sectionData }
+                }
+              }
+              const parsedSection = typeof sectionData === 'object' ? sectionData : { label: `${citingCommentary!.author} 주석`, content: sectionData }
+
+              const saved = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
+              const newSection: SermonSection = {
+                id: `sec_body_${Date.now()}`,
+                type: 'body',
+                label: parsedSection.label || `${citingCommentary!.author} 주석 중심`,
+                content: parsedSection.content || '',
+                aiGenerated: true,
+              }
+              const newNote: ReferenceNote = {
+                id: `ref_${citingCommentary!.author}_${citingCommentary!.verse}_${Date.now()}`,
+                title: `${citingCommentary!.author} - ${citingCommentary!.verse}절 주석`,
+                content: citingCommentary!.text,
+                category: citingCommentary!.type === 'exegetical' ? 'commentary' : citingCommentary!.type as any,
+                author: citingCommentary!.author,
+                book: citingCommentary!.source,
+                tags: [citingCommentary!.type],
+                linkedSectionId: newSection.id,
+              }
+              const updated: JohnManuscriptData = saved || {
+                title: '', oneSentenceSummary: '', passage: activePassageDisplay,
+                sermonDate: '', audience: '', tone: '',
+                sections: [], illustrationNotes: [], referenceNotes: [],
+                coreMessage: '', outlinePoints: [], prepInsights: [], warningPoints: [],
+                greekWords: [], relatedPassages: [],
+              }
+              setStorageItem(`manuscript_${project.id}`, {
+                ...updated,
+                sections: [...updated.sections, newSection],
+                referenceNotes: [...(updated.referenceNotes || []), newNote],
+                _savedAt: Date.now(),
+              })
+              setCitingCommentary(null)
+              setCiteSuccessMsg(`"${citingCommentary!.author}" 주석으로 새 대지가 생성되었습니다. 설교 작성 탭에서 확인하세요!`)
+              setTimeout(() => setCiteSuccessMsg(null), 5000)
+            } catch {
+              setCiteSuccessMsg('대지 생성 중 오류가 발생했습니다')
+              setTimeout(() => setCiteSuccessMsg(null), 3000)
+            }
+            setCiteLoading(false)
+          }}
+          loading={citeLoading}
+        />
+      )}
+
+      {/* Success Toast */}
+      {citeSuccessMsg && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-teal-600/90 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl backdrop-blur-sm animate-fade-in">
+          <Check className="w-4 h-4 shrink-0" />
+          {citeSuccessMsg}
+          <button onClick={() => setCiteSuccessMsg(null)} className="ml-2 opacity-60 hover:opacity-100">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CitationDialog({ commentary, sections, projectId, onClose, onCiteToSection, onCreateSection, loading }: {
+  commentary: JohnCommentary
+  sections: SermonSection[]
+  projectId: string
+  onClose: () => void
+  onCiteToSection: (sectionId: string, sectionLabel: string) => void
+  onCreateSection: () => void
+  loading: boolean
+}) {
+  const [mode, setMode] = useState<'create' | 'cite'>(sections.length > 0 ? 'cite' : 'create')
+  const [selectedSection, setSelectedSection] = useState(sections[0]?.id || '')
+
+  const sectionIcons: Record<string, string> = {
+    introduction: '📝',
+    body: '📖',
+    conclusion: '✨',
+    application: '💡',
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <PenLine className="w-4 h-4 text-indigo-400" />
+            <span className="text-sm font-semibold text-slate-100">원고에 인용</span>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div className="bg-[#04060f]/60 rounded-xl p-3 border border-white/5">
+            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">인용할 주석</div>
+            <div className="text-xs text-slate-100 font-medium mb-0.5">{commentary.author}</div>
+            <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
+              {commentary.text.slice(0, 100)}...
+            </p>
+            <p className="text-[10px] text-slate-500 mt-1 italic">— {commentary.source}</p>
+          </div>
+
+          <div>
+            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">인용 방식</div>
+            <div className="space-y-1">
+              {/* 새 대지 만들기 */}
+              <button
+                onClick={() => setMode('create')}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
+                  mode === 'create'
+                    ? 'bg-teal-500/10 border border-teal-500/30'
+                    : 'bg-[#04060f]/60 border border-white/5 hover:bg-white/5'
+                }`}
+              >
+                <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5">
+                  {mode === 'create' && <div className="w-2.5 h-2.5 rounded-full bg-teal-400" />}
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-teal-300 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    이 주석으로 새 대지 만들기
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    AI가 주석을 바탕으로 설교 본문 대지를 자동 생성합니다
+                  </div>
+                </div>
+              </button>
+
+              {/* 기존 섹션에 인용 */}
+              {sections.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="flex-1 h-px bg-white/5" />
+                    <span className="text-[9px] text-slate-500 uppercase tracking-widest">또는 기존 섹션</span>
+                    <div className="flex-1 h-px bg-white/5" />
+                  </div>
+                  {sections.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setMode('cite'); setSelectedSection(s.id) }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
+                        mode === 'cite' && selectedSection === s.id
+                          ? 'bg-indigo-500/10 border border-indigo-500/30'
+                          : 'bg-[#04060f]/60 border border-white/5 hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5">
+                        {mode === 'cite' && selectedSection === s.id && <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs text-slate-200">
+                          {sectionIcons[s.type] || '📄'} {s.label}
+                        </div>
+                        {s.content && (
+                          <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                            {s.content.slice(0, 60)}...
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-white/5">
+          <button
+            onClick={onClose}
+            className="text-xs px-4 py-2 rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 transition-colors"
+          >
+            취소
+          </button>
+          {mode === 'create' ? (
+            <button
+              onClick={onCreateSection}
+              disabled={loading}
+              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
+            >
+              {loading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              {loading ? '생성 중...' : '✨ 새 대지 생성'}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                const section = sections.find(s => s.id === selectedSection)
+                onCiteToSection(selectedSection, section?.label || '')
+              }}
+              disabled={!selectedSection || loading}
+              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
+            >
+              {loading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <PenLine className="w-3 h-3" />
+              )}
+              {loading ? '인용문 생성 중...' : '이 섹션에 인용'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -915,12 +1251,14 @@ function TranslationDifferenceCard({ notes }: { notes: typeof JOHN_TRANSLATION_N
 /* ─── Commentary Summary ─── */
 
 function CommentarySummary({
-  commentaries, expandedId, onToggleExpand, onVerseClick,
+  commentaries, expandedId, onToggleExpand, onVerseClick, onSaveReference, onCiteInManuscript,
 }: {
   commentaries: typeof JOHN_COMMENTARIES
   expandedId: number | null
   onToggleExpand: (id: number | null) => void
   onVerseClick: (v: number) => void
+  onSaveReference: (c: JohnCommentary) => void
+  onCiteInManuscript: (c: JohnCommentary) => void
 }) {
   const grouped = commentaries.reduce<Record<number, typeof commentaries>>((acc, c) => {
     if (!acc[c.verse]) acc[c.verse] = []
@@ -997,6 +1335,22 @@ function CommentarySummary({
                       </div>
                       <p className="text-xs text-slate-300 leading-relaxed">{c.text}</p>
                       <p className="text-[10px] text-slate-500 mt-1.5 italic">— {c.source}</p>
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
+                        <button
+                          onClick={() => onSaveReference(c)}
+                          className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 transition-colors"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          참고 메모로 저장
+                        </button>
+                        <button
+                          onClick={() => onCiteInManuscript(c)}
+                          className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-colors"
+                        >
+                          <PenLine className="w-3 h-3" />
+                          원고에 인용
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

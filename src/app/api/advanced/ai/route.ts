@@ -17,6 +17,7 @@ import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
 import { SYSTEM_PROMPT as STUDY_TO_PREP_PROMPT } from '@/lib/ai/prompts/studyToPrep'
 import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
 import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
+import { SYSTEM_PROMPT as COMMENTARY_TO_SECTION_PROMPT } from '@/lib/ai/prompts/commentaryToSection'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -127,6 +128,7 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   'study-to-prep': STUDY_TO_PREP_PROMPT,
   'manuscript-diagnosis': MANUSCRIPT_DIAGNOSIS_PROMPT,
   'reference-weave': REFERENCE_WEAVE_PROMPT,
+  'commentary-to-section': COMMENTARY_TO_SECTION_PROMPT,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -340,6 +342,12 @@ export async function POST(request: NextRequest) {
       model = 'gpt-4o-mini'
       maxTokens = 500
       temperature = 0.7
+    } else if (type === 'commentary-to-section') {
+      const { author, text, source, type: commType } = data
+      userText = `Create a sermon body section from this commentary:\n\nAuthor: ${author || ''}\nCommentary: ${text || ''}\nSource: ${source || ''}\n\nGenerate a compelling sermon section that naturally incorporates this commentary.`
+      model = 'gpt-4o-mini'
+      maxTokens = 1000
+      temperature = 0.7
     } else if (type === 'suggest-titles') {
       const { passage, book, chapter, verseStart, verseEnd } = data
       userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
@@ -358,7 +366,7 @@ export async function POST(request: NextRequest) {
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep' || type === 'manuscript-diagnosis') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section') ? { type: 'json_object' } : undefined,
     })
 
     let output = res.choices[0]?.message?.content || ''

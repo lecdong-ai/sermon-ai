@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Loader2, Sparkles, Plus, X, Trash2, BookOpen } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Trash2, BookOpen, Link2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -820,6 +820,20 @@ export default function ManuscriptTab({ project }: Props) {
     triggerSave();
   }, [triggerSave, project.id])
 
+  const updateReferenceLink = useCallback((noteId: string, sectionId: string | null) => {
+    setManuscriptSafe(prev => {
+      const next = {
+        ...prev,
+        referenceNotes: prev.referenceNotes.map(n =>
+          n.id === noteId ? { ...n, linkedSectionId: sectionId || undefined } : n
+        ),
+      }
+      setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() })
+      return next
+    })
+    triggerSave()
+  }, [triggerSave, project.id])
+
   const handleWeaveReference = useCallback(async (note: ReferenceNote, sectionId: string) => {
     setWeavingRefId(note.id)
     try {
@@ -1615,6 +1629,7 @@ export default function ManuscriptTab({ project }: Props) {
               manuscript={manuscript}
               onAdd={addReference}
               onDelete={deleteReference}
+              onLinkToSection={updateReferenceLink}
             />
 
             {/* ─── 최근 작업 활동 ─── */}
@@ -2405,11 +2420,13 @@ function ReferenceNotesSection({
   manuscript,
   onAdd,
   onDelete,
+  onLinkToSection,
 }: {
   notes: ReferenceNote[]
   manuscript: JohnManuscriptData
   onAdd: (note: ReferenceNote) => void
   onDelete: (id: string) => void
+  onLinkToSection: (noteId: string, sectionId: string | null) => void
 }) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<ReferenceNote[]>([])
@@ -2417,6 +2434,7 @@ function ReferenceNotesSection({
   const [newNote, setNewNote] = useState({ title: '', content: '', category: 'commentary' as ReferenceNote['category'], author: '', book: '' })
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [linkingNoteId, setLinkingNoteId] = useState<string | null>(null)
 
   const categoryColors: Record<string, string> = {
     commentary: 'bg-teal-500/10 text-teal-300',
@@ -2670,14 +2688,59 @@ function ReferenceNotesSection({
                     ))}
                   </div>
                 )}
+                {note.linkedSectionId && (
+                  <div className="mt-1.5 flex items-center gap-1 text-[9px] text-teal-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                    {manuscript.sections.find(s => s.id === note.linkedSectionId)?.label || '알 수 없음'}에 연결됨
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => onDelete(note.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-slate-600 hover:text-red-400 transition-all shrink-0"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setLinkingNoteId(linkingNoteId === note.id ? null : note.id)}
+                  className={`p-1.5 rounded transition-all ${
+                    note.linkedSectionId
+                      ? 'text-teal-400 bg-teal-500/10'
+                      : 'opacity-0 group-hover:opacity-100 text-slate-500 hover:text-teal-400'
+                  }`}
+                  title="섹션에 연결"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => onDelete(note.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
+            {linkingNoteId === note.id && (
+              <div className="mt-3 pt-3 border-t border-white/5">
+                <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-2">연결할 섹션 선택</div>
+                <div className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin">
+                  <button
+                    onClick={() => { onLinkToSection(note.id, null); setLinkingNoteId(null) }}
+                    className="w-full text-left text-[11px] px-3 py-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-colors"
+                  >
+                    연결 해제
+                  </button>
+                  {manuscript.sections.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { onLinkToSection(note.id, s.id); setLinkingNoteId(null) }}
+                      className={`w-full text-left text-[11px] px-3 py-1.5 rounded-lg transition-colors ${
+                        note.linkedSectionId === s.id
+                          ? 'bg-teal-500/10 text-teal-300'
+                          : 'text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      {s.label} {s.passage ? `(${s.passage})` : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
