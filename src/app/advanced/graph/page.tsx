@@ -84,31 +84,79 @@ export default function GraphPage() {
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 })
   const [filterTypes, setFilterTypes] = useState<Set<NodeType>>(new Set<NodeType>(['sermon', 'passage', 'theme', 'word', 'note', 'series']))
   const [focusMode, setFocusMode] = useState<FocusMode>('full')
-  const [focusCenterId, setFocusCenterId] = useState('passage-rom8')
+  const [focusCenterId, setFocusCenterId] = useState('')
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [realNodes, setRealNodes] = useState<GraphNode[]>([])
+  const [realEdges, setRealEdges] = useState<GraphEdge[]>([])
+  const [loading, setLoading] = useState(true)
   const isDark = true
+
+  // Fetch real graph data
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/graph')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data) {
+          setRealNodes(json.data.nodes)
+          setRealEdges(json.data.edges)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Merge real + mock: use real data, fall back to mock for word/note nodes
+  const allNodes = useMemo(() => {
+    if (realNodes.length === 0 && !loading) return GRAPH_NODES // fallback to mock
+    const realIds = new Set(realNodes.map(n => n.id))
+    const mockWordNotes = GRAPH_NODES.filter(n => n.type === 'word' || n.type === 'note')
+    const extras = mockWordNotes.filter(n => !realIds.has(n.id))
+    return [...realNodes, ...extras]
+  }, [realNodes, loading])
+
+  const allEdges = useMemo(() => {
+    if (realEdges.length === 0 && !loading) return GRAPH_EDGES
+    const realIds = new Set(realNodes.map(n => n.id))
+    const mockEdges = GRAPH_EDGES.filter(e => {
+      const sourceReal = realIds.has(e.source)
+      const targetReal = realIds.has(e.target)
+      return sourceReal !== targetReal // edge connects real to mock (word/note)
+    })
+    return [...realEdges, ...mockEdges]
+  }, [realEdges, realNodes, loading])
+
+  // Set first real sermon as default for 'project' focus
+  const firstRealSermonId = useMemo(() => {
+    const sermon = allNodes.find(n => n.type === 'sermon')
+    return sermon?.id || null
+  }, [allNodes])
 
   // Reset focusCenterId when focusMode changes
   const handleFocusMode = useCallback((mode: FocusMode) => {
     setFocusMode(mode)
-    if (mode === 'passage') {
-      setFocusCenterId('passage-rom8')
+    if (mode === 'project' && firstRealSermonId) {
+      setFocusCenterId(firstRealSermonId)
+    } else if (mode === 'passage') {
+      const firstPassage = allNodes.find(n => n.type === 'passage')
+      setFocusCenterId(firstPassage?.id || '')
     } else if (mode === 'theme') {
-      setFocusCenterId('theme-grace')
+      const firstTheme = allNodes.find(n => n.type === 'theme')
+      setFocusCenterId(firstTheme?.id || '')
     }
-  }, [])
+  }, [firstRealSermonId, allNodes])
 
   const focusCenterNode = useMemo(() => {
-    if (focusMode === 'passage' || focusMode === 'theme') {
-      return GRAPH_NODES.find(n => n.id === focusCenterId) || null
+    if (focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme') {
+      return allNodes.find(n => n.id === focusCenterId) || null
     }
     return null
-  }, [focusMode, focusCenterId])
+  }, [focusMode, focusCenterId, allNodes])
 
   const filteredNodes = useMemo(() => {
-    let nodes = GRAPH_NODES.filter(n => filterTypes.has(n.type))
+    let nodes = allNodes.filter(n => filterTypes.has(n.type))
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase()
@@ -120,25 +168,25 @@ export default function GraphPage() {
     }
 
     if (focusMode === 'project') {
-      const centerId = 'sermon-current'
-      const neighbors = new Set(getNeighborIds(centerId, GRAPH_EDGES))
-      neighbors.add(centerId)
-      nodes = nodes.filter(n => neighbors.has(n.id))
-    } else if (focusMode === 'passage' || focusMode === 'theme') {
-      if (focusCenterId && nodes.some(n => n.id === focusCenterId)) {
-        const neighbors = new Set(getNeighborIds(focusCenterId, GRAPH_EDGES))
-        neighbors.add(focusCenterId)
+      const centerId = focusCenterId || (allNodes.find(n => n.type === 'sermon')?.id || '')
+      if (centerId) {
+        const neighbors = new Set(getNeighborIds(centerId, allEdges))
+        neighbors.add(centerId)
         nodes = nodes.filter(n => neighbors.has(n.id))
       }
+    } else if ((focusMode === 'passage' || focusMode === 'theme') && focusCenterId) {
+      const neighbors = new Set(getNeighborIds(focusCenterId, allEdges))
+      neighbors.add(focusCenterId)
+      nodes = nodes.filter(n => neighbors.has(n.id))
     }
 
     return nodes
-  }, [filterTypes, focusMode, focusCenterId, searchQuery])
+  }, [filterTypes, focusMode, focusCenterId, searchQuery, allNodes, allEdges])
 
   const filteredEdges = useMemo(() => {
     const ids = new Set(filteredNodes.map(n => n.id))
-    return GRAPH_EDGES.filter(e => ids.has(e.source) && ids.has(e.target))
-  }, [filteredNodes])
+    return allEdges.filter(e => ids.has(e.source) && ids.has(e.target))
+  }, [filteredNodes, allEdges])
 
   // Resize observer
   useEffect(() => {
@@ -163,9 +211,9 @@ export default function GraphPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
-    NODE_TYPES.forEach(t => { c[t] = GRAPH_NODES.filter(n => n.type === t).length })
+    NODE_TYPES.forEach(t => { c[t] = allNodes.filter(n => n.type === t).length })
     return c
-  }, [])
+  }, [allNodes])
 
   const neighborIds = useMemo(() => {
     if (!selectedNode) return new Set<string>()
@@ -174,13 +222,16 @@ export default function GraphPage() {
 
   const focusCenterOptions = useMemo(() => {
     if (focusMode === 'passage') {
-      return GRAPH_NODES.filter(n => n.type === 'passage')
+      return allNodes.filter(n => n.type === 'passage')
     }
     if (focusMode === 'theme') {
-      return GRAPH_NODES.filter(n => n.type === 'theme')
+      return allNodes.filter(n => n.type === 'theme')
+    }
+    if (focusMode === 'project') {
+      return allNodes.filter(n => n.type === 'sermon')
     }
     return []
-  }, [focusMode])
+  }, [focusMode, allNodes])
 
   return (
     <div className="flex h-full">
@@ -222,18 +273,22 @@ export default function GraphPage() {
           </div>
         </div>
 
-        {/* Focus center selector for passage/theme */}
-        {(focusMode === 'passage' || focusMode === 'theme') && (
+        {/* Focus center selector */}
+        {(focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme') && (
           <div className={`p-4 border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
             <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>
-              {focusMode === 'passage' ? '본문 선택' : '주제 선택'}
+              {focusMode === 'project' ? '프로젝트 선택' : focusMode === 'passage' ? '본문 선택' : '주제 선택'}
             </h3>
-            <select value={focusCenterId} onChange={e => setFocusCenterId(e.target.value)}
-              className={`w-full text-xs border rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-green-400 ${isDark ? 'border-white/10 bg-[#1a1a28] text-white/60' : 'border-paper-200 bg-white text-paper-700'}`}>
-              {focusCenterOptions.map(n => (
-                <option key={n.id} value={n.id}>{n.label}</option>
-              ))}
-            </select>
+            {focusCenterOptions.length > 0 ? (
+              <select value={focusCenterId} onChange={e => setFocusCenterId(e.target.value)}
+                className={`w-full text-xs border rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-green-400 ${isDark ? 'border-white/10 bg-[#1a1a28] text-white/60' : 'border-paper-200 bg-white text-paper-700'}`}>
+                {focusCenterOptions.map(n => (
+                  <option key={n.id} value={n.id}>{n.label}</option>
+                ))}
+              </select>
+            ) : (
+              <p className={`text-xs ${isDark ? 'text-white/25' : 'text-paper-400'}`}>표시할 항목이 없습니다</p>
+            )}
             {focusCenterNode && (
               <p className={`text-[10px] mt-1.5 leading-relaxed ${isDark ? 'text-white/25' : 'text-paper-400'}`}>{focusCenterNode.detail.slice(0, 60)}…</p>
             )}
@@ -288,7 +343,7 @@ export default function GraphPage() {
           </div>
 
           <span className={`text-[10px] ${isDark ? 'text-white/20' : 'text-paper-400'}`}>·</span>
-          <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-paper-400'}`}>{filteredNodes.length}개 노드 · {filteredEdges.length}개 관계</span>
+          <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-paper-400'}`}>{loading ? '로딩 중...' : `${filteredNodes.length}개 노드 · ${filteredEdges.length}개 관계`}</span>
 
           <div className="flex-1" />
 
@@ -309,14 +364,21 @@ export default function GraphPage() {
         {focusMode !== 'full' && (
           <div className={`px-4 py-1.5 border-b text-[10px] ${isDark ? 'bg-green-900/20 border-green-800/30 text-green-400' : 'bg-green-50/50 border-green-100 text-green-600'}`}>
             {FOCUS_MODE_DESCRIPTIONS[focusMode]}
-            {focusMode !== 'project' && focusCenterNode && (
+            {focusCenterNode && (
               <span> 현재 중심: <strong>{focusCenterNode.label}</strong></span>
             )}
           </div>
         )}
 
         {/* Canvas */}
-        {filteredNodes.length === 0 ? (
+        {loading ? (
+          <div className={`flex-1 flex items-center justify-center ${isDark ? 'bg-[#0d0d12]' : 'bg-paper-50/30'}`}>
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-paper-400">그래프 데이터를 불러오는 중...</p>
+            </div>
+          </div>
+        ) : filteredNodes.length === 0 ? (
           <div className={`flex-1 flex items-center justify-center ${isDark ? 'bg-[#0d0d12]' : 'bg-paper-50/30'}`}>
             <div className="text-center">
               <p className="text-sm text-paper-400">표시할 노드가 없습니다</p>
