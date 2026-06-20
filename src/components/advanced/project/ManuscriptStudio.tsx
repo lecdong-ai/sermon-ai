@@ -249,7 +249,7 @@ export default function ManuscriptStudio({
               {localManuscript.coreMessage && (
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 mt-4 print:bg-gray-100 print:border-gray-300 print:text-gray-800">
                   <p className="text-sm text-indigo-200 font-serif print:text-gray-800">
-                    "{localManuscript.coreMessage}"
+                    &ldquo;{localManuscript.coreMessage}&rdquo;
                   </p>
                 </div>
               )}
