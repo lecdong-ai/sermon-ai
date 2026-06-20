@@ -92,7 +92,7 @@ export async function generateAll(text: string, useMock?: boolean): Promise<Serm
   const [summary, groupDiscussion, cardNews, sermonScript, shortsScript, ppt] =
     await Promise.all([
       safeCallAI<SummaryResponse>(SummaryPrompt.SYSTEM_PROMPT, text, SUMMARY_SCHEMA, 'summary', 6000),
-      safeCallAI<any>(GroupDiscussionPrompt.SYSTEM_PROMPT, text, GROUP_DISCUSSION_SCHEMA, 'groupDiscussion', 3000),
+      safeCallAI<any>(GroupDiscussionPrompt.SYSTEM_PROMPT, text, GROUP_DISCUSSION_SCHEMA, 'groupDiscussion', 8000),
       safeCallAI<any>(CardNewsPrompt.SYSTEM_PROMPT, text, CARD_NEWS_SCHEMA, 'cardNews', 3000),
       safeCallAI<any>(SermonScriptPrompt.SYSTEM_PROMPT, text, SERMON_SCRIPT_SCHEMA, 'sermonScript', 4000, 0.3),
       safeCallAI<any>(ShortsScriptPrompt.SYSTEM_PROMPT, text, SHORTS_SCRIPT_SCHEMA, 'shortsScript', 2000),
@@ -164,7 +164,7 @@ export async function generateSingleItem(
     groupDiscussion: {
       prompt: GroupDiscussionPrompt.SYSTEM_PROMPT,
       schema: GROUP_DISCUSSION_SCHEMA,
-      maxTokens: 3000,
+      maxTokens: 8000,
       mapper: (d: any) => ({ groupDiscussion: d }),
     },
     cardNews: {

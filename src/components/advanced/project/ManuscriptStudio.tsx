@@ -128,79 +128,90 @@ export default function ManuscriptStudio({
   const toggleDiagnosis = useCallback(() => setSidebarTab(prev => prev === 'diagnosis' ? null : 'diagnosis'), [])
   const openPractice = useCallback(() => setShowPractice(true), [])
 
+  const handlePrint = useCallback(() => {
+    const e = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const data = localManuscriptRef.current;
+
+    const sectionHtml = data.sections.map(section => {
+      const refNotes = referenceNotes.filter(n => n.linkedSectionId === section.id);
+      const illNotes = illustrationNotes.filter(n => n.linkedSectionId === section.id);
+      let html = `<div class="section">`;
+      html += `<h2>${e(section.label)}${section.passage ? ` <span class="passage-label">(${e(section.passage)})</span>` : ''}</h2>`;
+      html += `<div class="content">${e(section.content) || '<em>(내용 없음)</em>'}</div>`;
+      if (refNotes.length > 0) {
+        html += `<div class="notes ref-notes"><div class="notes-title">📚 참고 메모</div>`;
+        refNotes.forEach(n => { html += `<div class="note"><strong>${e(n.title)}:</strong> ${e(n.content)}</div>`; });
+        html += `</div>`;
+      }
+      if (illNotes.length > 0) {
+        html += `<div class="notes ill-notes"><div class="notes-title">💡 예화 메모</div>`;
+        illNotes.forEach(n => { html += `<div class="note"><strong>${e(n.title)}:</strong> ${e(n.content)}</div>`; });
+        html += `</div>`;
+      }
+      html += `</div>`;
+      return html;
+    }).join('');
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+    document.body.appendChild(iframe);
+    const win = iframe.contentWindow!;
+    const doc = win.document;
+    doc.write(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>${e(data.title || '설교 원고')}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { margin: 2cm; }
+  body {
+    font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: #000;
+    background: #fff;
+    line-height: 1.8;
+    font-size: 12pt;
+    padding: 0;
+  }
+  h1 { text-align: center; font-size: 30pt; font-weight: bold; margin-bottom: 0.3rem; line-height: 1.3; }
+  .passage { text-align: center; font-size: 14pt; color: #444; font-style: italic; margin-bottom: 1.5rem; }
+  .core-message {
+    background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;
+    padding: 1rem 1.5rem; margin-bottom: 2rem; font-style: italic;
+    font-size: 11pt; color: #333; text-align: center;
+  }
+  .section { margin-bottom: 2.5rem; }
+  h2 {
+    font-size: 20pt; font-weight: bold; margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid #ccc;
+  }
+  .passage-label { font-size: 11pt; color: #666; font-weight: normal; margin-left: 0.5rem; }
+  .content {
+    font-size: 12pt; line-height: 1.8; white-space: pre-wrap;
+    text-align: justify; word-break: break-word;
+  }
+  .notes { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #ccc; }
+  .ref-notes { border-top-color: #aaa; }
+  .ill-notes { border-top-color: #aaa; }
+  .notes-title { font-size: 9pt; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+  .note { font-size: 10pt; color: #444; padding-left: 0.5rem; border-left: 2px solid #ccc; margin-bottom: 0.3rem; line-height: 1.5; }
+  .note strong { color: #222; }
+</style>
+</head>
+<body>
+  <h1>${e(data.title || '(제목 없음)')}</h1>
+  <p class="passage">${e(data.passage)}</p>
+  ${data.coreMessage ? `<div class="core-message">"${e(data.coreMessage)}"</div>` : ''}
+  ${sectionHtml}
+</body>
+</html>`);
+    doc.close();
+    win.focus();
+    win.print();
+    setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1000);
+  }, [referenceNotes, illustrationNotes]);
+
   return (
     <div className="fixed inset-0 z-50 bg-[#04060f] flex flex-col">
-      <style>{`
-        @media print {
-          /* 1. 전체 배경 및 기본 설정 */
-          body, html { 
-            background: white !important; 
-            color: black !important; 
-            height: auto !important; 
-            overflow: visible !important; 
-            width: auto !important;
-          }
-
-          /* 2. UI 요소 완전 제거 (핵심) */
-          header, aside, nav, footer, button, .no-print, .print\\:hidden { 
-            display: none !important; 
-          }
-          
-          /* 3. 레이아웃 컨테이너 초기화 (스크롤/고정 위치 해제) */
-          .fixed, .absolute, .sticky {
-            position: static !important;
-          }
-          
-          .flex, .grid, .overflow-hidden, .overflow-y-auto, .overflow-x-auto {
-            display: block !important;
-            height: auto !important;
-            overflow: visible !important;
-            width: auto !important;
-            max-width: none !important;
-          }
-
-          /* 4. 콘텐츠 영역 설정 */
-          .print-content {
-            padding: 20px !important;
-            margin: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-          }
-
-          /* 5. 텍스트 영역 처리 (미리보기 div 및 편집 textarea) */
-          textarea, .whitespace-pre-wrap {
-            border: none !important;
-            background: transparent !important;
-            resize: none !important;
-            overflow: visible !important;
-            height: auto !important;
-            min-height: 0 !important;
-            box-shadow: none !important;
-            color: black !important;
-            font-family: 'Noto Serif KR', 'Apple SD Gothic Neo', serif !important;
-            line-height: 1.6 !important;
-            font-size: 11pt !important;
-            padding: 0 !important;
-            margin: 0 0 1rem 0 !important;
-            display: block !important;
-            white-space: pre-wrap !important;
-          }
-
-          /* 6. 제목 및 페이지 나누기 */
-          h1, h2, h3 { 
-            page-break-after: avoid; 
-            color: black !important; 
-            margin-top: 1.5rem !important;
-            border-bottom: 1px solid #ccc !important;
-            padding-bottom: 0.5rem !important;
-          }
-          
-          .group {
-            page-break-inside: avoid;
-            margin-bottom: 2rem !important;
-          }
-        }
-      `}</style>
       {/* Header */}
       <StudioHeader
         manuscript={localManuscript}
@@ -213,6 +224,7 @@ export default function ManuscriptStudio({
         onToggleDiagnosis={toggleDiagnosis}
         onPractice={openPractice}
         onExport={handleExport}
+        onPrint={handlePrint}
         onSave={() => handleSave()}
         onClose={onClose}
         viewMode={viewMode}
@@ -313,7 +325,7 @@ export default function ManuscriptStudio({
 
         {/* Sidebar */}
         {sidebarTab && (
-          <div className="w-80 border-l border-white/5 bg-[#04060f] overflow-y-auto scrollbar-thin print:hidden">
+          <div className="w-80 border-l border-white/5 bg-[#04060f] overflow-y-auto scrollbar-thin print:hidden no-print">
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
