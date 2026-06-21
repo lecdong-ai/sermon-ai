@@ -41,6 +41,7 @@ export default function SeriesPage() {
   const [bulkBusy, setBulkBusy] = useState<'all' | 'sample' | null>(null)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const [confirm, setConfirm] = useState<null | { kind: 'delete-one'; id: string; name: string } | { kind: 'delete-all' } | { kind: 'delete-sample' }>(null)
+  const [frequentTopics, setFrequentTopics] = useState<{ label: string; count: number }[]>([])
 
   const showToast = useCallback((kind: 'success' | 'error', text: string) => {
     setToast({ kind, text })
@@ -63,6 +64,29 @@ export default function SeriesPage() {
   }, [])
 
   useEffect(() => { fetchSeries() }, [fetchSeries])
+
+  // 통찰(insights)에서 태그 빈도수를 계산하여 자주 다룬 주제 추출
+  useEffect(() => {
+    fetch('/api/insights')
+      .then((r) => r.json())
+      .then((json) => {
+        if (!json.success) return
+        const tagCount = new Map<string, number>()
+        for (const note of json.data || []) {
+          if (Array.isArray(note.tags)) {
+            for (const tag of note.tags) {
+              tagCount.set(tag, (tagCount.get(tag) || 0) + 1)
+            }
+          }
+        }
+        const tagArr: { label: string; count: number }[] = []
+        tagCount.forEach((count, label) => tagArr.push({ label, count }))
+        tagArr.sort((a, b) => b.count - a.count)
+        const sorted = tagArr.slice(0, 10)
+        setFrequentTopics(sorted)
+      })
+      .catch(() => {})
+  }, [])
 
   const sampleCount = useMemo(() => series.filter((s) => s.isSample).length, [series])
 
@@ -229,7 +253,7 @@ export default function SeriesPage() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SermonSeriesPlanner frequentTopics={[]} />
+              <SermonSeriesPlanner frequentTopics={frequentTopics} />
             </div>
           </div>
         </div>

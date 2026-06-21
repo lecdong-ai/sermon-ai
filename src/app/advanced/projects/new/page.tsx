@@ -175,6 +175,14 @@ export default function NewProjectPage() {
   }
 
   const [suggestions, setSuggestions] = useState<{ title: string; reason: string }[]>([])
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3500)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
 
   const handleQuickPassage = (book: string, chapterNum: number, vs: number, ve: number | null) => {
     const found = BIBLE_BOOKS.find(b => b.name === book)
@@ -280,7 +288,15 @@ export default function NewProjectPage() {
         season,
         status: 'draft',
       }),
-    }).catch((e) => console.error('DB 저장 실패:', e))
+    }).then(async (res) => {
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error || `서버 오류 (${res.status})`)
+      }
+    }).catch((e) => {
+      console.error('DB 저장 실패:', e)
+      setToast({ kind: 'error', text: `⚠ DB 저장 실패: ${e?.message || '네트워크 오류'} (로컬에는 저장됨)` })
+    })
 
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)
   }
@@ -860,6 +876,16 @@ export default function NewProjectPage() {
           </div>
         </section>
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border backdrop-blur-md text-xs font-bold transition-all ${
+          toast.kind === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        }`}>
+          {toast.text}
+        </div>
+      )}
     </div>
   )
 }
