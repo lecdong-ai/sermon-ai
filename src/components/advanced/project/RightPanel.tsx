@@ -14,9 +14,10 @@ import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteEntry } from '@/lib/advanced
 interface Props {
   project: ProjectDetail
   activeTab: string
+  onProjectUpdated?: () => void
 }
 
-export default function RightPanel({ project, activeTab }: Props) {
+export default function RightPanel({ project, activeTab, onProjectUpdated }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
   const [linkedInsights, setLinkedInsights] = useState<NoteEntry[]>([])
@@ -44,7 +45,7 @@ export default function RightPanel({ project, activeTab }: Props) {
       const json = await res.json()
       if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
       showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
-      router.refresh()
+      onProjectUpdated?.()
     } catch (e: any) {
       showToast('error', e?.message || '단계 전환 실패')
     } finally {

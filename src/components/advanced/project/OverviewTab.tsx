@@ -10,9 +10,9 @@ import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDra
 import RecentChangesPanel from '@/components/advanced/shared/RecentChangesPanel'
 import { MOCK_VERSIONS, MOCK_RECENT_CHANGES } from '@/lib/advanced/statusData'
 
-interface Props { project: ProjectDetail }
+interface Props { project: ProjectDetail; onProjectUpdated?: () => void }
 
-export default function OverviewTab({ project }: Props) {
+export default function OverviewTab({ project, onProjectUpdated }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
@@ -38,7 +38,7 @@ export default function OverviewTab({ project }: Props) {
       const json = await res.json()
       if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
       showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
-      router.refresh()
+      onProjectUpdated?.()
     } catch (e: any) {
       showToast('error', e?.message || '단계 전환 실패')
     } finally {
