@@ -94,7 +94,7 @@ export default function NotesPage() {
       }
     })
     return () => { ac?.abort() }
-  }, [notes])
+  }, [])
 
   useEffect(() => {
     if (view !== 'atelier') return
@@ -415,17 +415,15 @@ export default function NotesPage() {
             setNotes((prev) => prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n)))
             setSelectedNote((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev))
             // Note: the modal already PATCHes the server; we only sync local state here.
-            // We re-fetch from server to pick up any server-side normalization (updated_at, etc).
+            // We re-fetch the single updated note (not the full list) to pick up server-side normalization.
             if (updated.id && !updated.id.startsWith('temp-')) {
-              fetch(`/api/insights`)
+              fetch(`/api/insights/${updated.id}`)
                 .then((r) => r.json())
                 .then((json) => {
-                  if (json?.success) {
-                    const fresh = (json.data || []).find((n: NoteEntry) => n.id === updated.id)
-                    if (fresh) {
-                      setNotes((prev) => prev.map((n) => (n.id === fresh.id ? fresh : n)))
-                      setSelectedNote((prev) => (prev?.id === fresh.id ? fresh : prev))
-                    }
+                  if (json?.success && json.data) {
+                    const fresh = json.data
+                    setNotes((prev) => prev.map((n) => (n.id === fresh.id ? fresh : n)))
+                    setSelectedNote((prev) => (prev?.id === fresh.id ? fresh : prev))
                   }
                 })
                 .catch(() => {})

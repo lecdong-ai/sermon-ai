@@ -99,8 +99,8 @@ export default function ConstellationGraph({ notes, draftText, draftType, draftT
 
     const simNodes: ConstellationNode[] = nodes.map((n) => ({
       ...n,
-      x: centerX + (Math.random() - 0.5) * 80,
-      y: centerY + (Math.random() - 0.5) * 80,
+      x: centerX + (Math.random() - 0.5) * 40,
+      y: centerY + (Math.random() - 0.5) * 40,
       vx: 0, vy: 0, fx: null, fy: null,
     }))
     const nodeMap = new Map<string, ConstellationNode>()
@@ -118,9 +118,9 @@ export default function ConstellationGraph({ notes, draftText, draftType, draftT
     }
 
     const sim = forceSimulation<ConstellationNode, ConstellationLink>(simNodes)
-      .force('charge', forceManyBody<ConstellationNode>().strength((d) => (d.type === 'draft' ? -260 : -110)))
-      .force('center', forceCenter(centerX, centerY).strength(0.06))
-      .force('link', forceLink<ConstellationNode, ConstellationLink>(simLinks).id((d) => d.id).distance((l) => 80 + (1 - Math.min(1, l.weight)) * 60).strength(0.5))
+      .force('charge', forceManyBody<ConstellationNode>().strength((d) => (d.type === 'draft' ? -90 : -50)))
+      .force('center', forceCenter(centerX, centerY).strength(0.18))
+      .force('link', forceLink<ConstellationNode, ConstellationLink>(simLinks).id((d) => d.id).distance((l) => 60 + (1 - Math.min(1, l.weight)) * 40).strength(0.7))
       .force('collide', forceCollide<ConstellationNode>().radius((d) => d.r + 6))
       .alpha(1)
       .alphaDecay(0.025)

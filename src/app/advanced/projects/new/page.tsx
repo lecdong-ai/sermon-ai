@@ -225,7 +225,7 @@ export default function NewProjectPage() {
     setSelectedPassages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!isFormValid) return
     const newId = `proj-${Date.now().toString(36)}`
     const now = new Date().toISOString()
@@ -270,33 +270,52 @@ export default function NewProjectPage() {
     setStorageItem('custom_projects', existing)
 
     // DB에도 저장 (직조대/통찰 연결/이음 기능이 DB에서 찾을 수 있도록)
-    fetch('/api/sermons', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: newProject.title,
-        normalizedPassage: newProject.passage,
-        bibleBook: bookName,
-        chapterStart: ch ? parseInt(ch) : null,
-        chapterEnd: null,
-        verseStart: vs ? parseInt(vs) : null,
-        verseEnd: ve ? parseInt(ve) : null,
-        date: sermonDate,
-        preacher,
-        sermonType,
-        audience,
-        season,
-        status: 'draft',
-      }),
-    }).then(async (res) => {
-      if (!res.ok) {
+    let apiId: string | null = null
+    try {
+      const res = await fetch('/api/sermons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newProject.title,
+          normalizedPassage: newProject.passage,
+          bibleBook: bookName,
+          chapterStart: ch ? parseInt(ch) : null,
+          chapterEnd: null,
+          verseStart: vs ? parseInt(vs) : null,
+          verseEnd: ve ? parseInt(ve) : null,
+          date: sermonDate,
+          preacher,
+          sermonType,
+          audience,
+          season,
+          status: 'draft',
+        }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        apiId = json?.data?.id || null
+        // API ID로 localStorage 항목의 ID를 교체 (중복 방지)
+        if (apiId && apiId !== newId) {
+          const refreshed = getCustomProjects()
+          const idx2 = refreshed.findIndex(p => p.id === newId)
+          if (idx2 !== -1) {
+            refreshed[idx2] = { ...refreshed[idx2], id: apiId }
+            setStorageItem('custom_projects', refreshed)
+            // useProjects/refetch 트리거 (storage event로는 미동작하므로 직접 호출)
+            window.dispatchEvent(new StorageEvent('storage', { key: 'custom_projects' }))
+          }
+          router.push(`/advanced/projects/${apiId}?tab=overview&new=true`)
+          return
+        }
+      } else {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.error || `서버 오류 (${res.status})`)
+        console.error('DB 저장 실패:', json.error || res.status)
+        setToast({ kind: 'error', text: `⚠ DB 저장 실패: ${json.error || res.status} (로컬에는 저장됨)` })
       }
-    }).catch((e) => {
+    } catch (e: any) {
       console.error('DB 저장 실패:', e)
       setToast({ kind: 'error', text: `⚠ DB 저장 실패: ${e?.message || '네트워크 오류'} (로컬에는 저장됨)` })
-    })
+    }
 
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)
   }

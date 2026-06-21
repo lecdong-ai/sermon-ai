@@ -124,7 +124,7 @@ function ProjectContent() {
               <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 animate-fade-in">
                 <Zap className="w-4 h-4 text-amber-400 shrink-0" />
                 <p className="text-[11px] text-amber-200 font-medium leading-relaxed flex-1">
-                  이 프로젝트의 내용이 현재 단계('<span className="font-bold">{PROJECT_STATUS_LABELS[project.status]}</span>')보다 앞서 있습니다.
+                  이 프로젝트의 내용이 현재 단계(&apos;<span className="font-bold">{PROJECT_STATUS_LABELS[project.status]}</span>&apos;)보다 앞서 있습니다.
                   <span className="text-amber-300/70 ml-1">탐지된 단계: <span className="font-bold text-amber-200">{PROJECT_STATUS_LABELS[detectedStage]}</span></span>
                 </p>
                 <button

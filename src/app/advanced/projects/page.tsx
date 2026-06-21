@@ -11,7 +11,7 @@ import {
   BarChart2, Calendar, AlignLeft, ArrowRight, Trash2,
   Loader2, RefreshCw, AlertTriangle,
 } from 'lucide-react'
-import { getStorageItem } from '@/lib/storage'
+import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 
 /* ── 상태별 색상 매핑 ── */
@@ -204,6 +204,63 @@ function ProjectCard({ project, onClick, onDelete }: { project: AdvancedProject;
   )
 }
 
+function ArchivedProjectCard({ project, onOpen, onUnarchive, onDelete }: {
+  project: AdvancedProject; onOpen: () => void; onUnarchive: () => void; onDelete?: () => void
+}) {
+  return (
+    <div
+      className="group relative rounded-2xl border border-slate-500/20 bg-slate-900/30 hover:border-slate-400/40 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col opacity-75 hover:opacity-100"
+      style={{ boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)' }}
+    >
+      <div className="h-0.5 w-full bg-gradient-to-r from-slate-500 to-slate-600" />
+      <div className="p-5 flex flex-col gap-4 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0" onClick={onOpen}>
+            <h3 className="text-[15px] font-bold text-slate-300 group-hover:text-white transition-colors leading-snug line-clamp-2">
+              {project.title}
+            </h3>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[11px] font-extrabold text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded">
+                {project.passage}
+              </span>
+              <span className="text-[10px] text-slate-500 font-bold">{project.sermonType}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete() }}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-slate-600 hover:text-red-400 transition-all"
+                title="프로젝트 삭제"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-slate-500/20 text-slate-300 border border-slate-500/30">
+              보관됨
+            </span>
+          </div>
+        </div>
+        <p className="text-[11px] text-slate-500 italic font-medium">이 프로젝트는 보관되었습니다.</p>
+        <div className="flex gap-2 mt-auto">
+          <button
+            onClick={(e) => { e.stopPropagation(); onUnarchive() }}
+            className="flex-1 text-[11px] font-bold bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-indigo-200 py-2 rounded-lg transition-colors border border-indigo-500/30"
+          >
+            보관 해제
+          </button>
+          <button
+            onClick={onOpen}
+            className="flex-1 text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white py-2 rounded-lg transition-colors border border-white/5"
+          >
+            열기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── 상단 통계 카드 ── */
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: string }) {
   return (
@@ -249,6 +306,35 @@ function ProjectsContent() {
 
   const inProgress = filtered.filter(p => !['completed','archived'].includes(p.status))
   const done = filtered.filter(p => p.status === 'completed')
+  const archived = filtered.filter(p => p.status === 'archived')
+
+  const handleUnarchive = async (id: string) => {
+    try {
+      // localStorage 업데이트
+      const custom = getStorageItem<AdvancedProject[]>('custom_projects', [])
+      const idx = custom.findIndex(p => p.id === id)
+      if (idx !== -1) {
+        custom[idx] = { ...custom[idx], status: 'research', updatedAt: new Date().toISOString() }
+        setStorageItem('custom_projects', custom)
+      }
+      // API도 업데이트 (영구 보관 해제)
+      try {
+        const res = await fetch(`/api/sermons/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'research' }),
+        })
+        if (!res.ok) {
+          console.warn('API 보관 해제 실패:', res.status)
+        }
+      } catch (e) {
+        console.warn('API 보관 해제 네트워크 오류:', e)
+      }
+      refetch()
+    } catch (e) {
+      console.error('보관 해제 실패:', e)
+    }
+  }
 
   if (loading) {
     return (
@@ -322,10 +408,11 @@ function ProjectsContent() {
 
         {/* ── 통계 카드 ── */}
         {!searchQuery && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <StatCard label="전체 프로젝트" value={stats.totalProjects} sub="편" color="text-indigo-400" />
             <StatCard label="진행 중" value={stats.inProgress} sub="활성" color="text-amber-400" />
             <StatCard label="완료 설교" value={stats.completed} sub="편" color="text-emerald-400" />
+            <StatCard label="보관됨" value={stats.archived} sub="편" color="text-slate-400" />
             <StatCard label="누적 원고량" value={(stats.totalWords / 10000).toFixed(1)} sub="만 자" color="text-purple-400" />
           </div>
         )}
@@ -421,6 +508,28 @@ function ProjectsContent() {
                       key={p.id}
                       project={p}
                       onClick={() => router.push(`/advanced/projects/${p.id}`)}
+                      onDelete={() => handleDelete(p.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {archived.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Archive className="w-4 h-4 text-slate-400" />
+                  <h2 className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
+                    보관된 프로젝트 ({archived.length})
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {archived.map(p => (
+                    <ArchivedProjectCard
+                      key={p.id}
+                      project={p}
+                      onOpen={() => router.push(`/advanced/projects/${p.id}`)}
+                      onUnarchive={() => handleUnarchive(p.id)}
                       onDelete={() => handleDelete(p.id)}
                     />
                   ))}

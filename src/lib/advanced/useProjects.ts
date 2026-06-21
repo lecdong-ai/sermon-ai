@@ -123,6 +123,7 @@ export function useProjects(): UseProjectsResult {
     totalProjects: projects.length,
     inProgress: projects.filter(p => !['completed', 'archived'].includes(p.status)).length,
     completed: projects.filter(p => p.status === 'completed').length,
+    archived: projects.filter(p => p.status === 'archived').length,
     totalStudies: projects.reduce((sum, p) => sum + (p.studyCount || 0), 0),
     totalWords: projects.reduce((sum, p) => sum + (p.wordCount || 0), 0),
     thisMonthSermons: projects.filter(p => {

@@ -206,6 +206,7 @@ export interface QuickStats {
   totalProjects: number
   inProgress: number
   completed: number
+  archived: number
   totalStudies: number
   totalWords: number
   thisMonthSermons: number

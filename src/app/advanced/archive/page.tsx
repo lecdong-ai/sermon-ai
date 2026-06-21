@@ -4,8 +4,10 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
-import { 
-  Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw, 
+import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getStorageItem } from '@/lib/storage'
+import {
+  Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw,
   ArrowRight, BookOpen, Star, Sparkles, FolderOpen, Heart, MessageSquare, Archive
 } from 'lucide-react'
 
@@ -29,13 +31,78 @@ export default function ArchivePage() {
   const [showInsights, setShowInsights] = useState(true)
 
   useEffect(() => {
-    fetch('/api/archive')
-      .then(r => r.json())
-      .then(json => {
-        if (json.success) setAllSermons(json.data)
+    Promise.all([
+      fetch('/api/archive').then(r => r.json()).catch(() => ({ success: false })),
+      Promise.resolve(getCustomProjects()),
+    ]).then(([json, customProjects]) => {
+      const apiSermons: ArchivedSermon[] = json.success && Array.isArray(json.data) ? json.data : []
+
+      // localStorage 프로젝트를 ArchivedSermon 형식으로 변환
+      const localSermons: ArchivedSermon[] = customProjects.map(p => {
+        let introduction = ''
+        let conclusion = ''
+        let outlineTitles: string[] = []
+        let wordCount = p.wordCount || 0
+        let coreMessage = p.coreMessage || ''
+
+        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        if (prepRaw) {
+          if (!coreMessage && prepRaw.coreMessage) coreMessage = prepRaw.coreMessage
+          if (prepRaw.outlines?.length) outlineTitles = prepRaw.outlines.map((o: any) => o.title)
+          if (prepRaw.deliveryIntro) introduction = prepRaw.deliveryIntro
+          if (prepRaw.deliveryConclusion) conclusion = prepRaw.deliveryConclusion
+        }
+
+        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
+        if (msRaw) {
+          if (msRaw.outlinePoints?.length) outlineTitles = msRaw.outlinePoints.map((o: any) => o.title)
+          if (msRaw.sections?.length) {
+            const introSection = msRaw.sections.find((s: any) => s.type === 'introduction')
+            if (introSection?.content) introduction = introSection.content
+            const concSection = msRaw.sections.find((s: any) => s.type === 'conclusion')
+            if (concSection?.content) conclusion = concSection.content
+            const msWords = msRaw.sections.reduce((sum: number, s: any) => {
+              const text: string = s.content || ''
+              return sum + text.replace(/\s/g, '').length
+            }, 0)
+            if (msWords > wordCount) wordCount = msWords
+          }
+          if (!coreMessage && msRaw.coreMessage) coreMessage = msRaw.coreMessage
+        }
+
+        return {
+          id: p.id,
+          title: p.title || '',
+          passage: p.passage || '',
+          book: p.book || '',
+          chapter: p.chapter || 0,
+          verseStart: p.verseStart || 0,
+          verseEnd: p.verseEnd || null,
+          sermonDate: p.sermonDate || '',
+          preacher: p.preacher || '',
+          sermonType: p.sermonType || '',
+          audience: Array.isArray(p.audience) ? p.audience : [],
+          season: p.season || '',
+          coreMessage,
+          wordCount,
+          seriesName: p.seriesName || '',
+          themeNames: p.themeNames || [],
+          tagNames: p.tagNames || [],
+          introduction,
+          conclusion,
+          outlineTitles,
+          relatedIds: [],
+          createdAt: p.createdAt || '',
+          updatedAt: p.updatedAt || '',
+        }
       })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+
+      // API 데이터와 localStorage 데이터를 ID로 중복 제거하며 병합
+      const byId = new Map<string, ArchivedSermon>()
+      for (const s of apiSermons) byId.set(s.id, s)
+      for (const s of localSermons) if (!byId.has(s.id)) byId.set(s.id, s)
+      setAllSermons(Array.from(byId.values()))
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const searched = useMemo(() => searchSermons(allSermons, searchQuery), [allSermons, searchQuery])

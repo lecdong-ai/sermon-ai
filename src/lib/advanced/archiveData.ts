@@ -73,11 +73,56 @@ export function getAllArchivedSermons(completedProjects: {
   wordCount: number; seriesName?: string; themeNames: string[]; tagNames: string[];
   createdAt: string; updatedAt: string;
 }[]): ArchivedSermon[] {
-  return completedProjects.map(p => ({
-    ...p,
-    introduction: '',
-    conclusion: '',
-    outlineTitles: [],
-    relatedIds: [],
-  }))
+  // Lazy import to avoid SSR issues
+  let getStorageItem: ((k: string, fb: any) => any) | null = null
+  try {
+    if (typeof window !== 'undefined') {
+      getStorageItem = require('@/lib/storage').getStorageItem
+    }
+  } catch {}
+
+  return completedProjects.map(p => {
+    let introduction = ''
+    let conclusion = ''
+    let outlineTitles: string[] = []
+    let wordCount = p.wordCount || 0
+    let coreMessage = p.coreMessage || ''
+
+    if (getStorageItem) {
+      const prepRaw = getStorageItem(`prep_${p.id}`, null)
+      if (prepRaw) {
+        if (!coreMessage && prepRaw.coreMessage) coreMessage = prepRaw.coreMessage
+        if (prepRaw.outlines?.length) outlineTitles = prepRaw.outlines.map((o: any) => o.title)
+        if (prepRaw.deliveryIntro) introduction = prepRaw.deliveryIntro
+        if (prepRaw.deliveryConclusion) conclusion = prepRaw.deliveryConclusion
+      }
+
+      const msRaw = getStorageItem(`manuscript_${p.id}`, null)
+      if (msRaw) {
+        if (msRaw.outlinePoints?.length) outlineTitles = msRaw.outlinePoints.map((o: any) => o.title)
+        if (msRaw.sections?.length) {
+          const introSection = msRaw.sections.find((s: any) => s.type === 'introduction')
+          if (introSection?.content) introduction = introSection.content
+          const concSection = msRaw.sections.find((s: any) => s.type === 'conclusion')
+          if (concSection?.content) conclusion = concSection.content
+          const msWords = msRaw.sections.reduce((sum: number, s: any) => {
+            const text: string = s.content || ''
+            return sum + text.replace(/\s/g, '').length
+          }, 0)
+          if (msWords > wordCount) wordCount = msWords
+        }
+        if (!coreMessage && msRaw.coreMessage) coreMessage = msRaw.coreMessage
+      }
+    }
+
+    return {
+      ...p,
+      coreMessage,
+      wordCount,
+      introduction,
+      conclusion,
+      outlineTitles,
+      relatedIds: [],
+    }
+  })
 }

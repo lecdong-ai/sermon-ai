@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
-import { GRAPH_NODES, GRAPH_EDGES, NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
+import { NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
+import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getStorageItem } from '@/lib/storage'
 
 const NODE_TYPES: NodeType[] = ['sermon', 'passage', 'theme', 'word', 'note', 'series']
 
@@ -96,19 +98,103 @@ export default function GraphPage() {
   const [loading, setLoading] = useState(true)
   const isDark = true
 
-  // Fetch real graph data
+  // Fetch graph data: API + localStorage
   useEffect(() => {
     setLoading(true)
-    fetch('/api/graph')
-      .then(r => r.json())
-      .then(json => {
-        if (json.success && json.data) {
-          setRealNodes(json.data.nodes)
-          setRealEdges(json.data.edges)
+    Promise.all([
+      fetch('/api/graph').then(r => r.json()).catch(() => ({ success: false })),
+      Promise.resolve(getCustomProjects()),
+    ]).then(([json, customProjects]) => {
+      const apiNodes: GraphNode[] = json.success && json.data ? json.data.nodes : []
+      const apiEdges: GraphEdge[] = json.success && json.data ? json.data.edges : []
+      const nodesMap = new Map<string, GraphNode>()
+      const edges: GraphEdge[] = []
+      const edgeSet = new Set<string>()
+
+      const addNode = (n: GraphNode) => { if (!nodesMap.has(n.id)) nodesMap.set(n.id, n) }
+      const addEdge = (source: string, target: string, label: string, weight = 1) => {
+        const key = `${source}::${target}`
+        const rev = `${target}::${source}`
+        if (!edgeSet.has(key) && !edgeSet.has(rev)) { edgeSet.add(key); edges.push({ source, target, label, weight }) }
+      }
+
+      // API data first
+      apiNodes.forEach(addNode)
+      apiEdges.forEach(e => addEdge(e.source, e.target, e.label || '', e.weight || 1))
+
+      // localStorage projects
+      for (const p of customProjects) {
+        const sid = `sermon-${p.id}`
+        addNode({ id: sid, label: p.title || '(제목 없음)', type: 'sermon', subtitle: p.passage || '', detail: p.coreMessage || '', size: 5 })
+
+        if (p.book && p.chapter) {
+          const pid = `passage-${p.book}-${p.chapter}`
+          if (!nodesMap.has(pid)) {
+            const plabel = p.passage || `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && p.verseEnd !== p.verseStart ? '-' + p.verseEnd : ''}`
+            addNode({ id: pid, label: plabel, type: 'passage', subtitle: p.book, detail: `${p.book} ${p.chapter}장`, size: 4 })
+          }
+          addEdge(sid, pid, '본문', 2)
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+
+        if (p.seriesName) {
+          const sId = `series-${p.seriesName}`
+          if (!nodesMap.has(sId)) {
+            addNode({ id: sId, label: p.seriesName, type: 'series', subtitle: '', detail: '시리즈', size: 4 })
+          }
+          addEdge(sid, sId, '소속', 1)
+        }
+
+        for (const t of (p.themeNames || [])) {
+          if (!t) continue
+          const tid = `theme-${t}`
+          if (!nodesMap.has(tid)) {
+            addNode({ id: tid, label: t, type: 'theme', subtitle: '주제', detail: '연결된 설교: 1개', size: 4 })
+          }
+          addEdge(sid, tid, '관련', 1)
+        }
+
+        // Prep data: keywords + themes
+        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        if (prepRaw) {
+          if (!p.themeNames || p.themeNames.length === 0) {
+            for (const t of (prepRaw.themes || [])) {
+              if (!t.name) continue
+              const tid = `theme-${t.name}`
+              if (!nodesMap.has(tid)) {
+                addNode({ id: tid, label: t.name, type: 'theme', subtitle: '주제', detail: '연결된 설교: 1개', size: 4 })
+              }
+              addEdge(sid, tid, '관련', 1)
+            }
+          }
+          for (const kw of (prepRaw.keyWords || [])) {
+            const wordLabel = kw.word || ''
+            if (!wordLabel) continue
+            const wid = `word-${p.id}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
+            if (!nodesMap.has(wid)) {
+              addNode({ id: wid, label: wordLabel, type: 'word', subtitle: kw.meaning || '', detail: kw.note || kw.contextualMeaning || kw.simpleExplanation || '', size: 3 })
+            }
+            addEdge(sid, wid, '원어', 1)
+          }
+        }
+
+        // Manuscript data: greek words
+        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
+        if (msRaw) {
+          for (const gw of (msRaw.greekWords || [])) {
+            const wordLabel = gw.greek || gw.word || ''
+            if (!wordLabel) continue
+            const wid = `word-${p.id}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
+            if (!nodesMap.has(wid)) {
+              addNode({ id: wid, label: wordLabel, type: 'word', subtitle: gw.meaning || '', detail: gw.note || '', size: 3 })
+            }
+            addEdge(sid, wid, '원어', 1)
+          }
+        }
+      }
+
+      setRealNodes(Array.from(nodesMap.values()))
+      setRealEdges(edges)
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   // Auto-select node from ?focus= query param (링크로 들어온 경우)
@@ -484,15 +570,15 @@ const GraphCanvas = ({
   const alphaRef = useRef(0.6)
   const rafRef = useRef<number>(0)
 
-  // Initialize positions when nodes change
+  // Initialize positions when nodes change (fixed coordinate space: 1200x800)
   useEffect(() => {
-    if (!width || !height || nodes.length === 0) return
+    if (nodes.length === 0) return
     if (prevNodeIds.current === nodeIds) return
     prevNodeIds.current = nodeIds
 
-    const centerX = width / 2
-    const centerY = height / 2
-    const radius = Math.min(width, height) * 0.35
+    const centerX = 600
+    const centerY = 400
+    const radius = 280
     const existing = simRef.current
     const map = new Map<string, SimState>()
 
@@ -516,7 +602,7 @@ const GraphCanvas = ({
     })
     setPositions(initial)
     alphaRef.current = 1
-  }, [nodeIds, width, height])
+  }, [nodeIds])
 
   // Continuous rAF simulation — pauses when not visible
   useEffect(() => {
@@ -536,8 +622,8 @@ const GraphCanvas = ({
 
       const alpha = alphaRef.current
       const entries = Array.from(currentMap.values())
-      const cX = widthRef.current / 2
-      const cY = heightRef.current / 2
+      const cX = 600
+      const cY = 400
 
       if (alpha > ALPHA_AT_REST) {
         entries.forEach(e => { e.vx *= 0.6; e.vy *= 0.6 })
@@ -743,7 +829,7 @@ const GraphCanvas = ({
         </defs>
       </svg>
       <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.5' fill='${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}'/%3E%3C/svg%3E")` }} />
-      <svg ref={svgRef} width={width} height={height}
+      <svg ref={svgRef} viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"
         className="w-full h-full cursor-grab active:cursor-grabbing relative z-10"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

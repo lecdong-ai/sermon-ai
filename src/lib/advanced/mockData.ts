@@ -206,6 +206,7 @@ export const mockQuickStats: QuickStats = {
   totalProjects: 47,
   inProgress: 3,
   completed: 38,
+  archived: 6,
   totalStudies: 124,
   totalWords: 156800,
   thisMonthSermons: 2,
