@@ -9,6 +9,7 @@ import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import type { PrepVersion } from '@/lib/advanced/johnVersionData'
 import { PREP_VERSIONS, RECENT_ACTIVITY } from '@/lib/advanced/johnVersionData'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 interface Props { project: ProjectDetail }
 
@@ -186,7 +187,7 @@ export default function PrepTab({ project }: Props) {
     }
 
     // 4) saved prep data from auto-save (if no fresh study handoff came in)
-    const raw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const { prep: raw } = readProjectCore(project.id)
     if (raw) {
       const { _savedAt, ...savedPrep } = raw
       setPrepData(prev => {

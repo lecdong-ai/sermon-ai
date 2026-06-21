@@ -7,6 +7,7 @@ import { NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighb
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
 import { getCustomProjects } from '@/lib/advanced/mockData'
 import { getStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 const NODE_TYPES: NodeType[] = ['sermon', 'passage', 'theme', 'word', 'note', 'series']
 
@@ -153,8 +154,8 @@ export default function GraphPage() {
           addEdge(sid, tid, '관련', 1)
         }
 
-        // Prep data: keywords + themes
-        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        // Prep + manuscript data (unified read)
+        const { prep: prepRaw, manuscript: msRaw } = readProjectCore(p.id)
         if (prepRaw) {
           if (!p.themeNames || p.themeNames.length === 0) {
             for (const t of (prepRaw.themes || [])) {
@@ -177,8 +178,6 @@ export default function GraphPage() {
           }
         }
 
-        // Manuscript data: greek words
-        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
         if (msRaw) {
           for (const gw of (msRaw.greekWords || [])) {
             const wordLabel = gw.greek || gw.word || ''

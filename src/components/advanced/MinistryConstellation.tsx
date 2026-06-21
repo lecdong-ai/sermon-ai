@@ -7,6 +7,7 @@ import {
 } from 'd3-force'
 import { getCustomProjects } from '@/lib/advanced/mockData'
 import { getStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 interface GraphNode {
   id: string
@@ -175,8 +176,8 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
           addEdge(sid, tid, '관련', 1)
         }
 
-        // Prep: keywords + themes fallback
-        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        // Prep + manuscript: unified read
+        const { prep: prepRaw, manuscript: msRaw } = readProjectCore(p.id)
         if (prepRaw) {
           if (!p.themeNames || p.themeNames.length === 0) {
             for (const t of (prepRaw.themes || [])) {
@@ -195,8 +196,6 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
           }
         }
 
-        // Manuscript: greek words
-        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
         if (msRaw) {
           for (const gw of (msRaw.greekWords || [])) {
             const wordLabel = gw.greek || gw.word || ''

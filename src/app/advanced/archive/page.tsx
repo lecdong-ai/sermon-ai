@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 import { getCustomProjects } from '@/lib/advanced/mockData'
-import { getStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 import {
   Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw,
   ArrowRight, BookOpen, Star, Sparkles, FolderOpen, Heart, MessageSquare, Archive
@@ -45,15 +45,13 @@ export default function ArchivePage() {
         let wordCount = p.wordCount || 0
         let coreMessage = p.coreMessage || ''
 
-        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        const { prep: prepRaw, manuscript: msRaw } = readProjectCore(p.id)
         if (prepRaw) {
           if (!coreMessage && prepRaw.coreMessage) coreMessage = prepRaw.coreMessage
           if (prepRaw.outlines?.length) outlineTitles = prepRaw.outlines.map((o: any) => o.title)
           if (prepRaw.deliveryIntro) introduction = prepRaw.deliveryIntro
           if (prepRaw.deliveryConclusion) conclusion = prepRaw.deliveryConclusion
         }
-
-        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
         if (msRaw) {
           if (msRaw.outlinePoints?.length) outlineTitles = msRaw.outlinePoints.map((o: any) => o.title)
           if (msRaw.sections?.length) {

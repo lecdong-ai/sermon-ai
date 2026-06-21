@@ -17,6 +17,7 @@ import CaptureStudio, { type CapturePayload } from '@/components/advanced/notes/
 import AIAssistantPanel from '@/components/advanced/notes/AIAssistantPanel'
 import InsightMasonryGrid from '@/components/advanced/notes/InsightMasonryGrid'
 import NoteDetailPanel from '@/components/advanced/notes/NoteDetailPanel'
+import PassageSidePanel from '@/components/advanced/notes/PassageSidePanel'
 import QuickActionChips from '@/components/advanced/notes/QuickActionChips'
 import NotesSummary from '@/components/advanced/notes/NotesSummary'
 
@@ -41,6 +42,7 @@ export default function NotesPage() {
   const [pinnedOnly, setPinnedOnly] = useState(false)
   const [view, setView] = useState<ViewMode>('atelier')
   const [actionTarget, setActionTarget] = useState<NoteEntry | null>(null)
+  const [passagePanelOpen, setPassagePanelOpen] = useState(true)
 
   const [draftText, setDraftText] = useState('')
   const [draftType, setDraftType] = useState<NoteType>('insight')
@@ -177,6 +179,11 @@ export default function NotesPage() {
     setSelectedNote((prev) => (prev?.id === id ? { ...prev, pinned: next } : prev))
     patchNote(id, { pinned: next })
   }, [notes, patchNote])
+
+  // Reopen passage panel when a new note is selected
+  useEffect(() => {
+    if (selectedNote) setPassagePanelOpen(true)
+  }, [selectedNote])
 
   const clearFilters = useCallback(() => {
     setFilterTypes([])
@@ -441,6 +448,25 @@ export default function NotesPage() {
             }
           }}
         />
+      )}
+
+      {selectedNote && passagePanelOpen && (selectedNote.connections || []).some((c) => c.type === 'passage') && (
+        <PassageSidePanel
+          note={selectedNote}
+          onClose={() => setPassagePanelOpen(false)}
+        />
+      )}
+
+      {selectedNote && !passagePanelOpen && (selectedNote.connections || []).some((c) => c.type === 'passage') && (
+        <button
+          onClick={() => setPassagePanelOpen(true)}
+          className="fixed right-[20.5rem] top-1/2 -translate-y-1/2 z-30 w-8 h-12 rounded-l-xl bg-teal-500/15 hover:bg-teal-500/25 border border-r-0 border-teal-500/30 text-teal-300 hover:text-teal-200 flex items-center justify-center transition-colors"
+          title="본문 패널 열기"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
       )}
 
       <QuickActionChips

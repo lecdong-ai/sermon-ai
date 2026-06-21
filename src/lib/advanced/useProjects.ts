@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { AdvancedProject, ProjectStatus, QuickStats } from './types'
 import { getCustomProjects, getDeletedMockIds, mockProjects } from './mockData'
 import { setStorageItem, removeStorageItem, getStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 const STATUS_MAP: Record<string, ProjectStatus> = {
   draft: 'research',
@@ -107,9 +108,8 @@ export function useProjects(): UseProjectsResult {
     const enrichCore = (p: AdvancedProject): AdvancedProject => {
       if (p.coreMessage) return p
       try {
-        const prep = getStorageItem<any | null>(`prep_${p.id}`, null)
+        const { prep, manuscript: ms } = readProjectCore(p.id)
         if (prep?.coreMessage) return { ...p, coreMessage: prep.coreMessage }
-        const ms = getStorageItem<any | null>(`manuscript_${p.id}`, null)
         if (ms?.coreMessage) return { ...p, coreMessage: ms.coreMessage }
       } catch {}
       return p

@@ -16,6 +16,7 @@ import {
 } from '@/lib/advanced/johnVersionData'
 import type { ManuscriptVersion } from '@/lib/advanced/johnVersionData'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
+import { readProjectCore } from '@/lib/advanced/projectStorage'
 import ManuscriptStudio from './ManuscriptStudio'
 
 interface Props { project: ProjectDetail }
@@ -539,8 +540,7 @@ export default function ManuscriptTab({ project }: Props) {
   // This effect runs *after* PrepTab's unmount cleanup, so `prep_{id}` is always current.
 
   useEffect(() => {
-    const saved = getStorageItem<any | null>(`manuscript_${project.id}`, null)
-    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const { manuscript: saved, prep: prepRaw } = readProjectCore(project.id)
     const prepSavedAt = (prepRaw as any)?._savedAt ?? null
     setHasPrepData(!!(prepRaw?.outlines?.length || prepRaw?.coreMessage))
 
@@ -616,7 +616,7 @@ export default function ManuscriptTab({ project }: Props) {
   /* ─── Manual sync with latest prep data ─── */
 
   const handleSyncPrep = useCallback(() => {
-    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const { prep: prepRaw } = readProjectCore(project.id)
     if (!prepRaw?.outlines?.length) return
     const prepSavedAt = (prepRaw as any)?._savedAt ?? null
     const ms = syncManuscriptWithPrep(manuscript, prepRaw)
@@ -628,7 +628,7 @@ export default function ManuscriptTab({ project }: Props) {
 
   const prepNeedsSync = useMemo(() => {
     if (!hasPrepData) return false
-    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    const { prep: prepRaw } = readProjectCore(project.id)
     const prepSavedAt = (prepRaw as any)?._savedAt ?? null
     if (!prepSavedAt) return false
     return !lastPrepSyncAt || prepSavedAt > lastPrepSyncAt
@@ -882,8 +882,8 @@ export default function ManuscriptTab({ project }: Props) {
     const apiType = typeMap[sectionType]
     if (!apiType) return ''
 
-    // Load prep data once
-    const prepRaw = getStorageItem<any | null>(`prep_${project.id}`, null)
+    // Load prep data once (unified read)
+    const { prep: prepRaw } = readProjectCore(project.id)
     const congregationProfile = prepRaw?.congregationProfile || null
     const deliveryIntro = prepRaw?.deliveryIntro || ''
     const deliveryConclusion = prepRaw?.deliveryConclusion || ''
