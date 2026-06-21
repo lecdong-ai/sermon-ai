@@ -13,6 +13,9 @@ import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 import { useProjects } from '@/lib/advanced/useProjects'
 import NewUserLanding from '@/components/advanced/NewUserLanding'
 import MinistryConstellation from '@/components/advanced/MinistryConstellation'
+import PipelineVisualization from '@/components/advanced/PipelineVisualization'
+import ActivityFeed from '@/components/advanced/ActivityFeed'
+import SmartRecommendations from '@/components/advanced/SmartRecommendations'
 
 // 감정 톤 매핑 유틸리티
 const getEmotionalTone = (sermon: ArchivedSermon) => {
@@ -200,6 +203,15 @@ export default function AdvancedDashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* ─── 2. Dashboard Insights (A1-A3: Pipeline, Activity, AI) ─── */}
+        <div className="space-y-5">
+          <PipelineVisualization projects={projects} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <ActivityFeed projects={projects} />
+            <SmartRecommendations projects={projects} />
+          </div>
+        </div>
 
         {/* ─── 3. Ministry Constellation (실시간 데이터 + 시간 스크럽) ─── */}
         <section className="space-y-3">
