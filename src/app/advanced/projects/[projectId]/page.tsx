@@ -55,19 +55,25 @@ function ProjectContent() {
   }, [dismissedSync])
 
   const handleStageSync = async () => {
-    if (!detectedStage || syncing || detectedStage === project?.status) return
+    if (!detectedStage || syncing || !project || detectedStage === project.status) return
+    const prevStatus = project.status
     setSyncing(true)
     updateStatus(detectedStage)
     try {
-      await fetch(`/api/sermons/${params.projectId}`, {
+      const res = await fetch(`/api/sermons/${params.projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: detectedStage }),
       })
-    } catch {}
+      const json = await res.json()
+      if (!res.ok || !json.success) throw new Error(json.error || 'API 오류')
+      // 백그라운드에서 최신 데이터 동기화 (지연 실행으로 충돌 방지)
+      setTimeout(() => refetch(), 500)
+    } catch {
+      updateStatus(prevStatus)
+    }
     setSyncing(false)
     setDismissedSync(true)
-    refetch()
   }
 
   const showSyncBanner = project && detectedStage &&
