@@ -17,6 +17,7 @@ const TYPE_COLORS_BG: Record<NoteType, string> = {
   pastoral: 'bg-rose-500',
   illustration: 'bg-cyan-500',
   warning: 'bg-red-500',
+  word: 'bg-pink-500',
 }
 
 export default function NotesSummary({ notes, onSelectNote }: NotesSummaryProps) {
@@ -26,7 +27,7 @@ export default function NotesSummary({ notes, onSelectNote }: NotesSummaryProps)
     const pinned = notes.filter((n) => n.pinned).length
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const recentWeek = notes.filter((n) => new Date(n.updatedAt) > weekAgo).length
-    const byType: Record<NoteType, number> = { insight: 0, research: 0, application: 0, question: 0, pastoral: 0, illustration: 0, warning: 0 }
+    const byType: Record<NoteType, number> = { insight: 0, research: 0, application: 0, question: 0, pastoral: 0, illustration: 0, warning: 0, word: 0 }
     notes.forEach((n) => { byType[n.type] = (byType[n.type] || 0) + 1 })
     const topicCount: Record<string, number> = {}
     notes.forEach((n) => {

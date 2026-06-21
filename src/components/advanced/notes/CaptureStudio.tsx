@@ -32,7 +32,7 @@ export interface CapturePayload {
 }
 
 const MODE_TABS: { key: CaptureMode; label: string; icon: string; desc: string }[] = [
-  { key: 'quick', label: '한 줄 번개', icon: '⚡', desc: '8자 이상의 핵심 통찰을 빠르게' },
+  { key: 'quick', label: '간단 메모', icon: '⚡', desc: '8자 이상의 핵심 통찰을 빠르게' },
   { key: 'deep', label: '깊이 쓰기', icon: '📖', desc: '마크다운으로 길게 정리' },
   { key: 'scripture', label: '본문 주석', icon: '📜', desc: '성경 본문 위에 주석을 얹기' },
   { key: 'chat', label: 'AI 대화', icon: '💬', desc: 'AI와 함께 통찰을 빚어내기' },
@@ -367,7 +367,7 @@ function SaveIndicator({ state, lastSavedAt }: { state: 'idle' | 'saving' | 'sav
 function QuickMode({ text, setText, textareaRef }: { text: string; setText: (s: string) => void; textareaRef: React.RefObject<HTMLTextAreaElement> }) {
   return (
     <div>
-      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">⚡ 한 줄 번개</label>
+      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">⚡ 간단 메모</label>
       <textarea
         ref={textareaRef}
         value={text}

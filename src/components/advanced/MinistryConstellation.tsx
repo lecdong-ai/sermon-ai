@@ -121,7 +121,8 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     Promise.all([
       fetch('/api/graph', { signal: ac.signal }).then(r => r.json()).catch(() => ({ success: false })),
       Promise.resolve(getCustomProjects()),
-    ]).then(([json, customProjects]) => {
+      fetch('/api/insights?limit=200', { signal: ac.signal }).then(r => r.json()).catch(() => ({ success: false, data: [] })),
+    ]).then(([json, customProjects, insightsJson]) => {
       const nodesMap = new Map<string, GraphNode>()
       const edgesMap = new Map<string, GraphEdge>()
 
@@ -203,6 +204,35 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
             const wid = `word-${p.id}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
             if (!nodesMap.has(wid)) addNode({ id: wid, label: wordLabel, type: 'word', subtitle: gw.meaning || '', detail: '', size: 3, updatedAt: '' })
             addEdge(sid, wid, '원어', 1)
+          }
+        }
+      }
+
+      // Insights (통찰 노트) — 자동 추가
+      if (insightsJson?.success && Array.isArray(insightsJson.data)) {
+        for (const insight of insightsJson.data) {
+          if (!insight.id) continue
+          const nid = `note-${insight.id}`
+          const typeColor = insight.type === 'word' ? '#F43F5E' : '#EC4899'
+          addNode({
+            id: nid,
+            label: insight.title || '통찰',
+            type: 'note',
+            subtitle: insight.summary?.slice(0, 60) || '',
+            detail: '',
+            size: insight.type === 'word' ? 5 : 4,
+            updatedAt: insight.updatedAt || insight.createdAt || '',
+          })
+
+          // connections: word → note, sermon → note
+          const conns = Array.isArray(insight.connections) ? insight.connections : []
+          for (const c of conns) {
+            if (c?.type === 'word' && c.id) {
+              addEdge(c.id, nid, '통찰', 1)
+            }
+            if (c?.type === 'sermon' && c.id) {
+              addEdge(`sermon-${c.id}`, nid, '통찰', 1)
+            }
           }
         }
       }

@@ -27,7 +27,7 @@ async function getUser(request: NextRequest) {
   return data?.user ?? null
 }
 
-const VALID_TYPES = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning'] as const
+const VALID_TYPES = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning', 'word'] as const
 type NoteType = (typeof VALID_TYPES)[number]
 
 const TYPE_LABELS: Record<NoteType, string> = {
@@ -38,6 +38,7 @@ const TYPE_LABELS: Record<NoteType, string> = {
   pastoral: '목회적 관찰',
   illustration: '예화 후보',
   warning: '경고 메모',
+  word: '원어 단어',
 }
 
 export async function POST(request: NextRequest) {

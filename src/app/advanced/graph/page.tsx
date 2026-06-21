@@ -792,7 +792,7 @@ const GraphCanvas = ({
   }
 
   const nodeRadius = (node: GraphNode) => {
-    const base = node.size * 5.5
+    const base = node.size * 4
     const s = (nodeId: string) => {
       if (!selectedNodeId) return 1
       if (nodeId === selectedNodeId) return 1.25

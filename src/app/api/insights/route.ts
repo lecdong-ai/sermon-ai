@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { rowToNote, type InsightRow } from '@/lib/advanced/insightsApi'
 
-const VALID_TYPES = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning']
+const VALID_TYPES = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning', 'word']
 
 export async function GET() {
   try {

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, BookOpen, PenLine, Check, X } from 'lucide-react'
+import { Loader2, Sparkles, BookOpen, PenLine, Check, X, Plus } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
@@ -566,7 +566,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
         />
 
         {/* ─── Research Summary for Prep Handoff ─── */}
-        {studyData && <ResearchSummaryForPrep studyData={studyData} onSendToPrep={handleSendToPrep} />}
+        {studyData && <ResearchSummaryForPrep studyData={studyData} onSendToPrep={handleSendToPrep} projectTitle={project.title} passage={activePassageDisplay} projectId={project.id} />}
 
         {/* Bottom spacer */}
         <div className="h-8" />
@@ -1871,32 +1871,175 @@ function RightPanel({
 
 /* ─── Research Summary for Prep ─── */
 
-function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; onSendToPrep: () => void }) {
+function ResearchSummaryForPrep({ studyData, onSendToPrep, projectTitle, passage, projectId }: {
+  studyData: any; onSendToPrep: () => void; projectTitle?: string; passage?: string; projectId?: string
+}) {
+  const router = useRouter()
   const themes = (studyData?.themes || []).map((t: any) => t.name).slice(0, 6)
   const insights = (studyData?.commentaries || []).slice(0, 4).map((c: any) => c.text)
   const rawWords = Object.values(studyData?.words || {}).slice(0, 6)
-  const words = rawWords.map((w: any) => ({
-    word: w.lemmaGreek || w.word || '',
-    transliteration: w.transliteration || w.pronunciation || '',
-    partOfSpeech: w.partOfSpeech || '',
-    strong: w.strong || '',
-    basicMeaning: w.basicMeaning || '',
-    contextualMeaning: w.contextualMeaning || '',
-    simpleExplanation: w.simpleExplanation || '',
-    sermonNote: w.sermonNote || '',
-    usage: Array.isArray(w.usage) ? w.usage.slice(0, 2) : [],
-  }))
+  const projectIdForWord = projectId || ''
+  const words = rawWords.map((w: any) => {
+    const wordLabel = w.lemmaGreek || w.word || ''
+    const wid = `word-${projectIdForWord}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
+    return {
+      id: wid,
+      word: wordLabel,
+      transliteration: w.transliteration || w.pronunciation || '',
+      partOfSpeech: w.partOfSpeech || '',
+      strong: w.strong || '',
+      basicMeaning: w.basicMeaning || '',
+      contextualMeaning: w.contextualMeaning || '',
+      simpleExplanation: w.simpleExplanation || '',
+      sermonNote: w.sermonNote || '',
+      usage: Array.isArray(w.usage) ? w.usage.slice(0, 2) : [],
+    }
+  })
+
+  // 통찰로 저장 기능
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
+  const [savingIdx, setSavingIdx] = useState<number | null>(null)
+  const [bulkSaving, setBulkSaving] = useState(false)
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+
+  const showToast = (kind: 'success' | 'error', text: string) => {
+    setToast({ kind, text })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const buildNoteContent = (kw: typeof words[number]) => {
+    const lines: string[] = []
+    if (kw.basicMeaning) lines.push(`**기본 의미**: ${kw.basicMeaning}`)
+    if (kw.contextualMeaning) lines.push(`**이 본문에서의 의미**: ${kw.contextualMeaning}`)
+    if (kw.simpleExplanation) lines.push(`**쉽게 설명하면**: ${kw.simpleExplanation}`)
+    if (kw.sermonNote) lines.push(`**설교 적용**: ${kw.sermonNote}`)
+    if (kw.usage.length > 0) {
+      lines.push('**성경 용례**:')
+      kw.usage.forEach((u: { ref: string; text: string }) => lines.push(`- ${u.ref}: "${u.text}"`))
+    }
+    return lines.join('\n\n')
+  }
+
+  const buildNoteTags = (kw: typeof words[number]) => {
+    const tags = ['원어', '헬라어']
+    if (kw.transliteration) tags.push(kw.transliteration)
+    if (passage) {
+      // Extract book name from passage
+      const bookMatch = passage.match(/^([\d가-힣\s]+?)\s*\d/)
+      if (bookMatch) tags.push(bookMatch[1].trim())
+    }
+    return tags.slice(0, 8)
+  }
+
+  const saveAsInsight = async (idx: number) => {
+    if (savingIdx !== null || bulkSaving) return
+    const kw = words[idx]
+    if (!kw?.word) {
+      showToast('error', '저장할 단어가 없습니다')
+      return
+    }
+    setSavingIdx(idx)
+    try {
+      const res = await fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'word',
+          title: `[원어] ${kw.word}${kw.transliteration ? ` (${kw.transliteration})` : ''}`,
+          content: buildNoteContent(kw),
+          summary: kw.basicMeaning?.slice(0, 200) || kw.contextualMeaning?.slice(0, 200) || '',
+          tags: buildNoteTags(kw),
+          projectIds: projectIdForWord ? [projectIdForWord] : [],
+          connections: [
+            ...(projectTitle ? [{ type: 'sermon', id: projectIdForWord, title: projectTitle }] : []),
+            { type: 'word', id: kw.id, title: kw.word },
+          ],
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) throw new Error(json.error || '저장 실패')
+      setSavedIds((prev) => new Set(Array.from(prev).concat([idx])))
+      showToast('success', `"${kw.word}" 노트가 저장되었습니다`)
+      // Navigate to graph after short delay
+      setTimeout(() => router.push('/advanced/graph?focus=' + json.data.id), 800)
+    } catch (e: any) {
+      showToast('error', `저장 실패: ${e?.message || '네트워크 오류'}`)
+    } finally {
+      setSavingIdx(null)
+    }
+  }
+
+  const toggleSelect = (idx: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
+
+  const saveSelected = async () => {
+    if (selected.size === 0 || bulkSaving) return
+    setBulkSaving(true)
+    let successCount = 0
+    for (const idx of Array.from(selected)) {
+      const kw = words[idx]
+      if (!kw?.word) continue
+      try {
+        const res = await fetch('/api/insights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'word',
+            title: `[원어] ${kw.word}${kw.transliteration ? ` (${kw.transliteration})` : ''}`,
+            content: buildNoteContent(kw),
+            summary: kw.basicMeaning?.slice(0, 200) || kw.contextualMeaning?.slice(0, 200) || '',
+            tags: buildNoteTags(kw),
+            projectIds: projectIdForWord ? [projectIdForWord] : [],
+            connections: [
+              ...(projectTitle ? [{ type: 'sermon', id: projectIdForWord, title: projectTitle }] : []),
+              { type: 'word', id: kw.id, title: kw.word },
+            ],
+          }),
+        })
+        const json = await res.json()
+        if (res.ok && json.success) {
+          successCount++
+          setSavedIds((prev) => new Set(Array.from(prev).concat([idx])))
+        }
+      } catch {}
+    }
+    showToast('success', `${successCount}개 노트가 저장되었습니다 — 별자리로 이동합니다`)
+    setSelected(new Set())
+    setSelectMode(false)
+    setBulkSaving(false)
+    // Navigate to graph after short delay
+    setTimeout(() => router.push('/advanced/graph'), 800)
+  }
 
   return (
-    <div className="bg-[#04060f]/60 rounded-xl border border-indigo-500/20 mb-5 overflow-hidden">
-      <div className="px-5 py-3 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center justify-between">
+    <div className="bg-[#04060f]/60 rounded-xl border border-indigo-500/20 mb-5 overflow-hidden relative">
+      <div className="px-5 py-3 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
           <span className="text-[10px] font-semibold text-indigo-300 uppercase tracking-widest">설교 준비로 가져갈 핵심 정리</span>
         </div>
-        <span className="text-[10px] text-indigo-400">연구에서 정리한 내용입니다</span>
+        {words.length > 0 && (
+          <button
+            onClick={() => { setSelectMode(!selectMode); setSelected(new Set()) }}
+            className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${
+              selectMode
+                ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/40'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10'
+            }`}
+          >
+            {selectMode ? '선택 모드 끄기' : '선택 모드'}
+          </button>
+        )}
       </div>
 
       <div className="p-5 space-y-5">
@@ -1932,76 +2075,160 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; o
         {/* Key Greek Words — 풍성한 원어 분석 */}
         {words.length > 0 && (
           <div>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">핵심 원어</span>
-            <div className="space-y-3">
-              {words.map((kw, idx) => (
-                <div key={idx} className="bg-[#04060f]/60 rounded-xl border border-white/5 overflow-hidden">
-                  {/* 헤더: 헬라어 + 음역 + 메타 */}
-                  <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                    <div className="flex items-baseline gap-3 flex-wrap">
-                      <span className="text-lg text-white font-greek font-semibold">{kw.word}</span>
-                      {kw.transliteration && (
-                        <span className="text-xs text-indigo-300 italic">{kw.transliteration}</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">핵심 원어</span>
+              {selectMode && (
+                <span className="text-[10px] text-indigo-300 font-medium">
+                  {selected.size}개 선택됨
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {words.map((kw, idx) => {
+                const isSelected = selected.has(idx)
+                const isSaved = savedIds.has(idx)
+                return (
+                  <div
+                    key={idx}
+                    onClick={selectMode ? () => toggleSelect(idx) : undefined}
+                    className={`bg-[#04060f]/60 rounded-xl border overflow-hidden transition-all ${
+                      selectMode ? 'cursor-pointer ' + (isSelected ? 'border-indigo-500/60 ring-1 ring-indigo-500/40' : 'border-white/5 hover:border-white/15') : 'border-white/5'
+                    }`}
+                  >
+                    {/* 헤더: 헬라어 + 음역 + 메타 + 저장 버튼 */}
+                    <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02] flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-lg text-white font-greek font-semibold">{kw.word}</span>
+                          {kw.transliteration && (
+                            <span className="text-xs text-indigo-300 italic">{kw.transliteration}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
+                          {kw.partOfSpeech && <span>· {kw.partOfSpeech}</span>}
+                          {kw.strong && <span className="font-mono">{kw.strong}</span>}
+                        </div>
+                      </div>
+                      {!selectMode && (
+                        isSaved ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); router.push('/advanced/graph') }}
+                            className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+                            title="별자리에서 보기"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>저장됨 ↗</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); saveAsInsight(idx) }}
+                            disabled={savingIdx === idx}
+                            className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold transition-all bg-pink-500/15 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30 disabled:opacity-60"
+                            title="원어 단어 노트로 저장"
+                          >
+                            {savingIdx === idx ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Plus className="w-3 h-3" />
+                            )}
+                            <span>노트로</span>
+                          </button>
+                        )
                       )}
-                      {kw.partOfSpeech && (
-                        <span className="text-[10px] text-slate-500">· {kw.partOfSpeech}</span>
+                      {selectMode && (
+                        <div className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                          isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600'
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                        </div>
                       )}
-                      {kw.strong && (
-                        <span className="text-[10px] text-slate-500 font-mono ml-auto">{kw.strong}</span>
+                    </div>
+
+                    <div className="px-4 py-3 space-y-2.5">
+                      {/* 기본 의미 */}
+                      {kw.basicMeaning && (
+                        <div>
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">기본 의미</div>
+                          <p className="text-[11.5px] text-slate-200 leading-relaxed">{kw.basicMeaning}</p>
+                        </div>
+                      )}
+
+                      {/* 문맥상 의미 */}
+                      {kw.contextualMeaning && (
+                        <div>
+                          <div className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold mb-0.5">이 본문에서의 의미</div>
+                          <p className="text-[11.5px] text-indigo-200 leading-relaxed">{kw.contextualMeaning}</p>
+                        </div>
+                      )}
+
+                      {/* 쉽게 설명 */}
+                      {kw.simpleExplanation && (
+                        <div>
+                          <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mb-0.5">쉽게 설명하면</div>
+                          <p className="text-[11.5px] text-amber-100 leading-relaxed">{kw.simpleExplanation}</p>
+                        </div>
+                      )}
+
+                      {/* 설교적 적용 */}
+                      {kw.sermonNote && (
+                        <div className="border-l-2 border-indigo-500 pl-3">
+                          <div className="text-[9px] uppercase tracking-wider text-indigo-300 font-bold mb-0.5">설교 적용</div>
+                          <p className="text-[11.5px] text-slate-300 leading-relaxed italic">{kw.sermonNote}</p>
+                        </div>
+                      )}
+
+                      {/* 성경 용례 */}
+                      {kw.usage.length > 0 && (
+                        <div>
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">성경 용례</div>
+                          <div className="space-y-1">
+                            {kw.usage.map((u: { ref: string; text: string }, i: number) => (
+                              <div key={i} className="text-[11px] text-slate-400 leading-relaxed">
+                                <span className="text-indigo-400 font-mono mr-1.5">{u.ref}</span>
+                                <span>&ldquo;{u.text}&rdquo;</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
-                  <div className="px-4 py-3 space-y-2.5">
-                    {/* 기본 의미 */}
-                    {kw.basicMeaning && (
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">기본 의미</div>
-                        <p className="text-[11.5px] text-slate-200 leading-relaxed">{kw.basicMeaning}</p>
-                      </div>
-                    )}
-
-                    {/* 문맥상 의미 */}
-                    {kw.contextualMeaning && (
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold mb-0.5">이 본문에서의 의미</div>
-                        <p className="text-[11.5px] text-indigo-200 leading-relaxed">{kw.contextualMeaning}</p>
-                      </div>
-                    )}
-
-                    {/* 쉽게 설명 */}
-                    {kw.simpleExplanation && (
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mb-0.5">쉽게 설명하면</div>
-                        <p className="text-[11.5px] text-amber-100 leading-relaxed">{kw.simpleExplanation}</p>
-                      </div>
-                    )}
-
-                    {/* 설교적 적용 */}
-                    {kw.sermonNote && (
-                      <div className="border-l-2 border-indigo-500 pl-3">
-                        <div className="text-[9px] uppercase tracking-wider text-indigo-300 font-bold mb-0.5">설교 적용</div>
-                        <p className="text-[11.5px] text-slate-300 leading-relaxed italic">{kw.sermonNote}</p>
-                      </div>
-                    )}
-
-                    {/* 성경 용례 */}
-                    {kw.usage.length > 0 && (
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">성경 용례</div>
-                        <div className="space-y-1">
-                          {kw.usage.map((u: { ref: string; text: string }, i: number) => (
-                            <div key={i} className="text-[11px] text-slate-400 leading-relaxed">
-                              <span className="text-indigo-400 font-mono mr-1.5">{u.ref}</span>
-                              <span>&ldquo;{u.text}&rdquo;</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+        {/* 일괄 저장 sticky bar (선택 모드) */}
+        {selectMode && selected.size > 0 && (
+          <div className="sticky bottom-3 z-10 bg-pink-950/90 backdrop-blur-md border border-pink-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-2xl">
+            <div className="text-[12px] text-pink-100 font-medium">
+              <span className="text-pink-300 font-bold">{selected.size}개</span>의 원어를 노트로 저장
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelected(new Set())}
+                className="text-[11px] text-slate-400 hover:text-slate-200 px-3 py-1.5"
+              >
+                선택 해제
+              </button>
+              <button
+                onClick={saveSelected}
+                disabled={bulkSaving}
+                className="text-[11px] font-bold bg-pink-600 hover:bg-pink-700 text-white px-4 py-1.5 rounded-lg inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {bulkSaving ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    저장 중
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3 h-3" />
+                    노트로 일괄 저장
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}
@@ -2019,6 +2246,17 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; o
           </p>
         </div>
       </div>
+
+      {/* 토스트 알림 */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-[12px] font-bold shadow-2xl border backdrop-blur-md ${
+          toast.kind === 'success'
+            ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/30'
+            : 'bg-red-950/90 text-red-200 border-red-500/30'
+        }`}>
+          {toast.text}
+        </div>
+      )}
     </div>
   )
 }

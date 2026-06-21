@@ -118,12 +118,12 @@ export default function ConstellationGraph({ notes, draftText, draftType, draftT
     }
 
     const sim = forceSimulation<ConstellationNode, ConstellationLink>(simNodes)
-      .force('charge', forceManyBody<ConstellationNode>().strength((d) => (d.type === 'draft' ? -90 : -50)))
-      .force('center', forceCenter(centerX, centerY).strength(0.18))
-      .force('link', forceLink<ConstellationNode, ConstellationLink>(simLinks).id((d) => d.id).distance((l) => 60 + (1 - Math.min(1, l.weight)) * 40).strength(0.7))
-      .force('collide', forceCollide<ConstellationNode>().radius((d) => d.r + 6))
-      .alpha(1)
-      .alphaDecay(0.025)
+      .force('charge', forceManyBody<ConstellationNode>().strength((d) => (d.type === 'draft' ? -50 : -30)))
+      .force('center', forceCenter(centerX, centerY).strength(0.3))
+      .force('link', forceLink<ConstellationNode, ConstellationLink>(simLinks).id((d) => d.id).distance((l) => 50 + (1 - Math.min(1, l.weight)) * 30).strength(0.9))
+      .force('collide', forceCollide<ConstellationNode>().radius((d) => d.r + 4))
+      .alpha(0.7)
+      .alphaDecay(0.035)
       .on('tick', () => force((x) => x + 1))
 
     simRef.current = sim

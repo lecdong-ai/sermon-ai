@@ -21,6 +21,7 @@ const MOOD_PALETTES: Record<NoteType | 'default', Palette> = {
   pastoral:     { from: BASE, via: BASE, to: BASE, accent: '#f43f5e', hue: 340 },
   illustration: { from: BASE, via: BASE, to: BASE, accent: '#06b6d4', hue: 190 },
   warning:      { from: BASE, via: BASE, to: BASE, accent: '#ef4444', hue: 0 },
+  word:         { from: BASE, via: BASE, to: BASE, accent: '#ec4899', hue: 320 },
 }
 
 interface Particle {

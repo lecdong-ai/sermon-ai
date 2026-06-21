@@ -1,4 +1,4 @@
-export type NoteType = 'insight' | 'research' | 'application' | 'question' | 'pastoral' | 'illustration' | 'warning'
+export type NoteType = 'insight' | 'research' | 'application' | 'question' | 'pastoral' | 'illustration' | 'warning' | 'word'
 
 export type NoteConnectionType = 'passage' | 'theme' | 'word' | 'project' | 'series'
 
@@ -35,6 +35,7 @@ export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   pastoral: '목회적 관찰',
   illustration: '예화 후보',
   warning: '경고 메모',
+  word: '원어 단어',
 }
 
 export const NOTE_TYPE_DESCRIPTIONS: Record<NoteType, string> = {
@@ -45,6 +46,7 @@ export const NOTE_TYPE_DESCRIPTIONS: Record<NoteType, string> = {
   pastoral: '목회적 관찰. 회중의 상황과 설교의 접점에 대한 통찰',
   illustration: '예화/이야기 후보. 본문을 설명할 수 있는 구체적 이미지나 사례',
   warning: '설교 경고. 설교에서 피해야 할 함정, 주의할 표현, 신학적 위험',
+  word: '원어 단어 노트. 헬라어/히브리어 단어의 의미, 문맥, 설교적 적용을 정리한 기록',
 }
 
 export const NOTE_TYPE_COLORS: Record<NoteType, string> = {
@@ -55,6 +57,7 @@ export const NOTE_TYPE_COLORS: Record<NoteType, string> = {
   pastoral: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
   illustration: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
   warning: 'bg-red-500/10 text-red-300 border-red-500/20',
+  word: 'bg-pink-500/10 text-pink-300 border-pink-500/20',
 }
 
 export const NOTE_TYPE_DOTS: Record<NoteType, string> = {
@@ -65,9 +68,10 @@ export const NOTE_TYPE_DOTS: Record<NoteType, string> = {
   pastoral: 'bg-rose-500',
   illustration: 'bg-cyan-500',
   warning: 'bg-red-500',
+  word: 'bg-pink-500',
 }
 
-export const NOTE_TYPES: NoteType[] = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning']
+export const NOTE_TYPES: NoteType[] = ['insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning', 'word']
 
 
 export const NOTES: NoteEntry[] = []

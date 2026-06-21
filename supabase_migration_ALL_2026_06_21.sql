@@ -35,7 +35,12 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'insights_type_check') THEN
     ALTER TABLE insights ADD CONSTRAINT insights_type_check
-      CHECK (type IN ('insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning'));
+      CHECK (type IN ('insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning', 'word'));
+  ELSE
+    -- 기존 constraint에 'word'가 없으면 재생성
+    ALTER TABLE insights DROP CONSTRAINT insights_type_check;
+    ALTER TABLE insights ADD CONSTRAINT insights_type_check
+      CHECK (type IN ('insight', 'research', 'application', 'question', 'pastoral', 'illustration', 'warning', 'word'));
   END IF;
 END $$;
 
