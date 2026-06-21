@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
+import { getCustomProjects } from '@/lib/advanced/mockData'
 import {
   Mail, LogOut, KeyRound, Shield, Crown, Sparkles,
   BookOpen, Network, BrainCircuit, Archive, ChevronRight, AlertCircle,
@@ -69,14 +70,22 @@ export default function MyPage() {
         setName(p.name || '')
       }
 
-      const [usageRes, sermonsRes, insightsRes] = await Promise.all([
+      const [usageRes, sermonsRes, insightsRes, localProjects] = await Promise.all([
         fetch('/api/usage').then(r => r.json()).catch(() => null),
         fetch('/api/sermons').then(r => r.json()).catch(() => ({ data: [] })),
         fetch('/api/insights').then(r => r.json()).catch(() => ({ data: [] })),
+        Promise.resolve(getCustomProjects()),
       ])
       if (usageRes && !usageRes.error) setUsage(usageRes)
-      const sermonList = Array.isArray(sermonsRes?.data) ? sermonsRes.data : []
+      const apiSermons: any[] = Array.isArray(sermonsRes?.data) ? sermonsRes.data : []
       const insightsList = Array.isArray(insightsRes?.data) ? insightsRes.data : []
+
+      // Merge: API + localStorage (deduped by id)
+      const byId = new Map<string, any>()
+      for (const s of apiSermons) byId.set(s.id, s)
+      for (const s of localProjects) byId.set(s.id, s)
+      const sermonList = Array.from(byId.values())
+
       const completed = sermonList.filter((s: any) => s.status === 'completed').length
       const archived = sermonList.filter((s: any) => s.status === 'archived').length
       const inProgress = sermonList.filter((s: any) => !['completed', 'archived'].includes(s.status)).length
