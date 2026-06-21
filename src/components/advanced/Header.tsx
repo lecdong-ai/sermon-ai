@@ -23,7 +23,7 @@ export default function AdvancedHeader() {
   const [mockOn, setMockOn] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showSavedNotes, setShowSavedNotes] = useState(false)
-  const [plan, setPlan] = useState<string>('Free')
+  const [isSupporter, setIsSupporter] = useState<boolean>(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -34,7 +34,11 @@ export default function AdvancedHeader() {
     if (user) {
       fetch('/api/usage')
         .then(r => r.json())
-        .then(d => { if (!d.error) setPlan(d.plan?.name || d.plan || 'Free') })
+        .then(d => {
+          if (!d.error) {
+            setIsSupporter(!!d.supporter)
+          }
+        })
         .catch(() => {})
     }
   }, [user])
@@ -124,11 +128,9 @@ export default function AdvancedHeader() {
                 <p className="text-[13px] font-bold text-white truncate">{fullEmail}</p>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    plan === 'Free' ? 'bg-slate-500/20 text-slate-400' :
-                    plan === 'Pro' ? 'bg-indigo-500/20 text-indigo-300' :
-                    'bg-amber-500/20 text-amber-300'
+                    isSupporter ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-500/20 text-slate-400'
                   }`}>
-                    {plan}
+                    {isSupporter ? '👑 후원회원' : '일반회원'}
                   </span>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER } from '@/lib/advanced/types'
+import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER, type ProjectStatus } from '@/lib/advanced/types'
 import { useRouter } from 'next/navigation'
 import { BookOpen, AlignLeft, Pen, Network, History } from 'lucide-react'
 import { AppSectionHeader } from '@/components/advanced/shared'
@@ -15,9 +15,36 @@ interface Props { project: ProjectDetail }
 export default function OverviewTab({ project }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
   const totalSteps = PROJECT_STATUS_ORDER.length - 1
   const progressPercent = Math.round((statusIndex / totalSteps) * 100)
+
+  const showToast = (kind: 'success' | 'error', text: string) => {
+    setToast({ kind, text })
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  const handleTransition = async (to: ProjectStatus) => {
+    if (transitioning) return
+    setTransitioning(true)
+    try {
+      const res = await fetch(`/api/sermons/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: to }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
+      showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
+      router.refresh()
+    } catch (e: any) {
+      showToast('error', e?.message || '단계 전환 실패')
+    } finally {
+      setTransitioning(false)
+    }
+  }
 
   return (
     <>
@@ -46,8 +73,10 @@ export default function OverviewTab({ project }: Props) {
           <div className="mt-3">
             <StageTransitionCard
               currentStatus={project.status}
-              onTransition={(to) => router.push(`/advanced/projects/${project.id}?status=${to}`)}
+              onTransition={handleTransition}
               projectId={project.id}
+              passage={project.passage}
+              book={project.book}
             />
           </div>
         </div>
@@ -274,6 +303,23 @@ export default function OverviewTab({ project }: Props) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl border backdrop-blur-md text-xs font-bold transition-all ${
+          toast.kind === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        }`}>
+          {toast.text}
+        </div>
+      )}
+
+      {transitioning && (
+        <div className="fixed top-4 right-4 z-50 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-[10px] text-indigo-300 font-bold flex items-center gap-1.5 backdrop-blur-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+          단계 전환 중...
         </div>
       )}
     </div>

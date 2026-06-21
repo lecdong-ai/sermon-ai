@@ -12,6 +12,7 @@ import { getAllArchivedSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
 import { useProjects } from '@/lib/advanced/useProjects'
 import NewUserLanding from '@/components/advanced/NewUserLanding'
+import MinistryConstellation from '@/components/advanced/MinistryConstellation'
 
 // 감정 톤 매핑 유틸리티
 const getEmotionalTone = (sermon: ArchivedSermon) => {
@@ -105,38 +106,6 @@ export default function AdvancedDashboardPage() {
   }
 
   // ── Existing user dashboard ──
-
-  // 3. 지식 그래프 노드 구조 정의 (데스크톱 전용)
-  const GRAPH_NODES = [
-    { id: 'romans', label: '로마서', type: 'book', color: 'rgba(99, 102, 241, 0.8)', glowColor: 'rgba(99, 102, 241, 0.4)', cx: 400, cy: 190, r: 28 },
-    
-    // 설교 노드들
-    { id: 'arc-001', label: '믿음으로 말미암는 의', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 220, cy: 90, r: 16 },
-    { id: 'arc-002', label: '화목하게 된 즐거움', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 580, cy: 90, r: 16 },
-    { id: 'arc-003', label: '죄에 대하여 죽은 자', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 160, cy: 220, r: 16 },
-    { id: 'arc-004', label: '성령 안에 있는 생명', type: 'sermon', color: 'rgba(56, 189, 248, 0.8)', glowColor: 'rgba(56, 189, 248, 0.3)', cx: 640, cy: 220, r: 16 },
-    
-    // 주제 노드들
-    { id: 'theme-grace', label: '은혜', type: 'theme', color: 'rgba(192, 132, 252, 0.8)', glowColor: 'rgba(192, 132, 252, 0.3)', cx: 330, cy: 310, r: 20 },
-    { id: 'theme-faith', label: '믿음', type: 'theme', color: 'rgba(192, 132, 252, 0.8)', glowColor: 'rgba(192, 132, 252, 0.3)', cx: 470, cy: 310, r: 20 },
-    
-    // 시리즈 노드
-    { id: 'series-rom', label: '로마서 강해', type: 'series', color: 'rgba(251, 191, 36, 0.8)', glowColor: 'rgba(251, 191, 36, 0.3)', cx: 400, cy: 50, r: 22 },
-  ]
-
-  const GRAPH_LINKS = [
-    { source: 'romans', target: 'arc-001' },
-    { source: 'romans', target: 'arc-002' },
-    { source: 'romans', target: 'arc-003' },
-    { source: 'romans', target: 'arc-004' },
-    { source: 'romans', target: 'theme-grace' },
-    { source: 'romans', target: 'theme-faith' },
-    { source: 'series-rom', target: 'romans' },
-    { source: 'theme-grace', target: 'arc-001' },
-    { source: 'theme-grace', target: 'arc-004' },
-    { source: 'theme-faith', target: 'arc-001' },
-    { source: 'theme-faith', target: 'arc-002' },
-  ]
 
   // 4. AI 액션 핸들러
   const handleAiAction = async (sermon: ArchivedSermon, type: string) => {
@@ -232,97 +201,30 @@ export default function AdvancedDashboardPage() {
           </div>
         </section>
 
-        {/* ─── 3. Knowledge Graph Section (Obsidian Style) ─── */}
-        <section className="space-y-4">
+        {/* ─── 3. Ministry Constellation (실시간 데이터 + 시간 스크럽) ─── */}
+        <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Network className="w-5 h-5 text-purple-400 animate-pulse" />
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Knowledge Network Graph</h2>
+              <Network className="w-5 h-5 text-purple-400" />
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">사역의 별자리</h2>
+              <span className="text-[10px] text-slate-600 font-medium">· Ministry Constellation</span>
             </div>
-            <span className="text-[10px] text-slate-600 font-medium">노드를 클릭하여 즉시 검색 필터를 적용하세요.</span>
+            <span className="text-[10px] text-slate-600 font-medium">별을 클릭하면 아래 설교가 필터링됩니다 · 슬라이더로 시간을 이동하세요</span>
           </div>
 
-          <div className="relative h-[340px] rounded-3xl border border-white/5 bg-[#04060f]/60 overflow-hidden shadow-2xl">
-            {/* SVG 링크 및 노드 그리기 */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 800 340">
-              <defs>
-                <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-
-              {/* 연결 선 */}
-              {GRAPH_LINKS.map((link, idx) => {
-                const src = GRAPH_NODES.find(n => n.id === link.source)
-                const tgt = GRAPH_NODES.find(n => n.id === link.target)
-                if (!src || !tgt) return null
-                return (
-                  <line
-                    key={idx}
-                    x1={src.cx} y1={src.cy}
-                    x2={tgt.cx} y2={tgt.cy}
-                    stroke="rgba(255, 255, 255, 0.08)"
-                    strokeWidth="1.5"
-                    className="line-trail"
-                  />
-                )
-              })}
-
-              {/* 노드 그래픽 요소 */}
-              {GRAPH_NODES.map((node) => (
-                <g key={node.id}>
-                  {/* 글로우 백그라운드 */}
-                  <circle 
-                    cx={node.cx} 
-                    cy={node.cy} 
-                    r={node.r * 1.8} 
-                    fill="url(#node-glow)" 
-                    opacity="0.3"
-                  />
-                </g>
-              ))}
-            </svg>
-
-            {/* 실제 마우스 클릭을 지원하기 위해 절대좌표 div 노드를 배치 */}
-            {GRAPH_NODES.map((node) => (
-              <button
-                key={node.id}
-                onClick={() => setSearchQuery(node.label)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group"
-                style={{ left: `${(node.cx / 800) * 100}%`, top: `${(node.cy / 340) * 100}%` }}
-              >
-                <div 
-                  className="rounded-full flex items-center justify-center border transition-all shadow-lg text-white font-bold"
-                  style={{ 
-                    width: `${node.r * 2}px`, 
-                    height: `${node.r * 2}px`,
-                    backgroundColor: node.color,
-                    borderColor: 'rgba(255, 255, 255, 0.25)',
-                    boxShadow: `0 0 15px ${node.glowColor}`
-                  }}
-                >
-                  <span className="text-[10px] tracking-tight">{node.label.slice(0, 2)}</span>
-                </div>
-                {/* 툴팁/레이블 */}
-                <div className="absolute top-[105%] px-2 py-0.5 rounded bg-[#090d20] border border-white/10 text-[9.5px] font-bold text-slate-300 opacity-80 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
-                  {node.label}
-                </div>
-              </button>
-            ))}
-
-            {/* 그래프 맵 범례 */}
-            <div className="absolute bottom-4 left-5 flex gap-4 text-[10px] text-slate-500 font-bold bg-[#070a16]/80 px-4 py-2 rounded-xl border border-white/5 backdrop-blur-sm">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-500" />성경 권</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500" />설교 원고</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" />사역 주제</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />강해 시리즈</span>
-            </div>
-          </div>
+          <MinistryConstellation
+            onSelectNode={(term) => {
+              setSearchQuery(term)
+              // Scroll to cards
+              setTimeout(() => {
+                document.getElementById('sermon-cards')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 100)
+            }}
+          />
         </section>
 
         {/* ─── 4. Sermon Cards Section ─── */}
-        <section className="space-y-5">
+        <section id="sermon-cards" className="space-y-5 scroll-mt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Archive className="w-5 h-5 text-indigo-400" />

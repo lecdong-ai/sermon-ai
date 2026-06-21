@@ -261,6 +261,27 @@ export default function NewProjectPage() {
     existing.push(newProject)
     setStorageItem('custom_projects', existing)
 
+    // DB에도 저장 (직조대/통찰 연결/이음 기능이 DB에서 찾을 수 있도록)
+    fetch('/api/sermons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: newProject.title,
+        normalizedPassage: newProject.passage,
+        bibleBook: bookName,
+        chapterStart: ch ? parseInt(ch) : null,
+        chapterEnd: null,
+        verseStart: vs ? parseInt(vs) : null,
+        verseEnd: ve ? parseInt(ve) : null,
+        date: sermonDate,
+        preacher,
+        sermonType,
+        audience,
+        season,
+        status: 'draft',
+      }),
+    }).catch((e) => console.error('DB 저장 실패:', e))
+
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)
   }
 

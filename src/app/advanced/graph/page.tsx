@@ -1,20 +1,21 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
 import { GRAPH_NODES, GRAPH_EDGES, NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
 
 const NODE_TYPES: NodeType[] = ['sermon', 'passage', 'theme', 'word', 'note', 'series']
 
-type FocusMode = 'full' | 'project' | 'passage' | 'theme'
+type FocusMode = 'full' | 'project' | 'passage' | 'theme' | 'note'
 
 const FOCUS_MODE_LABELS: Record<FocusMode, string> = {
   full: '전체 그래프',
   project: '프로젝트 중심',
   passage: '본문 중심',
   theme: '주제 중심',
+  note: '통찰 중심',
 }
 
 const FOCUS_MODE_DESCRIPTIONS: Record<FocusMode, string> = {
@@ -22,6 +23,7 @@ const FOCUS_MODE_DESCRIPTIONS: Record<FocusMode, string> = {
   project: '현재 작업 중인 설교와 연결된 노드만 표시합니다',
   passage: '선택한 본문과 연결된 노드만 표시합니다',
   theme: '선택한 주제와 연결된 노드만 표시합니다',
+  note: '선택한 통찰과 직접 연결된 노드만 표시합니다',
 }
 
 /* ─── Helpers ─── */
@@ -80,6 +82,7 @@ function getSuggestedConnections(nodes: GraphNode[], edges: GraphEdge[], maxResu
 
 export default function GraphPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 })
   const [filterTypes, setFilterTypes] = useState<Set<NodeType>>(new Set<NodeType>(['sermon', 'passage', 'theme', 'word', 'note', 'series']))
@@ -108,6 +111,29 @@ export default function GraphPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Auto-select node from ?focus= query param (링크로 들어온 경우)
+  // 노트 타입이면 자동으로 'note' focus mode 활성화
+  const focusId = searchParams.get('focus')
+  useEffect(() => {
+    if (!focusId || realNodes.length === 0) return
+    const node = realNodes.find((n) => n.id === focusId)
+    if (!node) return
+    setSelectedNode(node)
+    if (node.type === 'note') {
+      setFocusMode('note')
+      setFocusCenterId(node.id)
+    } else if (node.type === 'sermon') {
+      setFocusMode('project')
+      setFocusCenterId(node.id)
+    } else if (node.type === 'passage') {
+      setFocusMode('passage')
+      setFocusCenterId(node.id)
+    } else if (node.type === 'theme') {
+      setFocusMode('theme')
+      setFocusCenterId(node.id)
+    }
+  }, [focusId, realNodes])
+
   // All data comes from the API; no mock fallback
   const allNodes = realNodes
   const allEdges = realEdges
@@ -129,11 +155,14 @@ export default function GraphPage() {
     } else if (mode === 'theme') {
       const firstTheme = allNodes.find(n => n.type === 'theme')
       setFocusCenterId(firstTheme?.id || '')
+    } else if (mode === 'note') {
+      const firstNote = allNodes.find(n => n.type === 'note')
+      setFocusCenterId(firstNote?.id || '')
     }
   }, [firstRealSermonId, allNodes])
 
   const focusCenterNode = useMemo(() => {
-    if (focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme') {
+    if (focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme' || focusMode === 'note') {
       return allNodes.find(n => n.id === focusCenterId) || null
     }
     return null
@@ -158,7 +187,7 @@ export default function GraphPage() {
         neighbors.add(centerId)
         nodes = nodes.filter(n => neighbors.has(n.id))
       }
-    } else if ((focusMode === 'passage' || focusMode === 'theme') && focusCenterId) {
+    } else if ((focusMode === 'passage' || focusMode === 'theme' || focusMode === 'note') && focusCenterId) {
       const neighbors = new Set(getNeighborIds(focusCenterId, allEdges))
       neighbors.add(focusCenterId)
       nodes = nodes.filter(n => neighbors.has(n.id))
@@ -214,6 +243,9 @@ export default function GraphPage() {
     if (focusMode === 'project') {
       return allNodes.filter(n => n.type === 'sermon')
     }
+    if (focusMode === 'note') {
+      return allNodes.filter(n => n.type === 'note')
+    }
     return []
   }, [focusMode, allNodes])
 
@@ -258,10 +290,10 @@ export default function GraphPage() {
         </div>
 
         {/* Focus center selector */}
-        {(focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme') && (
+        {(focusMode === 'project' || focusMode === 'passage' || focusMode === 'theme' || focusMode === 'note') && (
           <div className={`p-4 border-b ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
             <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>
-              {focusMode === 'project' ? '프로젝트 선택' : focusMode === 'passage' ? '본문 선택' : '주제 선택'}
+              {focusMode === 'project' ? '프로젝트 선택' : focusMode === 'passage' ? '본문 선택' : focusMode === 'theme' ? '주제 선택' : '통찰 선택'}
             </h3>
             {focusCenterOptions.length > 0 ? (
               <select value={focusCenterId} onChange={e => setFocusCenterId(e.target.value)}

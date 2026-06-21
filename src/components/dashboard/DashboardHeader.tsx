@@ -9,13 +9,19 @@ export default function DashboardHeader() {
   const { user, signOut } = useAuth()
   const router = useRouter()
   const [plan, setPlan] = useState<string | null>(null)
+  const [isSupporter, setIsSupporter] = useState<boolean>(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     if (user) {
       fetch('/api/usage')
         .then(r => r.json())
-        .then(d => { if (!d.error) setPlan(d.plan) })
+        .then(d => {
+          if (!d.error) {
+            setPlan(d.plan)
+            setIsSupporter(!!d.supporter)
+          }
+        })
         .catch(() => {})
     }
   }, [user])
@@ -40,13 +46,11 @@ export default function DashboardHeader() {
       <div className="flex items-center gap-3">
         {plan && (
           <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-bold ${
-            plan === 'pro'
+            (plan === 'pro' || isSupporter)
               ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
-              : plan === 'none'
-              ? 'bg-slate-100 text-slate-500 border border-slate-200/50'
-              : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50'
+              : 'bg-slate-100 text-slate-500 border border-slate-200/50'
           }`}>
-            {plan === 'pro' ? '👑 Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
+            {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
           </span>
         )}
 
@@ -73,9 +77,9 @@ export default function DashboardHeader() {
                   {plan && (
                     <div className="mt-1.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                        plan === 'pro' ? 'bg-indigo-100 text-indigo-700' : plan === 'none' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'
+                        (plan === 'pro' || isSupporter) ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
                       }`}>
-{plan === 'pro' ? '👑 Pro' : plan === 'basic' ? 'Basic' : '🎁 Trial'}
+                        {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
                       </span>
                     </div>
                   )}

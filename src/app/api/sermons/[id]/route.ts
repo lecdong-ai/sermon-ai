@@ -95,6 +95,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (body.verseEnd !== undefined) updates.verse_end = body.verseEnd
     if (body.date !== undefined) updates.sermon_date = body.date
     if (body.season !== undefined) updates.season = body.season
+    if (body.status !== undefined && typeof body.status === 'string') updates.status = body.status
 
     const existingResult = sermon.result || {}
     const resultUpdate = {

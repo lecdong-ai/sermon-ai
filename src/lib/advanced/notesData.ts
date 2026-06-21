@@ -19,6 +19,7 @@ export interface NoteEntry {
   pinned: boolean
   connections: NoteConnection[]
   projectIds: string[]
+  seriesIds?: string[]
   archiveIds: string[]
   createdAt: string
   updatedAt: string

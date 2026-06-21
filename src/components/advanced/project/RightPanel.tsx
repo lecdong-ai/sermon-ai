@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ProjectDetail, PROJECT_STATUS_ORDER } from '@/lib/advanced/types'
+import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER, type ProjectStatus } from '@/lib/advanced/types'
 import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
 import RecentChangesPanel from '@/components/advanced/shared/RecentChangesPanel'
 import StageTransitionCard from '@/components/advanced/shared/StageTransitionCard'
 import StatusTimeline from '@/components/advanced/shared/StatusTimeline'
 import { MOCK_SAVE_STATE, MOCK_VERSIONS, MOCK_RECENT_CHANGES } from '@/lib/advanced/statusData'
+import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteEntry } from '@/lib/advanced/notesData'
 
 interface Props {
   project: ProjectDetail
@@ -18,9 +19,72 @@ interface Props {
 export default function RightPanel({ project, activeTab }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
+  const [linkedInsights, setLinkedInsights] = useState<NoteEntry[]>([])
+  const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
+  const [transitioning, setTransitioning] = useState(false)
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
   const totalSteps = PROJECT_STATUS_ORDER.length - 1
   const progressPercent = Math.round((statusIndex / totalSteps) * 100)
+
+  const showToast = (kind: 'success' | 'error', text: string) => {
+    setToast({ kind, text })
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  const handleTransition = async (to: ProjectStatus) => {
+    if (transitioning) return
+    setTransitioning(true)
+    try {
+      const res = await fetch(`/api/sermons/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: to }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
+      showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
+      router.refresh()
+    } catch (e: any) {
+      showToast('error', e?.message || '단계 전환 실패')
+    } finally {
+      setTransitioning(false)
+    }
+  }
+
+  useEffect(() => {
+    let ac: AbortController | null = null
+    ac = new AbortController()
+    fetch('/api/insights', { signal: ac.signal })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          setLinkedInsights((json.data || []).filter((n: NoteEntry) => (n.projectIds || []).includes(project.id)))
+        }
+      })
+      .catch(() => {})
+    return () => { ac?.abort() }
+  }, [project.id])
+
+  const handleUnlink = async (insightId: string) => {
+    const insight = linkedInsights.find((n) => n.id === insightId)
+    if (!insight) return
+    setUnlinkingId(insightId)
+    const next = (insight.projectIds || []).filter((x) => x !== project.id)
+    setLinkedInsights((prev) => prev.filter((n) => n.id !== insightId))
+    try {
+      const res = await fetch(`/api/insights/${insightId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectIds: next }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setLinkedInsights((prev) => [...prev, insight])
+    } finally {
+      setUnlinkingId(null)
+    }
+  }
 
   return (
     <>
@@ -87,8 +151,10 @@ export default function RightPanel({ project, activeTab }: Props) {
         <div className="p-4 border-b border-white/5">
           <StageTransitionCard
             currentStatus={project.status}
-            onTransition={(to) => router.push(`/advanced/projects/${project.id}?status=${to}`)}
+            onTransition={handleTransition}
             projectId={project.id}
+            passage={project.passage}
+            book={project.book}
           />
         </div>
 
@@ -156,6 +222,52 @@ export default function RightPanel({ project, activeTab }: Props) {
           </div>
         </div>
 
+        {/* 연결된 통찰 (양방향) */}
+        <div className="p-4 border-b border-white/5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">연결된 통찰</h3>
+            <span className="text-[10px] text-slate-600 font-bold">{linkedInsights.length}개</span>
+          </div>
+          {linkedInsights.length === 0 ? (
+            <p className="text-[10px] text-slate-600 italic">아직 연결된 통찰이 없습니다</p>
+          ) : (
+            <div className="space-y-1.5">
+              {linkedInsights.map((n) => (
+                <div key={n.id} className="group bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-2 transition-colors">
+                  <div className="flex items-start gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${NOTE_TYPE_DOTS[n.type]}`} />
+                    <button
+                      onClick={() => router.push(`/advanced/notes?selected=${n.id}`)}
+                      className="flex-1 text-left min-w-0"
+                    >
+                      <p className="text-[11px] font-bold text-slate-200 group-hover:text-indigo-300 line-clamp-2 leading-snug">{n.title}</p>
+                      <p className="text-[9px] text-slate-500 mt-0.5 font-medium">
+                        {NOTE_TYPE_LABELS[n.type]}{n.starred && ' · ★'}
+                      </p>
+                    </button>
+                    <button
+                      onClick={() => handleUnlink(n.id)}
+                      disabled={unlinkingId === n.id}
+                      className="text-slate-500 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30"
+                      title="연결 해제"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => router.push(`/advanced/notes`)}
+            className="w-full mt-2 text-[10px] text-indigo-400 hover:text-indigo-300 font-bold text-left"
+          >
+            + 통찰 기록하기 →
+          </button>
+        </div>
+
         {/* 빠른 작업 */}
         <div className="p-4">
           <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">빠른 작업</h3>
@@ -165,6 +277,23 @@ export default function RightPanel({ project, activeTab }: Props) {
           </div>
         </div>
       </aside>
+
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl border backdrop-blur-md text-xs font-bold transition-all ${
+          toast.kind === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        }`}>
+          {toast.text}
+        </div>
+      )}
+
+      {transitioning && (
+        <div className="fixed top-4 right-4 z-50 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-[10px] text-indigo-300 font-bold flex items-center gap-1.5 backdrop-blur-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+          단계 전환 중...
+        </div>
+      )}
     </>
   )
 }

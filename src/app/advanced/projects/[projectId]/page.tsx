@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import {
   Eye, BookOpen, AlignLeft, Pen, Network, History
 } from 'lucide-react'
@@ -14,6 +14,7 @@ import PrepTab from '@/components/advanced/project/PrepTab'
 import ManuscriptTab from '@/components/advanced/project/ManuscriptTab'
 import ConnectionsTab from '@/components/advanced/project/ConnectionsTab'
 import VersionsTab from '@/components/advanced/project/VersionsTab'
+import LinkedInsightBanner from '@/components/advanced/project/LinkedInsightBanner'
 
 const TABS = [
   { key: 'overview', label: '개요', icon: Eye },
@@ -29,6 +30,8 @@ function ProjectContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentTab = searchParams.get('tab') || 'overview'
+  const insightParam = searchParams.get('insight')
+  const [showInsightBanner, setShowInsightBanner] = useState(!!insightParam)
 
   const { project, loading, error } = useProjectDetail(params.projectId as string)
 
@@ -99,6 +102,17 @@ function ProjectContent() {
 
           {/* Tab Content */}
           <div className="max-w-[1440px] mx-auto p-6 animate-fade-in">
+            {currentTab === 'manuscript' && showInsightBanner && (
+              <LinkedInsightBanner
+                insightId={insightParam}
+                onClose={() => {
+                  setShowInsightBanner(false)
+                  const next = new URLSearchParams(searchParams.toString())
+                  next.delete('insight')
+                  router.replace(`/advanced/projects/${params.projectId}?${next.toString()}`)
+                }}
+              />
+            )}
             {currentTab === 'overview' && <OverviewTab project={project} />}
             {currentTab === 'study' && <BibleStudyTab project={project} passages={project.passages} />}
             {currentTab === 'prep' && <PrepTab project={project} />}

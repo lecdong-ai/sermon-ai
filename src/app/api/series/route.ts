@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       startDate: row.start_date || '',
       endDate: row.end_date || '',
       status: row.status || 'active',
+      isSample: !!row.is_sample,
+      createdAt: row.created_at || '',
     }))
 
     return NextResponse.json({ success: true, data: series })
@@ -81,6 +83,8 @@ export async function POST(request: NextRequest) {
       startDate: data.start_date || '',
       endDate: data.end_date || '',
       status: data.status || 'active',
+      isSample: !!data.is_sample,
+      createdAt: data.created_at || '',
     }
 
     return NextResponse.json({ success: true, data: series }, { status: 201 })

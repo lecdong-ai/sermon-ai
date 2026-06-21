@@ -9,10 +9,14 @@ export default function StageTransitionCard({
   currentStatus,
   onTransition,
   projectId,
+  passage,
+  book,
 }: {
   currentStatus: ProjectStatus
   onTransition: (to: ProjectStatus) => void
   projectId?: string
+  passage?: string
+  book?: string
 }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [pendingTransition, setPendingTransition] = useState<ProjectStatus | null>(null)
@@ -66,6 +70,8 @@ export default function StageTransitionCard({
           to={pendingTransition}
           projectId={projectId || ''}
           onConfirm={handleConfirm}
+          passage={passage}
+          book={book}
         />
       )}
     </>
