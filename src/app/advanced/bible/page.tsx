@@ -1296,7 +1296,7 @@ function ThemeDetailView({ theme, onClose }: {
           <span className="font-extrabold text-slate-300">{theme.connectedSermons}편</span>
         </div>
         <button
-          onClick={() => router.push(`/dashboard/sermons?search=${encodeURIComponent(theme.name)}`)}
+          onClick={() => router.push(`/advanced/projects?search=${encodeURIComponent(theme.name)}`)}
           className="w-full text-xs font-bold text-indigo-400 border border-indigo-500/30 rounded-xl py-2.5 hover:bg-indigo-500/10 transition-colors"
         >
           이 주제로 설교 검색 →

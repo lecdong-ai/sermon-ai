@@ -687,8 +687,10 @@ export default function ManuscriptTab({ project }: Props) {
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       mountedRef.current = false
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      if (innerTimerRef.current) clearTimeout(innerTimerRef.current)
+      const saveTimer = saveTimerRef.current
+      const innerTimer = innerTimerRef.current
+      if (saveTimer) clearTimeout(saveTimer)
+      if (innerTimer) clearTimeout(innerTimer)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [manualSave])

@@ -155,6 +155,8 @@ export function useProjects(): UseProjectsResult {
 
       fetch(`/api/sermons/${id}`, { method: 'DELETE' }).catch(() => {})
 
+      // Optimistic: remove from local state immediately
+      setApiProjects((prev) => prev.filter(p => p.id !== id))
       refetch()
       return true
     } catch {

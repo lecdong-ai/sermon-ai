@@ -128,6 +128,16 @@ export default function NotesPage() {
     if (inflight) inflight.abort()
     const ac = new AbortController()
     inflightRef.current.set(id, ac)
+    // Capture original values for rollback
+    const originalNote = notes.find((n) => n.id === id)
+    const rollbackPatch: Partial<NoteEntry> = {}
+    if (originalNote) {
+      for (const key of Object.keys(patch) as (keyof NoteEntry)[]) {
+        if (key in originalNote) {
+          (rollbackPatch as any)[key] = (originalNote as any)[key]
+        }
+      }
+    }
     try {
       const res = await fetch(`/api/insights/${id}`, {
         method: 'PATCH',
@@ -142,12 +152,13 @@ export default function NotesPage() {
     } catch (e: any) {
       if (e?.name === 'AbortError') return
       showToast('error', '저장 실패: ' + (e?.message || ''))
-      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...{ starred: !patch.starred, pinned: !patch.pinned } } : n)))
-      setSelectedNote((prev) => (prev?.id === id ? { ...prev, ...{ starred: !patch.starred, pinned: !patch.pinned } } : prev))
+      // Rollback only the fields that were patched
+      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...rollbackPatch } : n)))
+      setSelectedNote((prev) => (prev?.id === id ? { ...prev, ...rollbackPatch } : prev))
     } finally {
       inflightRef.current.delete(id)
     }
-  }, [showToast])
+  }, [notes, showToast])
 
   const toggleStar = useCallback((id: string) => {
     const current = notes.find((n) => n.id === id)
