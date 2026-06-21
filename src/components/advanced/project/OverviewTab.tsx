@@ -10,9 +10,9 @@ import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDra
 import RecentChangesPanel from '@/components/advanced/shared/RecentChangesPanel'
 import { MOCK_VERSIONS, MOCK_RECENT_CHANGES } from '@/lib/advanced/statusData'
 
-interface Props { project: ProjectDetail; onProjectUpdated?: () => void }
+interface Props { project: ProjectDetail; onProjectUpdated?: () => void; updateStatus?: (status: ProjectStatus) => void }
 
-export default function OverviewTab({ project, onProjectUpdated }: Props) {
+export default function OverviewTab({ project, onProjectUpdated, updateStatus }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
@@ -29,6 +29,9 @@ export default function OverviewTab({ project, onProjectUpdated }: Props) {
   const handleTransition = async (to: ProjectStatus) => {
     if (transitioning) return
     setTransitioning(true)
+    // 낙관적 업데이트: UI를 즉시 변경
+    updateStatus?.(to)
+    showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
     try {
       const res = await fetch(`/api/sermons/${project.id}`, {
         method: 'PUT',
@@ -37,10 +40,12 @@ export default function OverviewTab({ project, onProjectUpdated }: Props) {
       })
       const json = await res.json()
       if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
-      showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
+      // 백그라운드에서 최신 데이터 동기화
       onProjectUpdated?.()
     } catch (e: any) {
       showToast('error', e?.message || '단계 전환 실패')
+      // 실패 시 원래 상태로 롤백
+      updateStatus?.(project.status)
     } finally {
       setTransitioning(false)
     }

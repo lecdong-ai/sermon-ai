@@ -15,9 +15,10 @@ interface Props {
   project: ProjectDetail
   activeTab: string
   onProjectUpdated?: () => void
+  updateStatus?: (status: ProjectStatus) => void
 }
 
-export default function RightPanel({ project, activeTab, onProjectUpdated }: Props) {
+export default function RightPanel({ project, activeTab, onProjectUpdated, updateStatus }: Props) {
   const router = useRouter()
   const [showVersions, setShowVersions] = useState(false)
   const [linkedInsights, setLinkedInsights] = useState<NoteEntry[]>([])
@@ -36,6 +37,8 @@ export default function RightPanel({ project, activeTab, onProjectUpdated }: Pro
   const handleTransition = async (to: ProjectStatus) => {
     if (transitioning) return
     setTransitioning(true)
+    updateStatus?.(to)
+    showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
     try {
       const res = await fetch(`/api/sermons/${project.id}`, {
         method: 'PUT',
@@ -44,10 +47,10 @@ export default function RightPanel({ project, activeTab, onProjectUpdated }: Pro
       })
       const json = await res.json()
       if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
-      showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
       onProjectUpdated?.()
     } catch (e: any) {
       showToast('error', e?.message || '단계 전환 실패')
+      updateStatus?.(project.status)
     } finally {
       setTransitioning(false)
     }

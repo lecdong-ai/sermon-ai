@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { ProjectDetail, AdvancedProject, ProjectVersion, ActivityItem } from './types'
+import type { ProjectDetail, AdvancedProject, ProjectVersion, ActivityItem, ProjectStatus } from './types'
 import { getStorageItem } from '@/lib/storage'
 import { getCustomProjects } from './mockData'
 
@@ -10,6 +10,7 @@ interface ProjectDetailResult {
   loading: boolean
   error: string | null
   refetch: () => void
+  updateStatus: (status: ProjectStatus) => void
 }
 
 export function useProjectDetail(projectId: string): ProjectDetailResult {
@@ -104,9 +105,13 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
     }
   }, [projectId])
 
+  const updateStatus = useCallback((status: ProjectStatus) => {
+    setProject((prev) => prev ? { ...prev, status } : prev)
+  }, [])
+
   useEffect(() => {
     loadProject()
   }, [loadProject])
 
-  return { project, loading, error, refetch: loadProject }
+  return { project, loading, error, refetch: loadProject, updateStatus }
 }

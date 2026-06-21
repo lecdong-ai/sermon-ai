@@ -33,7 +33,7 @@ function ProjectContent() {
   const insightParam = searchParams.get('insight')
   const [showInsightBanner, setShowInsightBanner] = useState(!!insightParam)
 
-  const { project, loading, error, refetch } = useProjectDetail(params.projectId as string)
+  const { project, loading, error, refetch, updateStatus } = useProjectDetail(params.projectId as string)
 
   const handleTabChange = (tab: string) => {
     router.push(`/advanced/projects/${params.projectId}?tab=${tab}`)
@@ -113,7 +113,7 @@ function ProjectContent() {
                 }}
               />
             )}
-            {currentTab === 'overview' && <OverviewTab project={project} onProjectUpdated={refetch} />}
+            {currentTab === 'overview' && <OverviewTab project={project} onProjectUpdated={refetch} updateStatus={updateStatus} />}
             {currentTab === 'study' && <BibleStudyTab project={project} passages={project.passages} />}
             {currentTab === 'prep' && <PrepTab project={project} />}
             {currentTab === 'manuscript' && <ManuscriptTab project={project} />}
@@ -123,7 +123,7 @@ function ProjectContent() {
         </div>
 
         {/* Right Panel */}
-        <RightPanel project={project} activeTab={currentTab} onProjectUpdated={refetch} />
+        <RightPanel project={project} activeTab={currentTab} onProjectUpdated={refetch} updateStatus={updateStatus} />
       </div>
     </div>
   )
