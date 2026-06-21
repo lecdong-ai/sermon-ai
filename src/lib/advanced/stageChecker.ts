@@ -1,4 +1,5 @@
 import { getStorageItem, setStorageItem } from '@/lib/storage'
+import type { ProjectStatus } from '@/lib/advanced/types'
 
 export type CheckSource = 'study' | 'insight' | 'quickfill' | 'prep' | 'manuscript'
 
@@ -128,6 +129,42 @@ export async function loadAggregatedSourcesAsync(projectId: string, insights: In
 
 export function saveQuickFill(projectId: string, data: Omit<QuickFill, 'savedAt'>) {
   setStorageItem(STORAGE_KEYS.quickfill(projectId), { ...data, savedAt: Date.now() })
+}
+
+/** localStorage + API 데이터 기반으로 현재 실제 완료된 단계를 추정 */
+export function detectCurrentStage(projectId: string, sermonResult?: SermonResult | null): ProjectStatus {
+  const study = getStorageItem<StudyData | null>(STORAGE_KEYS.study(projectId), null)
+  const prep = getStorageItem<any | null>(STORAGE_KEYS.prep(projectId), null)
+  const manuscript = getStorageItem<any | null>(STORAGE_KEYS.manuscript(projectId), null)
+
+  // 1. 원고 완료 확인 (review 단계)
+  const msSections = manuscript?.sections || []
+  const msRaw = manuscript?.rawText || sermonResult?.manuscript || ''
+  const hasFullManuscript = msSections.length >= 3 ||
+    (msSections.length > 0 && msSections.every((s: any) => (s.content?.length || 0) > 50)) ||
+    msRaw.length >= 1000
+  if (hasFullManuscript) return 'review'
+
+  // 2. 원고 일부 작성 확인 (writing 단계)
+  const hasPartialManuscript = msSections.length > 0 || msRaw.length > 200 ||
+    (sermonResult?.manuscript?.length || 0) > 200
+  if (hasPartialManuscript) return 'writing'
+
+  // 3. 설교 준비 확인 (prepare 단계)
+  const prepCore = prep?.coreMessage || sermonResult?.coreMessage || ''
+  const prepOutlines = Array.isArray(prep?.outlines) ? prep.outlines.length : 0
+  const apiOutlines = [sermonResult?.outlinePoint1, sermonResult?.outlinePoint2, sermonResult?.outlinePoint3].filter(Boolean).length
+  const hasPrep = (prepCore.length > 10 && (prepOutlines >= 2 || apiOutlines >= 2)) ||
+    (prep && Object.keys(prep).length >= 3)
+  if (hasPrep) return 'prepare'
+
+  // 4. 연구 확인 (research 단계 - 기본값)
+  const hasStudy = (study?.greekWords?.length || 0) >= 2 ||
+    (study?.commentaries?.length || 0) >= 1 ||
+    (study?.themes?.length || 0) >= 1
+  if (hasStudy) return 'research'
+
+  return 'research'
 }
 
 /**
