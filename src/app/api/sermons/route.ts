@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('sermons')
-      .select('id, title, sermon_date, book, passage, chapter_start, chapter_end, verse_start, verse_end, season, status, version, updated_at, created_at, source, file_name, result')
+      .select('id, title, sermon_date, book, passage, chapter_start, chapter_end, verse_start, verse_end, season, status, version, updated_at, created_at, source, file_name, result, passages')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
@@ -67,6 +67,21 @@ export async function GET(request: NextRequest) {
         status: row.status || 'draft',
         createdAt: row.created_at || new Date().toISOString(),
         updatedAt: row.updated_at || new Date().toISOString(),
+        // B5: 다중 본문 (없으면 기존 단일 본문으로 fallback)
+        passages: row.passages && row.passages.length > 0
+          ? row.passages
+          : (row.passage
+              ? [{
+                  id: 'legacy',
+                  book: row.book || '',
+                  chapterStart: row.chapter_start || 1,
+                  chapterEnd: row.chapter_end || row.chapter_start || 1,
+                  verseStart: row.verse_start || 1,
+                  verseEnd: row.verse_end || row.verse_start || 1,
+                  label: row.passage,
+                  role: 'primary',
+                }]
+              : []),
       }
     })
 
@@ -125,6 +140,21 @@ export async function POST(request: NextRequest) {
       church_context: null,
       status: body.status || 'draft',
       version: 1,
+      // B5: 다중 본문. 없으면 단일 본문으로 자동 변환
+      passages: body.passages && body.passages.length > 0
+        ? body.passages
+        : (body.normalizedPassage || body.bibleBook
+            ? [{
+                id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+                book: body.bibleBook || '',
+                chapterStart: body.chapterStart || 1,
+                chapterEnd: body.chapterEnd || body.chapterStart || 1,
+                verseStart: body.verseStart || 1,
+                verseEnd: body.verseEnd || body.verseStart || 1,
+                label: body.normalizedPassage || body.bibleBook || '',
+                role: 'primary',
+              }]
+            : []),
       result: {
         preacher: body.preacher || '',
         sermonType: body.sermonType || '',
@@ -180,6 +210,7 @@ export async function POST(request: NextRequest) {
       status: data.status || 'completed',
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      passages: data.passages || [],
     }
 
     return NextResponse.json({ success: true, data: sermon }, { status: 201 })

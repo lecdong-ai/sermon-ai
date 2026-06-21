@@ -45,6 +45,21 @@ function toSermon(row: any) {
     updatedAt: row.updated_at || new Date().toISOString(),
     result: result,
     raw_text: row.raw_text || '',
+    // B5: 다중 본문 (fallback to single)
+    passages: row.passages && row.passages.length > 0
+      ? row.passages
+      : (row.passage
+          ? [{
+              id: 'legacy',
+              book: row.book || '',
+              chapterStart: row.chapter_start || 1,
+              chapterEnd: row.chapter_end || row.chapter_start || 1,
+              verseStart: row.verse_start || 1,
+              verseEnd: row.verse_end || row.verse_start || 1,
+              label: row.passage,
+              role: 'primary',
+            }]
+          : []),
   }
 }
 
@@ -96,6 +111,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (body.date !== undefined) updates.sermon_date = body.date
     if (body.season !== undefined) updates.season = body.season
     if (body.status !== undefined && typeof body.status === 'string') updates.status = body.status
+    // B5: 다중 본문 업데이트
+    if (body.passages !== undefined && Array.isArray(body.passages)) updates.passages = body.passages
 
     const existingResult = sermon.result || {}
     const resultUpdate = {
