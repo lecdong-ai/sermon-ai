@@ -36,18 +36,32 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #d4d1c9;
+    background: transparent;
     border-radius: 999px;
+    transition: background 0.3s ease;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #c2bfb9;
+  *:hover::-webkit-scrollbar-thumb,
+  *:focus-within::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.35);
+  }
+  *:hover::-webkit-scrollbar-thumb:hover,
+  *:focus-within::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.6);
+  }
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
   }
 }
 
@@ -345,8 +359,12 @@
     width: 4px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #E4DED4;
+    background: transparent;
     border-radius: 999px;
+    transition: background 0.3s ease;
+  }
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.4);
   }
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;

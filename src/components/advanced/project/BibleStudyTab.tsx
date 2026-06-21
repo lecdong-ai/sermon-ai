@@ -1874,9 +1874,17 @@ function RightPanel({
 function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; onSendToPrep: () => void }) {
   const themes = (studyData?.themes || []).map((t: any) => t.name).slice(0, 6)
   const insights = (studyData?.commentaries || []).slice(0, 4).map((c: any) => c.text)
-  const words = Object.values(studyData?.words || {}).slice(0, 4).map((w: any) => ({
-    word: w.lemmaGreek || '',
-    meaning: w.basicMeaning?.slice(0, 30) || '',
+  const rawWords = Object.values(studyData?.words || {}).slice(0, 6)
+  const words = rawWords.map((w: any) => ({
+    word: w.lemmaGreek || w.word || '',
+    transliteration: w.transliteration || w.pronunciation || '',
+    partOfSpeech: w.partOfSpeech || '',
+    strong: w.strong || '',
+    basicMeaning: w.basicMeaning || '',
+    contextualMeaning: w.contextualMeaning || '',
+    simpleExplanation: w.simpleExplanation || '',
+    sermonNote: w.sermonNote || '',
+    usage: Array.isArray(w.usage) ? w.usage.slice(0, 2) : [],
   }))
 
   return (
@@ -1921,15 +1929,77 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep }: { studyData: any; o
           </div>
         )}
 
-        {/* Key Greek Words */}
+        {/* Key Greek Words — 풍성한 원어 분석 */}
         {words.length > 0 && (
           <div>
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">핵심 원어</span>
-            <div className="grid grid-cols-2 gap-2">
-              {words.map(kw => (
-                <div key={kw.word} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-2.5">
-                  <span className="text-xs text-slate-100 font-greek">{kw.word}</span>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{kw.meaning}</p>
+            <div className="space-y-3">
+              {words.map((kw, idx) => (
+                <div key={idx} className="bg-[#04060f]/60 rounded-xl border border-white/5 overflow-hidden">
+                  {/* 헤더: 헬라어 + 음역 + 메타 */}
+                  <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className="text-lg text-white font-greek font-semibold">{kw.word}</span>
+                      {kw.transliteration && (
+                        <span className="text-xs text-indigo-300 italic">{kw.transliteration}</span>
+                      )}
+                      {kw.partOfSpeech && (
+                        <span className="text-[10px] text-slate-500">· {kw.partOfSpeech}</span>
+                      )}
+                      {kw.strong && (
+                        <span className="text-[10px] text-slate-500 font-mono ml-auto">{kw.strong}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="px-4 py-3 space-y-2.5">
+                    {/* 기본 의미 */}
+                    {kw.basicMeaning && (
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">기본 의미</div>
+                        <p className="text-[11.5px] text-slate-200 leading-relaxed">{kw.basicMeaning}</p>
+                      </div>
+                    )}
+
+                    {/* 문맥상 의미 */}
+                    {kw.contextualMeaning && (
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold mb-0.5">이 본문에서의 의미</div>
+                        <p className="text-[11.5px] text-indigo-200 leading-relaxed">{kw.contextualMeaning}</p>
+                      </div>
+                    )}
+
+                    {/* 쉽게 설명 */}
+                    {kw.simpleExplanation && (
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mb-0.5">쉽게 설명하면</div>
+                        <p className="text-[11.5px] text-amber-100 leading-relaxed">{kw.simpleExplanation}</p>
+                      </div>
+                    )}
+
+                    {/* 설교적 적용 */}
+                    {kw.sermonNote && (
+                      <div className="border-l-2 border-indigo-500 pl-3">
+                        <div className="text-[9px] uppercase tracking-wider text-indigo-300 font-bold mb-0.5">설교 적용</div>
+                        <p className="text-[11.5px] text-slate-300 leading-relaxed italic">{kw.sermonNote}</p>
+                      </div>
+                    )}
+
+                    {/* 성경 용례 */}
+                    {kw.usage.length > 0 && (
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">성경 용례</div>
+                        <div className="space-y-1">
+                          {kw.usage.map((u: { ref: string; text: string }, i: number) => (
+                            <div key={i} className="text-[11px] text-slate-400 leading-relaxed">
+                              <span className="text-indigo-400 font-mono mr-1.5">{u.ref}</span>
+                              <span>&ldquo;{u.text}&rdquo;</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
