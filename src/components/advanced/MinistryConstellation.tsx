@@ -5,6 +5,8 @@ import {
   forceSimulation, forceManyBody, forceLink, forceCenter, forceCollide,
   type Simulation,
 } from 'd3-force'
+import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getStorageItem } from '@/lib/storage'
 
 interface GraphNode {
   id: string
@@ -116,30 +118,98 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     let ac: AbortController | null = null
     ac = new AbortController()
     setLoading(true)
-    fetch('/api/graph', { signal: ac.signal })
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          const nodes: GraphNode[] = (json.data.nodes || []).map((n: any) => ({
-            id: n.id,
-            label: n.label,
-            type: n.type,
-            subtitle: n.subtitle || '',
-            detail: n.detail || '',
+    Promise.all([
+      fetch('/api/graph', { signal: ac.signal }).then(r => r.json()).catch(() => ({ success: false })),
+      Promise.resolve(getCustomProjects()),
+    ]).then(([json, customProjects]) => {
+      const nodesMap = new Map<string, GraphNode>()
+      const edgesMap = new Map<string, GraphEdge>()
+
+      const addNode = (n: GraphNode) => { if (!nodesMap.has(n.id)) nodesMap.set(n.id, n) }
+      const addEdge = (source: string, target: string, label: string, weight = 1) => {
+        const key = `${source}::${target}`
+        const rev = `${target}::${source}`
+        if (!edgesMap.has(key) && !edgesMap.has(rev)) {
+          edgesMap.set(key, { source, target, label, weight })
+        }
+      }
+
+      // API nodes
+      if (json.success && json.data) {
+        for (const n of (json.data.nodes || [])) {
+          addNode({
+            id: n.id, label: n.label, type: n.type,
+            subtitle: n.subtitle || '', detail: n.detail || '',
             size: n.size || 0,
             updatedAt: n.updatedAt || n.updated_at || '',
             sermonCount: n.sermonCount || 0,
-          }))
-          const edges: GraphEdge[] = (json.data.edges || []).map((e: any) => ({
-            source: typeof e.source === 'string' ? e.source : e.source?.id,
-            target: typeof e.target === 'string' ? e.target : e.target?.id,
-            label: e.label,
-            weight: e.weight || 1,
-          })).filter((e: any) => e.source && e.target)
-          setAllNodes(nodes)
-          setAllEdges(edges)
+          })
         }
-      })
+        for (const e of (json.data.edges || [])) {
+          const src = typeof e.source === 'string' ? e.source : e.source?.id
+          const tgt = typeof e.target === 'string' ? e.target : e.target?.id
+          if (src && tgt) addEdge(src, tgt, e.label || '', e.weight || 1)
+        }
+      }
+
+      // localStorage projects — 진행 중 + 완료만 (보관 제외)
+      const activeLocalProjects = customProjects.filter((p: any) => p.status !== 'archived')
+      for (const p of activeLocalProjects) {
+        const sid = `sermon-${p.id}`
+        addNode({ id: sid, label: p.title || '(제목 없음)', type: 'sermon', subtitle: p.passage || '', detail: '', size: 5, updatedAt: p.updatedAt || p.createdAt || '' })
+
+        if (p.book && p.chapter) {
+          const pid = `passage-${p.book}-${p.chapter}`
+          if (!nodesMap.has(pid)) {
+            const plabel = p.passage || `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && p.verseEnd !== p.verseStart ? '-' + p.verseEnd : ''}`
+            addNode({ id: pid, label: plabel, type: 'passage', subtitle: p.book, detail: `${p.book} ${p.chapter}장`, size: 4, updatedAt: p.updatedAt || '' })
+          }
+          addEdge(sid, pid, '본문', 2)
+        }
+
+        for (const t of (p.themeNames || [])) {
+          if (!t) continue
+          const tid = `theme-${t}`
+          if (!nodesMap.has(tid)) addNode({ id: tid, label: t, type: 'theme', subtitle: '주제', detail: '', size: 4, updatedAt: '' })
+          addEdge(sid, tid, '관련', 1)
+        }
+
+        // Prep: keywords + themes fallback
+        const prepRaw = getStorageItem<any | null>(`prep_${p.id}`, null)
+        if (prepRaw) {
+          if (!p.themeNames || p.themeNames.length === 0) {
+            for (const t of (prepRaw.themes || [])) {
+              if (!t.name) continue
+              const tid = `theme-${t.name}`
+              if (!nodesMap.has(tid)) addNode({ id: tid, label: t.name, type: 'theme', subtitle: '주제', detail: '', size: 4, updatedAt: '' })
+              addEdge(sid, tid, '관련', 1)
+            }
+          }
+          for (const kw of (prepRaw.keyWords || [])) {
+            const wordLabel = kw.word || ''
+            if (!wordLabel) continue
+            const wid = `word-${p.id}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
+            if (!nodesMap.has(wid)) addNode({ id: wid, label: wordLabel, type: 'word', subtitle: kw.meaning || '', detail: '', size: 3, updatedAt: '' })
+            addEdge(sid, wid, '원어', 1)
+          }
+        }
+
+        // Manuscript: greek words
+        const msRaw = getStorageItem<any | null>(`manuscript_${p.id}`, null)
+        if (msRaw) {
+          for (const gw of (msRaw.greekWords || [])) {
+            const wordLabel = gw.greek || gw.word || ''
+            if (!wordLabel) continue
+            const wid = `word-${p.id}-${wordLabel.replace(/[^a-zA-Z0-9가-힣]/g, '_')}`
+            if (!nodesMap.has(wid)) addNode({ id: wid, label: wordLabel, type: 'word', subtitle: gw.meaning || '', detail: '', size: 3, updatedAt: '' })
+            addEdge(sid, wid, '원어', 1)
+          }
+        }
+      }
+
+      setAllNodes(Array.from(nodesMap.values()))
+      setAllEdges(Array.from(edgesMap.values()))
+    })
       .catch(() => {})
       .finally(() => setLoading(false))
     return () => ac?.abort()

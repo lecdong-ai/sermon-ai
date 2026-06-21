@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         .from('sermons')
         .select('id, title, book, passage, chapter_start, chapter_end, verse_start, verse_end, season, series, status, result, created_at, updated_at')
         .eq('user_id', user.id)
+        .neq('status', 'archived')
         .order('updated_at', { ascending: false }),
       supabaseAdmin
         .from('series')
