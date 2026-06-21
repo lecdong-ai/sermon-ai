@@ -447,8 +447,8 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
           <defs>
             {Object.entries(TYPE_COLOR).map(([t, c]) => (
               <radialGradient key={t} id={`starGlow-${t}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={c} stopOpacity="0.7" />
-                <stop offset="50%" stopColor={c} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={c} stopOpacity="0.9" />
+                <stop offset="50%" stopColor={c} stopOpacity="0.4" />
                 <stop offset="100%" stopColor={c} stopOpacity="0" />
               </radialGradient>
             ))}
@@ -496,11 +496,11 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
                     <circle
                       r={n.r * 2.2}
                       fill={`url(#starGlow-${n.type})`}
-                      opacity={n.recency * 0.6}
+                      opacity={n.recency * 0.85}
                     >
                       <animate
                         attributeName="opacity"
-                        values={`${n.recency * 0.4};${n.recency * 0.8};${n.recency * 0.4}`}
+                        values={`${n.recency * 0.6};${n.recency};${n.recency * 0.6}`}
                         dur={`${3 + (n.id.charCodeAt(0) % 3)}s`}
                         repeatCount="indefinite"
                       />
@@ -508,23 +508,23 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
                   )}
                   {/* Pulse for selected */}
                   {isSelected && (
-                    <circle r={n.r + 4} fill="none" stroke={color} strokeWidth={1.5} opacity={0.6}>
+                    <circle r={n.r + 4} fill="none" stroke={color} strokeWidth={2} opacity={0.8}>
                       <animate attributeName="r" from={n.r + 3} to={n.r + 12} dur="1.5s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" from="0.9" to="0" dur="1.5s" repeatCount="indefinite" />
                     </circle>
                   )}
                   {/* Main star */}
                   <circle
                     r={n.r}
                     fill={color}
-                    fillOpacity={0.9}
-                    stroke={isHover || isSelected ? '#fff' : 'rgba(255,255,255,0.3)'}
-                    strokeWidth={isHover || isSelected ? 1.5 : 0.5}
+                    fillOpacity={1}
+                    stroke={isHover || isSelected ? '#fff' : 'rgba(255,255,255,0.7)'}
+                    strokeWidth={isHover || isSelected ? 2 : 1}
                   />
                   <circle
                     r={n.r * 0.4}
                     fill="#fff"
-                    fillOpacity={0.4}
+                    fillOpacity={0.7}
                     cx={-n.r * 0.2}
                     cy={-n.r * 0.2}
                   />
