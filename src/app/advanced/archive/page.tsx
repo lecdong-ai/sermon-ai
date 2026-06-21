@@ -640,7 +640,7 @@ function SermonArchiveListItem({
           <span className="text-slate-600">·</span>
           <span>{sermon.sermonDate}</span>
           <span className="text-slate-600">·</span>
-          <span>{sermon.audience.join(', ')}</span>
+          <span>{Array.isArray(sermon.audience) ? sermon.audience.join(', ') : (sermon.audience || '')}</span>
         </div>
       </div>
       <div className="flex flex-wrap gap-1 shrink-0 max-w-[200px]">
@@ -735,7 +735,7 @@ function ArchivePreviewPanel({
 
             {/* Meta */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <MetaItem label="대상 청중" value={sermon.audience.join(', ')} />
+              <MetaItem label="대상 청중" value={Array.isArray(sermon.audience) ? sermon.audience.join(', ') : (sermon.audience || '')} />
               <MetaItem label="예배 유형" value={sermon.sermonType} />
               <MetaItem label="누적 자수" value={`${sermon.wordCount.toLocaleString()}자`} />
               <MetaItem label="구조화 대지" value={`${sermon.outlineTitles.length}개`} />

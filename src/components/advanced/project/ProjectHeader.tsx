@@ -73,7 +73,7 @@ export default function ProjectHeader({ project }: Props) {
               <span className="text-slate-600">·</span>
               <span>{project.sermonType}</span>
               <span className="text-slate-600">·</span>
-              <span>{project.audience.join(', ')}</span>
+              <span>{Array.isArray(project.audience) ? project.audience.join(', ') : (project.audience || '')}</span>
               {project.seriesName && (
                 <>
                   <span className="text-slate-600">·</span>

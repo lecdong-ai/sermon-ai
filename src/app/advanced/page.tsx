@@ -299,7 +299,7 @@ export default function AdvancedDashboardPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-slate-600">회중:</span>
-                        <span className="text-blue-300 font-extrabold">{sermon.audience.join(', ')}</span>
+                        <span className="text-blue-300 font-extrabold">{Array.isArray(sermon.audience) ? sermon.audience.join(', ') : (sermon.audience || '')}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-slate-600">키워드:</span>

@@ -184,7 +184,7 @@ export default function OverviewTab({ project, onProjectUpdated, updateStatus }:
           </div>
           <div>
             <span className="text-[11px] text-slate-500 block mb-1">유형 · 회중</span>
-            <span className="text-sm text-slate-100">{project.sermonType} · {project.audience.join(', ')}</span>
+            <span className="text-sm text-slate-100">{project.sermonType} · {Array.isArray(project.audience) ? project.audience.join(', ') : (project.audience || '')}</span>
           </div>
           <div>
             <span className="text-[11px] text-slate-500 block mb-1">시리즈</span>

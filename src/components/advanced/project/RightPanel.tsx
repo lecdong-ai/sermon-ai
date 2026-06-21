@@ -119,7 +119,7 @@ export default function RightPanel({ project, activeTab, onProjectUpdated, updat
             )}
             <InfoRow label="설교일" value={project.sermonDate} />
             <InfoRow label="유형" value={project.sermonType} />
-            <InfoRow label="회중" value={project.audience.join(', ')} />
+            <InfoRow label="회중" value={Array.isArray(project.audience) ? project.audience.join(', ') : (project.audience || '')} />
             {project.season && <InfoRow label="절기" value={project.season} />}
             {project.preacher && <InfoRow label="설교자" value={project.preacher} />}
             {project.seriesName && (
