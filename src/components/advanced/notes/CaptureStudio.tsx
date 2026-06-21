@@ -62,7 +62,8 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
   const readMinutes = Math.max(1, Math.round(wordCount / 250))
 
   useEffect(() => {
-    if (text.length < 12) {
+    const contentLength = mode === 'scripture' ? verseNotes.length : text.length
+    if (contentLength < 12) {
       setSaveState('idle')
       return
     }
@@ -72,7 +73,7 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
       setLastSavedAt(new Date())
     }, 900)
     return () => clearTimeout(t)
-  }, [text])
+  }, [text, verseNotes, mode])
 
   useEffect(() => {
     const parts = scripture.split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
@@ -110,7 +111,9 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
     }
   }
 
-  const canSave = text.trim().length >= 4
+  const canSave = mode === 'scripture'
+    ? (verseNotes.trim().length >= 4 || scriptureList.length > 0)
+    : text.trim().length >= 4
 
   const handleSave = () => {
     if (!canSave) return
@@ -121,7 +124,7 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
     onSave({
       type,
       title: title || '제목 없음',
-      content: text.trim(),
+      content: (mode === 'scripture' ? verseNotes : text).trim(),
       summary,
       tags,
       scripture: scriptureList,
@@ -130,6 +133,7 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
     setText('')
     setScripture('')
     setScriptureList([])
+    setVerseNotes('')
     setTags([])
     setTagInput('')
     setSaveState('idle')
