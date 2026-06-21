@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
+import ActivityHeatmap from '@/components/mypage/ActivityHeatmap'
 import { getCustomProjects } from '@/lib/advanced/mockData'
 import {
   Mail, LogOut, KeyRound, Shield, Crown, Sparkles,
@@ -52,6 +53,7 @@ export default function MyPage() {
   const [counts, setCounts] = useState<{ projects: number; inProgress: number; notes: number; completed: number; archived: number }>({
     projects: 0, inProgress: 0, notes: 0, completed: 0, archived: 0,
   })
+  const [activities, setActivities] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
 
   const loadAll = useCallback(async () => {
@@ -96,6 +98,18 @@ export default function MyPage() {
         completed,
         archived,
       })
+
+      // 활동 히트맵용 타임스탬프 수집
+      const acts: string[] = []
+      for (const s of sermonList) {
+        if (s.createdAt) acts.push(s.createdAt)
+        if (s.updatedAt && s.updatedAt !== s.createdAt) acts.push(s.updatedAt)
+      }
+      for (const n of insightsList) {
+        if (n.createdAt) acts.push(n.createdAt)
+        if (n.updatedAt && n.updatedAt !== n.createdAt) acts.push(n.updatedAt)
+      }
+      setActivities(acts)
     } catch (e) {
       console.error('mypage load error:', e)
     } finally {
@@ -335,6 +349,9 @@ export default function MyPage() {
           <CounterCell label="보관" value={counts.archived} sub="편" />
           <CounterCell label="통찰" value={counts.notes} sub="개" violet />
         </div>
+
+        {/* ── 활동 히트맵 ── */}
+        <ActivityHeatmap activities={activities} />
 
         {/* ── 2-Column Grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

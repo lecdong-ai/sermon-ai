@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Search, Plus, Sparkles, Bug, User, Heart, LogOut, LayoutDashboard, BookOpen } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
+import GlobalSearch from '@/components/advanced/shared/GlobalSearch'
 
 function getCookie(name: string): string {
   if (typeof document === 'undefined') return ''
@@ -86,8 +87,9 @@ export default function AdvancedHeader() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="설교, 성경 구절, 주제, 노트 통합 검색..."
-            className="w-full text-[13px] bg-[#0c1020] border border-white/5 rounded-xl pl-9 pr-3 py-1.5 text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
+            className="w-full text-[13px] bg-[#0c1020] border border-white/5 rounded-xl pl-9 pr-16 py-1.5 text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
           />
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-mono">⌘K</kbd>
         </div>
       </form>
       <div className="flex items-center gap-4">
@@ -186,6 +188,9 @@ export default function AdvancedHeader() {
         </div>
       </div>
     </header>
+
+    {/* Global Search Modal (Cmd+K) */}
+    <GlobalSearch />
 
     {/* Saved Notes Modal */}
     {showSavedNotes && <SavedNotesModal onClose={() => setShowSavedNotes(false)} />}
