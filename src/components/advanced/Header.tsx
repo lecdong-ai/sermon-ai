@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Sparkles, Bug, User, Heart, LogOut, LayoutDashboard, BookOpen } from 'lucide-react'
+import { Search, Plus, Sparkles, Bug, User, Heart, LogOut, LayoutDashboard, BookOpen, Archive, ScrollText, Crown } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 import GlobalSearch from '@/components/advanced/shared/GlobalSearch'
@@ -164,6 +164,35 @@ export default function AdvancedHeader() {
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   마이페이지
                 </button>
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/dashboard') }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  설교 대시보드
+                </button>
+                {isSupporter ? (
+                  <button
+                    onClick={() => { setShowMenu(false); router.push('/advanced/bible') }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200 transition-colors"
+                  >
+                    <ScrollText className="w-3.5 h-3.5" />
+                    말씀연구실
+                    <Crown className="w-3 h-3 ml-auto text-indigo-400" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setShowMenu(false); router.push('/support') }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors"
+                    title="후원회원 전용 메뉴입니다"
+                  >
+                    <ScrollText className="w-3.5 h-3.5" />
+                    <span>말씀연구실</span>
+                    <span className="ml-auto text-[9px] font-bold text-amber-400/80 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20">
+                      👑 후원 전용
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={() => { setShowMenu(false); router.push('/support') }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"

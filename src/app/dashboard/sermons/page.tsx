@@ -79,7 +79,7 @@ function SermonsContent() {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none focus:ring-1 focus:ring-primary-light text-muted"
+      className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 text-slate-300 font-medium"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -89,17 +89,17 @@ function SermonsContent() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">설교 목록</h2>
-        <button onClick={() => router.push('/dashboard/sermons/new')} className="text-sm bg-primary hover:bg-primary-dark text-white px-4 py-1.5 rounded-md transition-colors">
+        <h2 className="text-xl font-bold text-white">설교 목록</h2>
+        <button onClick={() => router.push('/dashboard/sermons/new')} className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/20 font-bold">
           + 새 설교
         </button>
       </div>
 
-      <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
+      <div className="glass-dark rounded-2xl p-4 space-y-3 border border-white/10">
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">⌕</span>
-            <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="제목, 본문, 메시지, 주제 검색..." className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light" />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">⌕</span>
+            <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="제목, 본문, 메시지, 주제 검색..." className="w-full pl-8 pr-3 py-1.5 text-sm border border-white/10 rounded-xl bg-white/5 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/40 font-medium" />
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <FilterSelect value={filterType} onChange={setFilterType} options={SERMON_TYPES} placeholder="설교 종류" />
@@ -109,7 +109,7 @@ function SermonsContent() {
             <select
               value={filterSeries}
               onChange={(e) => setFilterSeries(e.target.value)}
-              className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none focus:ring-1 focus:ring-primary-light text-muted"
+              className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 text-slate-300 font-medium"
             >
               <option value="">시리즈</option>
               {series.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -117,57 +117,57 @@ function SermonsContent() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none focus:ring-1 focus:ring-primary-light text-muted"
+              className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 text-slate-300 font-medium"
             >
               <option value="date-desc">최신순</option>
               <option value="date-asc">오래된순</option>
               <option value="title">제목순</option>
               <option value="book">성경책순</option>
             </select>
-            <div className="flex border border-border rounded overflow-hidden">
-              <button onClick={() => setViewMode('table')} className={`px-2.5 py-1.5 text-xs ${viewMode === 'table' ? 'bg-primary text-white' : 'bg-surface text-muted hover:bg-background'}`}>☰</button>
-              <button onClick={() => setViewMode('card')} className={`px-2.5 py-1.5 text-xs ${viewMode === 'card' ? 'bg-primary text-white' : 'bg-surface text-muted hover:bg-background'}`}>▦</button>
+            <div className="flex border border-white/10 rounded-lg overflow-hidden">
+              <button onClick={() => setViewMode('table')} className={`px-2.5 py-1.5 text-xs font-bold transition-colors ${viewMode === 'table' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>☰</button>
+              <button onClick={() => setViewMode('card')} className={`px-2.5 py-1.5 text-xs font-bold transition-colors ${viewMode === 'card' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>▦</button>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <FilterSelect value={filterBook} onChange={setFilterBook} options={BIBLE_BOOKS} placeholder="성경책" />
           {(filterBook || filterType || filterAudience || filterSeason || filterSeminar || filterSeries) && (
-            <button onClick={() => { setFilterBook(''); setFilterType(''); setFilterAudience(''); setFilterSeason(''); setFilterSeminar(''); setFilterSeries(''); setSearchText('') }} className="text-xs text-primary hover:text-primary-dark">필터 초기화</button>
+            <button onClick={() => { setFilterBook(''); setFilterType(''); setFilterAudience(''); setFilterSeason(''); setFilterSeminar(''); setFilterSeries(''); setSearchText('') }} className="text-xs text-indigo-300 hover:text-indigo-200 font-bold transition-colors">필터 초기화</button>
           )}
-          <span className="text-xs text-muted ml-auto">총 {filtered.length}개의 결과</span>
+          <span className="text-xs text-slate-500 ml-auto font-bold tabular-nums">총 {filtered.length}개의 결과</span>
         </div>
       </div>
 
       {viewMode === 'table' ? (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
+        <div className="glass-dark rounded-2xl overflow-hidden border border-white/10">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-background/50">
-                <th className="text-left py-3 px-4 text-xs text-muted font-medium">제목</th>
-                <th className="text-left py-3 px-4 text-xs text-muted font-medium">본문</th>
-                <th className="text-left py-3 px-4 text-xs text-muted font-medium">종류</th>
-                <th className="text-left py-3 px-4 text-xs text-muted font-medium">회중</th>
-                <th className="text-left py-3 px-4 text-xs text-muted font-medium">날짜</th>
-                <th className="text-right py-3 px-4 text-xs text-muted font-medium">AI</th>
+              <tr className="border-b border-white/5 bg-white/[0.02]">
+                <th className="text-left py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">제목</th>
+                <th className="text-left py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">본문</th>
+                <th className="text-left py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">종류</th>
+                <th className="text-left py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">회중</th>
+                <th className="text-left py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">날짜</th>
+                <th className="text-right py-3 px-4 text-xs text-slate-400 font-bold uppercase tracking-widest">AI</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((sermon) => (
-                <tr key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="border-b border-border/50 hover:bg-background/80 cursor-pointer transition-colors">
+                <tr key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors group">
                   <td className="py-3 px-4">
-                    <p className="font-medium text-foreground">{sermon.title}</p>
-                    <p className="text-xs text-muted mt-0.5">{sermon.coreMessage.slice(0, 40)}...</p>
+                    <p className="font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">{sermon.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">{sermon.coreMessage.slice(0, 40)}...</p>
                   </td>
-                  <td className="py-3 px-4 text-muted">{sermon.normalizedPassage}</td>
-                  <td className="py-3 px-4 text-muted">{sermon.sermonType}</td>
-                  <td className="py-3 px-4 text-muted">{sermon.audience}</td>
-                  <td className="py-3 px-4 text-muted shrink-0">{sermon.date.replace(/-/g, '.')}</td>
+                  <td className="py-3 px-4 text-slate-300 font-medium">{sermon.normalizedPassage}</td>
+                  <td className="py-3 px-4 text-slate-400">{sermon.sermonType}</td>
+                  <td className="py-3 px-4 text-slate-400">{sermon.audience}</td>
+                  <td className="py-3 px-4 text-slate-500 shrink-0 font-bold tabular-nums">{sermon.date.replace(/-/g, '.')}</td>
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleGenerate(sermon); }}
                       disabled={generatingId === sermon.id}
-                      className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                      className="inline-flex items-center gap-1 text-xs bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 disabled:opacity-50 px-2 py-1 rounded-lg transition-colors font-bold border border-indigo-500/20"
                     >
                       <Sparkles className="w-3 h-3" />
                       {generatingId === sermon.id ? '생성중...' : 'AI 생성'}
@@ -177,28 +177,28 @@ function SermonsContent() {
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && <div className="py-12 text-center text-muted text-sm">검색 결과가 없습니다</div>}
+          {filtered.length === 0 && <div className="py-12 text-center text-slate-500 text-sm font-medium">검색 결과가 없습니다</div>}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
           {filtered.map((sermon) => (
-            <div key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="bg-surface border border-border rounded-lg p-4 hover:shadow-sm cursor-pointer transition-all">
+            <div key={sermon.id} onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)} className="glass-dark rounded-2xl p-4 hover:border-indigo-500/30 cursor-pointer transition-all border border-white/10 group">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm text-foreground truncate">{sermon.title}</p>
-                  <p className="text-xs text-muted mt-1">{sermon.normalizedPassage}</p>
+                  <p className="font-bold text-sm text-slate-200 truncate group-hover:text-indigo-300 transition-colors">{sermon.title}</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">{sermon.normalizedPassage}</p>
                 </div>
-                <span className="text-xs text-muted shrink-0">{sermon.date.replace(/-/g, '.')}</span>
+                <span className="text-xs text-slate-500 shrink-0 font-bold tabular-nums">{sermon.date.replace(/-/g, '.')}</span>
               </div>
-              <p className="text-xs text-muted mt-2 line-clamp-2">{sermon.coreMessage}</p>
+              <p className="text-xs text-slate-400 mt-2 line-clamp-2 font-medium">{sermon.coreMessage}</p>
               <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.sermonType}</span>
-                <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.audience}</span>
-                {sermon.season && <span className="text-[10px] bg-background text-muted px-1.5 py-0.5 rounded">{sermon.season}</span>}
+                <span className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded font-bold">{sermon.sermonType}</span>
+                <span className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded font-bold">{sermon.audience}</span>
+                {sermon.season && <span className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded font-bold">{sermon.season}</span>}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleGenerate(sermon); }}
                   disabled={generatingId === sermon.id}
-                  className="ml-auto inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                  className="ml-auto inline-flex items-center gap-1 text-[10px] bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 disabled:opacity-50 px-2 py-1 rounded-lg transition-colors font-bold border border-indigo-500/20"
                 >
                   <Sparkles className="w-3 h-3" />
                   {generatingId === sermon.id ? '생성중...' : 'AI 생성'}
@@ -214,7 +214,7 @@ function SermonsContent() {
 
 export default function SermonsPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-muted text-sm">로딩 중...</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-slate-500 text-sm font-medium">로딩 중...</div>}>
       <SermonsContent />
     </Suspense>
   )

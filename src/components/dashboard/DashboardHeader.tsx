@@ -34,21 +34,21 @@ export default function DashboardHeader() {
   if (!user) return null
 
   return (
-    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-6 shrink-0">
+    <header className="h-14 border-b border-white/5 bg-[#050814]/80 backdrop-blur-md flex items-center justify-between px-6 shrink-0 relative z-10">
       <button
         onClick={() => router.push('/')}
-        className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors font-medium"
       >
         <span>←</span>
-        <span className="font-medium">메인 페이지</span>
+        <span>메인 페이지</span>
       </button>
 
       <div className="flex items-center gap-3">
         {plan && (
           <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-bold ${
             (plan === 'pro' || isSupporter)
-              ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
-              : 'bg-slate-100 text-slate-500 border border-slate-200/50'
+              ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30'
+              : 'bg-white/5 text-slate-500 border border-white/5'
           }`}>
             {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
           </span>
@@ -57,12 +57,12 @@ export default function DashboardHeader() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-background transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
               <User className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[13px] font-semibold text-foreground max-w-[120px] truncate">
+            <span className="text-[13px] font-bold text-slate-200 max-w-[120px] truncate">
               {user.email?.split('@')[0]}
             </span>
           </button>
@@ -70,14 +70,14 @@ export default function DashboardHeader() {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200/60 py-2 z-50">
-                <div className="px-4 py-2.5 border-b border-slate-200/40 mb-1.5">
-                  <p className="text-[11px] text-slate-400 font-medium">로그인 정보</p>
-                  <p className="text-[12px] font-bold text-slate-800 truncate mt-0.5">{user.email}</p>
+              <div className="absolute right-0 top-full mt-2 w-56 bg-[#0c1020] rounded-2xl shadow-2xl border border-white/10 py-2 z-50">
+                <div className="px-4 py-2.5 border-b border-white/5 mb-1.5">
+                  <p className="text-[11px] text-slate-500 font-medium">로그인 정보</p>
+                  <p className="text-[12px] font-bold text-white truncate mt-0.5">{user.email}</p>
                   {plan && (
                     <div className="mt-1.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                        (plan === 'pro' || isSupporter) ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+                        (plan === 'pro' || isSupporter) ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500'
                       }`}>
                         {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
                       </span>
@@ -86,24 +86,24 @@ export default function DashboardHeader() {
                 </div>
                 <button
                   onClick={() => { setMenuOpen(false); router.push('/mypage') }}
-                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-all"
+                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
                 >
-                  <User className="w-4 h-4 text-purple-500" />
+                  <User className="w-4 h-4 text-purple-400" />
                   마이페이지
                 </button>
                 <button
                   onClick={() => { setMenuOpen(false); router.push('/dashboard') }}
-                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-all"
+                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
                 >
-                  <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
                   대시보드 홈
                 </button>
-                <div className="border-t border-slate-200/40 mt-1.5 pt-1.5">
+                <div className="border-t border-white/5 mt-1.5 pt-1.5">
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50/50 transition-all"
+                    className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
                   >
-                    <LogOut className="w-4 h-4 text-rose-500" />
+                    <LogOut className="w-4 h-4 text-red-400" />
                     로그아웃
                   </button>
                 </div>

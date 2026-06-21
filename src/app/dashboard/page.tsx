@@ -100,42 +100,47 @@ export default function DashboardPage() {
   }, [series, completedSermons])
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">{userName ? `${userName}의 설교아카이브` : '대시보드'}</h2>
-          <p className="text-sm text-muted mt-0.5">
-            총 {completedSermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
-          </p>
+    <div className="animate-fade-in space-y-6 max-w-6xl relative">
+      {/* 배경 글로우 효과 */}
+      <div className="absolute inset-x-0 top-0 h-[400px] pointer-events-none overflow-hidden z-0 bg-radial-glow opacity-50" />
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white">{userName ? `${userName}의 설교아카이브` : '대시보드'}</h2>
+            <p className="text-sm text-slate-500 mt-0.5 font-medium">
+              총 {completedSermons.length}개의 설교 · {themes.length}개의 태그 · {series.length}개의 시리즈
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/dashboard/sermons/new')}
+            className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl transition-colors shadow-lg shadow-indigo-600/20 font-bold"
+          >
+            + 새 설교 등록
+          </button>
         </div>
-        <button
-          onClick={() => router.push('/dashboard/sermons/new')}
-          className="text-sm bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-md transition-colors"
-        >
-          + 새 설교 등록
-        </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">최근 등록된 설교</h3>
+      <div className="grid grid-cols-3 gap-4 relative z-10">
+        <div className="col-span-2 glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">최근 등록된 설교</h3>
           <div className="space-y-2">
             {recentSermons.map((sermon, i) => (
               <div
                 key={sermon.id}
                 onClick={() => router.push(`/dashboard/sermons/${sermon.id}`)}
-                className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-background cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                  <p className="text-sm font-bold text-slate-200 truncate group-hover:text-indigo-300 transition-colors">
                     {sermon.title}
                   </p>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5 font-medium">
                     {sermon.normalizedPassage} · {sermon.sermonType} · {sermon.audience}
                   </p>
                 </div>
-                <div className="text-xs text-muted shrink-0 ml-3">
+                <div className="text-xs text-slate-500 shrink-0 ml-3 font-bold tabular-nums">
                   {sermon.date.replace(/-/g, '.')}
                 </div>
               </div>
@@ -143,12 +148,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-lg p-5">
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-muted">업로드된 설교</h3>
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">업로드된 설교</h3>
             <button
               onClick={() => router.push('/dashboard/sermons/uploaded')}
-              className="text-[11px] text-primary hover:underline"
+              className="text-[11px] text-indigo-300 hover:text-indigo-200 font-bold transition-colors"
             >
               전체 보기 →
             </button>
@@ -158,18 +163,18 @@ export default function DashboardPage() {
               <div
                 key={sermon.id}
                 onClick={() => router.push(`/workspace?id=${sermon.id}`)}
-                className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-background cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                  <p className="text-sm font-bold text-slate-200 truncate group-hover:text-indigo-300 transition-colors">
                     {sermon.result?.sermon_title || sermon.title || sermon.file_name?.replace(/\.[^.]+$/, '') || '제목 없음'}
                   </p>
-                  <p className="text-xs text-muted mt-0.5 truncate">
+                  <p className="text-xs text-slate-500 mt-0.5 truncate font-medium">
                     {sermon.passage || sermon.file_name?.replace(/\.[^.]+$/, '') || ''}
                   </p>
                 </div>
-                <div className="text-xs text-muted shrink-0 ml-3">
+                <div className="text-xs text-slate-500 shrink-0 ml-3 font-bold tabular-nums">
                   {(() => {
                     const d = new Date(sermon.created_at || sermon.createdAt)
                     if (isNaN(d.getTime())) return ''
@@ -182,74 +187,74 @@ export default function DashboardPage() {
               </div>
             ))}
             {uploadedSermons.length === 0 && (
-              <p className="text-xs text-muted">업로드된 설교가 없습니다</p>
+              <p className="text-xs text-slate-500 font-medium">업로드된 설교가 없습니다</p>
             )}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">성경책별 설교</h3>
+      <div className="grid grid-cols-4 gap-4 relative z-10">
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">성경책별 설교</h3>
           <div className="space-y-1.5">
             {bookCount.slice(0, 8).map((item) => (
               <div key={item.book} className="flex items-center justify-between text-sm">
-                <span className="truncate">{item.book}</span>
-                <span className="text-xs text-muted shrink-0 ml-2">{item.count}편</span>
+                <span className="truncate text-slate-200 font-medium">{item.book}</span>
+                <span className="text-xs text-slate-500 shrink-0 ml-2 font-bold tabular-nums">{item.count}편</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">절기별 설교</h3>
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">절기별 설교</h3>
           <div className="space-y-1.5">
             {seasonCount.map((item) => (
               <div key={item.season} className="flex items-center justify-between text-sm">
-                <span className="truncate">{item.season}</span>
-                <span className="text-xs text-muted shrink-0 ml-2">{item.count}편</span>
+                <span className="truncate text-slate-200 font-medium">{item.season}</span>
+                <span className="text-xs text-slate-500 shrink-0 ml-2 font-bold tabular-nums">{item.count}편</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">회중별 설교</h3>
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">회중별 설교</h3>
           <div className="space-y-1.5">
             {audienceCount.map((item) => (
               <div key={item.audience} className="flex items-center justify-between text-sm">
-                <span className="truncate">{item.audience}</span>
-                <span className="text-xs text-muted shrink-0 ml-2">{item.count}편</span>
+                <span className="truncate text-slate-200 font-medium">{item.audience}</span>
+                <span className="text-xs text-slate-500 shrink-0 ml-2 font-bold tabular-nums">{item.count}편</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">시리즈 진행 현황</h3>
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">시리즈 진행 현황</h3>
           <div className="space-y-2">
             {seriesProgress.map((srs) => (
               <div key={srs.id} className="text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="truncate">{srs.name}</span>
-                  <span className="text-xs text-muted shrink-0 ml-2">{srs.sermonCount}편</span>
+                  <span className="truncate text-slate-200 font-medium">{srs.name}</span>
+                  <span className="text-xs text-slate-500 shrink-0 ml-2 font-bold tabular-nums">{srs.sermonCount}편</span>
                 </div>
-                <div className="mt-1 h-1.5 bg-background rounded-full overflow-hidden">
+                <div className="mt-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       srs.status === 'active'
-                        ? 'bg-primary'
+                        ? 'bg-indigo-500'
                         : srs.status === 'completed'
-                        ? 'bg-green-500'
+                        ? 'bg-emerald-500'
                         : 'bg-amber-400'
                     }`}
                     style={{ width: `${Math.min((srs.sermonCount / 10) * 100, 100)}%` }}
                   />
                 </div>
-                <span className="text-[10px] text-muted mt-0.5 block">
+                <span className="text-[10px] text-slate-500 mt-0.5 block font-bold">
                   {srs.status === 'active' ? '진행 중' : srs.status === 'completed' ? '완료' : '예정'}
                 </span>
               </div>
             ))}
             {seriesProgress.length === 0 && (
-              <p className="text-xs text-muted">등록된 시리즈가 없습니다</p>
+              <p className="text-xs text-slate-500 font-medium">등록된 시리즈가 없습니다</p>
             )}
           </div>
         </div>
