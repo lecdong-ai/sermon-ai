@@ -42,6 +42,23 @@ export interface InsightInfo {
   title: string
 }
 
+export interface SermonResult {
+  coreMessage?: string
+  outlineIntro?: string
+  outlinePoint1?: string
+  outlinePoint2?: string
+  outlinePoint3?: string
+  outlineConclusion?: string
+  manuscript?: string
+  preacher?: string
+  sermonType?: string
+  audience?: string
+  seriesId?: string
+  themeIds?: string[]
+  tagIds?: string[]
+  relatedSermonIds?: string[]
+}
+
 export interface StudyData {
   greekWords?: any[]
   commentaries?: any[]
@@ -55,6 +72,7 @@ export interface AggregatedSources {
   manuscript: any
   quickfill: QuickFill | null
   insights: InsightInfo[]
+  sermonResult?: SermonResult | null
 }
 
 const STORAGE_KEYS = {
@@ -64,14 +82,48 @@ const STORAGE_KEYS = {
   quickfill: (projectId: string) => `quickfill_${projectId}`,
 }
 
-export function loadAggregatedSources(projectId: string, insights: InsightInfo[] = []): AggregatedSources {
-  return {
-    study: getStorageItem<StudyData | null>(STORAGE_KEYS.study(projectId), null),
-    prep: getStorageItem<any | null>(STORAGE_KEYS.prep(projectId), null),
-    manuscript: getStorageItem<any | null>(STORAGE_KEYS.manuscript(projectId), null),
-  quickfill: getStorageItem<QuickFill | null>(STORAGE_KEYS.quickfill(projectId), null),
-    insights,
+export function loadAggregatedSources(projectId: string, insights: InsightInfo[] = [], sermonResult?: SermonResult | null): AggregatedSources {
+  const studyLocal = getStorageItem<StudyData | null>(STORAGE_KEYS.study(projectId), null)
+  const prepLocal = getStorageItem<any | null>(STORAGE_KEYS.prep(projectId), null)
+  const manuscriptLocal = getStorageItem<any | null>(STORAGE_KEYS.manuscript(projectId), null)
+
+  // API 결과와 localStorage 데이터 병합 (API 데이터가 우선순위 높음)
+  const prep = prepLocal || {}
+  if (sermonResult) {
+    if (sermonResult.coreMessage && !prep.coreMessage) prep.coreMessage = sermonResult.coreMessage
+    if (sermonResult.outlineIntro && !prep.deliveryIntro) prep.deliveryIntro = sermonResult.outlineIntro
+    if (sermonResult.outlineConclusion && !prep.deliveryConclusion) prep.deliveryConclusion = sermonResult.outlineConclusion
+    const apiOutlines = [sermonResult.outlinePoint1, sermonResult.outlinePoint2, sermonResult.outlinePoint3].filter(Boolean)
+    if (apiOutlines.length > 0 && (!prep.outlines || prep.outlines.length === 0)) {
+      prep.outlines = apiOutlines.map((title, i) => ({ title, description: '' }))
+    }
   }
+
+  const manuscript = manuscriptLocal || {}
+  if (sermonResult?.manuscript && !manuscript.rawText) {
+    manuscript.rawText = sermonResult.manuscript
+  }
+
+  return {
+    study: studyLocal,
+    prep: Object.keys(prep).length > 0 ? prep : null,
+    manuscript: Object.keys(manuscript).length > 0 ? manuscript : null,
+    quickfill: getStorageItem<QuickFill | null>(STORAGE_KEYS.quickfill(projectId), null),
+    insights,
+    sermonResult,
+  }
+}
+
+export async function loadAggregatedSourcesAsync(projectId: string, insights: InsightInfo[] = []): Promise<AggregatedSources> {
+  let sermonResult: SermonResult | null = null
+  try {
+    const res = await fetch(`/api/sermons/${projectId}`)
+    const json = await res.json()
+    if (json.success && json.data?.result) {
+      sermonResult = json.data.result
+    }
+  } catch {}
+  return loadAggregatedSources(projectId, insights, sermonResult)
 }
 
 export function saveQuickFill(projectId: string, data: Omit<QuickFill, 'savedAt'>) {
@@ -87,12 +139,11 @@ export function runMultiSourceCheck(
   toStatus: string,
   sources: AggregatedSources,
 ): MultiCheckReport {
-  const { study, prep, manuscript, quickfill, insights } = sources
+  const { study, prep, manuscript, quickfill, insights, sermonResult } = sources
 
   const reportResults: MultiCheckResult[] = []
 
   if (fromStatus === 'research' && toStatus === 'prepare') {
-    // 원어: study.greekWords OR (quickfill.keyWords ≥ 2) OR (insights.research ≥ 2)
     const studyWords = study?.greekWords?.length || 0
     const qfWords = quickfill?.keyWords?.filter(Boolean).length || 0
     const insightWords = insights.filter((i) => i.type === 'research').length
@@ -111,7 +162,6 @@ export function runMultiSourceCheck(
       availablePaths: ['insight', 'study', 'quickfill', 'manuscript'],
     })
 
-    // 주석: study.commentaries OR (quickfill.commentaries ≥ 3) OR (insights.research ≥ 3)
     const studyComms = study?.commentaries?.length || 0
     const qfComms = quickfill?.commentaries?.filter(Boolean).length || 0
     const insightComms = insights.filter((i) => i.type === 'research' || i.type === 'illustration').length
@@ -130,7 +180,6 @@ export function runMultiSourceCheck(
       availablePaths: ['insight', 'study', 'quickfill', 'manuscript'],
     })
 
-    // 주제: study.themes OR (quickfill.theme) OR (insights tags)
     const studyThemes = study?.themes?.length || 0
     const qfTheme = quickfill?.theme?.trim() ? 1 : 0
     const insightTags = new Set<string>()
@@ -150,7 +199,6 @@ export function runMultiSourceCheck(
       availablePaths: ['insight', 'study', 'quickfill'],
     })
   } else if (fromStatus === 'prepare' && toStatus === 'writing') {
-    // 중심명제, 대지, 적용, 전달흐름 — prep 데이터 기준
     const coreMsg = (prep?.coreMessage && String(prep.coreMessage).length > 10) ? 1 : 0
     const outlines = Array.isArray(prep?.outlines) ? prep.outlines.length : 0
     const apps = Array.isArray(prep?.applicationPoints) ? prep.applicationPoints.length : 0
@@ -160,82 +208,95 @@ export function runMultiSourceCheck(
       id: 'core-message',
       label: '중심명제',
       required: 1, satisfied: coreMsg, passed: coreMsg >= 1,
-      contributors: coreMsg ? [{ source: 'prep', count: 1, detail: '설교 준비' }] : [],
+      contributors: coreMsg ? [{ source: 'prep', count: 1, detail: '설교 준비 탭' }] : [],
       availablePaths: ['prep', 'manuscript'],
     })
     reportResults.push({
       id: 'outlines',
       label: '대지 구조',
       required: 2, satisfied: outlines, passed: outlines >= 2,
-      contributors: outlines ? [{ source: 'prep', count: outlines, detail: '설교 준비' }] : [],
+      contributors: outlines ? [{ source: 'prep', count: outlines, detail: '설교 준비 탭' }] : [],
       availablePaths: ['prep', 'manuscript'],
     })
     reportResults.push({
       id: 'application-points',
       label: '적용 포인트',
       required: 1, satisfied: apps, passed: apps >= 1,
-      contributors: apps ? [{ source: 'prep', count: apps, detail: '설교 준비' }] : [],
+      contributors: apps ? [{ source: 'prep', count: apps, detail: '설교 준비 탭' }] : [],
       availablePaths: ['prep', 'manuscript'],
     })
     reportResults.push({
       id: 'delivery-flow',
       label: '전달 흐름',
       required: 1, satisfied: flow, passed: flow >= 1,
-      contributors: flow ? [{ source: 'prep', count: 1, detail: '설교 준비' }] : [],
+      contributors: flow ? [{ source: 'prep', count: 1, detail: '설교 준비 탭' }] : [],
       availablePaths: ['prep', 'manuscript'],
     })
   } else if (fromStatus === 'writing' && toStatus === 'review') {
-    // 원고 섹션 확인
+    // localStorage 구조화된 섹션
     const sections = manuscript?.sections || []
     const intro = sections.find((s: any) => s.type === 'introduction' || s.label?.includes('서론') || s.label?.includes('도입'))
     const bodies = sections.filter((s: any) => s.type === 'body' || s.label?.match(/본론|대지/))
     const concl = sections.find((s: any) => s.type === 'conclusion' || s.label?.includes('결론'))
     const app = sections.find((s: any) => s.type === 'application' || s.label?.includes('적용'))
 
+    // API rawText fallback (ManuscriptTab이 저장한 result.manuscript)
+    const rawText = manuscript?.rawText || sermonResult?.manuscript || ''
+    const rawLen = rawText.length
+    const hasRawIntro = rawLen > 0 && (rawText.includes('서론') || rawText.includes('도입') || rawText.startsWith('##'))
+    const rawBodyCount = rawLen > 300 ? 2 : rawLen > 100 ? 1 : 0
+    const hasRawConcl = rawLen > 0 && (rawText.includes('결론') || rawText.trim().endsWith('아멘') || rawText.trim().endsWith('기도'))
+    const hasRawApp = rawLen > 0 && (rawText.includes('적용'))
+
     reportResults.push({
       id: 'introduction', label: '서론', required: 1,
-      satisfied: intro?.content?.length > 50 ? 1 : 0,
-      passed: !!intro?.content && intro.content.length > 50,
-      contributors: intro?.content ? [{ source: 'manuscript', count: 1, detail: '원고' }] : [],
+      satisfied: (intro?.content?.length > 50 ? 1 : 0) || (hasRawIntro && rawLen > 100 ? 1 : 0),
+      passed: (!!intro?.content && intro.content.length > 50) || (hasRawIntro && rawLen > 100),
+      contributors: intro?.content ? [{ source: 'manuscript', count: 1, detail: '원고 섹션' }] : rawLen > 0 ? [{ source: 'manuscript', count: 1, detail: '원고 본문' }] : [],
       availablePaths: ['manuscript'],
     })
     reportResults.push({
       id: 'body-sections', label: '본론', required: 2,
-      satisfied: bodies.filter((s: any) => s.content?.length > 100).length,
-      passed: bodies.filter((s: any) => s.content?.length > 100).length >= 2,
-      contributors: bodies.length ? [{ source: 'manuscript', count: bodies.length, detail: '원고' }] : [],
+      satisfied: Math.max(bodies.filter((s: any) => s.content?.length > 100).length, rawBodyCount),
+      passed: bodies.filter((s: any) => s.content?.length > 100).length >= 2 || rawBodyCount >= 2,
+      contributors: bodies.length ? [{ source: 'manuscript', count: bodies.length, detail: '원고 섹션' }] : rawLen > 0 ? [{ source: 'manuscript', count: rawBodyCount, detail: '원고 본문' }] : [],
       availablePaths: ['manuscript'],
     })
     reportResults.push({
       id: 'conclusion', label: '결론', required: 1,
-      satisfied: concl?.content?.length > 50 ? 1 : 0,
-      passed: !!concl?.content && concl.content.length > 50,
-      contributors: concl?.content ? [{ source: 'manuscript', count: 1, detail: '원고' }] : [],
+      satisfied: (concl?.content?.length > 50 ? 1 : 0) || (hasRawConcl && rawLen > 50 ? 1 : 0),
+      passed: (!!concl?.content && concl.content.length > 50) || (hasRawConcl && rawLen > 50),
+      contributors: concl?.content ? [{ source: 'manuscript', count: 1, detail: '원고 섹션' }] : rawLen > 0 ? [{ source: 'manuscript', count: 1, detail: '원고 본문' }] : [],
       availablePaths: ['manuscript'],
     })
     reportResults.push({
       id: 'application', label: '적용', required: 1,
-      satisfied: app?.content?.length > 50 ? 1 : 0,
-      passed: !!app?.content && app.content.length > 50,
-      contributors: app?.content ? [{ source: 'manuscript', count: 1, detail: '원고' }] : [],
+      satisfied: (app?.content?.length > 50 ? 1 : 0) || (hasRawApp && rawLen > 100 ? 1 : 0),
+      passed: (!!app?.content && app.content.length > 50) || (hasRawApp && rawLen > 100),
+      contributors: app?.content ? [{ source: 'manuscript', count: 1, detail: '원고 섹션' }] : rawLen > 0 ? [{ source: 'manuscript', count: 1, detail: '원고 본문' }] : [],
       availablePaths: ['manuscript'],
     })
   } else if (fromStatus === 'review' && toStatus === 'completed') {
-    const total = (manuscript?.sections || []).reduce((sum: number, s: any) => sum + (s.content?.length || 0), 0)
     const sections = manuscript?.sections || []
+    const total = sections.reduce((sum: number, s: any) => sum + (s.content?.length || 0), 0)
     const allFilled = sections.length > 0 && sections.every((s: any) => s.content?.length > 20)
     const illustrations = Array.isArray(manuscript?.illustrationNotes) ? manuscript.illustrationNotes.length : 0
 
+    // rawText fallback
+    const rawText = manuscript?.rawText || sermonResult?.manuscript || ''
+    const rawTotal = total + rawText.length
+
     reportResults.push({
-      id: 'word-count', label: '원고 분량', required: 1000, satisfied: total,
-      passed: total >= 1000,
-      contributors: [{ source: 'manuscript', count: total, detail: '원고 글자수' }],
+      id: 'word-count', label: '원고 분량', required: 1000, satisfied: rawTotal,
+      passed: rawTotal >= 1000,
+      contributors: [{ source: 'manuscript', count: rawTotal, detail: total > 0 ? '원고 섹션' : '원고 본문' }],
       availablePaths: ['manuscript'],
     })
     reportResults.push({
-      id: 'all-sections', label: '모든 섹션 채워짐', required: 1, satisfied: allFilled ? 1 : 0,
-      passed: allFilled,
-      contributors: allFilled ? [{ source: 'manuscript', count: 1, detail: '원고' }] : [],
+      id: 'all-sections', label: '모든 섹션 채워짐', required: 1,
+      satisfied: (allFilled ? 1 : 0) || (rawText.length > 500 ? 1 : 0),
+      passed: allFilled || rawText.length > 500,
+      contributors: allFilled ? [{ source: 'manuscript', count: 1, detail: '원고 섹션' }] : rawText.length > 500 ? [{ source: 'manuscript', count: 1, detail: '원고 본문' }] : [],
       availablePaths: ['manuscript'],
     })
     reportResults.push({

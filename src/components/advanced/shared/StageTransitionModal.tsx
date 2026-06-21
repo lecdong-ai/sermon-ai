@@ -9,7 +9,7 @@ import {
 import type { ProjectStatus } from '@/lib/advanced/types'
 import { PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
 import {
-  runMultiSourceCheck, loadAggregatedSources, type MultiCheckReport,
+  runMultiSourceCheck, loadAggregatedSources, loadAggregatedSourcesAsync, type MultiCheckReport,
   type MultiCheckResult, type InsightInfo, type QuickFill,
 } from '@/lib/advanced/stageChecker'
 import QuickFillWizard from './QuickFillWizard'
@@ -38,7 +38,6 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
   const runCheck = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch insights from DB
       let insights: InsightInfo[] = []
       try {
         const res = await fetch('/api/insights')
@@ -56,7 +55,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
         }
       } catch {}
 
-      const sources = loadAggregatedSources(projectId, insights)
+      const sources = await loadAggregatedSourcesAsync(projectId, insights)
       const newReport = runMultiSourceCheck(from, to, sources)
       setReport(newReport)
     } finally {
