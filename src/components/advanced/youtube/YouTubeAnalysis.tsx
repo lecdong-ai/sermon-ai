@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
-  Youtube, FileText, ArrowLeft, ExternalLink, Loader2, Bookmark, Trash2
+  FileText, ArrowLeft, ExternalLink, Loader2, Bookmark, Trash2
 } from 'lucide-react'
 import { TranscriptTimeline } from './TranscriptTimeline'
 import { YouTubePlayer } from './YouTubePlayer'
@@ -130,37 +130,10 @@ export function YouTubeAnalysis({ data, loading, onBack, onDelete, onInsightsCha
         </div>
       </div>
 
-      {/* Video info */}
-      <div className="flex items-start gap-4">
-        <div className="shrink-0 w-32 aspect-video rounded-lg overflow-hidden bg-slate-800 border border-white/10">
-          {data.thumbnail_url ? (
-            <img src={data.thumbnail_url} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Youtube className="w-6 h-6 text-slate-700" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0 pt-1">
-          <h2 className="text-base font-bold text-white mb-1">{data.title || '제목 없음'}</h2>
-          <p className="text-xs text-slate-500 mb-2">{data.channel_name}</p>
-          <div className="flex items-center gap-3 text-[10px] text-slate-600">
-            <span className="flex items-center gap-1">
-              <FileText className="w-3 h-3" />
-              {formatDate(data.created_at)}
-            </span>
-            <span className="flex items-center gap-1">
-              <Bookmark className="w-3 h-3" />
-              {savedInsights.length}개 저장됨
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left: Player + Transcript */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Left: Player + info + Transcript */}
+        <div className="lg:col-span-2 space-y-3">
           <div className="aspect-video rounded-xl overflow-hidden border border-white/10">
             <YouTubePlayer
               videoId={data.video_id}
@@ -168,6 +141,23 @@ export function YouTubeAnalysis({ data, loading, onBack, onDelete, onInsightsCha
               onSeekReady={(seek) => { seekRef.current = seek }}
             />
           </div>
+
+          {/* Video info below player */}
+          <div>
+            <h2 className="text-sm font-bold text-white mb-0.5">{data.title || '제목 없음'}</h2>
+            <p className="text-xs text-slate-500 mb-1.5">{data.channel_name}</p>
+            <div className="flex items-center gap-3 text-[10px] text-slate-600">
+              <span className="flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                {formatDate(data.created_at)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Bookmark className="w-3 h-3" />
+                {savedInsights.length}개 저장됨
+              </span>
+            </div>
+          </div>
+
           {data.transcript?.length > 0 && (
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
               <TranscriptTimeline

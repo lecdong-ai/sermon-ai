@@ -1,6 +1,6 @@
 'use client'
 
-import { Trash2, Youtube, ExternalLink, Calendar, Clock, AlertCircle, RefreshCw } from 'lucide-react'
+import { Trash2, Youtube, ExternalLink, Calendar, AlertCircle, RefreshCw } from 'lucide-react'
 
 interface AnalysisItem {
   id: string
@@ -11,9 +11,8 @@ interface AnalysisItem {
   video_url: string
   created_at: string
   analysis: {
-    summary: string
-    topics?: { title: string; description: string }[]
-    keyInsights?: { title: string; detail: string }[]
+    overallSummary?: string
+    summary?: string
   }
 }
 
@@ -129,18 +128,12 @@ export function YouTubeLibrary({ items, loading, error, onSelect, onDelete, onRe
 
           {/* Info */}
           <div className="p-4">
-            <h4 className="text-sm font-medium text-white/90 truncate mb-1 group-hover:text-white transition-colors">
-              {item.title || '제목 없음'}
-            </h4>
-            <p className="text-[11px] text-slate-500 mb-3">
-              {item.channel_name || '알 수 없는 채널'}
-            </p>
-
-            {/* Preview */}
-            {item.analysis?.summary && (
-              <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 mb-3">
-                {item.analysis.summary}
+            {(item.analysis?.overallSummary || item.analysis?.summary) ? (
+              <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3 mb-3">
+                {item.analysis.overallSummary || item.analysis.summary}
               </p>
+            ) : (
+              <p className="text-xs text-slate-500">{item.title || '제목 없음'}</p>
             )}
 
             {/* Meta */}
