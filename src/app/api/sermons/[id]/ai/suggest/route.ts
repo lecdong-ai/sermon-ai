@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserFromRequest } from '@/lib/auth'
+import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null

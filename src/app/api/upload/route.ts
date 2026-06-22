@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { validateFile, parseFile } from '@/lib/parsers'
 import { generateAll } from '@/lib/openai'
 import { generateWithDeduction } from '@/lib/generation'
+import { checkOpenAIRateLimit } from '@/lib/auth'
 
 function getSupabaseAdmin(request: NextRequest) {
   return createServerClient(
@@ -74,6 +75,10 @@ export async function POST(request: NextRequest) {
       )
     }
     const userId = user.id
+
+    // Rate limit: OpenAI 호출 비용 폭탄 방지
+    const rateLimitResponse = checkOpenAIRateLimit(request, userId)
+    if (rateLimitResponse) return rateLimitResponse
 
     // 3. Supabase에 저장
     const { data: sermon, error: insertError } = await supabaseAdmin

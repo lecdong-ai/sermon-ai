@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { getUserFromRequest } from '@/lib/auth'
+import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { mapBookName } from '@/lib/bible/bookMap'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'

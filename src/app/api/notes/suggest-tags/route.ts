@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createServerClient } from '@supabase/ssr'
+import { checkOpenAIRateLimit } from '@/lib/auth'
 
 let _openai: OpenAI | null = null
 function getOpenai() {

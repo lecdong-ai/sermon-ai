@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserFromRequest } from '@/lib/auth'
+import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { createApiClient } from '@/lib/supabase/api'
 import { YoutubeTranscript } from 'youtube-transcript'
 import OpenAI from 'openai'

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getUserFromRequest } from '@/lib/auth'
+import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { generateStudyGuide } from '@/lib/openai'
 
 import type { StudyGuideInput } from '@/types'

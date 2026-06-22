@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { getUserFromRequest } from '@/lib/auth'
+import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { SYSTEM_PROMPT } from '@/lib/ai/prompts/series-insights'
 import { getSeriesById } from '@/lib/advanced/seriesData'
 

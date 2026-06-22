@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import JSON5 from 'json5'
 import { createServerClient } from '@supabase/ssr'
 import { PROMPTS } from '@/lib/dashboard/sermonWizardPrompts'
+import { checkOpenAIRateLimit } from '@/lib/auth'
 
 async function getUser(request: NextRequest) {
   const sb = createServerClient(
