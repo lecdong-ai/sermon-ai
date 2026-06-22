@@ -75,6 +75,9 @@ export async function grantSupporter(
     console.error('grantSupporter (user_usage) error:', e)
   }
 
+  // Supabase Auth 캐시 propagation 대기 (listUsers가 새 데이터를 반환할 때까지)
+  await new Promise(resolve => setTimeout(resolve, 500))
+
   return metaOk
 }
 
