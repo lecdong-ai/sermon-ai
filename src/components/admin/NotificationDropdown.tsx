@@ -17,6 +17,7 @@ interface Notification {
 const TYPE_COLORS: Record<string, string> = {
   new_user: 'bg-indigo-500',
   new_donation: 'bg-emerald-500',
+  new_message: 'bg-cyan-500',
   quota_warning: 'bg-amber-500',
   error: 'bg-rose-500',
   system: 'bg-slate-500',
@@ -25,6 +26,7 @@ const TYPE_COLORS: Record<string, string> = {
 const TYPE_LABELS: Record<string, string> = {
   new_user: '신규 회원',
   new_donation: '후원',
+  new_message: '메시지',
   quota_warning: 'quota 경고',
   error: '에러',
   system: '시스템',

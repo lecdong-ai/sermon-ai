@@ -1,7 +1,7 @@
 // Admin notification helper. Server-side only (uses service_role).
 import { supabaseAdmin } from './supabase'
 
-export type AdminNotificationType = 'new_user' | 'new_donation' | 'quota_warning' | 'error' | 'system'
+export type AdminNotificationType = 'new_user' | 'new_donation' | 'new_message' | 'quota_warning' | 'error' | 'system'
 
 export interface CreateNotificationInput {
   type: AdminNotificationType

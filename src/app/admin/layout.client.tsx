@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
-  LayoutDashboard, Users, Search, ChevronDown,
+  LayoutDashboard, Users, Inbox, Search, ChevronDown,
   Shield, Home, ChevronLeft,
 } from 'lucide-react'
 import NotificationDropdown from '@/components/admin/NotificationDropdown'
@@ -13,6 +13,7 @@ import NotificationDropdown from '@/components/admin/NotificationDropdown'
 const ADMIN_MENUS = [
   { key: 'overview', label: '대시보드', icon: LayoutDashboard, href: '/admin' },
   { key: 'users', label: '회원 관리', icon: Users, href: '/admin/users' },
+  { key: 'messages', label: '메시지', icon: Inbox, href: '/admin/messages' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
