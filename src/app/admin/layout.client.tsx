@@ -5,14 +5,13 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
-  LayoutDashboard, Users, Activity, Search, Bell, ChevronDown,
+  LayoutDashboard, Users, Search, Bell, ChevronDown,
   Shield, Home, ChevronLeft,
 } from 'lucide-react'
 
 const ADMIN_MENUS = [
   { key: 'overview', label: '대시보드', icon: LayoutDashboard, href: '/admin' },
   { key: 'users', label: '회원 관리', icon: Users, href: '/admin/users' },
-  { key: 'logs', label: '시스템 로그', icon: Activity, href: '/admin/logs' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
