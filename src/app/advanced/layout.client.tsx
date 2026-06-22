@@ -64,7 +64,7 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
   if (!isSupporter) return null
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#050814] text-slate-200 -mt-16 relative">
+    <div className="flex h-screen overflow-hidden bg-[#050814] text-slate-200 relative">
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[120px]" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-purple-500/5 blur-[120px]" />
