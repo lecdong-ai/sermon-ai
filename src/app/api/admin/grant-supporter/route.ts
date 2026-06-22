@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getUserFromRequest } from '@/lib/auth'
 import { grantSupporter } from '@/lib/donations'
+import { notifyAdmins } from '@/lib/admin-notifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,6 +32,25 @@ export async function POST(request: NextRequest) {
     if (!ok) {
       return NextResponse.json({ error: '후원자 부여에 실패했습니다.' }, { status: 500 })
     }
+
+    // 대상 회원 정보 조회 (이메일)
+    let userEmail = userId
+    try {
+      const { data: target } = await supabaseAdmin.auth.admin.getUserById(userId)
+      userEmail = target?.user?.email || userId
+    } catch {}
+
+    // 관리자 알림
+    notifyAdmins({
+      type: 'new_donation',
+      title: `${userEmail} 후원 ${days}일 부여`,
+      message: amountKrw
+        ? `₩${amountKrw.toLocaleString('ko-KR')} 후원 — ${note || '메모 없음'}`
+        : `${days}일 후원 부여 (금액 미입력)`,
+      link: `/admin/users?focus=${userId}`,
+      relatedUserId: userId,
+      metadata: { days, amountKrw, note },
+    }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

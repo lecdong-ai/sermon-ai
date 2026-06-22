@@ -5,9 +5,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
-  LayoutDashboard, Users, Search, Bell, ChevronDown,
+  LayoutDashboard, Users, Search, ChevronDown,
   Shield, Home, ChevronLeft,
 } from 'lucide-react'
+import NotificationDropdown from '@/components/admin/NotificationDropdown'
 
 const ADMIN_MENUS = [
   { key: 'overview', label: '대시보드', icon: LayoutDashboard, href: '/admin' },
@@ -79,10 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="ml-auto flex items-center gap-1">
-            <button className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
-            </button>
+            <NotificationDropdown />
             <div className="w-px h-5 bg-white/5 mx-1" />
             <button className="flex items-center gap-2 h-8 px-2 rounded-lg hover:bg-white/5 transition-colors">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white">

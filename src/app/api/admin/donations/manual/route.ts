@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { isAdmin } from '@/lib/admin'
 import { getManualDonations, addManualDonation } from '@/lib/admin/donations'
+import { notifyAdmins } from '@/lib/admin-notifications'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +34,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId와 amountKrw는 필수입니다.' }, { status: 400 })
     }
     const donation = await addManualDonation(userId, parseInt(amountKrw), note || '', user.id)
+    if (donation) {
+      let userEmail = userId
+      try {
+        const { data: target } = await supabaseAdmin.auth.admin.getUserById(userId)
+        userEmail = target?.user?.email || userId
+      } catch {}
+      notifyAdmins({
+        type: 'new_donation',
+        title: `${userEmail} 수동 후원 ₩${parseInt(amountKrw).toLocaleString('ko-KR')}`,
+        message: note || '수동 입력 후원',
+        link: `/admin/users?focus=${userId}`,
+        relatedUserId: userId,
+        metadata: { amountKrw: parseInt(amountKrw), note, source: 'manual' },
+      }).catch(() => {})
+    }
     return NextResponse.json({ donation })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || '입력 실패' }, { status: 500 })
