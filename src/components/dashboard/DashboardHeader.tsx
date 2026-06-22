@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { LogOut, User, LayoutDashboard } from 'lucide-react'
@@ -11,6 +11,7 @@ export default function DashboardHeader() {
   const [plan, setPlan] = useState<string | null>(null)
   const [isSupporter, setIsSupporter] = useState<boolean>(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user) {
@@ -26,7 +27,18 @@ export default function DashboardHeader() {
     }
   }, [user])
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
   const handleSignOut = async () => {
+    setMenuOpen(false)
     await signOut()
     router.push('/')
   }
@@ -54,7 +66,7 @@ export default function DashboardHeader() {
           </span>
         )}
 
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
@@ -68,47 +80,44 @@ export default function DashboardHeader() {
           </button>
 
           {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-[#0c1020] rounded-2xl shadow-2xl border border-white/10 py-2 z-50">
-                <div className="px-4 py-2.5 border-b border-white/5 mb-1.5">
-                  <p className="text-[11px] text-slate-500 font-medium">로그인 정보</p>
-                  <p className="text-[12px] font-bold text-white truncate mt-0.5">{user.email}</p>
-                  {plan && (
-                    <div className="mt-1.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                        (plan === 'pro' || isSupporter) ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500'
-                      }`}>
-                        {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => { setMenuOpen(false); router.push('/mypage') }}
-                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
-                >
-                  <User className="w-4 h-4 text-purple-400" />
-                  마이페이지
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); router.push('/dashboard') }}
-                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                  대시보드 홈
-                </button>
-                <div className="border-t border-white/5 mt-1.5 pt-1.5">
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
-                  >
-                    <LogOut className="w-4 h-4 text-red-400" />
-                    로그아웃
-                  </button>
-                </div>
+            <div className="absolute right-0 top-full mt-2 w-56 bg-[#0c1020] rounded-2xl shadow-2xl border border-white/10 py-2 z-50">
+              <div className="px-4 py-2.5 border-b border-white/5 mb-1.5">
+                <p className="text-[11px] text-slate-500 font-medium">로그인 정보</p>
+                <p className="text-[12px] font-bold text-white truncate mt-0.5">{user.email}</p>
+                {plan && (
+                  <div className="mt-1.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                      (plan === 'pro' || isSupporter) ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500'
+                    }`}>
+                      {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
+                    </span>
+                  </div>
+                )}
               </div>
-            </>
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/mypage') }}
+                className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
+              >
+                <User className="w-4 h-4 text-purple-400" />
+                마이페이지
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/dashboard') }}
+                className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
+              >
+                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                대시보드 홈
+              </button>
+              <div className="border-t border-white/5 mt-1.5 pt-1.5">
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                >
+                  <LogOut className="w-4 h-4 text-red-400" />
+                  로그아웃
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
