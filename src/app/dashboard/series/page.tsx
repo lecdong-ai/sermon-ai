@@ -28,37 +28,37 @@ export default function SeriesPage() {
       </div>
 
       {seriesWithCounts.length === 0 ? (
-        <div className="bg-surface border border-border rounded-lg p-12 text-center">
-          <p className="text-muted text-sm">등록된 시리즈가 없습니다</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg p-12 text-center">
+          <p className="text-slate-400 text-sm">등록된 시리즈가 없습니다</p>
         </div>
       ) : (
         <div className="space-y-4">
           {seriesWithCounts.map((srs) => (
             <div
               key={srs.id}
-              className="bg-surface border border-border rounded-lg p-5 hover:shadow-sm transition-shadow cursor-pointer"
+              className="bg-white/[0.03] border border-white/10 rounded-lg p-5 hover:shadow-sm transition-shadow cursor-pointer"
               onClick={() => router.push(`/series/${srs.id}`)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">{srs.name}</h3>
+                    <h3 className="font-semibold text-white">{srs.name}</h3>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         srs.status === 'active'
-                          ? 'bg-green-50 text-green-700'
+                          ? 'bg-emerald-500/15 text-emerald-300'
                           : srs.status === 'completed'
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'bg-amber-50 text-amber-700'
+                          ? 'bg-blue-500/15 text-blue-300'
+                          : 'bg-amber-500/15 text-amber-300'
                       }`}
                     >
                       {srs.status === 'active' ? '진행 중' : srs.status === 'completed' ? '완료' : '예정'}
                     </span>
                   </div>
                   {srs.description && (
-                    <p className="text-xs text-muted mt-1">{srs.description}</p>
+                    <p className="text-xs text-slate-400 mt-1">{srs.description}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                     <span>설교 {srs.sermonCount}편</span>
                     {srs.startDate && <span>시작: {srs.startDate.replace(/-/g, '.')}</span>}
                     {srs.endDate && <span>종료: {srs.endDate.replace(/-/g, '.')}</span>}
@@ -78,11 +78,11 @@ export default function SeriesPage() {
                         }
                       }
                     }}
-                    className="p-1.5 rounded-lg text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <span className="text-muted text-sm">→</span>
+                  <span className="text-slate-400 text-sm">→</span>
                 </div>
               </div>
 
@@ -91,7 +91,7 @@ export default function SeriesPage() {
                   {srs.sermons.map((s) => (
                     <span
                       key={s.id}
-                      className="text-[10px] bg-background text-muted px-2 py-0.5 rounded-full truncate max-w-[120px]"
+                      className="text-[10px] bg-white/[0.02] text-slate-400 px-2 py-0.5 rounded-full truncate max-w-[120px]"
                     >
                       {s.title}
                     </span>

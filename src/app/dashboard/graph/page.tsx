@@ -109,7 +109,7 @@ function GraphContent() {
   if (state.loading || state.sermons.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
-        <p className="text-muted text-sm">데이터를 불러오는 중...</p>
+        <p className="text-slate-400 text-sm">데이터를 불러오는 중...</p>
       </div>
     )
   }
@@ -119,43 +119,43 @@ function GraphContent() {
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div>
           <h2 className="text-xl font-bold">그래프</h2>
-          <p className="text-sm text-muted mt-0.5">설교와 본문, 주제, 절기, 회중, 시리즈의 연결 구조</p>
+          <p className="text-sm text-slate-400 mt-0.5">설교와 본문, 주제, 절기, 회중, 시리즈의 연결 구조</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 mb-4 shrink-0 flex-wrap">
-        <button onClick={() => setViewMode('full')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'full' ? 'bg-primary text-white' : 'bg-surface border border-border text-muted hover:text-foreground'}`}>전체 그래프</button>
-        <button onClick={() => setViewMode('sermon-centric')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'sermon-centric' ? 'bg-primary text-white' : 'bg-surface border border-border text-muted hover:text-foreground'}`}>설교 중심</button>
-        <button onClick={() => setViewMode('theme-centric')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'theme-centric' ? 'bg-primary text-white' : 'bg-surface border border-border text-muted hover:text-foreground'}`}>주제 중심</button>
-        <div className="w-px h-5 bg-border mx-1" />
-        <select value={filterBook} onChange={(e) => setFilterBook(e.target.value)} className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none text-muted">
+        <button onClick={() => setViewMode('full')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'full' ? 'bg-indigo-600 text-white' : 'bg-white/[0.03] border border-white/10 text-slate-400 hover:text-white'}`}>전체 그래프</button>
+        <button onClick={() => setViewMode('sermon-centric')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'sermon-centric' ? 'bg-indigo-600 text-white' : 'bg-white/[0.03] border border-white/10 text-slate-400 hover:text-white'}`}>설교 중심</button>
+        <button onClick={() => setViewMode('theme-centric')} className={`text-xs px-3 py-1.5 rounded-md transition-colors ${viewMode === 'theme-centric' ? 'bg-indigo-600 text-white' : 'bg-white/[0.03] border border-white/10 text-slate-400 hover:text-white'}`}>주제 중심</button>
+        <div className="w-px h-5 bg-white/10 mx-1" />
+        <select value={filterBook} onChange={(e) => setFilterBook(e.target.value)} className="text-xs border border-white/10 rounded px-2 py-1.5 bg-white/[0.03] focus:outline-none text-slate-400">
           <option value="">모든 성경책</option>
           {BIBLE_BOOKS.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={filterSeason} onChange={(e) => setFilterSeason(e.target.value)} className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none text-muted">
+        <select value={filterSeason} onChange={(e) => setFilterSeason(e.target.value)} className="text-xs border border-white/10 rounded px-2 py-1.5 bg-white/[0.03] focus:outline-none text-slate-400">
           <option value="">모든 절기</option>
           {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={filterAudience} onChange={(e) => setFilterAudience(e.target.value)} className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none text-muted">
+        <select value={filterAudience} onChange={(e) => setFilterAudience(e.target.value)} className="text-xs border border-white/10 rounded px-2 py-1.5 bg-white/[0.03] focus:outline-none text-slate-400">
           <option value="">모든 회중</option>
           {AUDIENCES.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-        <div className="w-px h-5 bg-border mx-1" />
+        <div className="w-px h-5 bg-white/10 mx-1" />
         {draftCount > 0 && (
           <button onClick={() => setShowDrafts(p => !p)}
-            className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${showDrafts ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-white border-border text-muted hover:text-foreground'}`}>
+            className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${showDrafts ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' : 'bg-white border-white/10 text-slate-400 hover:text-white'}`}>
             {showDrafts ? '✓ 임시 저장 표시' : `임시 저장 ${draftCount}개 숨김`}
           </button>
         )}
-        <div className="w-px h-5 bg-border mx-1" />
+        <div className="w-px h-5 bg-white/10 mx-1" />
         {unanalyzedCount > 0 && !analyzing && (
           <button type="button" onClick={handleBatchAnalyze}
-            className="text-xs px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1">
+            className="text-xs px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors flex items-center gap-1">
             <Sparkles className="w-3 h-3" /> AI 주제 분석 ({unanalyzedCount})
           </button>
         )}
         {analyzing && (
-          <div className="flex items-center gap-2 text-xs text-amber-700">
+          <div className="flex items-center gap-2 text-xs text-amber-300">
             <Loader2 className="w-3 h-3 animate-spin" />
             {analyzeProgress || '분석 중...'}
           </div>
@@ -171,7 +171,7 @@ function GraphContent() {
 
 export default function GraphPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-muted text-sm">로딩 중...</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-slate-400 text-sm">로딩 중...</div>}>
       <GraphContent />
     </Suspense>
   )

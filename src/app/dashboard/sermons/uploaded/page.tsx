@@ -98,7 +98,7 @@ export default function UploadedSermonsPage() {
   if (loading) {
     return (
       <div className="animate-fade-in py-12 text-center">
-        <p className="text-muted text-sm">로딩 중...</p>
+        <p className="text-slate-400 text-sm">로딩 중...</p>
       </div>
     )
   }
@@ -106,10 +106,10 @@ export default function UploadedSermonsPage() {
   if (!user) {
     return (
       <div className="animate-fade-in py-12 text-center">
-        <p className="text-muted text-sm mb-4">로그인이 필요합니다</p>
+        <p className="text-slate-400 text-sm mb-4">로그인이 필요합니다</p>
         <button
           onClick={() => router.push('/login?redirect=/dashboard/sermons/uploaded')}
-          className="text-sm bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-md transition-colors"
+          className="text-sm bg-indigo-600 hover:bg-indigo-600-dark text-white px-5 py-2 rounded-md transition-colors"
         >
           로그인하기
         </button>
@@ -121,15 +121,15 @@ export default function UploadedSermonsPage() {
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <div>
         <h2 className="text-xl font-bold">업로드된 설교</h2>
-        <p className="text-sm text-muted mt-0.5">메인 페이지에서 업로드하고 AI 분석을 받은 설교 원고</p>
+        <p className="text-sm text-slate-400 mt-0.5">메인 페이지에서 업로드하고 AI 분석을 받은 설교 원고</p>
       </div>
 
       {sermons.length === 0 ? (
-        <div className="bg-surface border border-border rounded-lg p-12 text-center">
-          <p className="text-muted text-sm mb-4">업로드된 설교 원고가 없습니다</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg p-12 text-center">
+          <p className="text-slate-400 text-sm mb-4">업로드된 설교 원고가 없습니다</p>
           <button
             onClick={() => setShowUploadModal(true)}
-            className="text-sm bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-md transition-colors"
+            className="text-sm bg-indigo-600 hover:bg-indigo-600-dark text-white px-5 py-2 rounded-md transition-colors"
           >
             설교 원고 업로드
           </button>
@@ -140,24 +140,24 @@ export default function UploadedSermonsPage() {
             <div
               key={sermon.id}
               onClick={() => window.location.href = `/workspace?id=${sermon.id}`}
-              className="bg-surface border border-border rounded-lg p-5 hover:shadow-sm cursor-pointer transition-all group"
+              className="bg-white/[0.03] border border-white/10 rounded-lg p-5 hover:shadow-sm cursor-pointer transition-all group"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                    <h3 className="font-semibold text-white group-hover:text-indigo-300 transition-colors truncate">
                       {sermon.result?.sermon_title || sermon.title || sermon.file_name?.replace(/\.[^.]+$/, '') || '제목 없음'}
                     </h3>
                     {sermon.season && (
-                      <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full shrink-0">
+                      <span className="text-[10px] bg-purple-500/15 text-purple-300 px-1.5 py-0.5 rounded-full shrink-0">
                         {sermon.season}
                       </span>
                     )}
                   </div>
                   {sermon.passage && (
-                    <p className="text-xs text-muted mt-1">{sermon.passage}</p>
+                    <p className="text-xs text-slate-400 mt-1">{sermon.passage}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                     <span>{new Date(sermon.created_at).toLocaleDateString('ko-KR')}</span>
                     {sermon.series && <span>· {sermon.series}</span>}
                   </div>
@@ -165,12 +165,12 @@ export default function UploadedSermonsPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={(e) => handleDelete(e, sermon.id)}
-                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs px-2 py-1 rounded transition-all"
+                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded transition-all"
                     title="삭제"
                   >
                     🗑️
                   </button>
-                  <span className="text-muted text-sm group-hover:text-primary transition-colors">→</span>
+                  <span className="text-slate-400 text-sm group-hover:text-indigo-300 transition-colors">→</span>
                 </div>
               </div>
 
@@ -180,8 +180,8 @@ export default function UploadedSermonsPage() {
                     key={svc.key}
                     className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
                       hasService(sermon, svc.key)
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-gray-100 text-gray-400'
+                        ? 'bg-indigo-600/10 text-indigo-300'
+                        : 'bg-white/5 text-slate-500'
                     }`}
                   >
                     <span>{svc.icon}</span>
@@ -200,17 +200,17 @@ export default function UploadedSermonsPage() {
           onClick={() => setShowUploadModal(false)}
         >
           <div
-            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-2xl bg-[#0c1020] rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div>
-                <h2 className="text-base font-bold text-gray-900">설교 원고 업로드</h2>
-                <p className="text-xs text-gray-400 mt-0.5">PDF, TXT, DOCX 파일을 업로드하면 AI가 6개 서비스를 생성합니다</p>
+                <h2 className="text-base font-bold text-white">설교 원고 업로드</h2>
+                <p className="text-xs text-slate-400 mt-0.5">PDF, TXT, DOCX 파일을 업로드하면 AI가 6개 서비스를 생성합니다</p>
               </div>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>

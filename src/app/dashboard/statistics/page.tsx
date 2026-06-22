@@ -42,7 +42,7 @@ function CustomTooltip({ active, payload, label }: any) {
       borderRadius: '12px',
       padding: '10px 14px',
       fontSize: '13px',
-      color: '#f1f5f9',
+      color: '#e2e8f0',
       boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
     }}>
       <p style={{ margin: 0, fontWeight: 600, opacity: 0.7, fontSize: '11px' }}>{label}</p>
@@ -77,8 +77,8 @@ function ChartCard({ title, children, className }: { title: string; children: Re
   return (
     <div className={`rounded-2xl p-5 transition-all duration-300 hover:shadow-lg ${className || ''}`}
       style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        background: '#0f172a',
+        border: '1px solid rgba(255,255,255,0.1)',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}
     >
@@ -147,14 +147,14 @@ export default function StatisticsPage() {
   ], [totalSermons, themes.length, series.length, sermons])
 
   const axisStyle = useMemo(() => ({ fontSize: 11, fill: '#94a3b8', fontFamily: 'var(--font-noto-sans-kr), sans-serif' }), [])
-  const gridStyle = useMemo(() => ({ stroke: '#f1f5f9', strokeDasharray: '4 4' }), [])
+  const gridStyle = useMemo(() => ({ stroke: '#334155', strokeDasharray: '4 4' }), [])
 
   return (
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">통계 / 분석</h2>
-          <p className="text-sm text-muted mt-1">설교 사역의 흐름을 한눈에 파악하세요</p>
+          <p className="text-sm text-slate-400 mt-1">설교 사역의 흐름을 한눈에 파악하세요</p>
         </div>
       </div>
 
@@ -262,7 +262,7 @@ export default function StatisticsPage() {
             {seasonData.map((item, i) => (
               <div key={item.name} className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.fill }} />
-                <span className="text-xs text-slate-600">{item.name}</span>
+                <span className="text-xs text-slate-400">{item.name}</span>
               </div>
             ))}
           </div>
@@ -275,8 +275,8 @@ export default function StatisticsPage() {
               const pct = (item.count / max) * 100
               return (
                 <div key={item.name} className="flex items-center gap-3">
-                  <span className="text-sm w-20 shrink-0 font-medium text-slate-700">{item.name}</span>
-                  <div className="flex-1 h-6 rounded-full overflow-hidden" style={{ background: '#f1f5f9' }}>
+                  <span className="text-sm w-20 shrink-0 font-medium text-slate-300">{item.name}</span>
+                  <div className="flex-1 h-6 rounded-full overflow-hidden" style={{ background: '#334155' }}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -285,7 +285,7 @@ export default function StatisticsPage() {
                       }}
                     />
                   </div>
-                  <span className="text-xs font-bold w-8 text-right text-slate-600">{item.count}</span>
+                  <span className="text-xs font-bold w-8 text-right text-slate-400">{item.count}</span>
                 </div>
               )
             })}
@@ -302,8 +302,8 @@ export default function StatisticsPage() {
                 const pct = (item.count / max) * 100
                 return (
                   <div key={item.name} className="flex items-center gap-3">
-                    <span className="text-sm flex-1 truncate font-medium text-slate-700">{item.name}</span>
-                    <div className="flex-1 h-6 rounded-full overflow-hidden max-w-[180px]" style={{ background: '#f1f5f9' }}>
+                    <span className="text-sm flex-1 truncate font-medium text-slate-300">{item.name}</span>
+                    <div className="flex-1 h-6 rounded-full overflow-hidden max-w-[180px]" style={{ background: '#334155' }}>
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -312,13 +312,13 @@ export default function StatisticsPage() {
                         }}
                       />
                     </div>
-                    <span className="text-xs font-bold w-8 text-right text-slate-600">{item.count}</span>
+                    <span className="text-xs font-bold w-8 text-right text-slate-400">{item.count}</span>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted py-8 text-center">등록된 시리즈가 없습니다</p>
+            <p className="text-sm text-slate-400 py-8 text-center">등록된 시리즈가 없습니다</p>
           )}
         </ChartCard>
 
@@ -345,7 +345,7 @@ export default function StatisticsPage() {
               )
             })}
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+          <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
             <div>
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">적게 다룬 성경책</h4>
               <p className="text-xs text-slate-500 leading-relaxed">

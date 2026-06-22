@@ -21,7 +21,7 @@ export default function NewSermonPage() {
   if (!params) {
     return (
       <div className="animate-fade-in py-12 text-center">
-        <p className="text-muted text-sm">로딩 중...</p>
+        <p className="text-slate-400 text-sm font-medium">로딩 중...</p>
       </div>
     )
   }

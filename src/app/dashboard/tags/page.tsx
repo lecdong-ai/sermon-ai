@@ -64,8 +64,8 @@ export default function TagsPage() {
   }
 
   const renderTagGroup = (title: string, tags: Theme[], color: string) => (
-    <div className="bg-surface border border-border rounded-lg p-5">
-      <h3 className="text-sm font-semibold text-muted mb-3">{title}</h3>
+    <div className="bg-white/[0.03] border border-white/10 rounded-lg p-5">
+      <h3 className="text-sm font-semibold text-slate-400 mb-3">{title}</h3>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
           <div key={tag.id} className="group relative">
@@ -75,7 +75,7 @@ export default function TagsPage() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="text-xs border border-border rounded px-2 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-primary-light"
+                  className="text-xs border border-white/10 rounded px-2 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleEdit(tag.id)
@@ -84,7 +84,7 @@ export default function TagsPage() {
                 />
                 <button
                   onClick={() => handleEdit(tag.id)}
-                  className="text-[10px] text-primary hover:text-primary-dark"
+                  className="text-[10px] text-indigo-300 hover:text-indigo-300-dark"
                 >
                   저장
                 </button>
@@ -130,21 +130,21 @@ export default function TagsPage() {
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <h2 className="text-xl font-bold">태그 관리</h2>
 
-      <div className="bg-surface border border-border rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-muted mb-3">새 태그 추가</h3>
+      <div className="bg-white/[0.03] border border-white/10 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-400 mb-3">새 태그 추가</h3>
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
             placeholder="태그 이름"
-            className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-light flex-1 max-w-xs"
+            className="px-3 py-2 text-sm border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/30 flex-1 max-w-xs"
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           />
           <select
             value={newTagCategory}
             onChange={(e) => setNewTagCategory(e.target.value as Theme['category'])}
-            className="px-3 py-2 text-sm border border-border rounded-md focus:outline-none text-muted"
+            className="px-3 py-2 text-sm border border-white/10 rounded-md focus:outline-none text-slate-400"
           >
             <option value="major">대주제</option>
             <option value="situation">상황</option>
@@ -152,7 +152,7 @@ export default function TagsPage() {
           </select>
           <button
             onClick={handleAdd}
-            className="text-sm bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md transition-colors"
+            className="text-sm bg-indigo-600 hover:bg-indigo-600-dark text-white px-4 py-2 rounded-md transition-colors"
           >
             추가
           </button>
@@ -163,7 +163,7 @@ export default function TagsPage() {
       {renderTagGroup('상황 태그', categorized.situation, '#3182ce')}
       {renderTagGroup('정서 태그', categorized.emotion, '#805ad5')}
 
-      <p className="text-xs text-muted">
+      <p className="text-xs text-slate-400">
         총 {themes.length}개의 태그 · 괄호 안 숫자는 사용 횟수
       </p>
     </div>
