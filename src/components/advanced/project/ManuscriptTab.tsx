@@ -453,69 +453,84 @@ export default function ManuscriptTab({ project }: Props) {
       details.push({ label: '도입', ok: false, note: '내용 없음', tip: 'AI 추천으로 초안을 생성해보세요' })
     }
 
-    // 2. Body sections (30 pts total, based on content length)
+    // 2. Body sections (25 pts total, based on content length)
     const totalBodyLen = bodies.reduce((sum, s) => sum + s.content.replace(/\s/g, '').length, 0)
     const avgBodyLen = bodies.length > 0 ? totalBodyLen / bodies.length : 0
     if (avgBodyLen > 0) {
-      const bodyPts = Math.min(30, Math.round((avgBodyLen / 200) * 30))
+      const bodyPts = Math.min(25, Math.round((avgBodyLen / 200) * 25))
       score += bodyPts
       details.push({
         label: '본론',
-        ok: bodyPts >= 25,
+        ok: bodyPts >= 20,
         note: `평균 ${Math.round(avgBodyLen)}자/섹션`,
-        tip: bodyPts < 25 ? '섹션당 200자 이상이면 만점입니다' : undefined,
+        tip: bodyPts < 20 ? '섹션당 200자 이상이면 만점입니다' : undefined,
       })
     } else {
       details.push({ label: '본론', ok: false, note: '작성 전', tip: 'AI 추천으로 각 대지를 작성해보세요' })
     }
 
-    // 3. Prep data integration (15 pts) — 연구/적용 방향 대신 Prep 데이터 연동 평가
+    // 3. Prep data integration (10 pts)
     const hasPrepInsights = manuscript.prepInsights.length > 0
     const hasOutlines = manuscript.outlinePoints.length > 0
-    const prepPts = (hasPrepInsights ? 8 : 0) + (hasOutlines ? 7 : 0)
+    const prepPts = (hasPrepInsights ? 5 : 0) + (hasOutlines ? 5 : 0)
     score += prepPts
     if (prepPts > 0) {
       details.push({
         label: '준비 데이터',
-        ok: prepPts === 15,
+        ok: prepPts === 10,
         note: hasPrepInsights && hasOutlines ? '연구+대지 연동' : hasPrepInsights ? '연구 연동' : '대지 연동',
-        tip: prepPts < 15 ? '설교 준비 탭에서 대지 구조를 작성하세요' : undefined,
+        tip: prepPts < 10 ? '설교 준비 탭에서 대지 구조를 작성하세요' : undefined,
       })
     } else {
       details.push({ label: '준비 데이터', ok: false, note: '연동 없음', tip: '설교 준비 탭에서 내용을 작성하면 자동 연동됩니다' })
     }
 
-    // 4. Conclusion (10 pts)
+    // 4. Greek word analysis (10 pts)
+    const greekCount = manuscript.greekWords.length
+    const greekPts = greekCount >= 2 ? 10 : greekCount === 1 ? 5 : 0
+    score += greekPts
+    if (greekCount > 0) {
+      details.push({
+        label: '원어 분석',
+        ok: greekPts === 10,
+        note: `${greekCount}개 단어`,
+        tip: greekPts < 10 ? '2개 이상 원어를 분석하면 만점입니다' : undefined,
+      })
+    } else {
+      details.push({ label: '원어 분석', ok: false, note: '분석 전', tip: '본문 기반 원어 분석을 실행해보세요' })
+    }
+
+    // 5. Conclusion (15 pts)
     const conclLen = conclusion?.content.replace(/\s/g, '').length || 0
     if (conclLen > 0) {
-      const conclPts = conclLen >= 100 ? 10 : conclLen >= 40 ? 6 : 3
+      const conclPts = conclLen >= 100 ? 15 : conclLen >= 40 ? 9 : 4
       score += conclPts
       details.push({
         label: '결론',
-        ok: conclPts === 10,
+        ok: conclPts === 15,
         note: `${conclLen}자`,
-        tip: conclPts < 10 ? '100자 이상이면 만점입니다' : undefined,
+        tip: conclPts < 15 ? '100자 이상이면 만점입니다' : undefined,
       })
     } else {
       details.push({ label: '결론', ok: false, note: '내용 없음', tip: 'AI 추천으로 초청 문장을 생성해보세요' })
     }
 
-    // 5. Application (10 pts)
+    // 6. Application (15 pts)
     const appLen = application?.content.replace(/\s/g, '').length || 0
     if (appLen > 0) {
-      const appPts = appLen >= 100 ? 10 : appLen >= 40 ? 6 : 3
+      const appPts = appLen >= 100 ? 15 : appLen >= 40 ? 9 : 4
       score += appPts
       details.push({
         label: '적용',
-        ok: appPts === 10,
+        ok: appPts === 15,
         note: `${appLen}자`,
-        tip: appPts < 10 ? '100자 이상이면 만점입니다' : undefined,
+        tip: appPts < 15 ? '100자 이상이면 만점입니다' : undefined,
       })
     } else {
       details.push({ label: '적용', ok: false, note: '내용 없음', tip: 'AI 재구성으로 적용을 생성해보세요' })
     }
 
-    // 6. Scripture references (10 pts)
+    // 7. Scripture references (10 pts)
     const sectionsWithPassage = sections.filter(s => s.passage?.trim()).length
     if (sectionsWithPassage > 0) {
       const refScore = Math.min(10, sectionsWithPassage * 3)
@@ -523,8 +538,8 @@ export default function ManuscriptTab({ project }: Props) {
       details.push({ label: '성경 참조', ok: refScore >= 9, note: `${sectionsWithPassage}개 섹션` })
     }
 
-    return { score: Math.min(100, score), details }
-  }, [manuscript.sections, manuscript.prepInsights, manuscript.outlinePoints])
+    return { score, details }
+  }, [manuscript.sections, manuscript.prepInsights, manuscript.outlinePoints, manuscript.greekWords])
 
   /* ─── Empty state detection ─── */
 
@@ -897,6 +912,9 @@ export default function ManuscriptTab({ project }: Props) {
       sermonTitle: manuscript.title,
       sermonPurpose: manuscript.oneSentenceSummary,
       congregationProfile,
+      // Prep data for natural weaving
+      greekWords: manuscript.greekWords || [],
+      prepInsights: manuscript.prepInsights || [],
     }
 
     if (sectionType === 'introduction') {
@@ -1016,6 +1034,56 @@ export default function ManuscriptTab({ project }: Props) {
 
     setBoostingSections(new Set())
   }, [manuscript.sections, handleAiGenerate, updateSection])
+
+  /* ─── 핵심 원어 GPT 분석 ─── */
+  const [analyzingGreek, setAnalyzingGreek] = useState(false)
+  const handleAnalyzeGreekWords = useCallback(async () => {
+    if (!project.passage?.trim()) {
+      alert('먼저 본문을 입력해주세요.')
+      return
+    }
+    setAnalyzingGreek(true)
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'greek-words-analyze',
+          data: {
+            passage: project.passage,
+            coreMessage: manuscript.coreMessage,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        console.error('Greek word analysis API error:', json.error)
+        alert('분석에 실패했습니다: ' + (json.error || '알 수 없는 오류'))
+        setAnalyzingGreek(false)
+        return
+      }
+      let parsed = JSON.parse(json.data.output)
+      // Handle both raw array and object-wrapped response
+      if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed) {
+        const found = Object.values(parsed).find(v => Array.isArray(v))
+        if (found) parsed = found
+      }
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const next = {
+          ...manuscriptRef.current,
+          greekWords: parsed as { word: string; greek: string; meaning: string; note: string }[],
+        }
+        manuscriptRef.current = next
+        setStorageItem(`manuscript_${project.id}`, { ...next, _savedAt: Date.now() })
+        setManuscriptSafe(next)
+      } else {
+        alert('본문에서 원어 단어를 찾을 수 없습니다. 본문이 올바른지 확인해주세요.')
+      }
+    } catch (e) {
+      console.error('Greek word analysis failed:', e)
+    }
+    setAnalyzingGreek(false)
+  }, [project.passage, manuscript.coreMessage, setStorageItem, setManuscriptSafe])
 
   const startRehearsal = useCallback((minutes: number) => {
     setRehearsalDuration(minutes)
@@ -1651,6 +1719,8 @@ export default function ManuscriptTab({ project }: Props) {
             healthScore={healthScore}
             onBoostHealth={handleBoostHealth}
             boostingSections={boostingSections}
+            onAnalyzeGreekWords={handleAnalyzeGreekWords}
+            analyzingGreek={analyzingGreek}
           />
         )}
       </div>
@@ -2754,6 +2824,7 @@ function ReferenceNotesSection({
 
 function PrepSummaryPanel({
   manuscript, onGoToPrep, prepNeedsSync, onSyncPrep, healthScore, onBoostHealth, boostingSections,
+  onAnalyzeGreekWords, analyzingGreek,
 }: {
   manuscript: JohnManuscriptData
   onGoToPrep?: () => void
@@ -2762,6 +2833,8 @@ function PrepSummaryPanel({
   healthScore: { score: number; details: { label: string; ok: boolean; note: string; tip?: string }[] }
   onBoostHealth?: () => void
   boostingSections?: Set<string>
+  onAnalyzeGreekWords?: () => void
+  analyzingGreek?: boolean
 }) {
   const emptySections = manuscript.sections.filter(s => !s.content.trim())
   const canBoost = emptySections.length > 0 || healthScore.score < 80
@@ -2959,18 +3032,36 @@ function PrepSummaryPanel({
       {/* Greek Words */}
       <div className="p-4 border-b border-white/5">
         <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest block mb-2">핵심 원어</span>
-        <div className="space-y-2">
-          {manuscript.greekWords.map(w => (
-            <div key={w.word} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-2.5">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-sm font-greek text-white">{w.greek}</span>
-                <span className="text-[10px] text-slate-400">{w.word}</span>
+        {manuscript.greekWords.length > 0 ? (
+          <div className="space-y-2">
+            {manuscript.greekWords.map(w => (
+              <div key={w.word} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-2.5">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-sm font-greek text-white">{w.greek}</span>
+                  <span className="text-[10px] text-slate-400">{w.word}</span>
+                </div>
+                <p className="text-[10px] text-slate-200">{w.meaning}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 italic">{w.note}</p>
               </div>
-              <p className="text-[10px] text-slate-200">{w.meaning}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 italic">{w.note}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-[10px] text-slate-600">아직 분석된 원어가 없습니다</p>
+            <button
+              onClick={onAnalyzeGreekWords}
+              disabled={analyzingGreek}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 disabled:opacity-50 text-indigo-300 text-[10px] font-medium transition-all"
+            >
+              {analyzingGreek ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              {analyzingGreek ? '분석 중...' : '본문 기반 원어 분석'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Prep Insights & Warning Points */}

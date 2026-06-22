@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Youtube, RefreshCw, Library, Search } from 'lucide-react'
+import { Youtube, RefreshCw, Library } from 'lucide-react'
 import { YouTubeInput } from '@/components/advanced/youtube/YouTubeInput'
 import { YouTubeLibrary } from '@/components/advanced/youtube/YouTubeLibrary'
 import { YouTubeAnalysis } from '@/components/advanced/youtube/YouTubeAnalysis'
@@ -15,9 +15,8 @@ interface AnalysisItem {
   video_url: string
   created_at: string
   analysis: {
-    summary: string
-    topics?: { title: string; description: string }[]
-    keyInsights?: { title: string; detail: string }[]
+    overallSummary?: string
+    summary?: string
   }
 }
 
@@ -29,16 +28,11 @@ interface AnalysisRecord {
   thumbnail_url: string | null
   video_url: string
   transcript: { text: string; offset: number; duration: number }[]
-  analysis: {
-    summary: string
-    topics: { title: string; description: string }[]
-    bibleConnections: { passage: string; explanation: string }[]
-    keyInsights: { title: string; detail: string }[]
-    usageSuggestions: { title: string; description: string }[]
-  }
+  analysis: any
   saved_insights: string[]
   note_ids: string[]
   created_at: string
+  isSample?: boolean
 }
 
 type ViewState = 'library' | 'analyzing' | 'analysis'

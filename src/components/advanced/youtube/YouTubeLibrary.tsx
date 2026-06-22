@@ -100,15 +100,9 @@ export function YouTubeLibrary({ items, loading, error, onSelect, onDelete, onRe
           onClick={() => onSelect(item.id)}
           className="group relative rounded-xl bg-white/[0.03] border border-white/10 overflow-hidden cursor-pointer transition-all hover:border-indigo-500/30 hover:bg-white/[0.05] hover:shadow-lg hover:shadow-indigo-500/5"
         >
-          {/* Thumbnail */}
           <div className="aspect-video bg-slate-800 relative overflow-hidden">
             {item.thumbnail_url ? (
-              <img
-                src={item.thumbnail_url}
-                alt=""
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                loading="lazy"
-              />
+              <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
             ) : (
               <div className="flex items-center justify-center h-full">
                 <Youtube className="w-8 h-8 text-slate-700" />
@@ -126,7 +120,6 @@ export function YouTubeLibrary({ items, loading, error, onSelect, onDelete, onRe
             </div>
           </div>
 
-          {/* Info */}
           <div className="p-4">
             {(item.analysis?.overallSummary || item.analysis?.summary) ? (
               <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3 mb-3">
@@ -136,7 +129,6 @@ export function YouTubeLibrary({ items, loading, error, onSelect, onDelete, onRe
               <p className="text-xs text-slate-500">{item.title || '제목 없음'}</p>
             )}
 
-            {/* Meta */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
                 <Calendar className="w-3 h-3" />

@@ -142,8 +142,8 @@ export function YouTubeAnalysis({ data, loading, onBack, onDelete, onInsightsCha
             />
           </div>
 
-          {/* Video info below player */}
-          <div>
+      {/* Video info below player */}
+      <div>
             <h2 className="text-sm font-bold text-white mb-0.5">{data.title || '제목 없음'}</h2>
             <p className="text-xs text-slate-500 mb-1.5">{data.channel_name}</p>
             <div className="flex items-center gap-3 text-[10px] text-slate-600">

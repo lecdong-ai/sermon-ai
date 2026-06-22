@@ -43,9 +43,13 @@ export default function OverviewTab({ project, onProjectUpdated, updateStatus }:
       // 백그라운드에서 최신 데이터 동기화
       onProjectUpdated?.()
     } catch (e: any) {
-      showToast('error', e?.message || '단계 전환 실패')
-      // 실패 시 원래 상태로 롤백
-      updateStatus?.(project.status)
+      // 로컬 프로젝트는 API에 없으므로 무시하고 localStorage 상태 유지
+      if (e?.message?.includes('찾을 수 없습니다')) {
+        showToast('success', '로컬 저장소에 반영되었습니다')
+      } else {
+        showToast('error', e?.message || '단계 전환 실패')
+        updateStatus?.(project.status)
+      }
     } finally {
       setTransitioning(false)
     }
