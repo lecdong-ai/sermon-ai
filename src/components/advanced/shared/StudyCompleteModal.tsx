@@ -57,12 +57,25 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
       const json = await res.json()
       if (json.success) {
         const parsed = JSON.parse(json.data.output)
-        setPrepPackage(parsed)
+        console.log('[StudyComplete] parsed:', parsed)
+        // Defensive: AI 응답 shape 보장
+        const safe = {
+          coreMessages: Array.isArray(parsed?.coreMessages) ? parsed.coreMessages : [],
+          outlines: Array.isArray(parsed?.outlines) ? parsed.outlines : [],
+          applicationPoints: Array.isArray(parsed?.applicationPoints) ? parsed.applicationPoints : [],
+          smallGroupQuestions: Array.isArray(parsed?.smallGroupQuestions) ? parsed.smallGroupQuestions : [],
+          cardNewsContent: Array.isArray(parsed?.cardNewsContent) ? parsed.cardNewsContent : [],
+          pptOutline: Array.isArray(parsed?.pptOutline) ? parsed.pptOutline : [],
+          deliveryIntro: parsed?.deliveryIntro || '',
+          deliveryConclusion: parsed?.deliveryConclusion || '',
+          deliveryFlow: parsed?.deliveryFlow || '',
+        }
+        setPrepPackage(safe)
 
         // Auto-save to prep storage
         const prepPayload = {
           sermonTitle: '',
-          coreMessage: parsed.coreMessages?.[0]?.coreMessage || '',
+          coreMessage: safe.coreMessages?.[0]?.coreMessage || '',
           sermonPurpose: '',
           expectedResponse: '',
           passageStructure: studyData?.contextInfo?.bookStructure || '',
@@ -75,13 +88,13 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
             note: w.contextualMeaning || w.simpleExplanation || '',
           })),
           researchInsights: (studyData?.commentaries || []).slice(0, 5).map((c: any) => c.text),
-          outlines: parsed.outlines || [],
-          applicationPoints: parsed.applicationPoints || [],
+          outlines: safe.outlines || [],
+          applicationPoints: safe.applicationPoints || [],
           congregationProfile: {},
-          deliveryIntro: parsed.deliveryIntro || '',
-          deliveryFlow: parsed.deliveryFlow || '',
-          deliveryTransitions: parsed.outlines?.map((o: any) => o.transitionNote).filter(Boolean) || [],
-          deliveryConclusion: parsed.deliveryConclusion || '',
+          deliveryIntro: safe.deliveryIntro || '',
+          deliveryFlow: safe.deliveryFlow || '',
+          deliveryTransitions: safe.outlines?.map((o: any) => o.transitionNote).filter(Boolean) || [],
+          deliveryConclusion: safe.deliveryConclusion || '',
           prepStatus: 'ready' as const,
         }
 
