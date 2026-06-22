@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { Pin, Star } from 'lucide-react'
 import { AppSectionHeader } from '@/components/advanced/shared'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteType, type NoteEntry } from '@/lib/advanced/notesData'
 
@@ -54,8 +55,8 @@ export default function NotesSummary({ notes, onSelectNote }: NotesSummaryProps)
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="전체 통찰" value={stats.total} accent="from-indigo-500/20 to-indigo-500/5" />
-          <StatCard label="중요 표시" value={stats.starred} accent="from-amber-500/20 to-amber-500/5" icon="★" />
-          <StatCard label="고정됨" value={stats.pinned} accent="from-emerald-500/20 to-emerald-500/5" icon="📌" />
+          <StatCard label="중요 표시" value={stats.starred} accent="from-amber-500/20 to-amber-500/5" icon={Star} />
+          <StatCard label="고정됨" value={stats.pinned} accent="from-emerald-500/20 to-emerald-500/5" icon={Pin} />
           <StatCard label="이번 주" value={stats.recentWeek} accent="from-rose-500/20 to-rose-500/5" pulse />
         </div>
 
@@ -172,7 +173,7 @@ export default function NotesSummary({ notes, onSelectNote }: NotesSummaryProps)
   )
 }
 
-function StatCard({ label, value, accent, icon, pulse }: { label: string; value: number; accent: string; icon?: string; pulse?: boolean }) {
+function StatCard({ label, value, accent, icon: Icon, pulse }: { label: string; value: number; accent: string; icon?: React.ComponentType<{ className?: string }>; pulse?: boolean }) {
   return (
     <div className={`relative rounded-2xl border border-white/5 bg-gradient-to-br ${accent} p-4 overflow-hidden`}>
       {pulse && (
@@ -180,7 +181,7 @@ function StatCard({ label, value, accent, icon, pulse }: { label: string; value:
       )}
       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{label}</p>
       <p className="text-2xl font-bold text-white mt-1.5 flex items-center gap-1.5">
-        {icon && <span className="text-base opacity-70">{icon}</span>}
+        {Icon && <Icon className="w-4 h-4 opacity-70" />}
         <span className="tabular-nums">{value}</span>
       </p>
     </div>

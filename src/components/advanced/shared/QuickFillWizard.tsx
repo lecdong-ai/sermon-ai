@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Save } from 'lucide-react'
+import { BookOpen, FileText, Save, Sparkles } from 'lucide-react'
 import type { QuickFill } from '@/lib/advanced/stageChecker'
 import { saveQuickFill } from '@/lib/advanced/stageChecker'
 
@@ -38,13 +38,13 @@ export default function QuickFillWizard({ projectId, initial, passageHint, onSav
     <div className="space-y-3">
       {passageHint && (
         <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1.5">
-          <span>📖</span>
+          <BookOpen className="w-3 h-3" />
           <span>{passageHint}</span>
         </div>
       )}
 
       <Field
-        label="📝 핵심 단어 (2개 이상)"
+        label="핵심 단어 (2개 이상)"
         value={keyWords}
         onChange={setKeyWords}
         placeholder="예: 은혜(χάρις), 순종(ὑπακοή), 믿음(πίστις)"

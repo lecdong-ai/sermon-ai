@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Lightbulb } from 'lucide-react'
 import type { NoteEntry } from '@/lib/advanced/notesData'
 
 interface PassageSidePanelProps {
@@ -160,7 +161,7 @@ export default function PassageSidePanel({ note, onClose }: PassageSidePanelProp
             </div>
             <div className="pt-3 mt-3 border-t border-white/5">
               <p className="text-[9px] text-slate-500 font-medium leading-relaxed">
-                💡 노트와 함께 본문을 보며 묵상해보세요
+                <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />노트와 함께 본문을 보며 묵상해보세요</span>
               </p>
             </div>
           </div>

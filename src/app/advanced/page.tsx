@@ -60,10 +60,10 @@ export default function AdvancedDashboardPage() {
 
   // ── Computed data (before early returns to satisfy rules-of-hooks) ──
   const SUGGESTION_CHIPS = [
-    { label: '💡 은혜에 관한 설교', query: '은혜' },
-    { label: '💡 로마서 강해 시리즈', query: '로마서' },
-    { label: '💡 소망에 대한 본문', query: '소망' },
-    { label: '💡 칭의 연구', query: '칭의' },
+    { label: '은혜에 관한 설교', query: '은혜' },
+    { label: '로마서 강해 시리즈', query: '로마서' },
+    { label: '소망에 대한 본문', query: '소망' },
+    { label: '칭의 연구', query: '칭의' },
   ]
 
   const completedProjects = projects
@@ -307,7 +307,7 @@ export default function AdvancedDashboardPage() {
                       </div>
                     </div>
 
-                    {/* 🚀 AI Action Panel (Hover Slide-Up / Grid Action buttons) */}
+                    {/* AI Action Panel (Hover Slide-Up / Grid Action buttons) */}
                     <div className="pt-2">
                       <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-600 mb-1.5">AI Action Panel</div>
                       <div className="grid grid-cols-3 gap-1">

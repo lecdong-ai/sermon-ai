@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Lightbulb, Pin } from 'lucide-react'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteEntry } from '@/lib/advanced/notesData'
 
 interface LinkedInsightBannerProps {
@@ -34,7 +35,7 @@ export default function LinkedInsightBanner({ insightId, onClose }: LinkedInsigh
 
   const insertToManuscript = () => {
     if (!insight) return
-    const quote = `> 💡 [통찰] ${insight.title}\n> ${insight.content.split('\n').join('\n> ')}\n\n`
+    const quote = `> [통찰] ${insight.title}\n> ${insight.content.split('\n').join('\n> ')}\n\n`
     const event = new CustomEvent('insert-to-manuscript', { detail: quote })
     window.dispatchEvent(event)
     setCopied(true)
@@ -45,7 +46,7 @@ export default function LinkedInsightBanner({ insightId, onClose }: LinkedInsigh
     <div className="sticky top-0 z-20 mb-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-indigo-500/10 p-4 backdrop-blur-md">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-base">💡</span>
+          <Lightbulb className="w-4 h-4 text-emerald-300" />
           <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">참고 통찰</span>
           <span className="text-[10px] text-slate-500">이 프로젝트를 위해 기록한 통찰이 원고에 인용 준비됨</span>
         </div>
@@ -68,7 +69,7 @@ export default function LinkedInsightBanner({ insightId, onClose }: LinkedInsigh
             <span className={`w-1.5 h-1.5 rounded-full ${NOTE_TYPE_DOTS[insight.type]}`} />
             <span className="text-[10px] font-bold text-slate-300">{NOTE_TYPE_LABELS[insight.type]}</span>
             {insight.starred && <span className="text-[10px] text-amber-400">★</span>}
-            {insight.pinned && <span className="text-[10px] text-indigo-400">📌</span>}
+            {insight.pinned && <Pin className="w-3 h-3 text-indigo-400 inline" />}
           </div>
           <h4 className="text-sm font-bold text-white leading-snug mb-1">{insight.title}</h4>
           <p className="text-[11px] text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-4 font-medium mb-3">

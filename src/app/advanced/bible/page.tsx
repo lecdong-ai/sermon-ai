@@ -993,9 +993,9 @@ function StudyMemoSection({ value, onChange }: { value: string; onChange: (v: st
       />
       <div className="flex justify-between">
         <div className="flex gap-1.5">
-          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">💡 통찰</span>
-          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">❓ 질문</span>
-          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">📌 적용</span>
+          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">통찰</span>
+          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">질문</span>
+          <span className="text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">적용</span>
         </div>
         <span className="text-[10px] text-slate-600 font-bold">{value.length}자</span>
       </div>

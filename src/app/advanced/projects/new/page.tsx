@@ -310,11 +310,11 @@ export default function NewProjectPage() {
       } else {
         const json = await res.json().catch(() => ({}))
         console.error('DB 저장 실패:', json.error || res.status)
-        setToast({ kind: 'error', text: `⚠ DB 저장 실패: ${json.error || res.status} (로컬에는 저장됨)` })
+        setToast({ kind: 'error', text: `DB 저장 실패: ${json.error || res.status} (로컬에는 저장됨)` })
       }
     } catch (e: any) {
       console.error('DB 저장 실패:', e)
-      setToast({ kind: 'error', text: `⚠ DB 저장 실패: ${e?.message || '네트워크 오류'} (로컬에는 저장됨)` })
+      setToast({ kind: 'error', text: `DB 저장 실패: ${e?.message || '네트워크 오류'} (로컬에는 저장됨)` })
     }
 
     router.push(`/advanced/projects/${newId}?tab=overview&new=true`)

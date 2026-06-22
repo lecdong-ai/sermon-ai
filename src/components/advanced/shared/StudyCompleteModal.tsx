@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Sparkles, CheckCircle2, ArrowRight, Copy, Download, X } from 'lucide-react'
+import { ArrowRight, BarChart3, CheckCircle2, Copy, Download, Image, ListTree, Loader2, MessageSquare, Sparkles, Target, Users, X } from 'lucide-react'
 import { setStorageItem } from '@/lib/storage'
 
 interface Props {
@@ -187,37 +187,37 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
               {/* Generated Items */}
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
-                  icon="📝"
+                  icon={MessageSquare}
                   label="중심명제"
                   value={`${prepPackage.coreMessages?.length || 0}개`}
                   preview={prepPackage.coreMessages?.[0]?.coreMessage?.slice(0, 30)}
                 />
                 <StatCard
-                  icon="📋"
+                  icon={ListTree}
                   label="대지 구조"
                   value={`${prepPackage.outlines?.length || 0}대지`}
                   preview={prepPackage.outlines?.[0]?.title}
                 />
                 <StatCard
-                  icon="🎯"
+                  icon={Target}
                   label="적용 포인트"
                   value={`${prepPackage.applicationPoints?.length || 0}개`}
                   preview={prepPackage.applicationPoints?.[0]?.point?.slice(0, 30)}
                 />
                 <StatCard
-                  icon="👥"
+                  icon={Users}
                   label="소그룹 질문"
                   value={`${prepPackage.smallGroupQuestions?.length || 0}개`}
                   preview={prepPackage.smallGroupQuestions?.[0]?.question?.slice(0, 30)}
                 />
                 <StatCard
-                  icon="🖼️"
+                  icon={Image}
                   label="카드뉴스"
                   value={`${prepPackage.cardNewsContent?.length || 0}장`}
                   preview={prepPackage.cardNewsContent?.[0]?.title}
                 />
                 <StatCard
-                  icon="📊"
+                  icon={BarChart3}
                   label="PPT 개요"
                   value={`${prepPackage.pptOutline?.length || 0}장`}
                   preview={prepPackage.pptOutline?.[0]?.title}
@@ -249,11 +249,13 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
   )
 }
 
-function StatCard({ icon, label, value, preview }: { icon: string; label: string; value: string; preview?: string }) {
+function StatCard({ icon: Icon, label, value, preview }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; preview?: string }) {
   return (
     <div className="bg-[#04060f]/60 rounded-xl border border-white/5 p-3">
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-lg">{icon}</span>
+        <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+          <Icon className="w-3.5 h-3.5 text-indigo-300" />
+        </div>
         <div>
           <p className="text-[10px] text-slate-500">{label}</p>
           <p className="text-sm font-bold text-white">{value}</p>

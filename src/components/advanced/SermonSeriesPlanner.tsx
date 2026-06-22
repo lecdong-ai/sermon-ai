@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Loader2, Download, BookOpen, Cross, ChevronRight, Calendar, Music, Sparkles, Pencil, Lightbulb, BarChart3 } from 'lucide-react'
+import { BarChart3, BookOpen, Calendar, ChevronRight, Church, Cross, Crown, Diamond, Download, Feather, Globe, Heart, Lightbulb, Loader2, Music, Pencil, Pin, Scale, Scroll, Shield, Sparkles, Sprout, Star, Sun, Zap } from 'lucide-react'
 
 interface SeriesWeek {
   weekNumber: number
@@ -26,12 +26,12 @@ interface SeriesData {
 }
 
 // 자주 쓰는 주제 아이콘 매핑
-const THEME_ICONS: Record<string, string> = {
-  '은혜': '💎', '믿음': '✝️', '사랑': '❤️', '소망': '🌅',
-  '성령': '🕊️', '회개': '🙏', '구원': '🛡️', '하나님 나라': '👑',
-  '기도': '🤲', '십자가': '✝️', '부활': '🌟', '칭의': '⚖️',
-  '성화': '🌱', '교회': '⛪', '선교': '🌍', '말씀': '📖',
-  '창조': '🌌', '언약': '📜', '심판': '⚡', '위로': '💝',
+const THEME_ICONS: Record<string, any> = {
+  '은혜': Diamond, '믿음': Cross, '사랑': Heart, '소망': Sun,
+  '성령': Feather, '회개': Lightbulb, '구원': Shield, '하나님 나라': Crown,
+  '기도': Sparkles, '십자가': Cross, '부활': Star, '칭의': Scale,
+  '성화': Sprout, '교회': Church, '선교': Globe, '말씀': BookOpen,
+  '창조': Star, '언약': Scroll, '심판': Zap, '위로': Heart,
 }
 
 // AI 추천 주제 (아직 다루지 않은 주요 성경 주제)
@@ -119,7 +119,10 @@ export default function SermonSeriesPlanner({ frequentTopics }: { frequentTopics
                   onClick={() => handleGenerate(topic.label)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-semibold hover:bg-indigo-500/20 transition-colors"
                 >
-                  <span>{THEME_ICONS[topic.label] || '📌'}</span>
+                  {(() => {
+                    const Icon = THEME_ICONS[topic.label] || Pin
+                    return <Icon className="w-4 h-4 text-amber-300" />
+                  })()}
                   <span>{topic.label}</span>
                   <span className="text-[9px] text-indigo-400/60">{topic.count}회</span>
                 </button>

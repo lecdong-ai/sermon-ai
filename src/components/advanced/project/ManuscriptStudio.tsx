@@ -139,12 +139,12 @@ export default function ManuscriptStudio({
       html += `<h2>${e(section.label)}${section.passage ? ` <span class="passage-label">(${e(section.passage)})</span>` : ''}</h2>`;
       html += `<div class="content">${e(section.content) || '<em>(내용 없음)</em>'}</div>`;
       if (refNotes.length > 0) {
-        html += `<div class="notes ref-notes"><div class="notes-title">📚 참고 메모</div>`;
+        html += `<div class="notes ref-notes"><div class="notes-title">참고 메모</div>`;
         refNotes.forEach(n => { html += `<div class="note"><strong>${e(n.title)}:</strong> ${e(n.content)}</div>`; });
         html += `</div>`;
       }
       if (illNotes.length > 0) {
-        html += `<div class="notes ill-notes"><div class="notes-title">💡 예화 메모</div>`;
+        html += `<div class="notes ill-notes"><div class="notes-title">예화 메모</div>`;
         illNotes.forEach(n => { html += `<div class="note"><strong>${e(n.title)}:</strong> ${e(n.content)}</div>`; });
         html += `</div>`;
       }

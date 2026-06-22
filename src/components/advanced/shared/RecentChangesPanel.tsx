@@ -1,4 +1,5 @@
 import type { RecentChange } from '@/lib/advanced/types'
+import { Bot, Pencil, Save, Sparkles } from 'lucide-react'
 
 function formatTime(iso: string): string {
   const d = new Date(iso)
@@ -10,12 +11,11 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  edit: '✏️',
-  generate: '🤖',
-  save: '💾',
-  create: '✨',
-  stage: '➡️',
+const TYPE_ICONS: Record<string, any> = {
+  edit: Pencil,
+  generate: Bot,
+  save: Save,
+  create: Sparkles,
 }
 
 const SECTION_LABELS: Record<string, string> = {
@@ -32,7 +32,10 @@ export default function RecentChangesPanel({ changes, maxItems = 5 }: { changes:
     <div className="space-y-2">
       {display.map((change, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-[11px] shrink-0 mt-0.5">{TYPE_ICONS[change.type] || '•'}</span>
+          {(() => {
+            const Icon = TYPE_ICONS[change.type] || Sparkles
+            return <Icon className="w-3 h-3 shrink-0 mt-0.5 text-slate-400" />
+          })()}
           <div className="flex-1 min-w-0">
             <div className="text-[11px] text-slate-100 leading-relaxed">{change.description}</div>
             <div className="flex items-center gap-1.5 mt-0.5">

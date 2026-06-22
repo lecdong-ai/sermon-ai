@@ -10,7 +10,7 @@ export default function ProjectContextRow({
   stageStatus,
 }: {
   project: ProjectDetail
-  currentStage: StageKey
+  currentStage?: StageKey
   lastSaved?: string
   stageStatus?: Partial<Record<StageKey, 'empty' | 'done' | 'progress'>>
 }) {
@@ -33,12 +33,14 @@ export default function ProjectContextRow({
           </>
         )}
       </div>
-      <StageFlowIndicator
-        currentStage={currentStage}
-        stageStatus={stageStatus}
-        projectId={project.id}
-        compact
-      />
+      {currentStage && (
+        <StageFlowIndicator
+          currentStage={currentStage}
+          stageStatus={stageStatus}
+          projectId={project.id}
+          compact
+        />
+      )}
     </div>
   )
 }

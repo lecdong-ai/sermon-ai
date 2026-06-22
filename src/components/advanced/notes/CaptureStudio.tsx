@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { BookOpen, MessageSquare, Scroll, Zap } from 'lucide-react'
 import {
   NOTE_TYPES,
   NOTE_TYPE_LABELS,
@@ -31,11 +32,11 @@ export interface CapturePayload {
   connections: { type: 'passage' | 'theme' | 'word' | 'project' | 'series'; label: string; id: string }[]
 }
 
-const MODE_TABS: { key: CaptureMode; label: string; icon: string; desc: string }[] = [
-  { key: 'quick', label: '간단 메모', icon: '⚡', desc: '8자 이상의 핵심 통찰을 빠르게' },
-  { key: 'deep', label: '깊이 쓰기', icon: '📖', desc: '마크다운으로 길게 정리' },
-  { key: 'scripture', label: '본문 주석', icon: '📜', desc: '성경 본문 위에 주석을 얹기' },
-  { key: 'chat', label: 'AI 대화', icon: '💬', desc: 'AI와 함께 통찰을 빚어내기' },
+const MODE_TABS: { key: CaptureMode; label: string; icon: any; desc: string }[] = [
+  { key: 'quick', label: '간단 메모', icon: Zap, desc: '8자 이상의 핵심 통찰을 빠르게' },
+  { key: 'deep', label: '깊이 쓰기', icon: BookOpen, desc: '마크다운으로 길게 정리' },
+  { key: 'scripture', label: '본문 주석', icon: Scroll, desc: '성경 본문 위에 주석을 얹기' },
+  { key: 'chat', label: 'AI 대화', icon: MessageSquare, desc: 'AI와 함께 통찰을 빚어내기' },
 ]
 
 export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: CaptureStudioProps) {
@@ -200,7 +201,7 @@ export default function CaptureStudio({ notes, onSave, onSelectNote, onClose }: 
               }`}
               title={m.desc}
             >
-              <span>{m.icon}</span>
+              <m.icon className="w-3.5 h-3.5" />
               <span>{m.label}</span>
             </button>
           ))}
@@ -387,7 +388,9 @@ function QuickMode({ text, setText, textareaRef }: { text: string; setText: (s: 
 function DeepMode({ text, setText, textareaRef }: { text: string; setText: (s: string) => void; textareaRef: React.RefObject<HTMLTextAreaElement> }) {
   return (
     <div>
-      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">📖 깊이 쓰기</label>
+      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5 flex items-center gap-1">
+        <BookOpen className="w-3 h-3" />깊이 쓰기
+      </label>
       <textarea
         ref={textareaRef}
         value={text}

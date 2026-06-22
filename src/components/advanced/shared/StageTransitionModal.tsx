@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircle2, AlertCircle, X, Sparkles, ChevronRight, BookOpen, Zap,
-  Loader2, MessageCircle, ArrowRight,
+  AlertCircle, ArrowRight, BookOpen, Bot, CheckCircle2, ChevronRight,
+  FileText, Lightbulb, Loader2, MessageCircle, PenLine, Sparkles, X, Zap,
 } from 'lucide-react'
 import type { ProjectStatus } from '@/lib/advanced/types'
 import { PROJECT_STATUS_LABELS } from '@/lib/advanced/types'
@@ -187,7 +187,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
                 <div className="space-y-2 pt-2">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">어떻게 채울까요?</p>
                   <PathOption
-                    icon="🌱"
+                    icon={Sparkles}
                     label="통찰로 충족"
                     desc="이미 기록한 통찰이 있으면 자동으로 인정됩니다"
                     onClick={() => {
@@ -198,7 +198,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
                     badge="자동"
                   />
                   <PathOption
-                    icon="📖"
+                    icon={BookOpen}
                     label="성경 연구로 이동"
                     desc="깊이 있는 원어·주석 연구를 직접 진행합니다"
                     onClick={() => {
@@ -207,7 +207,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
                     }}
                   />
                   <PathOption
-                    icon="🤖"
+                    icon={Bot}
                     label="AI 자동 생성"
                     desc="30초 안에 본문 기반 원어·주석·주제를 자동 채웁니다"
                     onClick={() => {
@@ -217,7 +217,7 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
                     badge="1분"
                   />
                   <PathOption
-                    icon="✏️"
+                    icon={PenLine}
                     label="1분 안에 채우기"
                     desc="핵심 단어·주석·주제를 직접 입력합니다"
                     onClick={() => setActivePanel('quickfill')}
@@ -248,7 +248,9 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
               {activePanel === 'ai' && (
                 <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">🤖 AI 자동 생성</p>
+                    <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <Bot className="w-3 h-3" />AI 자동 생성
+                    </p>
                     <button onClick={() => { setActivePanel('none'); setAiResult(null) }} className="text-[10px] text-slate-500 hover:text-slate-300">
                       ← 돌아가기
                     </button>
@@ -259,7 +261,10 @@ export default function StageTransitionModal({ isOpen, onClose, from, to, projec
                       AI가 본문을 분석하고 있습니다...
                     </div>
                   ) : aiResult?.error ? (
-                    <p className="text-[11px] text-red-300">⚠ {aiResult.error}</p>
+                    <p className="text-[11px] text-red-300 flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <span>{aiResult.error}</span>
+                    </p>
                   ) : aiResult ? (
                     <>
                       <div>
@@ -360,7 +365,10 @@ function ChecklistRow({ result }: { result: MultiCheckResult }) {
             <div className="flex flex-wrap gap-1 mt-1.5">
               {result.contributors.map((c, i) => (
                 <span key={i} className="inline-flex items-center gap-0.5 text-[9px] font-bold text-slate-400 bg-white/5 border border-white/5 rounded-full px-1.5 py-0.5">
-                  <span className="text-slate-500">{SOURCE_ICON[c.source]}</span>
+                  {(() => {
+                    const Icon = SOURCE_ICON[c.source] || Lightbulb
+                    return <Icon className="w-2.5 h-2.5 text-slate-500" />
+                  })()}
                   <span>{c.detail}</span>
                   <span className="text-emerald-400 ml-0.5">×{c.count}</span>
                 </span>
@@ -373,16 +381,16 @@ function ChecklistRow({ result }: { result: MultiCheckResult }) {
   )
 }
 
-const SOURCE_ICON: Record<string, string> = {
-  study: '📖',
-  insight: '💡',
-  quickfill: '✏️',
-  prep: '📝',
-  manuscript: '✍️',
+const SOURCE_ICON: Record<string, any> = {
+  study: BookOpen,
+  insight: Lightbulb,
+  quickfill: PenLine,
+  prep: FileText,
+  manuscript: PenLine,
 }
 
-function PathOption({ icon, label, desc, onClick, disabled, badge }: {
-  icon: string
+function PathOption({ icon: Icon, label, desc, onClick, disabled, badge }: {
+  icon: React.ComponentType<{ className?: string }>
   label: string
   desc: string
   onClick: () => void
@@ -395,7 +403,9 @@ function PathOption({ icon, label, desc, onClick, disabled, badge }: {
       disabled={disabled}
       className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-colors text-left group disabled:opacity-30 disabled:cursor-not-allowed"
     >
-      <div className="text-2xl shrink-0">{icon}</div>
+      <div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-indigo-300" />
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-[12px] font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">{label}</p>

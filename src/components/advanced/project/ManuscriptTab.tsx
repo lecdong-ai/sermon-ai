@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Loader2, Sparkles, Plus, X, Trash2, BookOpen, Link2 } from 'lucide-react'
+import { Atom, BookOpen, Church, Globe, History, Home, Lightbulb, Link2, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -2136,7 +2136,7 @@ function SermonSectionBlock({
                   className="shrink-0 text-[9px] px-2 py-1 rounded bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 transition-colors font-medium disabled:opacity-50"
                   title="원고에 자연스럽게 녹여 넣기"
                 >
-                  {weavingRefId === note.id ? <Loader2 className="w-3 h-3 animate-spin" /> : '✨ 녹이기'}
+                  {weavingRefId === note.id ? <Loader2 className="w-3 h-3 animate-spin" /> : (<><Sparkles className="w-3 h-3 inline" /> 녹이기</>)}
                 </button>
               )}
             </div>
@@ -2203,13 +2203,13 @@ function IllustrationNotesSection({
     '보류': 'bg-amber-500/10 text-amber-300',
     '검토중': 'bg-blue-500/10 text-blue-300',
   }
-  const categoryIcons: Record<string, string> = {
-    '일상': '🏠',
-    '역사': '📜',
-    '성경인물': '📖',
-    '현대사례': '🌍',
-    '교회사': '⛪',
-    '과학/자연': '🔬',
+  const categoryIcons: Record<string, any> = {
+    '일상': Home,
+    '역사': History,
+    '성경인물': BookOpen,
+    '현대사례': Globe,
+    '교회사': Church,
+    '과학/자연': Atom,
   }
 
   const handleAiGenerate = async () => {
@@ -2337,7 +2337,10 @@ function IllustrationNotesSection({
               <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{categoryIcons[note.category as string] || '💡'}</span>
+                    {(() => {
+                      const Icon = categoryIcons[note.category as string] || Lightbulb
+                      return <Icon className="w-4 h-4 text-slate-300" />
+                    })()}
                     <h4 className="text-sm font-medium text-white">{note.title}</h4>
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">{note.category}</span>
                   </div>
@@ -2363,7 +2366,7 @@ function IllustrationNotesSection({
                 <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
                 {note.applicationTip && (
                   <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
-                    💡 적용 팁: {note.applicationTip}
+                    <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용 팁:</span> {note.applicationTip}
                   </p>
                 )}
                 {note.relatedVerses && note.relatedVerses.length > 0 && (
@@ -2433,7 +2436,10 @@ function IllustrationNotesSection({
           <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group hover:border-white/10 transition-colors">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-base">{categoryIcons[note.category as string] || '💡'}</span>
+                {(() => {
+                  const Icon = categoryIcons[note.category as string] || Lightbulb
+                  return <Icon className="w-5 h-5 text-slate-300" />
+                })()}
                 <h4 className="text-sm font-medium text-white truncate">{note.title}</h4>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${statusColors[note.status]}`}>
                   {note.status}
@@ -2460,7 +2466,7 @@ function IllustrationNotesSection({
             <p className="text-xs text-slate-200 leading-relaxed mb-2 line-clamp-3">{note.content}</p>
             {note.applicationTip && (
               <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
-                💡 적용: {note.applicationTip}
+                <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용:</span> {note.applicationTip}
               </p>
             )}
             {note.relatedVerses && note.relatedVerses.length > 0 && (
@@ -2842,7 +2848,7 @@ function PrepSummaryPanel({
   return (
     <aside className="w-80 border-l border-white/5 bg-[#04060f]/60 flex flex-col shrink-0 overflow-y-auto scrollbar-thin">
 
-      {/* ✨ 건강도 높이기 버튼 */}
+      {/* 건강도 높이기 버튼 */}
       {canBoost && (
         <div className="px-4 py-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-b border-indigo-500/20">
           <button
@@ -2858,7 +2864,7 @@ function PrepSummaryPanel({
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                ✨ 건강도 높이기 ({healthScore.score} → {Math.min(100, healthScore.score + 20)} 예상)
+                건강도 높이기 ({healthScore.score} → {Math.min(100, healthScore.score + 20)} 예상)
               </>
             )}
           </button>

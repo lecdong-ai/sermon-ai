@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { FileText, Library, Network, PenLine } from 'lucide-react'
 import type { NoteEntry } from '@/lib/advanced/notesData'
 
 interface QuickActionChipsProps {
@@ -37,10 +38,10 @@ export default function QuickActionChips({ note, onDismiss, onSendToPrepare, onA
           <span className="text-[10px] text-slate-400 font-medium truncate max-w-[180px]">&ldquo;{note.title}&rdquo;</span>
         </div>
         <div className="w-px h-5 bg-white/10" />
-        <ActionChip label="설교 준비" icon="📝" onClick={onSendToPrepare} />
-        <ActionChip label="시리즈" icon="📚" onClick={onAddToSeries} />
-        <ActionChip label="원고 반영" icon="✍️" onClick={onReflectInManuscript} />
-        <ActionChip label="그래프" icon="🌌" onClick={onViewInGraph} />
+        <ActionChip label="설교 준비" icon={FileText} onClick={onSendToPrepare} />
+        <ActionChip label="시리즈" icon={Library} onClick={onAddToSeries} />
+        <ActionChip label="원고 반영" icon={PenLine} onClick={onReflectInManuscript} />
+        <ActionChip label="그래프" icon={Network} onClick={onViewInGraph} />
         <div className="w-px h-5 bg-white/10" />
         <button
           onClick={onDismiss}
@@ -56,13 +57,13 @@ export default function QuickActionChips({ note, onDismiss, onSendToPrepare, onA
   )
 }
 
-function ActionChip({ label, icon, onClick }: { label: string; icon: string; onClick: () => void }) {
+function ActionChip({ label, icon: Icon, onClick }: { label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className="text-[10px] font-bold text-slate-300 hover:text-indigo-300 px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 transition-colors flex items-center gap-1"
     >
-      <span>{icon}</span>
+      <Icon className="w-3 h-3" />
       <span>{label}</span>
     </button>
   )

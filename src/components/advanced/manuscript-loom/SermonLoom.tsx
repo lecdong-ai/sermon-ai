@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertCircle, BookOpen, Bot, PartyPopper } from 'lucide-react'
 import type { NoteEntry, NoteType } from '@/lib/advanced/notesData'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, NOTE_TYPE_COLORS } from '@/lib/advanced/notesData'
 
@@ -241,7 +242,7 @@ export default function SermonLoom({ initialProjectId }: SermonLoomProps) {
 
       {error && (
         <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-[11px] text-red-300 flex items-center justify-between">
-          <span>⚠ {error}</span>
+          <span className="inline-flex items-center gap-1"><AlertCircle className="w-3 h-3" />{error}</span>
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">✕</button>
         </div>
       )}
@@ -389,7 +390,7 @@ function TopBar({ projects, activeProjectId, onSelectProject, savedAt, arranging
                     AI 배치 중
                   </>
                 ) : (
-                  <>🤖 AI 자동 배치</>
+                  <><Bot className="w-3 h-3 inline" />AI 자동 배치</>
                 )}
               </button>
               <button
@@ -438,7 +439,7 @@ function BasketPanel({ insights, allInsights, placedIds, filter, setFilter, onDr
         {insights.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-[11px] text-slate-500">
-              {filter === 'unplaced' ? '🎉 모든 통찰이 배치되었습니다' : '통찰이 없습니다'}
+              {filter === 'unplaced' ? (<><PartyPopper className="w-3 h-3 inline" />모든 통찰이 배치되었습니다</>) : '통찰이 없습니다'}
             </p>
           </div>
         ) : (
@@ -733,7 +734,9 @@ function HealthPanel({ loom, insightMap, reasoning, totalInsights, placedCount }
 
         {health.warnings.length > 0 && (
           <div>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">⚠ 약한 부분</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <AlertCircle className="w-3 h-3" />약한 부분
+            </p>
             <ul className="space-y-1">
               {health.warnings.map((w, i) => (
                 <li key={i} className="text-[11px] text-amber-300 flex items-start gap-1">
@@ -761,7 +764,9 @@ function HealthPanel({ loom, insightMap, reasoning, totalInsights, placedCount }
 
         {reasoning && (
           <div>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">🤖 AI 배치 이유</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <Bot className="w-3 h-3" />AI 배치 이유
+            </p>
             <p className="text-[11px] text-slate-300 leading-relaxed font-medium bg-white/5 rounded-lg p-2.5 border border-white/5">{reasoning}</p>
           </div>
         )}
@@ -781,7 +786,9 @@ function WorkbenchStrip({ projects, activeProjectId, onSelect, loomTotalsByProje
   return (
     <div className="shrink-0 border-t border-white/5 bg-[#04060f]/80 backdrop-blur-md">
       <div className="px-4 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-thin">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">📚 다른 작성 중 설교</span>
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0 flex items-center gap-1.5">
+          <BookOpen className="w-3 h-3" />다른 작성 중 설교
+        </span>
         <div className="flex gap-2">
           {projects.slice(0, 8).map((p) => {
             const isActive = p.id === activeProjectId

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { getStorageItem } from '@/lib/storage'
 import { AlertCircle, CheckCircle2, ChevronRight, ExternalLink, Loader2 } from 'lucide-react'
+import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 
 interface Props { project: ProjectDetail }
 
@@ -400,6 +401,9 @@ export default function ConnectionsTab({ project }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Project Context */}
+      <ProjectContextRow project={project} />
+
       {/* ─── 헤더: 전체 리포트 요약 ─── */}
       {hasAnyData ? (
         <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-6">

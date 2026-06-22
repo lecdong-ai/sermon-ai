@@ -527,7 +527,9 @@ export default function SeriesDetailPage() {
                       ))}
                     </div>
                     <p className="text-[11px] text-slate-400">{insights.theologicalBalance.insight}</p>
-                    <p className="text-[11px] text-amber-300/80">💡 {insights.theologicalBalance.suggestion}</p>
+                    <p className="text-[11px] text-amber-300/80 inline-flex items-center gap-1">
+                      <Lightbulb className="w-3 h-3" />{insights.theologicalBalance.suggestion}
+                    </p>
                   </div>
                 </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { FileText, Library } from 'lucide-react'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteType, type NoteEntry } from '@/lib/advanced/notesData'
 import LinkInsightModal, { type LinkTarget } from './LinkInsightModal'
 import ReflectInManuscriptModal from './ReflectInManuscriptModal'
@@ -142,7 +143,7 @@ export default function NoteDetailPanel({
               : 'text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/10'
           }`}
         >
-          📝 설교 준비 {projectIds.length > 0 && <span className="ml-1 opacity-70">{projectIds.length}</span>}
+          <FileText className="w-3 h-3 inline mr-1" />설교 준비 {projectIds.length > 0 && <span className="ml-1 opacity-70">{projectIds.length}</span>}
         </button>
         <button
           onClick={() => openLinkModal('series')}
@@ -152,7 +153,7 @@ export default function NoteDetailPanel({
               : 'text-slate-300 border-white/10 hover:bg-white/5 hover:text-cyan-300'
           }`}
         >
-          📚 시리즈 {seriesIds.length > 0 && <span className="ml-1 opacity-70">{seriesIds.length}</span>}
+          <Library className="w-3 h-3 inline mr-1" />시리즈 {seriesIds.length > 0 && <span className="ml-1 opacity-70">{seriesIds.length}</span>}
         </button>
         <button
           onClick={() => openLinkModal('manuscript')}
@@ -315,7 +316,9 @@ function LinksTab({
     <div className="p-3 space-y-3">
       <section>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">📝 설교 프로젝트</p>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+            <FileText className="w-3 h-3" />설교 프로젝트
+          </p>
           <div className="flex items-center gap-2">
             {linkedProjects.length > 0 && onOpenLoom && (
               <button onClick={onOpenLoom} className="text-[10px] text-violet-400 hover:text-violet-300 font-bold">🧵 직조</button>
@@ -343,7 +346,9 @@ function LinksTab({
 
       <section>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">📚 시리즈</p>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+            <Library className="w-3 h-3" />시리즈
+          </p>
           <button onClick={onAddSeries} className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold">+ 추가</button>
         </div>
         {linkedSeries.length === 0 ? (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Flame } from 'lucide-react'
 
 interface DailyVerse {
   text: string
@@ -81,7 +82,7 @@ export default function InspirationStrip({ totalNotes, weeklyCount, streak, last
           <Divider />
           <Stat label="이번 주" value={weeklyCount} unit="회" color="text-emerald-400" pulse />
           <Divider />
-          <Stat label="연속" value={streak} unit="일" color="text-amber-400" icon="🔥" />
+          <Stat label="연속" value={streak} unit="일" color="text-amber-400" icon={Flame} />
           <Divider />
           <div className="text-right min-w-[80px]">
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">마지막 통찰</p>
@@ -93,12 +94,12 @@ export default function InspirationStrip({ totalNotes, weeklyCount, streak, last
   )
 }
 
-function Stat({ label, value, unit, color, pulse, icon }: { label: string; value: number; unit: string; color: string; pulse?: boolean; icon?: string }) {
+function Stat({ label, value, unit, color, pulse, icon: Icon }: { label: string; value: number; unit: string; color: string; pulse?: boolean; icon?: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="text-right px-1">
       <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{label}</p>
       <p className={`text-sm font-bold ${color} flex items-center justify-end gap-0.5`}>
-        {icon && <span>{icon}</span>}
+        {Icon && <Icon className="w-3 h-3" />}
         <span className={pulse ? 'tabular-nums' : 'tabular-nums'}>{value}</span>
         <span className="text-[9px] text-slate-500 font-bold">{unit}</span>
       </p>

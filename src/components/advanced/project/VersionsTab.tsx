@@ -13,9 +13,11 @@ import {
 } from '@/lib/advanced/retrospectiveStorage'
 import { computeMetrics, diffLines, diffStats, pickPhaseIcon, pickPhaseTone, VersionMetrics } from '@/lib/advanced/retrospectiveHelpers'
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Clock, GitBranch,
-  History, Mic2, Play, Plus, RefreshCw, Sparkles, Star, Trash2, X,
+  ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, Dna, FileText,
+  GitBranch, History, Lightbulb, Mic2, Play, Plus, RefreshCw, Sparkles,
+  Star, Trash2, X,
 } from 'lucide-react'
+import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 
 interface Props { project: ProjectDetail }
 
@@ -203,6 +205,9 @@ export default function VersionsTab({ project }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Project Context */}
+      <ProjectContextRow project={project} />
+
       {/* ─── 여정 헤더 ─── */}
       <JourneyHeader
         project={project}
@@ -218,7 +223,7 @@ export default function VersionsTab({ project }: Props) {
         {([
           { key: 'journey', label: '🌱 진화', icon: GitBranch },
           { key: 'compare', label: '🔍 비교', icon: History },
-          { key: 'dna', label: '🧬 DNA', icon: Sparkles },
+          { key: 'dna', label: 'DNA', icon: Dna },
           { key: 'worship', label: '🎤 예배 회고', icon: Mic2 },
         ] as const).map(t => (
           <button
@@ -342,7 +347,9 @@ function JourneyHeader({ project, versions, allMetrics, daySpan, onAddSnapshot, 
     <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl border border-indigo-500/20 p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <div className="text-[10px] font-semibold text-indigo-300 uppercase tracking-widest mb-1">📖 설교 여정</div>
+          <div className="text-[10px] font-semibold text-indigo-300 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+            <BookOpen className="w-3 h-3" />설교 여정
+          </div>
           <h2 className="text-2xl font-bold text-white mb-1">{project.title || '(제목 없음)'}</h2>
           <div className="text-[11px] text-slate-400 flex items-center gap-2">
             <Clock className="w-3 h-3" />
@@ -449,10 +456,10 @@ function JourneyTab({ allMetrics, versions, showSlideIdx, setShowSlideIdx, refle
                   </div>
                 </div>
                 <div className="flex gap-4 text-[10px] text-slate-400 mt-2 mb-3 flex-wrap">
-                  <span>📝 {m.wordCount}자</span>
-                  <span>📚 섹션 {m.sectionCount}</span>
-                  <span>💡 예화 {m.illCount}</span>
-                  <span>📖 참고 {m.refCount}</span>
+                  <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" />{m.wordCount}자</span>
+                  <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" />섹션 {m.sectionCount}</span>
+                  <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />예화 {m.illCount}</span>
+                  <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" />참고 {m.refCount}</span>
                   <span>🇬🇷 원어 {m.greekCount}</span>
                   {m.oneSentenceSummary && <span className="italic text-slate-500">· &ldquo;{m.oneSentenceSummary.slice(0, 50)}{m.oneSentenceSummary.length > 50 ? '…' : ''}&rdquo;</span>}
                 </div>
@@ -624,7 +631,9 @@ function DNATab({ allMetrics, aiInsight, aiLoading, aiError, onRunAi }: {
       <div className="bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl border border-purple-500/20 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-[10px] font-semibold text-purple-300 uppercase tracking-widest mb-1">🧬 메시지 DNA</div>
+            <div className="text-[10px] font-semibold text-purple-300 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <Dna className="w-3 h-3" />메시지 DNA
+            </div>
             <p className="text-[11px] text-slate-400">이 설교의 핵심 키워드가 시간에 따라 어떻게 자랐는지</p>
           </div>
         </div>
@@ -669,7 +678,9 @@ function DNATab({ allMetrics, aiInsight, aiLoading, aiError, onRunAi }: {
       <div className="bg-[#04060f]/60 rounded-xl border border-indigo-500/20 p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-[10px] font-semibold text-indigo-300 uppercase tracking-widest">💡 AI 인사이트</div>
+            <div className="text-[10px] font-semibold text-indigo-300 uppercase tracking-widest flex items-center gap-1.5">
+              <Lightbulb className="w-3 h-3" />AI 인사이트
+            </div>
             <p className="text-[11px] text-slate-400 mt-0.5">이 설교의 진화를 AI가 분석합니다</p>
           </div>
           <button
