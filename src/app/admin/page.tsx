@@ -222,7 +222,7 @@ export default function AdminCenterPage() {
   if (loading && !stats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
       </div>
     )
   }
@@ -324,7 +324,7 @@ export default function AdminCenterPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+              <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
             </div>
           ) : supporters.length === 0 ? (
             <div className="text-center py-12 text-slate-500 text-[12px]">검색 결과가 없습니다</div>

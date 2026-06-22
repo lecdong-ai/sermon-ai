@@ -87,9 +87,9 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   const sub = data?.subscription
 
   const statusStyles: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    trialing: 'bg-blue-100 text-blue-700',
-    past_due: 'bg-amber-100 text-amber-700',
+    active: 'bg-emerald-500/15 text-emerald-300',
+    trialing: 'bg-blue-500/15 text-blue-300',
+    past_due: 'bg-amber-500/15 text-amber-300',
     canceled: 'bg-white/5 text-slate-500',
     expired: 'bg-rose-500/20 text-rose-300',
   }
@@ -342,7 +342,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             )}
             <button
               onClick={() => { onClose(); setTimeout(() => onDelete(member.id), 300) }}
-              className="w-full py-3 rounded-xl border border-rose-200 text-rose-300 text-[13px] font-bold hover:bg-rose-500/10 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl border border-rose-500/30 text-rose-300 text-[13px] font-bold hover:bg-rose-500/10 transition-all flex items-center justify-center gap-2"
             >
               <X className="w-4 h-4" />
               탈퇴 처리
@@ -382,9 +382,9 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-[14px] ${
             member.role === 'admin'
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-200'
+              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/20'
               : active
-                ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-md shadow-rose-200'
+                ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-md shadow-rose-500/20'
                 : 'bg-gradient-to-br from-slate-300 to-slate-400'
           }`}>
             {member.name ? member.name.charAt(0) : member.email.charAt(0).toUpperCase()}
@@ -410,7 +410,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {active ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-300 text-[12px] font-semibold border border-rose-200/60">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-300 text-[12px] font-semibold border border-rose-500/30">
               <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
               후원회원
             </span>
@@ -488,7 +488,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
         <div className="flex items-center gap-2">
           <button
             onClick={() => onDetail(member)}
-            className="py-2 px-2.5 rounded-xl bg-white/5 text-slate-500 text-[12px] font-bold hover:bg-indigo-500/10 hover:text-indigo-500 transition-all"
+            className="py-2 px-2.5 rounded-xl bg-white/5 text-slate-500 text-[12px] font-bold hover:bg-indigo-500/10 hover:text-indigo-400 transition-all"
             title="상세 보기"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -515,8 +515,8 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
 function SortIcon({ field, sortField, sortOrder }: { field: SortField; sortField: SortField | null; sortOrder: 'asc' | 'desc' }) {
   if (sortField !== field) return <ChevronUp className="w-3 h-3 text-slate-600" />
   return sortOrder === 'asc'
-    ? <ChevronUp className="w-3 h-3 text-indigo-500" />
-    : <ChevronDown className="w-3 h-3 text-indigo-500" />
+    ? <ChevronUp className="w-3 h-3 text-indigo-400" />
+    : <ChevronDown className="w-3 h-3 text-indigo-400" />
 }
 
 export default function AdminUsersPage() {
@@ -677,7 +677,7 @@ export default function AdminUsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
       </div>
     )
   }
@@ -688,7 +688,7 @@ export default function AdminUsersPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-[22px] font-extrabold text-slate-100 flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-500" />
+            <Users className="w-5 h-5 text-indigo-400" />
             회원 관리
           </h1>
           <p className="text-[14px] text-slate-500 mt-1">
@@ -753,7 +753,7 @@ export default function AdminUsersPage() {
               onClick={() => setFilter(f)}
               className={`px-3 py-2 rounded-xl text-[12px] font-bold transition-all ${
                 filter === f
-                  ? 'bg-indigo-500/20 text-indigo-700 border border-indigo-200'
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                   : 'bg-[#0a0e1a] text-slate-500 border border-white/5 hover:bg-white/5'
               }`}
             >
@@ -922,7 +922,7 @@ export default function AdminUsersPage() {
             </div>
             <h2 className="text-[18px] font-extrabold text-slate-100 text-center mb-2">회원 탈퇴</h2>
             <p className="text-[14px] text-slate-500 text-center mb-4">{deleteTarget.email}</p>
-            <div className="bg-amber-50 rounded-xl px-4 py-3 mb-5 text-[12px] text-amber-700 flex items-start gap-2">
+            <div className="bg-amber-500/10 rounded-xl px-4 py-3 mb-5 text-[12px] text-amber-300 flex items-start gap-2">
               <X className="w-4 h-4 shrink-0 mt-0.5" />
               모든 데이터가 영구 삭제되며 복구할 수 없습니다.
             </div>

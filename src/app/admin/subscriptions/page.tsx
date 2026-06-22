@@ -31,9 +31,9 @@ export default function AdminSubscriptionsPage() {
   useEffect(() => { fetchSubs() }, [])
 
   const statusStyles: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    trialing: 'bg-blue-100 text-blue-700',
-    past_due: 'bg-amber-100 text-amber-700',
+    active: 'bg-emerald-500/15 text-emerald-300',
+    trialing: 'bg-blue-500/15 text-blue-300',
+    past_due: 'bg-amber-500/15 text-amber-300',
     canceled: 'bg-white/5 text-slate-500',
     expired: 'bg-rose-500/20 text-rose-300',
   }
@@ -41,7 +41,7 @@ export default function AdminSubscriptionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
       </div>
     )
   }

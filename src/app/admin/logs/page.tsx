@@ -34,7 +34,7 @@ export default function AdminLogsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
       </div>
     )
   }
@@ -114,9 +114,9 @@ export default function AdminLogsPage() {
                       <td className="px-5 py-3 font-bold text-slate-200">{p.amount.toLocaleString()}원</td>
                       <td className="px-5 py-3">
                         <span className={`px-2 py-0.5 rounded text-[12px] font-bold ${
-                          p.status === 'succeeded' ? 'bg-emerald-100 text-emerald-700' :
+                          p.status === 'succeeded' ? 'bg-emerald-500/15 text-emerald-300' :
                           p.status === 'failed' ? 'bg-rose-500/20 text-rose-300' :
-                          'bg-amber-100 text-amber-700'
+                          'bg-amber-500/15 text-amber-300'
                         }`}>{p.status}</span>
                       </td>
                       <td className="px-5 py-3 text-slate-600">{p.payment_method || '-'}</td>
