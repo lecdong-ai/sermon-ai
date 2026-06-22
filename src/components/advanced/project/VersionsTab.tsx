@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
+import { type StageKey } from '@/components/advanced/shared/StageFlowIndicator'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import { getVersions, saveVersion, restoreVersion, deleteVersion, ManuscriptVersion } from '@/lib/advanced/versionManager'
 import { JohnManuscriptData, EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -203,10 +204,16 @@ export default function VersionsTab({ project }: Props) {
   const leftVer = versions.find(v => v.id === leftVerId)
   const rightVer = versions.find(v => v.id === rightVerId)
 
+  // Map project.status → StageKey for StageFlowIndicator
+  const stageKey: StageKey =
+    project.status === 'research' ? 'study' :
+    project.status === 'prepare' ? 'prep' :
+    'manuscript'
+
   return (
     <div className="space-y-6">
       {/* Project Context */}
-      <ProjectContextRow project={project} />
+      <ProjectContextRow project={project} currentStage={stageKey} />
 
       {/* ─── 여정 헤더 ─── */}
       <JourneyHeader

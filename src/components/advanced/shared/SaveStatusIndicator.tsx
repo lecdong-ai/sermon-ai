@@ -1,6 +1,10 @@
 'use client'
 
-import type { SaveStatus } from '@/lib/advanced/types'
+// Note: SaveStatus type intentionally not imported from @/lib/advanced/types
+// to avoid runtime errors from type/import resolution issues. String literals
+// are used directly in the prop signature and the inline mapping below.
+
+type SaveStatus = 'saving' | 'saved' | 'modified' | 'error' | 'idle'
 
 function formatTime(iso: string | null): string {
   if (!iso) return ''

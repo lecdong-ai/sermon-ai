@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Atom, BookOpen, Church, Globe, History, Home, Lightbulb, Link2, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
@@ -1780,18 +1781,9 @@ function WritingContextHeader({
   writingProgress: number
   currentVersion: ManuscriptVersion | null
 }) {
-  const saveLabel =
-    autoSaveStatus === 'saving' ? '저장 중...' :
-    autoSaveStatus === 'saved' ? '자동 저장됨' :
-    '저장 대기 중'
-  const saveDotColor =
-    autoSaveStatus === 'saving' ? 'bg-blue-400 animate-pulse' :
-    autoSaveStatus === 'saved' ? 'bg-green-400' :
-    'bg-amber-400'
-  const saveTextColor =
-    autoSaveStatus === 'saving' ? 'text-blue-400' :
-    autoSaveStatus === 'saved' ? 'text-green-400' :
-    'text-amber-400'
+  const saveStatus = autoSaveStatus === 'saving' ? 'saving' :
+                      autoSaveStatus === 'saved' ? 'saved' :
+                      'modified'
 
   return (
     <div className="bg-[#04060f]/60 border-b border-white/5 px-5 py-2.5 flex items-center justify-between shrink-0">
@@ -1800,11 +1792,7 @@ function WritingContextHeader({
         <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${OVERALL_STATUS_COLORS[overallStatus] || 'bg-white/5 text-slate-200'}`}>
           {OVERALL_STATUS_LABELS[overallStatus] || overallStatus}
         </span>
-        <span className={`text-[10px] ${saveTextColor} flex items-center gap-1.5`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${saveDotColor}`} />
-          {saveLabel}
-          {lastSaved && autoSaveStatus === 'saved' && <span className="text-slate-500"> · {lastSaved}</span>}
-        </span>
+        <SaveStatusIndicator status={saveStatus} lastSavedAt={lastSaved} />
         <span className="text-[11px] text-slate-500">{manuscript.passage} · {totalWordCount.toLocaleString()}자 · 약 {readingTimeMin}분</span>
         {currentVersion && (
           <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold whitespace-nowrap">

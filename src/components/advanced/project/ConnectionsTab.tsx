@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
+import { type StageKey } from '@/components/advanced/shared/StageFlowIndicator'
 import { getStorageItem } from '@/lib/storage'
 import { AlertCircle, CheckCircle2, ChevronRight, ExternalLink, Loader2 } from 'lucide-react'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
@@ -399,10 +400,16 @@ export default function ConnectionsTab({ project }: Props) {
     }
   }, [])
 
+  // Map project.status (ProjectStatus) → StageKey for StageFlowIndicator
+  const stageKey: StageKey =
+    project.status === 'research' ? 'study' :
+    project.status === 'prepare' ? 'prep' :
+    'manuscript'
+
   return (
     <div className="space-y-6">
       {/* Project Context */}
-      <ProjectContextRow project={project} />
+      <ProjectContextRow project={project} currentStage={stageKey} />
 
       {/* ─── 헤더: 전체 리포트 요약 ─── */}
       {hasAnyData ? (
