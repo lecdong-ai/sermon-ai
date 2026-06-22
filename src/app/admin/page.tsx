@@ -332,7 +332,7 @@ export default function AdminCenterPage() {
             <div className="divide-y divide-white/5">
               {supporters.slice(0, 8).map((s) => {
                 const active = isActive(s.supporter_until)
-                const initial = (s.name?.[0] || s.email[0]).toUpperCase()
+                const initial = ((s.name?.[0] || s.email?.[0] || '?') as string).toUpperCase()
                 return (
                   <div key={s.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
