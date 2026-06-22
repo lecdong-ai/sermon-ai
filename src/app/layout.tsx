@@ -4,6 +4,7 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 import './globals.css'
 import SiteHeader from '@/components/SiteHeader'
+import MainWrapper from '@/components/MainWrapper'
 import { AuthProvider } from '@/components/AuthProvider'
 import HydrationGuard from '@/components/HydrationGuard'
 
@@ -70,7 +71,7 @@ export default function RootLayout({
           <AuthProvider>
             <Suspense fallback={null}>
               <SiteHeader />
-              <main className="pt-16">{children}</main>
+              <MainWrapper>{children}</MainWrapper>
             </Suspense>
             {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
               <Script

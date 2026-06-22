@@ -1962,8 +1962,6 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep, projectTitle, passage
       if (!res.ok || !json.success) throw new Error(json.error || '저장 실패')
       setSavedIds((prev) => new Set(Array.from(prev).concat([idx])))
       showToast('success', `"${kw.word}" 노트가 저장되었습니다`)
-      // Navigate to graph after short delay
-      setTimeout(() => router.push('/advanced/graph?focus=' + json.data.id), 800)
     } catch (e: any) {
       showToast('error', `저장 실패: ${e?.message || '네트워크 오류'}`)
     } finally {
@@ -2011,12 +2009,10 @@ function ResearchSummaryForPrep({ studyData, onSendToPrep, projectTitle, passage
         }
       } catch {}
     }
-    showToast('success', `${successCount}개 노트가 저장되었습니다 — 별자리로 이동합니다`)
+    showToast('success', `${successCount}개 노트가 저장되었습니다`)
     setSelected(new Set())
     setSelectMode(false)
     setBulkSaving(false)
-    // Navigate to graph after short delay
-    setTimeout(() => router.push('/advanced/graph'), 800)
   }
 
   return (

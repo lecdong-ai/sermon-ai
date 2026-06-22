@@ -32,6 +32,15 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
         if (json.success) apiProject = json.data
       } catch {}
 
+      // Normalize status: DB uses 'draft', UI uses ProjectStatus enum
+      const VALID_STATUSES: ProjectStatus[] = ['research', 'prepare', 'writing', 'review', 'completed', 'archived']
+      if (apiProject) {
+        const s = (apiProject as any).status
+        if (s === 'draft' || !s || !VALID_STATUSES.includes(s)) {
+          apiProject = { ...apiProject, status: 'research' }
+        }
+      }
+
       // 2. Load from localStorage custom projects
       let customProject: AdvancedProject | null = null
       try {
@@ -85,16 +94,23 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
       const detail: ProjectDetail = {
         ...base,
         outlinePoints,
+        wordCount: (base as any).wordCount || manuscriptData?.sections?.reduce((sum: number, s: any) => sum + (s.content?.length || 0), 0) || 0,
+        version: (base as any).version || 1,
+        studyCount: (base as any).studyCount || 0,
+        passages: (base as any).passages || [],
+        themeNames: (base as any).themeNames || [],
+        tagNames: (base as any).tagNames || [],
+        audience: (base as any).audience || [],
         introduction: prepData?.deliveryIntro || manuscriptData?.sections?.find((s: any) => s.id === 'intro')?.content || '',
         conclusion: prepData?.deliveryConclusion || manuscriptData?.sections?.find((s: any) => s.id === 'conclusion')?.content || '',
         applicationPoints: prepData?.applicationPoints?.map((a: any) =>
           `[${a.audienceTag || '전체'}] ${a.point}`
         ) || manuscriptData?.sections?.find((s: any) => s.id === 'application')?.content ? [manuscriptData.sections.find((s: any) => s.id === 'application')!.content] : [],
-        titleCandidates: prepData?.titleCandidates || [],
+        titleCandidates: prepData?.titleCandidates || (base as any).titleCandidates || [],
         manuscriptContent: manuscriptData?.sections?.map((s: any) => `## ${s.label}\n${s.content}`).join('\n\n') || '',
         observations: prepData?.researchInsights?.[0] || manuscriptData?.prepInsights?.[0] || '',
         backgroundNotes: '', interpretationNotes: '', illustrationNotes: '',
-        versions, recentActivity, relatedSermons: [],
+        versions, recentActivity, relatedSermons: (base as any).relatedSermons || [],
       }
 
       setProject(detail)
