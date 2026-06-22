@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { ADVANCED_MENUS, SECTION_LABELS } from '@/lib/advanced/constants'
 import { 
   LayoutDashboard, BookOpen, FileText, Network, Sparkles, Archive, 
-  Settings, Info, ArrowLeft, BrainCircuit, Zap, Database, Cross, Infinity
+  Settings, Info, ArrowLeft, BrainCircuit, Zap, Database, Cross, Infinity, Youtube
 } from 'lucide-react'
 
 const MENU_ICONS: Record<string, any> = {
@@ -19,6 +19,7 @@ const MENU_ICONS: Record<string, any> = {
   notes: Sparkles,
   series: BookOpen,
   settings: Settings,
+  youtube: Youtube,
 }
 
 const VERSES = [

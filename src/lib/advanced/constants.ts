@@ -9,6 +9,7 @@ export const ADVANCED_MENUS: MenuItem[] = [
   { key: 'graph', label: '그래프', href: '/advanced/graph', icon: '◇', section: 'knowledge' },
   { key: 'notes', label: '노트/통찰', href: '/advanced/notes', icon: '◇', section: 'knowledge' },
   { key: 'series', label: '시리즈', href: '/advanced/series', icon: '◇', section: 'knowledge' },
+  { key: 'youtube', label: '유튜브 연구소', href: '/advanced/youtube', icon: '🎬', section: 'ministry' },
   { key: 'settings', label: '설정', href: '/advanced/settings', icon: '◇', section: 'system' },
 ]
 
