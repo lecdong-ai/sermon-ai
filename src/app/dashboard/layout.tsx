@@ -5,7 +5,7 @@ import { AppProvider } from '@/lib/dashboard/store'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppProvider>
-      <div className="flex h-[calc(100vh-4rem)] overflow-hidden -mt-16 bg-[#050814]">
+      <div className="flex h-[calc(100vh-4rem)] -mt-16 bg-[#050814]">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <DashboardHeader />

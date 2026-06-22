@@ -33,7 +33,10 @@ export default function DashboardHeader() {
         setMenuOpen(false)
       }
     }
-    if (menuOpen) document.addEventListener('mousedown', handleClickOutside)
+    if (menuOpen) {
+      // setTimeout to ensure menu items' onClick fires first
+      setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 0)
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [menuOpen])
 
