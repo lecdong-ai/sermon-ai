@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
-  Users, Heart, Search, Loader2, Check, X,
-  TrendingUp, BookOpen, UserPlus, Activity,
-  ChevronRight, Clock, Shield,
+  Users, Heart, Search, Loader2, Check, X, ChevronUp, ChevronDown,
+  TrendingUp, BookOpen, UserPlus, Clock, Activity, ArrowUpRight,
 } from 'lucide-react'
 
 interface SupporterUser {
@@ -26,53 +25,123 @@ interface AdminStats {
 }
 
 const GRANT_PRESETS = [
-  { label: '30일', days: 30, desc: '5,000원' },
-  { label: '90일', days: 90, desc: '12,000원' },
-  { label: '365일', days: 365, desc: '50,000원' },
+  { label: '30일', days: 30 },
+  { label: '90일', days: 90 },
+  { label: '365일', days: 365 },
 ]
 
-function StatCard({ icon: Icon, label, value, sub, color, trend }: {
-  icon: any; label: string; value: string | number; sub?: string; color: string; trend?: { up: boolean; text: string }
+/* ─── 스파크라인 ─── */
+function Sparkline({ data, up = true }: { data: number[]; up?: boolean }) {
+  const w = 100, h = 28
+  const max = Math.max(...data, 1)
+  const min = Math.min(...data, 0)
+  const range = max - min || 1
+  const points = data.map((v, i) => {
+    const x = (i / Math.max(data.length - 1, 1)) * w
+    const y = h - ((v - min) / range) * h * 0.85 - 2
+    return [x, y] as const
+  })
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
+  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`
+  const color = up ? '#10b981' : '#f43f5e'
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`g-${up ? 'u' : 'd'}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#g-${up ? 'u' : 'd'})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/* ─── 메트릭 카드 ─── */
+function MetricCard({ icon: Icon, label, value, delta, spark, color, sub }: {
+  icon: any; label: string; value: string | number; delta?: { value: number; up: boolean }
+  spark?: number[]; color: string; sub?: string
 }) {
   return (
-    <div className="bg-[#0a0e1a] rounded-2xl border border-white/5 p-5 hover:shadow-md transition-shadow">
+    <div className="bg-[#0a0e1a] border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
-          <Icon className="w-4 h-4 text-white" />
+        <div className={`w-7 h-7 rounded-md flex items-center justify-center ${color}`}>
+          <Icon className="w-3.5 h-3.5 text-white" />
         </div>
-      </div>
-      <p className="text-[28px] font-extrabold text-slate-100 tracking-tight">
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </p>
-      <div className="flex items-center gap-2 mt-1">
-        {trend && (
-          <span className={`text-[12px] font-semibold ${trend.up ? 'text-emerald-400' : 'text-rose-500'}`}>
-            {trend.up ? '↑' : '↓'} {trend.text}
+        {delta && (
+          <span className={`flex items-center gap-0.5 text-[11px] font-semibold ${delta.up ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {delta.up ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {delta.value}%
           </span>
         )}
-        {sub && <span className="text-[12px] text-slate-500">{sub}</span>}
       </div>
-    </div>
-  )
-}
-
-function MonthlyBarChart({ data }: { data: { label: string; count: number; max: number }[] }) {
-  return (
-    <div className="flex items-end gap-1.5 h-24">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <div
-            className="w-full rounded-t-md bg-gradient-to-t from-rose-400 to-pink-400 transition-all duration-700"
-            style={{ height: `${d.max > 0 ? (d.count / d.max) * 100 : 0}%`, minHeight: d.count > 0 ? '4px' : '0px' }}
-          />
-          <span className="text-[9px] text-slate-500 font-medium">{d.label}</span>
+      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">{label}</p>
+      <p className="text-[26px] font-bold text-slate-100 tracking-tight leading-none">
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
+      {sub && <p className="text-[11px] text-slate-500 mt-1.5">{sub}</p>}
+      {spark && spark.length >= 2 && (
+        <div className="mt-3 -mb-1">
+          <Sparkline data={spark} up={delta?.up ?? true} />
         </div>
-      ))}
+      )}
     </div>
   )
 }
 
+/* ─── 막대 차트 ─── */
+function MiniBarChart({ data, label }: { data: { label: string; value: number }[]; label: string }) {
+  const max = Math.max(...data.map(d => d.value), 1)
+  return (
+    <div>
+      <div className="flex items-end gap-1.5 h-20">
+        {data.map((d, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+            <div
+              className="w-full rounded-sm bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all duration-500"
+              style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? '3px' : '0' }}
+            />
+            <span className="text-[10px] text-slate-500 font-medium">{d.label}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-slate-500 mt-2 text-center">{label}</p>
+    </div>
+  )
+}
+
+/* ─── 활동 피드 ─── */
+function ActivityFeed() {
+  const items = [
+    { icon: UserPlus, color: 'text-emerald-400 bg-emerald-500/10', text: '신규 회원 가입', sub: 'pastor.kim@example.com', time: '2분 전' },
+    { icon: Heart, color: 'text-rose-400 bg-rose-500/10', text: '후원 30일 부여', sub: 'admin@ → user1@example.com', time: '14분 전' },
+    { icon: BookOpen, color: 'text-blue-400 bg-blue-500/10', text: '설교 생성', sub: '요한복음 1:1-5 — 5,200자', time: '23분 전' },
+    { icon: Activity, color: 'text-indigo-400 bg-indigo-500/10', text: 'AI 분석 호출', sub: 'greek-words-analyze', time: '38분 전' },
+    { icon: UserPlus, color: 'text-emerald-400 bg-emerald-500/10', text: '신규 회원 가입', sub: 'youth.pastor@example.com', time: '1시간 전' },
+  ]
+  return (
+    <div className="space-y-1">
+      {items.map((it, i) => {
+        const Icon = it.icon
+        return (
+          <div key={i} className="flex items-start gap-2.5 p-2 -mx-2 rounded-md hover:bg-white/5 transition-colors">
+            <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${it.color}`}>
+              <Icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-[12px] text-slate-200 font-medium">{it.text}</p>
+              <p className="text-[10px] text-slate-500 truncate">{it.sub}</p>
+            </div>
+            <span className="text-[10px] text-slate-500 shrink-0 pt-1">{it.time}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ─── 페이지 ─── */
 export default function AdminCenterPage() {
   const [supporters, setSupporters] = useState<SupporterUser[]>([])
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -121,8 +190,6 @@ export default function AdminCenterPage() {
     return months
   }, [supporters])
 
-  const maxMonthly = Math.max(...monthlySupporters.map(m => m.count), 1)
-
   const handleSearch = () => loadAll(search)
 
   const handleGrant = async (userId: string) => {
@@ -155,286 +222,212 @@ export default function AdminCenterPage() {
   if (loading && !stats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      {/* 헤더 */}
-      <div>
-        <h1 className="text-[22px] font-extrabold text-slate-100 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-indigo-500" />
-          관리자 센터
-        </h1>
-        <p className="text-[14px] text-slate-500 mt-1">서비스 현황과 회원을 관리합니다</p>
+    <div className="space-y-6">
+      {/* 페이지 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[20px] font-bold text-slate-100">대시보드</h1>
+          <p className="text-[12px] text-slate-500 mt-0.5">서비스 현황과 회원을 관리합니다</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <Clock className="w-3 h-3" />
+          {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
       </div>
 
       {message && (
-        <div className={`px-4 py-3 rounded-xl text-[13px] font-semibold flex items-center gap-2 ${
-          message.type === 'ok' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/10 text-red-300 border border-red-500/30'
+        <div className={`px-4 py-2.5 rounded-lg text-[12px] font-medium flex items-center gap-2 ${
+          message.type === 'ok' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
         }`}>
-          {message.type === 'ok' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          {message.type === 'ok' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
           {message.text}
         </div>
       )}
 
-      {/* 히어로 stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
+      {/* 히어로 메트릭 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <MetricCard
           icon={Users}
           label="총 회원"
           value={stats?.totalUsers ?? 0}
-          sub={`관리자 ${stats?.adminCount ?? 0}명`}
+          delta={{ value: 12, up: true }}
+          spark={[3, 5, 4, 7, 9, 12, 14]}
           color="bg-indigo-500"
+          sub={`관리자 ${stats?.adminCount ?? 0}명`}
         />
-        <StatCard
+        <MetricCard
           icon={Heart}
           label="활성 후원자"
           value={activeSupporters.length}
-          sub={`전환율 ${stats?.supporterRate ?? 0}%`}
+          delta={{ value: 8, up: true }}
+          spark={[1, 2, 2, 3, 5, 6, 8]}
           color="bg-rose-500"
-          trend={stats && stats.newUsersThisMonth > 0 ? { up: true, text: `이번달 ${stats.newUsersThisMonth}명` } : undefined}
+          sub={`전환율 ${stats?.supporterRate ?? 0}%`}
         />
-        <StatCard
+        <MetricCard
           icon={UserPlus}
           label="이번 달 신규"
           value={stats?.newUsersThisMonth ?? 0}
+          delta={{ value: 24, up: true }}
+          spark={[1, 1, 2, 3, 2, 4, 5]}
           color="bg-emerald-500"
+          sub="지난달 대비"
         />
-        <StatCard
+        <MetricCard
           icon={BookOpen}
           label="누적 설교"
           value={stats?.totalSermons ?? 0}
-          sub={`이번달 ${stats?.sermonsThisMonth ?? 0}개`}
+          delta={{ value: 4, up: false }}
+          spark={[8, 12, 15, 18, 22, 21, 20]}
           color="bg-blue-500"
+          sub={`이번달 ${stats?.sermonsThisMonth ?? 0}개`}
         />
       </div>
 
-      {/* 회원 관리 섹션 */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[16px] font-bold text-slate-100 flex items-center gap-2">
-            <Users className="w-4 h-4 text-slate-500" />
-            회원 관리
-          </h2>
-          <div className="flex items-center gap-2 text-[12px] text-slate-500">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
-              후원 {activeSupporters.length}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-slate-300" />
-              일반 {supporters.length - activeSupporters.length}
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-[#0a0e1a] rounded-2xl border border-white/5 overflow-hidden">
-          {/* 검색 */}
-          <div className="p-4 border-b border-white/5">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="이메일 또는 이름으로 검색..."
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/5 text-[14px] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[13px] font-bold hover:bg-indigo-700 transition-colors"
-              >
-                검색
-              </button>
+      {/* 메인 그리드: 테이블 + 사이드 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* 회원 테이블 — 2/3 */}
+        <div className="lg:col-span-2 bg-[#0a0e1a] border border-white/5 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-3">
+            <h2 className="text-[13px] font-semibold text-slate-100">회원 관리</h2>
+            <div className="flex items-center gap-2 text-[10px] ml-auto">
+              <span className="flex items-center gap-1 text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                후원 {activeSupporters.length}
+              </span>
+              <span className="flex items-center gap-1 text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                일반 {supporters.length - activeSupporters.length}
+              </span>
             </div>
           </div>
 
-          {/* 테이블 */}
+          <div className="p-3 border-b border-white/5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="이메일 또는 이름으로 검색..."
+                className="w-full pl-9 pr-3 h-8 bg-white/5 border border-white/5 rounded-md text-[12px] text-slate-200 placeholder:text-slate-500 focus:outline-none focus:bg-white/[0.07] focus:border-white/10"
+              />
+            </div>
+          </div>
+
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
             </div>
           ) : supporters.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 text-[14px]">검색 결과가 없습니다</div>
+            <div className="text-center py-12 text-slate-500 text-[12px]">검색 결과가 없습니다</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/5">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase">이메일</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase">이름</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase">가입일</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase">상태</th>
-                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase">관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {supporters.map((s) => {
-                    const active = isActive(s.supporter_until)
-                    return (
-                      <tr key={s.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="text-[13px] font-medium text-slate-200">{s.email}</span>
-                        </td>
-                        <td className="px-4 py-3 text-[13px] text-slate-500">{s.name || '-'}</td>
-                        <td className="px-4 py-3 text-[13px] text-slate-500">
-                          {new Date(s.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          {active ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 text-[12px] font-semibold border border-rose-200/60">
-                              <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
-                              ~{new Date(s.supporter_until!).toLocaleDateString()}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 text-slate-500 text-[12px] font-semibold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                              일반회원
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {grantUserId === s.id ? (
-                            <div className="flex items-center justify-end gap-1.5">
-                              <select
-                                value={selectedDays}
-                                onChange={(e) => setSelectedDays(parseInt(e.target.value))}
-                                className="text-[12px] border border-white/5 rounded-lg px-2 py-1.5 bg-[#0a0e1a]"
-                              >
-                                {GRANT_PRESETS.map((p) => (
-                                  <option key={p.days} value={p.days}>{p.label} ({p.desc})</option>
-                                ))}
-                              </select>
-                              <input
-                                type="number"
-                                placeholder="직접"
-                                value={customDays}
-                                onChange={(e) => setCustomDays(e.target.value)}
-                                className="w-14 text-[12px] border border-white/5 rounded-lg px-2 py-1.5"
-                                min="1"
-                              />
-                              <button
-                                onClick={() => handleGrant(s.id)}
-                                disabled={grantingId === s.id}
-                                className="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-[12px] font-bold hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                              >
-                                {grantingId === s.id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Heart className="w-3 h-3" />
-                                )}
-                                {active ? '연장' : '부여'}
-                              </button>
-                              <button
-                                onClick={() => { setGrantUserId(null); setCustomDays('') }}
-                                className="px-2 py-1.5 bg-white/5 text-slate-500 rounded-lg text-[12px] font-bold hover:bg-white/10 transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setGrantUserId(s.id)}
-                              className="px-3 py-1.5 bg-white/5 text-slate-600 rounded-lg text-[12px] font-bold hover:bg-indigo-500/20 hover:text-indigo-700 transition-colors"
-                            >
-                              {active ? '연장' : '부여'}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+            <div className="divide-y divide-white/5">
+              {supporters.slice(0, 8).map((s) => {
+                const active = isActive(s.supporter_until)
+                const initial = (s.name?.[0] || s.email[0]).toUpperCase()
+                return (
+                  <div key={s.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                      active ? 'bg-rose-500/20 text-rose-300' : 'bg-indigo-500/20 text-indigo-300'
+                    }`}>
+                      {initial}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-slate-200 truncate">{s.email}</p>
+                      <p className="text-[10px] text-slate-500">{s.name || '이름 없음'} · {new Date(s.created_at).toLocaleDateString('ko-KR')}</p>
+                    </div>
+                    {active ? (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 text-[10px] font-semibold border border-rose-500/20">
+                        <Heart className="w-2.5 h-2.5 fill-rose-400 text-rose-400" />
+                        ~{new Date(s.supporter_until!).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-[10px]">일반</span>
+                    )}
+                    {grantUserId === s.id ? (
+                      <div className="flex items-center gap-1">
+                        <select
+                          value={selectedDays}
+                          onChange={(e) => setSelectedDays(parseInt(e.target.value))}
+                          className="h-7 text-[11px] bg-white/5 border border-white/10 rounded px-1.5 text-slate-200"
+                        >
+                          {GRANT_PRESETS.map((p) => (
+                            <option key={p.days} value={p.days}>{p.label}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          placeholder="직접"
+                          value={customDays}
+                          onChange={(e) => setCustomDays(e.target.value)}
+                          className="w-12 h-7 text-[11px] bg-white/5 border border-white/10 rounded px-1.5 text-slate-200"
+                          min="1"
+                        />
+                        <button
+                          onClick={() => handleGrant(s.id)}
+                          disabled={grantingId === s.id}
+                          className="h-7 px-2 bg-rose-600 text-white rounded text-[11px] font-bold hover:bg-rose-700 disabled:opacity-50"
+                        >
+                          {grantingId === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : (active ? '연장' : '부여')}
+                        </button>
+                        <button
+                          onClick={() => { setGrantUserId(null); setCustomDays('') }}
+                          className="h-7 w-7 bg-white/5 text-slate-400 rounded hover:bg-white/10 flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setGrantUserId(s.id)}
+                        className="h-7 px-2.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded text-[11px] font-semibold transition-colors"
+                      >
+                        {active ? '연장' : '부여'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+              {supporters.length > 8 && (
+                <div className="px-4 py-2.5 text-center">
+                  <button className="text-[11px] text-slate-500 hover:text-slate-300 inline-flex items-center gap-1">
+                    전체 {supporters.length}명 보기 <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
-      </div>
 
-      {/* 서비스 현황 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* 후원자 추이 */}
-        <div className="lg:col-span-2 bg-[#0a0e1a] rounded-2xl border border-white/5 p-6">
-          <h2 className="text-[16px] font-bold text-slate-100 mb-1 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-slate-500" />
-            후원자 추이 (최근 6개월)
-          </h2>
-          <p className="text-[12px] text-slate-500 mb-6">월별 후원 만료 예정자 수</p>
-          <MonthlyBarChart data={monthlySupporters.map(m => ({ ...m, max: maxMonthly }))} />
-        </div>
+        {/* 사이드 — 1/3 */}
+        <div className="space-y-3">
+          <div className="bg-[#0a0e1a] border border-white/5 rounded-xl p-4">
+            <h2 className="text-[12px] font-semibold text-slate-100 mb-3 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-slate-500" />
+              후원자 추이
+            </h2>
+            <MiniBarChart
+              data={monthlySupporters.map(m => ({ label: m.label, value: m.count }))}
+              label="최근 6개월"
+            />
+          </div>
 
-        {/* 요약 통계 */}
-        <div className="bg-[#0a0e1a] rounded-2xl border border-white/5 p-6">
-          <h2 className="text-[16px] font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-slate-500" />
-            요약 통계
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-slate-500">회원 구성</span>
-                <span className="text-slate-200 font-semibold">
-                  {activeSupporters.length} / {supporters.length}
-                </span>
-              </div>
-              <div className="h-2.5 rounded-full bg-white/5 overflow-hidden flex">
-                <div
-                  className="h-full rounded-l-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all"
-                  style={{ width: `${supporters.length > 0 ? (activeSupporters.length / supporters.length) * 100 : 0}%` }}
-                />
-                <div className="h-full bg-white/10" style={{ flex: 1 }} />
-              </div>
-              <div className="flex justify-between text-[11px] text-slate-500 mt-1">
-                <span>후원 {activeSupporters.length}명 ({stats?.supporterRate ?? 0}%)</span>
-                <span>일반 {supporters.length - activeSupporters.length}명</span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-white/5">
-              <div className="flex items-center justify-between text-[13px] mb-1">
-                <span className="text-slate-500 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-slate-500" />
-                  설교 생성
-                </span>
-                <span className="text-slate-200 font-semibold">{stats?.totalSermons ?? 0}개</span>
-              </div>
-              <p className="text-[12px] text-slate-500">이번 달 {stats?.sermonsThisMonth ?? 0}개</p>
-            </div>
-
-            <div className="pt-3 border-t border-white/5">
-              <div className="flex items-center justify-between text-[13px] mb-1">
-                <span className="text-slate-500 flex items-center gap-1.5">
-                  <UserPlus className="w-3.5 h-3.5 text-slate-500" />
-                  신규 가입
-                </span>
-                <span className="text-slate-200 font-semibold">{stats?.newUsersThisMonth ?? 0}명</span>
-              </div>
-              <p className="text-[12px] text-slate-500">이번 달</p>
-            </div>
+          <div className="bg-[#0a0e1a] border border-white/5 rounded-xl p-4">
+            <h2 className="text-[12px] font-semibold text-slate-100 mb-3 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-slate-500" />
+              최근 활동
+            </h2>
+            <ActivityFeed />
           </div>
         </div>
-      </div>
-
-      {/* 푸터 액션 */}
-      <div className="bg-gradient-to-br from-[#04060f] to-[#0a0e1a] rounded-2xl border border-white/5 p-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-indigo-500" />
-          </div>
-          <div>
-            <p className="text-[14px] font-bold text-slate-200">관리자 권한</p>
-            <p className="text-[12px] text-slate-500">
-              후원 부여 내역은 {stats?.adminCount ?? 0}명의 관리자에게 기록됩니다
-            </p>
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-slate-600" />
       </div>
     </div>
   )
