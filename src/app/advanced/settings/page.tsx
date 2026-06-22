@@ -4,30 +4,52 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { resetUserCache } from '@/lib/storage'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [confirming, setConfirming] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  const clearAllLocalData = (): number => {
+    // 삭제 대상: sermonai_* (user-scoped) + 비-scoped 앱 데이터
+    // 보존: sb-*-auth-token (Supabase 세션), theme/UI 설정
+    const APP_KEY_PATTERNS = [
+      /^sermonai_/,           // user-scoped 데이터
+      /^custom_projects$/,    // custom projects (전역)
+      /^sermon-options$/,     // dashboard 설정
+      /^loom_/,               // SermonLoom
+      /^sermon-wizard-/,      // SermonWizard 초안
+    ]
+    let removed = 0
+    const toRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key) continue
+      if (APP_KEY_PATTERNS.some(re => re.test(key))) {
+        toRemove.push(key)
+      }
+    }
+    toRemove.forEach(k => { localStorage.removeItem(k); removed++ })
+    resetUserCache()
+    return removed
+  }
 
   const handleClearLocalStorage = () => {
     if (confirming !== 'local') {
       setConfirming('local')
+      setMessage(null)
       return
     }
     setProcessing(true)
+    setMessage(null)
     try {
-      // Clear all sermonai keys for current user
-      const keysToRemove: string[] = []
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key && key.startsWith('sermonai_')) {
-          keysToRemove.push(key)
-        }
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k))
-      resetUserCache()
+      const removed = clearAllLocalData()
+      setMessage({ type: 'ok', text: `${removed}개 항목을 삭제했습니다. 페이지를 새로고침하면 변경 사항이 반영됩니다.` })
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.message || '삭제 중 오류가 발생했습니다.' })
     } finally {
       setProcessing(false)
       setConfirming(null)
@@ -40,27 +62,20 @@ export default function SettingsPage() {
     router.push('/login')
   }
 
-  const handleFullReset = () => {
+  const handleFullReset = async () => {
     if (confirming !== 'full') {
       setConfirming('full')
+      setMessage(null)
       return
     }
     setProcessing(true)
+    setMessage(null)
     try {
-      // Clear localStorage
-      const keysToRemove: string[] = []
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key && key.startsWith('sermonai_')) {
-          keysToRemove.push(key)
-        }
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k))
-      resetUserCache()
-      // Sign out
-      signOut()
+      clearAllLocalData()
+      await signOut()
       router.push('/login')
-    } finally {
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.message || '초기화 중 오류가 발생했습니다.' })
       setProcessing(false)
       setConfirming(null)
     }
@@ -73,6 +88,17 @@ export default function SettingsPage() {
           <h1 className="text-xl font-bold text-white">설정</h1>
           <p className="text-sm text-slate-500 mt-1">데이터 관리 및 초기화</p>
         </div>
+
+        {message && (
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
+            message.type === 'ok'
+              ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+              : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
+          }`}>
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            {message.text}
+          </div>
+        )}
 
         {/* User Info */}
         <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl p-5">
@@ -92,8 +118,8 @@ export default function SettingsPage() {
         <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl p-5">
           <h2 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">로컬 데이터 초기화</h2>
           <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-            브라우저에 저장된 모든 연구 데이터, 설교 준비, 원고 데이터를 삭제합니다.
-            Supabase 서버에 저장된 노트는 유지됩니다.
+            이 브라우저에 저장된 모든 로컬 데이터(연구 노트, 설교 준비, 원고, 커스텀 프로젝트, SermonLoom, Wizard 초안)를 삭제합니다.
+            Supabase 서버에 저장된 데이터는 유지됩니다.
           </p>
           <button
             onClick={handleClearLocalStorage}
