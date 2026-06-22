@@ -44,11 +44,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '분석할 텍스트가 너무 짧습니다.' }, { status: 400 })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      return NextResponse.json({ success: true, ...mockSuggest(text, existingTags) })
-    }
-
     const systemPrompt = `당신은 설교 준비를 돕는 신학 보조 AI다. 사용자가 작성한 메모를 분석해 다음 두 가지를 추출하라.
 
 1. tags: 메모의 핵심 주제·신학 개념·대상·감정을 포착하는 한국어 태그 3~5개. 각 태그는 1~3 단어, '#' 없이 단답형. 다음 기존 태그가 적합하면 우선 사용: ${existingTags.slice(0, 30).join(', ') || '(없음)'}
@@ -91,18 +86,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/notes/suggest-tags error:', err)
     return NextResponse.json({ success: false, error: err.message || '태그 추천 실패' }, { status: 500 })
   }
-}
-
-function mockSuggest(text: string, existing: string[]) {
-  const keywords = ['은혜', '사랑', '십자가', '회개', '소망', '교제', '말씀', '기도', '성령', '순종', '감사', '평안', '인내', '믿음', '회복']
-  const tags: string[] = []
-  for (const k of keywords) {
-    if (text.includes(k) && !tags.includes(k)) tags.push(k)
-    if (tags.length >= 4) break
-  }
-  if (tags.length === 0 && existing.length > 0) tags.push(existing[0])
-  if (tags.length === 0) tags.push('은혜')
-
-  const scripture = Array.from(new Set((text.match(SCRIPTURE_REGEX) || []).map((s) => s.trim()))).slice(0, 3)
-  return { tags, scripture }
 }

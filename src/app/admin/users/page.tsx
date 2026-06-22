@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   Users, Heart, Search, Loader2, Check, X, XCircle,
-  Shield, Calendar, Mail, Clock, Sparkles,
+  Shield, Calendar, Mail, Clock, Sparkles, Trophy,
   LayoutGrid, List, Download, ChevronUp, ChevronDown,
-  Eye, Activity, CreditCard, AlertTriangle,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface Member {
@@ -18,33 +18,7 @@ interface Member {
   last_sign_in_at: string | null
 }
 
-interface DetailUsage {
-  plan: string
-  user_status: string
-  monthly_used: number
-  monthly_limit: number
-  workspace_used: number
-  workspace_limit: number
-  trial_used: number
-  trial_limit: number
-  trial_start_at: string
-  trial_end_at: string
-  supporter_until?: string | null
-}
-
-interface DetailSubscription {
-  id: string
-  plan: string
-  status: string
-  billing_cycle_start: string
-  billing_cycle_end: string
-  monthly_limit: number
-  monthly_used: number
-}
-
 interface DetailData {
-  usage: DetailUsage | null
-  subscription: DetailSubscription | null
   apiUsage?: ApiUsageData | null
   manualDonations?: ManualDonationItem[]
 }
@@ -65,9 +39,9 @@ interface ManualDonationItem {
 }
 
 const GRANT_PRESETS = [
-  { label: '30일', days: 30, desc: '5,000원' },
-  { label: '90일', days: 90, desc: '12,000원' },
-  { label: '365일', days: 365, desc: '50,000원' },
+  { label: '30일', days: 30, defaultAmount: 5000 },
+  { label: '90일', days: 90, defaultAmount: 12000 },
+  { label: '365일', days: 365, defaultAmount: 50000 },
 ]
 
 type SortField = 'name' | 'email' | 'role' | 'supporter_until' | 'created_at' | 'last_sign_in_at' | 'total_donation' | 'api_cost'
@@ -90,11 +64,13 @@ function DonationUsageSection({ data, memberId, onAdded, onDeleted }: {
   const donation = api?.donation
   const manualDonations = data?.manualDonations || []
 
+  // 누적 계산: manualDonations 배열에서 직접 계산 (가장 신뢰할 수 있는 fresh data)
+  const manualKrw = manualDonations.reduce((sum, d) => sum + (d.amount_krw || 0), 0)
+  const autoKrw = donation?.auto_krw || 0
+  const totalDonationKrw = manualKrw + autoKrw
+
   const monthlyKrw = api?.monthly.cost_krw || 0
   const totalApiKrw = api?.total.cost_krw || 0
-  const totalDonationKrw = donation?.total_krw || 0
-  const manualKrw = donation?.manual_krw || 0
-  const autoKrw = donation?.auto_krw || 0
   const margin = totalDonationKrw - totalApiKrw
 
   const marginRatio = totalDonationKrw > 0 ? Math.max(0, Math.min(100, (margin / totalDonationKrw) * 100)) : 0
@@ -303,12 +279,145 @@ function DonationUsageSection({ data, memberId, onAdded, onDeleted }: {
   )
 }
 
+function SupporterSection({
+  member, active, showGrant, setShowGrant,
+  selectedDays, setSelectedDays, customDays, setCustomDays,
+  grantAmount, setGrantAmount, granting, handleGrant,
+}: {
+  member: Member
+  active: boolean
+  showGrant: boolean
+  setShowGrant: (v: boolean) => void
+  selectedDays: number
+  setSelectedDays: (n: number) => void
+  customDays: string
+  setCustomDays: (s: string) => void
+  grantAmount: string
+  setGrantAmount: (s: string) => void
+  granting: boolean
+  handleGrant: () => void
+}) {
+  // D-day 계산
+  const supporterDate = member.supporter_until ? new Date(member.supporter_until) : null
+  const today = new Date()
+  const daysLeft = supporterDate
+    ? Math.ceil((supporterDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    : -999
+  const expired = daysLeft <= 0
+  const imminent = !expired && daysLeft <= 7
+
+  const badge = active
+    ? imminent
+      ? { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30', label: `후원 임박 (${daysLeft}일 남음)` }
+      : { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30', label: `후원 회원 (${daysLeft}일 남음)` }
+    : { bg: 'bg-white/5', text: 'text-slate-500', border: 'border-white/10', label: '일반 회원' }
+
+  return (
+    <div>
+      <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
+        <Trophy className="w-3.5 h-3.5" />
+        후원 회원 자격
+      </h3>
+
+      <div className="bg-white/5 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-500">상태</span>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold border ${badge.bg} ${badge.text} ${badge.border}`}>
+            {badge.label}
+          </span>
+        </div>
+
+        {active && supporterDate && (
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-slate-500">만료일</span>
+            <span className="font-bold text-slate-200">
+              {supporterDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
+        )}
+
+        {!active && supporterDate && (
+          <div className="text-[12px] text-slate-500 text-center">
+            {supporterDate.toLocaleDateString('ko-KR')}에 만료됨
+          </div>
+        )}
+
+        {!supporterDate && !active && (
+          <p className="text-[12px] text-slate-500 text-center py-1">후원 이력이 없습니다</p>
+        )}
+
+        {/* 부여/연장 UI */}
+        <div className="pt-2 border-t border-white/5">
+          {showGrant ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                {GRANT_PRESETS.map(p => (
+                  <button
+                    key={p.days}
+                    onClick={() => { setSelectedDays(p.days); setCustomDays('') }}
+                    className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-all ${
+                      selectedDays === p.days
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        : 'bg-white/5 text-slate-500 border border-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="일수"
+                  value={customDays}
+                  onChange={e => setCustomDays(e.target.value)}
+                  className="w-16 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  min="1"
+                />
+                <input
+                  type="text"
+                  placeholder="금액(₩)"
+                  value={grantAmount ? Number(grantAmount).toLocaleString('ko-KR') : ''}
+                  onChange={e => setGrantAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="flex-1 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+                <button
+                  onClick={handleGrant}
+                  disabled={granting}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[12px] font-bold hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  {granting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Heart className="w-3 h-3" />}
+                  {active ? '연장' : '부여'}
+                </button>
+                <button
+                  onClick={() => { setShowGrant(false); setCustomDays('') }}
+                  className="px-2 py-1.5 bg-white/5 text-slate-500 rounded-lg text-[12px] font-bold hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowGrant(true)}
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[12px] font-bold hover:shadow-md transition-all flex items-center justify-center gap-1.5"
+            >
+              <Heart className="w-3.5 h-3.5" />
+              {active ? '후원 연장' : '후원 부여'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDelete, onManualDonationAdded, onManualDonationDeleted }: {
   member: Member
   data: DetailData | null
   loading: boolean
   onClose: () => void
-  onGrant: (id: string, days: number) => void
+  onGrant: (id: string, days: number, amountKrw?: number) => void
   onRevoke?: (id: string) => void
   onDelete: (id: string) => void
   onManualDonationAdded?: () => void
@@ -318,27 +427,18 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   const [showGrant, setShowGrant] = useState(false)
   const [selectedDays, setSelectedDays] = useState(30)
   const [customDays, setCustomDays] = useState('')
+  const [grantAmount, setGrantAmount] = useState('5000')
   const [granting, setGranting] = useState(false)
 
   const handleGrant = async () => {
     const days = customDays ? parseInt(customDays) : selectedDays
     if (days < 1) return
     setGranting(true)
-    await onGrant(member.id, days)
+    const amt = parseInt(grantAmount.replace(/[^0-9]/g, '')) || 0
+    await onGrant(member.id, days, amt > 0 ? amt : undefined)
     setGranting(false)
     setShowGrant(false)
     setCustomDays('')
-  }
-
-  const usage = data?.usage
-  const sub = data?.subscription
-
-  const statusStyles: Record<string, string> = {
-    active: 'bg-emerald-500/15 text-emerald-300',
-    trialing: 'bg-blue-500/15 text-blue-300',
-    past_due: 'bg-amber-500/15 text-amber-300',
-    canceled: 'bg-white/5 text-slate-500',
-    expired: 'bg-rose-500/20 text-rose-300',
   }
 
   return (
@@ -393,103 +493,21 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             </div>
           </div>
 
-          {/* 사용량 */}
-          <div>
-            <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
-              <Activity className="w-3.5 h-3.5" />
-              사용량
-            </h3>
-            {loading ? (
-              <div className="flex items-center gap-2 text-[13px] text-slate-500">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                불러오는 중...
-              </div>
-            ) : usage ? (
-              <div className="bg-white/5 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">플랜</span>
-                  <span className="font-bold text-slate-200 capitalize">{usage.plan === 'none' ? '없음' : usage.plan}</span>
-                </div>
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">상태</span>
-                  <span className="font-bold text-slate-200">{usage.user_status === 'trial' ? '트라이얼' : '활성'}</span>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1">
-                    <span className="text-slate-500">월간 사용</span>
-                    <span className="font-bold text-slate-200">{usage.monthly_used}/{usage.monthly_limit}</span>
-                  </div>
-                  {usage.monthly_limit > 0 && (
-                    <div className="h-1.5 rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min((usage.monthly_used / usage.monthly_limit) * 100, 100)}%` }} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">워크스페이스</span>
-                  <span className="font-bold text-slate-200">{usage.workspace_used}/{usage.workspace_limit}</span>
-                </div>
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">트라이얼</span>
-                  <span className="font-bold text-slate-200">{usage.trial_used}/{usage.trial_limit}</span>
-                </div>
-                {usage.supporter_until && (
-                  <div className="flex items-center justify-between text-[13px]">
-                    <span className="text-slate-500">후원 만료</span>
-                    <span className="font-bold text-slate-200">{new Date(usage.supporter_until).toLocaleDateString('ko-KR')}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-[13px] text-slate-500">사용량 데이터가 없습니다.</p>
-            )}
-          </div>
-
-          {/* 구독 정보 */}
-          <div>
-            <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
-              <CreditCard className="w-3.5 h-3.5" />
-              구독 정보
-            </h3>
-            {loading ? (
-              <div className="flex items-center gap-2 text-[13px] text-slate-500">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                불러오는 중...
-              </div>
-            ) : sub ? (
-              <div className="bg-white/5 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">플랜</span>
-                  <span className="font-bold text-slate-200 capitalize">{sub.plan}</span>
-                </div>
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">상태</span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[12px] font-bold ${statusStyles[sub.status] || 'bg-white/5 text-slate-500'}`}>
-                    {sub.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500">결제 주기</span>
-                  <span className="font-bold text-slate-200">
-                    {new Date(sub.billing_cycle_start).toLocaleDateString('ko-KR')} ~ {new Date(sub.billing_cycle_end).toLocaleDateString('ko-KR')}
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1">
-                    <span className="text-slate-500">사용량</span>
-                    <span className="font-bold text-slate-200">{sub.monthly_used}/{sub.monthly_limit}</span>
-                  </div>
-                  {sub.monthly_limit > 0 && (
-                    <div className="h-1.5 rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min((sub.monthly_used / sub.monthly_limit) * 100, 100)}%` }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-[13px] text-slate-500">구독 정보가 없습니다.</p>
-            )}
-          </div>
+          {/* 🏆 후원 회원 자격 */}
+          <SupporterSection
+            member={member}
+            active={!!active}
+            showGrant={showGrant}
+            setShowGrant={setShowGrant}
+            selectedDays={selectedDays}
+            setSelectedDays={setSelectedDays}
+            customDays={customDays}
+            setCustomDays={setCustomDays}
+            grantAmount={grantAmount}
+            setGrantAmount={setGrantAmount}
+            granting={granting}
+            handleGrant={handleGrant}
+          />
 
           {/* 후원 / 사용 비교 */}
           <DonationUsageSection
@@ -499,77 +517,8 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             onDeleted={onManualDonationDeleted}
           />
 
-          {/* 활동 정보 */}
-          <div>
-            <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
-              <Clock className="w-3.5 h-3.5" />
-              활동
-            </h3>
-            <div className="bg-white/5 rounded-xl p-4 space-y-2 text-[13px]">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">가입일</span>
-                <span className="font-bold text-slate-200">{formatDate(member.created_at)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">최근 접속</span>
-                <span className="font-bold text-slate-200">{formatDate(member.last_sign_in_at)}</span>
-              </div>
-            </div>
-          </div>
-
           {/* 액션 */}
           <div className="border-t border-white/5 pt-4 space-y-3">
-            {showGrant ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5">
-                  {GRANT_PRESETS.map(p => (
-                    <button
-                      key={p.days}
-                      onClick={() => { setSelectedDays(p.days); setCustomDays('') }}
-                      className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-all ${
-                        selectedDays === p.days
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-300'
-                          : 'bg-white/5 text-slate-500 border border-white/5 hover:bg-white/10'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    placeholder="직접 입력"
-                    value={customDays}
-                    onChange={e => setCustomDays(e.target.value)}
-                    className="w-20 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                    min="1"
-                  />
-                  <button
-                    onClick={handleGrant}
-                    disabled={granting}
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[13px] font-bold hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-1"
-                  >
-                    {granting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Heart className="w-3.5 h-3.5" />}
-                    {active ? '연장' : '부여'}
-                  </button>
-                  <button
-                    onClick={() => { setShowGrant(false); setCustomDays('') }}
-                    className="px-3 py-2 bg-white/5 text-slate-500 rounded-lg text-[12px] font-bold hover:bg-white/10 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowGrant(true)}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[13px] font-bold hover:shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                <Heart className="w-4 h-4" />
-                {active ? '후원 연장' : '후원 부여'}
-              </button>
-            )}
             {active && (
               <button
                 onClick={() => {
@@ -589,7 +538,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
                       })
                   }
                 }}
-                className="w-full py-3 rounded-xl border border-white/10 text-slate-600 text-[13px] font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl border border-white/10 text-slate-300 text-[13px] font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2"
               >
                 <XCircle className="w-4 h-4" />
                 후원회원 강등
@@ -611,7 +560,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
 
 function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
   member: Member
-  onGrant: (id: string, days: number) => void
+  onGrant: (id: string, days: number, amountKrw?: number) => void
   onDelete: (id: string) => void
   onDetail: (member: Member) => void
   summary?: { api_cost_krw: number; manual_donation_krw: number; auto_donation_krw: number; total_donation_krw: number }
@@ -620,20 +569,25 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
   const [showGrant, setShowGrant] = useState(false)
   const [selectedDays, setSelectedDays] = useState(30)
   const [customDays, setCustomDays] = useState('')
+  const [grantAmount, setGrantAmount] = useState('5000')
   const [granting, setGranting] = useState(false)
 
   const handleGrant = async () => {
     const days = customDays ? parseInt(customDays) : selectedDays
     if (days < 1) return
     setGranting(true)
-    await onGrant(member.id, days)
+    const amt = parseInt(grantAmount.replace(/[^0-9]/g, '')) || 0
+    await onGrant(member.id, days, amt > 0 ? amt : undefined)
     setGranting(false)
     setShowGrant(false)
     setCustomDays('')
   }
 
   return (
-    <div className="bg-[#0a0e1a] rounded-2xl border border-white/5 p-5 hover:shadow-md transition-all group">
+    <div
+      onClick={() => onDetail(member)}
+      className="bg-[#0a0e1a] rounded-2xl border border-white/5 p-5 hover:shadow-md hover:border-indigo-500/30 transition-all group cursor-pointer"
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-[14px] ${
@@ -720,7 +674,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
       )}
 
       {showGrant ? (
-        <div className="space-y-2 border-t border-white/5 pt-3">
+        <div className="space-y-2 border-t border-white/5 pt-3" onClick={e => e.stopPropagation()}>
           <div className="flex items-center gap-1.5">
             {GRANT_PRESETS.map(p => (
               <button
@@ -745,6 +699,13 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
               className="w-16 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               min="1"
             />
+            <input
+              type="text"
+              placeholder="금액(₩)"
+              value={grantAmount ? Number(grantAmount).toLocaleString('ko-KR') : ''}
+              onChange={e => setGrantAmount(e.target.value.replace(/[^0-9]/g, ''))}
+              className="w-20 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+            />
             <button
               onClick={handleGrant}
               disabled={granting}
@@ -762,14 +723,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onDetail(member)}
-            className="py-2 px-2.5 rounded-xl bg-white/5 text-slate-500 text-[12px] font-bold hover:bg-indigo-500/10 hover:text-indigo-400 transition-all"
-            title="상세 보기"
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </button>
+        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => setShowGrant(true)}
             className="flex-1 py-2 rounded-xl bg-white/5 text-slate-600 text-[12px] font-bold hover:bg-rose-500/10 hover:text-rose-300 transition-all flex items-center justify-center gap-1.5"
@@ -779,7 +733,8 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
           </button>
           <button
             onClick={() => onDelete(member.id)}
-            className="py-2 px-3 rounded-xl bg-white/5 text-slate-500 text-[12px] font-bold hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+            className="py-2 px-2.5 rounded-xl bg-white/5 text-slate-500 text-[12px] font-bold hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+            title="탈퇴 처리"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -810,6 +765,7 @@ export default function AdminUsersPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [detailData, setDetailData] = useState<DetailData | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0)
   const [userSummary, setUserSummary] = useState<Record<string, { api_cost_krw: number; manual_donation_krw: number; auto_donation_krw: number; total_donation_krw: number }>>({})
 
   const loadMembers = useCallback(async () => {
@@ -833,20 +789,18 @@ export default function AdminUsersPage() {
       return
     }
     setDetailLoading(true)
-    setDetailData(null)
     Promise.all([
-      fetch(`/api/admin/users/detail?userId=${selectedMember.id}`).then(r => r.json()),
       fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
       fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
-    ]).then(([detail, usage, donations]) => {
-      setDetailData({
-        ...detail,
+    ]).then(([usage, donations]) => {
+      setDetailData(prev => ({
+        ...(prev || {}),
         apiUsage: usage.error ? null : usage,
         manualDonations: donations.donations || [],
-      })
+      }))
     }).catch(() => {})
       .finally(() => setDetailLoading(false))
-  }, [selectedMember?.id])
+  }, [selectedMember?.id, detailRefreshKey])
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -857,16 +811,16 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleGrant = async (userId: string, days: number) => {
+  const handleGrant = async (userId: string, days: number, amountKrw?: number) => {
     setMessage(null)
     const res = await fetch('/api/admin/grant-supporter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, days }),
+      body: JSON.stringify({ userId, days, amountKrw, note: amountKrw ? `후원 부여 ${days}일` : undefined }),
     })
     const d = await res.json()
     if (d.success) {
-      setMessage({ type: 'ok', text: `${days}일 후원자 권한이 부여되었습니다.` })
+      setMessage({ type: 'ok', text: amountKrw ? `${days}일 부여 · ₩${amountKrw.toLocaleString('ko-KR')} 기록됨` : `${days}일 후원자 권한이 부여되었습니다.` })
       // 클라이언트 측에서 즉시 UI 업데이트 (서버 캐시 무관)
       const now = new Date()
       const newUntil = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
@@ -987,8 +941,8 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
       </div>
-    )
-  }
+  )
+}
 
   return (
     <div className="space-y-6">
@@ -1195,9 +1149,9 @@ export default function AdminUsersPage() {
                           {GRANT_PRESETS.map(p => (
                             <button
                               key={p.days}
-                              onClick={() => handleGrant(m.id, p.days)}
+                              onClick={() => handleGrant(m.id, p.days, p.defaultAmount)}
                               className="px-1.5 py-1 rounded-lg bg-rose-500/10 text-rose-300 text-[10px] font-bold hover:bg-rose-500/20 transition-colors"
-                              title={`${p.label} 후원 부여`}
+                              title={`${p.label} 후원 부여 (₩${p.defaultAmount.toLocaleString('ko-KR')} 기록)`}
                             >
                               {p.label}
                             </button>
@@ -1239,37 +1193,12 @@ export default function AdminUsersPage() {
           onRevoke={handleRevoke}
           onDelete={(id) => { setSelectedMember(null); setDeleteTarget(members.find(m => m.id === id) || null) }}
           onManualDonationAdded={() => {
-            // 드로어 데이터 새로고침
-            if (selectedMember) {
-              setSelectedMember({ ...selectedMember })
-              Promise.all([
-                fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
-                fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
-              ]).then(([usage, donations]) => {
-                setDetailData(prev => prev ? {
-                  ...prev,
-                  apiUsage: usage.error ? null : usage,
-                  manualDonations: donations.donations || [],
-                } : prev)
-              })
-              loadMembers()  // 리스트 summary 갱신
-            }
+            setDetailRefreshKey(k => k + 1)
+            loadMembers()
           }}
           onManualDonationDeleted={() => {
-            if (selectedMember) {
-              setSelectedMember({ ...selectedMember })
-              Promise.all([
-                fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
-                fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
-              ]).then(([usage, donations]) => {
-                setDetailData(prev => prev ? {
-                  ...prev,
-                  apiUsage: usage.error ? null : usage,
-                  manualDonations: donations.donations || [],
-                } : prev)
-              })
-              loadMembers()
-            }
+            setDetailRefreshKey(k => k + 1)
+            loadMembers()
           }}
         />
       )}

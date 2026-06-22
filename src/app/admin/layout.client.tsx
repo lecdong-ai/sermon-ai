@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <Shield className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[14px] font-bold text-slate-100">Sermon AI</span>
+            <span className="text-[14px] font-bold text-slate-100">Bunker 목양</span>
             <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.5 bg-white/5 rounded">Admin</span>
           </Link>
 

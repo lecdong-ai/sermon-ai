@@ -21,13 +21,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userId, days } = body
+    const { userId, days, amountKrw, note } = body
 
     if (!userId || !days || days < 1) {
       return NextResponse.json({ error: 'userId와 days가 필요합니다.' }, { status: 400 })
     }
 
-    const ok = await grantSupporter(userId, days)
+    const ok = await grantSupporter(userId, days, amountKrw, note)
     if (!ok) {
       return NextResponse.json({ error: '후원자 부여에 실패했습니다.' }, { status: 500 })
     }

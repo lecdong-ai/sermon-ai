@@ -68,15 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       notes?.application_points ? '\n[적용]\n' + notes.application_points : '',
     ].filter(Boolean).join('\n')
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-
-    let result
-    if (useMock) {
-      const { getMockResult } = await import('@/lib/mock')
-      result = getMockResult()
-    } else {
-      result = await generateAll(fullText)
-    }
+    const result = await generateAll(fullText)
 
     const { data: newSermon, error: insertError } = await supabaseAdmin
       .from('sermons')

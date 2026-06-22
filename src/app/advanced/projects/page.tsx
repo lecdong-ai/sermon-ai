@@ -280,12 +280,8 @@ function ProjectsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
-  const { projects, stats, loading, error, deleteProject, refetch, totalRealCount } = useProjects()
-  // 새 사용자는 mock 데이터 안 보임 (totalRealCount === 0이면 mock 필터링)
-  const visibleProjects = useMemo(
-    () => totalRealCount === 0 ? [] : projects,
-    [projects, totalRealCount]
-  )
+  const { projects, stats, loading, error, deleteProject, refetch } = useProjects()
+  const visibleProjects = projects
 
   const handleDelete = async (id: string) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return

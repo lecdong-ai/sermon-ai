@@ -8,7 +8,7 @@ import {
   HelpCircle, Zap, Clock, Hash, Layers, Loader2, Lightbulb
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
-import { getCustomProjects, mockProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 import { setStorageItem } from '@/lib/storage'
 import type { AdvancedProject, BiblePassage } from '@/lib/advanced/types'
 
@@ -101,7 +101,7 @@ export default function NewProjectPage() {
   const isFormValid = (selectedPassages.length > 0 || (selectedBook && chapter && verseStart)) && title.trim()
 
   const recentPassages = useMemo(() => {
-    const projects = [...getCustomProjects(), ...mockProjects]
+    const projects = getCustomProjects()
     const seen = new Set<string>()
     return projects
       .filter(p => p.book && p.chapter)

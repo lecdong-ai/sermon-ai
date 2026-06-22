@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, FileText, BrainCircuit, ArrowRight } from 'lucide-react'
-import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 
 interface SearchResult {
   id: string

@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getFilterOptions, getRelatedSermons, searchSermons, filterSermons } from '@/lib/advanced/archiveData'
 import type { ArchivedSermon } from '@/lib/advanced/archiveData'
-import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 import {
   Search, LayoutGrid, List, ChevronDown, Check, X, RefreshCw,

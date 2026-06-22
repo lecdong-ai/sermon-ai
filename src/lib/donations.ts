@@ -30,6 +30,8 @@ export async function checkSupporterAccess(userId: string): Promise<boolean> {
 export async function grantSupporter(
   userId: string,
   days: number,
+  amountKrw?: number,
+  note?: string,
 ): Promise<boolean> {
   // 현재 supporter_until 조회 (있으면 연장, 없으면 오늘부터)
   let currentDate = new Date()
@@ -55,7 +57,7 @@ export async function grantSupporter(
     console.error('grantSupporter (app_metadata) error:', e)
   }
 
-  // user_usage 테이블에 supporter_until + plan 업그레이드
+  // user_usage 테이블에 supporter_until 업데이트 (사용 한도는 무제한이므로 limit 미설정)
   try {
     await supabaseAdmin
       .from('user_usage')
@@ -65,8 +67,6 @@ export async function grantSupporter(
           supporter_until: until,
           plan: 'basic',
           user_status: 'active',
-          monthly_limit: 10,
-          workspace_limit: 10,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' },
@@ -75,10 +75,36 @@ export async function grantSupporter(
     console.error('grantSupporter (user_usage) error:', e)
   }
 
+  // 금액이 입력되면 manual_donations에 기록 (누적 후원 추적용)
+  if (amountKrw && amountKrw > 0) {
+    try {
+      const adminId = await getCurrentAdminId()
+      await supabaseAdmin
+        .from('manual_donations')
+        .insert({
+          user_id: userId,
+          amount_krw: amountKrw,
+          note: note || `후원 부여 ${days}일`,
+          created_by: adminId,
+        })
+    } catch (e) {
+      console.error('grantSupporter (manual_donations) error:', e)
+    }
+  }
+
   // Supabase Auth 캐시 propagation 대기 (listUsers가 새 데이터를 반환할 때까지)
   await new Promise(resolve => setTimeout(resolve, 500))
 
   return metaOk
+}
+
+async function getCurrentAdminId(): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabaseAdmin.auth.getUser()
+    return user?.id || null
+  } catch {
+    return null
+  }
 }
 
 export async function revokeSupporter(userId: string): Promise<boolean> {

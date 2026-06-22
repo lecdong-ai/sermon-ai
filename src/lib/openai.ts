@@ -1,5 +1,4 @@
 import OpenAI from 'openai'
-import { getMockResult } from './mock'
 import {
   SUMMARY_SCHEMA,
   GROUP_DISCUSSION_SCHEMA,
@@ -82,13 +81,7 @@ async function safeCallAI<T>(
   }
 }
 
-export async function generateAll(text: string, useMock?: boolean): Promise<SermonResultData> {
-  const mock = useMock ?? process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-  if (mock) {
-    await new Promise((r) => setTimeout(r, 1500))
-    return getMockResult()
-  }
-
+export async function generateAll(text: string): Promise<SermonResultData> {
   const [summary, groupDiscussion, cardNews, sermonScript, shortsScript, ppt] =
     await Promise.all([
       safeCallAI<SummaryResponse>(SummaryPrompt.SYSTEM_PROMPT, text, SUMMARY_SCHEMA, 'summary', 6000),

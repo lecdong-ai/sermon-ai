@@ -55,12 +55,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '분석할 텍스트가 너무 짧습니다.' }, { status: 400 })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      const mock = mockClassify(text)
-      return NextResponse.json({ success: true, ...mock })
-    }
-
     const systemPrompt = `당신은 설교 준비를 돕는 신학 보조 AI다. 사용자가 작성한 메모의 성격을 분석해 가장 적합한 노트 유형 하나를 추천하라.
 
 노트 유형과 의미:
@@ -109,16 +103,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/notes/classify error:', err)
     return NextResponse.json({ success: false, error: err.message || '분류 실패' }, { status: 500 })
   }
-}
-
-function mockClassify(text: string) {
-  const t = text.toLowerCase()
-  let type: NoteType = 'insight'
-  if (/(히브|헬라|원어|주석|배경|연구|사전)/.test(t)) type = 'research'
-  else if (/(적용|실천|생활|행동|도전|청년|직장인|부모)/.test(t)) type = 'application'
-  else if (/[?？]/.test(text) || /(왜|어떻게|무엇|질문)/.test(t)) type = 'question'
-  else if (/(목회|회중|성도|고민|상담|양육|섬김)/.test(t)) type = 'pastoral'
-  else if (/(예화|이야기|일화|사례|비유)/.test(t)) type = 'illustration'
-  else if (/(주의|경고|함정|위험|피하|조심)/.test(t)) type = 'warning'
-  return { type, label: TYPE_LABELS[type], confidence: 0.65, reason: 'Mock 추론 결과' }
 }

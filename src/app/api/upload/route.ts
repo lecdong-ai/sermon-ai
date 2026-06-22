@@ -3,7 +3,6 @@ import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import { validateFile, parseFile } from '@/lib/parsers'
 import { generateAll } from '@/lib/openai'
-import { getMockResult } from '@/lib/mock'
 import { generateWithDeduction } from '@/lib/generation'
 
 function getSupabaseAdmin(request: NextRequest) {
@@ -102,18 +101,8 @@ export async function POST(request: NextRequest) {
     // 5. OpenAI 분석 (병렬)
     let result
     try {
-    const useMockCookie = request.cookies.get('use_mock')?.value
-      const useMock = useMockCookie !== undefined
-        ? useMockCookie === 'true'
-        : process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-      console.log(`[upload POST] useMock=${useMock}, mockCookie=${useMockCookie}, envMock=${process.env.NEXT_PUBLIC_USE_MOCK}`)
-      if (useMock) {
-        console.log(`[upload POST] ⚠️ MOCK MODE 사용 중!`)
-        result = getMockResult()
-      } else {
-        result = await generateAll(parsed.text)
-        console.log(`[upload POST] sermonScript 길이: ${result.sermonScript?.length || 0}자`)
-      }
+      result = await generateAll(parsed.text)
+      console.log(`[upload POST] sermonScript 길이: ${result.sermonScript?.length || 0}자`)
     } catch (err: any) {
       console.error('AI generation error:', err)
       await supabaseAdmin.from('sermons').delete().eq('id', sermonId)
@@ -184,13 +173,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: '접근 권한이 없습니다.' }, { status: 403 })
     }
 
-    const useMockCookie = request.cookies.get('use_mock')?.value
-    const useMock = useMockCookie !== undefined
-      ? useMockCookie === 'true'
-      : process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-
-    console.log(`[upload PUT] item=${item}, useMock=${useMock}, textLen=${text?.length || 0}, mockCookie=${useMockCookie}, envMock=${process.env.NEXT_PUBLIC_USE_MOCK}`)
-
     // Generate with idempotency + deduction
     const genResult = await generateWithDeduction({
       userId: user.id,
@@ -198,7 +180,6 @@ export async function PUT(request: NextRequest) {
       item,
       idempotencyKey: idempotency_key,
       text,
-      useMock,
     })
 
     if (!genResult.success) {

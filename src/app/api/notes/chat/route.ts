@@ -47,11 +47,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '메시지가 비어 있습니다.' }, { status: 400 })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      return NextResponse.json({ success: true, content: mockReply(messages) })
-    }
-
     const systemPrompt = `당신은 개혁주의 복음주의 설교를 돕는 신학 보조 AI다. 사용자가 설교 준비 중 메모한 통찰/관찰/질문을 더 깊이 발전시키고자 할 때 대화 상대가 되어준다.
 
 원칙:
@@ -80,12 +75,4 @@ ${noteContext ? `\n[현재 메모 중인 내용]\n${noteContext.slice(0, 1000)}`
     console.error('POST /api/notes/chat error:', err)
     return NextResponse.json({ success: false, error: err.message || '대화 실패' }, { status: 500 })
   }
-}
-
-function mockReply(messages: ChatMessage[]) {
-  const last = messages[messages.length - 1]?.content || ''
-  if (last.includes('?')) {
-    return '좋은 질문입니다. 본문에서 그 단어가 사용된 맥락을 살펴보면, 헬라어 χάρι스(은혜)는 단순한 호의가 아니라 "의도된 호의로운 선물"을 가리킵니다. 이 뉘앙스를 적용에 어떻게 연결해볼 수 있을까요?'
-  }
-  return '그 관찰은 통찰의 본질을 잘 짚고 있습니다. 한 걸음 더 들어가 보면, 이 진리가 구약의 어떤 약속과 연결되는지, 그리고 회중이 이 진리를 자신의 삶에서 어떻게 드러낼 수 있는지 탐구해볼 수 있을 것 같습니다. 어떤 방향이 더 끌리시나요?'
 }

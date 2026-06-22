@@ -42,11 +42,8 @@ cp .env.example .env.local
 OPENAI_API_KEY=sk-...                                    # OpenAI 키 (필수)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co # Supabase URL (필수)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key               # Supabase anon key (필수)
-NEXT_PUBLIC_USE_MOCK=true                                 # Mock 모드 (선택, 개발용)
 NEXT_PUBLIC_KAKAO_KEY=                                    # 카카오 SDK 키 (선택)
 ```
-
-> **NEXT_PUBLIC_USE_MOCK=true** 로 설정하면 OpenAI 호출 없이 샘플 데이터로 UI를 미리 볼 수 있습니다.
 
 ### 3. Supabase 설정
 
@@ -82,10 +79,7 @@ ALTER TABLE sermons DISABLE ROW LEVEL SECURITY;
 # 패키지 설치
 npm install
 
-# 개발 서버 실행 (mock 모드)
-NEXT_PUBLIC_USE_MOCK=true npm run dev
-
-# 또는 실제 API 테스트
+# 개발 서버 실행
 npm run dev
 ```
 
@@ -131,8 +125,6 @@ Vercel 프로젝트 설정 > **Environment Variables**에서 추가:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 
-> `NEXT_PUBLIC_USE_MOCK`은 Vercel에 추가하지 마세요 (실제 운영에서는 false로 동작)
-
 ### 3. 배포
 
 `Deploy` 버튼 클릭 → 자동 빌드 및 배포
@@ -171,7 +163,6 @@ src/
 │   ├── supabase.ts          # Supabase 클라이언트
 │   ├── parsers.ts           # PDF/TXT/DOCX 파서
 │   ├── openai.ts            # OpenAI 연동
-│   ├── mock.ts              # Mock 데이터
 │   ├── pptTheme.ts          # PPT 테마 상수
 │   └── prompts/             # AI 프롬프트 템플릿
 ├── types/

@@ -51,7 +51,7 @@ const getGeneratedContent = (sermon: ArchivedSermon, actionType: string) => {
 
 export default function AdvancedDashboardPage() {
   const router = useRouter()
-  const { projects, loading, totalRealCount } = useProjects()
+  const { projects, loading } = useProjects()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeActionSermon, setActiveActionSermon] = useState<ArchivedSermon | null>(null)
   const [activeActionType, setActiveActionType] = useState<string | null>(null)
@@ -104,7 +104,7 @@ export default function AdvancedDashboardPage() {
     )
   }
 
-  if (totalRealCount === 0) {
+  if (projects.length === 0) {
     return <NewUserLanding />
   }
 

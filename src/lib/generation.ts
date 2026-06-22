@@ -1,6 +1,5 @@
 import { supabaseAdmin as supabase } from './supabase'
 import { generateSingleItem, generateAll } from './openai'
-import { getMockResult } from './mock'
 import type { GenerationItem } from '@/types'
 
 interface GenerateParams {
@@ -9,7 +8,6 @@ interface GenerateParams {
   item: string
   idempotencyKey: string
   text: string
-  useMock: boolean
 }
 
 interface GenerateResult {
@@ -20,7 +18,7 @@ interface GenerateResult {
 }
 
 export async function generateWithDeduction(params: GenerateParams): Promise<GenerateResult> {
-  const { userId, sermonId, item, idempotencyKey, text, useMock } = params
+  const { userId, sermonId, item, idempotencyKey, text } = params
 
   // Idempotency check
   const existing = await supabase
@@ -50,11 +48,7 @@ export async function generateWithDeduction(params: GenerateParams): Promise<Gen
   // Run AI generation
   let result: any
   try {
-    if (useMock) {
-      const mock = getMockResult()
-      const key = item as keyof typeof mock
-      result = { [item]: (mock as any)[key] }
-    } else if (item === 'all') {
+    if (item === 'all') {
       result = await generateAll(text)
     } else {
       result = await generateSingleItem(text, item as GenerationItem)

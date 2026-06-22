@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { cookies } from 'next/headers'
 import { getUserFromRequest } from '@/lib/auth'
 import { mapBookName } from '@/lib/bible/bookMap'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
@@ -37,71 +36,6 @@ async function loadBibleData(): Promise<any[]> {
   if (!res.ok) throw new Error('Failed to load bible data')
   _bibleData = await res.json()
   return _bibleData!
-}
-
-function getMockOutput(type: string, data: any): string {
-  const { passage, book, chapter, verseStart, verseEnd, sermon } = data
-  const p = passage || (sermon?.passage) || ''
-  const t = sermon?.title || ''
-  switch (type) {
-    case 'suggest-titles': {
-      const bookName = book || '성경'
-      const ch = chapter || '?'
-      const vs = verseStart || '?'
-      return JSON.stringify([
-        { title: `${bookName} ${ch}:${vs}에 담긴 은혜의 메시지`, reason: '본문의 핵심 주제를 은혜라는 보편적 프레임으로 전달합니다.' },
-        { title: `${bookName} ${ch}장이 우리에게 말하는 것`, reason: '질문형 제목으로 호기심을 유발합니다.' },
-        { title: '하나님의 약속을 붙드는 믿음', reason: '본문의 신학적 주제를 관통하는 보편적 제목입니다.' },
-        { title: `오늘을 사는 신앙 — ${bookName} ${ch}:${vs}`, reason: '본문의 현재적 적용을 강조합니다.' },
-        { title: '변화를 만나는 은혜의 자리', reason: '감동과 은혜를 강조하는 감성적 제목입니다.' },
-      ])
-    }
-    case 'summary':
-      return `📝 [AI 설교 요약서] - "${t}" (${p})\n\n■ 핵심 명제\n${sermon?.coreMessage || ''}\n\n■ 본문 전개 요약\n1. 도입: ${sermon?.introduction || ''}\n2. 전개:\n${(sermon?.outlineTitles || []).map((ot: string, idx: number) => `   - 대지 ${idx + 1}: ${ot}`).join('\n')}\n3. 결론: ${sermon?.conclusion || ''}`
-    case 'questions':
-      return `👥 [소그룹 나눔 질문지] - "${t}"\n\n■ 대상 회중: ${(sermon?.audience || []).join(', ')}\n\n1. [도입 질문] 오늘 설교 주제와 관련하여, 한 주간 내 삶에 가장 먼저 떠오른 생각은 무엇인가요?\n\n2. [본문 묵상] 본문 ${p}에 나타난 하나님의 마음에 대해 나누어 봅시다.\n\n3. [실천적 질문] "${sermon?.coreMessage || ''}"라는 메시지를 삶 속에서 어떻게 순종할 수 있을까요?`
-    case 'cardnews':
-      return `✨ [카드뉴스 기획안]\n\n■ 메인 컨셉: "${t}"\n\n- [카드 1] 표지: ${t} | ${p}\n- [카드 2] 문제 제기: ${(sermon?.introduction || '').slice(0, 50)}...\n- [카드 3] 해결책: ${sermon?.coreMessage || ''}\n- [카드 4] 적용: ${(sermon?.conclusion || '').slice(0, 60)}...\n- [카드 5] 엔딩`
-    case 'shorts':
-      return `🎬 [유튜브 쇼츠 60초]\n\n[00:00-00:10] (오프닝) "지치고 포기하고 싶은 순간이 있나요? 60초만 들어보세요."\n[00:10-00:35] "${sermon?.coreMessage?.slice(0, 70) || ''}"\n[00:35-00:50] 하나님의 사랑은 여러분을 결코 놓지 않습니다.\n[00:50-01:00] 구독과 좋아요를 눌러주세요!`
-    case 'ppt':
-      return `📊 [PPT 슬라이드]\n\n■ 템플릿: 테크 다크 오션\n\n- [슬라이드 1] ${t} | ${p}\n- [슬라이드 2] 본문 말씀\n- [슬라이드 3] ${(sermon?.outlineTitles || [])[0] || '첫 번째 대지'}\n- [슬라이드 4] ${(sermon?.outlineTitles || [])[1] || '두 번째 대지'}\n- [슬라이드 5] 결론`
-    case 'guide':
-      return `📖 [토론 가이드]\n\n■ 설교: "${t}" (${p})\n\n■ 진행:\n1. 본문 배경 설명\n2. 핵심 메시지: ${sermon?.coreMessage || ''}\n3. 토론 질문\n4. 기도로 마무리`
-    case 'bible-study':
-      return JSON.stringify({
-        passage: '성경 구절',
-        verses: Array.from({ length: Math.min((parseInt(verseEnd) || parseInt(chapter)) - parseInt(verseStart || '1') + 1, 5) }, (_, i) => ({
-          verse: parseInt(verseStart || '1') + i,
-          greek: 'original greek text',
-          translit: 'transliteration',
-          niv: 'NIV translation',
-          esv: 'ESV translation',
-        })),
-        words: [
-          { id: 'w-sample', strong: 'G0000', lemma: 'word', lemmaGreek: 'word', pronunciation: 'pron', transliteration: 'translit', partOfSpeech: '명사', morphology: '형태', basicMeaning: '기본 뜻', contextualMeaning: '문맥상 뜻', simpleExplanation: '쉬운 설명', usage: [{ ref: 'ref', text: 'text' }], sermonNote: '설교 적용', relatedWords: ['related'] },
-        ],
-        commentaries: [
-          { verse: parseInt(verseStart || '1'), author: '학자명', type: 'exegetical', source: '출처', text: '주석 내용' },
-        ],
-        translationNotes: [
-          { verse: parseInt(verseStart || '1'), versions: ['NIV', 'ESV', 'KRV'], note: '번역 차이 설명' },
-        ],
-        parallelPassages: [
-          { ref: '예) 창 1:1', text: '본문', relation: 'thematic', description: '설명' },
-        ],
-        themes: [
-          { name: '주제', description: '설명', connectedSermons: 5 },
-        ],
-        contextInfo: {
-          before: '앞 문맥',
-          after: '뒤 문맥',
-          bookStructure: '책 구조 설명',
-        },
-      })
-    default:
-      return '콘텐츠를 준비 중입니다.'
-  }
 }
 
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -219,19 +153,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const cookieStore = cookies()
-    const useMock = cookieStore.get('use_mock')?.value === 'true'
-
     const body = await request.json()
     const { type, data } = body as { type: string; data: any }
 
     if (!type || !data) {
       return NextResponse.json({ success: false, error: 'type과 data가 필요합니다.' }, { status: 400 })
-    }
-
-    if (useMock) {
-      await new Promise(r => setTimeout(r, 800))
-      return NextResponse.json({ success: true, data: { output: getMockOutput(type, data) } })
     }
 
     const systemPrompt = SYSTEM_PROMPTS[type]

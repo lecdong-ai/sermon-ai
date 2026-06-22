@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ProjectDetail, AdvancedProject, ProjectVersion, ActivityItem, ProjectStatus } from './types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
-import { getCustomProjects } from './mockData'
+import { getCustomProjects, updateCustomProject } from './customProjects'
 
 interface ProjectDetailResult {
   project: ProjectDetail | null
@@ -108,15 +108,7 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
   const updateStatus = useCallback((status: ProjectStatus) => {
     setProject((prev) => {
       if (!prev) return prev
-      // localStorage 사용자 프로젝트도 함께 업데이트 (refetch 시 폴백 방지)
-      try {
-        const customProjects = getCustomProjects()
-        const idx = customProjects.findIndex((p) => p.id === projectId)
-        if (idx !== -1) {
-          customProjects[idx] = { ...customProjects[idx], status }
-          setStorageItem('custom_projects', customProjects)
-        }
-      } catch {}
+      updateCustomProject(projectId, { status })
       return { ...prev, status }
     })
   }, [projectId])

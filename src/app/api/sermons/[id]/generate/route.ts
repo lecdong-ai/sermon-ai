@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateAll } from '@/lib/openai'
-import { getMockResult } from '@/lib/mock'
 import { getUserFromRequest } from '@/lib/auth'
 
 async function getSermon(id: string, userId: string) {
@@ -34,18 +33,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     let result
     try {
-      const useMock = request.cookies.get('use_mock')?.value === 'true'
-      if (useMock) {
-        result = getMockResult()
-      } else {
-        result = await generateAll(manuscript)
-      }
+      result = await generateAll(manuscript)
     } catch (err: any) {
       console.error('AI generation error:', err)
       return NextResponse.json({ success: false, error: err.message || 'AI 생성 중 오류가 발생했습니다.' })
     }
-
-
 
     const existingResult = sermon.result || {}
     const mergedResult = { ...existingResult, ...result }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { AdvancedProject, ProjectStatus, QuickStats } from './types'
-import { getCustomProjects, getDeletedMockIds, mockProjects } from './mockData'
-import { setStorageItem, removeStorageItem, getStorageItem } from '@/lib/storage'
+import { getCustomProjects, removeCustomProject } from './customProjects'
+import { setStorageItem, removeStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 const STATUS_MAP: Record<string, ProjectStatus> = {
@@ -57,8 +57,6 @@ export interface UseProjectsResult {
   error: string | null
   deleteProject: (id: string) => Promise<boolean>
   refetch: () => void
-  /** Number of real (non-mock) projects — useful for new-user detection */
-  totalRealCount: number
 }
 
 export function useProjects(): UseProjectsResult {
@@ -100,11 +98,9 @@ export function useProjects(): UseProjectsResult {
   const refetch = useCallback(() => setRefreshKey(k => k + 1), [])
 
   const projects = useMemo(() => {
-    const deletedIds = getDeletedMockIds()
     const customProjects = getCustomProjects()
-    const filteredMock = mockProjects.filter(p => !deletedIds.includes(p.id))
 
-    // Enrich custom/mock projects with coreMessage from prep/manuscript localStorage
+    // Enrich custom projects with coreMessage from prep/manuscript localStorage
     const enrichCore = (p: AdvancedProject): AdvancedProject => {
       if (p.coreMessage) return p
       try {
@@ -116,7 +112,6 @@ export function useProjects(): UseProjectsResult {
     }
 
     const byId = new Map<string, AdvancedProject>()
-    for (const p of filteredMock) byId.set(p.id, enrichCore(p))
     for (const p of customProjects) byId.set(p.id, enrichCore(p))
     for (const p of apiProjects) byId.set(p.id, p)
 
@@ -125,10 +120,6 @@ export function useProjects(): UseProjectsResult {
         new Date(b.updatedAt || b.createdAt).getTime() -
         new Date(a.updatedAt || a.createdAt).getTime()
     )
-  }, [apiProjects, refreshKey])
-
-  const totalRealCount = useMemo(() => {
-    return apiProjects.length + getCustomProjects().length
   }, [apiProjects, refreshKey])
 
   const stats: QuickStats = useMemo(() => ({
@@ -147,27 +138,12 @@ export function useProjects(): UseProjectsResult {
 
   const deleteProject = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const custom = getCustomProjects()
-      const wasCustom = custom.some(p => p.id === id)
-      if (wasCustom) {
-        setStorageItem('custom_projects', custom.filter(p => p.id !== id))
-      }
-
-      const isMock = mockProjects.some(p => p.id === id)
-      if (isMock) {
-        const deleted = getDeletedMockIds()
-        if (!deleted.includes(id)) {
-          deleted.push(id)
-          setStorageItem('deleted_mock_ids', deleted)
-        }
-      }
-
+      removeCustomProject(id)
       removeStorageItem(`prep_${id}`)
       removeStorageItem(`manuscript_${id}`)
 
       fetch(`/api/sermons/${id}`, { method: 'DELETE' }).catch(() => {})
 
-      // Optimistic: remove from local state immediately
       setApiProjects((prev) => prev.filter(p => p.id !== id))
       refetch()
       return true
@@ -176,5 +152,5 @@ export function useProjects(): UseProjectsResult {
     }
   }, [refetch])
 
-  return { projects, stats, loading, error, deleteProject, refetch, totalRealCount }
+  return { projects, stats, loading, error, deleteProject, refetch }
 }

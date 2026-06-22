@@ -5,7 +5,7 @@ import {
   forceSimulation, forceManyBody, forceLink, forceCenter, forceCollide,
   type Simulation,
 } from 'd3-force'
-import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 import { getStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 

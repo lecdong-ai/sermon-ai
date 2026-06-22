@@ -3,31 +3,16 @@
 import { useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Bug, LogIn, User, LogOut, LayoutDashboard, Cross, Heart, ScrollText, Crown } from 'lucide-react'
+import { LogIn, User, LogOut, LayoutDashboard, Cross, Heart, ScrollText, Crown } from 'lucide-react'
 import { useAuth } from './AuthProvider'
-
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null
-  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
-  return match ? decodeURIComponent(match[2]) : null
-}
-
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=None; Secure`
-}
 
 export default memo(function Header() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const isHome = pathname === '/'
-  const [mockOn, setMockOn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [supporter, setSupporter] = useState<{ active: boolean; until: string | null } | null>(null)
-
-  useEffect(() => {
-    setMockOn(getCookie('use_mock') === 'true')
-  }, [])
 
   useEffect(() => {
     if (user) {
@@ -38,13 +23,6 @@ export default memo(function Header() {
     }
   }, [user])
 
-  const toggleMock = () => {
-    const next = !mockOn
-    setMockOn(next)
-    setCookie('use_mock', next ? 'true' : 'false')
-    window.location.reload()
-  }
-
   const handleSignOut = async () => {
     setMenuOpen(false)
     await signOut()
@@ -53,17 +31,17 @@ export default memo(function Header() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isHome 
-        ? 'bg-[#0B1020]/80 backdrop-blur-md border-b border-white/10 text-white shadow-lg shadow-black/10' 
+      isHome
+        ? 'bg-[#0B1020]/80 backdrop-blur-md border-b border-white/10 text-white shadow-lg shadow-black/10'
         : 'bg-[#050814]/85 backdrop-blur-md border-b border-white/5 text-white shadow-lg shadow-black/20'
     }`}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        
+
         {/* Bunker 목양 로고 브랜딩 */}
         <Link href="/" className="flex items-center gap-2.5 group ml-[0.5cm]">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
-            isHome 
-              ? 'bg-indigo-600 group-hover:bg-indigo-500' 
+            isHome
+              ? 'bg-indigo-600 group-hover:bg-indigo-500'
               : 'bg-gradient-to-br from-indigo-500 to-purple-600 group-hover:from-indigo-400 group-hover:to-purple-500 shadow-lg shadow-indigo-500/20'
           }`}>
             <Cross className="w-4 h-4 text-white" />
@@ -76,23 +54,6 @@ export default memo(function Header() {
         </Link>
 
         <nav className="flex items-center gap-2 mr-8">
-          {user?.email === 'lecdong@gmail.com' && (
-            <button
-              onClick={toggleMock}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-all duration-200 ${
-                mockOn
-                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
-                  : isHome
-                  ? 'bg-white/10 border-white/10 text-slate-300 hover:bg-white/20'
-                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-              }`}
-              title={mockOn ? 'Mock 데이터 사용 중 (클릭 시 해제)' : 'Mock 데이터 사용 (클릭 시 활성화)'}
-            >
-              <Bug className={`w-3.5 h-3.5 ${mockOn ? 'text-amber-400 animate-pulse' : ''}`} />
-              {mockOn ? 'Mock 켜짐' : 'Mock'}
-            </button>
-          )}
-
           {loading ? (
             <div className={`w-8 h-8 rounded-full animate-pulse ${isHome ? 'bg-white/10' : 'bg-white/5'}`} />
           ) : user ? (
@@ -115,8 +76,8 @@ export default memo(function Header() {
               <Link
                 href="/support"
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                  isHome 
-                    ? 'text-slate-300 hover:text-white hover:bg-white/10' 
+                  isHome
+                    ? 'text-slate-300 hover:text-white hover:bg-white/10'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -127,8 +88,8 @@ export default memo(function Header() {
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent transition-all duration-200 ${
-                    isHome 
-                      ? 'hover:bg-white/10 hover:border-white/10' 
+                    isHome
+                      ? 'hover:bg-white/10 hover:border-white/10'
                       : 'hover:bg-white/5 hover:border-white/10'
                   }`}
                 >

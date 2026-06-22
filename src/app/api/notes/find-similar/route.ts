@@ -55,11 +55,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, matches: [] })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      return NextResponse.json({ success: true, matches: mockSimilarity(text, existingNotes, currentNoteId) })
-    }
-
     const compact = existingNotes
       .filter((n) => n.id !== currentNoteId)
       .map((n) => ({ id: n.id, t: n.title, s: n.summary, g: n.tags.join(','), y: n.type }))
@@ -115,21 +110,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/notes/find-similar error:', err)
     return NextResponse.json({ success: false, error: err.message || '유사 노트 검색 실패', matches: [] }, { status: 500 })
   }
-}
-
-function mockSimilarity(text: string, existing: ExistingNote[], currentNoteId: string | null) {
-  const tokens = new Set(text.toLowerCase().split(/\s+/).filter((t) => t.length >= 2))
-  const scored = existing
-    .filter((n) => n.id !== currentNoteId)
-    .map((n) => {
-      const haystack = `${n.title} ${n.summary} ${n.tags.join(' ')}`.toLowerCase()
-      let hits = 0
-      tokens.forEach((t) => { if (haystack.includes(t)) hits++ })
-      const score = Math.min(0.95, hits / Math.max(tokens.size, 5))
-      return { id: n.id, score, reason: hits > 0 ? `공통 키워드 ${hits}개` : '관련 주제' }
-    })
-    .filter((m) => m.score >= 0.3)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 4)
-  return scored
 }

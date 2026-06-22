@@ -36,11 +36,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '본문 정보가 필요합니다.' }, { status: 400 })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      return NextResponse.json({ success: true, ...mockData() })
-    }
-
     const contextLine = [book, chapter, verseStart, verseEnd].filter(Boolean).join(' ')
     const systemPrompt = `당신은 신학 연구 보조 AI다. 주어진 성경 본문에 대한 단계 전환 진단용 **빠른 채우기 콘텐츠**를 생성하라.
 
@@ -92,20 +87,5 @@ ${coreMessage ? `[기존 중심명제 참고] ${coreMessage}` : ''}
   } catch (err: any) {
     console.error('POST /api/notes/study-fill error:', err)
     return NextResponse.json({ success: false, error: err.message || 'AI 채우기 실패' }, { status: 500 })
-  }
-}
-
-function mockData() {
-  return {
-    data: {
-      keyWords: ['χάρις(은혜)', 'πίστις(믿음)'],
-      commentaries: [
-        '이 본문에서 바울은 복음의 핵심을 다시 한번 확인하며, 인간의 행위가 아닌 그리스도의 순종에 의한 의를 강조한다.',
-        '헬라어 χάρις(은혜)는 인간의 заслу가 아닌 하나님의 선물로서의 구원을 가리키며, 로마서 신학의 중심 어휘이다.',
-        '목회적으로 이 본문은 율법주의에 빠진 성도들에게 복음의 자유를 선포하며, 칭의의 확신을 회복시키는 데 목적이 있다.',
-      ],
-      theme: '칭의와 은혜',
-      passageStructure: '인간 모두의 죄 → 그리스도의 의로 말미암은 칭의 → 아브라함의 믿음 예시',
-    },
   }
 }

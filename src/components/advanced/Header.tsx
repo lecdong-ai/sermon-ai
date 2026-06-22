@@ -2,34 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Sparkles, Bug, User, Heart, LogOut, LayoutDashboard, BookOpen, Archive, ScrollText, Crown } from 'lucide-react'
+import { Search, Plus, Sparkles, User, Heart, LogOut, LayoutDashboard, BookOpen, Archive, ScrollText, Crown } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 import GlobalSearch from '@/components/advanced/shared/GlobalSearch'
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
-  return match ? decodeURIComponent(match[2]) : ''
-}
-
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=86400`
-}
 
 export default function AdvancedHeader() {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [query, setQuery] = useState('')
-  const [mockOn, setMockOn] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showSavedNotes, setShowSavedNotes] = useState(false)
   const [isSupporter, setIsSupporter] = useState<boolean>(false)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setMockOn(getCookie('use_mock') === 'true')
-  }, [])
 
   useEffect(() => {
     if (user) {
@@ -53,13 +38,6 @@ export default function AdvancedHeader() {
     if (showMenu) document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showMenu])
-
-  const toggleMock = () => {
-    const next = !mockOn
-    setMockOn(next)
-    setCookie('use_mock', next ? 'true' : 'false')
-    window.location.reload()
-  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,20 +76,6 @@ export default function AdvancedHeader() {
           <Sparkles className="w-3 h-3 text-indigo-400 animate-pulse" />
           AI Engine Online
         </div>
-
-        {/* Mock 토글 */}
-        <button
-          onClick={toggleMock}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border ${
-            mockOn
-              ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
-              : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/10'
-          }`}
-          title={mockOn ? 'Mock 데이터 사용 중 (클릭 시 해제)' : 'Mock 데이터 사용 (클릭 시 활성화)'}
-        >
-          <Bug className={`w-3 h-3 ${mockOn ? 'text-amber-400 animate-pulse' : ''}`} />
-          {mockOn ? 'Mock' : 'Mock'}
-        </button>
 
         {/* 사용자 아바타 */}
         <div className="relative" ref={menuRef}>

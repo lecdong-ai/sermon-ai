@@ -66,11 +66,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '본문 정보가 필요합니다.' }, { status: 400 })
     }
 
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
-    if (useMock) {
-      return NextResponse.json({ success: true, ...mockArrange(insights) })
-    }
-
     const compact = insights.map((i) => ({
       id: i.id,
       title: i.title,
@@ -156,18 +151,4 @@ ${JSON.stringify(compact, null, 2)}`
     console.error('POST /api/notes/arrange error:', err)
     return NextResponse.json({ success: false, error: err.message || '배치 실패' }, { status: 500 })
   }
-}
-
-function mockArrange(insights: InsightInput[]): { arrangement: Record<Section, string[]>; reasoning: string } {
-  const total = insights.length
-  const arrangement: Record<Section, string[]> = { intro: [], main1: [], main2: [], main3: [], conclusion: [] }
-  insights.forEach((i, idx) => {
-    const ratio = idx / Math.max(1, total)
-    if (ratio < 0.2) arrangement.intro.push(i.id)
-    else if (ratio < 0.4) arrangement.main1.push(i.id)
-    else if (ratio < 0.6) arrangement.main2.push(i.id)
-    else if (ratio < 0.8) arrangement.main3.push(i.id)
-    else arrangement.conclusion.push(i.id)
-  })
-  return { arrangement, reasoning: '[Mock] 순차 배치 결과' }
 }

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
 import { NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
 import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
-import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 import { getStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 

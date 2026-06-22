@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import ActivityHeatmap from '@/components/mypage/ActivityHeatmap'
-import { getCustomProjects } from '@/lib/advanced/mockData'
+import { getCustomProjects } from '@/lib/advanced/customProjects'
 import {
   Mail, LogOut, KeyRound, Shield, Crown, Sparkles,
   BookOpen, Network, BrainCircuit, Archive, ChevronRight, AlertCircle,
