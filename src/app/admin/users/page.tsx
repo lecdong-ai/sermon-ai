@@ -430,6 +430,21 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   const [grantAmount, setGrantAmount] = useState('5000')
   const [granting, setGranting] = useState(false)
 
+  // Esc 키로 닫기
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  // 스크롤 잠금 (모달 열렸을 때 body)
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const handleGrant = async () => {
     const days = customDays ? parseInt(customDays) : selectedDays
     if (days < 1) return
@@ -442,10 +457,12 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[#0a0e1a] shadow-2xl h-full overflow-y-auto">
-        <div className="sticky top-0 bg-[#0a0e1a] border-b border-white/5 px-6 py-4 flex items-center justify-between z-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-3xl max-h-[88vh] bg-[#0a0e1a] shadow-2xl shadow-black/40 rounded-2xl border border-white/10 overflow-hidden flex flex-col animate-modal-in"
+      >
+        <div className="sticky top-0 bg-[#0a0e1a]/95 backdrop-blur-sm border-b border-white/5 px-6 py-4 flex items-center justify-between z-10 shrink-0">
           <h2 className="text-[16px] font-extrabold text-slate-100">회원 상세</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
             <X className="w-4 h-4 text-slate-500" />
