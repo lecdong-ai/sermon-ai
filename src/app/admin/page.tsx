@@ -317,7 +317,7 @@ export default function AdminCenterPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="이메일 또는 이름으로 검색..."
-                className="w-full pl-9 pr-3 h-8 bg-white/5 border border-white/5 rounded-md text-[12px] text-slate-200 placeholder:text-slate-500 focus:outline-none focus:bg-white/[0.07] focus:border-white/10"
+                className="w-full pl-9 pr-3 h-8 bg-[#04060f] border border-white/10 rounded-md text-[12px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:bg-[#04060f]"
               />
             </div>
           </div>
@@ -357,7 +357,7 @@ export default function AdminCenterPage() {
                         <select
                           value={selectedDays}
                           onChange={(e) => setSelectedDays(parseInt(e.target.value))}
-                          className="h-7 text-[11px] bg-white/5 border border-white/10 rounded px-1.5 text-slate-200"
+                          className="h-7 text-[11px] bg-[#04060f] border border-white/10 rounded px-1.5 text-slate-100"
                         >
                           {GRANT_PRESETS.map((p) => (
                             <option key={p.days} value={p.days}>{p.label}</option>
@@ -368,7 +368,7 @@ export default function AdminCenterPage() {
                           placeholder="직접"
                           value={customDays}
                           onChange={(e) => setCustomDays(e.target.value)}
-                          className="w-12 h-7 text-[11px] bg-white/5 border border-white/10 rounded px-1.5 text-slate-200"
+                          className="w-12 h-7 text-[11px] bg-[#04060f] border border-white/10 rounded px-1.5 text-slate-100 placeholder:text-slate-600"
                           min="1"
                         />
                         <button

@@ -287,7 +287,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
                     placeholder="직접 입력"
                     value={customDays}
                     onChange={e => setCustomDays(e.target.value)}
-                    className="w-20 text-[12px] border border-white/5 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-20 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                     min="1"
                   />
                   <button
@@ -465,7 +465,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
               placeholder="직접"
               value={customDays}
               onChange={e => setCustomDays(e.target.value)}
-              className="w-16 text-[12px] border border-white/5 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              className="w-16 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               min="1"
             />
             <button
@@ -743,7 +743,7 @@ export default function AdminUsersPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="이메일 또는 이름으로 검색..."
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/5 text-[14px] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/10 bg-[#04060f] text-[14px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
           />
         </div>
         <div className="flex items-center gap-1.5">
