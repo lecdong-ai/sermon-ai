@@ -6,6 +6,7 @@ import './globals.css'
 import SiteHeader from '@/components/SiteHeader'
 import MainWrapper from '@/components/MainWrapper'
 import MessageButton from '@/components/MessageButton'
+import KakaoTalkButton from '@/components/KakaoTalkButton'
 import { AuthProvider } from '@/components/AuthProvider'
 import HydrationGuard from '@/components/HydrationGuard'
 
@@ -73,6 +74,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <SiteHeader />
               <MainWrapper>{children}</MainWrapper>
+              <KakaoTalkButton />
               <MessageButton />
             </Suspense>
             {process.env.NEXT_PUBLIC_KAKAO_KEY ? (
