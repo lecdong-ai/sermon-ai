@@ -71,6 +71,17 @@ ${themeOptions}
       max_completion_tokens: 200,
     })
 
+    // API 사용량 추적 (fire-and-forget)
+    if (res.usage) {
+      const { trackAIUsage } = await import('@/lib/ai/trackUsage')
+      trackAIUsage({
+        userId: user.id,
+        apiType: 'analyze-tags',
+        model: 'gpt-4o-mini',
+        usage: res.usage,
+      }).catch(() => {})
+    }
+
     const raw = res.choices[0]?.message?.content || ''
     const cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
     let parsed: string[]

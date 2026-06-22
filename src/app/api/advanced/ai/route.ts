@@ -395,6 +395,17 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
     })
 
+    // API 사용량 추적 (fire-and-forget, 회원 응답에 영향 없음)
+    if (res.usage) {
+      const { trackAIUsage } = await import('@/lib/ai/trackUsage')
+      trackAIUsage({
+        userId: user.id,
+        apiType: `ai:${type}`,
+        model: model,
+        usage: res.usage,
+      }).catch(() => {})
+    }
+
     let output = res.choices[0]?.message?.content || ''
     // Extract JSON robustly — handle both {} objects and [] arrays
     const isArrayType = type === 'suggest-titles' || type === 'illustration' || type === 'reference'

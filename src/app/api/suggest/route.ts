@@ -394,6 +394,17 @@ ${illustration ? `\n예화: ${illustration}` : ''}
         : (body.generateAllPoints || (body.generateApplication && !body.suggestOnly) || (body.generateIllustration && !body.suggestOnly) || (body.generateIntroduction && !body.suggestOnly) || (body.generateConclusion && !body.suggestOnly)) ? 2000 : 1000,
     })
 
+    // API 사용량 추적 (fire-and-forget)
+    if (res.usage) {
+      const { trackAIUsage } = await import('@/lib/ai/trackUsage')
+      trackAIUsage({
+        userId: user.id,
+        apiType: `suggest:${mode || 'default'}`,
+        model: 'gpt-4o-mini',
+        usage: res.usage,
+      }).catch(() => {})
+    }
+
     const raw = res.choices[0]?.message?.content || ''
     let parsed
     try {

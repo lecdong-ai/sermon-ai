@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   Users, Heart, Search, Loader2, Check, X, XCircle,
-  Shield, Calendar, Mail, Clock,
+  Shield, Calendar, Mail, Clock, Sparkles,
   LayoutGrid, List, Download, ChevronUp, ChevronDown,
   Eye, Activity, CreditCard, AlertTriangle,
 } from 'lucide-react'
@@ -45,6 +45,23 @@ interface DetailSubscription {
 interface DetailData {
   usage: DetailUsage | null
   subscription: DetailSubscription | null
+  apiUsage?: ApiUsageData | null
+  manualDonations?: ManualDonationItem[]
+}
+
+interface ApiUsageData {
+  monthly: { cost_krw: number; count: number }
+  total: { cost_krw: number; count: number }
+  byApi: { api_type: string; cost_krw: number; count: number }[]
+  recent: { api_type: string; model: string; cost_krw: number; created_at: string }[]
+  donation: { manual_krw: number; auto_krw: number; total_krw: number }
+}
+
+interface ManualDonationItem {
+  id: string
+  amount_krw: number
+  note: string | null
+  created_at: string
 }
 
 const GRANT_PRESETS = [
@@ -53,12 +70,240 @@ const GRANT_PRESETS = [
   { label: '365일', days: 365, desc: '50,000원' },
 ]
 
-type SortField = 'name' | 'email' | 'role' | 'supporter_until' | 'created_at' | 'last_sign_in_at'
+type SortField = 'name' | 'email' | 'role' | 'supporter_until' | 'created_at' | 'last_sign_in_at' | 'total_donation' | 'api_cost'
 type ViewMode = 'card' | 'table'
 
 const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('ko-KR') : '-'
 
-function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDelete }: {
+function DonationUsageSection({ data, memberId, onAdded, onDeleted }: {
+  data: DetailData | null
+  memberId: string
+  onAdded?: () => void
+  onDeleted?: () => void
+}) {
+  const [showInput, setShowInput] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const api = data?.apiUsage
+  const donation = api?.donation
+  const manualDonations = data?.manualDonations || []
+
+  const monthlyKrw = api?.monthly.cost_krw || 0
+  const totalApiKrw = api?.total.cost_krw || 0
+  const totalDonationKrw = donation?.total_krw || 0
+  const manualKrw = donation?.manual_krw || 0
+  const autoKrw = donation?.auto_krw || 0
+  const margin = totalDonationKrw - totalApiKrw
+
+  const marginRatio = totalDonationKrw > 0 ? Math.max(0, Math.min(100, (margin / totalDonationKrw) * 100)) : 0
+  const marginStatus = totalDonationKrw === 0 ? 'none'
+    : margin < 0 ? 'over'
+    : marginRatio < 20 ? 'caution'
+    : marginRatio < 50 ? 'normal'
+    : 'healthy'
+
+  const statusMeta = {
+    none: { color: 'text-slate-500', bg: 'bg-slate-500/10', border: 'border-slate-500/20', label: '후원 없음' },
+    over: { color: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/30', label: '초과' },
+    caution: { color: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/30', label: '주의' },
+    normal: { color: 'text-blue-300', bg: 'bg-blue-500/10', border: 'border-blue-500/30', label: '정상' },
+    healthy: { color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', label: '여유' },
+  }[marginStatus]
+
+  const handleAdd = async () => {
+    const amt = parseInt(amount.replace(/[^0-9]/g, ''))
+    if (!amt || amt <= 0) return
+    setSaving(true)
+    const res = await fetch('/api/admin/donations/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: memberId, amountKrw: amt, note }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      setAmount('')
+      setNote('')
+      setShowInput(false)
+      onAdded?.()
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('이 입력을 삭제하시겠습니까?')) return
+    const res = await fetch(`/api/admin/donations/manual/${id}`, { method: 'DELETE' })
+    if (res.ok) onDeleted?.()
+  }
+
+  return (
+    <div>
+      <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
+        <Heart className="w-3.5 h-3.5" />
+        후원 / 사용 비교
+      </h3>
+
+      <div className="bg-white/5 rounded-xl p-4 space-y-3">
+        {/* 수동 입력 */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] text-slate-500 font-semibold">수동 입력</span>
+            <span className="text-[12px] text-slate-200 font-bold">
+              {manualKrw > 0 ? `₩${manualKrw.toLocaleString('ko-KR')}` : '₩0'}
+              {manualDonations.length > 0 && <span className="text-slate-500 font-normal ml-1">({manualDonations.length}건)</span>}
+            </span>
+          </div>
+          {showInput ? (
+            <div className="space-y-2">
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  placeholder="금액 (₩)"
+                  className="flex-1 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+                <input
+                  type="text"
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  placeholder="메모 (선택)"
+                  className="flex-1 text-[12px] bg-[#04060f] text-slate-100 border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </div>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={handleAdd}
+                  disabled={saving}
+                  className="flex-1 py-1.5 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-bold hover:bg-emerald-500/30 disabled:opacity-50"
+                >
+                  {saving ? '저장 중...' : '저장'}
+                </button>
+                <button
+                  onClick={() => { setShowInput(false); setAmount(''); setNote('') }}
+                  className="px-3 py-1.5 rounded bg-white/5 text-slate-400 text-[11px] font-bold hover:bg-white/10"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowInput(true)}
+              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold"
+            >
+              + 금액 입력
+            </button>
+          )}
+          {manualDonations.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {manualDonations.slice(0, 3).map(d => (
+                <div key={d.id} className="flex items-center justify-between text-[10px] text-slate-500 bg-black/20 rounded px-2 py-1">
+                  <span className="truncate flex-1">
+                    {new Date(d.created_at).toLocaleDateString('ko-KR')} · ₩{d.amount_krw.toLocaleString('ko-KR')}
+                    {d.note && <span className="text-slate-600 ml-1">· {d.note}</span>}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(d.id)}
+                    className="text-slate-600 hover:text-rose-400 ml-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {manualDonations.length > 3 && (
+                <div className="text-[10px] text-slate-600 text-center">+{manualDonations.length - 3}건 더</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 자동 집계 */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <span className="text-[11px] text-slate-500 font-semibold">자동 집계</span>
+          <span className="text-[12px] text-slate-200 font-bold">
+            {autoKrw > 0 ? `₩${autoKrw.toLocaleString('ko-KR')}` : '₩0'}
+          </span>
+        </div>
+
+        {/* 누적 후원 */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">누적 후원액</span>
+          <span className="text-[14px] text-emerald-300 font-bold">
+            ₩{totalDonationKrw.toLocaleString('ko-KR')}
+          </span>
+        </div>
+
+        {/* API 비용 */}
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">누적 API 비용</span>
+          <span className={`text-[14px] font-bold ${totalApiKrw >= 6500 ? 'text-amber-400' : 'text-slate-200'}`}>
+            ₩{totalApiKrw.toLocaleString('ko-KR')}
+          </span>
+        </div>
+        {api && api.monthly.count > 0 && (
+          <div className="text-[10px] text-slate-500 -mt-1">이번 달 ₩{monthlyKrw.toLocaleString('ko-KR')} ({api.monthly.count}회)</div>
+        )}
+
+        {/* 마진 비교 */}
+        {totalDonationKrw > 0 && (
+          <div className="pt-3 border-t border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] text-slate-500">마진</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[12px] font-bold ${margin < 0 ? 'text-rose-400' : 'text-emerald-300'}`}>
+                  ₩{margin.toLocaleString('ko-KR')}
+                </span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${statusMeta.bg} ${statusMeta.color} border ${statusMeta.border}`}>
+                  {statusMeta.label}
+                </span>
+              </div>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className={`h-full transition-all ${
+                  marginStatus === 'over' ? 'bg-rose-500' :
+                  marginStatus === 'caution' ? 'bg-amber-500' :
+                  marginStatus === 'normal' ? 'bg-blue-500' :
+                  'bg-emerald-500'
+                }`}
+                style={{ width: `${marginStatus === 'over' ? 100 : marginRatio}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-slate-500 mt-1 text-right">
+              사용률 {margin < 0 ? Math.round(((totalApiKrw / totalDonationKrw) * 100)) : Math.round(100 - marginRatio)}%
+            </div>
+          </div>
+        )}
+
+        {/* API 분포 */}
+        {api && api.byApi.length > 0 && (
+          <div className="pt-3 border-t border-white/5">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">API 분포</div>
+            <div className="space-y-1">
+              {api.byApi.slice(0, 4).map(b => {
+                const pct = totalApiKrw > 0 ? (b.cost_krw / totalApiKrw) * 100 : 0
+                return (
+                  <div key={b.api_type}>
+                    <div className="flex items-center justify-between text-[10px] mb-0.5">
+                      <span className="text-slate-400 truncate">{b.api_type}</span>
+                      <span className="text-slate-500">₩{b.cost_krw.toLocaleString('ko-KR')}</span>
+                    </div>
+                    <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-full bg-indigo-500/60" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDelete, onManualDonationAdded, onManualDonationDeleted }: {
   member: Member
   data: DetailData | null
   loading: boolean
@@ -66,6 +311,8 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   onGrant: (id: string, days: number) => void
   onRevoke?: (id: string) => void
   onDelete: (id: string) => void
+  onManualDonationAdded?: () => void
+  onManualDonationDeleted?: () => void
 }) {
   const active = member.supporter_until && new Date(member.supporter_until) > new Date()
   const [showGrant, setShowGrant] = useState(false)
@@ -244,6 +491,14 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             )}
           </div>
 
+          {/* 후원 / 사용 비교 */}
+          <DonationUsageSection
+            data={data}
+            memberId={member.id}
+            onAdded={onManualDonationAdded}
+            onDeleted={onManualDonationDeleted}
+          />
+
           {/* 활동 정보 */}
           <div>
             <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
@@ -354,11 +609,12 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
   )
 }
 
-function MemberCard({ member, onGrant, onDelete, onDetail }: {
+function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
   member: Member
   onGrant: (id: string, days: number) => void
   onDelete: (id: string) => void
   onDetail: (member: Member) => void
+  summary?: { api_cost_krw: number; manual_donation_krw: number; auto_donation_krw: number; total_donation_krw: number }
 }) {
   const active = member.supporter_until && new Date(member.supporter_until) > new Date()
   const [showGrant, setShowGrant] = useState(false)
@@ -441,6 +697,27 @@ function MemberCard({ member, onGrant, onDelete, onDetail }: {
           </span>
         )}
       </div>
+
+      {summary && (summary.total_donation_krw > 0 || summary.api_cost_krw > 0) && (
+        <div className="border-t border-white/5 pt-3 mb-3 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 flex items-center gap-1">
+              <Heart className="w-3 h-3" /> 누적 후원
+            </span>
+            <span className="text-slate-200 font-semibold">
+              {summary.total_donation_krw > 0 ? `₩${summary.total_donation_krw.toLocaleString('ko-KR')}` : '-'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> API 비용
+            </span>
+            <span className={`font-semibold ${summary.api_cost_krw >= 6500 ? 'text-amber-400' : 'text-slate-200'}`}>
+              {summary.api_cost_krw > 0 ? `₩${summary.api_cost_krw.toLocaleString('ko-KR')}` : '-'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {showGrant ? (
         <div className="space-y-2 border-t border-white/5 pt-3">
@@ -533,12 +810,18 @@ export default function AdminUsersPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [detailData, setDetailData] = useState<DetailData | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [userSummary, setUserSummary] = useState<Record<string, { api_cost_krw: number; manual_donation_krw: number; auto_donation_krw: number; total_donation_krw: number }>>({})
 
   const loadMembers = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/users')
-    const data = await res.json()
+    const [usersRes, summaryRes] = await Promise.all([
+      fetch('/api/admin/users'),
+      fetch('/api/admin/users/summary'),
+    ])
+    const data = await usersRes.json()
+    const sData = await summaryRes.json()
     if (!data.error) setMembers(data.users || [])
+    if (!sData.error) setUserSummary(sData.summary || {})
     setLoading(false)
   }, [])
 
@@ -551,12 +834,17 @@ export default function AdminUsersPage() {
     }
     setDetailLoading(true)
     setDetailData(null)
-    fetch(`/api/admin/users/detail?userId=${selectedMember.id}`)
-      .then(r => r.json())
-      .then(d => {
-        if (!d.error) setDetailData(d)
+    Promise.all([
+      fetch(`/api/admin/users/detail?userId=${selectedMember.id}`).then(r => r.json()),
+      fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
+      fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
+    ]).then(([detail, usage, donations]) => {
+      setDetailData({
+        ...detail,
+        apiUsage: usage.error ? null : usage,
+        manualDonations: donations.donations || [],
       })
-      .catch(() => {})
+    }).catch(() => {})
       .finally(() => setDetailLoading(false))
   }, [selectedMember?.id])
 
@@ -630,18 +918,29 @@ export default function AdminUsersPage() {
   }
 
   const handleExportCSV = () => {
-    const headers = ['이름', '이메일', '역할', '후원상태', '후원만료일', '가입일', '최근접속일']
-    const rows = filtered.map(m => [
-      m.name || '',
-      m.email,
-      m.role === 'admin' ? '관리자' : '회원',
-      m.supporter_until && new Date(m.supporter_until) > new Date() ? '후원중' : '일반',
-      m.supporter_until ? new Date(m.supporter_until).toLocaleDateString('ko-KR') : '',
-      new Date(m.created_at).toLocaleDateString('ko-KR'),
-      m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString('ko-KR') : '',
-    ])
+    const headers = ['이름', '이메일', '역할', '후원상태', '후원만료일', '수동후원', '자동후원', '누적후원', '누적API비용', '마진', '가입일', '최근접속일']
+    const rows = filtered.map(m => {
+      const sum = userSummary[m.id]
+      const totalDonation = sum?.total_donation_krw || 0
+      const totalApi = sum?.api_cost_krw || 0
+      const margin = totalDonation - totalApi
+      return [
+        m.name || '',
+        m.email,
+        m.role === 'admin' ? '관리자' : '회원',
+        m.supporter_until && new Date(m.supporter_until) > new Date() ? '후원중' : '일반',
+        m.supporter_until ? new Date(m.supporter_until).toLocaleDateString('ko-KR') : '',
+        sum?.manual_donation_krw || 0,
+        sum?.auto_donation_krw || 0,
+        totalDonation,
+        totalApi,
+        margin,
+        new Date(m.created_at).toLocaleDateString('ko-KR'),
+        m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString('ko-KR') : '',
+      ]
+    })
     const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n')
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -664,8 +963,17 @@ export default function AdminUsersPage() {
   const sorted = [...filtered].sort((a, b) => {
     if (!sortField) return 0
     const dir = sortOrder === 'asc' ? 1 : -1
-    const aVal = a[sortField]
-    const bVal = b[sortField]
+    let aVal: any, bVal: any
+    if (sortField === 'total_donation') {
+      aVal = userSummary[a.id]?.total_donation_krw || 0
+      bVal = userSummary[b.id]?.total_donation_krw || 0
+    } else if (sortField === 'api_cost') {
+      aVal = userSummary[a.id]?.api_cost_krw || 0
+      bVal = userSummary[b.id]?.api_cost_krw || 0
+    } else {
+      aVal = a[sortField]
+      bVal = b[sortField]
+    }
     if (aVal === null && bVal === null) return 0
     if (aVal === null) return 1
     if (bVal === null) return -1
@@ -775,6 +1083,7 @@ export default function AdminUsersPage() {
               onGrant={handleGrant}
               onDelete={(id) => setDeleteTarget(m)}
               onDetail={setSelectedMember}
+              summary={userSummary[m.id]}
             />
           ))}
         </div>
@@ -789,6 +1098,8 @@ export default function AdminUsersPage() {
                     { key: 'email', label: '이메일' },
                     { key: 'role', label: '상태' },
                     { key: 'supporter_until', label: '후원만료일' },
+                    { key: 'total_donation', label: '누적 후원' },
+                    { key: 'api_cost', label: '누적 API' },
                     { key: 'created_at', label: '가입일' },
                     { key: 'last_sign_in_at', label: '최근접속일' },
                   ] as { key: SortField; label: string }[]).map(col => (
@@ -809,6 +1120,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {sorted.map((m, i) => {
                   const active = m.supporter_until && new Date(m.supporter_until) > new Date()
+                  const sum = userSummary[m.id]
                   return (
                     <tr
                       key={m.id}
@@ -855,6 +1167,22 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 text-[12px]">
                         {active ? new Date(m.supporter_until!).toLocaleDateString('ko-KR') : '-'}
+                      </td>
+                      <td className="px-5 py-3.5 text-[12px]">
+                        {sum && sum.total_donation_krw > 0 ? (
+                          <span className="text-emerald-400 font-semibold">₩{sum.total_donation_krw.toLocaleString('ko-KR')}</span>
+                        ) : (
+                          <span className="text-slate-600">-</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-[12px]">
+                        {sum && sum.api_cost_krw > 0 ? (
+                          <span className={sum.api_cost_krw >= 6500 ? 'text-amber-400 font-semibold' : 'text-slate-200'}>
+                            ₩{sum.api_cost_krw.toLocaleString('ko-KR')}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">-</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 text-[12px]">
                         {new Date(m.created_at).toLocaleDateString('ko-KR')}
@@ -910,6 +1238,39 @@ export default function AdminUsersPage() {
           onGrant={handleGrant}
           onRevoke={handleRevoke}
           onDelete={(id) => { setSelectedMember(null); setDeleteTarget(members.find(m => m.id === id) || null) }}
+          onManualDonationAdded={() => {
+            // 드로어 데이터 새로고침
+            if (selectedMember) {
+              setSelectedMember({ ...selectedMember })
+              Promise.all([
+                fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
+                fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
+              ]).then(([usage, donations]) => {
+                setDetailData(prev => prev ? {
+                  ...prev,
+                  apiUsage: usage.error ? null : usage,
+                  manualDonations: donations.donations || [],
+                } : prev)
+              })
+              loadMembers()  // 리스트 summary 갱신
+            }
+          }}
+          onManualDonationDeleted={() => {
+            if (selectedMember) {
+              setSelectedMember({ ...selectedMember })
+              Promise.all([
+                fetch(`/api/admin/users/usage?userId=${selectedMember.id}`).then(r => r.json()),
+                fetch(`/api/admin/donations/manual?userId=${selectedMember.id}`).then(r => r.json()),
+              ]).then(([usage, donations]) => {
+                setDetailData(prev => prev ? {
+                  ...prev,
+                  apiUsage: usage.error ? null : usage,
+                  manualDonations: donations.donations || [],
+                } : prev)
+              })
+              loadMembers()
+            }
+          }}
         />
       )}
 

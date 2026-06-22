@@ -55,6 +55,17 @@ export async function POST(request: NextRequest) {
       max_completion_tokens: 2000,
     })
 
+    // API 사용량 추적 (fire-and-forget)
+    if (res.usage) {
+      const { trackAIUsage } = await import('@/lib/ai/trackUsage')
+      trackAIUsage({
+        userId: user.id,
+        apiType: 'review-manuscript',
+        model: 'gpt-4o-mini',
+        usage: res.usage,
+      }).catch(() => {})
+    }
+
     const raw = res.choices[0]?.message?.content || ''
     let parsed
     try {

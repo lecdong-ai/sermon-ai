@@ -157,7 +157,7 @@ export default function VersionsTab({ project }: Props) {
       const res = await fetch('/api/advanced/retrospective-insight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: project.title, snapshots: allMetrics }),
+        body: JSON.stringify({ title: project.title, snapshots: allMetrics, projectId: project.id }),
       })
       if (!res.ok) throw new Error('분석 실패')
       const data = await res.json()
@@ -454,7 +454,7 @@ function JourneyTab({ allMetrics, versions, showSlideIdx, setShowSlideIdx, refle
                   <span>💡 예화 {m.illCount}</span>
                   <span>📖 참고 {m.refCount}</span>
                   <span>🇬🇷 원어 {m.greekCount}</span>
-                  {m.oneSentenceSummary && <span className="italic text-slate-500">· "{m.oneSentenceSummary.slice(0, 50)}{m.oneSentenceSummary.length > 50 ? '…' : ''}"</span>}
+                  {m.oneSentenceSummary && <span className="italic text-slate-500">· &ldquo;{m.oneSentenceSummary.slice(0, 50)}{m.oneSentenceSummary.length > 50 ? '…' : ''}&rdquo;</span>}
                 </div>
                 {m.topKeywords.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap mb-3">
@@ -532,7 +532,7 @@ function Slideshow({ allMetrics, versions, idx, setIdx, onExit }: {
           ))}
         </div>
         {m.oneSentenceSummary && (
-          <p className="text-sm text-slate-300 italic max-w-md leading-relaxed">"{m.oneSentenceSummary}"</p>
+          <p className="text-sm text-slate-300 italic max-w-md leading-relaxed">&ldquo;{m.oneSentenceSummary}&rdquo;</p>
         )}
         {v.note && (
           <p className="text-[11px] text-slate-500 mt-3 max-w-md">메모: {v.note}</p>

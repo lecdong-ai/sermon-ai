@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@supabase/supabase-js'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -9,6 +10,14 @@ function getOpenai() {
     _openai = new OpenAI({ apiKey: key })
   }
   return _openai
+}
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 }
 
 interface SnapshotSummary {
@@ -40,9 +49,19 @@ const SYSTEM_PROMPT = `당신은 한국 개혁신학 목회자를 돕는 설교 
 
 export async function POST(req: NextRequest) {
   try {
-    const { title, snapshots } = await req.json() as { title: string; snapshots: SnapshotSummary[] }
+    const { title, snapshots, userId, projectId } = await req.json() as { title: string; snapshots: SnapshotSummary[]; userId?: string; projectId?: string }
     if (!snapshots || snapshots.length < 2) {
       return NextResponse.json({ error: '최소 2개 스냅샷 필요' }, { status: 400 })
+    }
+
+    // projectId가 있으면 프로젝트 owner 추적
+    let ownerId = userId
+    if (!ownerId && projectId) {
+      try {
+        const sb = getSupabaseAdmin()
+        const { data: project } = await sb.from('sermons').select('user_id').eq('id', projectId).single()
+        if (project?.user_id) ownerId = project.user_id
+      } catch { /* fallback: skip tracking */ }
     }
 
     const userPrompt = `설교 제목: ${title || '(제목 없음)'}
@@ -67,6 +86,18 @@ ${snapshots.map((s, i) => `[${s.label}] ${new Date(s.timestamp).toLocaleDateStri
 
     const text = res.choices[0]?.message?.content || '{}'
     const parsed = JSON.parse(text)
+
+    // API 사용량 추적 (fire-and-forget, 프로젝트 owner userId)
+    if (res.usage && ownerId) {
+      const { trackAIUsage } = await import('@/lib/ai/trackUsage')
+      trackAIUsage({
+        userId: ownerId,
+        apiType: 'retrospective-insight',
+        model: 'gpt-4o-mini',
+        usage: res.usage,
+      }).catch(() => {})
+    }
+
     return NextResponse.json({
       trajectory: parsed.trajectory || '',
       highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
