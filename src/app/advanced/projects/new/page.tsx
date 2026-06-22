@@ -145,7 +145,7 @@ export default function NewProjectPage() {
       const json = await res.json()
       if (json.success) {
         try {
-          let output = json.data.output.trim()
+          let output = (json.data?.output || '').trim()
           // Remove markdown code blocks
           if (output.startsWith('```')) {
             output = output.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
@@ -157,19 +157,28 @@ export default function NewProjectPage() {
             const jsonStr = output.slice(startIdx, endIdx + 1)
             const parsed = JSON.parse(jsonStr)
             setSuggestions(Array.isArray(parsed) ? parsed : [])
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setToast({ kind: 'success', text: 'AI 추천 제목을 가져왔습니다.' })
+            } else {
+              setToast({ kind: 'error', text: '추천된 제목이 없습니다. 직접 입력해주세요.' })
+            }
           } else {
             console.error('No array found in output:', output)
             setSuggestions([])
+            setToast({ kind: 'error', text: 'AI 응답을 파싱할 수 없습니다. 다시 시도해주세요.' })
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Suggestion parse error:', e)
           setSuggestions([])
+          setToast({ kind: 'error', text: `AI 응답 파싱 실패: ${e?.message || '알 수 없는 오류'}` })
         }
       } else {
         console.error('AI suggest API error:', json.error)
+        setToast({ kind: 'error', text: `AI 추천 실패: ${json.error || '알 수 없는 오류'}` })
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('AI suggest failed:', e)
+      setToast({ kind: 'error', text: `AI 추천 실패: ${e?.message || '네트워크 오류'}` })
     }
     setSuggesting(false)
   }

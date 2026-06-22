@@ -318,7 +318,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
     })
 
     // API 사용량 추적 (fire-and-forget, 회원 응답에 영향 없음)
