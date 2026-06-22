@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail, PROJECT_STATUS_ORDER } from '@/lib/advanced/types'
 import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
 import StatusTimeline from '@/components/advanced/shared/StatusTimeline'
 import { ProjectStatusBadge } from '@/components/advanced/shared'
 import { MOCK_SAVE_STATE } from '@/lib/advanced/statusData'
-import HarvestModal from '@/components/advanced/notes/HarvestModal'
 
 interface Props {
   project: ProjectDetail
@@ -15,7 +13,6 @@ interface Props {
 
 export default function ProjectHeader({ project }: Props) {
   const router = useRouter()
-  const [showHarvest, setShowHarvest] = useState(false)
   const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
   const totalSteps = PROJECT_STATUS_ORDER.length - 1
   const progressPercent = Math.round((statusIndex / totalSteps) * 100)
@@ -23,8 +20,6 @@ export default function ProjectHeader({ project }: Props) {
   const passageText = project.passages && project.passages.length > 0
     ? project.passages.map((p) => p.passage).join(', ')
     : project.passage
-
-  const canHarvest = (project.manuscriptContent || '').length > 50
 
   return (
     <div className="bg-[#04060f]/60 border-b border-white/5 shrink-0">
@@ -99,19 +94,9 @@ export default function ProjectHeader({ project }: Props) {
             )}
           </div>
 
-          {/* 우측: 저장 상태 + 수확 버튼 */}
+          {/* 우측: 저장 상태 */}
           <div className="flex items-center gap-2 shrink-0 ml-4">
             <SaveStatusIndicator status={MOCK_SAVE_STATE.status} lastSavedAt={MOCK_SAVE_STATE.lastSavedAt} minimal />
-            {canHarvest && (
-              <button
-                onClick={() => setShowHarvest(true)}
-                className="flex items-center gap-1.5 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-2 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all hover:scale-[1.02]"
-                title="이 설교로 6가지 콘텐츠 자동 생성"
-              >
-                <span className="text-sm">🍇</span>
-                <span>수확하기</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -131,18 +116,6 @@ export default function ProjectHeader({ project }: Props) {
           </span>
         </div>
       </div>
-
-      {showHarvest && (
-        <HarvestModal
-          sermonId={project.id}
-          sermonTitle={project.title}
-          sermonPassage={passageText || ''}
-          sermonContent={project.manuscriptContent || ''}
-          coreMessage={project.coreMessage || ''}
-          onClose={() => setShowHarvest(false)}
-          onSaved={() => { router.refresh() }}
-        />
-      )}
     </div>
   )
 }
