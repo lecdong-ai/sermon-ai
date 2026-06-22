@@ -280,7 +280,12 @@ function ProjectsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
-  const { projects, stats, loading, error, deleteProject, refetch } = useProjects()
+  const { projects, stats, loading, error, deleteProject, refetch, totalRealCount } = useProjects()
+  // 새 사용자는 mock 데이터 안 보임 (totalRealCount === 0이면 mock 필터링)
+  const visibleProjects = useMemo(
+    () => totalRealCount === 0 ? [] : projects,
+    [projects, totalRealCount]
+  )
 
   const handleDelete = async (id: string) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return
@@ -288,7 +293,7 @@ function ProjectsContent() {
   }
 
   const filtered = useMemo(() => {
-    let list = projects
+    let list = visibleProjects
     if (statusFilter !== 'all') {
       list = list.filter(p => p.status === statusFilter)
     }
@@ -302,7 +307,7 @@ function ProjectsContent() {
       )
     }
     return list
-  }, [projects, searchQuery, statusFilter])
+  }, [visibleProjects, searchQuery, statusFilter])
 
   const inProgress = filtered.filter(p => !['completed','archived'].includes(p.status))
   const done = filtered.filter(p => p.status === 'completed')
@@ -423,8 +428,8 @@ function ProjectsContent() {
             {STATUS_FILTERS.map(f => {
               const isActive = statusFilter === f.key
               const count = f.key === 'all'
-                ? projects.length
-                : projects.filter(p => p.status === f.key).length
+                ? visibleProjects.length
+                : visibleProjects.filter(p => p.status === f.key).length
               return (
                 <button
                   key={f.key}

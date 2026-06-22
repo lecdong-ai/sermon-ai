@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Users, Heart, Search, Loader2, Check, X,
+  Users, Heart, Search, Loader2, Check, X, XCircle,
   Shield, Calendar, Mail, Clock,
   LayoutGrid, List, Download, ChevronUp, ChevronDown,
   Eye, Activity, CreditCard, AlertTriangle,
@@ -58,12 +58,13 @@ type ViewMode = 'card' | 'table'
 
 const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('ko-KR') : '-'
 
-function DetailDrawer({ member, data, loading, onClose, onGrant, onDelete }: {
+function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDelete }: {
   member: Member
   data: DetailData | null
   loading: boolean
   onClose: () => void
   onGrant: (id: string, days: number) => void
+  onRevoke?: (id: string) => void
   onDelete: (id: string) => void
 }) {
   const active = member.supporter_until && new Date(member.supporter_until) > new Date()
@@ -314,6 +315,31 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onDelete }: {
                 {active ? '후원 연장' : '후원 부여'}
               </button>
             )}
+            {active && (
+              <button
+                onClick={() => {
+                  if (confirm('정말 이 사용자의 후원회원 자격을 강등시키겠습니까?')) {
+                    fetch('/api/admin/revoke-supporter', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId: member.id }),
+                    })
+                      .then(r => r.json())
+                      .then(d => {
+                        if (d.success) {
+                          onRevoke?.(member.id)
+                        } else {
+                          alert(d.error || '강등 실패')
+                        }
+                      })
+                  }
+                }}
+                className="w-full py-3 rounded-xl border border-slate-300 text-slate-600 text-[13px] font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+              >
+                <XCircle className="w-4 h-4" />
+                후원회원 강등
+              </button>
+            )}
             <button
               onClick={() => { onClose(); setTimeout(() => onDelete(member.id), 300) }}
               className="w-full py-3 rounded-xl border border-rose-200 text-rose-600 text-[13px] font-bold hover:bg-rose-50 transition-all flex items-center justify-center gap-2"
@@ -553,9 +579,35 @@ export default function AdminUsersPage() {
     const d = await res.json()
     if (d.success) {
       setMessage({ type: 'ok', text: `${days}일 후원자 권한이 부여되었습니다.` })
-      loadMembers()
+      // 클라이언트 측에서 즉시 UI 업데이트 (서버 캐시 무관)
+      const now = new Date()
+      const newUntil = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+      setMembers(prev => prev.map(m => m.id === userId ? { ...m, supporter_until: newUntil } : m))
+      setSelectedMember(prev => prev?.id === userId ? { ...prev, supporter_until: newUntil } : prev)
+      // 백그라운드 새로고침 (데이터 동기화)
+      setTimeout(() => loadMembers(), 800)
     } else {
       setMessage({ type: 'error', text: d.error || '부여 실패' })
+    }
+  }
+
+  const handleRevoke = async (userId: string) => {
+    if (!confirm('정말 이 사용자의 후원회원 자격을 강등시키겠습니까?')) return
+    setMessage(null)
+    const res = await fetch('/api/admin/revoke-supporter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+    const d = await res.json()
+    if (d.success) {
+      setMessage({ type: 'ok', text: '후원회원 자격이 강등되었습니다.' })
+      // 즉시 UI 업데이트
+      setMembers(prev => prev.map(m => m.id === userId ? { ...m, supporter_until: null } : m))
+      setSelectedMember(prev => prev?.id === userId ? { ...prev, supporter_until: null } : prev)
+      setTimeout(() => loadMembers(), 800)
+    } else {
+      setMessage({ type: 'error', text: d.error || '강등 실패' })
     }
   }
 
@@ -822,6 +874,15 @@ export default function AdminUsersPage() {
                               {p.label}
                             </button>
                           ))}
+                          {active && (
+                            <button
+                              onClick={() => handleRevoke(m.id)}
+                              className="px-2 py-1 rounded-lg bg-slate-100 text-slate-500 text-[10px] font-bold hover:bg-slate-200 transition-colors"
+                              title="후원회원 강등"
+                            >
+                              강등
+                            </button>
+                          )}
                           <button
                             onClick={() => setDeleteTarget(m)}
                             className="px-2 py-1 rounded-lg bg-slate-100 text-slate-400 text-[11px] font-bold hover:bg-rose-50 hover:text-rose-500 transition-colors"
@@ -847,6 +908,7 @@ export default function AdminUsersPage() {
           loading={detailLoading}
           onClose={() => setSelectedMember(null)}
           onGrant={handleGrant}
+          onRevoke={handleRevoke}
           onDelete={(id) => { setSelectedMember(null); setDeleteTarget(members.find(m => m.id === id) || null) }}
         />
       )}

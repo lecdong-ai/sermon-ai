@@ -77,3 +77,37 @@ export async function grantSupporter(
 
   return metaOk
 }
+
+export async function revokeSupporter(userId: string): Promise<boolean> {
+  // app_metadata에서 supporter_until 제거
+  let metaOk = false
+  try {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      app_metadata: { supporter_until: null } as any,
+    })
+    metaOk = !error
+    if (error) console.error('revokeSupporter (app_metadata) error:', error)
+  } catch (e) {
+    console.error('revokeSupporter (app_metadata) error:', e)
+  }
+
+  // user_usage 테이블에서도 supporter_until 제거
+  try {
+    await supabaseAdmin
+      .from('user_usage')
+      .upsert(
+        {
+          user_id: userId,
+          supporter_until: null,
+          plan: 'free',
+          user_status: 'active',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      )
+  } catch (e) {
+    console.error('revokeSupporter (user_usage) error:', e)
+  }
+
+  return metaOk
+}

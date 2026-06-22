@@ -62,13 +62,15 @@ export async function setAdminRole(userId: string): Promise<boolean> {
 }
 
 export async function getAllUsers() {
-  const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+  // 페이지당 1000명 명시 (기본값 50보다 안전)
+  const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
   if (authError) throw authError
 
   const { data: profiles } = await supabaseAdmin
     .from('user_profiles')
     .select('*')
 
+  // user_usage 테이블을 우선 사용 (upsert로 즉시 반영)
   const { data: usageList } = await supabaseAdmin
     .from('user_usage')
     .select('user_id, supporter_until')
@@ -76,16 +78,40 @@ export async function getAllUsers() {
   const usageMap = new Map(usageList?.map(u => [u.user_id, u.supporter_until]) || [])
   const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
 
-  return authUsers.users.map(u => ({
-    id: u.id,
-    email: u.email,
-    name: profileMap.get(u.id)?.name || null,
-    role: isAdminFromMeta(u) ? 'admin' : 'user',
-    supporter_until: (u.app_metadata as any)?.supporter_until || usageMap.get(u.id) || null,
-    created_at: u.created_at,
-    last_sign_in_at: u.last_sign_in_at,
-    confirmed_at: u.confirmed_at,
+  // 각 사용자에 대해 최신 app_metadata 가져오기 (캐시 우회)
+  // 주의: listUsers는 캐시가 있을 수 있으므로, getUserById로 보강
+  const enriched = await Promise.all(authUsers.users.map(async (u) => {
+    let appMetaUntil = (u.app_metadata as any)?.supporter_until
+    try {
+      const { data: fresh } = await supabaseAdmin.auth.admin.getUserById(u.id)
+      if (fresh?.user?.app_metadata) {
+        appMetaUntil = (fresh.user.app_metadata as any)?.supporter_until
+      }
+    } catch {
+      // fallback to listUsers data
+    }
+    return { user: u, appMetaUntil }
   }))
+
+  return enriched.map(({ user: u, appMetaUntil }) => {
+    const usageUntil = usageMap.get(u.id)
+    let finalUntil: string | null = null
+    if (appMetaUntil && usageUntil) {
+      finalUntil = new Date(appMetaUntil) > new Date(usageUntil) ? appMetaUntil : usageUntil
+    } else {
+      finalUntil = usageUntil || appMetaUntil || null
+    }
+    return {
+      id: u.id,
+      email: u.email,
+      name: profileMap.get(u.id)?.name || null,
+      role: isAdminFromMeta(u) ? 'admin' : 'user',
+      supporter_until: finalUntil,
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at,
+      confirmed_at: u.confirmed_at,
+    }
+  })
 }
 
 export async function getUserStats() {
