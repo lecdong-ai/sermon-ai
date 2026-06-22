@@ -24,6 +24,35 @@ interface PrepPackage {
   pptOutline: { slide: number; title: string; bulletPoints: string[] }[]
 }
 
+// Default values — AI 응답이 일부 누락되어도 UI 안 깨짐
+const defaultPrepPackage: PrepPackage = {
+  coreMessages: [],
+  outlines: [],
+  applicationPoints: [],
+  deliveryIntro: '',
+  deliveryConclusion: '',
+  deliveryFlow: '',
+  smallGroupQuestions: [],
+  cardNewsContent: [],
+  pptOutline: [],
+}
+
+// AI 응답 정규화 — 누락된 필드 기본값으로 채움
+function normalizePrepPackage(raw: any): PrepPackage {
+  if (!raw || typeof raw !== 'object') return { ...defaultPrepPackage }
+  return {
+    coreMessages: Array.isArray(raw.coreMessages) ? raw.coreMessages : [],
+    outlines: Array.isArray(raw.outlines) ? raw.outlines : [],
+    applicationPoints: Array.isArray(raw.applicationPoints) ? raw.applicationPoints : [],
+    deliveryIntro: typeof raw.deliveryIntro === 'string' ? raw.deliveryIntro : '',
+    deliveryConclusion: typeof raw.deliveryConclusion === 'string' ? raw.deliveryConclusion : '',
+    deliveryFlow: typeof raw.deliveryFlow === 'string' ? raw.deliveryFlow : '',
+    smallGroupQuestions: Array.isArray(raw.smallGroupQuestions) ? raw.smallGroupQuestions : [],
+    cardNewsContent: Array.isArray(raw.cardNewsContent) ? raw.cardNewsContent : [],
+    pptOutline: Array.isArray(raw.pptOutline) ? raw.pptOutline : [],
+  }
+}
+
 export default function StudyCompleteModal({ isOpen, onClose, studyData, projectId, onSendToPrep }: Props) {
   const [generating, setGenerating] = useState(false)
   const [prepPackage, setPrepPackage] = useState<PrepPackage | null>(null)
@@ -55,46 +84,65 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
       })
 
       const json = await res.json()
+      console.log('[StudyComplete] AI response:', { success: json.success, status: res.status, hasOutput: !!json.data?.output })
       if (json.success) {
-        const parsed = JSON.parse(json.data.output)
-        console.log('[StudyComplete] parsed:', parsed)
-        // Defensive: AI 응답 shape 보장
-        const safe = {
-          coreMessages: Array.isArray(parsed?.coreMessages) ? parsed.coreMessages : [],
-          outlines: Array.isArray(parsed?.outlines) ? parsed.outlines : [],
-          applicationPoints: Array.isArray(parsed?.applicationPoints) ? parsed.applicationPoints : [],
-          smallGroupQuestions: Array.isArray(parsed?.smallGroupQuestions) ? parsed.smallGroupQuestions : [],
-          cardNewsContent: Array.isArray(parsed?.cardNewsContent) ? parsed.cardNewsContent : [],
-          pptOutline: Array.isArray(parsed?.pptOutline) ? parsed.pptOutline : [],
-          deliveryIntro: parsed?.deliveryIntro || '',
-          deliveryConclusion: parsed?.deliveryConclusion || '',
-          deliveryFlow: parsed?.deliveryFlow || '',
+        // AI 응답 output 파싱 (방어적 — 빈 문자열, 잘못된 JSON 모두 처리)
+        let rawParsed: any = null
+        try {
+          const output = json.data?.output || ''
+          if (output) {
+            // 1차: 직접 파싱
+            try {
+              rawParsed = JSON.parse(output)
+            } catch {
+              // 2차: {} 또는 [] 추출
+              const firstOpen = Math.min(
+                output.indexOf('{') === -1 ? Infinity : output.indexOf('{'),
+                output.indexOf('[') === -1 ? Infinity : output.indexOf('['),
+              )
+              const lastClose = Math.max(output.lastIndexOf('}'), output.lastIndexOf(']'))
+              if (firstOpen < Infinity && lastClose > firstOpen) {
+                try {
+                  rawParsed = JSON.parse(output.slice(firstOpen, lastClose + 1))
+                } catch {}
+              }
+            }
+          }
+        } catch (e) {
+          console.error('[StudyComplete] parse error:', e)
         }
-        setPrepPackage(safe)
+
+        const parsed = normalizePrepPackage(rawParsed)
+        console.log('[StudyComplete] normalized:', {
+          coreMessages: parsed.coreMessages.length,
+          outlines: parsed.outlines.length,
+          applicationPoints: parsed.applicationPoints.length,
+        })
+        setPrepPackage(parsed)
 
         // Auto-save to prep storage
         const prepPayload = {
           sermonTitle: '',
-          coreMessage: safe.coreMessages?.[0]?.coreMessage || '',
+          coreMessage: parsed.coreMessages[0]?.coreMessage || '',
           sermonPurpose: '',
           expectedResponse: '',
           passageStructure: studyData?.contextInfo?.bookStructure || '',
           contextPoints: [
-            ...(studyData?.themes || []).map((t: any) => `${t.name}: ${t.description}`),
+            ...(Array.isArray(studyData?.themes) ? studyData.themes : []).map((t: any) => `${t.name}: ${t.description}`),
           ].slice(0, 5),
           keyWords: wordList.map((w: any) => ({
             word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
             meaning: w.basicMeaning || '',
             note: w.contextualMeaning || w.simpleExplanation || '',
           })),
-          researchInsights: (studyData?.commentaries || []).slice(0, 5).map((c: any) => c.text),
-          outlines: safe.outlines || [],
-          applicationPoints: safe.applicationPoints || [],
+          researchInsights: (Array.isArray(studyData?.commentaries) ? studyData.commentaries : []).slice(0, 5).map((c: any) => c.text),
+          outlines: parsed.outlines,
+          applicationPoints: parsed.applicationPoints,
           congregationProfile: {},
-          deliveryIntro: safe.deliveryIntro || '',
-          deliveryFlow: safe.deliveryFlow || '',
-          deliveryTransitions: safe.outlines?.map((o: any) => o.transitionNote).filter(Boolean) || [],
-          deliveryConclusion: safe.deliveryConclusion || '',
+          deliveryIntro: parsed.deliveryIntro,
+          deliveryFlow: parsed.deliveryFlow,
+          deliveryTransitions: parsed.outlines.map((o: any) => o.transitionNote).filter(Boolean),
+          deliveryConclusion: parsed.deliveryConclusion,
           prepStatus: 'ready' as const,
         }
 
@@ -104,8 +152,9 @@ export default function StudyCompleteModal({ isOpen, onClose, studyData, project
       } else {
         setError(json.error || '생성에 실패했습니다.')
       }
-    } catch {
-      setError('서버에 연결할 수 없습니다.')
+    } catch (e: any) {
+      console.error('[StudyComplete] handleGenerate error:', e)
+      setError(e?.message || '서버에 연결할 수 없습니다.')
     }
 
     setGenerating(false)
