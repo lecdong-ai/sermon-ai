@@ -152,7 +152,7 @@ export default function ActivityFeed({ projects }: ActivityFeedProps) {
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-emerald-400" />
           <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400">최근 활동</h2>
-          <span className="text-[10px] text-slate-600 font-medium">Activity Feed</span>
+          <span className="text-[10px] text-slate-600 font-medium">최근 활동</span>
         </div>
         <span className="text-[10px] text-slate-500 font-bold">{items.length}개</span>
       </div>

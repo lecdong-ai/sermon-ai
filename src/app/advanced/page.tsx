@@ -240,7 +240,7 @@ export default function AdvancedDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Archive className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Sermon Asset Cards</h2>
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">설교 자료 카드</h2>
             </div>
             <span className="text-xs text-slate-500 font-bold">
               {filteredSermons.length}개의 정렬 결과

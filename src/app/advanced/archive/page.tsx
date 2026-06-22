@@ -689,7 +689,7 @@ function ArchivePreviewPanel({
     <aside className="w-80 shrink-0 border-l border-white/5 bg-[#04060f]/85 backdrop-blur-md overflow-y-auto scrollbar-thin relative z-10 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
-        <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Sermon Inspector</h3>
+        <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">설교 분석</h3>
         <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
           <X className="w-4 h-4" />
         </button>

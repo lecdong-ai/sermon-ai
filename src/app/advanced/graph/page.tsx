@@ -22,11 +22,11 @@ const FOCUS_MODE_LABELS: Record<FocusMode, string> = {
 }
 
 const FOCUS_MODE_DESCRIPTIONS: Record<FocusMode, string> = {
-  full: '모든 노드를 표시합니다',
-  project: '현재 작업 중인 설교와 연결된 노드만 표시합니다',
-  passage: '선택한 본문과 연결된 노드만 표시합니다',
-  theme: '선택한 주제와 연결된 노드만 표시합니다',
-  note: '선택한 통찰과 직접 연결된 노드만 표시합니다',
+  full: '모든 연결을 표시합니다',
+  project: '현재 작업 중인 설교와 연결된 항목만 표시합니다',
+  passage: '선택한 본문과 연결된 항목만 표시합니다',
+  theme: '선택한 주제와 연결된 항목만 표시합니다',
+  note: '선택한 통찰과 직접 연결된 항목만 표시합니다',
 }
 
 /* ─── Helpers ─── */

@@ -363,7 +363,7 @@ export default function BiblePage() {
               <div>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">Bible Study</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">성경 연구</span>
                 </div>
                 <h2 className="text-xl font-extrabold text-white mt-1">성경 연구</h2>
                 <p className="text-xs text-slate-500 font-bold mt-0.5">

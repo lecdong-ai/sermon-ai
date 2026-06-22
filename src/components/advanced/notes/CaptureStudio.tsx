@@ -442,7 +442,7 @@ function ScriptureMode({ scripture, setScripture, verseNotes, setVerseNotes, det
           className="w-full text-sm border border-white/10 focus:border-indigo-500/40 rounded-xl outline-none resize-none bg-[#0c1020]/60 text-slate-200 placeholder:text-slate-600 leading-relaxed p-4 font-medium"
         />
       </div>
-      <p className="text-[9px] text-slate-600 italic">본문은 자동 태그로 저장되고, 별자리에 본문 노드로 표시됩니다.</p>
+      <p className="text-[9px] text-slate-600 italic">본문은 자동 태그로 저장되고, 별자리에 본문으로 표시됩니다.</p>
     </div>
   )
 }

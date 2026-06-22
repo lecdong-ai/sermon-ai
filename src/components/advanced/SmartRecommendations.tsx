@@ -104,7 +104,7 @@ export default function SmartRecommendations({ projects }: SmartRecommendationsP
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-amber-400" />
         <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400">AI 추천</h2>
-        <span className="text-[10px] text-slate-600 font-medium">Smart Recommendations</span>
+        <span className="text-[10px] text-slate-600 font-medium">AI 추천</span>
       </div>
 
       <div className="space-y-2">

@@ -378,7 +378,7 @@ function ProjectsContent() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">Sermon Projects</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">설교 프로젝트</span>
             </div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight">
               {searchQuery ? `"${searchQuery}" 검색 결과` : '설교 프로젝트'}

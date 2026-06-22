@@ -699,7 +699,7 @@ export default function ConnectionsTab({ project }: Props) {
                               onClick={() => setPinnedNode(w.targetNodeId!)}
                               className="text-[9px] text-slate-500 hover:text-indigo-300 transition-colors"
                             >
-                              노드 확인 →
+                              연결 보기 →
                             </button>
                           )}
                           {w.link && (

@@ -329,7 +329,7 @@ export default function NewProjectPage() {
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">New Sermon Project</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">새 설교 프로젝트</span>
             </div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight">
               새 설교 프로젝트

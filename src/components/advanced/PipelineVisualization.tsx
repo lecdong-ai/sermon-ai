@@ -50,7 +50,7 @@ export default function PipelineVisualization({ projects }: PipelineVisualizatio
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
           <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400">설계 진행 현황</h2>
-          <span className="text-[10px] text-slate-600 font-medium">Pipeline</span>
+          <span className="text-[10px] text-slate-600 font-medium">작업 흐름</span>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
           <span>
