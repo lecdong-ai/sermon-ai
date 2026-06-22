@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
     let result
     try {
       result = await generateAll(parsed.text)
-      console.log(`[upload POST] sermonScript 길이: ${result.sermonScript?.length || 0}자`)
     } catch (err: any) {
       console.error('AI generation error:', err)
       await supabaseAdmin.from('sermons').delete().eq('id', sermonId)

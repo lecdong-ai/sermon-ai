@@ -431,7 +431,6 @@ export default function GraphCanvas({ data, focusNodeId, onNodeClick, sermonCent
     }
 
     rafRef.current = requestAnimationFrame(render)
-    console.log('[renderLoop] started')
 
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting

@@ -151,7 +151,6 @@ export default function PrepTab({ project }: Props) {
       if (buffer) {
         studyData = buffer
         ;(window as any).__prepDataBuffer = null
-        console.log('[PrepTab] Loaded from global buffer:', studyData)
       }
       // 2) sessionStorage
       if (!studyData) {
@@ -159,7 +158,6 @@ export default function PrepTab({ project }: Props) {
         if (ss) {
           studyData = JSON.parse(ss)
           sessionStorage.removeItem(`sermonai_study_to_prep_${project.id}`)
-          console.log('[PrepTab] Loaded from sessionStorage:', studyData)
         }
       }
       // 3) localStorage fallback
@@ -168,7 +166,6 @@ export default function PrepTab({ project }: Props) {
         if (ls) {
           studyData = ls
           removeStorageItem(`study_to_prep_${project.id}`)
-          console.log('[PrepTab] Loaded from localStorage:', studyData)
         }
       }
       if (studyData) {
@@ -179,8 +176,6 @@ export default function PrepTab({ project }: Props) {
           keyWords: studyData.keyWords?.length ? studyData.keyWords : prev.keyWords,
           researchInsights: studyData.researchInsights?.length ? studyData.researchInsights : prev.researchInsights,
         }))
-      } else {
-        console.log('[PrepTab] No study data found for key:', `sermonai_study_to_prep_${project.id}`)
       }
     } catch (e) {
       console.error('[PrepTab] Failed to load study data:', e)
@@ -218,7 +213,6 @@ export default function PrepTab({ project }: Props) {
       if (_savedAt) {
         setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
       }
-      console.log('[PrepTab] Restored saved prep data')
     }
 
     prepLoadedRef.current = true

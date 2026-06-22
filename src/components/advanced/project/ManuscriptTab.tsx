@@ -586,15 +586,12 @@ export default function ManuscriptTab({ project }: Props) {
       const hasPrepData = prepRaw?.outlines?.length > 0
 
       if (allSectionsEmpty && hasPrepData) {
-        console.log('[ManuscriptTab] Saved manuscript is empty, building from prep')
         const fromPrep = buildManuscriptFromPrep(project, prepRaw)
         setManuscriptSafe(fromPrep)
         setLastPrepSyncAt(prepSavedAt)
         manuscriptLoadedRef.current = true
         return
       }
-
-      console.log('[ManuscriptTab] Loading saved manuscript directly', restored.title)
 
       // sections가 비어있으면 기본 구조 생성
       if (!restored.sections || restored.sections.length === 0) {
@@ -615,7 +612,6 @@ export default function ManuscriptTab({ project }: Props) {
         setLastSaved(new Date(_savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
       }
       manuscriptLoadedRef.current = true
-      console.log('[ManuscriptTab] Loaded saved manuscript')
       return
     }
 

@@ -2,12 +2,13 @@
 
 설교 원고를 업로드하면 AI가 자동으로 **요약, 소그룹 나눔 자료, 카드뉴스, 설교 대본, 쇼츠 대본, PPT**를 생성하는 웹앱입니다.
 
-> Next.js 14 · TypeScript · Tailwind CSS · Supabase · OpenAI GPT-4o-mini
+> Next.js 14 · TypeScript · Tailwind CSS · Supabase · OpenAI GPT-5.4-mini
 
 ---
 
 ## 기능
 
+### 사용자 (목회자)
 | 기능 | 설명 |
 |------|------|
 | 📄 **파일 업로드** | PDF/TXT/DOCX 업로드, 텍스트 자동 추출 |
@@ -18,6 +19,16 @@
 | 📹 **쇼츠 대본** | YouTube Shorts 60초 대본 |
 | 📊 **설교 PPT** | .pptx 파일 다운로드 (표지/목차/본문/마무리) |
 | 🔗 **공유** | 링크 복사 · 카카오톡 공유 · OG 메타태그 |
+| 💬 **관리자에게 보내기** | 우측 하단 플로팅 — 질문/요청/버그/칭찬 4-탭 |
+| 🟡 **카카오톡 문의** | 우측 하단 플로팅 — 카카오 채널로 1:1 상담 |
+
+### 관리자
+| 기능 | 설명 |
+|------|------|
+| 👥 **회원 관리** | 목록/검색/필터, 후원 부여/회수, 수동 후원 입력 |
+| 📨 **메시지 인박스** | 사용자 문의 답변/상태 관리 |
+| 🔔 **알림** | 신규 가입/후원/메시지 자동 알림 |
+| 📊 **API 사용량 추적** | 회원별 OpenAI 비용 + 후원 비교 (admin 전용) |
 
 ---
 
@@ -42,10 +53,22 @@ cp .env.example .env.local
 OPENAI_API_KEY=sk-...                                    # OpenAI 키 (필수)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co # Supabase URL (필수)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key               # Supabase anon key (필수)
-NEXT_PUBLIC_KAKAO_KEY=                                    # 카카오 SDK 키 (선택)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key          # Supabase service role (서버 전용, RLS 우회)
+NEXT_PUBLIC_KAKAO_KEY=                                    # 카카오 SDK 키 (선택, 공유용)
+NEXT_PUBLIC_KAKAO_CHANNEL_URL=                            # 카카오톡 채널 URL (선택, 문의용)
 ```
 
-### 3. Supabase 설정
+### 3. Supabase 마이그레이션
+
+Supabase 대시보드 > SQL Editor에서 순서대로 실행:
+
+```bash
+# 기존 마이그레이션 + 신규 2개
+supabase/migrations/20260622_admin_notifications.sql  # 관리자 알림
+supabase/migrations/20260622_user_messages.sql         # 사용자 메시지
+```
+
+### 4. Supabase 설정
 
 1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
 2. SQL Editor에서 아래 쿼리 실행:

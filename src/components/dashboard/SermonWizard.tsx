@@ -482,7 +482,6 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     setLoading(7)
     try {
       const ctx = buildContext()
-      console.log('[Manuscript] Context length:', ctx.length)
       // save current to history
       if (s.manuscript) setManuscriptHistory(prev => [...prev, s.manuscript])
       const json = await aiSuggest({

@@ -348,7 +348,6 @@ export default function BibleStudyTab({ project, passages }: Props) {
       memoText,
       memoTags,
     }
-    console.log('[BibleStudyTab] Saving to prep:', prepPayload)
     setStorageItem(`study_to_prep_${project.id}`, prepPayload)
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload

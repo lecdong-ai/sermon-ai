@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import { isAdmin } from '@/lib/admin'
 import { supabaseAdmin } from '@/lib/supabase'
 
 // PATCH: mark a single notification as read
@@ -12,12 +13,7 @@ export async function PATCH(
   if (!user) {
     return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
   }
-  const { data: roleCheck } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (roleCheck?.role !== 'admin') {
+  if (!await isAdmin(user.id)) {
     return NextResponse.json({ success: false, error: '관리자 권한이 필요합니다.' }, { status: 403 })
   }
 
