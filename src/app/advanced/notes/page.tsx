@@ -393,6 +393,7 @@ export default function NotesPage() {
               onSelect={(n) => setSelectedNote(n)}
               onStar={toggleStar}
               onPin={togglePin}
+              onDelete={handleDelete}
             />
           </div>
         )}

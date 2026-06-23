@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageSquare, X, Send, Check, Loader2, Inbox } from 'lucide-react'
+import { MessageSquare, X, Send, Check, Loader2, Inbox, GripVertical } from 'lucide-react'
 
 type Category = 'question' | 'request' | 'bug' | 'praise'
 
@@ -12,6 +12,11 @@ const CATEGORIES: { key: Category; label: string; description: string; color: st
   { key: 'bug', label: '버그 신고', description: '발견한 문제점이나 오류', color: 'from-rose-500 to-red-500' },
   { key: 'praise', label: '칭찬', description: '도움이 되었거나 좋아하셨던 점', color: 'from-amber-500 to-yellow-500' },
 ]
+
+const POS_KEY = 'bunker_msg_btn_pos'
+const DRAG_THRESHOLD = 5 // px — 이 거리 미만 이동은 클릭으로 간주
+const BUTTON_SIZE = 56 // px — w-14 h-14
+const MARGIN = 12 // px — 화면 가장자리 여백
 
 export default function MessageButton() {
   const router = useRouter()
@@ -24,6 +29,12 @@ export default function MessageButton() {
   const [error, setError] = useState<string | null>(null)
   const [showToast, setShowToast] = useState(false)
 
+  // ── 드래그 앤 드롭 상태 ──
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartRef = useRef<{ pointerX: number; pointerY: number; btnX: number; btnY: number; moved: boolean } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+
   // Esc로 닫기
   useEffect(() => {
     if (!open) return
@@ -33,6 +44,118 @@ export default function MessageButton() {
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, sending])
+
+  // 위치 복원 (localStorage)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POS_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as { x: number; y: number }
+        if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
+          setPos(parsed)
+        }
+      }
+    } catch {}
+  }, [])
+
+  // 위치 저장
+  const savePos = (next: { x: number; y: number }) => {
+    try { localStorage.setItem(POS_KEY, JSON.stringify(next)) } catch {}
+  }
+
+  // ── 드래그 핸들러 ──
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    // 모달이 열려있을 땐 드래그 안 됨
+    if (open) return
+    // 왼쪽 버튼 또는 터치만 허용
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    // 현재 위치 (저장된 값이 없으면 현재 화면 위치의 백분율 계산)
+    const currentX = pos ? (window.innerWidth * pos.x) : rect.left
+    const currentY = pos ? (window.innerHeight * pos.y) : rect.top
+
+    dragStartRef.current = {
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      btnX: currentX,
+      btnY: currentY,
+      moved: false,
+    }
+  }
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const start = dragStartRef.current
+      if (!start) return
+
+      const dx = e.clientX - start.pointerX
+      const dy = e.clientY - start.pointerY
+
+      if (!start.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+      start.moved = true
+
+      // 경계 제한
+      const maxX = window.innerWidth - BUTTON_SIZE - MARGIN
+      const maxY = window.innerHeight - BUTTON_SIZE - MARGIN
+      const newX = Math.max(MARGIN, Math.min(maxX, start.btnX + dx))
+      const newY = Math.max(MARGIN, Math.min(maxY, start.btnY + dy))
+
+      setPos({ x: newX, y: newY })
+    }
+
+    const handlePointerUp = () => {
+      const start = dragStartRef.current
+      if (start?.moved && pos) {
+        // 백분율로 저장
+        const ratio = {
+          x: pos.x / window.innerWidth,
+          y: pos.y / window.innerHeight,
+        }
+        savePos(ratio)
+        setPos(ratio) // 상대 비율 형태로 전환
+      }
+      setIsDragging(false)
+      dragStartRef.current = null
+    }
+
+    document.addEventListener('pointermove', handlePointerMove)
+    document.addEventListener('pointerup', handlePointerUp)
+    document.addEventListener('pointercancel', handlePointerUp)
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerup', handlePointerUp)
+      document.removeEventListener('pointercancel', handlePointerUp)
+    }
+  }, [isDragging, pos])
+
+  // 클릭 vs 드래그 판정 후 처리
+  const handlePointerUpOnButton = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const start = dragStartRef.current
+    if (start?.moved) {
+      // 드래그였으면 클릭 무시
+      e.stopPropagation()
+      e.preventDefault()
+      return
+    }
+    setOpen(true)
+  }
+
+  // 위치를 실제 px로 계산
+  const buttonStyle: React.CSSProperties = pos
+    ? {
+        position: 'fixed',
+        left: pos.x <= 1 ? `${pos.x * 100}%` : `${pos.x}px`,
+        top: pos.y <= 1 ? `${pos.y * 100}%` : `${pos.y}px`,
+        transition: isDragging ? 'none' : 'left 200ms ease-out, top 200ms ease-out',
+        right: 'auto',
+        bottom: 'auto',
+      }
+    : {}
 
   const reset = () => {
     setCategory('question')
@@ -84,18 +207,46 @@ export default function MessageButton() {
 
   return (
     <>
-      {/* 플로팅 버튼 */}
+      {/* 플로팅 버튼 (드래그 가능) */}
       <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:scale-105 flex items-center justify-center group"
-        aria-label="관리자에게 메시지 보내기"
+        ref={buttonRef}
+        onPointerDown={(e) => { setIsDragging(true); handlePointerDown(e) }}
+        onPointerUp={handlePointerUpOnButton}
+        onPointerCancel={() => { setIsDragging(false); dragStartRef.current = null }}
+        onClick={(e) => {
+          // 드래그였으면 클릭 무시 (pointerUp에서 처리됨)
+          if (dragStartRef.current?.moved) {
+            e.preventDefault()
+            e.stopPropagation()
+            return
+          }
+          setOpen(true)
+        }}
+        style={buttonStyle}
+        className={`z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center group select-none ${
+          isDragging && dragStartRef.current?.moved
+            ? 'cursor-grabbing scale-110 shadow-indigo-500/60'
+            : 'cursor-grab hover:scale-105'
+        } transition-transform`}
+        aria-label="관리자에게 메시지 보내기 (드래그로 위치 이동)"
+        title="클릭: 문의 열기 · 드래그: 위치 이동"
       >
-        <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        {isDragging && dragStartRef.current?.moved ? (
+          <GripVertical className="w-5 h-5 text-white/90" />
+        ) : (
+          <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        )}
       </button>
 
       {/* 토스트 */}
       {showToast && (
-        <div className="fixed bottom-24 right-6 z-50 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm animate-fade-in">
+        <div
+          className="fixed z-50 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm animate-fade-in"
+          style={pos
+            ? { left: typeof pos.x === 'number' && pos.x <= 1 ? `${pos.x * 100}%` : `${(pos.x as number) - 8}px`, bottom: typeof pos.y === 'number' && pos.y <= 1 ? `${(1 - pos.y) * 100}%` : `${(pos.y as number) - 88}px` }
+            : { bottom: 96, right: 24 }
+          }
+        >
           <p className="text-[12px] text-emerald-200 font-medium flex items-center gap-2">
             <Check className="w-3.5 h-3.5" />
             문의 감사합니다. 검토 후 답변 드리겠습니다.

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_COLORS, NOTE_TYPE_DOTS, type NoteType, type NoteEntry } from '@/lib/advanced/notesData'
 
 interface InsightMasonryGridProps {
@@ -9,9 +10,10 @@ interface InsightMasonryGridProps {
   onSelect: (n: NoteEntry) => void
   onStar: (id: string) => void
   onPin: (id: string) => void
+  onDelete?: (id: string) => void
 }
 
-export default function InsightMasonryGrid({ notes, selectedId, onSelect, onStar, onPin }: InsightMasonryGridProps) {
+export default function InsightMasonryGrid({ notes, selectedId, onSelect, onStar, onPin, onDelete }: InsightMasonryGridProps) {
   if (notes.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center px-8">
@@ -41,6 +43,7 @@ export default function InsightMasonryGrid({ notes, selectedId, onSelect, onStar
               onSelect={() => onSelect(n)}
               onStar={() => onStar(n.id)}
               onPin={() => onPin(n.id)}
+              onDelete={onDelete ? () => onDelete(n.id) : undefined}
             />
           ))}
         </div>
@@ -49,7 +52,7 @@ export default function InsightMasonryGrid({ notes, selectedId, onSelect, onStar
   )
 }
 
-function InsightCard({ note, isSelected, onSelect, onStar, onPin }: { note: NoteEntry; isSelected: boolean; onSelect: () => void; onStar: () => void; onPin: () => void }) {
+function InsightCard({ note, isSelected, onSelect, onStar, onPin, onDelete }: { note: NoteEntry; isSelected: boolean; onSelect: () => void; onStar: () => void; onPin: () => void; onDelete?: () => void }) {
   const passageConns = note.connections.filter((c) => c.type === 'passage')
   const themeConns = note.connections.filter((c) => c.type === 'theme')
   const totalConns = note.connections.length + (note.projectIds.length > 0 ? 1 : 0)
@@ -81,17 +84,28 @@ function InsightCard({ note, isSelected, onSelect, onStar, onPin }: { note: Note
             <button
               onClick={onStar}
               className={`p-0.5 rounded text-[10px] transition-colors ${note.starred ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}
+              title={note.starred ? '즐겨찾기 해제' : '즐겨찾기'}
             >
               {note.starred ? '★' : '☆'}
             </button>
             <button
               onClick={onPin}
               className={`p-0.5 rounded text-[10px] transition-colors ${note.pinned ? 'text-indigo-400' : 'text-slate-600 hover:text-indigo-400'}`}
+              title={note.pinned ? '고정 해제' : '고정'}
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             </button>
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); if (confirm('이 통찰을 삭제하시겠습니까?')) onDelete() }}
+                className="p-0.5 rounded text-[10px] text-slate-600 hover:text-red-400 transition-colors"
+                title="삭제"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
 
