@@ -7,6 +7,8 @@ import {
   LayoutGrid, List, Download, ChevronUp, ChevronDown,
   AlertTriangle,
 } from 'lucide-react'
+import { useUsersListState } from '@/lib/hooks/useUsersListState'
+import Pagination from '@/components/admin/Pagination'
 
 interface Member {
   id: string
@@ -44,7 +46,9 @@ const GRANT_PRESETS = [
   { label: '365일', days: 365, defaultAmount: 50000 },
 ]
 
-type SortField = 'name' | 'email' | 'role' | 'supporter_until' | 'created_at' | 'last_sign_in_at' | 'total_donation' | 'api_cost'
+type ServerSortField = 'name' | 'email' | 'role' | 'supporter_until' | 'created_at' | 'last_sign_in_at'
+type ClientSortField = 'total_donation' | 'api_cost'
+type SortField = ServerSortField | ClientSortField
 type ViewMode = 'card' | 'table'
 
 const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('ko-KR') : '-'
@@ -769,36 +773,78 @@ function SortIcon({ field, sortField, sortOrder }: { field: SortField; sortField
 }
 
 export default function AdminUsersPage() {
+  const { state, update } = useUsersListState()
   const [members, setMembers] = useState<Member[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'supporter' | 'general'>('all')
+  const [searchInput, setSearchInput] = useState(state.search)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null)
 
   const [viewMode, setViewMode] = useState<ViewMode>('card')
-  const [sortField, setSortField] = useState<SortField | null>(null)
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [clientSortField, setClientSortField] = useState<ClientSortField | null>(null)
+  const [clientSortOrder, setClientSortOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [detailData, setDetailData] = useState<DetailData | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailRefreshKey, setDetailRefreshKey] = useState(0)
   const [userSummary, setUserSummary] = useState<Record<string, { api_cost_krw: number; manual_donation_krw: number; auto_donation_krw: number; total_donation_krw: number }>>({})
 
-  const loadMembers = useCallback(async () => {
-    setLoading(true)
-    const [usersRes, summaryRes] = await Promise.all([
-      fetch('/api/admin/users'),
-      fetch('/api/admin/users/summary'),
-    ])
-    const data = await usersRes.json()
-    const sData = await summaryRes.json()
-    if (!data.error) setMembers(data.users || [])
-    if (!sData.error) setUserSummary(sData.summary || {})
-    setLoading(false)
-  }, [])
+  const refreshMembers = useCallback(() => setRefreshKey(k => k + 1), [])
 
-  useEffect(() => { loadMembers() }, [loadMembers])
+  // URL → input 동기화 (뒤로가기 등)
+  useEffect(() => { setSearchInput(state.search) }, [state.search])
+
+  // 디바운스된 검색어 → URL
+  useEffect(() => {
+    if (searchInput === state.search) return
+    const id = setTimeout(() => {
+      update({ search: searchInput })
+    }, 300)
+    return () => clearTimeout(id)
+  }, [searchInput, state.search, update])
+
+  // 페이지/필터/서버 정렬 변경 시 fetch
+  useEffect(() => {
+    let cancelled = false
+    const abort = new AbortController()
+
+    const loadMembers = async () => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({
+          page: String(state.page),
+          limit: String(state.limit),
+          ...(state.search && { search: state.search }),
+          filter: state.filter,
+          sort: state.sort,
+          order: state.order,
+        })
+        const [usersRes, summaryRes] = await Promise.all([
+          fetch(`/api/admin/users?${params}`, { signal: abort.signal, cache: 'no-store' }),
+          fetch('/api/admin/users/summary', { signal: abort.signal, cache: 'no-store' }),
+        ])
+        const data = await usersRes.json()
+        const sData = await summaryRes.json()
+        if (cancelled) return
+        if (!data.error) {
+          setMembers(data.users || [])
+          setTotal(data.total ?? 0)
+          setTotalPages(data.totalPages ?? 1)
+        }
+        if (!sData.error) setUserSummary(sData.summary || {})
+      } catch (e) {
+        if ((e as any)?.name !== 'AbortError') console.error('loadMembers error:', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadMembers()
+    return () => { cancelled = true; abort.abort() }
+  }, [state.page, state.limit, state.search, state.filter, state.sort, state.order, refreshKey])
 
   useEffect(() => {
     if (!selectedMember) {
@@ -820,11 +866,18 @@ export default function AdminUsersPage() {
   }, [selectedMember?.id, detailRefreshKey])
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    if (field === 'total_donation' || field === 'api_cost') {
+      // 클라이언트 정렬 (summary 데이터 기반)
+      if (clientSortField === field) {
+        setClientSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+      } else {
+        setClientSortField(field)
+        setClientSortOrder('desc')
+      }
     } else {
-      setSortField(field)
-      setSortOrder('desc')
+      // 서버 정렬
+      const isCurrent = state.sort === field
+      update({ sort: field, order: isCurrent ? (state.order === 'asc' ? 'desc' : 'asc') : 'desc' })
     }
   }
 
@@ -844,7 +897,7 @@ export default function AdminUsersPage() {
       setMembers(prev => prev.map(m => m.id === userId ? { ...m, supporter_until: newUntil } : m))
       setSelectedMember(prev => prev?.id === userId ? { ...prev, supporter_until: newUntil } : prev)
       // 백그라운드 새로고침 (데이터 동기화)
-      setTimeout(() => loadMembers(), 800)
+      setTimeout(() => refreshMembers(), 800)
     } else {
       setMessage({ type: 'error', text: d.error || '부여 실패' })
     }
@@ -864,7 +917,7 @@ export default function AdminUsersPage() {
       // 즉시 UI 업데이트
       setMembers(prev => prev.map(m => m.id === userId ? { ...m, supporter_until: null } : m))
       setSelectedMember(prev => prev?.id === userId ? { ...prev, supporter_until: null } : prev)
-      setTimeout(() => loadMembers(), 800)
+      setTimeout(() => refreshMembers(), 800)
     } else {
       setMessage({ type: 'error', text: d.error || '강등 실패' })
     }
@@ -881,7 +934,7 @@ export default function AdminUsersPage() {
     if (d.success) {
       setMessage({ type: 'ok', text: '회원 탈퇴 처리되었습니다.' })
       setDeleteTarget(null)
-      loadMembers()
+      refreshMembers()
     } else {
       setMessage({ type: 'error', text: d.error || '삭제 실패' })
       setDeleteTarget(null)
@@ -889,8 +942,14 @@ export default function AdminUsersPage() {
   }
 
   const handleExportCSV = () => {
+    const exportData = clientSortField ? [...members].sort((a, b) => {
+      const dir = clientSortOrder === 'asc' ? 1 : -1
+      const aVal = clientSortField === 'total_donation' ? (userSummary[a.id]?.total_donation_krw || 0) : (userSummary[a.id]?.api_cost_krw || 0)
+      const bVal = clientSortField === 'total_donation' ? (userSummary[b.id]?.total_donation_krw || 0) : (userSummary[b.id]?.api_cost_krw || 0)
+      return aVal < bVal ? -dir : aVal > bVal ? dir : 0
+    }) : members
     const headers = ['이름', '이메일', '역할', '후원상태', '후원만료일', '수동후원', '자동후원', '누적후원', '누적API비용', '마진', '가입일', '최근접속일']
-    const rows = filtered.map(m => {
+    const rows = exportData.map(m => {
       const sum = userSummary[m.id]
       const totalDonation = sum?.total_donation_krw || 0
       const totalApi = sum?.api_cost_krw || 0
@@ -922,44 +981,34 @@ export default function AdminUsersPage() {
     URL.revokeObjectURL(url)
   }
 
-  const filtered = members.filter(m => {
-    const matchSearch = m.email?.toLowerCase().includes(search.toLowerCase()) ||
-      m.name?.toLowerCase().includes(search.toLowerCase())
-    if (!matchSearch) return false
-    if (filter === 'supporter') return m.supporter_until && new Date(m.supporter_until) > new Date()
-    if (filter === 'general') return !(m.supporter_until && new Date(m.supporter_until) > new Date())
-    return true
-  })
+  const filtered = members
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (!sortField) return 0
-    const dir = sortOrder === 'asc' ? 1 : -1
-    let aVal: any, bVal: any
-    if (sortField === 'total_donation') {
-      aVal = userSummary[a.id]?.total_donation_krw || 0
-      bVal = userSummary[b.id]?.total_donation_krw || 0
-    } else if (sortField === 'api_cost') {
-      aVal = userSummary[a.id]?.api_cost_krw || 0
-      bVal = userSummary[b.id]?.api_cost_krw || 0
-    } else {
-      aVal = a[sortField]
-      bVal = b[sortField]
-    }
-    if (aVal === null && bVal === null) return 0
-    if (aVal === null) return 1
-    if (bVal === null) return -1
-    return aVal < bVal ? -dir : aVal > bVal ? dir : 0
-  })
+  // 클라이언트 정렬 (summary 기반 컬럼만)
+  const sorted = clientSortField
+    ? [...members].sort((a, b) => {
+        const dir = clientSortOrder === 'asc' ? 1 : -1
+        const aVal = clientSortField === 'total_donation'
+          ? (userSummary[a.id]?.total_donation_krw || 0)
+          : (userSummary[a.id]?.api_cost_krw || 0)
+        const bVal = clientSortField === 'total_donation'
+          ? (userSummary[b.id]?.total_donation_krw || 0)
+          : (userSummary[b.id]?.api_cost_krw || 0)
+        return aVal < bVal ? -dir : aVal > bVal ? dir : 0
+      })
+    : members
 
   const supporterCount = members.filter(m => m.supporter_until && new Date(m.supporter_until) > new Date()).length
+  const activeSortField: SortField | null = clientSortField || state.sort
+  const activeSortOrder: 'asc' | 'desc' = clientSortField ? clientSortOrder : state.order
 
-  if (loading) {
+  // 첫 로딩 시에만 전체 로더, 이후엔 인라인
+  if (loading && members.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
       </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -971,7 +1020,11 @@ export default function AdminUsersPage() {
             회원 관리
           </h1>
           <p className="text-[14px] text-slate-500 mt-1">
-            전체 {members.length}명 · 후원 {supporterCount}명 · 일반 {members.length - supporterCount}명
+            전체 <span className="text-slate-300 font-semibold">{total.toLocaleString('ko-KR')}</span>명
+            {state.search && <span className="ml-1.5 text-indigo-300">· &ldquo;{state.search}&rdquo; 검색</span>}
+            {state.filter !== 'all' && (
+              <span className="ml-1.5 text-indigo-300">· {state.filter === 'supporter' ? '후원회원만' : '일반회원만'}</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1019,19 +1072,29 @@ export default function AdminUsersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             placeholder="이메일 또는 이름으로 검색..."
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/10 bg-[#04060f] text-[14px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-white/10 bg-[#04060f] text-[14px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
           />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-500 hover:text-slate-200 transition-colors"
+              title="검색어 지우기"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           {(['all', 'supporter', 'general'] as const).map(f => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => update({ filter: f })}
               className={`px-3 py-2 rounded-xl text-[12px] font-bold transition-all ${
-                filter === f
+                state.filter === f
                   ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                   : 'bg-[#0a0e1a] text-slate-500 border border-white/5 hover:bg-white/5'
               }`}
@@ -1043,8 +1106,17 @@ export default function AdminUsersPage() {
       </div>
 
       {/* 회원 목록 */}
+      {loading && members.length > 0 ? (
+        <div className="text-center py-4 text-[12px] text-slate-500 flex items-center justify-center gap-2">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> 불러오는 중...
+        </div>
+      ) : null}
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-slate-500 text-[14px]">검색 결과가 없습니다</div>
+        <div className="text-center py-16 text-slate-500 text-[14px]">
+          {state.search || state.filter !== 'all'
+            ? '검색 결과가 없습니다'
+            : '등록된 회원이 없습니다'}
+        </div>
       ) : viewMode === 'card' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {sorted.map(m => (
@@ -1081,7 +1153,7 @@ export default function AdminUsersPage() {
                     >
                       <div className="flex items-center gap-1">
                         {col.label}
-                        <SortIcon field={col.key} sortField={sortField} sortOrder={sortOrder} />
+                        <SortIcon field={col.key} sortField={activeSortField} sortOrder={activeSortOrder} />
                       </div>
                     </th>
                   ))}
@@ -1199,6 +1271,16 @@ export default function AdminUsersPage() {
         </div>
       )}
 
+      {/* 페이지네이션 */}
+      <Pagination
+        page={state.page}
+        totalPages={totalPages}
+        total={total}
+        limit={state.limit}
+        onPageChange={(p) => update({ page: p })}
+        loading={loading}
+      />
+
       {/* 상세 드로어 */}
       {selectedMember && (
         <DetailDrawer
@@ -1211,11 +1293,11 @@ export default function AdminUsersPage() {
           onDelete={(id) => { setSelectedMember(null); setDeleteTarget(members.find(m => m.id === id) || null) }}
           onManualDonationAdded={() => {
             setDetailRefreshKey(k => k + 1)
-            loadMembers()
+            refreshMembers()
           }}
           onManualDonationDeleted={() => {
             setDetailRefreshKey(k => k + 1)
-            loadMembers()
+            refreshMembers()
           }}
         />
       )}
