@@ -448,8 +448,11 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
 
 위 형식의 JSON으로만 응답하세요.${allBibleRefText}`
 
-        // Step 3: 모델 + 토큰 (Step 5에서 gpt-5.4-mini로 업그레이드)
-        model = 'gpt-4o-mini'
+        // Step 5: 다중 본문은 gpt-5.4-mini로 업그레이드
+        // - 128K 출력으로 잘림 걱정 없음
+        // - 신학적 추론 능력 향상 (다중 본문 통합 분석에 최적)
+        // - 단일 본문은 gpt-4o-mini 유지 (변경 없음)
+        model = 'gpt-5.4-mini'
         maxTokens = Math.min(6000 + (passageList.length - 2) * 2000, 12000) // 2개: 6000, 3개: 8000, 4개+: 10000, 5개+: 12000
         temperature = 0.3
       }
