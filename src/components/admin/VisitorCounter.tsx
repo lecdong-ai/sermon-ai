@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Eye, Activity, Smartphone, Monitor, Tablet, TrendingUp, Calendar, Globe, Loader2, RefreshCw, Radio } from 'lucide-react'
+import { Eye, Activity, Smartphone, Monitor, Tablet, TrendingUp, Calendar, Globe, Loader2, RefreshCw, Radio, ChevronDown, ChevronUp, UserCircle2 } from 'lucide-react'
 
 interface HourlyBucket { hour: number; visits: number; unique: number }
 interface DailyBucket { date: string; visits: number; unique: number }
@@ -11,8 +11,18 @@ interface DeviceData {
   total: number
 }
 interface TopPath { path: string; count: number }
+interface LiveSession {
+  sessionId: string
+  userId: string | null
+  email: string | null
+  name: string | null
+  path: string
+  device: string
+  lastSeen: string
+}
 interface VisitorData {
   liveCount: number
+  liveSessions: LiveSession[]
   hourly: HourlyBucket[]
   daily: DailyBucket[]
   device: DeviceData
@@ -35,11 +45,36 @@ function shortPath(p: string, max = 28): string {
   return p.slice(0, max - 1) + '…'
 }
 
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 10) return '방금 전'
+  if (diff < 60) return `${diff}초 전`
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`
+  return new Date(iso).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+}
+
+function avatarColor(seed: string): string {
+  const colors = [
+    'from-rose-500 to-pink-500',
+    'from-amber-500 to-orange-500',
+    'from-emerald-500 to-teal-500',
+    'from-cyan-500 to-blue-500',
+    'from-indigo-500 to-purple-500',
+    'from-fuchsia-500 to-pink-500',
+    'from-violet-500 to-indigo-500',
+  ]
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  return colors[Math.abs(hash) % colors.length]
+}
+
 export default function VisitorCounter() {
   const [data, setData] = useState<VisitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [liveExpanded, setLiveExpanded] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -123,20 +158,35 @@ export default function VisitorCounter() {
       </div>
 
       {/* 메인 그리드: 라이브 + 비교 */}
-      <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         {/* 라이브 카운터 */}
-        <div className="col-span-2 relative overflow-hidden rounded-xl border border-rose-500/30 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent p-4">
+        <button
+          type="button"
+          onClick={() => setLiveExpanded(v => !v)}
+          className={`col-span-2 relative overflow-hidden rounded-xl border text-left p-4 transition-all ${
+            liveExpanded
+              ? 'border-rose-500/50 bg-gradient-to-br from-rose-500/20 via-rose-500/10 to-transparent'
+              : 'border-rose-500/30 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent hover:border-rose-500/50 hover:from-rose-500/20'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] text-rose-300 uppercase tracking-widest font-bold flex items-center gap-1.5">
                 <Radio className="w-3 h-3" />
                 지금 접속 중
+                {liveExpanded ? (
+                  <ChevronUp className="w-3 h-3 text-rose-300" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-rose-300" />
+                )}
               </p>
               <p className="text-[40px] font-extrabold text-white leading-none mt-2 tracking-tight">
                 {data.liveCount}
                 <span className="text-[14px] font-medium text-slate-400 ml-1.5">명</span>
               </p>
-              <p className="text-[10px] text-slate-500 mt-1.5">최근 5분 내 활동 세션</p>
+              <p className="text-[10px] text-slate-500 mt-1.5">
+                {liveExpanded ? '클릭하여 접기' : '클릭하여 사용자 목록 보기'}
+              </p>
             </div>
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-rose-500/30 blur-xl animate-pulse" />
@@ -148,7 +198,7 @@ export default function VisitorCounter() {
               </div>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* 오늘 */}
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
@@ -176,6 +226,74 @@ export default function VisitorCounter() {
           <p className="text-[10px] text-slate-500 mt-1.5">일일 방문 (7일 평균)</p>
         </div>
       </div>
+
+      {/* 펼쳐진 라이브 세션 목록 */}
+      {liveExpanded && (
+        <div className="relative rounded-xl border border-rose-500/20 bg-rose-500/[0.03] p-3 mb-4 animate-fade-in">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[11px] font-semibold text-rose-200 flex items-center gap-1.5">
+              <Radio className="w-3 h-3" />
+              활성 세션 ({data.liveSessions.length})
+            </p>
+            <p className="text-[10px] text-slate-500">최근 활동순</p>
+          </div>
+          {data.liveSessions.length === 0 ? (
+            <p className="text-[11px] text-slate-500 text-center py-4">현재 접속 중인 세션이 없습니다</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {data.liveSessions.map((s) => {
+                const DeviceIcon = DEVICE_ICONS[s.device] || Monitor
+                const displayName = s.name || (s.email ? s.email.split('@')[0] : null)
+                const isLoggedIn = !!s.userId
+                const seed = s.userId || s.sessionId
+                const initial = displayName
+                  ? displayName.slice(0, 1).toUpperCase()
+                  : '?'
+                return (
+                  <div
+                    key={s.sessionId}
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/[0.03] border border-white/5 hover:border-rose-500/30 hover:bg-rose-500/[0.05] transition-colors"
+                  >
+                    <div className={`relative shrink-0 w-9 h-9 rounded-full bg-gradient-to-br ${avatarColor(seed)} flex items-center justify-center text-white text-[13px] font-bold shadow-sm`}>
+                      {isLoggedIn ? initial : <UserCircle2 className="w-4 h-4" />}
+                      {isLoggedIn && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0a0e1a]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {isLoggedIn ? (
+                          <p className="text-[12px] font-semibold text-slate-100 truncate">
+                            {displayName}
+                          </p>
+                        ) : (
+                          <p className="text-[12px] font-semibold text-slate-400">
+                            익명 방문자
+                          </p>
+                        )}
+                        <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gradient-to-r ${DEVICE_COLORS[s.device] || DEVICE_COLORS.desktop}`}>
+                          <DeviceIcon className="w-2.5 h-2.5" />
+                          {DEVICE_LABELS[s.device] || s.device}
+                        </span>
+                      </div>
+                      {isLoggedIn && s.email && (
+                        <p className="text-[10px] text-slate-500 truncate">{s.email}</p>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-slate-400 font-mono truncate" title={s.path}>
+                          {shortPath(s.path, 32)}
+                        </span>
+                        <span className="text-[9px] text-slate-600">·</span>
+                        <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(s.lastSeen)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 24시간 히트맵 */}
       <div className="relative rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-4">

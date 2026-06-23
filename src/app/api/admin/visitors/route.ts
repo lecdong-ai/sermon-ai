@@ -23,14 +23,59 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
 
-    // 1) 최근 5분 이내 unique session_id (LIVE)
+    // 1) 최근 5분 이내 unique session_id (LIVE) + 상세 정보
     const { data: liveData } = await supabaseAdmin
       .from('visitor_logs')
-      .select('session_id')
+      .select('session_id, user_id, path, device, created_at')
       .gt('created_at', fiveMinutesAgo.toISOString())
+      .order('created_at', { ascending: false })
 
-    const liveSessions = new Set((liveData || []).map((r: any) => r.session_id))
-    const liveCount = liveSessions.size
+    const seen = new Set<string>()
+    type LiveSession = {
+      sessionId: string
+      userId: string | null
+      email: string | null
+      name: string | null
+      path: string
+      device: string
+      lastSeen: string
+    }
+    const liveSessionList: LiveSession[] = []
+
+    for (const r of (liveData || []) as any[]) {
+      if (seen.has(r.session_id)) continue
+      seen.add(r.session_id)
+      liveSessionList.push({
+        sessionId: r.session_id,
+        userId: r.user_id,
+        email: null,
+        name: null,
+        path: r.path,
+        device: r.device,
+        lastSeen: r.created_at,
+      })
+    }
+    const liveCount = liveSessionList.length
+
+    // 로그인 사용자 정보 일괄 조회
+    const userIds = Array.from(new Set(liveSessionList.map(s => s.userId).filter(Boolean))) as string[]
+    if (userIds.length > 0) {
+      const { data: profileData } = await supabaseAdmin
+        .from('user_profiles')
+        .select('id, email, name')
+        .in('id', userIds)
+      const profileMap = new Map<string, { email: string; name: string | null }>()
+      ;(profileData || []).forEach((p: any) => {
+        profileMap.set(p.id, { email: p.email, name: p.name })
+      })
+      liveSessionList.forEach(s => {
+        if (s.userId && profileMap.has(s.userId)) {
+          const p = profileMap.get(s.userId)!
+          s.email = p.email
+          s.name = p.name
+        }
+      })
+    }
 
     // 2) 최근 24시간 시간대별 카운트
     const { data: hourlyData } = await supabaseAdmin
@@ -130,6 +175,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         liveCount,
+        liveSessions: liveSessionList,
         hourly,
         daily,
         device: { counts: deviceMap, ratio: deviceRatio, total: deviceTotal },
