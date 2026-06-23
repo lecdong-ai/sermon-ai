@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Plus, X, BookOpen, Calendar, User, ChevronRight,
   Sparkles, MessageSquare, BrainCircuit, Check, ArrowLeft,
-  HelpCircle, Zap, Clock, Hash, Layers, Loader2, Lightbulb
+  HelpCircle, Zap, Clock, Hash, Layers, Loader2, Lightbulb,
+  MessageCircle, Image, ArrowRightLeft, Megaphone
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
 import { getCustomProjects } from '@/lib/advanced/customProjects'
@@ -15,6 +16,18 @@ import type { AdvancedProject, BiblePassage } from '@/lib/advanced/types'
 const SERMON_TYPES = ['주일예배', '수요예배', '금요기도회', '새벽기도회', '특별집회', '부흥회', '수련회', '장례예배', '혼인예배']
 const AUDIENCE_OPTIONS = ['장년', '청년', '학생', '유년', '전체', '남선교회', '여선교회']
 const SEASONS = ['일반주일', '사순절', '부활절', '성령강림절', '추수감사절', '대림절', '성탄절', '종려주일', '고난주일']
+
+const STYLE_META: Record<string, { label: string; icon: any; color: string }> = {
+  declarative: { label: '진술형', icon: MessageCircle, color: 'text-indigo-300' },
+  question: { label: '질문형', icon: HelpCircle, color: 'text-cyan-300' },
+  image: { label: '이미지형', icon: Image, color: 'text-amber-300' },
+  contrast: { label: '대조형', icon: ArrowRightLeft, color: 'text-rose-300' },
+  imperative: { label: '명령형', icon: Megaphone, color: 'text-emerald-300' },
+}
+
+function getStyleMeta(style: string) {
+  return STYLE_META[style] || STYLE_META.declarative
+}
 
 function getTodayString(): string {
   const d = new Date()
@@ -124,17 +137,45 @@ export default function NewProjectPage() {
   }, [])
 
   const handleSuggest = async () => {
-    if (!selectedBook) return
+    if (!selectedBook && selectedPassages.length === 0) return
     setSuggesting(true)
     setShowSuggestions(true)
     try {
+      // passages 배열 구성 (다중 본문 지원)
+      const passages: Array<{ book: string; chapter: string | number; verseStart: string | number; verseEnd?: string | number | null; text?: string }> = []
+
+      // 1) 다중 본문 모드 (selectedPassages가 있으면 그것을 우선)
+      if (selectedPassages.length > 0) {
+        for (const p of selectedPassages) {
+          const bookObj = BIBLE_BOOKS.find(b => b.name === p.book)
+          passages.push({
+            book: p.book,
+            chapter: p.chapter,
+            verseStart: p.verseStart,
+            verseEnd: p.verseEnd || null,
+            text: p.passage,
+          })
+        }
+      } else {
+        // 2) 단일 본문 모드 (기존 selectedBook + chapter/verse)
+        passages.push({
+          book: selectedBook?.name || '',
+          chapter,
+          verseStart,
+          verseEnd: verseEnd || null,
+          text: passageDisplay,
+        })
+      }
+
       const res = await fetch('/api/advanced/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'suggest-titles',
           data: {
-            book: selectedBook.name,
+            passages,
+            // 하위 호환: 단일 필드도 함께 전송
+            book: selectedBook?.name,
             passage: passageDisplay,
             chapter,
             verseStart,
@@ -158,9 +199,17 @@ export default function NewProjectPage() {
             const jsonStr = output.slice(startIdx, endIdx + 1)
             const parsed = JSON.parse(jsonStr)
             console.log('[AI suggest] parsed array length:', Array.isArray(parsed) ? parsed.length : 'not array')
-            setSuggestions(Array.isArray(parsed) ? parsed : [])
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setToast({ kind: 'success', text: `AI 추천 제목 ${parsed.length}개를 가져왔습니다.` })
+            // 새 필드 (style, passages_used) fallback 처리
+            const normalized = (Array.isArray(parsed) ? parsed : []).map((s: any) => ({
+              title: s.title || '',
+              reason: s.reason || '',
+              style: s.style || 'declarative',
+              passages_used: Array.isArray(s.passages_used) ? s.passages_used : [],
+            }))
+            setSuggestions(normalized)
+            if (normalized.length > 0) {
+              const isMulti = passages.length > 1
+              setToast({ kind: 'success', text: `AI 추천 제목 ${normalized.length}개${isMulti ? ' (다중 본문 통합)' : ''}` })
             } else {
               setToast({ kind: 'error', text: '추천된 제목이 없습니다. 직접 입력해주세요.' })
             }
@@ -185,7 +234,12 @@ export default function NewProjectPage() {
     setSuggesting(false)
   }
 
-  const [suggestions, setSuggestions] = useState<{ title: string; reason: string }[]>([])
+  const [suggestions, setSuggestions] = useState<Array<{
+    title: string
+    reason: string
+    style?: 'declarative' | 'question' | 'image' | 'contrast' | 'imperative'
+    passages_used?: string[]
+  }>>([])
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -602,14 +656,19 @@ export default function NewProjectPage() {
                   placeholder="설교 제목을 입력하거나 AI 추천을 받아보세요"
                   className="flex-1 text-[13px] bg-[#0c1020] border border-white/5 rounded-xl px-4 py-2.5 text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
                 />
-                {selectedBook && (
+                {(selectedBook || selectedPassages.length > 0) && (
                   <button
                     onClick={handleSuggest}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold transition-all shrink-0"
-                    title="AI 제목 추천"
+                    title={selectedPassages.length > 1 ? `AI 제목 추천 (다중 본문 ${selectedPassages.length}개 통합)` : 'AI 제목 추천'}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     AI 추천
+                    {selectedPassages.length > 1 && (
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/30 text-[9px] font-bold">
+                        ×{selectedPassages.length}
+                      </span>
+                    )}
                   </button>
                 )}
               </div>
@@ -647,32 +706,49 @@ export default function NewProjectPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {suggestions.map((s, i) => (
-                        <button
-                          key={i}
-                          onClick={() => { setTitle(s.title); setShowSuggestions(false) }}
-                          className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/30 transition-all group"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0">
-                                  {i + 1}
-                                </span>
-                                <span className="text-[13px] font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">
-                                  {s.title}
-                                </span>
+                      {suggestions.map((s, i) => {
+                        const styleMeta = getStyleMeta(s.style || 'declarative')
+                        const StyleIcon = styleMeta.icon
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { setTitle(s.title); setShowSuggestions(false) }}
+                            className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/30 transition-all group"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                    {i + 1}
+                                  </span>
+                                  <StyleIcon className={`w-3 h-3 ${styleMeta.color} shrink-0`} />
+                                  <span className="text-[13px] font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">
+                                    {s.title}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-1.5 ml-7 leading-relaxed">
+                                  {s.reason}
+                                </p>
+                                {s.passages_used && s.passages_used.length > 0 && (
+                                  <div className="flex items-center gap-1 flex-wrap mt-1.5 ml-7">
+                                    {s.passages_used.map((ref, j) => (
+                                      <span
+                                        key={j}
+                                        className="inline-flex items-center px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[9.5px] font-semibold tabular-nums"
+                                      >
+                                        {ref}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-[11px] text-slate-500 mt-1.5 ml-7 leading-relaxed">
-                                {s.reason}
-                              </p>
+                              <div className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                적용
+                              </div>
                             </div>
-                            <div className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                              적용
-                            </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>

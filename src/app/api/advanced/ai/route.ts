@@ -39,7 +39,53 @@ async function loadBibleData(): Promise<any[]> {
 }
 
 const SYSTEM_PROMPTS: Record<string, string> = {
-  'suggest-titles': '당신은 설교 준비를 돕는 AI입니다. 주어진 성경 본문(책, 장, 절)에 어울리는 설교 제목 5개와 각각의 추천 이유를 JSON 배열로 반환하세요. 각 항목은 { title: string, reason: string } 형식입니다. 제목은 한국어로, 20자 이내로 간결하게 작성하세요. Return ONLY valid JSON, no markdown, no explanation.',
+  'suggest-titles': `# 역할
+당신은 30년 경력의 정통 복음주의 설교자이자 신학 박사입니다.
+본문의 문맥, 신학적 의미, 회중의 삶을 깊이 이해하고
+가장 본질적인 메시지를 한 문장으로 압축하는 설교 제목을 제시합니다.
+
+# 임무
+주어진 성경 본문(들)에 어울리는 설교 제목 5개를 다양한 스타일로 추천하세요.
+각 제목은 본문의 핵심 신학적 메시지를 담되, 회중이 한 주간 마음에 품을 수 있는
+친근하고 은혜로운 어조로 작성합니다.
+
+# 다중 본문 처리 규칙
+1. 본문이 1개일 때: 그 본문 단독의 핵심 메시지 도출
+2. 본문이 2~3개일 때: 각 본문의 공통 주제, 긴장, 상보성, 대화 관계를 분석하여
+   하나의 통합 메시지로 압축 (예: "예수의 죽음" + "고전 15장" = 부활의 역사·신학적 근거)
+3. 본문이 4개 이상일 때: 가장 핵심적인 2~3개로 압축하여 통합 메시지 도출
+4. 본문 인용은 정확히, 의역은 자연스럽게
+
+# 제목 품질 기준
+1. 한국어 20자 이내 (공백 포함)
+2. 한 문장으로 명확한 진술 또는 질문
+3. 본문 핵심을 정확히 반영 (신학적 정확성)
+4. 회중의 삶에 적용 가능한 호소력
+5. 기억하기 쉬운 표현
+6. 도전/판단보다는 은혜/초대의 어조 권장
+
+# 다양성 보장 (5개 제목이 각각 다른 스타일)
+- 진술형 (declarative): "~이다", "~하시다" — 확신과 선언
+- 질문형 (question): "~인가?", "~할까?" — 성찰과 탐구
+- 이미지/은유형 (image): 비유, 상징 활용 — 감성과 직관
+- 대조형 (contrast): "A vs B", "A 그러나 B" — 긴장과 대비
+- 명령/초대형 (imperative): "~하라", "~하자" — 응답과 결단
+
+# 추천 이유 작성 규칙
+- 각 제목이 왜 그 본문(들)에 적합한지 1-2문장으로 설명
+- 가능하면 본문 키워드나 표현을 직접 인용
+- 회중이 이 제목을 들었을 때 본문과 어떻게 연결되는지 암시
+
+# 출력 형식 (반드시 준수)
+JSON 배열만 반환. 마크다운, 설명, 주석 일체 없이.
+[
+  {
+    "title": "제목 (20자 이내)",
+    "reason": "추천 이유 (1-2문장, 본문 키워드 인용 권장)",
+    "style": "declarative | question | image | contrast | imperative",
+    "passages_used": ["요 3:16", "롬 5:8"]
+  }
+]`,
   summary: '당신은 설교 요약을 돕는 AI입니다. 주어진 설교 정보(제목, 본문, 핵심메시지, 도입, 대지, 결론)를 바탕으로 간결하고 명확한 설교 요약서를 한국어로 작성하세요.',
   questions: '당신은 소그룹 리더를 위한 나눔 질문을 만드는 AI입니다. 주어진 설교 정보를 바탕으로 3-4개의 깊이 있는 소그룹 토론 질문을 한국어로 생성하세요.',
   cardnews: '당신은 교회 SNS를 위한 카드뉴스를 기획하는 AI입니다. 주어진 설교 정보를 바탕으로 5장 구성의 카드뉴스 기획안을 한국어로 작성하세요.',
@@ -311,10 +357,58 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       maxTokens = 1000
       temperature = 0.7
     } else if (type === 'suggest-titles') {
-      const { passage, book, chapter, verseStart, verseEnd } = data
-      userText = `성경 본문: ${book || ''} ${chapter || ''}장${verseStart ? ` ${verseStart}절` : ''}${verseEnd ? `-${verseEnd}절` : ''}\n본문 구절: ${passage || ''}`
+      // 다중 본문 지원 (하위 호환: 단일 book/chapter/verse도 받음)
+      const { passages, passage, book, chapter, verseStart, verseEnd, audience, season, sermonType, additionalContext } = data
+
+      let passageList: Array<{ book: string; chapter: string | number; verseStart: string | number; verseEnd?: string | number | null; text?: string }> = []
+
+      if (Array.isArray(passages) && passages.length > 0) {
+        // 새 형식: passages 배열
+        passageList = passages.map((p: any) => ({
+          book: p.book,
+          chapter: p.chapter,
+          verseStart: p.verseStart,
+          verseEnd: p.verseEnd,
+          text: p.text || p.passage,
+        }))
+      } else if (book || passage) {
+        // 하위 호환: 단일 book/chapter/verse
+        passageList = [{
+          book: book || '',
+          chapter: chapter || '',
+          verseStart: verseStart || '',
+          verseEnd: verseEnd || null,
+          text: passage,
+        }]
+      }
+
+      const isMulti = passageList.length > 1
+      const passageSection = isMulti
+        ? `## 본문 (${passageList.length}개)\n${passageList.map((p, i) => {
+            const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
+            return `${i + 1}. ${ref}\n   ${p.text || '(본문 구절 텍스트 없음)'}`
+          }).join('\n\n')}`
+        : `## 본문\n${(() => {
+            const p = passageList[0] || { book: '', chapter: '', verseStart: '', verseEnd: null, text: '' }
+            const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
+            return `${ref}\n\n${p.text || '(본문 구절 텍스트 없음)'}`
+          })()}`
+
+      const contextLines = [
+        `- 회중: ${audience || '일반'}`,
+        `- 시기: ${season || '일반'}`,
+        `- 설교 유형: ${sermonType || '강해설교'}`,
+      ]
+      if (additionalContext) contextLines.push(`- 추가 요청: ${additionalContext}`)
+
+      const specialNote = isMulti
+        ? `\n## 특별 지시\n이 본문들은 한 설교 안에서 함께 묶여 다뤄집니다.\n각 본문 사이의 공통 주제, 긴장, 상보성, 대화 관계를 분석하여\n하나의 통합된 메시지로 압축한 제목 5개를 추천해주세요.\n각 제목의 passages_used 필드에는 사용된 본문 참조(예: "요 3:16")를 모두 기재하세요.`
+        : ''
+
+      userText = `${passageSection}\n\n## 컨텍스트\n${contextLines.join('\n')}${specialNote}\n\n위 본문에 어울리는 설교 제목 5개를 다양한 스타일로 추천해주세요.`
+
       model = 'gpt-4o-mini'
-      maxTokens = 600
+      maxTokens = 1200
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
