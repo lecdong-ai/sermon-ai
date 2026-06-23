@@ -142,12 +142,12 @@ export function useProjects(): UseProjectsResult {
       removeStorageItem(`prep_${id}`)
       removeStorageItem(`manuscript_${id}`)
 
-      fetch(`/api/sermons/${id}`, { method: 'DELETE' }).catch(() => {})
-
       setApiProjects((prev) => prev.filter(p => p.id !== id))
+      await fetch(`/api/sermons/${id}`, { method: 'DELETE' })
       refetch()
       return true
     } catch {
+      refetch()
       return false
     }
   }, [refetch])
