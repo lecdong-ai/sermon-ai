@@ -635,20 +635,6 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
 
     let output = res.choices[0]?.message?.content || ''
 
-    // 잘림 감지 (다중 본문 분석 시 특히 중요)
-    const finishReason = res.choices[0]?.finish_reason
-    if (finishReason === 'length') {
-      console.warn(`[bible-study] Response truncated. type=${type}, maxTokens=${maxTokens}, outputLength=${output.length}`)
-      // 단일 본문에서 잘린 경우에만 에러 반환 (다중 본문은 클라이언트가 처리)
-      if (type === 'bible-study' && !(Array.isArray(data?.passages) && data.passages.length > 1)) {
-        return NextResponse.json({
-          success: false,
-          error: 'AI 응답이 너무 길어 일부가 잘렸습니다. 본문을 더 짧게 하거나 다시 시도해주세요.',
-          finishReason,
-        }, { status: 422 })
-      }
-    }
-
     // Extract JSON robustly — handle both {} objects and [] arrays
     const isArrayType = type === 'suggest-titles' || type === 'illustration' || type === 'reference'
     const openChar = isArrayType ? '[' : '{'
