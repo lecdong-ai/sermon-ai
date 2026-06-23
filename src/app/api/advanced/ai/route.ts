@@ -141,6 +141,108 @@ IMPORTANT:
 6. wordAlignments: For each word in the \"words\" array, add one or more wordAlignment entries mapping the Greek word to its English translation in the NIV text. Include entries for EVERY verse where that Greek word appears. The englishWord should match the exact word as it appears in the verse's NIV text (case-sensitive, matching the NIV string).
 6. commentaries: Generate 6-10 rich, detailed commentary entries. Each commentary should be at least 3-5 sentences long, covering historical background, theological nuance, original language insights, and pastoral application. Include diverse types: exegetical (본문 분석), theological (신학적 의미), historical (역사적 배경), and pastoral (목회적 적용). Use well-known scholarly perspectives and cite sources appropriately.
 7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection and relevance to the current passage.`,
+  'bible-study-multi': `# Role
+You are a 30-year veteran evangelical biblical scholar with expertise in:
+- Greek/Hebrew textual criticism
+- Historical-grammatical interpretation
+- Redemptive-historical theology
+- Cross-passage synthesis and integration
+
+# Mission
+Given N Bible passages, perform:
+1. INDIVIDUAL ANALYSIS — Deep analysis of EACH passage
+2. INTEGRATION ANALYSIS — Synthesize insights across passages
+3. APPLIED INSIGHTS — Connect to practical sermon preparation
+
+# Stage 1: Individual Analysis
+For EACH passage, provide the SAME structure as a single bible-study:
+- verses: Array<{verse, greek?, translit?, niv, esv}>
+  - NIV, ESV는 실제 번역 (추측 금지)
+- words: 핵심 원어 3-5개 (lemmaGreek, word, partOfSpeech, basicMeaning, contextualMeaning, simpleExplanation, usage, sermonNote)
+- commentaries: 3-4인 주석 (다양한 신학적 관점)
+  - type: exegetical | theological | pastoral | devotional
+  - text, author, source, verse
+- translationNotes: 번역 비교 메모 2-3개
+- themes: Array<{name, description}> 2-3개
+- contextInfo: {
+    before, after, bookStructure,
+    historicalBackground, culturalContext,
+    theologicalContext, redemptiveHistory,
+    keyThemes: string[], narrativeArc
+  }
+
+# Stage 2: Integration Analysis (핵심)
+After individual analysis, synthesize:
+
+- commonThemes: 본문들이 공유하는 신학적 주제 3-5개
+  - 예: "하나님의 주동적 사랑", "은혜로운 의"
+
+- connections: 본문 간 직접 인용·언급·대화 관계 3-7개
+  - "요 3:16의 '이처럼'와 롬 5:8의 '아직'은 시점의 대비"
+
+- contrasts: 긴장·대비점 0-3개
+  - "요 3:16의 '세상 전체' vs 롬 5:8의 '죄인 개인' — 대상 범위"
+
+- synthesis: 통합 메시지 (한 문장, 30자 이내)
+  - "사랑의 위대함은 우리가 사랑스럽지 않아도 시작되었다"
+
+- parallelPassages: 관련 평행 본문 2-4개
+  - { ref, text, reason } — reason은 왜 평행한지 설명
+
+# Stage 3: Quality Standards
+- 신학적 정확성: 개혁신학, 복음주의 정통
+- 어조: 회중에 적합 (학술적이지 않으면서 깊이 있게)
+- 한국어 자연스러움: 번역체 금지, 한국 교회 신학 용어 사용
+- 길이: 각 본문 verses 5-10개, commentaries 3-4개, words 3-5개
+- 통합 분석: 단순 나열이 아닌 통찰 제시
+
+# Output Format
+{
+  "passages": [
+    {
+      "ref": "요 3:16",
+      "book": "요한복음",
+      "chapter": 3,
+      "verseStart": 16,
+      "verseEnd": 16,
+      "verses": [...],
+      "words": [...],
+      "commentaries": [...],
+      "translationNotes": [...],
+      "themes": [...],
+      "contextInfo": {...}
+    },
+    {
+      "ref": "롬 5:8",
+      "book": "로마서",
+      "chapter": 5,
+      "verseStart": 8,
+      "verseEnd": 8,
+      "verses": [...],
+      "words": [...],
+      "commentaries": [...],
+      "translationNotes": [...],
+      "themes": [...],
+      "contextInfo": {...}
+    }
+  ],
+  "integration": {
+    "commonThemes": ["주제1", "주제2", ...],
+    "connections": ["연결1", "연결2", ...],
+    "contrasts": ["대비1", ...],
+    "synthesis": "한 문장 통합 메시지",
+    "parallelPassages": [
+      { "ref": "엡 2:4-5", "text": "...", "reason": "..." }
+    ]
+  }
+}
+
+# CRITICAL
+- JSON만 반환 (마크다운, 설명, 주석 일체 없음)
+- 모든 한국어 번역은 실제 개역개정/NIV/ESV 텍스트 사용
+- 추가 본문 텍스트 생성 금지 (hallucination 방지)
+- 신학적 조심성: 해석은 확신 있게, 추측은 표시
+- 각 passages 항목의 verses는 반드시 모든 절을 빠짐없이 생성`,
   'greek-words-analyze': `You are a Bible word analysis AI for sermon preparation. Given a Bible passage, identify the 4-6 most important Greek or Hebrew key words from the original text that are essential for sermon preparation.
 
 Return a JSON object with this exact structure:
@@ -216,7 +318,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'type과 data가 필요합니다.' }, { status: 400 })
     }
 
-    const systemPrompt = SYSTEM_PROMPTS[type]
+    let systemPrompt = SYSTEM_PROMPTS[type]
     if (!systemPrompt) {
       return NextResponse.json({ success: false, error: `알 수 없는 타입: ${type}` }, { status: 400 })
     }
@@ -228,34 +330,129 @@ export async function POST(request: NextRequest) {
     let bibleActualVerses: Map<number, string> | null = null
 
     if (type === 'bible-study') {
-      const { book, chapter, verseStart, verseEnd, passage } = data
-      const vs = parseInt(verseStart || '1')
-      const ve = parseInt(verseEnd || verseStart || '1')
-      const count = ve - vs + 1
+      // 1) 입력 정규화: passages 배열 (다중) 또는 단일 필드 (하위 호환)
+      const { passages: rawPassages, book, chapter, verseStart, verseEnd, passage, audience, season } = data
 
-      let bibleRefText = ''
-      try {
-        const shortName = book ? mapBookName(book) : null
-        if (shortName && chapter) {
-          const ch = parseInt(chapter)
-          const allData = await loadBibleData()
-          const matches = allData.filter(
-            (v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve
-          ).sort((a: any, b: any) => a.verse - b.verse)
-          if (matches.length > 0) {
-            bibleActualVerses = new Map(matches.map((v: any) => [v.verse, v.content]))
-            bibleRefText = '\n\nHere is the actual 개역개정 text for this passage — use it for analysis but do NOT include it in the output:\n' +
-              matches.map((v: any) => `  [${v.verse}절] ${v.content}`).join('\n')
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load bible data:', e)
+      type NormalizedPassage = {
+        book: string
+        chapter: number
+        verseStart: number
+        verseEnd: number | null
+        text?: string
       }
 
-      userText = `Analyze this passage in depth:\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.${bibleRefText}`
-      model = 'gpt-4o-mini'
-      maxTokens = 5000
-      temperature = 0.3
+      const passageList: NormalizedPassage[] = []
+
+      if (Array.isArray(rawPassages) && rawPassages.length > 0) {
+        // 새 형식: passages 배열
+        for (const p of rawPassages as any[]) {
+          passageList.push({
+            book: String(p.book || ''),
+            chapter: parseInt(String(p.chapter || '0'), 10),
+            verseStart: parseInt(String(p.verseStart || '1'), 10),
+            verseEnd: p.verseEnd ? parseInt(String(p.verseEnd), 10) : null,
+            text: p.text || p.passage,
+          })
+        }
+      } else if (book || passage) {
+        // 하위 호환: 단일 필드
+        const vs = parseInt(verseStart || '1')
+        const ve = parseInt(verseEnd || verseStart || '1')
+        passageList.push({
+          book: String(book || ''),
+          chapter: parseInt(String(chapter || '0'), 10),
+          verseStart: vs,
+          verseEnd: ve === vs ? null : ve,
+          text: passage,
+        })
+      }
+
+      // 2) 분기: 단일 본문 vs 다중 본문
+      const isMulti = passageList.length > 1
+
+      if (!isMulti) {
+        // === 기존 단일 본문 로직 100% 보존 ===
+        const single = passageList[0] || { book: '', chapter: 0, verseStart: 1, verseEnd: null, text: '' }
+        const vs = single.verseStart
+        const ve = single.verseEnd || vs
+        const count = ve - vs + 1
+
+        let bibleRefText = ''
+        try {
+          const shortName = single.book ? mapBookName(single.book) : null
+          if (shortName && single.chapter) {
+            const ch = single.chapter
+            const allData = await loadBibleData()
+            const matches = allData.filter(
+              (v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve
+            ).sort((a: any, b: any) => a.verse - b.verse)
+            if (matches.length > 0) {
+              bibleActualVerses = new Map(matches.map((v: any) => [v.verse, v.content]))
+              bibleRefText = '\n\nHere is the actual 개역개정 text for this passage — use it for analysis but do NOT include it in the output:\n' +
+                matches.map((v: any) => `  [${v.verse}절] ${v.content}`).join('\n')
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load bible data:', e)
+        }
+
+        userText = `Analyze this passage in depth:\nBook: ${single.book}\nChapter: ${single.chapter}\nVerses: ${vs}${single.verseEnd ? `-${single.verseEnd}` : ''}\nPassage: ${single.text || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.${bibleRefText}`
+        model = 'gpt-4o-mini'
+        maxTokens = 5000
+        temperature = 0.3
+      } else {
+        // === 신규: 다중 본문 통합 분석 ===
+        // Step 1: 각 본문 개역개정 본문 로드
+        let allBibleRefText = ''
+        try {
+          const allData = await loadBibleData()
+          const allMatches: Array<{ ref: string; content: string }> = []
+
+          for (const p of passageList) {
+            const shortName = p.book ? mapBookName(p.book) : null
+            if (!shortName || !p.chapter) continue
+            const vs = p.verseStart
+            const ve = p.verseEnd || vs
+            const matches = allData.filter(
+              (v: any) => v.book === shortName && v.chapter === p.chapter && v.verse >= vs && v.verse <= ve
+            ).sort((a: any, b: any) => a.verse - b.verse)
+            if (matches.length > 0) {
+              const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd ? `-${p.verseEnd}` : ''}`
+              allMatches.push({ ref, content: matches.map((v: any) => `[${v.verse}절] ${v.content}`).join(' ') })
+            }
+          }
+
+          if (allMatches.length > 0) {
+            allBibleRefText = '\n\nHere is the actual 개역개정 text for these passages — use it for analysis but do NOT include it in the output:\n' +
+              allMatches.map(m => `  [${m.ref}] ${m.content}`).join('\n')
+          }
+        } catch (e) {
+          console.error('Failed to load multi bible data:', e)
+        }
+
+        // Step 2: 다중 본문 시스템 프롬프트 사용
+        systemPrompt = SYSTEM_PROMPTS['bible-study-multi']
+        userText = `# 임무
+${passageList.length}개의 성경 본문을 함께 묶어 다중 본문 통합 분석을 수행합니다.
+
+${passageList.map((p, i) => `## 본문 ${i + 1}: ${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd ? `-${p.verseEnd}` : ''}
+${p.text || '(본문 텍스트 없음)'}`).join('\n\n')}
+
+${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` : ''}${season ? `- 시기: ${season}\n` : ''}` : ''}
+# 특별 지시
+1. 각 본문을 동일 깊이로 개별 분석 (Stage 1)
+2. 본문들 간의 신학적 연결·대비·대화를 깊이 있게 분석 (Stage 2)
+3. 통합 메시지(synthesis)는 한 문장으로 명확하게
+4. 평행 본문은 직접 관련 있는 것만
+5. 신학적 정확성 최우선, 추측 금지
+
+위 형식의 JSON으로만 응답하세요.${allBibleRefText}`
+
+        // Step 3: 모델 + 토큰 (Step 5에서 gpt-5.4-mini로 업그레이드)
+        model = 'gpt-4o-mini'
+        maxTokens = Math.min(6000 + (passageList.length - 2) * 2000, 12000) // 2개: 6000, 3개: 8000, 4개+: 10000, 5개+: 12000
+        temperature = 0.3
+      }
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
       maxTokens = 2000
@@ -422,7 +619,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
+      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
     })
 
     // API 사용량 추적 (fire-and-forget, 회원 응답에 영향 없음)
@@ -437,6 +634,21 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
     }
 
     let output = res.choices[0]?.message?.content || ''
+
+    // 잘림 감지 (다중 본문 분석 시 특히 중요)
+    const finishReason = res.choices[0]?.finish_reason
+    if (finishReason === 'length') {
+      console.warn(`[bible-study] Response truncated. type=${type}, maxTokens=${maxTokens}, outputLength=${output.length}`)
+      // 단일 본문에서 잘린 경우에만 에러 반환 (다중 본문은 클라이언트가 처리)
+      if (type === 'bible-study' && !(Array.isArray(data?.passages) && data.passages.length > 1)) {
+        return NextResponse.json({
+          success: false,
+          error: 'AI 응답이 너무 길어 일부가 잘렸습니다. 본문을 더 짧게 하거나 다시 시도해주세요.',
+          finishReason,
+        }, { status: 422 })
+      }
+    }
+
     // Extract JSON robustly — handle both {} objects and [] arrays
     const isArrayType = type === 'suggest-titles' || type === 'illustration' || type === 'reference'
     const openChar = isArrayType ? '[' : '{'
@@ -451,7 +663,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
+    if ((type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
       try {
         JSON.parse(output)
       } catch (e) {
