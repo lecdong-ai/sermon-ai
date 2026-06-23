@@ -38,6 +38,12 @@ async function loadBibleData(): Promise<any[]> {
   return _bibleData!
 }
 
+// 다중 본문 통합 분석용 모델 (환경 변수로 오버라이드 가능)
+// 기본값: gpt-4o-mini (안정적, OpenAI API에 보장됨)
+// 미래에 gpt-5.4-mini 등 사용 가능해지면 환경 변수로만 변경
+const MULTI_BIBLE_STUDY_MODEL = process.env.MULTI_BIBLE_STUDY_MODEL || 'gpt-4o-mini'
+const MULTI_BIBLE_STUDY_FALLBACK = 'gpt-4o-mini'  // fallback 모델 (안정성 보장)
+
 const SYSTEM_PROMPTS: Record<string, string> = {
   'suggest-titles': `# 역할
 당신은 30년 경력의 정통 복음주의 설교자이자 신학 박사입니다.
@@ -323,6 +329,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: `알 수 없는 타입: ${type}` }, { status: 400 })
     }
 
+    // 다중 본문 fallback 지원용 변수
+    let primaryModel: string | null = null
+    let fallbackModel: string | null = null
+
     let userText: string
     let maxTokens = 2000
     let temperature = 0.3
@@ -448,11 +458,14 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
 
 위 형식의 JSON으로만 응답하세요.${allBibleRefText}`
 
-        // Step 5: 다중 본문은 gpt-5.4-mini로 업그레이드
-        // - 128K 출력으로 잘림 걱정 없음
-        // - 신학적 추론 능력 향상 (다중 본문 통합 분석에 최적)
-        // - 단일 본문은 gpt-4o-mini 유지 (변경 없음)
-        model = 'gpt-5.4-mini'
+        // Step 5 (Option 3): 다중 본문 모델 + 자동 fallback
+        // - 기본: 환경 변수 MULTI_BIBLE_STUDY_MODEL (또는 gpt-4o-mini)
+        // - fallback: MULTI_BIBLE_STUDY_FALLBACK (gpt-4o-mini, 안정성 보장)
+        // - 모델 부재 시 자동 fallback (gpt-5.4-mini 등 미래 모델 대응)
+        // - 단일 본문은 gpt-4o-mini 유지 (이 분기 영향 없음)
+        primaryModel = MULTI_BIBLE_STUDY_MODEL
+        fallbackModel = MULTI_BIBLE_STUDY_FALLBACK
+        model = primaryModel
         maxTokens = Math.min(6000 + (passageList.length - 2) * 2000, 12000) // 2개: 6000, 3개: 8000, 4개+: 10000, 5개+: 12000
         temperature = 0.3
       }
@@ -582,6 +595,31 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
         }]
       }
 
+      // === NEW: text가 비어있으면 개역개정 본문 자동 로드 ===
+      // 클라이언트(`new/page.tsx`)는 passageDisplay="롬 5:8" 같은 참조만 보내므로
+      // AI가 본문 내용을 알 수 없음 → bible-study 분기와 동일하게 서버에서 직접 로드
+      try {
+        const allData = await loadBibleData()
+        for (const p of passageList) {
+          if (p.text && p.text.trim()) continue  // 클라이언트가 본문 텍스트를 보낸 경우 스킵
+          const shortName = p.book ? mapBookName(String(p.book)) : null
+          if (!shortName || !p.chapter) continue
+          const ch = parseInt(String(p.chapter), 10)
+          const vs = parseInt(String(p.verseStart || '1'), 10)
+          const ve = p.verseEnd ? parseInt(String(p.verseEnd), 10) : vs
+          if (!ch || !vs) continue
+          const matches = allData.filter(
+            (v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve
+          ).sort((a: any, b: any) => a.verse - b.verse)
+          if (matches.length > 0) {
+            p.text = matches.map((v: any) => v.content).join(' ')
+          }
+        }
+      } catch (e) {
+        console.error('[suggest-titles] Failed to load bible data:', e)
+      }
+      // === END NEW ===
+
       const isMulti = passageList.length > 1
       const passageSection = isMulti
         ? `## 본문 (${passageList.length}개)\n${passageList.map((p, i) => {
@@ -608,22 +646,41 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       userText = `${passageSection}\n\n## 컨텍스트\n${contextLines.join('\n')}${specialNote}\n\n위 본문에 어울리는 설교 제목 5개를 다양한 스타일로 추천해주세요.`
 
       model = 'gpt-4o-mini'
-      maxTokens = 1200
+      maxTokens = 2500  // 5개 제목 + reason + style + passages_used 안정적 생성
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
     }
 
-    const res = await getOpenai().chat.completions.create({
-      model: model,
+    // OpenAI 호출 (Option 3: 다중 본문은 자동 fallback 지원)
+    let res: any
+    let isFallback = false
+    const baseRequest = {
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userText },
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userText },
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' } : undefined,
-    })
+      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' as const } : undefined,
+    }
+
+    try {
+      res = await getOpenai().chat.completions.create({ model, ...baseRequest })
+    } catch (e: any) {
+      // 모델 부재/접근 불가 시 fallback (다중 본문 분기에서만)
+      const isModelError = e?.code === 'model_not_found' || 
+                            e?.message?.includes('model') || 
+                            e?.status === 404
+      if (isModelError && (primaryModel || fallbackModel) && fallbackModel && model !== fallbackModel) {
+        console.warn(`[bible-study] Model ${model} unavailable, falling back to ${fallbackModel}:`, e?.message)
+        isFallback = true
+        model = fallbackModel
+        res = await getOpenai().chat.completions.create({ model, ...baseRequest })
+      } else {
+        throw e  // 다른 에러는 그대로 전파
+      }
+    }
 
     // API 사용량 추적 (fire-and-forget, 회원 응답에 영향 없음)
     if (res.usage) {
@@ -691,7 +748,14 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       }
     }
 
-    return NextResponse.json({ success: true, data: { output } })
+    return NextResponse.json({
+      success: true,
+      data: {
+        output,
+        modelUsed: model,
+        isFallback,
+      },
+    })
   } catch (err: any) {
     console.error('POST /api/advanced/ai error:', err)
     return NextResponse.json({ success: false, error: err.message || '생성 실패' }, { status: 500 })

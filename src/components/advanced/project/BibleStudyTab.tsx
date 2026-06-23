@@ -130,6 +130,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
       parallelPassages: Array<{ ref: string; text: string; reason: string }>
     } | null
     generatedAt: string
+    modelUsed?: string
+    isFallback?: boolean
   } | null>(null)
   const [multiStudyLoading, setMultiStudyLoading] = useState(false)
   const [multiStudyError, setMultiStudyError] = useState<string | null>(null)
@@ -290,6 +292,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
             passages: parsed.passages || [],
             integration: parsed.integration || null,
             generatedAt: new Date().toISOString(),
+            modelUsed: json.data.modelUsed,
+            isFallback: json.data.isFallback,
           }
           setMultiStudyData(result)
           try {
@@ -527,17 +531,19 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 {p.passage}
               </button>
             ))}
-            {/* 통합 인사이트 탭 (NEW) — 다중 본문 분석 완료 시에만 표시 */}
-            {isMulti && multiStudyData?.integration && (
+            {/* 통합 인사이트 탭 (NEW) — 분석 완료 또는 에러 시 표시 */}
+            {isMulti && (multiStudyData?.integration || multiStudyError) && (
               <button
                 onClick={() => setActiveView('integration')}
                 className={`text-[12px] px-3 py-1.5 rounded-xl font-bold transition-all ${
                   activeView === 'integration'
                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                    : multiStudyError
+                    ? 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/20'
                     : 'bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20'
                 }`}
               >
-                ✨ 통합 인사이트
+                ✨ 통합 인사이트 {multiStudyError && <span className="ml-1 text-rose-400">⚠</span>}
               </button>
             )}
           </div>
@@ -567,13 +573,19 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 </div>
               </div>
             ) : multiStudyError ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                <p className="text-[14px] text-rose-300/80">{multiStudyError}</p>
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                  <X className="w-8 h-8 text-rose-400" />
+                </div>
+                <div className="text-center space-y-2 max-w-md">
+                  <h3 className="text-[15px] font-bold text-white">통합 분석을 가져올 수 없습니다</h3>
+                  <p className="text-[12px] text-rose-300/80 break-words">{multiStudyError}</p>
+                </div>
                 <button
                   onClick={fetchMultiStudy}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold"
                 >
-                  다시 시도
+                  <Loader2 className="w-3.5 h-3.5" /> 다시 시도
                 </button>
               </div>
             ) : multiStudyData?.integration ? (
@@ -586,6 +598,11 @@ export default function BibleStudyTab({ project, passages }: Props) {
                   </div>
                   <p className="text-[10.5px] text-slate-500">
                     {(passages || []).map(p => p.passage).join(' · ')} 통합 분석 결과
+                    {multiStudyData.modelUsed && (
+                      <span className="ml-1.5 text-[9.5px] text-slate-600">
+                        · {multiStudyData.isFallback ? '⚠ ' : ''}{multiStudyData.modelUsed}
+                      </span>
+                    )}
                   </p>
                 </div>
 
