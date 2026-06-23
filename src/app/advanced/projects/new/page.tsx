@@ -354,6 +354,7 @@ export default function NewProjectPage() {
           audience,
           season,
           status: 'draft',
+          passages: newProject.passages || [],
         }),
       })
       if (res.ok) {
