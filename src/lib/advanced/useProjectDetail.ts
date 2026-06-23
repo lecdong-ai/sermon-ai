@@ -93,11 +93,18 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
 
       const detail: ProjectDetail = {
         ...base,
+        passage: (base as any).passage || (base as any).normalizedPassage || '',
+        sermonDate: (base as any).sermonDate || (base as any).date || '',
+        book: (base as any).book || (base as any).bibleBook || '',
+        chapter: (base as any).chapter || (base as any).chapterStart || 0,
         outlinePoints,
         wordCount: (base as any).wordCount || manuscriptData?.sections?.reduce((sum: number, s: any) => sum + (s.content?.length || 0), 0) || 0,
         version: (base as any).version || 1,
         studyCount: (base as any).studyCount || 0,
-        passages: (base as any).passages || [],
+        passages: ((base as any).passages || []).map((p: any) => ({
+          ...p,
+          passage: p.passage || p.label || '',
+        })),
         themeNames: (base as any).themeNames || [],
         tagNames: (base as any).tagNames || [],
         audience: (base as any).audience || [],
