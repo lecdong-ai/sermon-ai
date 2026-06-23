@@ -117,6 +117,32 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [citeSuccessMsg, setCiteSuccessMsg] = useState<string | null>(null)
   const [citeLoading, setCiteLoading] = useState(false)
 
+  // ─── 다중 본문 통합 분석 (NEW) ───
+  const isMulti = (passages?.length || 0) > 1
+  const [activeView, setActiveView] = useState<'passage' | 'integration'>('passage')
+  const [multiStudyData, setMultiStudyData] = useState<{
+    passages: any[]
+    integration: {
+      commonThemes: string[]
+      connections: string[]
+      contrasts: string[]
+      synthesis: string
+      parallelPassages: Array<{ ref: string; text: string; reason: string }>
+    } | null
+    generatedAt: string
+  } | null>(null)
+  const [multiStudyLoading, setMultiStudyLoading] = useState(false)
+  const [multiStudyError, setMultiStudyError] = useState<string | null>(null)
+
+  const multiCacheKey = useMemo(() => {
+    if (!isMulti || !passages) return null
+    const refs = passages
+      .map(p => `${p.book}_${p.chapter}_${p.verseStart}-${p.verseEnd || p.verseStart}`)
+      .sort()
+      .join('__')
+    return `multi_study_${refs}`
+  }, [isMulti, passages])
+
   const loadManuscriptSections = useCallback((): SermonSection[] => {
     const saved = getStorageItem<JohnManuscriptData | null>(`manuscript_${project.id}`, null)
     return saved?.sections || []
@@ -222,6 +248,71 @@ export default function BibleStudyTab({ project, passages }: Props) {
   useEffect(() => {
     fetchAiStudy()
   }, [fetchAiStudy])
+
+  // ─── 다중 본문 통합 분석 fetch (NEW) ───
+  const fetchMultiStudy = useCallback(async () => {
+    if (!isMulti || !passages || !multiCacheKey) return
+    setMultiStudyError(null)
+
+    // 1) 캐시 확인
+    try {
+      const cached = getStorageItem<any>(multiCacheKey, null)
+      if (cached && cached.integration) {
+        setMultiStudyData(cached)
+        return
+      }
+    } catch {}
+
+    // 2) API 호출
+    setMultiStudyLoading(true)
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'bible-study',
+          data: {
+            passages: passages.map(p => ({
+              book: p.book,
+              chapter: p.chapter,
+              verseStart: p.verseStart,
+              verseEnd: p.verseEnd,
+              text: p.passage,
+            })),
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json.success && json.data?.output) {
+        try {
+          const parsed = JSON.parse(json.data.output)
+          const result = {
+            passages: parsed.passages || [],
+            integration: parsed.integration || null,
+            generatedAt: new Date().toISOString(),
+          }
+          setMultiStudyData(result)
+          try {
+            setStorageItem(multiCacheKey, result)
+          } catch {}
+        } catch {
+          setMultiStudyError('AI 응답을 해석하는 중 오류가 발생했습니다.')
+        }
+      } else {
+        setMultiStudyError(json.error || 'AI 분석에 실패했습니다.')
+      }
+    } catch {
+      setMultiStudyError('AI 서버에 연결할 수 없습니다.')
+    } finally {
+      setMultiStudyLoading(false)
+    }
+  }, [isMulti, passages, multiCacheKey])
+
+  useEffect(() => {
+    if (isMulti) {
+      fetchMultiStudy()
+    }
+  }, [isMulti, fetchMultiStudy])
 
   const handleWordClick = (wordId: string, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => {
     if (fallbackWord && fallbackWord.version) {
@@ -426,9 +517,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
             {passages.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setSelectedPassageIndex(i)}
+                onClick={() => { setSelectedPassageIndex(i); setActiveView('passage') }}
                 className={`text-[12px] px-3 py-1.5 rounded-xl font-bold transition-all ${
-                  selectedPassageIndex === i
+                  selectedPassageIndex === i && activeView === 'passage'
                     ? 'bg-indigo-600 text-white shadow-lg'
                     : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
                 }`}
@@ -436,6 +527,151 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 {p.passage}
               </button>
             ))}
+            {/* 통합 인사이트 탭 (NEW) — 다중 본문 분석 완료 시에만 표시 */}
+            {isMulti && multiStudyData?.integration && (
+              <button
+                onClick={() => setActiveView('integration')}
+                className={`text-[12px] px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  activeView === 'integration'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                    : 'bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20'
+                }`}
+              >
+                ✨ 통합 인사이트
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 통합 인사이트 뷰 (NEW) — 다중 본문 모드에서만 */}
+        {isMulti && activeView === 'integration' && (
+          <div className="space-y-4 animate-fade-in px-5 py-5">
+            {multiStudyLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+                <div className="text-center space-y-2">
+                  <h3 className="text-[16px] font-bold text-white">
+                    AI가 {passages?.length || 0}개 본문을 통합 분석 중입니다
+                  </h3>
+                  <p className="text-[12px] text-slate-400">
+                    각 본문 분석 + 신학적 연결점 + 통합 메시지 도출
+                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3 text-[11px]">
+                    {(passages || []).map((p, i) => (
+                      <span key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                        {p.passage}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : multiStudyError ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                <p className="text-[14px] text-rose-300/80">{multiStudyError}</p>
+                <button
+                  onClick={fetchMultiStudy}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold"
+                >
+                  다시 시도
+                </button>
+              </div>
+            ) : multiStudyData?.integration ? (
+              <div className="space-y-4">
+                {/* 통합 헤더 */}
+                <div className="bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-cyan-500/10 border border-purple-500/20 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Sparkles className="w-4 h-4 text-purple-300" />
+                    <h2 className="text-[14px] font-extrabold text-white">통합 인사이트</h2>
+                  </div>
+                  <p className="text-[10.5px] text-slate-500">
+                    {(passages || []).map(p => p.passage).join(' · ')} 통합 분석 결과
+                  </p>
+                </div>
+
+                {/* 통합 메시지 */}
+                {multiStudyData.integration.synthesis && (
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/[0.12] to-indigo-500/[0.08] border border-purple-500/30 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                      <span className="text-[10px] font-extrabold text-purple-200 uppercase tracking-wider">통합 메시지</span>
+                    </div>
+                    <p className="text-[18px] font-extrabold text-white leading-relaxed">
+                      &ldquo;{multiStudyData.integration.synthesis}&rdquo;
+                    </p>
+                  </div>
+                )}
+
+                {/* 공통 주제 */}
+                {multiStudyData.integration.commonThemes.length > 0 && (
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-extrabold text-indigo-300 uppercase tracking-wider mb-2">📌 공통 주제</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {multiStudyData.integration.commonThemes.map((t, i) => (
+                        <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 text-[11px] font-bold">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 연결점 */}
+                {multiStudyData.integration.connections.length > 0 && (
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider mb-2">🔗 연결점 ({multiStudyData.integration.connections.length}개)</h3>
+                    <ul className="space-y-1.5">
+                      {multiStudyData.integration.connections.map((c, i) => (
+                        <li key={i} className="flex items-start gap-2 text-[12px] text-slate-300 leading-relaxed">
+                          <span className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 대비점 */}
+                {multiStudyData.integration.contrasts.length > 0 && (
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-extrabold text-rose-300 uppercase tracking-wider mb-2">⚔️ 긴장 / 대비</h3>
+                    <ul className="space-y-1.5">
+                      {multiStudyData.integration.contrasts.map((c, i) => (
+                        <li key={i} className="flex items-start gap-2 text-[12px] text-slate-300 leading-relaxed">
+                          <span className="text-rose-300 mt-0.5">⚡</span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 평행 본문 */}
+                {multiStudyData.integration.parallelPassages.length > 0 && (
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-extrabold text-cyan-300 uppercase tracking-wider mb-2">📖 관련 평행 본문</h3>
+                    <div className="space-y-1.5">
+                      {multiStudyData.integration.parallelPassages.map((p, i) => (
+                        <div key={i} className="p-2.5 rounded-lg bg-cyan-500/[0.05] border border-cyan-500/20">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <BookOpen className="w-3 h-3 text-cyan-300" />
+                            <span className="text-[11px] font-bold text-cyan-200 tabular-nums">{p.ref}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300 leading-relaxed">{p.text}</p>
+                          {p.reason && (
+                            <p className="text-[10px] text-slate-500 italic mt-1 pt-1 border-t border-white/5">💡 {p.reason}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-16 text-[12px] text-slate-500">
+                통합 인사이트를 생성 중입니다...
+              </div>
+            )}
           </div>
         )}
 
