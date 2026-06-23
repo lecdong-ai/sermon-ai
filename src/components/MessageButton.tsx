@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { MessageSquare, X, Send, Check, Loader2, Inbox, GripVertical } from 'lucide-react'
 
 type Category = 'question' | 'request' | 'bug' | 'praise'
@@ -14,12 +14,17 @@ const CATEGORIES: { key: Category; label: string; description: string; color: st
 ]
 
 const POS_KEY = 'bunker_msg_btn_pos'
+const LAST_SEEN_KEY = 'bunker_msg_last_seen'
 const DRAG_THRESHOLD = 5 // px — 이 거리 미만 이동은 클릭으로 간주
 const BUTTON_SIZE = 56 // px — w-14 h-14
-const MARGIN = 12 // px — 화면 가장자리 여백
+const MARGIN = 38 // px — 1cm (CSS bottom-[1cm] right-[1cm]과 일치)
+const SAFE_MIN = 0.04 // 4% — 화면 너무 끝에 붙지 않음
+const SAFE_MAX = 0.96 // 96% — 화면 너무 끝에 붙지 않음
 
 export default function MessageButton() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isAdminRoute = pathname?.startsWith('/admin')
   const [open, setOpen] = useState(false)
   const [category, setCategory] = useState<Category>('question')
   const [subject, setSubject] = useState('')
@@ -28,6 +33,7 @@ export default function MessageButton() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showToast, setShowToast] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // ── 드래그 앤 드롭 상태 ──
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
@@ -57,6 +63,35 @@ export default function MessageButton() {
       }
     } catch {}
   }, [])
+
+  // 미확인 답변 카운트 폴링
+  useEffect(() => {
+    if (isAdminRoute) return
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/messages')
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data.success || !Array.isArray(data.messages)) return
+        const lastSeen = Number(localStorage.getItem(LAST_SEEN_KEY) || 0)
+        const count = data.messages.filter((m: any) =>
+          m.admin_replied_at && new Date(m.admin_replied_at).getTime() > lastSeen
+        ).length
+        setUnreadCount(count)
+      } catch {}
+    }
+    fetchUnread()
+    const id = setInterval(fetchUnread, 60_000)
+    return () => clearInterval(id)
+  }, [isAdminRoute])
+
+  // 모달 열림/이탈 시 lastSeen 갱신
+  const markAsSeen = () => {
+    try {
+      localStorage.setItem(LAST_SEEN_KEY, String(Date.now()))
+    } catch {}
+    setUnreadCount(0)
+  }
 
   // 위치 저장
   const savePos = (next: { x: number; y: number }) => {
@@ -111,13 +146,17 @@ export default function MessageButton() {
     const handlePointerUp = () => {
       const start = dragStartRef.current
       if (start?.moved && pos) {
-        // 백분율로 저장
-        const ratio = {
-          x: pos.x / window.innerWidth,
-          y: pos.y / window.innerHeight,
-        }
-        savePos(ratio)
-        setPos(ratio) // 상대 비율 형태로 전환
+        // 드롭 위치를 백분율로 변환
+        const ratioX = pos.x / window.innerWidth
+        const ratioY = pos.y / window.innerHeight
+
+        // 안전 범위로 정규화 (화면 끝 보호)
+        const safeX = Math.max(SAFE_MIN, Math.min(SAFE_MAX, ratioX))
+        const safeY = Math.max(SAFE_MIN, Math.min(SAFE_MAX, ratioY))
+        const final = { x: safeX, y: safeY }
+
+        savePos(final)
+        setPos(final)
       }
       setIsDragging(false)
       dragStartRef.current = null
@@ -205,6 +244,9 @@ export default function MessageButton() {
 
   const charCount = message.length
 
+  // 관리자 페이지에서는 버튼 자체를 숨김
+  if (isAdminRoute) return null
+
   return (
     <>
       {/* 플로팅 버튼 (드래그 가능) */}
@@ -221,13 +263,14 @@ export default function MessageButton() {
             return
           }
           setOpen(true)
+          markAsSeen()
         }}
         style={buttonStyle}
         className={`z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center group select-none ${
           isDragging && dragStartRef.current?.moved
             ? 'cursor-grabbing scale-110 shadow-indigo-500/60'
             : 'cursor-grab hover:scale-105'
-        } transition-transform`}
+        } transition-transform ${pos ? '' : 'fixed bottom-[calc(1cm+env(safe-area-inset-bottom))] right-[1cm]'}`}
         aria-label="관리자에게 메시지 보내기 (드래그로 위치 이동)"
         title="클릭: 문의 열기 · 드래그: 위치 이동"
       >
@@ -236,6 +279,11 @@ export default function MessageButton() {
         ) : (
           <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" />
         )}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-[#050814] pointer-events-none">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
       {/* 토스트 */}
@@ -243,8 +291,12 @@ export default function MessageButton() {
         <div
           className="fixed z-50 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm animate-fade-in"
           style={pos
-            ? { left: typeof pos.x === 'number' && pos.x <= 1 ? `${pos.x * 100}%` : `${(pos.x as number) - 8}px`, bottom: typeof pos.y === 'number' && pos.y <= 1 ? `${(1 - pos.y) * 100}%` : `${(pos.y as number) - 88}px` }
-            : { bottom: 96, right: 24 }
+            ? {
+                // 비율 좌표 (스냅 후) → 토스트는 버튼 좌상단 기준 위로 띄움
+                left: pos.x <= 1 ? `${pos.x * 100}%` : `${pos.x}px`,
+                top: pos.y <= 1 ? `calc(${pos.y * 100}% - 88px)` : `${pos.y - 88}px`,
+              }
+            : { bottom: `calc(1cm + ${BUTTON_SIZE + 8}px + env(safe-area-inset-bottom, 0px))`, right: '1cm' }
           }
         >
           <p className="text-[12px] text-emerald-200 font-medium flex items-center gap-2">
