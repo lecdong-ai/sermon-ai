@@ -69,11 +69,39 @@ https://sermon-ai-xxx.vercel.app/auth/callback
 https://sermon-ai-xxx.vercel.app/api/payments/webhook
 ```
 
-### C. 카카오 개발자 콘솔 플랫폼 등록
+### C. 카카오 개발자 콘솔 플랫폼 등록 (선택, 카카오 공유 SDK 사용 시)
 
-<https://developers.kakao.com/> → 앱 설정 → 플랫폼 → Web 플랫폼 추가:
+**이건 무엇인가요?**
+이 프로젝트는 두 가지 카카오 기능을 사용합니다:
+- `KakaoTalkButton` 컴포넌트: 카카오 채널 URL로 `window.open()` (단순 링크, 등록 불필요)
+- `Kakao.Share` SDK (`workspace`, `share/[id]` 페이지): JavaScript SDK로 공유하기 (도메인 등록 필요)
+
+`Kakao.Share` SDK가 호출될 때, 카카오 JavaScript SDK는 등록되지 않은 도메인에서 호출되면 에러를 발생시킵니다. 따라서 `Kakao.Share`를 쓰는 페이지를 배포 도메인에서 사용하려면 등록이 필요합니다.
+
+**등록 절차**:
+
+1. <https://developers.kakao.com/> 접속 → 카카오 계정으로 로그인
+2. **내 애플리케이션** → 해당 앱 선택 (없으면 새로 만들기)
+3. **앱 설정** → **플랫폼** 메뉴
+4. **Web 플랫폼 등록** 클릭
+5. **사이트 도메인**에 추가:
+   ```
+   https://sermon-ai-xxx.vercel.app
+   ```
+   (Preview 환경도 사용하려면):
+   ```
+   https://*.vercel.app
+   ```
+6. **저장** 클릭
+
+**확인 방법**:
+- 배포 후 `workspace` 페이지에서 "공유" 버튼 클릭
+- 콘솔에 `Kakao.Share` 호출이 성공하면 등록 완료
+- 에러 발생 시: 카카오 콘솔에서 도메인 형식 확인 (http/https, trailing slash 없는지)
+
+**참고**: 카카오 로그인(`/login` 페이지의 `provider: 'kakao'`)은 Supabase OAuth를 거치므로, **Supabase 콘솔**에서 카카오 provider를 활성화하고 Kakao Developers의 **Redirect URI**에 Supabase 콜백 URL을 등록해야 합니다:
 ```
-https://sermon-ai-xxx.vercel.app
+https://[supabase-project-ref].supabase.co/auth/v1/callback
 ```
 
 ## 7단계: 도메인 연결 (선택)
