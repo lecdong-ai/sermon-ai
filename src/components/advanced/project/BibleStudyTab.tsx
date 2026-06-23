@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Check, FileText, Lightbulb, Loader2, PenLine, Plus, Sparkles, X } from 'lucide-react'
+import { Anchor, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
@@ -24,8 +24,12 @@ const STUDY_DATA_REGISTRY: Record<string, {
   translationNotes: any[]
   parallelPassages: any[]
   themes: { name: string; description: string; connectedSermons: number }[]
-  contextInfo: { before: string; after: string; bookStructure: string }
-}> = {
+  contextInfo: {
+    before: string; after: string; bookStructure: string;
+    historicalBackground?: string; culturalContext?: string;
+    theologicalContext?: string; redemptiveHistory?: string;
+    keyThemes?: string[]; narrativeArc?: string;
+  }}> = {
   '로마서_8': {
     passage: '롬 8:1-11',
     verses: MOCK_BIBLE_STUDY.verses,
@@ -187,7 +191,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
               translationNotes: parsed.translationNotes || [],
               parallelPassages: parsed.parallelPassages || [],
               themes: parsed.themes || [],
-              contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
+              contextInfo: {
+                before: parsed.contextInfo?.before || '',
+                after: parsed.contextInfo?.after || '',
+                bookStructure: parsed.contextInfo?.bookStructure || '',
+                historicalBackground: parsed.contextInfo?.historicalBackground || '',
+                culturalContext: parsed.contextInfo?.culturalContext || '',
+                theologicalContext: parsed.contextInfo?.theologicalContext || '',
+                redemptiveHistory: parsed.contextInfo?.redemptiveHistory || '',
+                keyThemes: Array.isArray(parsed.contextInfo?.keyThemes) ? parsed.contextInfo.keyThemes : [],
+                narrativeArc: parsed.contextInfo?.narrativeArc || '',
+              },
               wordAlignments: parsed.wordAlignments || [],
             }
             setAiStudyData(prev => ({ ...prev, [passageKey]: data }))
@@ -440,11 +454,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
             />
 
             {/* Context Explorer - always visible */}
-            <ContextExplorer
-              before={studyData.contextInfo.before}
-              after={studyData.contextInfo.after}
-              bookStructure={studyData.contextInfo.bookStructure}
-            />
+            <ContextExplorer info={studyData.contextInfo} />
 
             {/* 병렬 모드: 여러 번역본 나란히 */}
             {viewMode === 'parallel' && (
@@ -1026,26 +1036,161 @@ function ResearchToolbar({
 
 /* ─── Context Explorer ─── */
 
-function ContextExplorer({ before, after, bookStructure }: {
-  before: string; after: string; bookStructure: string
-}) {
+interface ContextInfo {
+  before: string
+  after: string
+  bookStructure: string
+  historicalBackground: string
+  culturalContext: string
+  theologicalContext: string
+  redemptiveHistory: string
+  keyThemes: string[]
+  narrativeArc: string
+}
+
+function ContextExplorer({ info }: { info: Partial<ContextInfo> }) {
+  const [expanded, setExpanded] = useState<'beforeAfter' | null>(null)
+
+  const sections = [
+    {
+      key: 'historical',
+      icon: History,
+      color: 'text-cyan-300',
+      bg: 'bg-cyan-500/10',
+      border: 'border-cyan-500/20',
+      label: '역사적 배경',
+      content: info.historicalBackground,
+    },
+    {
+      key: 'cultural',
+      icon: Globe,
+      color: 'text-emerald-300',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      label: '문화적 맥락',
+      content: info.culturalContext,
+    },
+    {
+      key: 'theological',
+      icon: Cross,
+      color: 'text-purple-300',
+      bg: 'bg-purple-500/10',
+      border: 'border-purple-500/20',
+      label: '신학적 맥락',
+      content: info.theologicalContext,
+    },
+    {
+      key: 'redemptive',
+      icon: Heart,
+      color: 'text-rose-300',
+      bg: 'bg-rose-500/10',
+      border: 'border-rose-500/20',
+      label: '구속사적 흐름',
+      content: info.redemptiveHistory,
+    },
+  ]
+
+  const hasThemes = Array.isArray(info.keyThemes) && info.keyThemes.length > 0
+  const hasNarrative = info.narrativeArc
+  const hasBeforeAfter = info.before || info.after
+  const hasBookStructure = info.bookStructure
+
   return (
-    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-5">
-      <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-widest mb-2">문맥 확장</div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300 leading-relaxed">
-        <div>
-          <span className="font-medium text-amber-300 block mb-1">앞 문맥</span>
-          {before}
-        </div>
-        <div className="border-x border-amber-500/20 px-4">
-          <span className="font-medium text-amber-300 block mb-1">책 구조</span>
-          {bookStructure}
-        </div>
-        <div>
-          <span className="font-medium text-amber-300 block mb-1">뒤 문맥</span>
-          {after}
-        </div>
+    <div className="bg-gradient-to-r from-amber-500/[0.07] to-indigo-500/[0.07] border border-amber-500/20 rounded-xl p-4 mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
+        <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-widest">문맥 확장</span>
       </div>
+
+      {/* Context Section Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        {sections.map((s) => {
+          const Icon = s.icon
+          return (
+            <div
+              key={s.key}
+              className={`${s.bg} ${s.border} border rounded-lg p-3 transition-all hover:brightness-110`}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <Icon className={`w-3 h-3 ${s.color}`} />
+                <span className={`text-[11px] font-bold ${s.color}`}>{s.label}</span>
+              </div>
+              {s.content ? (
+                <p className="text-[11px] text-slate-300 leading-relaxed">{s.content}</p>
+              ) : (
+                <p className="text-[11px] text-slate-600 italic">생성되지 않음</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Key Themes */}
+      {hasThemes && (
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-2">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Tags className="w-3 h-3 text-indigo-300" />
+            <span className="text-[11px] font-bold text-indigo-300">핵심 주제</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {info.keyThemes!.map((theme, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-200 border border-indigo-500/30"
+              >
+                {theme}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Narrative Arc + Book Structure Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        {hasNarrative && (
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Waypoints className="w-3 h-3 text-amber-300" />
+              <span className="text-[11px] font-bold text-amber-300">본문 흐름</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">{info.narrativeArc}</p>
+          </div>
+        )}
+        {hasBookStructure && (
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <BookOpen className="w-3 h-3 text-sky-300" />
+              <span className="text-[11px] font-bold text-sky-300">책 구조</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">{info.bookStructure}</p>
+          </div>
+        )}
+      </div>
+
+      {/* 앞·뒤 문맥 (Collapsible) */}
+      {hasBeforeAfter && (
+        <div className="bg-white/[0.03] border border-white/5 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setExpanded(expanded === 'beforeAfter' ? null : 'beforeAfter')}
+            className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+          >
+            <span>앞·뒤 문맥</span>
+            {expanded === 'beforeAfter' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </button>
+          {expanded === 'beforeAfter' && (
+            <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-400 leading-relaxed">
+              <div>
+                <span className="font-medium text-slate-300 block mb-0.5">앞 문맥</span>
+                {info.before}
+              </div>
+              <div>
+                <span className="font-medium text-slate-300 block mb-0.5">뒤 문맥</span>
+                {info.after}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

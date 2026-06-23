@@ -73,7 +73,17 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   "parallelPassages": [{ "ref": "Book ch:vs", "text": "passage text", "relation": "direct_quote|allusion|thematic|typology", "description": "explanation in Korean" }],
   "themes": [{ "name": "theme name in Korean", "description": "description in Korean", "connectedSermons": number }],
   "wordAlignments": [{ "verse": number, "englishVersion": "NIV", "englishWord": "English word", "greekWordId": "w-matching_id" }],
-  "contextInfo": { "before": "previous context in Korean", "after": "following context in Korean", "bookStructure": "book structure overview in Korean" }
+  "contextInfo": {
+    "before": "직전 문맥 — 바로 앞 구절의 내용과 이어지는 흐름 (2-3문장, 한국어)",
+    "after": "이후 문맥 — 다음 구절의 내용과 연결점 (2-3문장, 한국어)",
+    "bookStructure": "이 책의 전체 구조 속에서 본문이 위치한 자리 (3-5문장, 한국어)",
+    "historicalBackground": "역사적 배경 — 저자, 저작 시기, 당시 교회 상황 (2-3문장, 한국어)",
+    "culturalContext": "문화적 맥락 — 당시 청중이 이해했을 관습과 사회적 배경 (2-3문장, 한국어)",
+    "theologicalContext": "신학적 맥락 — 이 구절이 전체 성경 이야기와 복음에서 차지하는 위치 (2-3문장, 한국어)",
+    "redemptiveHistory": "구속사적 흐름 — 이 본문이 그리스도와 연결되는 방식 (2-3문장, 한국어)",
+    "keyThemes": ["이 본문의 핵심 주제1", "핵심 주제2", "핵심 주제3"],
+    "narrativeArc": "본문의 이야기 전개 단계 — 도입/갈등/절정/해결 중 어디에 해당하는지 (1-2문장, 한국어)"
+  }
 }
 
 IMPORTANT: 
