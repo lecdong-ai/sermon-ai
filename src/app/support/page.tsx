@@ -143,7 +143,7 @@ export default function SupportPage() {
         <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6 sm:p-8 mb-6">
           <h2 className="text-[16px] font-bold text-white mb-5 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-rose-400" />
-            후원회원 혜택
+            사역 동참자 혜택
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {BENEFITS.map((b, i) => {

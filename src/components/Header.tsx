@@ -69,7 +69,7 @@ export default memo(function Header() {
                     ? 'bg-white/10 text-slate-300 border border-white/10'
                     : 'bg-white/5 text-slate-400 border border-white/10'
                 }`}>
-                  {supporter.active ? '🏅 후원회원' : '일반회원'}
+                  {supporter.active ? '🏅 사역 동참자' : '일반회원'}
                 </span>
               )}
 
@@ -115,7 +115,7 @@ export default memo(function Header() {
                                 ? 'bg-indigo-500/15 text-indigo-300'
                                 : 'bg-white/5 text-slate-500'
                             }`}>
-                              {supporter.active ? '🏅 후원회원' : '일반회원'}
+                              {supporter.active ? '🏅 사역 동참자' : '일반회원'}
                             </span>
                           </div>
                         )}
@@ -151,7 +151,7 @@ export default memo(function Header() {
                           href="/support"
                           onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all"
-                          title="후원회원 전용 메뉴입니다"
+                          title="사역 동참자 전용 메뉴입니다"
                         >
                           <ScrollText className="w-4 h-4 text-slate-600" />
                           <span>말씀 연구실</span>

@@ -91,7 +91,7 @@ export default function PreviewPage() {
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span className="text-[11px] font-semibold text-indigo-300">체험 모드</span>
-            <span className="text-[10px] text-slate-500">· 모든 기능은 후원회원이 되시면 사용 가능합니다</span>
+            <span className="text-[10px] text-slate-500">· 모든 기능은 사역 동참자이 되시면 사용 가능합니다</span>
           </div>
           <button
             onClick={() => router.push('/support')}
@@ -138,7 +138,7 @@ export default function PreviewPage() {
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 flex items-center justify-center" onClick={handleLocked}>
                       <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 border border-white/10">
                         <Lock className="w-3.5 h-3.5 text-indigo-400" />
-                        <span className="text-[11px] font-semibold text-white">후원회원 전용</span>
+                        <span className="text-[11px] font-semibold text-white">사역 동참자 전용</span>
                       </div>
                     </div>
 
@@ -174,7 +174,7 @@ export default function PreviewPage() {
                   <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                     <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 border border-white/10">
                       <Lock className="w-3.5 h-3.5 text-indigo-400" />
-                      <span className="text-[11px] font-semibold text-white">후원회원 전용</span>
+                      <span className="text-[11px] font-semibold text-white">사역 동참자 전용</span>
                     </div>
                   </div>
                   <feature.icon className={`w-6 h-6 ${feature.color} mb-3`} />
@@ -204,8 +204,8 @@ export default function PreviewPage() {
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
                 <Lock className="w-6 h-6 text-indigo-400" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">후원회원 전용 기능</h3>
-              <p className="text-sm text-slate-400 mb-6">이 기능은 후원회원만 사용할 수 있습니다.<br />후원하시면 모든 기능을 제한 없이 이용하실 수 있습니다.</p>
+              <h3 className="text-lg font-bold text-white mb-2">사역 동참자 전용 기능</h3>
+              <p className="text-sm text-slate-400 mb-6">이 기능은 사역 동참자만 사용할 수 있습니다.<br />후원하시면 모든 기능을 제한 없이 이용하실 수 있습니다.</p>
               <div className="flex gap-3">
                 <button onClick={() => setShowUpgradeModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-medium transition-colors">닫기</button>
                 <button onClick={() => router.push('/support')} className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors">후원하기</button>

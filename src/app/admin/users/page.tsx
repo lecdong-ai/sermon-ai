@@ -313,14 +313,14 @@ function SupporterSection({
   const badge = active
     ? imminent
       ? { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30', label: `후원 임박 (${daysLeft}일 남음)` }
-      : { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30', label: `후원 회원 (${daysLeft}일 남음)` }
+      : { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30', label: `사역 동참자 (${daysLeft}일 남음)` }
     : { bg: 'bg-white/5', text: 'text-slate-500', border: 'border-white/10', label: '일반 회원' }
 
   return (
     <div>
       <h3 className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 mb-3">
         <Trophy className="w-3.5 h-3.5" />
-        후원 회원 자격
+        사역 동참자 자격
       </h3>
 
       <div className="bg-white/5 rounded-xl p-4 space-y-3">
@@ -503,7 +503,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
                 {active ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-500/10 text-rose-300 text-[11px] font-bold">
                     <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
-                    후원회원
+                    사역 동참자
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-slate-500 text-[11px] font-bold">
@@ -514,7 +514,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             </div>
           </div>
 
-          {/* 🏆 후원 회원 자격 */}
+          {/* 🏆 사역 동참자 자격 */}
           <SupporterSection
             member={member}
             active={!!active}
@@ -543,7 +543,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
             {active && (
               <button
                 onClick={() => {
-                  if (confirm('정말 이 사용자의 후원회원 자격을 강등시키겠습니까?')) {
+                  if (confirm('정말 이 사용자의 사역 동참자 자격을 강등시키겠습니까?')) {
                     fetch('/api/admin/revoke-supporter', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -562,7 +562,7 @@ function DetailDrawer({ member, data, loading, onClose, onGrant, onRevoke, onDel
                 className="w-full py-3 rounded-xl border border-white/10 text-slate-300 text-[13px] font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2"
               >
                 <XCircle className="w-4 h-4" />
-                후원회원 강등
+                사역 동참자 강등
               </button>
             )}
             <button
@@ -643,7 +643,7 @@ function MemberCard({ member, onGrant, onDelete, onDetail, summary }: {
           {active ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-300 text-[12px] font-semibold border border-rose-500/30">
               <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
-              후원회원
+              사역 동참자
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-slate-500 text-[12px] font-semibold">
@@ -904,7 +904,7 @@ export default function AdminUsersPage() {
   }
 
   const handleRevoke = async (userId: string) => {
-    if (!confirm('정말 이 사용자의 후원회원 자격을 강등시키겠습니까?')) return
+    if (!confirm('정말 이 사용자의 사역 동참자 자격을 강등시키겠습니까?')) return
     setMessage(null)
     const res = await fetch('/api/admin/revoke-supporter', {
       method: 'POST',
@@ -913,7 +913,7 @@ export default function AdminUsersPage() {
     })
     const d = await res.json()
     if (d.success) {
-      setMessage({ type: 'ok', text: '후원회원 자격이 강등되었습니다.' })
+      setMessage({ type: 'ok', text: '사역 동참자 자격이 강등되었습니다.' })
       // 즉시 UI 업데이트
       setMembers(prev => prev.map(m => m.id === userId ? { ...m, supporter_until: null } : m))
       setSelectedMember(prev => prev?.id === userId ? { ...prev, supporter_until: null } : prev)
@@ -1023,7 +1023,7 @@ export default function AdminUsersPage() {
             전체 <span className="text-slate-300 font-semibold">{total.toLocaleString('ko-KR')}</span>명
             {state.search && <span className="ml-1.5 text-indigo-300">· &ldquo;{state.search}&rdquo; 검색</span>}
             {state.filter !== 'all' && (
-              <span className="ml-1.5 text-indigo-300">· {state.filter === 'supporter' ? '후원회원만' : '일반회원만'}</span>
+              <span className="ml-1.5 text-indigo-300">· {state.filter === 'supporter' ? '사역 동참자만' : '일반회원만'}</span>
             )}
           </p>
         </div>
@@ -1249,7 +1249,7 @@ export default function AdminUsersPage() {
                             <button
                               onClick={() => handleRevoke(m.id)}
                               className="px-2 py-1 rounded-lg bg-white/5 text-slate-500 text-[10px] font-bold hover:bg-white/10 transition-colors"
-                              title="후원회원 강등"
+                              title="사역 동참자 강등"
                             >
                               강등
                             </button>

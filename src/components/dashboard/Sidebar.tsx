@@ -34,7 +34,7 @@ function SupporterBadge() {
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <span className="text-[14px]">🏅</span>
           <div>
-            <p className="text-[12px] font-bold text-amber-300">후원회원</p>
+            <p className="text-[12px] font-bold text-amber-300">사역 동참자</p>
             {data.supporter_until && (
               <p className="text-[9px] text-amber-400/60">
                 ~{new Date(data.supporter_until).toLocaleDateString()}

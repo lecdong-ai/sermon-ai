@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     ? new Date(supporter_until) > new Date()
     : false
 
-  // 후원회원이지만 plan이 'none'이면 'basic'으로 간주
+  // 사역 동참자이지만 plan이 'none'이면 'basic'으로 간주
   const effectivePlan = supporterActive && usage.plan === 'none' ? 'basic' : usage.plan
   const effectiveMonthlyLimit = supporterActive && usage.monthly_limit === 0 ? 10 : usage.monthly_limit
   const effectiveWorkspaceLimit = supporterActive && usage.workspace_limit === 0 ? 10 : usage.workspace_limit

@@ -252,7 +252,7 @@ export default function MyPage() {
             {isSupporter ? (
               <div
                 className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-[#04060f] border border-amber-500/30 flex items-center justify-center shadow-lg"
-                title="후원회원"
+                title="사역 동참자"
               >
                 <Heart className="w-4 h-4 text-amber-300 fill-amber-300" />
               </div>
@@ -276,7 +276,7 @@ export default function MyPage() {
             {isSupporter ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium">
                 <Heart className="w-3 h-3 fill-amber-300" />
-                후원회원
+                사역 동참자
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-medium">
@@ -310,7 +310,7 @@ export default function MyPage() {
             )}
           </button>
 
-          {/* CTA — 후원회원에게는 후원 안내, 일반회원에게는 후원 유도 */}
+          {/* CTA — 사역 동참자에게는 후원 안내, 일반회원에게는 후원 유도 */}
           <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
             <Link
               href="/advanced"
@@ -364,7 +364,7 @@ export default function MyPage() {
               <header className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-2">
-                    AI 사용량 · {isSupporter ? '후원회원' : '일반회원'}
+                    AI 사용량 · {isSupporter ? '사역 동참자' : '일반회원'}
                   </h2>
                   <p className="text-2xl font-light text-white">
                     이번 달 <span className={`font-semibold ${isSupporter ? 'text-amber-300' : 'text-indigo-300'}`}>{usage?.monthly_used ?? 0}</span>

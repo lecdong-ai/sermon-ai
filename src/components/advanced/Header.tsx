@@ -96,7 +96,7 @@ export default function AdvancedHeader() {
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     isSupporter ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-500/20 text-slate-400'
                   }`}>
-                    {isSupporter ? '👑 후원회원' : '일반회원'}
+                    {isSupporter ? '👑 사역 동참자' : '일반회원'}
                   </span>
                 </div>
               </div>
@@ -148,7 +148,7 @@ export default function AdvancedHeader() {
                   <button
                     onClick={() => { setShowMenu(false); router.push('/support') }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors"
-                    title="후원회원 전용 메뉴입니다"
+                    title="사역 동참자 전용 메뉴입니다"
                   >
                     <ScrollText className="w-3.5 h-3.5" />
                     <span>말씀연구실</span>

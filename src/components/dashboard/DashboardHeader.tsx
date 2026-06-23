@@ -63,7 +63,7 @@ export default function DashboardHeader() {
               ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30'
               : 'bg-white/5 text-slate-500 border border-white/5'
           }`}>
-            {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
+            {(plan === 'pro' || isSupporter) ? '👑 사역 동참자' : '일반회원'}
           </span>
         )}
 
@@ -98,7 +98,7 @@ export default function DashboardHeader() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
                           (plan === 'pro' || isSupporter) ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-slate-500'
                         }`}>
-                          {(plan === 'pro' || isSupporter) ? '👑 후원회원' : '일반회원'}
+                          {(plan === 'pro' || isSupporter) ? '👑 사역 동참자' : '일반회원'}
                         </span>
                       </div>
                     )}
