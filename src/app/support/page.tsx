@@ -1,7 +1,8 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Heart, ChevronRight, MessageCircle, Mail, Sparkles, Server, Cpu, ExternalLink, Quote, HandHeart } from 'lucide-react'
+import { Heart, ChevronRight, MessageCircle, Mail, Sparkles, Server, Cpu, ExternalLink, Quote, HandHeart, Check, X, Crown } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 
 const BENEFITS = [
@@ -49,8 +50,87 @@ const costData = [
   { label: '서버 인프라 (월)', amount: '약 50만원', icon: Server },
 ]
 
+type SupportTier = 'general' | 'supporter'
+
+const COMPARISON: Array<{
+  category: string
+  feature: string
+  note?: string
+  general: SupportTier | string
+  supporter: SupportTier | string
+}> = [
+  // 기본 기능
+  { category: '기본 기능', feature: 'AI 설교 원고 생성', note: '요약·소그룹·카드뉴스·PPT', general: 'check', supporter: 'check' },
+  { category: '기본 기능', feature: 'AI 사용량', general: '무제한', supporter: '무제한' },
+  { category: '기본 기능', feature: '설교 아카이브', general: 'check', supporter: 'check' },
+  { category: '기본 기능', feature: '데이터 보존', general: 'check', supporter: 'check' },
+  // 워크스페이스
+  { category: '워크스페이스', feature: '동시 프로젝트 수', general: '1개', supporter: '20개' },
+  { category: '워크스페이스', feature: '성경 정밀 연구 도구', general: 'cross', supporter: 'check' },
+  { category: '워크스페이스', feature: '말씀 연구실 (Advanced)', note: 'PrepTab·ManuscriptTab·연구 노트', general: 'cross', supporter: 'check' },
+  // AI 품질
+  { category: 'AI 품질', feature: '기본 AI 모델', general: 'check', supporter: 'check' },
+  { category: 'AI 품질', feature: '고급 AI 모델 우선 사용', general: 'cross', supporter: 'check' },
+  // 사역 동참자 전용
+  { category: '사역 동참자 전용', feature: '신규 기능 우선 접근', general: 'cross', supporter: 'check' },
+  { category: '사역 동참자 전용', feature: '기능 개발 의견 반영', general: 'cross', supporter: 'check' },
+  { category: '사역 동참자 전용', feature: '결제·환불 지원', general: 'check', supporter: 'check' },
+]
+
+function ComparisonCell({ value, tier }: { value: string; tier: 'general' | 'supporter' }) {
+  if (value === 'check') {
+    return (
+      <div className="flex items-center justify-center">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+          tier === 'supporter'
+            ? 'bg-amber-500/20 border border-amber-500/40'
+            : 'bg-emerald-500/15 border border-emerald-500/30'
+        }`}>
+          <Check className={`w-3.5 h-3.5 ${tier === 'supporter' ? 'text-amber-300' : 'text-emerald-300'}`} strokeWidth={3} />
+        </div>
+      </div>
+    )
+  }
+  if (value === 'cross') {
+    return (
+      <div className="flex items-center justify-center">
+        <X className="w-4 h-4 text-slate-600" strokeWidth={2.5} />
+      </div>
+    )
+  }
+  return (
+    <span className={`text-[12px] font-semibold tabular-nums ${
+      tier === 'supporter' ? 'text-amber-200' : 'text-slate-300'
+    }`}>{value}</span>
+  )
+}
+
 export default function SupportPage() {
   const { user } = useAuth()
+  const [isSupporter, setIsSupporter] = useState<boolean | null>(null)
+  const [supporterUntil, setSupporterUntil] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) {
+      setIsSupporter(null)
+      return
+    }
+    fetch('/api/usage')
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) return
+        setIsSupporter(!!d.supporter)
+        setSupporterUntil(d.supporter_until || null)
+      })
+      .catch(() => {})
+  }, [user])
+
+  // 카테고리별 그룹화
+  const groupedComparison = COMPARISON.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = []
+    acc[item.category].push(item)
+    return acc
+  }, {} as Record<string, typeof COMPARISON>)
 
   return (
     <div className="min-h-screen bg-[#050814] text-slate-100">
@@ -108,6 +188,144 @@ export default function SupportPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* 비교표 — 일반 vs 사역 동참자 */}
+        <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6 sm:p-8 mb-6 overflow-hidden">
+          <h2 className="text-[16px] font-bold text-white mb-2 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-rose-400" />
+            일반 회원 vs 사역 동참자
+          </h2>
+          <p className="text-[12px] text-slate-500 mb-5">
+            무료로도 충분합니다. 사역 동참자는 더 깊은 도구를 함께 쓰고 싶을 때 선택하세요.
+          </p>
+
+          {/* 현재 등급 표시 */}
+          {user && isSupporter !== null && (
+            <div className={`mb-5 px-4 py-3 rounded-xl border flex items-center gap-2.5 ${
+              isSupporter
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-indigo-500/10 border-indigo-500/30'
+            }`}>
+              {isSupporter ? (
+                <Crown className="w-4 h-4 text-amber-300" />
+              ) : (
+                <Heart className="w-4 h-4 text-indigo-300" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`text-[13px] font-bold ${isSupporter ? 'text-amber-200' : 'text-indigo-200'}`}>
+                  현재 회원님은 {isSupporter ? '사역 동참자' : '일반 회원'}입니다
+                </p>
+                {isSupporter && supporterUntil && (
+                  <p className="text-[11px] text-amber-300/70 mt-0.5">
+                    만료 예정: {new Date(supporterUntil).toLocaleDateString('ko-KR')}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 데스크톱 테이블 */}
+          <div className="hidden sm:block overflow-hidden rounded-2xl border border-white/[0.08]">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-white/[0.04]">
+                  <th className="text-left px-5 py-3.5 text-[12px] font-bold text-slate-400 w-[40%]">기능</th>
+                  <th className={`text-center px-4 py-3.5 text-[12px] font-bold w-[30%] ${
+                    user && isSupporter === false ? 'text-indigo-300 bg-indigo-500/[0.08]' : 'text-slate-400'
+                  }`}>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span>일반 회원</span>
+                      <span className="text-[10px] font-normal text-slate-500">무료</span>
+                    </div>
+                  </th>
+                  <th className={`text-center px-4 py-3.5 text-[12px] font-bold w-[30%] ${
+                    user && isSupporter === true ? 'text-amber-300 bg-amber-500/[0.08]' : 'text-slate-400'
+                  }`}>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="flex items-center gap-1">
+                        <Crown className="w-3 h-3" /> 사역 동참자
+                      </span>
+                      <span className="text-[10px] font-normal text-slate-500">월 10,000원~</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(groupedComparison).map(([category, items], catIdx) => (
+                  <React.Fragment key={category}>
+                    <tr>
+                      <td colSpan={3} className={`px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white/[0.02] ${
+                        catIdx > 0 ? 'border-t border-white/[0.04]' : ''
+                      }`}>
+                        {category}
+                      </td>
+                    </tr>
+                    {items.map((item, idx) => (
+                      <tr
+                        key={`${category}-${idx}`}
+                        className={`border-t border-white/[0.04] ${
+                          idx === items.length - 1 && catIdx === Object.keys(groupedComparison).length - 1
+                            ? ''
+                            : ''
+                        }`}
+                      >
+                        <td className="px-5 py-3">
+                          <p className="text-[13px] text-slate-200 font-medium">{item.feature}</p>
+                          {item.note && <p className="text-[10px] text-slate-500 mt-0.5">{item.note}</p>}
+                        </td>
+                        <td className={`px-4 py-3 text-center ${
+                          user && isSupporter === false ? 'bg-indigo-500/[0.05]' : ''
+                        }`}>
+                          <ComparisonCell value={item.general} tier="general" />
+                        </td>
+                        <td className={`px-4 py-3 text-center ${
+                          user && isSupporter === true ? 'bg-amber-500/[0.05]' : ''
+                        }`}>
+                          <ComparisonCell value={item.supporter} tier="supporter" />
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 모바일 카드 뷰 */}
+          <div className="sm:hidden space-y-4">
+            {Object.entries(groupedComparison).map(([category, items]) => (
+              <div key={category}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 px-1">
+                  {category}
+                </p>
+                <div className="rounded-xl border border-white/[0.06] divide-y divide-white/[0.04]">
+                  {items.map((item, idx) => (
+                    <div key={idx} className="p-3 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] text-slate-200 font-medium">{item.feature}</p>
+                        {item.note && <p className="text-[10px] text-slate-500 mt-0.5">{item.note}</p>}
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex flex-col items-center gap-0.5 min-w-[50px]">
+                          <span className="text-[9px] text-slate-500">일반</span>
+                          <ComparisonCell value={item.general} tier="general" />
+                        </div>
+                        <div className="flex flex-col items-center gap-0.5 min-w-[50px]">
+                          <span className="text-[9px] text-amber-400">동참</span>
+                          <ComparisonCell value={item.supporter} tier="supporter" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-slate-500 italic mt-4 text-center">
+            * 모든 기능은 사전 고지 없이 변경될 수 있습니다.
+          </p>
         </div>
 
         {/* 운영 투명성 */}
