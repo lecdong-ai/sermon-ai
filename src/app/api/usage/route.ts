@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { ensureUsage } from '@/lib/usage'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getLimitInfo, isActiveSupporter, getCurrentPeriod } from '@/lib/limits'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +49,14 @@ export async function GET(request: NextRequest) {
   const effectiveMonthlyLimit = supporterActive && usage.monthly_limit === 0 ? 10 : usage.monthly_limit
   const effectiveWorkspaceLimit = supporterActive && usage.workspace_limit === 0 ? 10 : usage.workspace_limit
 
+  // 한도 정보 조회 (Phase 1)
+  const [aiInfo, manualInfo, projectInfo, youtubeInfo] = await Promise.all([
+    getLimitInfo(user.id, 'ai_analysis'),
+    getLimitInfo(user.id, 'manual_sermon'),
+    getLimitInfo(user.id, 'project'),
+    getLimitInfo(user.id, 'youtube'),
+  ])
+
   return NextResponse.json({
     supporter: supporterActive,
     supporter_until,
@@ -56,5 +65,41 @@ export async function GET(request: NextRequest) {
     monthly_used: usage.monthly_used || 0,
     workspace_limit: effectiveWorkspaceLimit,
     workspace_used: usage.workspace_used || 0,
+    // Phase 1: 회원 등급별 한도 정보
+    limits: {
+      tier: aiInfo.tier,
+      inGracePeriod: !!(usage as any).grace_period_end && new Date((usage as any).grace_period_end) > new Date(),
+      gracePeriodEnd: (usage as any).grace_period_end || null,
+      resetAt: aiInfo.resetAt,
+      daysUntilReset: aiInfo.daysUntilReset,
+      actions: {
+        ai_analysis: {
+          current: aiInfo.current,
+          limit: aiInfo.limit,
+          remaining: aiInfo.remaining,
+          allowed: aiInfo.allowed,
+        },
+        manual_sermon: {
+          current: manualInfo.current,
+          limit: manualInfo.limit,
+          remaining: manualInfo.remaining,
+          allowed: manualInfo.allowed,
+        },
+        project: {
+          current: projectInfo.current,
+          limit: projectInfo.limit,
+          remaining: projectInfo.remaining,
+          allowed: projectInfo.allowed,
+          reason: projectInfo.reason,
+        },
+        youtube: {
+          current: youtubeInfo.current,
+          limit: youtubeInfo.limit,
+          remaining: youtubeInfo.remaining,
+          allowed: youtubeInfo.allowed,
+          reason: youtubeInfo.reason,
+        },
+      },
+    },
   })
 }

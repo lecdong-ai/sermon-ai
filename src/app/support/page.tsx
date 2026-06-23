@@ -59,18 +59,17 @@ const COMPARISON: Array<{
   general: SupportTier | string
   supporter: SupportTier | string
 }> = [
+  // 월간 한도 (Phase 1)
+  { category: '월간 한도 (30일 롤링)', feature: 'AI 분석 6종', note: '업로드한 설교 6종 자동 생성', general: '10편', supporter: '20편' },
+  { category: '월간 한도 (30일 롤링)', feature: '새 설교 등록', note: '본문 직접 입력', general: '10편', supporter: '20편' },
+  { category: '월간 한도 (30일 롤링)', feature: '말씀 연구실 (설교 프로젝트)', note: '성경 정밀 연구 + 원고 작성', general: '1편', supporter: '20편' },
+  { category: '월간 한도 (30일 롤링)', feature: '유튜브 연구소', note: '유튜브 설교 영상 분석', general: '1회', supporter: '10회' },
   // 기본 기능
-  { category: '기본 기능', feature: 'AI 설교 원고 생성', note: '요약·소그룹·카드뉴스·PPT', general: 'check', supporter: 'check' },
-  { category: '기본 기능', feature: 'AI 사용량', general: '무제한', supporter: '무제한' },
+  { category: '기본 기능', feature: 'AI 설교 원고 생성', note: '요약·소그룹·카드뉴스·PPT·설교 대본·쇼츠', general: 'check', supporter: 'check' },
   { category: '기본 기능', feature: '설교 아카이브', general: 'check', supporter: 'check' },
-  { category: '기본 기능', feature: '데이터 보존', general: 'check', supporter: 'check' },
+  { category: '기본 기능', feature: '데이터 보존', note: '한도 초과 시에도 영구 보존', general: 'check', supporter: 'check' },
   // 워크스페이스
   { category: '워크스페이스', feature: '동시 프로젝트 수', general: '1개', supporter: '20개' },
-  { category: '워크스페이스', feature: '성경 정밀 연구 도구', general: 'cross', supporter: 'check' },
-  { category: '워크스페이스', feature: '말씀 연구실 (Advanced)', note: 'PrepTab·ManuscriptTab·연구 노트', general: 'cross', supporter: 'check' },
-  // AI 품질
-  { category: 'AI 품질', feature: '기본 AI 모델', general: 'check', supporter: 'check' },
-  { category: 'AI 품질', feature: '고급 AI 모델 우선 사용', general: 'cross', supporter: 'check' },
   // 사역 동참자 전용
   { category: '사역 동참자 전용', feature: '신규 기능 우선 접근', general: 'cross', supporter: 'check' },
   { category: '사역 동참자 전용', feature: '기능 개발 의견 반영', general: 'cross', supporter: 'check' },
@@ -197,7 +196,7 @@ export default function SupportPage() {
             일반 회원 vs 사역 동참자
           </h2>
           <p className="text-[12px] text-slate-500 mb-5">
-            무료로도 충분합니다. 사역 동참자는 더 깊은 도구를 함께 쓰고 싶을 때 선택하세요.
+            한도는 가입일 기준 30일 단위로 리셋됩니다. 사역 동참자는 모든 한도가 2배 이상으로 늘어납니다.
           </p>
 
           {/* 현재 등급 표시 */}

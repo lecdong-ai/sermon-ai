@@ -21,6 +21,19 @@ interface UsageInfo {
   monthly_used: number
   workspace_limit: number
   workspace_used: number
+  limits?: {
+    tier: 'general' | 'supporter'
+    inGracePeriod: boolean
+    gracePeriodEnd: string | null
+    resetAt: string
+    daysUntilReset: number
+    actions: {
+      ai_analysis: { current: number; limit: number; remaining: number; allowed: boolean }
+      manual_sermon: { current: number; limit: number; remaining: number; allowed: boolean }
+      project: { current: number; limit: number; remaining: number; allowed: boolean }
+      youtube: { current: number; limit: number; remaining: number; allowed: boolean }
+    }
+  }
 }
 
 interface Profile {
@@ -359,44 +372,92 @@ export default function MyPage() {
           {/* 좌측: 큰 카드들 */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* 사용량 카드 — 등급별 무제한 안내 */}
+            {/* 사용량 카드 — 등급별 한도 안내 (Phase 1) */}
             <article className="rounded-2xl border border-white/[0.06] bg-white/[0.015] backdrop-blur-sm p-8">
               <header className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-2">
-                    AI 사용량 · {isSupporter ? '사역 동참자' : '일반회원'}
+                    이번 30일 사용량 · {isSupporter ? '사역 동참자' : '일반회원'}
                   </h2>
                   <p className="text-2xl font-light text-white">
-                    이번 달 <span className={`font-semibold ${isSupporter ? 'text-amber-300' : 'text-indigo-300'}`}>{usage?.monthly_used ?? 0}</span>
-                    <span className="text-slate-500 mx-2">회</span>
-                    <span className="text-[14px] text-slate-400">· 무제한</span>
+                    {usage?.limits ? (
+                      <>
+                        다음 리셋 <span className="font-semibold text-emerald-300">D-{usage.limits.daysUntilReset}</span>
+                        <span className="text-[14px] text-slate-400 ml-1">· 가입일 기준 30일</span>
+                      </>
+                    ) : (
+                      <span className="text-[14px] text-slate-400">한도 정보 없음</span>
+                    )}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">권한 범위</div>
-                  <div className="text-[12px] text-slate-300 font-medium">
-                    {isSupporter ? '모든 AI 기능 무제한' : 'AI 기능 무제한'}
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">등급</div>
+                  <div className={`text-[12px] font-medium ${
+                    isSupporter ? 'text-amber-300' : 'text-indigo-300'
+                  }`}>
+                    {usage?.limits?.inGracePeriod ? '유예 기간 · 기존 정책' : isSupporter ? '사역 동참자' : '일반회원'}
                   </div>
                 </div>
               </header>
 
-              {/* 활동 지표 — 막대 없이 깔끔하게 */}
-              <div className="grid grid-cols-2 gap-6 py-4 border-y border-white/[0.06]">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5">이번 달 호출</div>
-                  <div className="text-2xl font-extralight text-white tabular-nums">
-                    {usage?.monthly_used ?? 0}
-                    <span className="text-[11px] text-slate-500 ml-1.5">회</span>
-                  </div>
+              {/* 한도별 카운터 (Phase 1) */}
+              {usage?.limits && (
+                <div className="grid grid-cols-2 gap-3 py-4 border-y border-white/[0.06]">
+                  {[
+                    { key: 'ai_analysis', label: 'AI 분석 6종', note: '업로드 설교' },
+                    { key: 'manual_sermon', label: '새 설교 등록', note: 'manual' },
+                    { key: 'project', label: '말씀 연구실', note: '설교 프로젝트' },
+                    { key: 'youtube', label: '유튜브 연구소', note: '영상 분석' },
+                  ].map(item => {
+                    const a = usage.limits!.actions[item.key as keyof typeof usage.limits.actions]
+                    const isUnlimited = a.limit === -1
+                    const isZero = a.limit === 0
+                    const pct = !isUnlimited && a.limit > 0 ? Math.min(100, (a.current / a.limit) * 100) : 0
+                    const color = isZero
+                      ? 'text-amber-400'
+                      : isUnlimited
+                      ? 'text-blue-300'
+                      : pct >= 100
+                      ? 'text-rose-400'
+                      : pct >= 80
+                      ? 'text-amber-300'
+                      : isSupporter
+                      ? 'text-amber-300'
+                      : 'text-indigo-300'
+                    return (
+                      <div key={item.key} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">{item.label}</p>
+                        <p className="text-[10px] text-slate-600 mb-1.5">{item.note}</p>
+                        {isZero ? (
+                          <p className="text-[18px] font-extralight text-amber-400">사역 동참자 전용</p>
+                        ) : isUnlimited ? (
+                          <p className="text-[18px] font-extralight text-blue-300">무제한 · 유예 중</p>
+                        ) : (
+                          <>
+                            <p className={`text-[20px] font-extralight tabular-nums ${color}`}>
+                              {a.current}<span className="text-slate-600 text-[12px]"> / </span>{a.limit}
+                            </p>
+                            <div className="h-1 rounded-full bg-white/5 overflow-hidden mt-1.5">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  pct >= 100
+                                    ? 'bg-gradient-to-r from-rose-500 to-rose-400'
+                                    : pct >= 80
+                                    ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                                    : isSupporter
+                                    ? 'bg-gradient-to-r from-amber-500 to-rose-500'
+                                    : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                                }`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5">잔여 한도</div>
-                  <div className="text-2xl font-extralight text-emerald-300">
-                    ∞
-                    <span className="text-[11px] text-slate-500 ml-1.5">무제한</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* 워크스페이스 */}
               <div className="mt-6">
