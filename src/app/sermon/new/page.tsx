@@ -62,15 +62,15 @@ function SuggestionCard({ item, onPick }: { item: SuggestionItem; onPick: (value
     <button
       type="button"
       onClick={() => onPick(item.value)}
-      className="group w-full rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/90 to-white px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/5"
+      className="group w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:shadow-lg hover:shadow-indigo-500/20"
     >
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-indigo-200 bg-white text-indigo-400 transition-colors group-hover:border-indigo-400 group-hover:text-indigo-600">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-indigo-500/30 bg-indigo-500/15 text-indigo-300 transition-colors group-hover:border-indigo-400 group-hover:text-indigo-200">
           <Check className="h-3.5 w-3.5" />
         </span>
         <div className="min-w-0">
-          <span className="block text-[14px] font-bold text-slate-800">{item.value}</span>
-          <span className="mt-1 block text-[12px] leading-relaxed text-slate-500">{item.reason}</span>
+          <span className="block text-[14px] font-bold text-white">{item.value}</span>
+          <span className="mt-1 block text-[12px] leading-relaxed text-slate-400">{item.reason}</span>
         </div>
       </div>
     </button>
@@ -281,7 +281,7 @@ export default function NewSermonPage() {
             <div className="glass-dark rounded-[32px] border border-white/10 p-5 shadow-2xl shadow-indigo-500/10 sm:p-7">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[12px] font-bold text-indigo-600">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/15 px-3 py-1 text-[12px] font-bold text-indigo-300">
                     <Sparkles className="h-3.5 w-3.5" />
                     설교 시작 정보 입력
                   </div>
