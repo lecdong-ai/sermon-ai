@@ -1,5 +1,6 @@
 import Sidebar from '@/components/dashboard/Sidebar'
 import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import WelcomeModal from '@/components/dashboard/WelcomeModal'
 import { AppProvider } from '@/lib/dashboard/store'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
+      <WelcomeModal />
     </AppProvider>
   )
 }
