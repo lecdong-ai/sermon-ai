@@ -151,23 +151,17 @@ export default function NewProjectPage() {
           if (output.startsWith('```')) {
             output = output.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
           }
-          // Extract array from text (find first '[' and last ']')
-          const startIdx = output.indexOf('[')
-          const endIdx = output.lastIndexOf(']')
-          if (startIdx !== -1 && endIdx > startIdx) {
-            const jsonStr = output.slice(startIdx, endIdx + 1)
-            const parsed = JSON.parse(jsonStr)
-            console.log('[AI suggest] parsed array length:', Array.isArray(parsed) ? parsed.length : 'not array')
-            setSuggestions(Array.isArray(parsed) ? parsed : [])
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setToast({ kind: 'success', text: `AI 추천 제목 ${parsed.length}개를 가져왔습니다.` })
-            } else {
-              setToast({ kind: 'error', text: '추천된 제목이 없습니다. 직접 입력해주세요.' })
-            }
+          // Parse JSON object: { "titles": [...] }
+          const parsed = JSON.parse(output)
+          const titles = Array.isArray(parsed?.titles) ? parsed.titles
+            : Array.isArray(parsed) ? parsed
+            : []
+          console.log('[AI suggest] parsed titles:', titles.length)
+          setSuggestions(titles)
+          if (titles.length > 0) {
+            setToast({ kind: 'success', text: `AI 추천 제목 ${titles.length}개를 가져왔습니다.` })
           } else {
-            console.error('[AI suggest] No array found in output:', output)
-            setSuggestions([])
-            setToast({ kind: 'error', text: 'AI 응답을 파싱할 수 없습니다. 다시 시도해주세요.' })
+            setToast({ kind: 'error', text: '추천된 제목이 없습니다. 직접 입력해주세요.' })
           }
         } catch (e: any) {
           console.error('[AI suggest] parse error:', e)
@@ -300,6 +294,7 @@ export default function NewProjectPage() {
           audience,
           season,
           status: 'draft',
+          passages: passages.length > 0 ? passages : undefined,
         }),
       })
       if (res.ok) {

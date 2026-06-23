@@ -43,6 +43,7 @@ function toSermon(row: any) {
     relatedSermonIds: result.relatedSermonIds || [],
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
+    status: row.status || 'research',
     result: result,
     raw_text: row.raw_text || '',
     // B5: 다중 본문 (fallback to single)
@@ -142,17 +143,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .select()
       .single()
 
-    if (sermonError) throw sermonError
+    if (sermonError) {
+      console.error('[PUT] Supabase update error:', sermonError)
+      throw new Error(`DB 업데이트 실패: ${sermonError.message} (${sermonError.code || 'unknown'})`)
+    }
 
-    const { data: updatedSermon } = await supabaseAdmin
+    const { data: updatedSermon, error: selectError } = await supabaseAdmin
       .from('sermons')
       .select('*')
       .eq('id', params.id)
       .single()
 
+    if (selectError) {
+      console.error('[PUT] Supabase select error:', selectError)
+      throw new Error(`DB 조회 실패: ${selectError.message} (${selectError.code || 'unknown'})`)
+    }
+
     return NextResponse.json({ success: true, data: toSermon(updatedSermon || sermon) })
   } catch (err: any) {
-    console.error('PUT /api/sermons/[id] error:', err)
+    console.error('[PUT] /api/sermons/[id] error:', err)
     return NextResponse.json({ success: false, error: err.message || '수정 실패' }, { status: 500 })
   }
 }

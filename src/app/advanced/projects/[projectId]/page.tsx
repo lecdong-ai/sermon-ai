@@ -52,6 +52,7 @@ function ProjectContent() {
     if (detectedIdx > currentIdx) {
       autoSyncAttempted.current = true
       setSyncing(true)
+      const preUpdateStatus = project.status
       updateStatus(detectedStage)
       fetch(`/api/sermons/${params.projectId}`, {
         method: 'PUT',
@@ -62,7 +63,7 @@ function ProjectContent() {
           const json = await res.json().catch(() => ({}))
           // 로컬 프로젝트는 API에 없으므로 롤백하지 않음
           if (!json?.error?.includes('찾을 수 없습니다')) {
-            updateStatus(project.status)
+            updateStatus(preUpdateStatus)
           }
         }
         setTimeout(() => refetch(), 500)

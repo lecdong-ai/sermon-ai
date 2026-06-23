@@ -5,6 +5,7 @@ import { Atom, BookOpen, Church, Globe, History, Home, Lightbulb, Link2, Loader2
 import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
 import { useRouter } from 'next/navigation'
 import { ProjectDetail } from '@/lib/advanced/types'
+import { buildPassageContext } from '@/lib/advanced/passageContext'
 import { EMPTY_MANUSCRIPT } from '@/lib/advanced/johnManuscriptData'
 import type { SermonSection, IllustrationNote, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import { AppSectionHeader } from '@/components/advanced/shared'
@@ -903,8 +904,10 @@ export default function ManuscriptTab({ project }: Props) {
     const researchInsights = prepRaw?.researchInsights || []
     const passageStructure = prepRaw?.passageStructure || ''
 
+    const passageCtx = buildPassageContext(project)
     const payload: any = {
-      passage: project.passage,
+      passage: passageCtx.passage,
+      passageLabels: passageCtx.passageLabels,
       coreMessage: manuscript.coreMessage,
       sermonTitle: manuscript.title,
       sermonPurpose: manuscript.oneSentenceSummary,
@@ -1039,6 +1042,7 @@ export default function ManuscriptTab({ project }: Props) {
       alert('먼저 본문을 입력해주세요.')
       return
     }
+    const greekCtx = buildPassageContext(project)
     setAnalyzingGreek(true)
     try {
       const res = await fetch('/api/advanced/ai', {
@@ -1047,7 +1051,8 @@ export default function ManuscriptTab({ project }: Props) {
         body: JSON.stringify({
           type: 'greek-words-analyze',
           data: {
-            passage: project.passage,
+            passage: greekCtx.passage,
+            passageLabels: greekCtx.passageLabels,
             coreMessage: manuscript.coreMessage,
           },
         }),
@@ -1684,6 +1689,7 @@ export default function ManuscriptTab({ project }: Props) {
             <IllustrationNotesSection
               notes={manuscript.illustrationNotes}
               manuscript={manuscript}
+              project={project}
               onAdd={addIllustration}
               onDelete={deleteIllustration}
               onStatusChange={updateIllustrationStatus}
@@ -1694,6 +1700,7 @@ export default function ManuscriptTab({ project }: Props) {
             <ReferenceNotesSection
               notes={manuscript.referenceNotes}
               manuscript={manuscript}
+              project={project}
               onAdd={addReference}
               onDelete={deleteReference}
               onLinkToSection={updateReferenceLink}
@@ -2163,6 +2170,7 @@ function SermonSectionBlock({
 function IllustrationNotesSection({
   notes,
   manuscript,
+  project,
   onAdd,
   onDelete,
   onStatusChange,
@@ -2170,6 +2178,7 @@ function IllustrationNotesSection({
 }: {
   notes: IllustrationNote[]
   manuscript: JohnManuscriptData
+  project: ProjectDetail
   onAdd: (note: IllustrationNote) => void
   onDelete: (id: string) => void
   onStatusChange: (id: string, status: IllustrationNote['status']) => void
@@ -2201,6 +2210,7 @@ function IllustrationNotesSection({
     setAiSuggestions([])
     try {
       const activeSection = manuscript.sections.find(s => s.content.trim())
+      const illusCtx = buildPassageContext(project)
       const res = await fetch('/api/advanced/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2211,29 +2221,50 @@ function IllustrationNotesSection({
             sectionType: activeSection?.type || '',
             sectionLabel: activeSection?.label || '',
             coreMessage: manuscript.coreMessage,
-            passage: manuscript.passage,
+            passage: illusCtx.passage,
+            passageLabels: illusCtx.passageLabels,
             theme: manuscript.title,
           },
         }),
       })
       const json = await res.json()
-      if (json.success) {
-        const parsed = JSON.parse(json.data.output)
-        setAiSuggestions(parsed.map((item: any, i: number) => ({
-          id: `ill-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
-          title: item.title,
-          content: item.content,
-          status: '검토중' as const,
-          source: item.source || '',
-          category: item.category,
-          tags: item.tags || [],
-          relatedVerses: item.relatedVerses || [],
-          applicationTip: item.applicationTip || '',
-          linkedSectionId: activeSection?.id,
-        })))
+      if (!json.success) {
+        console.error('[illustration] API error:', json.error)
+        alert('AI 예화 추천에 실패했습니다: ' + (json.error || '알 수 없는 오류'))
+        return
       }
-    } catch { /* ignore */ }
-    setAiLoading(false)
+      let parsed = JSON.parse(json.data.output)
+      if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed) {
+        const found = Object.values(parsed).find(v => Array.isArray(v))
+        if (found) parsed = found
+      }
+      if (!Array.isArray(parsed)) {
+        console.error('[illustration] unexpected parsed shape:', parsed)
+        alert('AI 응답 형식이 예상과 다릅니다. 콘솔 로그를 확인해주세요.')
+        return
+      }
+      if (parsed.length === 0) {
+        alert('AI가 추천할 예화를 생성하지 못했습니다. 본문을 더 입력한 후 다시 시도해주세요.')
+        return
+      }
+      setAiSuggestions(parsed.map((item: any, i: number) => ({
+        id: `ill-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
+        title: String(item?.title ?? ''),
+        content: String(item?.content ?? ''),
+        status: '검토중' as const,
+        source: String(item?.source ?? ''),
+        category: String(item?.category?.name ?? item?.category ?? '일상'),
+        tags: Array.isArray(item?.tags) ? item.tags.filter((t: any) => typeof t === 'string') : [],
+        relatedVerses: Array.isArray(item?.relatedVerses) ? item.relatedVerses.filter((v: any) => typeof v === 'string') : [],
+        applicationTip: String(item?.applicationTip ?? ''),
+        linkedSectionId: activeSection?.id,
+      })))
+    } catch (e) {
+      console.error('[illustration] AI generate failed:', e)
+      alert('AI 예화 추천에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const handleAddManual = () => {
@@ -2281,19 +2312,23 @@ function IllustrationNotesSection({
       {/* Filters & Search */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-          {['all', '일상', '역사', '성경인물', '현대사례', '교회사', '과학/자연'].map(cat => (
+          {['all', '일상', '역사', '성경인물', '현대사례', '교회사', '과학/자연'].map(cat => {
+            const Icon = cat === 'all' ? null : categoryIcons[cat]
+            return (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap ${
+              className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 filterCategory === cat
                   ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
                   : 'bg-[#04060f]/60 border-white/5 text-slate-400 hover:border-white/20'
               }`}
             >
-              {cat === 'all' ? '전체' : `${categoryIcons[cat] || ''} ${cat}`}
+              {Icon ? <Icon className="w-3 h-3" /> : null}
+              {cat === 'all' ? '전체' : cat}
             </button>
-          ))}
+            )
+          })}
         </div>
         <input
           type="text"
@@ -2317,16 +2352,28 @@ function IllustrationNotesSection({
             </button>
           </div>
           <div className="space-y-3">
-            {aiSuggestions.map((note) => (
+            {aiSuggestions.map((note) => {
+              const safeTitle = typeof note.title === 'string' ? note.title : String(note.title ?? '')
+              const safeContent = typeof note.content === 'string' ? note.content : String(note.content ?? '')
+              const safeAppTip = typeof note.applicationTip === 'string' ? note.applicationTip : String(note.applicationTip ?? '')
+              const safeSource = typeof note.source === 'string' ? note.source : String(note.source ?? '')
+              const safeCat = typeof note.category === 'string' ? note.category : ((note.category as any)?.name ?? '일상')
+              const safeVerses: string[] = Array.isArray(note.relatedVerses)
+                ? (note.relatedVerses as any[]).map((v: any) => typeof v === 'string' ? v : String(v ?? '')).filter(Boolean)
+                : []
+              const safeTags: string[] = Array.isArray(note.tags)
+                ? (note.tags as any[]).map((t: any) => typeof t === 'string' ? t : String(t ?? '')).filter(Boolean)
+                : []
+              return (
               <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     {(() => {
-                      const Icon = categoryIcons[note.category as string] || Lightbulb
+                      const Icon = categoryIcons[safeCat] || Lightbulb
                       return <Icon className="w-4 h-4 text-slate-300" />
                     })()}
-                    <h4 className="text-sm font-medium text-white">{note.title}</h4>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">{note.category}</span>
+                    <h4 className="text-sm font-medium text-white">{safeTitle}</h4>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">{safeCat}</span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <select
@@ -2347,29 +2394,30 @@ function IllustrationNotesSection({
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
-                {note.applicationTip && (
+                <p className="text-xs text-slate-200 leading-relaxed mb-2">{safeContent}</p>
+                {safeAppTip && (
                   <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
-                    <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용 팁:</span> {note.applicationTip}
+                    <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용 팁:</span> {safeAppTip}
                   </p>
                 )}
-                {note.relatedVerses && note.relatedVerses.length > 0 && (
+                {safeVerses.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
-                    {note.relatedVerses.map((v, i) => (
+                    {safeVerses.map((v, i) => (
                       <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{v}</span>
                     ))}
                   </div>
                 )}
-                {note.tags && note.tags.length > 0 && (
+                {safeTags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {note.tags.map((t, i) => (
+                    {safeTags.map((t, i) => (
                       <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
                     ))}
                   </div>
                 )}
-                {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
+                {safeSource && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {safeSource}</p>}
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -2421,10 +2469,13 @@ function IllustrationNotesSection({
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-1">
                 {(() => {
-                  const Icon = categoryIcons[note.category as string] || Lightbulb
+                  const cat = typeof note.category === 'string' ? note.category : ((note.category as any)?.name ?? '일상')
+                  const Icon = categoryIcons[cat] || Lightbulb
                   return <Icon className="w-5 h-5 text-slate-300" />
                 })()}
-                <h4 className="text-sm font-medium text-white truncate">{note.title}</h4>
+                <h4 className="text-sm font-medium text-white truncate">
+                  {typeof note.title === 'string' ? note.title : String(note.title ?? '')}
+                </h4>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${statusColors[note.status]}`}>
                   {note.status}
                 </span>
@@ -2447,27 +2498,34 @@ function IllustrationNotesSection({
                 </button>
               </div>
             </div>
-            <p className="text-xs text-slate-200 leading-relaxed mb-2 line-clamp-3">{note.content}</p>
+            <p className="text-xs text-slate-200 leading-relaxed mb-2 line-clamp-3">
+              {typeof note.content === 'string' ? note.content : String(note.content ?? '')}
+            </p>
             {note.applicationTip && (
               <p className="text-[10px] text-green-400 mb-1.5 flex items-center gap-1">
-                <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용:</span> {note.applicationTip}
+                <span className="inline-flex items-center gap-1"><Lightbulb className="w-3 h-3" />적용:</span>
+                {typeof note.applicationTip === 'string' ? note.applicationTip : String(note.applicationTip ?? '')}
               </p>
             )}
-            {note.relatedVerses && note.relatedVerses.length > 0 && (
+            {note.relatedVerses && Array.isArray(note.relatedVerses) && note.relatedVerses.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-1">
-                {note.relatedVerses.map((v, i) => (
+                {note.relatedVerses.filter((v: any) => typeof v === 'string').map((v: string, i: number) => (
                   <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{v}</span>
                 ))}
               </div>
             )}
-            {note.tags && note.tags.length > 0 && (
+            {note.tags && Array.isArray(note.tags) && note.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
-                {note.tags.map((t, i) => (
+                {note.tags.filter((t: any) => typeof t === 'string').map((t: string, i: number) => (
                   <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
                 ))}
               </div>
             )}
-            {note.source && <p className="text-[10px] text-slate-500 mt-1.5 italic">— {note.source}</p>}
+            {note.source && (
+              <p className="text-[10px] text-slate-500 mt-1.5 italic">
+                — {typeof note.source === 'string' ? note.source : String(note.source ?? '')}
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -2480,12 +2538,14 @@ function IllustrationNotesSection({
 function ReferenceNotesSection({
   notes,
   manuscript,
+  project,
   onAdd,
   onDelete,
   onLinkToSection,
 }: {
   notes: ReferenceNote[]
   manuscript: JohnManuscriptData
+  project: ProjectDetail
   onAdd: (note: ReferenceNote) => void
   onDelete: (id: string) => void
   onLinkToSection: (noteId: string, sectionId: string | null) => void
@@ -2518,6 +2578,7 @@ function ReferenceNotesSection({
     setAiSuggestions([])
     try {
       const activeSection = manuscript.sections.find(s => s.content.trim())
+      const refCtx = buildPassageContext(project)
       const res = await fetch('/api/advanced/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2528,27 +2589,48 @@ function ReferenceNotesSection({
             sectionType: activeSection?.type || '',
             sectionLabel: activeSection?.label || '',
             coreMessage: manuscript.coreMessage,
-            passage: manuscript.passage,
+            passage: refCtx.passage,
+            passageLabels: refCtx.passageLabels,
             theme: manuscript.title,
           },
         }),
       })
       const json = await res.json()
-      if (json.success) {
-        const parsed = JSON.parse(json.data.output)
-        setAiSuggestions(parsed.map((item: any, i: number) => ({
-          id: `ref-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
-          title: item.title,
-          content: item.content,
-          category: item.category as ReferenceNote['category'],
-          author: item.author || '',
-          book: item.book || '',
-          tags: item.tags || [],
-          linkedSectionId: activeSection?.id,
-        })))
+      if (!json.success) {
+        console.error('[reference] API error:', json.error)
+        alert('AI 참고 메모 추천에 실패했습니다: ' + (json.error || '알 수 없는 오류'))
+        return
       }
-    } catch { /* ignore */ }
-    setAiLoading(false)
+      let parsed = JSON.parse(json.data.output)
+      if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed) {
+        const found = Object.values(parsed).find(v => Array.isArray(v))
+        if (found) parsed = found
+      }
+      if (!Array.isArray(parsed)) {
+        console.error('[reference] unexpected parsed shape:', parsed)
+        alert('AI 응답 형식이 예상과 다릅니다. 콘솔 로그를 확인해주세요.')
+        return
+      }
+      if (parsed.length === 0) {
+        alert('AI가 추천할 참고 메모를 생성하지 못했습니다. 본문을 더 입력한 후 다시 시도해주세요.')
+        return
+      }
+      setAiSuggestions(parsed.map((item: any, i: number) => ({
+        id: `ref-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
+        title: String(item?.title ?? ''),
+        content: String(item?.content ?? ''),
+        category: String(item?.category?.name ?? item?.category ?? 'commentary') as ReferenceNote['category'],
+        author: String(item?.author ?? ''),
+        book: String(item?.book ?? ''),
+        tags: Array.isArray(item?.tags) ? item.tags.filter((t: any) => typeof t === 'string') : [],
+        linkedSectionId: activeSection?.id,
+      })))
+    } catch (e) {
+      console.error('[reference] AI generate failed:', e)
+      alert('AI 참고 메모 추천에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const handleAddManual = () => {
@@ -2633,14 +2715,18 @@ function ReferenceNotesSection({
             </button>
           </div>
           <div className="space-y-3">
-            {aiSuggestions.map((note) => (
+            {aiSuggestions.map((note) => {
+              const noteCategory = typeof note.category === 'string' ? note.category : 'commentary'
+              return (
               <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
-                      {categoryLabels[note.category]}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[noteCategory]}`}>
+                      {categoryLabels[noteCategory]}
                     </span>
-                    <h4 className="text-sm font-medium text-white">{note.title}</h4>
+                    <h4 className="text-sm font-medium text-white">
+                      {typeof note.title === 'string' ? note.title : String(note.title ?? '')}
+                    </h4>
                   </div>
                   <button
                     onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
@@ -2649,21 +2735,25 @@ function ReferenceNotesSection({
                     저장
                   </button>
                 </div>
-                <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
+                <p className="text-xs text-slate-200 leading-relaxed mb-2">
+                  {typeof note.content === 'string' ? note.content : String(note.content ?? '')}
+                </p>
                 {note.author && (
                   <p className="text-[10px] text-slate-300 mb-1">
-                    👤 {note.author} {note.book ? `· 《${note.book}》` : ''}
+                    👤 {typeof note.author === 'string' ? note.author : String(note.author ?? '')}
+                    {note.book ? `· 《${typeof note.book === 'string' ? note.book : String(note.book ?? '')}》` : ''}
                   </p>
                 )}
-                {note.tags && note.tags.length > 0 && (
+                {note.tags && Array.isArray(note.tags) && note.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {note.tags.map((t, i) => (
+                    {note.tags.filter((t: any) => typeof t === 'string').map((t: string, i: number) => (
                       <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
                     ))}
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -2727,25 +2817,32 @@ function ReferenceNotesSection({
       )}
 
       <div className="space-y-2">
-        {filteredNotes.map(note => (
+        {filteredNotes.map(note => {
+          const noteCategory = typeof note.category === 'string' ? note.category : 'commentary'
+          return (
           <div key={note.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group hover:border-white/10 transition-colors">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[note.category]}`}>
-                    {categoryLabels[note.category]}
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${categoryColors[noteCategory]}`}>
+                    {categoryLabels[noteCategory]}
                   </span>
-                  <h4 className="text-sm font-medium text-white">{note.title}</h4>
+                  <h4 className="text-sm font-medium text-white">
+                    {typeof note.title === 'string' ? note.title : String(note.title ?? '')}
+                  </h4>
                 </div>
-                <p className="text-xs text-slate-200 leading-relaxed mb-1">{note.content}</p>
+                <p className="text-xs text-slate-200 leading-relaxed mb-1">
+                  {typeof note.content === 'string' ? note.content : String(note.content ?? '')}
+                </p>
                 {note.author && (
                   <p className="text-[10px] text-slate-400">
-                    👤 {note.author} {note.book ? `· 《${note.book}》` : ''}
+                    👤 {typeof note.author === 'string' ? note.author : String(note.author ?? '')}
+                    {note.book ? `· 《${typeof note.book === 'string' ? note.book : String(note.book ?? '')}》` : ''}
                   </p>
                 )}
-                {note.tags && note.tags.length > 0 && (
+                {note.tags && Array.isArray(note.tags) && note.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {note.tags.map((t, i) => (
+                    {note.tags.filter((t: any) => typeof t === 'string').map((t: string, i: number) => (
                       <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">#{t}</span>
                     ))}
                   </div>
@@ -2804,7 +2901,8 @@ function ReferenceNotesSection({
               </div>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

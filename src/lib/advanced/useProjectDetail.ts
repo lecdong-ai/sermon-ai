@@ -27,7 +27,7 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
       // 1. Load from API
       let apiProject: AdvancedProject | null = null
       try {
-        const res = await fetch(`/api/sermons/${projectId}`)
+        const res = await fetch(`/api/sermons/${projectId}`, { cache: 'no-store' })
         const json = await res.json()
         if (json.success) apiProject = json.data
       } catch {}
@@ -112,7 +112,7 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
         conclusion: prepData?.deliveryConclusion || manuscriptData?.sections?.find((s: any) => s.id === 'conclusion')?.content || '',
         applicationPoints: prepData?.applicationPoints?.map((a: any) =>
           `[${a.audienceTag || '전체'}] ${a.point}`
-        ) || manuscriptData?.sections?.find((s: any) => s.id === 'application')?.content ? [manuscriptData.sections.find((s: any) => s.id === 'application')!.content] : [],
+        ) || manuscriptData?.sections?.find((s: any) => s.id === 'application')?.content ? [manuscriptData?.sections?.find((s: any) => s.id === 'application')?.content ?? ''] : [],
         titleCandidates: prepData?.titleCandidates || (base as any).titleCandidates || [],
         manuscriptContent: manuscriptData?.sections?.map((s: any) => `## ${s.label}\n${s.content}`).join('\n\n') || '',
         observations: prepData?.researchInsights?.[0] || manuscriptData?.prepInsights?.[0] || '',

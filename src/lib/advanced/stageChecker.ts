@@ -138,7 +138,7 @@ export function detectCurrentStage(projectId: string, sermonResult?: SermonResul
   const manuscript = getStorageItem<any | null>(STORAGE_KEYS.manuscript(projectId), null)
 
   // 1. 원고 완료 확인 (review 단계)
-  const msSections = manuscript?.sections || []
+  const msSections = manuscript?.sections ?? []
   const msRaw = manuscript?.rawText || sermonResult?.manuscript || ''
   const hasFullManuscript = msSections.length >= 3 ||
     (msSections.length > 0 && msSections.every((s: any) => (s.content?.length || 0) > 50)) ||

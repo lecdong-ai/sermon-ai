@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { Anchor, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
+import { buildPassageContext } from '@/lib/advanced/passageContext'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import {
@@ -240,12 +241,13 @@ export default function BibleStudyTab({ project, passages }: Props) {
       setSelectedVerse(null)
       setSelectedTheme(null)
       setEnglishLookupLoading(true)
+      const ctx = buildPassageContext(project)
       fetch('/api/advanced/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'english-word',
-          data: { word: fallbackWord.word, context: project.passage },
+          data: { word: fallbackWord.word, context: ctx.passage, passageLabels: ctx.passageLabels },
         }),
       })
         .then(r => r.json())
@@ -275,12 +277,13 @@ export default function BibleStudyTab({ project, passages }: Props) {
       setSelectedVerse(null)
       setSelectedTheme(null)
       setLookupLoading(true)
+      const ctx2 = buildPassageContext(project)
       fetch('/api/advanced/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'word-lookup',
-          data: { word: fallbackWord.word, context: project.passage },
+          data: { word: fallbackWord.word, context: ctx2.passage, passageLabels: ctx2.passageLabels },
         }),
       })
         .then(r => r.json())

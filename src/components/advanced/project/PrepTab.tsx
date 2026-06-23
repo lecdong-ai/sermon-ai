@@ -2,8 +2,9 @@
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, Plus, X, Users, Settings2 } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Users, Settings2, Check, RefreshCw, MessageSquare } from 'lucide-react'
 import { ProjectDetail, CongregationProfile, DEFAULT_CONGREGATION_PROFILE, AGE_GROUP_OPTIONS, FAITH_MATURITY_OPTIONS } from '@/lib/advanced/types'
+import { buildPassageContext } from '@/lib/advanced/passageContext'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import type { PrepVersion } from '@/lib/advanced/johnVersionData'
@@ -244,6 +245,7 @@ export default function PrepTab({ project }: Props) {
   const generateOutlines = useCallback(() => {
     setOutlineLoading(true)
     setOutlineCandidates(null)
+    const ctx = buildPassageContext(project)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -254,7 +256,8 @@ export default function PrepTab({ project }: Props) {
           chapter: String(project.chapter),
           verseStart: String(project.verseStart),
           verseEnd: project.verseEnd ? String(project.verseEnd) : undefined,
-          passage: project.passage,
+          passage: ctx.passage,
+          passageLabels: ctx.passageLabels,
           passageStructure: prepData.passageStructure,
           keyWords: prepData.keyWords,
           researchInsights: prepData.researchInsights,
@@ -631,13 +634,15 @@ function DirectionSection({
   const generateCoreMessages = useCallback(() => {
     setLoadingCore(true)
     setCoreCandidates(null)
+    const ctx = buildPassageContext(project)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'core-message',
         data: {
-          passage: project.passage,
+          passage: ctx.passage,
+          passageLabels: ctx.passageLabels,
           book: project.book,
           chapter: String(project.chapter),
           verseStart: String(project.verseStart),
@@ -665,7 +670,7 @@ function DirectionSection({
 
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-indigo-500 pl-5 ${isActive ? 'bg-indigo-500/[0.07] -mx-5 px-5 py-4 rounded-xl' : ''}`}>
+      className={`border-l-4 border-l-indigo-500 pl-5 ${isActive ? 'bg-indigo-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
         <span className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold flex items-center justify-center">1</span>
         <h3 className="text-base font-semibold text-white">설교 방향</h3>
@@ -1143,13 +1148,15 @@ function ApplicationSection({
     setGenStep('loading-directions')
     setDirectionCandidates(null)
     setSelectedCandidate(null)
+    const ctx = buildPassageContext(project)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'application-direction',
         data: {
-          passage: project.passage,
+          passage: ctx.passage,
+          passageLabels: ctx.passageLabels,
           coreMessage: prepData.coreMessage,
           outlines: prepData.outlines,
           congregationProfile,
@@ -1174,13 +1181,15 @@ function ApplicationSection({
     setGenStep('loading-points')
     const candidate = directionCandidates?.[candidateIndex]
     if (!candidate) { setGenStep('idle'); return }
+    const ctx = buildPassageContext(project)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'application-generate',
         data: {
-          passage: project.passage,
+          passage: ctx.passage,
+          passageLabels: ctx.passageLabels,
           coreMessage: prepData.coreMessage,
           outlines: prepData.outlines,
           congregationProfile,
@@ -1228,26 +1237,28 @@ function ApplicationSection({
   }, [])
 
   const hasProfile = congregationProfile.dominantAgeGroups.length > 0
+  const profileExtraCount = [
+    congregationProfile.churchContext,
+    congregationProfile.pastoralPriorities,
+    congregationProfile.seasonNote,
+  ].filter(Boolean).length
 
   return (
     <div ref={sectionRef} onClick={onActivate}
-      className={`border-l-4 border-l-blue-400 pl-5 ${isActive ? 'bg-blue-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
+      className={`border-l-4 border-l-sky-400 pl-5 ${isActive ? 'bg-sky-500/10 -mx-5 px-5 py-4 rounded-xl' : ''}`}>
       <div className="flex items-center gap-2 mb-5">
-        <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-300 text-xs font-bold flex items-center justify-center">4</span>
+        <span className="w-6 h-6 rounded-full bg-sky-500/10 text-sky-300 text-xs font-bold flex items-center justify-center">4</span>
         <h3 className="text-base font-semibold text-white">적용과 회중 연결</h3>
         <span className="text-[10px] text-slate-500 ml-auto">말씀이 오늘의 회중에게 어떻게 들려야 하는가</span>
       </div>
 
       {/* Congregation Profile Banner */}
-      <div className={`rounded-xl p-3 mb-4 border transition-colors ${
-        hasProfile
-          ? 'bg-blue-500/10 border-blue-500/20'
-          : 'bg-amber-500/10 border-amber-500/20'
-      }`}>
+      <div className="rounded-xl p-3 mb-5 border bg-sky-500/10 border-sky-500/20 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-3.5 h-3.5 text-blue-300" />
-            <span className="text-[10px] font-semibold text-blue-300 uppercase tracking-widest">회중 프로필</span>
+            <Users className="w-3.5 h-3.5 text-sky-300" />
+            <span className="text-[10px] font-semibold text-sky-300 uppercase tracking-widest">회중 프로필</span>
+            <span className="text-[10px] text-slate-500">AI 적용 정확도 향상</span>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); setShowProfileEditor(true) }}
@@ -1258,24 +1269,29 @@ function ApplicationSection({
           </button>
         </div>
         {hasProfile ? (
-          <div className="mt-2 text-[11px] text-slate-300 leading-relaxed">
+          <div className="mt-2.5 text-[11px] text-slate-300 leading-relaxed space-y-1">
             <p>연령대: {congregationProfile.dominantAgeGroups.join(', ')}</p>
             <p>신앙 수준: {FAITH_MATURITY_OPTIONS.find(o => o.value === congregationProfile.faithMaturity)?.label || congregationProfile.faithMaturity}</p>
             {congregationProfile.churchContext && <p>교회 상황: {congregationProfile.churchContext}</p>}
+            {congregationProfile.pastoralPriorities && <p>목회 우선순위: {congregationProfile.pastoralPriorities}</p>}
+            {congregationProfile.seasonNote && <p>시즌 특이사항: {congregationProfile.seasonNote}</p>}
+            {profileExtraCount > 0 && (
+              <p className="text-[10px] text-sky-400/80 pt-0.5">+ {profileExtraCount}개 추가 정보</p>
+            )}
           </div>
         ) : (
-          <p className="mt-2 text-[11px] text-amber-300">회중 프로필을 설정하면 AI가 더 정확한 적용을 생성할 수 있습니다</p>
+          <p className="mt-2.5 text-[11px] text-sky-300/80">회중 정보를 입력하면 AI가 더 정교한 적용 포인트를 생성합니다</p>
         )}
       </div>
 
       {/* AI Application Generation */}
       {genStep === 'idle' && !directionCandidates && (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5">
           <span className="text-xs text-slate-500">{points.length}개 적용 포인트</span>
           <div className="flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); generateDirections() }}
-              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 hover:text-blue-200 transition-colors border border-blue-500/20"
+              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 hover:text-sky-200 transition-colors border border-sky-500/20"
             >
               <Sparkles className="w-3 h-3" />
               AI 적용 생성
@@ -1286,7 +1302,7 @@ function ApplicationSection({
                 const newId = `app-${Date.now()}`
                 onSetPoints([...points, { id: newId, point: '', audienceTag: '', pastoralNote: '' }])
               }}
-              className="flex items-center gap-1 text-[10px] px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/5"
             >
               <Plus className="w-3 h-3" />
               수동 추가
@@ -1297,18 +1313,18 @@ function ApplicationSection({
 
       {/* Loading Directions */}
       {genStep === 'loading-directions' && (
-        <div className="flex items-center gap-2 py-6 justify-center">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+        <div className="flex items-center gap-2 py-8 justify-center bg-[#04060f]/40 rounded-xl border border-dashed border-white/10 mb-5">
+          <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
           <span className="text-xs text-slate-400">회중 프로필과 본문을 분석해 적용 방향을 생성 중...</span>
         </div>
       )}
 
       {/* Direction Selection */}
       {directionCandidates && directionCandidates.length > 0 && genStep === 'selecting' && (
-        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-indigo-500/5 border border-blue-500/20">
+        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-sky-500/5 to-indigo-500/5 border border-sky-500/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-400" />
+              <Sparkles className="w-4 h-4 text-sky-400" />
               <span className="text-xs font-bold text-white">적용 방향을 선택하세요</span>
             </div>
             <button
@@ -1323,21 +1339,20 @@ function ApplicationSection({
               <button
                 key={i}
                 onClick={(e) => { e.stopPropagation(); confirmDirections(i) }}
-                disabled={false}
-                className="text-left p-3 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all group disabled:opacity-50"
+                className="text-left p-3 rounded-xl bg-[#04060f]/80 border border-white/10 hover:border-sky-500/40 hover:bg-sky-500/5 transition-all group disabled:opacity-50 overflow-hidden"
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-bold flex items-center justify-center">
+                  <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
-                  <span className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">{c.styleTitle}</span>
+                  <span className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors break-words">{c.styleTitle}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mb-2">{c.styleDescription}</p>
+                <p className="text-[10px] text-slate-500 mb-2 break-words">{c.styleDescription}</p>
                 <div className="space-y-1">
                   {c.directions.map((d, di) => (
-                    <div key={di} className="flex items-center gap-1.5 text-[9px]">
-                      <span className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-300 shrink-0">{d.audienceTag}</span>
-                      <span className="text-slate-400">{d.direction}</span>
+                    <div key={di} className="flex items-start gap-1.5 text-[9px]">
+                      <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 shrink-0 whitespace-nowrap">{d.audienceTag}</span>
+                      <span className="text-slate-400 break-words">{d.direction}</span>
                     </div>
                   ))}
                 </div>
@@ -1349,7 +1364,7 @@ function ApplicationSection({
 
       {/* Loading Points */}
       {genStep === 'loading-points' && (
-        <div className="flex items-center gap-2 py-6 justify-center">
+        <div className="flex items-center gap-2 py-8 justify-center bg-[#04060f]/40 rounded-xl border border-dashed border-white/10 mb-5">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
           <span className="text-xs text-slate-400">선택한 방향으로 구체적인 적용 포인트를 생성 중...</span>
         </div>
@@ -1357,12 +1372,12 @@ function ApplicationSection({
 
       {/* Review Generated Points */}
       {genStep === 'review-points' && pendingPoints.length > 0 && (
-        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-indigo-500/5 to-blue-500/5 border border-indigo-500/20">
+        <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-indigo-500/5 to-sky-500/5 border border-indigo-500/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-400" />
               <span className="text-xs font-bold text-white">생성된 적용 포인트</span>
-              <span className="text-[10px] text-slate-500">({pendingPoints.length}개)</span>
+              <span className="text-xs text-slate-500">({pendingPoints.length}개)</span>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); setGenStep('idle'); setDirectionCandidates(null); setSelectedCandidate(null); setPendingPoints([]) }}
@@ -1417,16 +1432,14 @@ function ApplicationSection({
                       : 'border-white/20'
                   }`}>
                     {selectedPendingIds.has(app.id) && (
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-300 text-[9px] font-bold flex items-center justify-center">{i + 1}</span>
                       {app.audienceTag && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">{app.audienceTag}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300">{app.audienceTag}</span>
                       )}
                     </div>
                     <p className="text-xs text-slate-100 leading-relaxed font-serif">{app.point}</p>
@@ -1484,26 +1497,28 @@ function ApplicationSection({
         {points.map((app, i) => (
           <div key={app.id} className="bg-[#04060f]/60 rounded-xl border border-white/5 p-4 group">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-300 text-[10px] font-medium flex items-center justify-center shrink-0">
+              <span className="w-6 h-6 rounded-full bg-sky-500/10 text-sky-300 text-xs font-bold flex items-center justify-center shrink-0">
                 {i + 1}
               </span>
               <input
                 value={app.audienceTag}
                 onChange={e => onUpdate(app.id, 'audienceTag', e.target.value)}
-                className="text-[10px] font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5 outline-none focus:border-blue-500/30"
+                className="text-xs font-medium text-sky-300 bg-sky-500/10 border border-sky-500/20 rounded-lg px-2.5 py-1 outline-none focus:border-sky-500/30 transition-colors"
                 placeholder="대상 그룹"
               />
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   setGenStep('loading-points')
+                  const ctx = buildPassageContext(project)
                   fetch('/api/advanced/ai', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       type: 'application-generate',
                       data: {
-                        passage: project.passage,
+                        passage: ctx.passage,
+                        passageLabels: ctx.passageLabels,
                         coreMessage: prepData.coreMessage,
                         outlines: prepData.outlines,
                         congregationProfile,
@@ -1535,12 +1550,10 @@ function ApplicationSection({
                     })
                     .catch(() => setGenStep('idle'))
                 }}
-                className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+                className="ml-auto p-1.5 rounded hover:bg-white/10 text-slate-500 hover:text-sky-300 transition-colors opacity-40 group-hover:opacity-100"
                 title="이 포인트 다시 생성"
               >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </div>
             <textarea
@@ -1552,9 +1565,7 @@ function ApplicationSection({
             />
             <div className="mt-2 pt-2 border-t border-white/5">
               <div className="flex items-start gap-1.5">
-                <svg className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
+                <MessageSquare className="w-3 h-3 text-slate-500 shrink-0 mt-1.5" />
                 <textarea
                   value={app.pastoralNote}
                   onChange={e => onUpdate(app.id, 'pastoralNote', e.target.value)}
@@ -1604,12 +1615,12 @@ function CongregationProfileEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="w-full max-w-lg bg-[#0a0e1a] border border-white/10 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-400" />
+            <Users className="w-4 h-4 text-sky-400" />
             <h3 className="text-sm font-bold text-white">회중 프로필 설정</h3>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white transition-colors">
@@ -1628,7 +1639,7 @@ function CongregationProfileEditor({
                   onClick={() => toggleAgeGroup(group)}
                   className={`text-[10px] px-2.5 py-1.5 rounded-lg border transition-colors ${
                     local.dominantAgeGroups.includes(group)
-                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                      ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
                       : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -1648,7 +1659,7 @@ function CongregationProfileEditor({
                   onClick={() => setLocal(prev => ({ ...prev, faithMaturity: opt.value as CongregationProfile['faithMaturity'] }))}
                   className={`text-[10px] px-2.5 py-1.5 rounded-lg border transition-colors ${
                     local.faithMaturity === opt.value
-                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                      ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
                       : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -1664,7 +1675,7 @@ function CongregationProfileEditor({
             <textarea
               value={local.churchContext}
               onChange={e => setLocal(prev => ({ ...prev, churchContext: e.target.value }))}
-              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-sky-500/30 transition-colors leading-relaxed"
               placeholder="예: 도심형 대형교회, 농촌 소형교회, 개척 3년차, 교회 분열 중..."
               rows={2}
             />
@@ -1676,7 +1687,7 @@ function CongregationProfileEditor({
             <textarea
               value={local.pastoralPriorities}
               onChange={e => setLocal(prev => ({ ...prev, pastoralPriorities: e.target.value }))}
-              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-sky-500/30 transition-colors leading-relaxed"
               placeholder="예: 제자양육 중심, 전도와 부흥, 성도 간 회복과 화해..."
               rows={2}
             />
@@ -1688,7 +1699,7 @@ function CongregationProfileEditor({
             <textarea
               value={local.seasonNote}
               onChange={e => setLocal(prev => ({ ...prev, seasonNote: e.target.value }))}
-              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-blue-500/30 transition-colors leading-relaxed"
+              className="w-full min-h-[60px] text-xs text-slate-200 bg-[#04060f]/60 rounded-xl border border-white/5 p-3 outline-none resize-none focus:border-sky-500/30 transition-colors leading-relaxed"
               placeholder="예: 사순절, 부활절, 추수감사절, 교회 창립기념일, 성탄절..."
               rows={2}
             />
@@ -1705,7 +1716,7 @@ function CongregationProfileEditor({
           </button>
           <button
             onClick={() => onSave(local)}
-            className="text-[11px] px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-medium"
+            className="text-[11px] px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white transition-colors font-medium"
           >
             저장
           </button>
@@ -1733,13 +1744,15 @@ function DeliverySection({
   const generateBlueprints = useCallback(() => {
     setLoading(true)
     setCandidates(null)
+    const ctx = buildPassageContext(project)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'delivery',
         data: {
-          passage: project.passage,
+          passage: ctx.passage,
+          passageLabels: ctx.passageLabels,
           coreMessage: data.coreMessage,
           outlines: data.outlines,
           applicationPoints: data.applicationPoints,
