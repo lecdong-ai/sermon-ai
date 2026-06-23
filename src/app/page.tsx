@@ -498,7 +498,145 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7. 신뢰성 및 한도 안내 섹션 (Tip) */}
+      {/* 7. 일반 회원 무료 가치 섹션 */}
+      <section className="relative pb-24 sm:pb-32 z-10">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+          <div className="reveal relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent p-8 sm:p-12">
+            {/* 배경 글로우 */}
+            <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-cyan-500/8 blur-3xl" />
+
+            <div className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10 items-center">
+              {/* 좌측: 헤드라인 + CTA */}
+              <div className="lg:col-span-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold mb-4">
+                  <Sparkles className="w-3 h-3" />
+                  평생 무료 · 카드 등록 없음
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold text-white leading-[1.25] tracking-tight">
+                  지금 가입하면
+                  <br />
+                  <span className="bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent">
+                    무료로 바로
+                  </span>
+                  <br />
+                  시작할 수 있어요
+                </h2>
+                <p className="text-[14px] text-slate-300 leading-relaxed mt-4">
+                  이메일과 비밀번호만 있으면 30초 안에 가입 완료.
+                  <br className="hidden sm:block" />
+                  아래 모든 기능을 <strong className="text-emerald-300">후원 없이</strong> 평생 무료로 사용하실 수 있습니다.
+                </p>
+                {!user && (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Link
+                      href="/login?redirect=/"
+                      className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-[14px] shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+                    >
+                      30초 만에 무료 가입
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    <Link
+                      href="/preview"
+                      className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold text-[13px] hover:bg-white/10 hover:text-white transition-all"
+                    >
+                      먼저 구경하기
+                    </Link>
+                  </div>
+                )}
+                {user && (
+                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30">
+                    <CheckCircle className="w-4 h-4 text-emerald-300" strokeWidth={2.5} />
+                    <span className="text-[13px] font-bold text-emerald-200">이미 가입되어 있습니다</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 우측: 6가지 무료 혜택 그리드 */}
+              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  {
+                    icon: FileText,
+                    title: 'AI 설교 원고 6종 자동 생성',
+                    desc: '요약 · 소그룹 · 카드뉴스 · PPT · QT · 설교 질문',
+                    color: 'from-indigo-500 to-blue-500',
+                  },
+                  {
+                    icon: Upload,
+                    title: 'PDF / DOCX 업로드',
+                    desc: '최대 20MB · 다양한 포맷 즉시 파싱',
+                    color: 'from-purple-500 to-pink-500',
+                  },
+                  {
+                    icon: HardDrive,
+                    title: '설교 아카이브 영구 보존',
+                    desc: '작성한 모든 콘텐츠 클라우드 보관',
+                    color: 'from-cyan-500 to-blue-500',
+                  },
+                  {
+                    icon: BrainCircuit,
+                    title: 'AI 사용량 무제한',
+                    desc: '횟수 제한 없이 자유롭게 사용',
+                    color: 'from-emerald-500 to-teal-500',
+                  },
+                  {
+                    icon: LayoutDashboard,
+                    title: '대시보드 · 통계 · 시리즈',
+                    desc: '설교 흐름 한눈에 관리',
+                    color: 'from-amber-500 to-orange-500',
+                  },
+                  {
+                    icon: FileCheck,
+                    title: '통찰 노트 + 검색',
+                    desc: '묵상과 아이디어 영구 저장 · 키워드 검색',
+                    color: 'from-rose-500 to-pink-500',
+                  },
+                ].map((item, idx) => {
+                  const Icon = item.icon
+                  return (
+                    <div
+                      key={idx}
+                      className="group relative p-4 sm:p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.06] transition-all duration-200"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 shadow-md`}>
+                          <Icon className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-[13.5px] font-bold text-white leading-snug">{item.title}</h4>
+                          <p className="text-[11.5px] text-slate-400 mt-1 leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 하단 강조 메시지 */}
+            <div className="relative mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
+              <div className="flex items-center gap-2 text-[12px] text-slate-400">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                <span>신용카드 등록 없음</span>
+              </div>
+              <div className="flex items-center gap-2 text-[12px] text-slate-400">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                <span>자동 결제 없음</span>
+              </div>
+              <div className="flex items-center gap-2 text-[12px] text-slate-400">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                <span>언제든 탈퇴 가능</span>
+              </div>
+              <div className="flex items-center gap-2 text-[12px] text-emerald-300 sm:ml-auto font-semibold">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>30일 체험 카드 같은 숨은 비용도 없어요</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. 신뢰성 및 한도 안내 섹션 (Tip) */}
       <section className="relative pb-24 sm:pb-32 z-10">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <div className="reveal rounded-3xl glass-dark border border-white/5 p-6 sm:p-8">
@@ -529,7 +667,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8. 신뢰 구역 (Testimonials) */}
+      {/* 9. 신뢰 구역 (Testimonials) */}
       <section className="relative pb-24 sm:pb-36 z-10">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-12">
