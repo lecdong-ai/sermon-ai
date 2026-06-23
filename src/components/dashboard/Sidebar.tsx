@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import UsagePanel from './UsagePanel'
 
 const MENUS = [
   { key: 'dashboard', label: '대시보드', icon: '◈', href: '/dashboard' },
@@ -82,6 +83,7 @@ export default function Sidebar() {
         </p>
       </div>
       <SupporterBadge />
+      <UsagePanel />
       <nav className="flex-1 py-3 overflow-y-auto">
         {MENUS.map((menu) => {
           const isActive =

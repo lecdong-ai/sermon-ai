@@ -184,6 +184,12 @@
   .animate-modal-in {
     animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  .animate-pulse-soft {
+    animation: pulseSoft 2.4s ease-in-out infinite;
+  }
+  .animate-pulse-strong {
+    animation: pulseStrong 1.2s ease-in-out infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -199,6 +205,16 @@
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes pulseStrong {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.06); }
 }
 
 /* ─── Advanced Dashboard Design System ─── */
