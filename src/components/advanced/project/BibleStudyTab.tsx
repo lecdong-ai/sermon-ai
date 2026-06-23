@@ -87,7 +87,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
 
   const currentPassage = passages && passages.length > 1 ? passages[selectedPassageIndex] : null
   const activeBook = currentPassage?.book || project.book
-  const activeChapter = currentPassage?.chapter ?? project.chapter
+  const activeChapter = currentPassage?.chapter ?? (currentPassage as any)?.chapterStart ?? project.chapter
   const activeVerseStart = currentPassage?.verseStart ?? project.verseStart
   const activeVerseEnd = currentPassage?.verseEnd ?? project.verseEnd
   const activePassageDisplay = currentPassage?.passage || project.passage
@@ -169,7 +169,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setStorageItem(`manuscript_${project.id}`, { ...updated, _savedAt: Date.now() })
   }, [project.id])
 
-  const passageKey = `${activeBook}_${activeChapter}`
+  const passageKey = `${activeBook}_${activeChapter}_${activeVerseStart}-${activeVerseEnd || activeVerseStart}`
 
   const studyData = useMemo(() => {
     const registered = getStudyData(activeBook, activeChapter)

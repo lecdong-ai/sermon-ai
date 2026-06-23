@@ -103,7 +103,11 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
         studyCount: (base as any).studyCount || 0,
         passages: ((base as any).passages || []).map((p: any) => ({
           ...p,
-          passage: p.passage || p.label || '',
+          book: p.book ?? p.bibleBook ?? '',
+          chapter: p.chapter ?? p.chapterStart ?? 0,
+          verseStart: p.verseStart ?? p.verseStart_ ?? 1,
+          verseEnd: p.verseEnd ?? p.verseEnd_ ?? null,
+          passage: p.passage ?? p.label ?? '',
         })),
         themeNames: (base as any).themeNames || [],
         tagNames: (base as any).tagNames || [],
