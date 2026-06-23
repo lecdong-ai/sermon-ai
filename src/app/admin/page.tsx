@@ -5,6 +5,7 @@ import {
   Users, Heart, Search, Loader2, Check, X, ChevronUp, ChevronDown,
   TrendingUp, BookOpen, UserPlus, Clock, Activity, ArrowUpRight,
 } from 'lucide-react'
+import VisitorCounter from '@/components/admin/VisitorCounter'
 
 interface SupporterUser {
   id: string
@@ -249,6 +250,9 @@ export default function AdminCenterPage() {
           {message.text}
         </div>
       )}
+
+      {/* 방문자 분석 카운터 */}
+      <VisitorCounter />
 
       {/* 히어로 메트릭 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
