@@ -393,64 +393,6 @@ export default function PrepTab({ project }: Props) {
         onGoToManuscript={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
       />
 
-      {/* ─── Research Memo (handoff from Study tab, per-passage) ─── */}
-      {Object.values(prepData.memosByPassage || {}).some(m => m.text?.trim() || (m.tags?.length || 0) > 0) && (
-        <div className="px-6 pt-4 pb-3 border-b border-white/5">
-          <div className="max-w-[1100px] mx-auto">
-            <div className="flex items-center gap-1.5 mb-3">
-              <FileText className="w-3 h-3 text-amber-300" />
-              <span className="text-[10px] font-semibold text-amber-300/80 uppercase tracking-widest">본문 연구 메모</span>
-              <span className="text-[10px] text-slate-500">· 연구 탭에서 가져옴</span>
-            </div>
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {Object.entries(prepData.memosByPassage).map(([key, m]) => {
-                if (!m.text?.trim() && !(m.tags?.length || 0)) return null
-                return (
-                  <div key={key} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <BookOpen className="w-3 h-3 text-indigo-300" />
-                      <span className="text-[11px] font-bold text-indigo-200">{m.label || '본문'}</span>
-                    </div>
-                    {m.text?.trim() && (
-                      <p className="text-[11.5px] text-slate-300 leading-relaxed line-clamp-4 whitespace-pre-wrap">
-                        {m.text}
-                      </p>
-                    )}
-                    {m.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {m.tags.map((t, i) => (
-                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── 본문 연구 결과 (study cache 직접 읽기, handoff 불필요) ─── */}
-      {Object.keys(cachedStudies).length > 0 && (
-        <div className="px-6 pt-4 pb-3 border-b border-white/5">
-          <div className="max-w-[1100px] mx-auto">
-            <div className="flex items-center gap-1.5 mb-3">
-              <Sparkles className="w-3 h-3 text-cyan-300" />
-              <span className="text-[10px] font-semibold text-cyan-300/80 uppercase tracking-widest">본문 연구 결과</span>
-              <span className="text-[10px] text-slate-500">· 성경연구 탭 분석 결과</span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {Object.entries(cachedStudies).map(([cacheKey, { label, data }]) => (
-                <StudyResultCard key={cacheKey} label={label} data={data} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-1 min-h-0 border-t border-white/5">
         {/* ─── Left: Section Navigator (sticky) ─── */}
         <PrepNavigator
@@ -463,6 +405,60 @@ export default function PrepTab({ project }: Props) {
         {/* ─── Center: Main Prep Content ─── */}
         <div className="flex-1 overflow-y-auto scrollbar-thin bg-[#04060f]/60">
           <div className="max-w-[720px] mx-auto p-8 space-y-10">
+
+            {/* ─── Research Memo (handoff from Study tab, per-passage) ─── */}
+            {Object.values(prepData.memosByPassage || {}).some(m => m.text?.trim() || (m.tags?.length || 0) > 0) && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-3">
+                  <FileText className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="text-xs font-semibold text-amber-300/80 uppercase tracking-widest">본문 연구 메모</span>
+                  <span className="text-[11px] text-slate-500">· 연구 탭에서 가져옴</span>
+                </div>
+                <div className="grid gap-3">
+                  {Object.entries(prepData.memosByPassage).map(([key, m]) => {
+                    if (!m.text?.trim() && !(m.tags?.length || 0)) return null
+                    return (
+                      <div key={key} className="rounded-lg bg-white/[0.02] border border-white/5 p-4">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
+                          <span className="text-xs font-bold text-indigo-200">{m.label || '본문'}</span>
+                        </div>
+                        {m.text?.trim() && (
+                          <p className="text-[13px] text-slate-300 leading-relaxed whitespace-pre-wrap">
+                            {m.text}
+                          </p>
+                        )}
+                        {m.tags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2.5">
+                            {m.tags.map((t, i) => (
+                              <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-slate-400">
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ─── 본문 연구 결과 (study cache 직접 읽기, handoff 불필요) ─── */}
+            {Object.keys(cachedStudies).length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                  <span className="text-xs font-semibold text-cyan-300/80 uppercase tracking-widest">본문 연구 결과</span>
+                  <span className="text-[11px] text-slate-500">· 성경연구 탭 분석 결과</span>
+                </div>
+                <div className="grid gap-3">
+                  {Object.entries(cachedStudies).map(([cacheKey, { label, data }]) => (
+                    <StudyResultCard key={cacheKey} label={label} data={data} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Section: 설교 방향 */}
             <DirectionSection
@@ -2149,16 +2145,16 @@ function StudyResultCard({ label, data }: { label: string; data: any }) {
   if (!hasContent) return null
 
   return (
-    <div className="rounded-lg bg-white/[0.02] border border-white/5 p-3 space-y-2.5">
-      <div className="flex items-center gap-1.5 pb-1.5 border-b border-white/5">
-        <BookOpen className="w-3 h-3 text-cyan-300" />
-        <span className="text-[11px] font-bold text-cyan-200">{label}</span>
+    <div className="rounded-lg bg-white/[0.02] border border-white/5 p-4 space-y-3">
+      <div className="flex items-center gap-1.5 pb-2 border-b border-white/5">
+        <BookOpen className="w-3.5 h-3.5 text-cyan-300" />
+        <span className="text-xs font-bold text-cyan-200">{label}</span>
       </div>
 
       {words.length > 0 && (
         <div>
-          <div className="text-[9.5px] font-bold text-emerald-300/80 uppercase tracking-wider mb-1">🔑 핵심 단어</div>
-          <ul className="space-y-0.5 text-[10.5px] text-slate-300">
+          <div className="text-[11px] font-bold text-emerald-300/80 uppercase tracking-wider mb-1.5">🔑 핵심 단어</div>
+          <ul className="space-y-0.5 text-xs text-slate-300">
             {words.map((w, i) => (
               <li key={i} className="leading-snug">
                 <span className="font-semibold text-slate-100">{w.title}</span>
@@ -2171,8 +2167,8 @@ function StudyResultCard({ label, data }: { label: string; data: any }) {
 
       {insights.length > 0 && (
         <div>
-          <div className="text-[9.5px] font-bold text-amber-300/80 uppercase tracking-wider mb-1">💡 주석 통찰</div>
-          <ul className="space-y-1 text-[10.5px] text-slate-300">
+          <div className="text-[11px] font-bold text-amber-300/80 uppercase tracking-wider mb-1.5">💡 주석 통찰</div>
+          <ul className="space-y-1.5 text-xs text-slate-300">
             {insights.map((c: any, i: number) => (
               <li key={i} className="leading-snug">
                 <span className="text-amber-300/80">{c.author || '주석'}:</span> {c.text || c.content || ''}
@@ -2184,8 +2180,8 @@ function StudyResultCard({ label, data }: { label: string; data: any }) {
 
       {(bookStructure || before || after) && (
         <div>
-          <div className="text-[9.5px] font-bold text-indigo-300/80 uppercase tracking-wider mb-1">🔗 문맥</div>
-          <div className="text-[10.5px] text-slate-400 leading-snug space-y-0.5">
+          <div className="text-[11px] font-bold text-indigo-300/80 uppercase tracking-wider mb-1.5">🔗 문맥</div>
+          <div className="text-xs text-slate-400 leading-snug space-y-0.5">
             {bookStructure && <div><span className="text-slate-300">📚 책 구조:</span> {bookStructure}</div>}
             {before && <div><span className="text-slate-300">↑ 앞:</span> {before}</div>}
             {after && <div><span className="text-slate-300">↓ 뒤:</span> {after}</div>}
@@ -2195,10 +2191,10 @@ function StudyResultCard({ label, data }: { label: string; data: any }) {
 
       {themes.length > 0 && (
         <div>
-          <div className="text-[9.5px] font-bold text-purple-300/80 uppercase tracking-wider mb-1">🏷️ 주제</div>
+          <div className="text-[11px] font-bold text-purple-300/80 uppercase tracking-wider mb-1.5">🏷️ 주제</div>
           <div className="flex flex-wrap gap-1">
             {themes.map((t: any, i: number) => (
-              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300">
+              <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-300">
                 {t.name || t}
               </span>
             ))}
