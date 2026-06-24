@@ -494,14 +494,24 @@ function PrepContextHeader({
               </span>
             </div>
             <p className="text-xs text-slate-400">연구에서 정리한 내용을 설교 흐름으로 세워가는 단계입니다</p>
-            <div className="flex items-center gap-3 text-[11px]">
-              <span className="text-slate-200 font-medium">{project.title}</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-400">{project.passage}</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-400">{project.seriesName}</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-500">마지막 수정: {lastSaved}</span>
+            <div className="flex items-center gap-2 text-[11px]">
+              {project.coreMessage && (
+                <span className="text-slate-300 italic max-w-[400px] truncate">
+                  &ldquo;{project.coreMessage}&rdquo;
+                </span>
+              )}
+              {project.coreMessage && (project.sermonType || project.preacher) && (
+                <span className="text-slate-600">·</span>
+              )}
+              {project.sermonType && (
+                <span className="text-slate-400">{project.sermonType}</span>
+              )}
+              {project.sermonType && project.preacher && (
+                <span className="text-slate-600">·</span>
+              )}
+              {project.preacher && (
+                <span className="text-slate-400">설교자: {project.preacher}</span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
