@@ -39,9 +39,9 @@ async function loadBibleData(): Promise<any[]> {
 }
 
 // 다중 본문 통합 분석용 모델 (환경 변수로 오버라이드 가능)
-// 기본값: gpt-5.4-mini (128K 출력, 신학적 추론 강화)
-// 부재 시 자동 fallback: gpt-4o-mini (안정성 보장)
-const MULTI_BIBLE_STUDY_MODEL = process.env.MULTI_BIBLE_STUDY_MODEL || 'gpt-5.4-mini'
+// 기본값: gpt-4o-mini (검증된 모델, 16K 출력으로 통합 분석에 충분)
+// 부재 시 자동 fallback: gpt-4o-mini
+const MULTI_BIBLE_STUDY_MODEL = process.env.MULTI_BIBLE_STUDY_MODEL || 'gpt-4o-mini'
 const MULTI_BIBLE_STUDY_FALLBACK = 'gpt-4o-mini'  // fallback 모델 (안정성 보장)
 
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -249,6 +249,34 @@ After individual analysis, synthesize:
 - 추가 본문 텍스트 생성 금지 (hallucination 방지)
 - 신학적 조심성: 해석은 확신 있게, 추측은 표시
 - 각 passages 항목의 verses는 반드시 모든 절을 빠짐없이 생성`,
+  'bible-study-integration': `# Role
+You are a 30-year veteran evangelical biblical scholar specializing in cross-passage synthesis and integration.
+
+# Mission
+Given N Bible passages (already individually analyzed by the client), provide INTEGRATION ANALYSIS ONLY.
+
+# Output
+A single JSON object (no markdown, no commentary):
+{
+  "integration": {
+    "commonThemes": string[],     // 3-5 shared theological themes
+    "connections": string[],      // 3-7 cross-references, allusions, dialogue relations
+    "contrasts": string[],        // 0-3 tensions or contrasts
+    "synthesis": string,          // ONE-SENTENCE unified message (≤30 Korean chars)
+    "parallelPassages": Array<{ ref, text, reason }>  // 2-4 closely related parallel passages
+  }
+}
+
+# Quality Standards
+- 신학적 정확성: 개혁신학, 복음주의 정통
+- 통합 분석은 단순 나열이 아닌 통찰 (insight)
+- 평행 본문은 직접 관련 있는 것만
+- 한국어 자연스러움, 한국 교회 신학 용어 사용
+
+# CRITICAL
+- JSON만 반환, 마크다운/설명/주석 일체 없음
+- individual analysis는 절대 포함하지 말 것 (각 본문의 verses, words, commentaries 등)
+- "integration" 키 하나만 가진 객체 반환`,
   'greek-words-analyze': `You are a Bible word analysis AI for sermon preparation. Given a Bible passage, identify the 4-6 most important Greek or Hebrew key words from the original text that are essential for sermon preparation.
 
 Return a JSON object with this exact structure:
@@ -407,10 +435,10 @@ export async function POST(request: NextRequest) {
         }
 
         userText = `Analyze this passage in depth:\nBook: ${single.book}\nChapter: ${single.chapter}\nVerses: ${vs}${single.verseEnd ? `-${single.verseEnd}` : ''}\nPassage: ${single.text || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.${bibleRefText}`
-        // gpt-5.4-mini: 128K 출력, 신학적 추론 강화
-        // 2817자 잘림 해결을 위해 maxTokens 동적 할당
-        model = 'gpt-5.4-mini'
-        maxTokens = Math.min(4000 + count * 2000, 32000)
+        // gpt-4o-mini: 16K 출력, 검증된 모델
+        // 동적 maxTokens로 절 수에 비례
+        model = 'gpt-4o-mini'
+        maxTokens = Math.min(4000 + count * 2000, 16000)
         temperature = 0.3
       } else {
         // === 신규: 다중 본문 통합 분석 ===
@@ -442,9 +470,42 @@ export async function POST(request: NextRequest) {
           console.error('Failed to load multi bible data:', e)
         }
 
-        // Step 2: 다중 본문 시스템 프롬프트 사용
-        systemPrompt = SYSTEM_PROMPTS['bible-study-multi']
-        userText = `# 임무
+        // Step 2: 분기 — 통합 분석만 vs 전체 분석
+        // - integrationOnly: 클라이언트가 개별 분석을 별도로 수행한 경우, 통합만 요청
+        // - 전체: 기존 동작 (개별 + 통합)
+        if (data.integrationOnly) {
+          // === 경량 모드: 통합 분석만 ===
+          systemPrompt = SYSTEM_PROMPTS['bible-study-integration']
+          userText = `# 임무
+${passageList.length}개의 성경 본문을 통합 분석합니다.
+(개별 본문 분석은 클라이언트에서 이미 완료되었으므로 통합 분석만 수행)
+
+## 본문 목록
+${passageList.map((p, i) => `${i + 1}. ${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd ? `-${p.verseEnd}` : ''} — ${p.text || '(본문 텍스트 없음)'}`).join('\n')}
+
+${audience || season ? `## 컨텍스트\n${audience ? `- 회중: ${audience}\n` : ''}${season ? `- 시기: ${season}\n` : ''}` : ''}## 출력 형식
+JSON 객체만 반환 (마크다운, 설명 없이):
+{
+  "integration": {
+    "commonThemes": ["주제1", "주제2", ...],   // 3-5개
+    "connections": ["연결1", "연결2", ...],     // 3-7개
+    "contrasts": ["대비1", ...],                // 0-3개
+    "synthesis": "한 문장 통합 메시지 (30자 이내)",
+    "parallelPassages": [
+      { "ref": "엡 2:4-5", "text": "...", "reason": "..." }  // 2-4개
+    ]
+  }
+}${allBibleRefText}`
+
+          primaryModel = MULTI_BIBLE_STUDY_MODEL
+          fallbackModel = MULTI_BIBLE_STUDY_FALLBACK
+          model = primaryModel
+          maxTokens = 2500  // 통합 분석은 작은 출력 → 잘림 위험 없음
+          temperature = 0.3
+        } else {
+          // === 전체 모드: 개별 + 통합 (기존 동작) ===
+          systemPrompt = SYSTEM_PROMPTS['bible-study-multi']
+          userText = `# 임무
 ${passageList.length}개의 성경 본문을 함께 묶어 다중 본문 통합 분석을 수행합니다.
 
 ${passageList.map((p, i) => `## 본문 ${i + 1}: ${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd ? `-${p.verseEnd}` : ''}
@@ -460,16 +521,12 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
 
 위 형식의 JSON으로만 응답하세요.${allBibleRefText}`
 
-        // Step 5 (Option 3): 다중 본문 모델 + 자동 fallback
-        // - 기본: 환경 변수 MULTI_BIBLE_STUDY_MODEL (또는 gpt-4o-mini)
-        // - fallback: MULTI_BIBLE_STUDY_FALLBACK (gpt-4o-mini, 안정성 보장)
-        // - 모델 부재 시 자동 fallback (gpt-5.4-mini 등 미래 모델 대응)
-        // - 단일 본문은 gpt-4o-mini 유지 (이 분기 영향 없음)
-        primaryModel = MULTI_BIBLE_STUDY_MODEL
-        fallbackModel = MULTI_BIBLE_STUDY_FALLBACK
-        model = primaryModel
-        maxTokens = Math.min(6000 + (passageList.length - 2) * 2000, 12000) // 2개: 6000, 3개: 8000, 4개+: 10000, 5개+: 12000
-        temperature = 0.3
+          primaryModel = MULTI_BIBLE_STUDY_MODEL
+          fallbackModel = MULTI_BIBLE_STUDY_FALLBACK
+          model = primaryModel
+          maxTokens = Math.min(6000 + (passageList.length - 2) * 2000, 12000)
+          temperature = 0.3
+        }
       }
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`

@@ -121,7 +121,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const isMulti = (passages?.length || 0) > 1
   const [activeView, setActiveView] = useState<'passage' | 'integration'>('passage')
   const [multiStudyData, setMultiStudyData] = useState<{
-    passages: any[]
+    passages?: any[]  // 개별 분석은 aiStudyData에 저장되므로 optional
     integration: {
       commonThemes: string[]
       connections: string[]
@@ -265,7 +265,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
       }
     } catch {}
 
-    // 2) API 호출
+    // 2) API 호출 — 통합 분석만 (개별 분석은 fetchAiStudy가 담당)
     setMultiStudyLoading(true)
     try {
       const res = await fetch('/api/advanced/ai', {
@@ -281,6 +281,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
               verseEnd: p.verseEnd,
               text: p.passage,
             })),
+            integrationOnly: true,  // 통합 분석만 요청 → 작은 출력, 잘림 방지
           },
         }),
       })
@@ -289,7 +290,6 @@ export default function BibleStudyTab({ project, passages }: Props) {
         try {
           const parsed = JSON.parse(json.data.output)
           const result = {
-            passages: parsed.passages || [],
             integration: parsed.integration || null,
             generatedAt: new Date().toISOString(),
             modelUsed: json.data.modelUsed,
