@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { Anchor, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
-import { getStorageItem, setStorageItem } from '@/lib/storage'
+import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import {
   JOHN_VERSES, JOHN_WORDS, JOHN_COMMENTARIES,
@@ -266,6 +266,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
       })
       .finally(() => setAiStudyLoading(false))
   }, [passageKey, activeVerseStart, activeVerseEnd, activePassageDisplay, aiStudyData, activeBook, activeChapter])
+
+  // [신규] 재분석 함수 — 사용자가 명시적으로 다시 분석 요청
+  const reAnalyze = useCallback((key: string) => {
+    removeStorageItem(`study_${key}`)
+    setAiStudyData(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setTimeout(() => fetchAiStudy(), 50)
+  }, [fetchAiStudy])
 
   useEffect(() => {
     fetchAiStudy()
@@ -862,6 +873,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
               isSaving={isSaving}
               lastSaved={lastSaved}
               onSendToPrep={handleSendToPrep}
+              onReAnalyze={() => reAnalyze(passageKey)}
             />
 
             {/* Context Explorer - always visible */}
@@ -1341,7 +1353,7 @@ function normalizeGreek(s: string): string {
 
 function ResearchToolbar({
   passage, viewMode, onViewModeChange, showTranslations, onToggleTranslation,
-  isSaving, lastSaved, onSendToPrep,
+  isSaving, lastSaved, onSendToPrep, onReAnalyze,
 }: {
   passage: string
   viewMode: ViewMode
@@ -1351,6 +1363,7 @@ function ResearchToolbar({
   isSaving: boolean
   lastSaved: string | null
   onSendToPrep: () => void
+  onReAnalyze: () => void
 }) {
   const viewModes: { key: ViewMode; label: string }[] = [
     { key: 'parallel', label: '병렬' },
@@ -1422,6 +1435,15 @@ function ResearchToolbar({
               <span className="text-slate-500">자동 저장</span>
             )}
           </div>
+
+          {/* 재분석 버튼 */}
+          <button
+            onClick={onReAnalyze}
+            className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+            title="캐시 삭제 후 새로 분석"
+          >
+            🔄 재분석
+          </button>
 
           {/* CTA */}
           <button
