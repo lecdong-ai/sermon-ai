@@ -434,31 +434,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setSelectedTheme(null)
   }, [])
 
-  const handleSaveMemo = useCallback(async () => {
+  const handleSaveMemo = useCallback(() => {
     if (!memoText.trim()) return
     setIsSaving(true)
-    // localStorage 즉시 저장 (데이터 손실 방지)
     try {
       localStorage.setItem(`study_memo_${project.id}`, memoText)
       localStorage.setItem(`study_memo_tags_${project.id}`, JSON.stringify(memoTags))
     } catch (e) {
       console.error('[memo] localStorage save failed:', e)
     }
-    // API 비동기 저장 (영속성)
-    let apiOk = false
-    try {
-      const res = await fetch(`/api/sermons/${project.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result: { memoText, memoTags } }),
-      })
-      apiOk = res.ok
-    } catch (e) {
-      console.error('[memo] API save failed:', e)
-    }
     setIsSaving(false)
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    setLastSaved(apiOk ? time : `${time} (로컬만)`)
+    setLastSaved(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
   }, [memoText, memoTags, project.id])
 
   const handleSendToPrep = useCallback(() => {
