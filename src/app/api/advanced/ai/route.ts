@@ -39,9 +39,9 @@ async function loadBibleData(): Promise<any[]> {
 }
 
 // 다중 본문 통합 분석용 모델 (환경 변수로 오버라이드 가능)
-// 기본값: gpt-4o-mini (안정적, OpenAI API에 보장됨)
-// 미래에 gpt-5.4-mini 등 사용 가능해지면 환경 변수로만 변경
-const MULTI_BIBLE_STUDY_MODEL = process.env.MULTI_BIBLE_STUDY_MODEL || 'gpt-4o-mini'
+// 기본값: gpt-5.4-mini (128K 출력, 신학적 추론 강화)
+// 부재 시 자동 fallback: gpt-4o-mini (안정성 보장)
+const MULTI_BIBLE_STUDY_MODEL = process.env.MULTI_BIBLE_STUDY_MODEL || 'gpt-5.4-mini'
 const MULTI_BIBLE_STUDY_FALLBACK = 'gpt-4o-mini'  // fallback 모델 (안정성 보장)
 
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -407,8 +407,10 @@ export async function POST(request: NextRequest) {
         }
 
         userText = `Analyze this passage in depth:\nBook: ${single.book}\nChapter: ${single.chapter}\nVerses: ${vs}${single.verseEnd ? `-${single.verseEnd}` : ''}\nPassage: ${single.text || ''}\n\nCRITICAL: You MUST generate ALL ${count} verses (${vs} to ${ve}) — every single one. Count them carefully. Do NOT skip, truncate, summarize, or merge any verse. Each verse entry MUST have complete greek, translit, niv, and esv fields. If you stop before finishing all ${count} verses, the entire analysis will be rejected.${bibleRefText}`
-        model = 'gpt-4o-mini'
-        maxTokens = 5000
+        // gpt-5.4-mini: 128K 출력, 신학적 추론 강화
+        // 2817자 잘림 해결을 위해 maxTokens 동적 할당
+        model = 'gpt-5.4-mini'
+        maxTokens = Math.min(4000 + count * 2000, 32000)
         temperature = 0.3
       } else {
         // === 신규: 다중 본문 통합 분석 ===
