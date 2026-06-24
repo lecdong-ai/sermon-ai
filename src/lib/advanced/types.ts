@@ -69,6 +69,8 @@ export interface AdvancedProject {
   studyCount: number
   createdAt: string
   updatedAt: string
+  memoText?: string
+  memoTags?: string[]
 }
 
 export interface OutlinePoint {

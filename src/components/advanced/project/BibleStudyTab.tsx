@@ -96,8 +96,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
-  const [memoText, setMemoText] = useState('')
-  const [memoTags, setMemoTags] = useState<string[]>([])
+  const [memoText, setMemoText] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try { return localStorage.getItem(`study_memo_${project.id}`) || '' } catch { return '' }
+  })
+  const [memoTags, setMemoTags] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem(`study_memo_tags_${project.id}`)
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
   const [suggestingMemo, setSuggestingMemo] = useState<'insight' | 'questions' | 'application' | null>(null)
   const [memoActionError, setMemoActionError] = useState<string | null>(null)
   const [expandedCommentary, setExpandedCommentary] = useState<number | null>(null)
@@ -425,14 +434,32 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setSelectedTheme(null)
   }, [])
 
-  const handleSaveMemo = useCallback(() => {
+  const handleSaveMemo = useCallback(async () => {
     if (!memoText.trim()) return
     setIsSaving(true)
-    setTimeout(() => {
-      setIsSaving(false)
-      setLastSaved(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
-    }, 800)
-  }, [memoText])
+    // localStorage 즉시 저장 (데이터 손실 방지)
+    try {
+      localStorage.setItem(`study_memo_${project.id}`, memoText)
+      localStorage.setItem(`study_memo_tags_${project.id}`, JSON.stringify(memoTags))
+    } catch (e) {
+      console.error('[memo] localStorage save failed:', e)
+    }
+    // API 비동기 저장 (영속성)
+    let apiOk = false
+    try {
+      const res = await fetch(`/api/sermons/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: { memoText, memoTags } }),
+      })
+      apiOk = res.ok
+    } catch (e) {
+      console.error('[memo] API save failed:', e)
+    }
+    setIsSaving(false)
+    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    setLastSaved(apiOk ? time : `${time} (로컬만)`)
+  }, [memoText, memoTags, project.id])
 
   const handleSendToPrep = useCallback(() => {
     if (!studyData) {
