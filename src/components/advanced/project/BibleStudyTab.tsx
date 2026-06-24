@@ -98,6 +98,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [memoText, setMemoText] = useState('')
   const [memoTags, setMemoTags] = useState<string[]>([])
+  const [suggestingMemo, setSuggestingMemo] = useState<'insight' | 'questions' | 'application' | null>(null)
+  const [memoActionError, setMemoActionError] = useState<string | null>(null)
   const [expandedCommentary, setExpandedCommentary] = useState<number | null>(null)
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
     greek: true, translit: false, niv: true, esv: true, korean: true,
@@ -471,6 +473,48 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setMemoTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }, [])
 
+  const handleMemoAction = useCallback(async (type: 'insight' | 'questions' | 'application') => {
+    setSuggestingMemo(type)
+    setMemoActionError(null)
+    const apiType = type === 'insight' ? 'memo-insight' : type === 'questions' ? 'memo-questions' : 'memo-application-idea'
+    const headerLabel = type === 'insight' ? 'AI 통찰' : type === 'questions' ? '질문' : '적용 아이디어'
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: apiType,
+          data: {
+            book: currentPassage?.book || project.book,
+            chapter: currentPassage?.chapter ?? (currentPassage as any)?.chapterStart ?? project.chapter,
+            verseStart: currentPassage?.verseStart ?? project.verseStart,
+            verseEnd: currentPassage?.verseEnd ?? project.verseEnd,
+            memoText,
+            memoTags,
+          },
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'AI 요청에 실패했습니다')
+      }
+      const parsed = JSON.parse(json.data.output)
+      const items: string[] = parsed.insights || parsed.questions || parsed.applications || []
+      if (items.length === 0) {
+        throw new Error('AI 응답이 비어 있습니다')
+      }
+      const bulletText = items.map(i => `- ${i}`).join('\n')
+      const separator = memoText.trim() ? '\n\n' : ''
+      const newBlock = `${separator}## ${headerLabel}\n${bulletText}\n`
+      setMemoText(prev => prev + newBlock)
+    } catch (e: any) {
+      setMemoActionError(e?.message || 'AI 요청 중 오류가 발생했습니다')
+      setTimeout(() => setMemoActionError(null), 3000)
+    } finally {
+      setSuggestingMemo(null)
+    }
+  }, [memoText, memoTags, currentPassage, project])
+
   const handleCopyStudyResults = useCallback(() => {
     if (!studyData) return
     const words = studyData?.words || {}
@@ -825,6 +869,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
           onSave={handleSaveMemo}
           isSaving={isSaving}
           lastSaved={lastSaved}
+          onSuggest={handleMemoAction}
+          suggesting={suggestingMemo}
+          suggestionError={memoActionError}
         />
 
         {/* ─── Research Summary for Prep Handoff ─── */}
@@ -1839,6 +1886,7 @@ function ThemeConnections({
 
 function ResearchNotesEditor({
   value, onChange, tags, onToggleTag, onSave, isSaving, lastSaved,
+  onSuggest, suggesting, suggestionError,
 }: {
   value: string
   onChange: (v: string) => void
@@ -1847,6 +1895,9 @@ function ResearchNotesEditor({
   onSave: () => void
   isSaving: boolean
   lastSaved: string | null
+  onSuggest: (type: 'insight' | 'questions' | 'application') => Promise<void>
+  suggesting: 'insight' | 'questions' | 'application' | null
+  suggestionError: string | null
 }) {
   const availableTags = ['관찰', '질문', '적용', '통찰', '예화', '핵심']
 
@@ -1868,7 +1919,7 @@ function ResearchNotesEditor({
         placeholder="본문을 연구하며 떠오른 통찰, 질문, 적용 아이디어를 기록하세요. 이 메모는 설교 준비 탭으로 전달됩니다."
         className="w-full min-h-[140px] text-sm text-slate-100 bg-[#04060f]/60 rounded-xl p-4 border border-white/5 outline-none resize-y focus:border-indigo-500/30 focus:bg-[#04060f]/60 transition-colors leading-relaxed"
       />
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-2 gap-2">
         <div className="flex flex-wrap gap-1.5">
           {availableTags.map(tag => (
             <button
@@ -1884,7 +1935,37 @@ function ResearchNotesEditor({
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          {([
+            { type: 'insight' as const, label: '통찰', color: 'text-amber-300' },
+            { type: 'questions' as const, label: '질문', color: 'text-cyan-300' },
+            { type: 'application' as const, label: '적용', color: 'text-emerald-300' },
+          ]).map(btn => {
+            const isLoading = suggesting === btn.type
+            const isDisabled = !!suggesting
+            return (
+              <button
+                key={btn.type}
+                onClick={() => onSuggest(btn.type)}
+                disabled={isDisabled}
+                className={`flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded transition-colors ${
+                  isLoading
+                    ? `${btn.color} bg-white/5`
+                    : isDisabled
+                      ? 'text-slate-600 cursor-not-allowed'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {isLoading ? (
+                  <Loader2 className={`w-3 h-3 animate-spin ${btn.color}`} />
+                ) : (
+                  <Sparkles className={`w-3 h-3 ${btn.color}`} />
+                )}
+                {btn.label}
+              </button>
+            )
+          })}
+          <div className="w-px h-3 bg-white/10 mx-0.5" />
           <span className="text-[10px] text-slate-500">{value.length}자</span>
           <button
             onClick={onSave}
@@ -1895,6 +1976,11 @@ function ResearchNotesEditor({
           </button>
         </div>
       </div>
+      {suggestionError && (
+        <div className="mt-1.5 text-[10px] text-red-400/80">
+          ⚠ {suggestionError}
+        </div>
+      )}
     </div>
   )
 }

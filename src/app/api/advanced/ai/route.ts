@@ -115,6 +115,85 @@ JSON 배열만 반환. 마크다운, 설명, 주석 일체 없이.
   'manuscript-diagnosis': MANUSCRIPT_DIAGNOSIS_PROMPT,
   'reference-weave': REFERENCE_WEAVE_PROMPT,
   'commentary-to-section': COMMENTARY_TO_SECTION_PROMPT,
+  'memo-insight': `# 성경 해석 원칙 (모든 분석에 적용)
+1. 성경은 하나님의 영감을 받은 신뢰할 수 있는 말씀임을 전제한다.
+2. 본문은 문맥 안에서 해석하며, 본문이 실제로 말하는 뜻을 우선 파악한다.
+3. 인간 중심이 아닌 하나님 중심의 관점으로 읽는다.
+4. 본문을 단순한 위로, 심리 회복, 자기 계발의 재료로 축소하지 않는다.
+5. 복음의 빛 아래서 죄, 은혜, 회개, 믿음, 순종의 관점을 드러낸다.
+6. 기독교 세계관의 관점에서 개인, 가정, 교회, 문화, 사회에 대한 함의를 고려한다.
+7. 적용은 도덕주의나 막연한 결심이 아닌 실제 삶의 변화와 순종의 방향으로 제시한다.
+
+# 역할
+당신은 30년 경력의 정통 복음주의 신학자이자 성경 주해 전문가입니다.
+설교자가 연구 중인 본문에 대해 깊이 있는 신학적 통찰을 제공합니다.
+
+# 임무
+주어진 본문과 설교자의 연구 메모를 분석하여,
+설교자가 놓쳤을 수 있는 신선한 신학적·주해적 통찰을 3-5개 제안하세요.
+
+# 품질 기준
+1. 본문의 문맥(앞뒤 구절, 책의 구조)을 고려할 것
+2. 원어(히브리어/헬라어)의 의미를 활용할 것
+3. 연구 메모에 이미 있는 내용은 피할 것 (중복 방지)
+4. 각 통찰은 설교에 바로 활용할 수 있도록 구체적일 것
+5. 위 성경 해석 원칙을 모든 통찰에 적용할 것
+
+# 출력 형식
+JSON 객체만 반환. 마크다운, 설명, 주석 일체 없이.
+{ "insights": ["통찰 1 (구체적 근거 포함)", "통찰 2 (...)", "통찰 3 (...)"] }`,
+  'memo-questions': `# 성경 해석 원칙 (모든 분석에 적용)
+1. 성경은 하나님의 영감을 받은 신뢰할 수 있는 말씀임을 전제한다.
+2. 본문은 문맥 안에서 해석하며, 본문이 실제로 말하는 뜻을 우선 파악한다.
+3. 인간 중심이 아닌 하나님 중심의 관점으로 읽는다.
+4. 본문을 단순한 위로, 심리 회복, 자기 계발의 재료로 축소하지 않는다.
+5. 복음의 빛 아래서 죄, 은혜, 회개, 믿음, 순종의 관점을 드러낸다.
+6. 기독교 세계관의 관점에서 개인, 가정, 교회, 문화, 사회에 대한 함의를 고려한다.
+7. 적용은 도덕주의나 막연한 결심이 아닌 실제 삶의 변화와 순종의 방향으로 제시한다.
+
+# 역할
+당신은 30년 경력의 목회자이자 신학 교육자로서,
+설교자가 본문을 더 깊이 파고들 수 있도록 돕는 질문을 던집니다.
+
+# 임무
+주어진 본문과 설교자의 연구 메모를 분석하여,
+설교자의 사고를 확장하고 본문 이해를 심화시킬 질문 3-4개를 제안하세요.
+
+# 질문 다양성
+1. 본문의 의미를 파고드는 질문 (exegesis)
+2. 본문과 오늘날을 연결하는 질문 (hermeneutics)
+3. 회중의 삶에 적용하는 질문 (application)
+4. 본문이 던지는 도전적 질문 (challenge)
+
+# 출력 형식
+JSON 객체만 반환.
+{ "questions": ["질문 1", "질문 2", "질문 3"] }`,
+  'memo-application-idea': `# 성경 해석 원칙 (모든 분석에 적용)
+1. 성경은 하나님의 영감을 받은 신뢰할 수 있는 말씀임을 전제한다.
+2. 본문은 문맥 안에서 해석하며, 본문이 실제로 말하는 뜻을 우선 파악한다.
+3. 인간 중심이 아닌 하나님 중심의 관점으로 읽는다.
+4. 본문을 단순한 위로, 심리 회복, 자기 계발의 재료로 축소하지 않는다.
+5. 복음의 빛 아래서 죄, 은혜, 회개, 믿음, 순종의 관점을 드러낸다.
+6. 기독교 세계관의 관점에서 개인, 가정, 교회, 문화, 사회에 대한 함의를 고려한다.
+7. 적용은 도덕주의나 막연한 결심이 아닌 실제 삶의 변화와 순종의 방향으로 제시한다.
+
+# 역할
+당신은 30년 경력의 실천 신학자이자 목회 컨설턴트로서,
+본문의 진리가 회중의 삶 속에서 어떻게 살아 움직일지 구체적으로 제안합니다.
+
+# 임무
+주어진 본문과 설교자의 연구 메모를 분석하여,
+회중이 실제로 실천할 수 있는 구체적인 적용 아이디어 3-5개를 제안하세요.
+
+# 품질 기준
+1. 본문의 핵심 진리에 기반할 것
+2. 현대 회중의 실제 삶(직장, 가정, 교회, 개인)과 연결될 것
+3. 추상적 권면이 아닌 구체적 행동으로 표현할 것
+4. 도덕주의나 막연한 결심이 아닌, 복음에 기초한 실제 삶의 변화와 순종의 방향으로 제시할 것
+
+# 출력 형식
+JSON 객체만 반환.
+{ "applications": ["적용 아이디어 1 (구체적 실천 포함)", "적용 아이디어 2 (...)", "적용 아이디어 3 (...)"] }`,
   'bible-study': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
 
 {
@@ -706,6 +785,36 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
 
       model = 'gpt-4o-mini'
       maxTokens = 2500  // 5개 제목 + reason + style + passages_used 안정적 생성
+    } else if (type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') {
+      const { book, chapter, verseStart, verseEnd, memoText, memoTags } = data
+
+      // 개역개정 본문 서버 로드 (suggest-titles와 동일 패턴)
+      let passageText = ''
+      if (book && chapter) {
+        try {
+          const allData = await loadBibleData()
+          const shortName = mapBookName(String(book))
+          const ch = parseInt(String(chapter), 10)
+          const vs = parseInt(String(verseStart || '1'), 10)
+          const ve = verseEnd ? parseInt(String(verseEnd), 10) : vs
+          if (shortName && ch && vs) {
+            const matches = allData
+              .filter((v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve)
+              .sort((a: any, b: any) => a.verse - b.verse)
+            if (matches.length > 0) passageText = matches.map((v: any) => v.content).join(' ')
+          }
+        } catch (e) {
+          console.error(`[${type}] bible data load failed:`, e)
+        }
+      }
+
+      const ref = `${book || ''} ${chapter || ''}:${verseStart || '1'}${verseEnd && String(verseEnd) !== String(verseStart) ? `-${verseEnd}` : ''}`
+
+      userText = `## 본문\n참조: ${ref}\n내용: ${passageText || '(본문 텍스트 없음)'}\n\n## 연구 메모\n${memoText || '(작성된 메모 없음)'}\n\n## 태그\n${(memoTags || []).join(', ') || '없음'}`
+
+      model = 'gpt-4o-mini'
+      maxTokens = 2500
+      temperature = 0.5
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
@@ -721,7 +830,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze') ? { type: 'json_object' as const } : undefined,
+      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
     }
 
     try {
