@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AppSectionHeader } from '@/components/advanced/shared'
-import { NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, getNodeConnections, getNeighborIds } from '@/lib/advanced/graphData'
-import type { GraphNode, GraphEdge, NodeType } from '@/lib/advanced/graphData'
+import { NODE_COLORS, NODE_COLORS_BG, NODE_LABELS, EDGE_STYLES, getEdgeType, getNodeConnections, getNeighborIds, getConnectionCount, isRecentNode } from '@/lib/advanced/graphData'
+import type { GraphNode, GraphEdge, NodeType, EdgeType } from '@/lib/advanced/graphData'
 import { getCustomProjects } from '@/lib/advanced/customProjects'
 import { getStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
+import { NOTE_TYPE_LABELS } from '@/lib/advanced/notesData'
 
 const NODE_TYPES: NodeType[] = ['sermon', 'passage', 'theme', 'word', 'note', 'series']
 
@@ -97,15 +98,18 @@ export default function GraphPage() {
   const [realNodes, setRealNodes] = useState<GraphNode[]>([])
   const [realEdges, setRealEdges] = useState<GraphEdge[]>([])
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'graph' | 'reading'>('graph')
+  const [refreshNotice, setRefreshNotice] = useState<string | null>(null)
   const isDark = true
 
-  // Fetch graph data: API + localStorage
-  useEffect(() => {
+  // Fetch graph data: API + localStorage + insights
+  const fetchGraphData = useCallback(() => {
     setLoading(true)
     Promise.all([
       fetch('/api/graph').then(r => r.json()).catch(() => ({ success: false })),
       Promise.resolve(getCustomProjects()),
-    ]).then(([json, customProjects]) => {
+      fetch('/api/insights').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+    ]).then(([json, customProjects, insightsJson]) => {
       const apiNodes: GraphNode[] = json.success && json.data ? json.data.nodes : []
       const apiEdges: GraphEdge[] = json.success && json.data ? json.data.edges : []
       const nodesMap = new Map<string, GraphNode>()
@@ -116,7 +120,11 @@ export default function GraphPage() {
       const addEdge = (source: string, target: string, label: string, weight = 1) => {
         const key = `${source}::${target}`
         const rev = `${target}::${source}`
-        if (!edgeSet.has(key) && !edgeSet.has(rev)) { edgeSet.add(key); edges.push({ source, target, label, weight }) }
+        if (!edgeSet.has(key) && !edgeSet.has(rev)) {
+          edgeSet.add(key)
+          const type = getEdgeType(label)
+          edges.push({ source, target, label, weight, type })
+        }
       }
 
       // API data first
@@ -126,7 +134,7 @@ export default function GraphPage() {
       // localStorage projects
       for (const p of customProjects) {
         const sid = `sermon-${p.id}`
-        addNode({ id: sid, label: p.title || '(제목 없음)', type: 'sermon', subtitle: p.passage || '', detail: p.coreMessage || '', size: 5 })
+        addNode({ id: sid, label: p.title || '(제목 없음)', type: 'sermon', subtitle: p.passage || '', detail: p.coreMessage || '', size: 5, createdAt: p.createdAt })
 
         if (p.book && p.chapter) {
           const pid = `passage-${p.book}-${p.chapter}`
@@ -191,10 +199,77 @@ export default function GraphPage() {
         }
       }
 
-      setRealNodes(Array.from(nodesMap.values()))
+      // Notes (insights) integration
+      const insights: any[] = insightsJson?.success && Array.isArray(insightsJson.data) ? insightsJson.data : []
+      for (const insight of insights) {
+        if (!insight.id) continue
+        const nid = `note-${insight.id}`
+        const noteTypeLabel = NOTE_TYPE_LABELS[insight.type as keyof typeof NOTE_TYPE_LABELS] || insight.type || '노트'
+        addNode({
+          id: nid,
+          label: insight.title || '통찰',
+          type: 'note',
+          subtitle: noteTypeLabel,
+          detail: insight.summary || insight.content?.slice(0, 200) || '',
+          size: 3,
+          createdAt: insight.createdAt,
+        })
+
+        // Direct project links
+        for (const pid of (insight.projectIds || [])) {
+          addEdge(`sermon-${pid}`, nid, '통찰', 1)
+        }
+        // Connection-based links
+        const conns = Array.isArray(insight.connections) ? insight.connections : []
+        for (const c of conns) {
+          if (!c?.type || !c?.id) continue
+          if (c.type === 'word') addEdge(`word-${c.id}`, nid, '통찰', 1)
+          if (c.type === 'passage') addEdge(`passage-${c.id}`, nid, '통찰', 1)
+          if (c.type === 'project') addEdge(`sermon-${c.id}`, nid, '통찰', 1)
+          if (c.type === 'series') addEdge(`series-${c.id}`, nid, '통찰', 1)
+          if (c.type === 'theme') {
+            const tid = `theme-${c.id}`
+            if (!nodesMap.has(tid)) addNode({ id: tid, label: c.id, type: 'theme', subtitle: '주제', detail: '통찰 노트 참조', size: 3 })
+            addEdge(tid, nid, '통찰', 1)
+          }
+        }
+        // Series links
+        for (const sid of (insight.seriesIds || [])) {
+          addEdge(`series-${sid}`, nid, '통찰', 1)
+        }
+      }
+
+      // Compute connection count for each node
+      const allEdgesArr = edges
+      const finalNodes = Array.from(nodesMap.values()).map(n => ({
+        ...n,
+        connectionCount: getConnectionCount(n.id, allEdgesArr),
+      }))
+
+      setRealNodes((prev) => {
+        // Detect new items (after first load)
+        if (prev.length > 0) {
+          const prevIds = new Set(prev.map(n => n.id))
+          const newCount = finalNodes.filter(n => !prevIds.has(n.id)).length
+          if (newCount > 0) {
+            setRefreshNotice(`새로운 항목 ${newCount}개가 추가되었습니다`)
+            setTimeout(() => setRefreshNotice(null), 3500)
+          }
+        }
+        return finalNodes
+      })
       setRealEdges(edges)
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchGraphData()
+
+    // Refresh on window focus — 다른 탭에서 설교/노트 생성 시 자동 반영
+    const onFocus = () => fetchGraphData()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [fetchGraphData])
 
   // Auto-select node from ?focus= query param (링크로 들어온 경우)
   // 노트 타입이면 자동으로 'note' focus mode 활성화
@@ -408,6 +483,17 @@ export default function GraphPage() {
               </div>
             ))}
           </div>
+          <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-paper-200'}`}>
+            <h4 className={`text-[9px] font-semibold uppercase tracking-widest mb-1.5 ${isDark ? 'text-white/20' : 'text-paper-400'}`}>연결 유형</h4>
+            <div className="space-y-1">
+              {Object.entries(EDGE_STYLES).filter(([k]) => k !== 'other').map(([key, style]) => (
+                <div key={key} className={`flex items-center gap-2 text-[10px] ${isDark ? 'text-white/35' : 'text-paper-500'}`}>
+                  <svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke={style.color} strokeWidth="2" /></svg>
+                  <span>{style.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-paper-200'} text-[10px] leading-relaxed ${isDark ? 'text-white/25' : 'text-paper-400'}`}>
             <p>클릭: 노드 선택</p>
             <p>드래그: 노드 이동</p>
@@ -447,6 +533,28 @@ export default function GraphPage() {
           <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-paper-400'}`}>{loading ? '로딩 중...' : `${filteredNodes.length}개 노드 · ${filteredEdges.length}개 관계`}</span>
 
           <div className="flex-1" />
+
+          {refreshNotice && (
+            <div className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 animate-pulse">
+              {refreshNotice}
+            </div>
+          )}
+
+          {/* View Mode toggle */}
+          <div className={`flex items-center gap-0.5 rounded-lg p-0.5 ${isDark ? 'bg-white/5' : 'bg-paper-100'}`}>
+            <button onClick={() => setViewMode('graph')}
+              className={`text-[10px] px-2.5 py-1 rounded-md transition-colors whitespace-nowrap ${
+                viewMode === 'graph' ? (isDark ? 'bg-[#1a1a28] text-green-400 font-medium shadow-sm' : 'bg-white text-green-700 font-medium shadow-sm') : (isDark ? 'text-white/35 hover:text-white/50' : 'text-paper-500 hover:text-paper-700')
+              }`}>
+              그래프
+            </button>
+            <button onClick={() => setViewMode('reading')}
+              className={`text-[10px] px-2.5 py-1 rounded-md transition-colors whitespace-nowrap ${
+                viewMode === 'reading' ? (isDark ? 'bg-[#1a1a28] text-green-400 font-medium shadow-sm' : 'bg-white text-green-700 font-medium shadow-sm') : (isDark ? 'text-white/35 hover:text-white/50' : 'text-paper-500 hover:text-paper-700')
+              }`}>
+              읽기
+            </button>
+          </div>
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
@@ -489,6 +597,13 @@ export default function GraphPage() {
               </button>
             </div>
           </div>
+        ) : viewMode === 'reading' ? (
+          <ReadingView
+            nodes={filteredNodes}
+            edges={filteredEdges}
+            onSelectNode={setSelectedNode}
+            theme="dark"
+          />
         ) : (
           <GraphCanvas
             containerRef={containerRef}
@@ -521,6 +636,196 @@ export default function GraphPage() {
           theme="dark"
         />
       )}
+    </div>
+  )
+}
+
+/* ─── Reading View ─── */
+
+const ReadingView = ({
+  nodes, edges, onSelectNode, theme = 'dark',
+}: {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  onSelectNode: (n: GraphNode | null) => void
+  theme?: 'light' | 'dark'
+}) => {
+  const isDark = theme === 'dark'
+
+  // Build narrative: group by sermon, show connected nodes
+  const readingSections = useMemo(() => {
+    const sermons = nodes.filter(n => n.type === 'sermon')
+    const nodeById = new Map(nodes.map(n => [n.id, n]))
+    const neighborMap = new Map<string, GraphNode[]>()
+    edges.forEach(e => {
+      if (!neighborMap.has(e.source)) neighborMap.set(e.source, [])
+      if (!neighborMap.has(e.target)) neighborMap.set(e.target, [])
+      const targetN = nodeById.get(e.target)
+      const sourceN = nodeById.get(e.source)
+      if (targetN) neighborMap.get(e.source)!.push(targetN)
+      if (sourceN) neighborMap.get(e.target)!.push(sourceN)
+    })
+
+    // Sort sermons by createdAt if available
+    const sortedSermons = [...sermons].sort((a, b) => {
+      if (!a.createdAt) return 1
+      if (!b.createdAt) return -1
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+
+    return sortedSermons.map(sermon => {
+      const neighbors = neighborMap.get(sermon.id) || []
+      const themes = neighbors.filter(n => n.type === 'theme')
+      const notes = neighbors.filter(n => n.type === 'note')
+      const series = neighbors.filter(n => n.type === 'series')
+      const passages = neighbors.filter(n => n.type === 'passage')
+      const words = neighbors.filter(n => n.type === 'word')
+
+      return {
+        sermon,
+        themes, notes, series, passages, words,
+        date: sermon.createdAt ? new Date(sermon.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }) : '',
+      }
+    })
+  }, [nodes, edges])
+
+  // Cluster by theme for thematic reading
+  const themeClusters = useMemo(() => {
+    const themes = nodes.filter(n => n.type === 'theme')
+    const nodeById = new Map(nodes.map(n => [n.id, n]))
+    const sermonByTheme = new Map<string, GraphNode[]>()
+    edges.forEach(e => {
+      if (e.label !== '관련' && e.label !== '통찰') return
+      const theme = nodeById.get(e.source)?.type === 'theme' ? nodeById.get(e.source) : nodeById.get(e.target)
+      const other = theme === nodeById.get(e.source) ? nodeById.get(e.target) : nodeById.get(e.source)
+      if (!theme || theme.type !== 'theme' || !other || other.type !== 'sermon') return
+      if (!sermonByTheme.has(theme.id)) sermonByTheme.set(theme.id, [])
+      sermonByTheme.get(theme.id)!.push(other)
+    })
+    return themes.map(t => ({
+      theme: t,
+      sermons: sermonByTheme.get(t.id) || [],
+    })).filter(c => c.sermons.length > 0)
+  }, [nodes, edges])
+
+  return (
+    <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#0d0d12]' : 'bg-paper-50/30'}`}>
+      <div className="max-w-3xl mx-auto p-8 space-y-8">
+        <div className={`text-xs ${isDark ? 'text-white/40' : 'text-paper-500'}`}>
+          📖 강해 사상 읽기 — 총 {readingSections.length}개 설교 · {themeClusters.length}개 주제 클러스터
+        </div>
+
+        {/* Thematic clusters */}
+        {themeClusters.length > 0 && (
+          <section>
+            <h2 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-paper-900'}`}>주제 흐름</h2>
+            <div className="space-y-4">
+              {themeClusters.map(({ theme, sermons }) => (
+                <div key={theme.id} className={`p-4 rounded-xl border ${isDark ? 'bg-[#1a1a28]/50 border-white/5' : 'bg-white border-paper-200'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: NODE_COLORS.theme }} />
+                    <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-paper-900'}`}>{theme.label}</h3>
+                    <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-paper-400'}`}>{sermons.length}개 설교</span>
+                  </div>
+                  <div className="space-y-1.5 ml-4">
+                    {sermons.map(s => (
+                      <button key={s.id} onClick={() => onSelectNode(s)}
+                        className={`block text-xs text-left ${isDark ? 'text-white/60 hover:text-green-400' : 'text-paper-600 hover:text-green-700'} transition-colors`}>
+                        → {s.label}
+                        {s.subtitle && <span className={`ml-2 text-[10px] ${isDark ? 'text-white/30' : 'text-paper-400'}`}>({s.subtitle})</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Sermon-by-sermon narrative */}
+        <section>
+          <h2 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-paper-900'}`}>설교별 흐름</h2>
+          <div className="space-y-6">
+            {readingSections.map(({ sermon, themes, notes, series, passages, words, date }) => (
+              <article key={sermon.id} className={`p-5 rounded-xl border ${isDark ? 'bg-[#1a1a28]/50 border-white/5' : 'bg-white border-paper-200'}`}>
+                <header className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: NODE_COLORS.sermon }} />
+                    <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-paper-900'}`}>{sermon.label}</h3>
+                  </div>
+                  <div className={`text-[10px] ml-4 ${isDark ? 'text-white/30' : 'text-paper-400'}`}>
+                    {date && <span>{date}</span>}
+                    {passages[0] && <span className="ml-2">· {passages[0].label}</span>}
+                  </div>
+                  {sermon.detail && (
+                    <p className={`text-xs mt-2 leading-relaxed ${isDark ? 'text-white/50' : 'text-paper-600'}`}>
+                      &ldquo;{sermon.detail}&rdquo;
+                    </p>
+                  )}
+                </header>
+
+                {themes.length > 0 && (
+                  <div className="mb-2">
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-white/30' : 'text-paper-400'}`}>주제 · </span>
+                    {themes.map(t => (
+                      <button key={t.id} onClick={() => onSelectNode(t)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full mr-1 ${isDark ? 'bg-violet-500/10 text-violet-300 hover:bg-violet-500/20' : 'bg-violet-50 text-violet-700 hover:bg-violet-100'} transition-colors`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {series.length > 0 && (
+                  <div className="mb-2">
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-white/30' : 'text-paper-400'}`}>시리즈 · </span>
+                    {series.map(s => (
+                      <button key={s.id} onClick={() => onSelectNode(s)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full mr-1 ${isDark ? 'bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20' : 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100'} transition-colors`}>
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {words.length > 0 && (
+                  <div className="mb-2">
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-white/30' : 'text-paper-400'}`}>원어 · </span>
+                    {words.slice(0, 5).map(w => (
+                      <button key={w.id} onClick={() => onSelectNode(w)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full mr-1 ${isDark ? 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'} transition-colors`}>
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {notes.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-white/5">
+                    <span className={`text-[10px] font-bold block mb-2 ${isDark ? 'text-white/30' : 'text-paper-400'}`}>📝 통찰 노트 ({notes.length}개)</span>
+                    <div className="space-y-2">
+                      {notes.map(n => (
+                        <button key={n.id} onClick={() => onSelectNode(n)}
+                          className={`block w-full text-left p-2 rounded-lg text-[11px] ${isDark ? 'bg-rose-500/5 hover:bg-rose-500/10 text-rose-200' : 'bg-rose-50/50 hover:bg-rose-50 text-rose-800'} transition-colors`}>
+                          <div className="font-medium">{n.label}</div>
+                          {n.subtitle && <div className={`text-[10px] mt-0.5 ${isDark ? 'text-rose-300/60' : 'text-rose-600/60'}`}>{n.subtitle}</div>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {readingSections.length === 0 && themeClusters.length === 0 && (
+          <div className="text-center py-16">
+            <p className={`text-sm ${isDark ? 'text-white/40' : 'text-paper-500'}`}>아직 연결된 데이터가 없습니다</p>
+            <p className={`text-xs mt-2 ${isDark ? 'text-white/25' : 'text-paper-400'}`}>설교와 노트를 만들면 자동으로 서사가 생성됩니다</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -863,11 +1168,13 @@ const GraphCanvas = ({
             const edgeKey = `${edge.source}-${edge.target}`
             const isHighlighted = hoveredEdge === edgeKey
             const isSelected = selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)
+            const edgeTypeStyle = EDGE_STYLES[edge.type || 'other']
+            const baseStroke = isSelected ? edgeHighlight : (isDark ? edgeTypeStyle.color : edgeTypeStyle.color)
             return (
               <g key={edgeKey}>
                 <line x1={s.x} y1={s.y} x2={t.x} y2={t.y}
-                  stroke={isSelected ? edgeHighlight : edgeColor}
-                  strokeWidth={isHighlighted ? Math.max(0.8, edge.weight * 1.2) : Math.max(0.3, edge.weight * 0.5)}
+                  stroke={baseStroke}
+                  strokeWidth={isHighlighted ? Math.max(1.0, edge.weight * 1.4) : Math.max(0.4, edge.weight * 0.6)}
                   opacity={edgeOpacity(edge)}
                   className="transition-all duration-300"
                   style={{ cursor: 'pointer' }}
@@ -912,6 +1219,14 @@ const GraphCanvas = ({
                     <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite" />
                   </circle>
                 )}
+                {/* "NEW" pulse for recently-created nodes (within 5 min) */}
+                {isRecentNode(node) && (
+                  <circle cx={pos.x} cy={pos.y} r={r + 3} fill="none"
+                    stroke={fill} strokeWidth={1.5} opacity={0.6}>
+                    <animate attributeName="r" values={`${r + 3};${r + 10};${r + 3}`} dur="2.5s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.6;0;0.6" dur="2.5s" repeatCount="indefinite" />
+                  </circle>
+                )}
                 {/* Glow layer - floating effect */}
                 <circle cx={pos.x} cy={pos.y} r={r * 1.6} fill={fill} opacity={isDark ? 0.08 : 0.06}
                   filter={`url(#nodeGlow-${theme})`} />
@@ -933,6 +1248,33 @@ const GraphCanvas = ({
                     className="pointer-events-none select-none">
                     {node.subtitle}
                   </text>
+                )}
+                {/* Connection count badge */}
+                {(node.connectionCount || 0) > 1 && (
+                  <g pointerEvents="none">
+                    <circle cx={pos.x + r * 0.7} cy={pos.y - r * 0.7} r={r * 0.35}
+                      fill={isDark ? '#1a1a2e' : '#fff'} stroke={fill} strokeWidth={1} />
+                    <text x={pos.x + r * 0.7} y={pos.y - r * 0.7 + 3}
+                      textAnchor="middle" fill={fill}
+                      fontSize={Math.max(8, r * 0.4)} fontWeight="700"
+                      style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}>
+                      {node.connectionCount}
+                    </text>
+                  </g>
+                )}
+                {/* "NEW" badge for recently-created nodes */}
+                {isRecentNode(node) && (
+                  <g pointerEvents="none">
+                    <rect x={pos.x - r * 0.6} y={pos.y - r - 12} width={r * 1.2} height={r * 0.55}
+                      rx={r * 0.275} fill={fill} />
+                    <text x={pos.x} y={pos.y - r - 12 + r * 0.4}
+                      textAnchor="middle" fill="#fff"
+                      fontSize={Math.max(7, r * 0.32)} fontWeight="800"
+                      letterSpacing="0.5"
+                      style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}>
+                      NEW
+                    </text>
+                  </g>
                 )}
               </g>
             )
