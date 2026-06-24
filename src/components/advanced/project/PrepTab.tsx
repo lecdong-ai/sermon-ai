@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, Plus, X, Users, Settings2 } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Users, Settings2, Quote } from 'lucide-react'
 import { ProjectDetail, CongregationProfile, DEFAULT_CONGREGATION_PROFILE, AGE_GROUP_OPTIONS, FAITH_MATURITY_OPTIONS } from '@/lib/advanced/types'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
@@ -494,25 +494,28 @@ function PrepContextHeader({
               </span>
             </div>
             <p className="text-xs text-slate-400">연구에서 정리한 내용을 설교 흐름으로 세워가는 단계입니다</p>
-            <div className="flex items-center gap-2 text-[11px]">
-              {project.coreMessage && (
-                <span className="text-slate-300 italic max-w-[400px] truncate">
-                  &ldquo;{project.coreMessage}&rdquo;
-                </span>
-              )}
-              {project.coreMessage && (project.sermonType || project.preacher) && (
-                <span className="text-slate-600">·</span>
-              )}
-              {project.sermonType && (
-                <span className="text-slate-400">{project.sermonType}</span>
-              )}
-              {project.sermonType && project.preacher && (
-                <span className="text-slate-600">·</span>
-              )}
-              {project.preacher && (
-                <span className="text-slate-400">설교자: {project.preacher}</span>
-              )}
-            </div>
+            {(project.coreMessage || project.sermonType || project.preacher) && (
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {project.coreMessage && (
+                  <div className="flex items-center gap-2 pl-3 pr-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-400/30 max-w-[560px]">
+                    <Quote className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                    <span className="text-[13px] text-amber-50 font-semibold italic truncate">
+                      {project.coreMessage}
+                    </span>
+                  </div>
+                )}
+                {project.sermonType && (
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-[11px] text-indigo-200 font-medium">
+                    {project.sermonType}
+                  </span>
+                )}
+                {project.preacher && (
+                  <span className="text-[12px] text-slate-300">
+                    설교자 <span className="text-white font-semibold">{project.preacher}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
