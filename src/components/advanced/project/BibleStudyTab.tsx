@@ -115,10 +115,6 @@ export default function BibleStudyTab({ project, passages }: Props) {
   })
   const [suggestingMemo, setSuggestingMemo] = useState<'insight' | 'questions' | 'application' | null>(null)
   const [memoActionError, setMemoActionError] = useState<string | null>(null)
-
-  // 현재 선택된 passage의 메모 key
-  const currentMemoKey = currentPassage?.id || 'legacy'
-  const currentMemo = memosByPassage[currentMemoKey] || { text: '', tags: [] }
   const [expandedCommentary, setExpandedCommentary] = useState<number | null>(null)
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
     greek: true, translit: false, niv: true, esv: true, korean: true,
@@ -141,6 +137,10 @@ export default function BibleStudyTab({ project, passages }: Props) {
   // ─── 다중 본문 통합 분석 (NEW) ───
   const isMulti = (passages?.length || 0) > 1
   const [activeView, setActiveView] = useState<'passage' | 'integration'>('passage')
+
+  // 현재 선택된 passage의 메모 key (id 없으면 tab_${index}, 단일은 'legacy')
+  const currentMemoKey = currentPassage?.id || (isMulti ? `tab_${selectedPassageIndex}` : 'legacy')
+  const currentMemo = memosByPassage[currentMemoKey] || { text: '', tags: [] }
   const [multiStudyData, setMultiStudyData] = useState<{
     passages?: any[]  // 개별 분석은 aiStudyData에 저장되므로 optional
     integration: {
@@ -271,6 +271,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
   useEffect(() => {
     fetchAiStudy()
   }, [fetchAiStudy])
+
+  // 마이그레이션: 다중 본문에서 'legacy'로 저장된 메모를 'tab_0'으로 이관
+  useEffect(() => {
+    if (!isMulti) return
+    setMemosByPassage(prev => {
+      if (prev.legacy?.text?.trim() && !prev.tab_0?.text?.trim()) {
+        return { ...prev, tab_0: prev.legacy }
+      }
+      return prev
+    })
+  }, [isMulti])
 
   // ─── 다중 본문 통합 분석 fetch (NEW) ───
   const fetchMultiStudy = useCallback(async () => {
@@ -475,15 +486,15 @@ export default function BibleStudyTab({ project, passages }: Props) {
     ].slice(0, 5)
     // 각 passage의 메모에 라벨 부여
     const memosByPassageWithLabel: Record<string, { label: string; text: string; tags: string[] }> = {}
-    for (const p of (passages || [])) {
-      const key = p.id || 'legacy'
+    ;((passages as BiblePassage[] | undefined) || []).forEach((p: BiblePassage, i: number) => {
+      const key = p.id || (isMulti ? `tab_${i}` : 'legacy')
       const m = memosByPassage[key]
       memosByPassageWithLabel[key] = {
         label: p.passage || `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && p.verseEnd !== p.verseStart ? `-${p.verseEnd}` : ''}`,
         text: m?.text || '',
         tags: m?.tags || [],
       }
-    }
+    })
     // legacy 단일 passage fallback (passages prop에 항목이 1개도 없을 때)
     if (Object.keys(memosByPassageWithLabel).length === 0 && memosByPassage.legacy) {
       memosByPassageWithLabel.legacy = {
@@ -503,7 +514,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload
     router.push(`/advanced/projects/${project.id}?tab=prep`)
-  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project])
+  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project, isMulti])
 
   const toggleTranslation = useCallback((key: string) => {
     setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))
@@ -596,14 +607,17 @@ export default function BibleStudyTab({ project, passages }: Props) {
     if (memoEntries.length > 0) {
       text += `\n## 연구 메모\n`
       for (const [key, m] of memoEntries) {
-        const p = (passages || []).find(pp => (pp.id || 'legacy') === key)
+        const p = (passages || []).find((pp, idx) => {
+          const ppKey = pp.id || (isMulti ? `tab_${idx}` : 'legacy')
+          return ppKey === key
+        })
         const label = p?.passage || key
         text += `\n### ${label}\n${m.text.trim()}\n`
       }
     }
 
     navigator.clipboard.writeText(text)
-  }, [studyData, memosByPassage, passages])
+  }, [studyData, memosByPassage, passages, isMulti])
 
   const handleViewFullChapter = useCallback(() => {
     window.open(`/advanced/study/${activeBook}/${activeChapter}`, '_blank')
