@@ -414,6 +414,63 @@ IMPORTANT:
 2. Analyze the English word itself — do NOT convert to Greek.
 3. All text in Korean except the English word itself.
 4. Provide 1-2 Bible usage examples (in English or Korean).`,
+
+  // ─── Translation Guardian (신규) ───
+  // bible-study에서 번역 4종(원어/음역/NIV/ESV)을 분리하여 lazy fetch 지원
+  'bible-study-core': `You are a Bible study AI assistant specializing in Greek/Hebrew textual analysis. Given a Bible passage, return a JSON object with this exact structure:
+
+{
+  "words": [{ "id": "w-uniqueid", "strong": "G####", "lemma": "lemma", "lemmaGreek": "Greek lemma", "pronunciation": "pronunciation", "transliteration": "transliteration", "partOfSpeech": "Korean POS", "morphology": "morphology info", "basicMeaning": "basic meaning in Korean", "contextualMeaning": "contextual meaning in Korean", "simpleExplanation": "easy explanation in Korean", "usage": [{ "ref": "Book ch:vs", "text": "usage text" }], "sermonNote": "preaching application note in Korean", "relatedWords": ["related1", "related2"] }],
+  "commentaries": [{ "verse": number, "author": "scholar name in Korean", "text": "commentary text in Korean", "type": "exegetical|theological|historical|pastoral", "source": "source name" }],
+  "translationNotes": [{ "verse": number, "versions": ["NIV","ESV","KRV"], "note": "translation difference explanation in Korean" }],
+  "parallelPassages": [{ "ref": "Book ch:vs", "text": "passage text", "relation": "direct_quote|allusion|thematic|typology", "description": "explanation in Korean" }],
+  "themes": [{ "name": "theme name in Korean", "description": "description in Korean", "connectedSermons": number }],
+  "wordAlignments": [{ "verse": number, "englishVersion": "NIV", "englishWord": "English word", "greekWordId": "w-matching_id" }],
+  "contextInfo": {
+    "before": "직전 문맥 — 바로 앞 구절의 내용과 이어지는 흐름 (2-3문장, 한국어)",
+    "after": "이후 문맥 — 다음 구절의 내용과 연결점 (2-3문장, 한국어)",
+    "bookStructure": "이 책의 전체 구조 속에서 본문이 위치한 자리 (3-5문장, 한국어)",
+    "historicalBackground": "역사적 배경 (2-3문장, 한국어)",
+    "culturalContext": "문화적 맥락 (2-3문장, 한국어)",
+    "theologicalContext": "신학적 맥락 (2-3문장, 한국어)",
+    "redemptiveHistory": "구속사적 흐름 (2-3문장, 한국어)",
+    "keyThemes": ["이 본문의 핵심 주제1", "핵심 주제2", "핵심 주제3"],
+    "narrativeArc": "본문의 이야기 전개 단계 (1-2문장, 한국어)"
+  }
+}
+
+IMPORTANT:
+1. Return ONLY valid JSON, no markdown, no explanation.
+2. Do NOT include a "verses" array — the Korean (개역개정) text and English translations (NIV/ESV/Greek) will be provided separately by the client on demand.
+3. Generate 3-7 key words (focus on theologically significant terms), 6-10 commentaries, 2-3 translation notes, 5-8 parallel passages, 3-5 themes.
+4. All text content in Korean.
+5. wordAlignments: For each word in the "words" array, add one or more wordAlignment entries mapping the Greek word to its English translation. Include entries for EVERY verse where that Greek word appears.
+6. commentaries: Generate 6-10 rich, detailed commentary entries. Each commentary should be at least 3-5 sentences long, covering historical background, theological nuance, original language insights, and pastoral application. Include diverse types: exegetical (본문 분석), theological (신학적 의미), historical (역사적 배경), and pastoral (목회적 적용).
+7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection.`,
+
+  'bible-study-translation': `You are a Bible text generator that produces the actual published text of a single translation version for a given Bible passage.
+
+# Input
+- Book / Chapter / Verse range
+- Version: one of: greek | translit | niv | esv
+
+# Output format
+Return ONLY a JSON object (no markdown, no explanation):
+{
+  "verses": [
+    { "verse": 1, "text": "..." },
+    { "verse": 2, "text": "..." }
+  ]
+}
+
+# Rules
+1. Return ONLY valid JSON, no markdown, no explanation.
+2. Generate EVERY verse in the given range — do not skip, truncate, or merge any verse.
+3. For "greek": return the original Greek (NT: SBLGNT text) or Hebrew (OT: BHS/WLC) — accented polytonic Greek.
+4. For "translit": return transliteration of the original Greek/Hebrew in Latin alphabet (e.g. "En arche en ho Logos").
+5. For "niv": return the actual New International Version English text (2011 revision).
+6. For "esv": return the actual English Standard Version English text (2016 revision).
+7. These are PUBLISHED translations — accuracy is critical. Do NOT paraphrase. If unsure, prefer the most widely accepted edition.`,
 }
 
 export async function POST(request: NextRequest) {
@@ -606,6 +663,65 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
           temperature = 0.3
         }
       }
+    } else if (type === 'bible-study-core') {
+      // ─── Translation Guardian: 핵심 분석만 (번역 제외) ───
+      // words, commentaries, themes, contextInfo, parallelPassages, translationNotes, wordAlignments
+      const { book, chapter, verseStart, verseEnd, passage } = data
+      const vs = parseInt(String(verseStart || '1'), 10)
+      const ve = verseEnd ? parseInt(String(verseEnd), 10) : vs
+      const count = ve - vs + 1
+
+      // 개역개정 본문 로드 (korean 자동 주입용)
+      let bibleRefText = ''
+      try {
+        const shortName = book ? mapBookName(String(book)) : null
+        if (shortName && chapter) {
+          const ch = parseInt(String(chapter), 10)
+          const allData = await loadBibleData()
+          const matches = allData.filter(
+            (v: any) => v.book === shortName && v.chapter === ch && v.verse >= vs && v.verse <= ve
+          ).sort((a: any, b: any) => a.verse - b.verse)
+          if (matches.length > 0) {
+            bibleActualVerses = new Map(matches.map((v: any) => [v.verse, v.content]))
+            bibleRefText = '\n\nHere is the actual 개역개정 text for this passage — use it for analysis (do NOT include in output):\n' +
+              matches.map((v: any) => `  [${v.절}] ${v.content}`).join('\n')
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load bible data for bible-study-core:', e)
+      }
+
+      userText = `Analyze this passage in depth (no need to generate translations):\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${vs}${verseEnd ? `-${ve}` : ''}\nPassage: ${passage || ''}\n\nFocus on: Greek/Hebrew key words, scholarly commentaries, translation notes, parallel passages, themes, and rich context info.${bibleRefText}`
+
+      model = 'gpt-4o-mini'
+      maxTokens = Math.min(3000 + count * 800, 10000)
+      temperature = 0.3
+    } else if (type === 'bible-study-translation') {
+      // ─── Translation Guardian: 단일 version만 생성 (greek | translit | niv | esv) ───
+      const { book, chapter, verseStart, verseEnd, passage, version } = data
+      const vs = parseInt(String(verseStart || '1'), 10)
+      const ve = verseEnd ? parseInt(String(verseEnd), 10) : vs
+      const count = ve - vs + 1
+      const ver = String(version || '').toLowerCase()
+
+      const versionLabel = ver === 'greek' ? '원어 (Greek NT or Hebrew OT)'
+        : ver === 'translit' ? '음역 (Transliteration of the original)'
+        : ver === 'niv' ? 'NIV (New International Version, 2011)'
+        : ver === 'esv' ? 'ESV (English Standard Version, 2016)'
+        : ''
+
+      if (!versionLabel) {
+        return NextResponse.json({
+          success: false,
+          error: `지원하지 않는 번역 버전: ${version || '(없음)'}. 가능한 값: greek, translit, niv, esv`,
+        }, { status: 400 })
+      }
+
+      userText = `Generate the ${versionLabel} for this Bible passage.\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${vs}${verseEnd ? `-${ve}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: Generate ALL ${count} verses (${vs} to ${ve}) — every single one. Each verse entry MUST have a complete "text" field. Use the actual published translation text — do NOT paraphrase or summarize.`
+
+      model = 'gpt-4o-mini'
+      maxTokens = Math.min(800 + count * 400, 4000)
+      temperature = 0.2  // 정확성 우선
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
       maxTokens = 2000
@@ -1000,7 +1116,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
+      response_format: (type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
     }
 
     try {
@@ -1047,7 +1163,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
+    if ((type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
       try {
         JSON.parse(output)
       } catch (e) {
@@ -1071,10 +1187,20 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
     }
 
     // Replace AI-generated korean with actual 개역개정 text
-    if (type === 'bible-study' && bibleActualVerses && output) {
+    if ((type === 'bible-study' || type === 'bible-study-core') && bibleActualVerses && output) {
       try {
         const parsed = JSON.parse(output)
-        if (parsed.verses) {
+        if (type === 'bible-study-core') {
+          // bible-study-core: AI가 verses를 안 만듦 → 개역개정 본문으로 자동 주입
+          const verses = Array.from(bibleActualVerses.entries())
+            .sort(([a], [b]) => a - b)
+            .map(([verse, korean]) => ({ verse, korean }))
+          if (verses.length > 0) {
+            parsed.verses = verses
+            output = JSON.stringify(parsed)
+          }
+        } else if (parsed.verses) {
+          // bible-study (기존): korean 필드만 보강
           parsed.verses = parsed.verses.map((v: any) => ({
             ...v,
             korean: bibleActualVerses.get(v.verse) || '',

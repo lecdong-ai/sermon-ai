@@ -155,7 +155,8 @@ export default function PrepTab({ project }: Props) {
         const vs = p.verseStart ?? 1
         const ve = p.verseEnd ?? vs
         const key = `${p.book}_${p.chapter}_${vs}-${ve}`
-        const cached = getStorageItem<any | null>(`study_${key}`, null)
+        // 신 캐시(_core) 우선, 없으면 옛 캐시 fallback (마이그레이션 이전 데이터 호환)
+        const cached = getStorageItem<any | null>(`study_${key}_core`, null) || getStorageItem<any | null>(`study_${key}`, null)
         if (cached) {
           const label = p.passage || `${p.book} ${p.chapter}:${vs}${ve !== vs ? `-${ve}` : ''}`
           results[key] = { label, data: cached }

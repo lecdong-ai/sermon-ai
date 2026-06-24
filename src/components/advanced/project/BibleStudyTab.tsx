@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { Anchor, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
+import { Anchor, ArrowRight, BookMarked, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Volume2, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
@@ -116,12 +116,20 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [suggestingMemo, setSuggestingMemo] = useState<'insight' | 'questions' | 'application' | null>(null)
   const [memoActionError, setMemoActionError] = useState<string | null>(null)
   const [expandedCommentary, setExpandedCommentary] = useState<number | null>(null)
+  // ─── Translation Guardian: 기본은 한글만 켜진 상태 ───
+  // 다른 4개(원어/음역/NIV/ESV)는 모두 OFF — 토글 시 lazy fetch
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
-    greek: true, translit: false, niv: true, esv: true, korean: true,
+    greek: false, translit: false, niv: false, esv: false, korean: true,
   })
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
-  const [aiStudyData, setAiStudyData] = useState<Record<string, any>>({})
+  // 핵심 분석 데이터 (words, commentaries, themes, contextInfo, verses.korean)
+  const [coreData, setCoreData] = useState<Record<string, any>>({})
+  // 번역 데이터 (lazy fetch) — { passageKey: { greek?: [], translit?: [], niv?: [], esv?: [] } }
+  const [translationData, setTranslationData] = useState<Record<string, Record<string, any[]>>>({})
+  // 번역 로딩 상태 — { passageKey: { greek?: bool, ... } }
+  const [translationLoading, setTranslationLoading] = useState<Record<string, Record<string, boolean>>>({})
+  const [translationError, setTranslationError] = useState<Record<string, Record<string, string | null>>>({})
   const [aiStudyLoading, setAiStudyLoading] = useState(false)
   const [aiStudyError, setAiStudyError] = useState<string | null>(null)
   const [selectedFallbackWord, setSelectedFallbackWord] = useState<{ word: string; clean: string; verse: number; version?: string } | null>(null)
@@ -141,7 +149,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const currentMemoKey = currentPassage?.id || (isMulti ? `tab_${selectedPassageIndex}` : 'legacy')
   const currentMemo = memosByPassage[currentMemoKey] || { text: '', tags: [] }
   const [multiStudyData, setMultiStudyData] = useState<{
-    passages?: any[]  // 개별 분석은 aiStudyData에 저장되므로 optional
+    passages?: any[]  // 개별 분석은 coreData에 저장되므로 optional
     integration: {
       commonThemes: string[]
       connections: string[]
@@ -194,29 +202,119 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const studyData = useMemo(() => {
     const registered = getStudyData(activeBook, activeChapter)
     if (registered) return registered
-    return aiStudyData[passageKey] || null
-  }, [activeBook, activeChapter, aiStudyData, passageKey])
+    return coreData[passageKey] || null
+  }, [activeBook, activeChapter, coreData, passageKey])
+
+  // ─── Translation Guardian: core(korean) + 켜진 translations 병합 ───
+  // ParallelPassagePanel은 verses prop으로 greek/translit/korean/niv/esv를 모두 받음
+  // coreData.verses에는 korean만, translationData에서 켜진 version을 합성
+  const mergedVerses = useMemo(() => {
+    const registered = getStudyData(activeBook, activeChapter)
+    // Registered (MOCK) 데이터는 이미 4개 번역 다 있음 — 그대로 사용
+    if (registered) return registered.verses
+
+    const core = coreData[passageKey]
+    if (!core?.verses) return []
+    const trans = translationData[passageKey] || {}
+
+    return core.verses.map((cv: any) => {
+      const g = trans.greek?.find((v: any) => v.verse === cv.verse)
+      const t = trans.translit?.find((v: any) => v.verse === cv.verse)
+      const n = trans.niv?.find((v: any) => v.verse === cv.verse)
+      const e = trans.esv?.find((v: any) => v.verse === cv.verse)
+      return {
+        ...cv,
+        greek: g?.greek,
+        translit: t?.translit,
+        niv: n?.niv,
+        esv: e?.esv,
+      }
+    })
+  }, [activeBook, activeChapter, coreData, translationData, passageKey])
 
   const allWords = useMemo(() => ({
     ...(studyData?.words || {}),
     ...wordLookup,
   }), [studyData?.words, wordLookup])
 
-  const fetchAiStudy = useCallback(() => {
+  // ─── Legacy 캐시 마이그레이션: 옛 study_${key} → study_${key}_core + study_${key}_trans_${ver} ───
+  const migrateLegacyCache = useCallback((key: string) => {
+    try {
+      const old = getStorageItem<any | null>(`study_${key}`, null)
+      if (!old) return null
+      const oldVerses: any[] = old.verses || []
+
+      // core: korean만 보존, 나머지 메타데이터 그대로
+      const core = {
+        passage: old.passage || activePassageDisplay,
+        verses: oldVerses.map((v: any) => ({ verse: v.verse, korean: v.korean || '' })),
+        words: old.words || {},
+        commentaries: old.commentaries || [],
+        translationNotes: old.translationNotes || [],
+        parallelPassages: old.parallelPassages || [],
+        themes: old.themes || [],
+        contextInfo: old.contextInfo || {},
+        wordAlignments: old.wordAlignments || [],
+      }
+      setStorageItem(`study_${key}_core`, core)
+
+      // trans: 각 version별로 분리 저장 (필드가 있는 것만)
+      const transMap: Record<string, any[]> = {}
+      for (const v of oldVerses) {
+        if (v.greek) transMap.greek = [...(transMap.greek || []), { verse: v.verse, greek: v.greek }]
+        if (v.translit) transMap.translit = [...(transMap.translit || []), { verse: v.verse, translit: v.translit }]
+        if (v.niv) transMap.niv = [...(transMap.niv || []), { verse: v.verse, niv: v.niv }]
+        if (v.esv) transMap.esv = [...(transMap.esv || []), { verse: v.verse, esv: v.esv }]
+      }
+      for (const [version, list] of Object.entries(transMap)) {
+        setStorageItem(`study_${key}_trans_${version}`, list)
+      }
+
+      // 옛 키 삭제
+      removeStorageItem(`study_${key}`)
+      return { core, transMap }
+    } catch (e) {
+      console.error('[migration] legacy cache failed:', e)
+      return null
+    }
+  }, [activePassageDisplay])
+
+  // ─── 핵심 분석 fetch (Translation Guardian: bible-study-core) ───
+  // - words, commentaries, themes, contextInfo, parallelPassages, translationNotes, wordAlignments
+  // - verses에는 korean만 (서버에서 개역개정 자동 주입)
+  // - greek/translit/niv/esv는 별도 lazy fetch (fetchTranslation)
+  const fetchCore = useCallback(() => {
     if (getStudyData(activeBook, activeChapter)) return
-    if (aiStudyData[passageKey]) return
-    const cached = getStorageItem<Record<string, any> | null>(`study_${passageKey}`, null)
+    if (coreData[passageKey]) return
+
+    // 1) 신 캐시 확인
+    const cached = getStorageItem<any | null>(`study_${passageKey}_core`, null)
     if (cached) {
-      setAiStudyData(prev => ({ ...prev, [passageKey]: cached }))
+      setCoreData(prev => ({ ...prev, [passageKey]: cached }))
       return
     }
+
+    // 2) Legacy 캐시 마이그레이션
+    const migrated = migrateLegacyCache(passageKey)
+    if (migrated) {
+      setCoreData(prev => ({ ...prev, [passageKey]: migrated.core }))
+      if (Object.keys(migrated.transMap).length > 0) {
+        setTranslationData(prev => ({
+          ...prev,
+          [passageKey]: { ...(prev[passageKey] || {}), ...migrated.transMap },
+        }))
+      }
+      return
+    }
+
+    // 3) API 호출
     setAiStudyError(null)
     setAiStudyLoading(true)
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'bible-study',
+        type: 'bible-study-core',
         data: {
           book: activeBook,
           chapter: String(activeChapter),
@@ -233,7 +331,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
             const parsed = JSON.parse(json.data.output)
             const data = {
               passage: activePassageDisplay,
-              verses: parsed.verses,
+              verses: parsed.verses || [],  // korean만
               words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
               commentaries: parsed.commentaries || [],
               translationNotes: parsed.translationNotes || [],
@@ -252,8 +350,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
               },
               wordAlignments: parsed.wordAlignments || [],
             }
-            setAiStudyData(prev => ({ ...prev, [passageKey]: data }))
-            setStorageItem(`study_${passageKey}`, data)
+            setCoreData(prev => ({ ...prev, [passageKey]: data }))
+            setStorageItem(`study_${passageKey}_core`, data)
           } catch {
             setAiStudyError('AI 응답을 해석하는 중 오류가 발생했습니다. 본문이 너무 길거나 응답이 잘렸습니다.')
           }
@@ -265,22 +363,115 @@ export default function BibleStudyTab({ project, passages }: Props) {
         setAiStudyError('AI 서버에 연결할 수 없습니다. 다시 시도해주세요.')
       })
       .finally(() => setAiStudyLoading(false))
-  }, [passageKey, activeVerseStart, activeVerseEnd, activePassageDisplay, aiStudyData, activeBook, activeChapter])
+  }, [passageKey, activeVerseStart, activeVerseEnd, activePassageDisplay, coreData, activeBook, activeChapter, migrateLegacyCache])
 
-  // [신규] 재분석 함수 — 사용자가 명시적으로 다시 분석 요청
+  // ─── [신규] 번역 lazy fetch: greek | translit | niv | esv ───
+  const fetchTranslation = useCallback((version: 'greek' | 'translit' | 'niv' | 'esv') => {
+    if (getStudyData(activeBook, activeChapter)) return  // MOCK 경로는 fetch 불필요
+    if (translationData[passageKey]?.[version]) return  // 이미 로드됨
+    if (translationLoading[passageKey]?.[version]) return  // 이미 로딩 중
+
+    // 1) 신 캐시 확인
+    const cached = getStorageItem<any[] | null>(`study_${passageKey}_trans_${version}`, null)
+    if (cached) {
+      setTranslationData(prev => ({
+        ...prev,
+        [passageKey]: { ...(prev[passageKey] || {}), [version]: cached },
+      }))
+      return
+    }
+
+    // 2) API 호출
+    setTranslationLoading(prev => ({
+      ...prev,
+      [passageKey]: { ...(prev[passageKey] || {}), [version]: true },
+    }))
+    setTranslationError(prev => ({
+      ...prev,
+      [passageKey]: { ...(prev[passageKey] || {}), [version]: null },
+    }))
+
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'bible-study-translation',
+        data: {
+          book: activeBook,
+          chapter: String(activeChapter),
+          verseStart: String(activeVerseStart),
+          verseEnd: activeVerseEnd ? String(activeVerseEnd) : undefined,
+          passage: activePassageDisplay,
+          version,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          try {
+            const parsed = JSON.parse(json.data.output)
+            const list = parsed.verses || []
+            setTranslationData(prev => ({
+              ...prev,
+              [passageKey]: { ...(prev[passageKey] || {}), [version]: list },
+            }))
+            setStorageItem(`study_${passageKey}_trans_${version}`, list)
+          } catch {
+            setTranslationError(prev => ({
+              ...prev,
+              [passageKey]: { ...(prev[passageKey] || {}), [version]: 'AI 응답을 해석할 수 없습니다' },
+            }))
+          }
+        } else {
+          setTranslationError(prev => ({
+            ...prev,
+            [passageKey]: { ...(prev[passageKey] || {}), [version]: json.error || 'AI 분석에 실패했습니다' },
+          }))
+        }
+      })
+      .catch(() => {
+        setTranslationError(prev => ({
+          ...prev,
+          [passageKey]: { ...(prev[passageKey] || {}), [version]: 'AI 서버에 연결할 수 없습니다' },
+        }))
+      })
+      .finally(() => {
+        setTranslationLoading(prev => ({
+          ...prev,
+          [passageKey]: { ...(prev[passageKey] || {}), [version]: false },
+        }))
+      })
+  }, [passageKey, activeVerseStart, activeVerseEnd, activePassageDisplay, translationData, translationLoading, activeBook, activeChapter])
+
+  // [신규] 재분석 함수 — core + 모든 translations 캐시 삭제 후 fetchCore
   const reAnalyze = useCallback((key: string) => {
-    removeStorageItem(`study_${key}`)
-    setAiStudyData(prev => {
+    removeStorageItem(`study_${key}_core`)
+    removeStorageItem(`study_${key}_trans_greek`)
+    removeStorageItem(`study_${key}_trans_translit`)
+    removeStorageItem(`study_${key}_trans_niv`)
+    removeStorageItem(`study_${key}_trans_esv`)
+    setCoreData(prev => {
       const next = { ...prev }
       delete next[key]
       return next
     })
-    setTimeout(() => fetchAiStudy(), 50)
-  }, [fetchAiStudy])
+    setTranslationData(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setTranslationLoading(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setTimeout(() => fetchCore(), 50)
+  }, [fetchCore])
 
   useEffect(() => {
-    fetchAiStudy()
-  }, [fetchAiStudy])
+    fetchCore()
+  }, [fetchCore])
 
   // 마이그레이션: 다중 본문에서 'legacy'로 저장된 메모를 'tab_0'으로 이관
   useEffect(() => {
@@ -307,7 +498,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
       }
     } catch {}
 
-    // 2) API 호출 — 통합 분석만 (개별 분석은 fetchAiStudy가 담당)
+    // 2) API 호출 — 통합 분석만 (개별 분석은 fetchCore가 담당)
     setMultiStudyLoading(true)
     try {
       const res = await fetch('/api/advanced/ai', {
@@ -449,6 +640,38 @@ export default function BibleStudyTab({ project, passages }: Props) {
     setSelectedTheme(null)
   }, [])
 
+  // ─── Auto Diff: 비교 인사이트에서 절 클릭 시 스크롤 + 선택 ───
+  const handleScrollToVerse = useCallback((verse: number) => {
+    setSelectedVerse(verse)
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById(`verse-row-${verse}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 50)
+    }
+  }, [])
+
+  // ─── Auto Diff: 활성 영어 버전 + 차이점 절 set 계산 ───
+  const activeEnglishVersions = useMemo(() => {
+    const out: string[] = []
+    if (showTranslations.niv) out.push('NIV')
+    if (showTranslations.esv) out.push('ESV')
+    return out
+  }, [showTranslations.niv, showTranslations.esv])
+
+  const diffVerses = useMemo(() => {
+    if (activeEnglishVersions.length < 2) return new Set<number>()
+    const notes = (studyData as any)?.translationNotes as any[] | undefined
+    if (!notes) return new Set<number>()
+    const set = new Set<number>()
+    for (const n of notes) {
+      if (Array.isArray(n?.versions) && n.versions.some((v: string) => activeEnglishVersions.includes(v))) {
+        if (typeof n.verse === 'number') set.add(n.verse)
+      }
+    }
+    return set
+  }, [activeEnglishVersions, studyData])
+
   const handleThemeClick = useCallback((theme: string) => {
     setSelectedTheme(theme)
     setSelectedWordId(null)
@@ -526,7 +749,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
         const vs = p.verseStart ?? 1
         const ve = p.verseEnd ?? vs
         const key = `${p.book}_${p.chapter}_${vs}-${ve}`
-        const data = aiStudyData[key] || getStorageItem<any | null>(`study_${key}`, null)
+        // 신 캐시(_core) 우선, 없으면 옛 캐시(study_${key}) 시도 (마이그레이션 이전 데이터 호환)
+        const data = coreData[key] || getStorageItem<any | null>(`study_${key}_core`, null) || getStorageItem<any | null>(`study_${key}`, null)
         if (data) {
           multiPassageData.push({
             label: p.passage || `${p.book} ${p.chapter}:${vs}${ve !== vs ? `-${ve}` : ''}`,
@@ -561,11 +785,34 @@ export default function BibleStudyTab({ project, passages }: Props) {
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload
     router.push(`/advanced/projects/${project.id}?tab=prep`)
-  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project, isMulti, aiStudyData, multiStudyData])
+  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project, isMulti, coreData, multiStudyData])
 
+  // ─── Translation Guardian: 토글 + Smart Cascade ───
+  // greek ↔ translit 자동 연동 (원어 켜면 음역도, 끄면 음역도)
+  // fetch는 useEffect에서 처리 (showTranslations 변동 감지)
   const toggleTranslation = useCallback((key: string) => {
-    setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))
+    setShowTranslations(prev => {
+      const willBeOn = !prev[key]
+      const next = { ...prev, [key]: willBeOn }
+      // Smart Cascade: greek ↔ translit
+      if (key === 'greek') {
+        next.translit = willBeOn
+      }
+      return next
+    })
   }, [])
+
+  // 켜진 version 중 데이터 없는 것 lazy fetch
+  useEffect(() => {
+    if (!passageKey) return
+    const trans = translationData[passageKey] || {}
+    const loading = translationLoading[passageKey] || {}
+    ;(['greek', 'translit', 'niv', 'esv'] as const).forEach(v => {
+      if (showTranslations[v] && !trans[v] && !loading[v]) {
+        fetchTranslation(v)
+      }
+    })
+  }, [showTranslations, passageKey, translationData, translationLoading, fetchTranslation])
 
   const toggleMemoTag = useCallback((tag: string) => {
     setMemosByPassage(prev => {
@@ -874,15 +1121,44 @@ export default function BibleStudyTab({ project, passages }: Props) {
               lastSaved={lastSaved}
               onSendToPrep={handleSendToPrep}
               onReAnalyze={() => reAnalyze(passageKey)}
+              translationState={(() => {
+                const trans = translationData[passageKey] || {}
+                const loading = translationLoading[passageKey] || {}
+                return {
+                  greek: { loading: !!loading.greek, hasData: !!trans.greek },
+                  translit: { loading: !!loading.translit, hasData: !!trans.translit },
+                  niv: { loading: !!loading.niv, hasData: !!trans.niv },
+                  esv: { loading: !!loading.esv, hasData: !!trans.esv },
+                }
+              })()}
+              previewVerses={(() => {
+                const trans = translationData[passageKey] || {}
+                const findFirst = (arr: any[]) => arr?.find((v: any) => v.verse === 1) || arr?.[0]
+                return {
+                  greek: findFirst(trans.greek || [])?.greek,
+                  translit: findFirst(trans.translit || [])?.translit,
+                  niv: findFirst(trans.niv || [])?.niv,
+                  esv: findFirst(trans.esv || [])?.esv,
+                }
+              })()}
             />
 
             {/* Context Explorer - always visible */}
             <ContextExplorer info={studyData.contextInfo} />
 
+            {/* Auto Diff: NIV + ESV 등 2개 영어 버전 켜졌을 때 비교 인사이트 */}
+            {viewMode !== 'compare' && (
+              <TranslationDiffSummary
+                translationNotes={(studyData as any)?.translationNotes || []}
+                activeEnglishVersions={activeEnglishVersions}
+                onScrollToVerse={handleScrollToVerse}
+              />
+            )}
+
             {/* 병렬 모드: 여러 번역본 나란히 */}
             {viewMode === 'parallel' && (
               <ParallelPassagePanel
-                verses={studyData.verses}
+                verses={mergedVerses}
                 words={allWords}
                 wordAlignments={(studyData as any)?.wordAlignments || []}
                 showTranslations={showTranslations}
@@ -890,6 +1166,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 selectedVerse={selectedVerse}
                 onWordClick={handleWordClick}
                 onVerseClick={handleVerseClick}
+                translationLoading={translationLoading[passageKey] || {}}
+                diffVerses={diffVerses}
               />
             )}
 
@@ -897,7 +1175,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
             {viewMode === 'focused' && (
               <>
                 <ParallelPassagePanel
-                  verses={studyData.verses}
+                  verses={mergedVerses}
                   words={allWords}
                   wordAlignments={(studyData as any)?.wordAlignments || []}
                   showTranslations={showTranslations}
@@ -905,6 +1183,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
                   selectedVerse={selectedVerse}
                   onWordClick={handleWordClick}
                   onVerseClick={handleVerseClick}
+                  translationLoading={translationLoading[passageKey] || {}}
+                  diffVerses={diffVerses}
                 />
                 <CommentarySummary
                   commentaries={studyData.commentaries}
@@ -949,7 +1229,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
                   <p className="text-sm text-red-400/80 mt-2">{aiStudyError}</p>
                 </div>
                 <button
-                  onClick={fetchAiStudy}
+                  onClick={fetchCore}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
                 >
                   <Loader2 className="w-4 h-4" />
@@ -1349,11 +1629,113 @@ function normalizeGreek(s: string): string {
    SUB-COMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
+/* ─── Translation Card 스타일 매핑 ───
+   Tailwind는 동적 class name을 빌드 타임에 감지하므로 lookup 테이블로 처리 */
+
+const VERSION_CARD_STYLE: Record<string, {
+  bgOn: string; borderOn: string; iconOn: string; labelOn: string; personaOn: string;
+  glow: string; dot: string;
+}> = {
+  greek: {
+    bgOn: 'bg-purple-500/15', borderOn: 'border-purple-500/50',
+    iconOn: 'text-purple-300', labelOn: 'text-purple-100', personaOn: 'text-purple-300/80',
+    glow: 'shadow-purple-500/20', dot: 'bg-purple-400',
+  },
+  translit: {
+    bgOn: 'bg-cyan-500/15', borderOn: 'border-cyan-500/50',
+    iconOn: 'text-cyan-300', labelOn: 'text-cyan-100', personaOn: 'text-cyan-300/80',
+    glow: 'shadow-cyan-500/20', dot: 'bg-cyan-400',
+  },
+  niv: {
+    bgOn: 'bg-blue-500/15', borderOn: 'border-blue-500/50',
+    iconOn: 'text-blue-300', labelOn: 'text-blue-100', personaOn: 'text-blue-300/80',
+    glow: 'shadow-blue-500/20', dot: 'bg-blue-400',
+  },
+  esv: {
+    bgOn: 'bg-amber-500/15', borderOn: 'border-amber-500/50',
+    iconOn: 'text-amber-300', labelOn: 'text-amber-100', personaOn: 'text-amber-300/80',
+    glow: 'shadow-amber-500/20', dot: 'bg-amber-400',
+  },
+}
+
+const VERSION_CARD_META: Record<string, {
+  label: string; persona: string; icon: any;
+}> = {
+  greek: { label: '원어', persona: '어원 · 구조', icon: Globe },
+  translit: { label: '음역', persona: '발음 · 표기', icon: Volume2 },
+  niv: { label: 'NIV', persona: '의미 · 현대', icon: BookOpen },
+  esv: { label: 'ESV', persona: '직역 · 정확', icon: BookMarked },
+}
+
+/* ─── Translation Card ─── */
+
+function TranslationCard({
+  version, isOn, isLoading, onToggle, preview,
+}: {
+  version: 'greek' | 'translit' | 'niv' | 'esv'
+  isOn: boolean
+  isLoading: boolean
+  onToggle: () => void
+  preview?: string  // 첫 절 텍스트 (loaded 시)
+}) {
+  const meta = VERSION_CARD_META[version]
+  const style = VERSION_CARD_STYLE[version]
+  const Icon = meta.icon
+  const [hover, setHover] = useState(false)
+
+  return (
+    <button
+      onClick={onToggle}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`relative w-[128px] h-[58px] rounded-lg border transition-all text-left px-3 py-2 group ${
+        isOn
+          ? `${style.bgOn} ${style.borderOn} shadow-md ${style.glow}`
+          : 'bg-[#04060f]/60 border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-0.5">
+        <div className="flex items-center gap-1.5">
+          <Icon className={`w-3 h-3 ${isOn ? style.iconOn : 'text-slate-500'}`} />
+          <span className={`text-[10.5px] font-bold tracking-wide ${
+            isOn ? style.labelOn : 'text-slate-400'
+          }`}>
+            {meta.label}
+          </span>
+        </div>
+        {isLoading ? (
+          <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />
+        ) : isOn ? (
+          <Check className={`w-3 h-3 ${style.iconOn}`} />
+        ) : null}
+      </div>
+      <div className={`text-[9px] leading-tight ${
+        isOn ? style.personaOn : 'text-slate-500'
+      }`}>
+        {isLoading ? '로딩 중…' : isOn ? meta.persona : '클릭하여 켜기'}
+      </div>
+
+      {/* 호버 미리보기 — ON + 로드 완료 시에만 */}
+      {isOn && !isLoading && preview && hover && (
+        <div className="absolute z-50 left-0 top-full mt-2 w-80 p-3 rounded-lg bg-[#0a0e1a] border border-white/10 text-[10.5px] text-slate-300 pointer-events-none shadow-2xl">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${style.iconOn}`}>
+              {meta.label} 미리보기 (1절)
+            </span>
+          </div>
+          <div className="italic leading-relaxed line-clamp-3">&ldquo;{preview}&rdquo;</div>
+        </div>
+      )}
+    </button>
+  )
+}
+
 /* ─── Research Toolbar ─── */
 
 function ResearchToolbar({
   passage, viewMode, onViewModeChange, showTranslations, onToggleTranslation,
-  isSaving, lastSaved, onSendToPrep, onReAnalyze,
+  isSaving, lastSaved, onSendToPrep, onReAnalyze, translationState, previewVerses,
 }: {
   passage: string
   viewMode: ViewMode
@@ -1364,6 +1746,8 @@ function ResearchToolbar({
   lastSaved: string | null
   onSendToPrep: () => void
   onReAnalyze: () => void
+  translationState: Record<string, { loading?: boolean; hasData?: boolean }>
+  previewVerses: Record<string, string>  // version → 첫 절 텍스트
 }) {
   const viewModes: { key: ViewMode; label: string }[] = [
     { key: 'parallel', label: '병렬' },
@@ -1371,9 +1755,12 @@ function ResearchToolbar({
     { key: 'compare', label: '비교' },
   ]
 
+  const cardVersions: ('greek' | 'translit' | 'niv' | 'esv')[] = ['greek', 'translit', 'niv', 'esv']
+
   return (
     <div className="sticky top-0 z-10 bg-[#050814]/95 backdrop-blur-sm border-b border-white/5 px-5 py-3 mb-5">
-      <div className="flex items-center justify-between">
+      {/* Top row: passage + view mode + save status + re-analyze + CTA */}
+      <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-4">
           {/* Current Passage */}
           <div className="flex items-center gap-2">
@@ -1402,29 +1789,6 @@ function ResearchToolbar({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Translation Toggles */}
-          <div className="flex items-center gap-1">
-            {([
-              { key: 'greek', label: '원문' },
-              { key: 'translit', label: '음역' },
-              { key: 'korean', label: '개역' },
-              { key: 'niv', label: 'NIV' },
-              { key: 'esv', label: 'ESV' },
-            ]).map(t => (
-              <button
-                key={t.key}
-                onClick={() => onToggleTranslation(t.key)}
-                className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                  showTranslations[t.key]
-                    ? 'bg-indigo-500/10 text-indigo-300 font-medium'
-                    : 'bg-[#04060f]/60 border border-white/5 text-slate-500'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {/* Save Status */}
           <div className="flex items-center gap-1.5 text-[11px]">
             {isSaving ? (
@@ -1452,6 +1816,27 @@ function ResearchToolbar({
           >
             설교 준비로 →
           </button>
+        </div>
+      </div>
+
+      {/* Bottom row: 4 Translation Cards + korean note */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider mr-1 shrink-0">번역</span>
+        {cardVersions.map(v => (
+          <TranslationCard
+            key={v}
+            version={v}
+            isOn={showTranslations[v] || false}
+            isLoading={translationState[v]?.loading || false}
+            onToggle={() => onToggleTranslation(v)}
+            preview={previewVerses[v]}
+          />
+        ))}
+        <div className="flex items-center gap-1.5 ml-2 text-[10px] text-slate-500">
+          <span className="px-2 py-1 rounded bg-slate-500/10 border border-slate-500/20 text-slate-300 font-medium">
+            한글
+          </span>
+          <span>본문에 기본 표시</span>
         </div>
       </div>
     </div>
@@ -1619,11 +2004,80 @@ function ContextExplorer({ info }: { info: Partial<ContextInfo> }) {
   )
 }
 
+/* ─── Translation Diff Summary (Auto Diff) ─── */
+
+function TranslationDiffSummary({
+  translationNotes, activeEnglishVersions, onScrollToVerse,
+}: {
+  translationNotes: any[]
+  activeEnglishVersions: string[]
+  onScrollToVerse: (verse: number) => void
+}) {
+  // 활성화된 영어 버전 2개 이상일 때만 표시
+  if (activeEnglishVersions.length < 2) return null
+
+  // 노트 중 활성화된 버전과 매칭되는 것만
+  const relevantNotes = translationNotes.filter(note =>
+    Array.isArray(note.versions) && note.versions.some((v: string) => activeEnglishVersions.includes(v))
+  )
+  if (relevantNotes.length === 0) return null
+
+  return (
+    <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/[0.08] via-orange-500/[0.04] to-transparent border border-amber-500/20 rounded-2xl p-4 mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-amber-300 text-base">⚡</span>
+        <h3 className="text-[13px] font-bold text-white">번역 비교 인사이트</h3>
+        <span className="text-[10px] text-amber-300/80 font-medium">
+          {activeEnglishVersions.join(' ↔ ')} · {relevantNotes.length}개 차이
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {relevantNotes.map((note, i) => (
+          <button
+            key={i}
+            onClick={() => onScrollToVerse(note.verse)}
+            className="w-full text-left p-2.5 rounded-lg bg-[#04060f]/60 hover:bg-amber-500/[0.08] border border-white/5 hover:border-amber-500/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded tabular-nums">
+                {note.verse}절
+              </span>
+              <div className="flex gap-1">
+                {(note.versions || []).map((v: string) => (
+                  <span
+                    key={v}
+                    className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                      activeEnglishVersions.includes(v)
+                        ? 'bg-amber-500/15 text-amber-200 border border-amber-500/20'
+                        : 'bg-white/5 text-slate-500'
+                    }`}
+                  >
+                    {v}
+                  </span>
+                ))}
+              </div>
+              <span className="ml-auto text-[10px] text-slate-500 group-hover:text-amber-300 transition-colors">
+                이동 →
+              </span>
+            </div>
+            <p className="text-[11.5px] text-slate-300 leading-relaxed">{note.note}</p>
+            {note.preachingNote && (
+              <p className="text-[10.5px] text-amber-200/80 leading-relaxed mt-1.5 pt-1.5 border-t border-amber-500/10 italic">
+                💡 설교 적용: {note.preachingNote}
+              </p>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Parallel Passage Panel ─── */
 
 function ParallelPassagePanel({
   verses, words, wordAlignments, showTranslations, selectedWordId, selectedVerse,
-  onWordClick, onVerseClick,
+  onWordClick, onVerseClick, translationLoading, diffVerses,
 }: {
   verses: typeof JOHN_VERSES
   words: Record<string, JohnWordDetail>
@@ -1633,6 +2087,8 @@ function ParallelPassagePanel({
   selectedVerse: number | null
   onWordClick: (id: string, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => void
   onVerseClick: (v: number) => void
+  translationLoading?: Record<string, boolean>
+  diffVerses?: Set<number>  // 번역 차이가 있는 절 번호들
 }) {
   const alignmentMap = useMemo(() => {
     const m = new Map<string, string>()
@@ -1692,31 +2148,58 @@ function ParallelPassagePanel({
     })
   }
 
+  // ─── Translation Guardian: 켜졌지만 데이터 로딩 중인 version ───
+  const loadingVersions = Object.entries(translationLoading || {})
+    .filter(([k, v]) => v && showTranslations[k])
+    .map(([k]) => k)
+
   return (
     <div className="bg-[#04060f]/60 rounded-xl border border-white/5 mb-5 overflow-hidden">
       <div className="px-5 py-3 border-b border-white/5 bg-[#04060f]/60 flex items-center justify-between">
-        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">병렬 본문</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">병렬 본문</span>
+          {loadingVersions.length > 0 && (
+            <span className="flex items-center gap-1.5 text-[10px] text-indigo-300">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {loadingVersions.map(v => v.toUpperCase()).join(', ')} 번역 생성 중...
+            </span>
+          )}
+        </div>
         <span className="text-[10px] text-slate-500">단어를 클릭하면 상세 분석을 볼 수 있습니다</span>
       </div>
       <div className="divide-y divide-white/5">
         {verses.map(v => (
           <div
             key={v.verse}
-            className={`px-5 py-4 transition-colors ${
-              selectedVerse === v.verse ? 'bg-indigo-500/10' : 'hover:bg-white/5'
+            id={`verse-row-${v.verse}`}
+            className={`px-5 py-4 transition-colors relative ${
+              selectedVerse === v.verse
+                ? 'bg-indigo-500/10 ring-1 ring-indigo-500/30'
+                : 'hover:bg-white/5'
             }`}
           >
             <div className="flex gap-4">
-              <button
-                onClick={() => onVerseClick(v.verse)}
-                className={`w-8 h-8 rounded-full text-xs font-bold shrink-0 transition-colors ${
-                  selectedVerse === v.verse
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white/5 text-slate-400 hover:bg-white/5'
-                }`}
-              >
-                {v.verse}
-              </button>
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => onVerseClick(v.verse)}
+                  className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
+                    selectedVerse === v.verse
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white/5 text-slate-400 hover:bg-white/5'
+                  }`}
+                >
+                  {v.verse}
+                </button>
+                {/* Δ 마커: 이 절에 번역 차이가 있을 때 */}
+                {diffVerses?.has(v.verse) && (
+                  <span
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md ring-2 ring-[#04060f]"
+                    title="번역 차이 있음"
+                  >
+                    Δ
+                  </span>
+                )}
+              </div>
               <div className="flex-1 min-w-0 space-y-2">
                 {/* Greek */}
                 {showTranslations.greek && (

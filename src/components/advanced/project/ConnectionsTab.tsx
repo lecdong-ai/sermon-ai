@@ -129,7 +129,8 @@ export default function ConnectionsTab({ project }: Props) {
     const pid = project.id
     const manuscript = getStorageItem<any>(`manuscript_${pid}`, {})
     const prep = getStorageItem<any>(`prep_${pid}`, {}) as PrepData
-    const study = getStorageItem<any>(`study_${pid}`, {})
+    // 신 캐시(_core) 우선, 없으면 옛 캐시 fallback (마이그레이션 이전 데이터 호환)
+    const study = getStorageItem<any>(`study_${pid}_core`, {}) || getStorageItem<any>(`study_${pid}`, {})
 
     const sections: SectionInfo[] = (manuscript.sections || []).filter((s: any) => s?.id)
     const greekWords: GreekWord[] = manuscript.greekWords || study.greekWords || []
