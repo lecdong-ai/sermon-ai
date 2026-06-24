@@ -5,6 +5,7 @@ import type { AdvancedProject, ProjectStatus, QuickStats } from './types'
 import { getCustomProjects, removeCustomProject } from './customProjects'
 import { setStorageItem, removeStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
+import { computeProjectProgress } from '@/lib/advanced/projectProgress'
 
 const STATUS_MAP: Record<string, ProjectStatus> = {
   draft: 'research',
@@ -100,20 +101,26 @@ export function useProjects(): UseProjectsResult {
   const projects = useMemo(() => {
     const customProjects = getCustomProjects()
 
-    // Enrich custom projects with coreMessage from prep/manuscript localStorage
+    // Enrich projects with coreMessage and auto-derived status from localStorage data
     const enrichCore = (p: AdvancedProject): AdvancedProject => {
-      if (p.coreMessage) return p
+      let enriched: AdvancedProject = p
+      if (!p.coreMessage) {
+        try {
+          const { prep, manuscript: ms } = readProjectCore(p.id)
+          if (prep?.coreMessage) enriched = { ...enriched, coreMessage: prep.coreMessage }
+          else if (ms?.coreMessage) enriched = { ...enriched, coreMessage: ms.coreMessage }
+        } catch {}
+      }
       try {
-        const { prep, manuscript: ms } = readProjectCore(p.id)
-        if (prep?.coreMessage) return { ...p, coreMessage: prep.coreMessage }
-        if (ms?.coreMessage) return { ...p, coreMessage: ms.coreMessage }
+        const progress = computeProjectProgress(p.id, p.passages, p.status)
+        enriched = { ...enriched, status: progress.overall }
       } catch {}
-      return p
+      return enriched
     }
 
     const byId = new Map<string, AdvancedProject>()
     for (const p of customProjects) byId.set(p.id, enrichCore(p))
-    for (const p of apiProjects) byId.set(p.id, p)
+    for (const p of apiProjects) byId.set(p.id, enrichCore(p))
 
     return Array.from(byId.values()).sort(
       (a, b) =>

@@ -17,7 +17,6 @@ export interface ProjectLocalData {
   manuscript?: any
   manuscriptVersions?: any
   quickfill?: any
-  studyToPrep?: Record<string, any>
 }
 
 const KEY_PREFIX = {
@@ -25,17 +24,8 @@ const KEY_PREFIX = {
   manuscript: (id: string) => `manuscript_${id}`,
   manuscriptVersions: (id: string) => `manuscript_${id}_versions`,
   quickfill: (id: string) => `quickfill_${id}`,
-  studyToPrep: (id: string) => `study_to_prep_${id}`,
 }
 
-/**
- * Read all per-project localStorage data in one call.
- * Returns an object with whatever data was present.
- *
- * Usage:
- *   const { prep, manuscript } = readProjectLocal(project.id)
- *   if (prep) { ... }
- */
 export function readProjectLocal(projectId: string): ProjectLocalData {
   if (!projectId) return {}
   return {
@@ -43,13 +33,12 @@ export function readProjectLocal(projectId: string): ProjectLocalData {
     manuscript: getStorageItem<any | null>(KEY_PREFIX.manuscript(projectId), null) ?? undefined,
     manuscriptVersions: getStorageItem<any | null>(KEY_PREFIX.manuscriptVersions(projectId), null) ?? undefined,
     quickfill: getStorageItem<any | null>(KEY_PREFIX.quickfill(projectId), null) ?? undefined,
-    studyToPrep: getStorageItem<Record<string, any> | null>(KEY_PREFIX.studyToPrep(projectId), null) ?? undefined,
   }
 }
 
 /**
  * Lightweight helper: only read prep + manuscript (the two most common pair).
- * Avoids the full 5-key read for callers that only need these.
+ * Avoids the full key read for callers that only need these.
  */
 export function readProjectCore(projectId: string): {
   prep?: any

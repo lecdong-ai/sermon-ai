@@ -10,6 +10,7 @@ import type { PrepVersion } from '@/lib/advanced/johnVersionData'
 import { PREP_VERSIONS, RECENT_ACTIVITY } from '@/lib/advanced/johnVersionData'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
+import { computeProjectProgress, toStageStatusMap } from '@/lib/advanced/projectProgress'
 
 interface Props { project: ProjectDetail }
 
@@ -273,6 +274,20 @@ export default function PrepTab({ project }: Props) {
   const generateOutlines = useCallback(() => {
     setOutlineLoading(true)
     setOutlineCandidates(null)
+
+    const multiPassageEntries = Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+      label,
+      passage: key,
+      words: study?.words ? Object.values(study.words).slice(0, 5).map((w: any) => ({
+        word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+        meaning: w.basicMeaning || '',
+        note: w.contextualMeaning || w.simpleExplanation || '',
+      })) : [],
+      commentaries: (study?.commentaries || []).map((c: any) => c.text).filter(Boolean).slice(0, 3),
+      themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+      contextInfo: study?.contextInfo || null,
+    }))
+
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -288,6 +303,7 @@ export default function PrepTab({ project }: Props) {
           keyWords: prepData.keyWords,
           researchInsights: prepData.researchInsights,
           coreMessage: prepData.coreMessage,
+          multiPassageData: multiPassageEntries.length > 0 ? multiPassageEntries : undefined,
         },
       }),
     })
@@ -300,7 +316,7 @@ export default function PrepTab({ project }: Props) {
       })
       .catch(() => {})
       .finally(() => setOutlineLoading(false))
-  }, [project, prepData])
+  }, [project, prepData, cachedStudies])
 
   const selectOutlineCandidate = useCallback((index: number) => {
     const candidate = outlineCandidates?.[index]
@@ -378,7 +394,7 @@ export default function PrepTab({ project }: Props) {
       <ProjectContextRow
         project={project}
         currentStage="prep"
-        stageStatus={{ study: 'done', prep: 'progress', manuscript: 'empty' }}
+        stageStatus={toStageStatusMap(computeProjectProgress(project.id, project.passages))}
         lastSaved={lastSavedDisplay}
       />
 
@@ -468,6 +484,7 @@ export default function PrepTab({ project }: Props) {
               isActive={activeSection === 'direction'}
               onActivate={() => setActiveSection('direction')}
               onUpdate={updateField}
+              cachedStudies={cachedStudies}
             />
 
             {/* Section: 본문 핵심 흐름 */}
@@ -517,6 +534,7 @@ export default function PrepTab({ project }: Props) {
               isActive={activeSection === 'delivery'}
               onActivate={() => setActiveSection('delivery')}
               onUpdate={updateField}
+              cachedStudies={cachedStudies}
             />
 
             {/* ─── 준비 이력 ─── */}
@@ -712,7 +730,7 @@ function PrepNavigator({
 /* ─── Direction Section ─── */
 
 function DirectionSection({
-  data, project, sectionRef, isActive, onActivate, onUpdate,
+  data, project, sectionRef, isActive, onActivate, onUpdate, cachedStudies,
 }: {
   data: PrepData
   project: ProjectDetail
@@ -720,6 +738,7 @@ function DirectionSection({
   isActive: boolean
   onActivate: () => void
   onUpdate: <K extends keyof PrepData>(key: K, value: PrepData[K]) => void
+  cachedStudies: Record<string, { label: string; data: any }>
 }) {
   const [loadingCore, setLoadingCore] = useState(false)
   const [coreCandidates, setCoreCandidates] = useState<{ style: string; coreMessage: string; reason: string }[] | null>(null)
@@ -727,6 +746,21 @@ function DirectionSection({
   const generateCoreMessages = useCallback(() => {
     setLoadingCore(true)
     setCoreCandidates(null)
+
+    // 다중 본문 cached study 데이터를 API payload에 포함
+    const multiPassageEntries = Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+      label,
+      passage: key,
+      words: study?.words ? Object.values(study.words).slice(0, 5).map((w: any) => ({
+        word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+        meaning: w.basicMeaning || '',
+        note: w.contextualMeaning || w.simpleExplanation || '',
+      })) : [],
+      commentaries: (study?.commentaries || []).map((c: any) => c.text).filter(Boolean).slice(0, 3),
+      themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+      contextInfo: study?.contextInfo || null,
+    }))
+
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -740,6 +774,10 @@ function DirectionSection({
           verseEnd: project.verseEnd ? String(project.verseEnd) : undefined,
           passageStructure: data.passageStructure,
           sermonTitle: data.sermonTitle,
+          keyWords: data.keyWords,
+          researchInsights: data.researchInsights,
+          contextPoints: data.contextPoints,
+          multiPassageData: multiPassageEntries.length > 0 ? multiPassageEntries : undefined,
         },
       }),
     })
@@ -752,7 +790,7 @@ function DirectionSection({
       })
       .catch(() => {})
       .finally(() => setLoadingCore(false))
-  }, [project, data.passageStructure, data.sermonTitle])
+  }, [project, data.passageStructure, data.sermonTitle, data.keyWords, data.researchInsights, data.contextPoints, cachedStudies])
 
   const selectCoreMessage = useCallback((msg: string) => {
     onUpdate('coreMessage', msg)
@@ -1814,7 +1852,7 @@ function CongregationProfileEditor({
 /* ─── Delivery Section ─── */
 
 function DeliverySection({
-  data, project, sectionRef, isActive, onActivate, onUpdate,
+  data, project, sectionRef, isActive, onActivate, onUpdate, cachedStudies,
 }: {
   data: PrepData
   project: ProjectDetail
@@ -1822,6 +1860,7 @@ function DeliverySection({
   isActive: boolean
   onActivate: () => void
   onUpdate: <K extends keyof PrepData>(key: K, value: PrepData[K]) => void
+  cachedStudies: Record<string, { label: string; data: any }>
 }) {
   const [loading, setLoading] = useState(false)
   const [candidates, setCandidates] = useState<DeliveryBlueprintCandidate[] | null>(null)
@@ -1829,6 +1868,20 @@ function DeliverySection({
   const generateBlueprints = useCallback(() => {
     setLoading(true)
     setCandidates(null)
+
+    const multiPassageEntries = Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+      label,
+      passage: key,
+      words: study?.words ? Object.values(study.words).slice(0, 5).map((w: any) => ({
+        word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+        meaning: w.basicMeaning || '',
+        note: w.contextualMeaning || w.simpleExplanation || '',
+      })) : [],
+      commentaries: (study?.commentaries || []).map((c: any) => c.text).filter(Boolean).slice(0, 3),
+      themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+      contextInfo: study?.contextInfo || null,
+    }))
+
     fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1840,6 +1893,7 @@ function DeliverySection({
           outlines: data.outlines,
           applicationPoints: data.applicationPoints,
           congregationProfile: data.congregationProfile,
+          multiPassageData: multiPassageEntries.length > 0 ? multiPassageEntries : undefined,
         },
       }),
     })
@@ -1852,7 +1906,7 @@ function DeliverySection({
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [project, data.coreMessage, data.outlines, data.applicationPoints, data.congregationProfile])
+  }, [project, data.coreMessage, data.outlines, data.applicationPoints, data.congregationProfile, cachedStudies])
 
   const applyBlueprint = useCallback((candidate: DeliveryBlueprintCandidate) => {
     onUpdate('deliveryIntro', candidate.deliveryIntro)

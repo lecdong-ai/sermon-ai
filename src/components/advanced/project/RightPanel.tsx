@@ -6,7 +6,6 @@ import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER, type Projec
 import SaveStatusIndicator from '@/components/advanced/shared/SaveStatusIndicator'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
 import RecentChangesPanel from '@/components/advanced/shared/RecentChangesPanel'
-import StageTransitionCard from '@/components/advanced/shared/StageTransitionCard'
 import StatusTimeline from '@/components/advanced/shared/StatusTimeline'
 import { MOCK_SAVE_STATE, MOCK_VERSIONS, MOCK_RECENT_CHANGES } from '@/lib/advanced/statusData'
 import { NOTE_TYPE_LABELS, NOTE_TYPE_DOTS, type NoteEntry } from '@/lib/advanced/notesData'
@@ -23,7 +22,6 @@ export default function RightPanel({ project, activeTab, onProjectUpdated, updat
   const [showVersions, setShowVersions] = useState(false)
   const [linkedInsights, setLinkedInsights] = useState<NoteEntry[]>([])
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
-  const [transitioning, setTransitioning] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const statusIndex = PROJECT_STATUS_ORDER.indexOf(project.status)
   const totalSteps = PROJECT_STATUS_ORDER.length - 1
@@ -32,33 +30,6 @@ export default function RightPanel({ project, activeTab, onProjectUpdated, updat
   const showToast = (kind: 'success' | 'error', text: string) => {
     setToast({ kind, text })
     setTimeout(() => setToast(null), 2500)
-  }
-
-  const handleTransition = async (to: ProjectStatus) => {
-    if (transitioning) return
-    setTransitioning(true)
-    updateStatus?.(to)
-    showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
-    try {
-      const res = await fetch(`/api/sermons/${project.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: to }),
-      })
-      const json = await res.json()
-      if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
-      onProjectUpdated?.()
-    } catch (e: any) {
-      // 로컬 프로젝트는 API에 없으므로 무시하고 localStorage 상태 유지
-      if (e?.message?.includes('찾을 수 없습니다')) {
-        showToast('success', '로컬 저장소에 반영되었습니다')
-      } else {
-        showToast('error', e?.message || '단계 전환 실패')
-        updateStatus?.(project.status)
-      }
-    } finally {
-      setTransitioning(false)
-    }
   }
 
   useEffect(() => {
@@ -154,17 +125,6 @@ export default function RightPanel({ project, activeTab, onProjectUpdated, updat
               <div className="adv-progress-fill bg-indigo-600 h-full rounded-full" style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
-        </div>
-
-        {/* 다음 단계 전환 */}
-        <div className="p-4 border-b border-white/5">
-          <StageTransitionCard
-            currentStatus={project.status}
-            onTransition={handleTransition}
-            projectId={project.id}
-            passage={project.passage}
-            book={project.book}
-          />
         </div>
 
         {/* 통계 */}
@@ -294,13 +254,6 @@ export default function RightPanel({ project, activeTab, onProjectUpdated, updat
             : 'bg-red-500/10 border-red-500/30 text-red-300'
         }`}>
           {toast.text}
-        </div>
-      )}
-
-      {transitioning && (
-        <div className="fixed top-4 right-4 z-50 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-[10px] text-indigo-300 font-bold flex items-center gap-1.5 backdrop-blur-md">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-          단계 전환 중...
         </div>
       )}
     </>

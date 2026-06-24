@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { Anchor, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
+import { Anchor, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
@@ -14,7 +14,7 @@ import {
 import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { JohnWordDetail, JohnCommentary } from '@/lib/advanced/johnStudyData'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
-import StudyCompleteModal from '@/components/advanced/shared/StudyCompleteModal'
+import { computeProjectProgress, toStageStatusMap } from '@/lib/advanced/projectProgress'
 
 const STUDY_DATA_REGISTRY: Record<string, {
   passage: string
@@ -129,7 +129,6 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [lookupLoading, setLookupLoading] = useState(false)
   const [englishLookup, setEnglishLookup] = useState<Record<string, EnglishWordDetail>>({})
   const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
-  const [showStudyComplete, setShowStudyComplete] = useState(false)
   const [citingCommentary, setCitingCommentary] = useState<JohnCommentary | null>(null)
   const [citeSuccessMsg, setCiteSuccessMsg] = useState<string | null>(null)
   const [citeLoading, setCiteLoading] = useState(false)
@@ -503,18 +502,55 @@ export default function BibleStudyTab({ project, passages }: Props) {
         tags: memosByPassage.legacy.tags,
       }
     }
+    // 다중 본문: 각 passage의 연구 데이터를 수집
+    const multiPassageData: Array<{
+      label: string
+      words: any[]
+      commentaries: string[]
+      themes: string[]
+      contextInfo: any
+    }> = []
+    if (isMulti && passages) {
+      for (const p of passages) {
+        const vs = p.verseStart ?? 1
+        const ve = p.verseEnd ?? vs
+        const key = `${p.book}_${p.chapter}_${vs}-${ve}`
+        const data = aiStudyData[key] || getStorageItem<any | null>(`study_${key}`, null)
+        if (data) {
+          multiPassageData.push({
+            label: p.passage || `${p.book} ${p.chapter}:${vs}${ve !== vs ? `-${ve}` : ''}`,
+            words: data.words ? Object.values(data.words).slice(0, 5).map((w: any) => ({
+              word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+              meaning: w.basicMeaning || '',
+              note: w.contextualMeaning || w.simpleExplanation || '',
+            })) : [],
+            commentaries: (data.commentaries || []).map((c: any) => c.text).filter(Boolean).slice(0, 3),
+            themes: (data.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+            contextInfo: data.contextInfo || null,
+          })
+        }
+      }
+    }
+
     const prepPayload = {
       passageStructure: studyData?.contextInfo?.bookStructure || '',
       contextPoints: contextEntries,
       keyWords: keyWordEntries,
       researchInsights: insightEntries,
       memosByPassage: memosByPassageWithLabel,
+      multiPassageData: multiPassageData.length > 0 ? multiPassageData : undefined,
+      multiIntegration: isMulti && multiStudyData?.integration ? {
+        commonThemes: multiStudyData.integration.commonThemes,
+        connections: multiStudyData.integration.connections,
+        contrasts: multiStudyData.integration.contrasts,
+        synthesis: multiStudyData.integration.synthesis,
+      } : undefined,
     }
     setStorageItem(`study_to_prep_${project.id}`, prepPayload)
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload
     router.push(`/advanced/projects/${project.id}?tab=prep`)
-  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project, isMulti])
+  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project, isMulti, aiStudyData, multiStudyData])
 
   const toggleTranslation = useCallback((key: string) => {
     setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))
@@ -632,7 +668,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
         <ProjectContextRow
           project={project}
           currentStage="study"
-          stageStatus={{ study: 'done', prep: 'progress', manuscript: 'empty' }}
+          stageStatus={toStageStatusMap(computeProjectProgress(project.id, project.passages))}
           lastSaved={lastSaved || undefined}
         />
 
@@ -981,21 +1017,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
           themes={studyData?.themes || []}
           onCopyResults={handleCopyStudyResults}
           onViewFullChapter={handleViewFullChapter}
-          onStudyComplete={() => setShowStudyComplete(true)}
         />
       </div>
-
-      {/* Study Complete Modal */}
-      <StudyCompleteModal
-        isOpen={showStudyComplete}
-        onClose={() => setShowStudyComplete(false)}
-        studyData={studyData}
-        projectId={project.id}
-        onSendToPrep={() => {
-          setShowStudyComplete(false)
-          handleSendToPrep()
-        }}
-      />
 
       {/* Citation Dialog */}
       {citingCommentary && (
@@ -2069,7 +2092,7 @@ function ResearchNotesEditor({
 function RightPanel({
   words, selectedWordId, selectedFallbackWord, lookupLoading, selectedEnglishWord, englishLookup, englishLookupLoading, selectedVerse, selectedTheme, onCloseDetail,
   onSendToPrep, memosByPassage, currentMemoLabel, passages, commentaries, verses, themes,
-  onCopyResults, onViewFullChapter, onStudyComplete,
+  onCopyResults, onViewFullChapter,
 }: {
   words: Record<string, JohnWordDetail>
   selectedWordId: string | null
@@ -2090,7 +2113,6 @@ function RightPanel({
   themes: any[]
   onCopyResults?: () => void
   onViewFullChapter?: () => void
-  onStudyComplete?: () => void
 }) {
   const typeLabel: Record<string, string> = {
     exegetical: '본문',
@@ -2375,15 +2397,9 @@ function RightPanel({
         <div className="space-y-1.5">
           <button
             onClick={onSendToPrep}
-            className="w-full text-left text-xs text-indigo-400 hover:bg-indigo-500/10 rounded-xl px-3 py-2 transition-colors font-medium border border-indigo-500/20"
-          >
-            설교 준비 탭으로 보내기 →
-          </button>
-          <button
-            onClick={onStudyComplete}
             className="w-full text-left text-xs text-emerald-400 hover:bg-emerald-500/10 rounded-xl px-3 py-2 transition-colors font-medium border border-emerald-500/20"
           >
-            <Sparkles className="w-3.5 h-3.5 inline" /> 연구 완료 — 설교 자료 생성
+            <ArrowRight className="w-3.5 h-3.5 inline" /> 설교 준비로 이동
           </button>
           <button
             onClick={onCopyResults}

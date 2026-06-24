@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { AdvancedProject } from '@/lib/advanced/types'
+import type { AdvancedProject, ProjectStatus } from '@/lib/advanced/types'
+import { computeProjectProgress } from '@/lib/advanced/projectProgress'
 
 interface PipelineVisualizationProps {
   projects: AdvancedProject[]
@@ -30,11 +31,16 @@ export default function PipelineVisualization({ projects }: PipelineVisualizatio
   const router = useRouter()
 
   const stats = useMemo(() => {
-    const counts: Record<string, number> = {
+    const counts: Record<ProjectStatus, number> = {
       research: 0, prepare: 0, writing: 0, review: 0, completed: 0, archived: 0,
     }
     projects.forEach((p) => {
-      if (p.status in counts) counts[p.status]++
+      try {
+        const progress = computeProjectProgress(p.id, p.passages, p.status)
+        counts[progress.overall]++
+      } catch {
+        counts[p.status]++
+      }
     })
     const active = counts.research + counts.prepare + counts.writing + counts.review
     const total = projects.length

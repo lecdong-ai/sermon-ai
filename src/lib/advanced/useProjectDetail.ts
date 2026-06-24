@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { ProjectDetail, AdvancedProject, ProjectVersion, ActivityItem, ProjectStatus } from './types'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import { getCustomProjects, updateCustomProject } from './customProjects'
+import { computeProjectProgress } from '@/lib/advanced/projectProgress'
 
 interface ProjectDetailResult {
   project: ProjectDetail | null
@@ -123,6 +124,12 @@ export function useProjectDetail(projectId: string): ProjectDetailResult {
         backgroundNotes: '', interpretationNotes: '', illustrationNotes: '',
         versions, recentActivity, relatedSermons: (base as any).relatedSermons || [],
       }
+
+      // Auto-derive status from actual data (respects completed/archived)
+      try {
+        const progress = computeProjectProgress(projectId, detail.passages, detail.status)
+        detail.status = progress.overall
+      } catch {}
 
       setProject(detail)
     } catch (err: any) {

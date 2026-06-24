@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { ProjectDetail, PROJECT_STATUS_LABELS, PROJECT_STATUS_ORDER, type ProjectStatus } from '@/lib/advanced/types'
 import { useRouter } from 'next/navigation'
-import { BookOpen, AlignLeft, Pen, Network, History } from 'lucide-react'
+import { BookOpen, AlignLeft, Pen, Network, History, Check, Archive } from 'lucide-react'
 import { AppSectionHeader } from '@/components/advanced/shared'
-import StageTransitionCard from '@/components/advanced/shared/StageTransitionCard'
+import StatusTimeline from '@/components/advanced/shared/StatusTimeline'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
 import RecentChangesPanel from '@/components/advanced/shared/RecentChangesPanel'
 import { MOCK_VERSIONS, MOCK_RECENT_CHANGES } from '@/lib/advanced/statusData'
@@ -26,30 +26,26 @@ export default function OverviewTab({ project, onProjectUpdated, updateStatus }:
     setTimeout(() => setToast(null), 2500)
   }
 
-  const handleTransition = async (to: ProjectStatus) => {
+  const handleManualTransition = async (to: ProjectStatus) => {
     if (transitioning) return
     setTransitioning(true)
-    // 낙관적 업데이트: UI를 즉시 변경
     updateStatus?.(to)
-    showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 이동했습니다`)
+    showToast('success', `${PROJECT_STATUS_LABELS[to]}(으)로 표시했습니다`)
     try {
       const res = await fetch(`/api/sermons/${project.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: to }),
       })
-      const json = await res.json()
-      if (!res.ok || !json.success) throw new Error(json.error || '단계 전환 실패')
-      // 백그라운드에서 최신 데이터 동기화
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        if (!json?.error?.includes('찾을 수 없습니다')) {
+          throw new Error(json?.error || '상태 변경 실패')
+        }
+      }
       onProjectUpdated?.()
     } catch (e: any) {
-      // 로컬 프로젝트는 API에 없으므로 무시하고 localStorage 상태 유지
-      if (e?.message?.includes('찾을 수 없습니다')) {
-        showToast('success', '로컬 저장소에 반영되었습니다')
-      } else {
-        showToast('error', e?.message || '단계 전환 실패')
-        updateStatus?.(project.status)
-      }
+      showToast('error', e?.message || '상태 변경 실패')
     } finally {
       setTransitioning(false)
     }
@@ -78,16 +74,41 @@ export default function OverviewTab({ project, onProjectUpdated, updateStatus }:
 
         {/* ─── 상태 타임라인 ─── */}
         <div className="bg-[#04060f]/60 rounded-xl border border-white/5 p-5">
-          <AppSectionHeader title="진행 단계" />
+          <AppSectionHeader
+            title="진행 단계"
+            action={
+              <span className="text-[10px] text-slate-500">
+                {PROJECT_STATUS_LABELS[project.status]} · 자동 계산됨
+              </span>
+            }
+          />
           <div className="mt-3">
-            <StageTransitionCard
-              currentStatus={project.status}
-              onTransition={handleTransition}
-              projectId={project.id}
-              passage={project.passage}
-              book={project.book}
-            />
+            <StatusTimeline currentStatus={project.status} />
           </div>
+          {(project.status === 'review' || project.status === 'completed') && (
+            <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+              {project.status === 'review' && (
+                <button
+                  onClick={() => handleManualTransition('completed')}
+                  disabled={transitioning}
+                  className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  설교 완료로 표시
+                </button>
+              )}
+              {project.status === 'completed' && (
+                <button
+                  onClick={() => handleManualTransition('archived')}
+                  disabled={transitioning}
+                  className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-slate-500/10 text-slate-300 border border-slate-500/20 hover:bg-slate-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  보관하기
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ─── 요약 통계 ─── */}

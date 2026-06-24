@@ -17,8 +17,6 @@ export { default as VersionHistoryDrawer } from './VersionHistoryDrawer'
 
 export { default as RecentChangesPanel } from './RecentChangesPanel'
 
-export { default as StageTransitionCard } from './StageTransitionCard'
-
 export { default as StatusTimeline } from './StatusTimeline'
 
 export { default as AppSectionHeader } from './AppSectionHeader'

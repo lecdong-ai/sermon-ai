@@ -108,14 +108,6 @@ export interface ActivityItem {
   timestamp: string
 }
 
-export const STAGE_TRANSITIONS: { from: ProjectStatus; to: ProjectStatus; label: string; description: string }[] = [
-  { from: 'research', to: 'prepare', label: '준비 단계로', description: '연구를 완료하고 설교 준비를 시작합니다' },
-  { from: 'prepare', to: 'writing', label: '작성 단계로', description: '대지 정리를 완료하고 원고 작성을 시작합니다' },
-  { from: 'writing', to: 'review', label: '검토 단계로', description: '초안 작성을 완료하고 검토를 진행합니다' },
-  { from: 'review', to: 'completed', label: '완료로 표시', description: '최종 검토를 완료하고 설교를 마무리합니다' },
-  { from: 'completed', to: 'archived', label: '아카이브로 이동', description: '완료된 설교를 아카이브에 보관합니다' },
-]
-
 export interface ProjectSummary {
   id: string
   title: string

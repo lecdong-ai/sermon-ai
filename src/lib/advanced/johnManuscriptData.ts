@@ -14,7 +14,7 @@ export interface IllustrationNote {
   id: string
   title: string
   content: string
-  status: '사용' | '보류' | '검토중'
+  status: '사용' | '보류'
   source?: string
   category?: string
   connection?: string
@@ -258,7 +258,7 @@ NIV는 "the darkness has not overcome it"(정복하지 못했다)로 번역했�
       id: 'ill-003',
       title: '루터의 "흔들리지 않는 뿌리"',
       content: '마틴 루터는 로마서 8장을 "그리스도인의 자유에 대한 가장 웅장한 선언"이라고 불렀다. "폭풍이 몰아칠 때 나뭇잎은 흔들려도 뿌리는 흔들리지 않는다."',
-      status: '검토중',
+      status: '사용',
       source: '루터의 로마서 강해',
     },
   ],

@@ -13,7 +13,7 @@ import { SYSTEM_PROMPT as MANUSCRIPT_BODY_PROMPT } from '@/lib/ai/prompts/manusc
 import { SYSTEM_PROMPT as MANUSCRIPT_APP_RECONSTRUCT_PROMPT } from '@/lib/ai/prompts/manuscript-application-reconstruct'
 import { SYSTEM_PROMPT as ILLUSTRATION_PROMPT } from '@/lib/ai/prompts/illustration'
 import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
-import { SYSTEM_PROMPT as STUDY_TO_PREP_PROMPT } from '@/lib/ai/prompts/studyToPrep'
+
 import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
 import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
 import { SYSTEM_PROMPT as COMMENTARY_TO_SECTION_PROMPT } from '@/lib/ai/prompts/commentaryToSection'
@@ -111,7 +111,6 @@ JSON 배열만 반환. 마크다운, 설명, 주석 일체 없이.
   'application-generate': GENERATE_PROMPT,
   'illustration': ILLUSTRATION_PROMPT,
   'reference': REFERENCE_PROMPT,
-  'study-to-prep': STUDY_TO_PREP_PROMPT,
   'manuscript-diagnosis': MANUSCRIPT_DIAGNOSIS_PROMPT,
   'reference-weave': REFERENCE_WEAVE_PROMPT,
   'commentary-to-section': COMMENTARY_TO_SECTION_PROMPT,
@@ -612,10 +611,16 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
       maxTokens = 2000
       temperature = 0.3
     } else if (type === 'greek-words-analyze') {
+      let multiPassageText = ''
+      if (data.multiPassageData?.length > 0) {
+        multiPassageText = '\n\n## Additional passages with study data:\n' + data.multiPassageData.map((mp: any, i: number) =>
+          `[Passage ${i + 1}: ${mp.label || mp.passage || ''}]${(mp.words || []).map((w: any) => `\n- ${w.word}${w.meaning ? `: ${w.meaning}` : ''}`).join('')}`
+        ).join('\n')
+      }
       userText = `Passage: ${data.passage || ''}
-${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
+${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText}
 
-위 본문에서 설교 준비에 가장 중요한 헬라어/히브리어 원어 4-6개를 추출하여 JSON 객체로 반환하세요. 키는 "words"입니다.`
+위 본문(들)에서 설교 준비에 가장 중요한 헬라어/히브리어 원어 4-6개를 추출하여 JSON 객체로 반환하세요. 다중 본문이 제공된 경우 전체 본문을 통틀어 중요 원어를 선정하세요. 키는 "words"입니다.`
       maxTokens = 2000
       temperature = 0.3
     } else if (type === 'english-word') {
@@ -623,13 +628,81 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       maxTokens = 2000
       temperature = 0.3
     } else if (type === 'core-message') {
-      const { passage, book, chapter, verseStart, verseEnd, passageStructure, sermonTitle } = data
-      userText = `설교 중심명제 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n설교 제목(가안): ${sermonTitle || ''}\n본문 구조: ${passageStructure || ''}`
+      const { passage, book, chapter, verseStart, verseEnd, passageStructure, sermonTitle, keyWords, researchInsights, contextPoints, multiPassageData } = data
+      let studySection = ''
+
+      // 다중 본문이 있고 연구 데이터가 있으면 각 본문별 섹션 구성
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) {
+            studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          }
+          if (mp.contextInfo?.before) {
+            studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          }
+          if (mp.contextInfo?.after) {
+            studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          }
+          if (mp.words?.length > 0) {
+            studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          }
+          if (mp.commentaries?.length > 0) {
+            studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+          }
+          if (mp.themes?.length > 0) {
+            studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          }
+        }
+      } else {
+        // 단일 본문: 기존 연구 데이터
+        if (keyWords?.length > 0 || researchInsights?.length > 0 || contextPoints?.length > 0) {
+          studySection = '\n\n## 연구 데이터 (아래 통찰을 중심명제 생성에 적극 활용하세요)'
+          if (keyWords?.length > 0) {
+            studySection += `\n### 원어 연구\n${keyWords.map((k: any) => `- ${k.word}: ${k.meaning || ''}${k.note ? ` — ${k.note}` : ''}`).join('\n')}`
+          }
+          if (researchInsights?.length > 0) {
+            studySection += `\n### 주석 통찰\n${researchInsights.map((i: any) => `- ${i}`).join('\n')}`
+          }
+          if (contextPoints?.length > 0) {
+            studySection += `\n### 연구 컨텍스트\n${contextPoints.map((p: any) => `- ${p}`).join('\n')}`
+          }
+        }
+      }
+      userText = `설교 중심명제 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n설교 제목(가안): ${sermonTitle || ''}\n본문 구조: ${passageStructure || ''}${studySection}`
       maxTokens = 1000
       temperature = 0.5
     } else if (type === 'delivery') {
-      const { passage, coreMessage, outlines, applicationPoints, congregationProfile } = data
-      userText = `설교 전달 설계도 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n중심명제: ${coreMessage || ''}\n대지: ${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n적용 포인트: ${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n대지 개수: ${(outlines || []).length}개`
+      const { passage, coreMessage, outlines, applicationPoints, congregationProfile, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문 — 전달 설계 시 각 본문의 성격과 흐름을 참고하세요)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) {
+            studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          }
+          if (mp.contextInfo?.before) {
+            studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          }
+          if (mp.contextInfo?.after) {
+            studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          }
+          if (mp.themes?.length > 0) {
+            studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          }
+          if (mp.words?.length > 0) {
+            studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          }
+          if (mp.commentaries?.length > 0) {
+            studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+          }
+        }
+      }
+      userText = `설교 전달 설계도 3가지를 생성해주세요:\n\n본문: ${passage || ''}\n중심명제: ${coreMessage || ''}\n대지: ${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n적용 포인트: ${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n대지 개수: ${(outlines || []).length}개${studySection}`
       maxTokens = 3000
       temperature = 0.5
     } else if (type === 'application-direction') {
@@ -643,18 +716,76 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       maxTokens = 3000
       temperature = 0.5
     } else if (type === 'outline') {
-      const { book, chapter, verseStart, verseEnd, passage, passageStructure, keyWords, researchInsights, coreMessage } = data
-      userText = `설교 개요(대지 구조)를 생성해주세요:\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n\n본문 핵심 흐름: ${passageStructure || ''}\n핵심 메시지: ${coreMessage || ''}\n주요 단어: ${(keyWords || []).map((w: any) => w.word || '').filter(Boolean).join(', ')}\n연구 통찰: ${(researchInsights || []).join('\n')}`
+      const { book, chapter, verseStart, verseEnd, passage, passageStructure, keyWords, researchInsights, coreMessage, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) {
+            studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          }
+          if (mp.contextInfo?.before) {
+            studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          }
+          if (mp.contextInfo?.after) {
+            studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          }
+          if (mp.words?.length > 0) {
+            studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          }
+          if (mp.commentaries?.length > 0) {
+            studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+          }
+          if (mp.themes?.length > 0) {
+            studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          }
+        }
+      } else {
+        if (keyWords?.length > 0 || researchInsights?.length > 0) {
+          studySection = `\n\n## 연구 데이터\n**주요 단어**: ${(keyWords || []).map((w: any) => w.word || '').filter(Boolean).join(', ')}\n**연구 통찰**:\n${(researchInsights || []).join('\n')}`
+        }
+      }
+      userText = `설교 개요(대지 구조) 3가지를 생성해주세요:\n\n### 본문 정보\n본문: ${passage || ''}\n책: ${book || ''}\n장: ${chapter || ''}\n절: ${verseStart || ''}${verseEnd ? `-${verseEnd}` : ''}\n\n### 본문 핵심 흐름\n${passageStructure || ''}\n\n### 핵심 메시지 (중심명제)\n${coreMessage || ''}${studySection}\n\n위 정보를 바탕으로 3가지 다른 스타일의 설교 개요(대지 구조)를 생성해주세요. 다중 본문이 제공된 경우 모든 본문을 아우르는 통합적인 개요를 만들어야 합니다.`
       maxTokens = 4000
       temperature = 0.5
     } else if (type === 'manuscript-introduction') {
-      const { passage, coreMessage, sermonTitle, sermonPurpose, passageStructure, congregationProfile, deliveryIntro, nextSections, greekWords, prepInsights } = data
-      userText = `설교 서론을 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n\n## 전달 도입 방향 (PrepTab에서 작성)\n${deliveryIntro || '(설정되지 않음)'}\n\n## 이후 이어질 섹션들 (서론에서 자연스럽게 예고할 것)\n${nextSections || '본론 → 결론 → 적용'}\n\n## 준비 단계 데이터 (서론에서 이 내용을 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}\n\n위 정보를 바탕으로 설교 서론을 작성해주세요. 이후 이어질 섹션들을 자연스럽게 예고하고, 회중 프로필에 맞는 언어를 사용하십시오. 준비 단계의 핵심 원어와 통찰을 서론 문장 속에 자연스럽게 녹여내십시오.`
+      const { passage, coreMessage, sermonTitle, sermonPurpose, passageStructure, congregationProfile, deliveryIntro, nextSections, greekWords, prepInsights, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          if (mp.contextInfo?.before) studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          if (mp.contextInfo?.after) studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          if (mp.themes?.length > 0) studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          if (mp.words?.length > 0) studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+        }
+      }
+      userText = `설교 서론을 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n\n## 전달 도입 방향 (PrepTab에서 작성)\n${deliveryIntro || '(설정되지 않음)'}\n\n## 이후 이어질 섹션들 (서론에서 자연스럽게 예고할 것)\n${nextSections || '본론 → 결론 → 적용'}\n\n## 준비 단계 데이터 (서론에서 이 내용을 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 서론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 주제와 흐름을 통합하여 하나의 설교로 엮어내는 서론을 작성하세요. 이후 이어질 섹션들을 자연스럽게 예고하고, 회중 프로필에 맞는 언어를 사용하십시오. 준비 단계의 핵심 원어와 통찰을 서론 문장 속에 자연스럽게 녹여내십시오.`
       maxTokens = 2000
       temperature = 0.7
     } else if (type === 'manuscript-conclusion') {
-      const { coreMessage, outlines, applicationPoints, sermonPurpose, expectedResponse, deliveryConclusion, previousContent, greekWords, prepInsights } = data
-      userText = `설교 결론을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트 (결론 이후 적용 섹션에서 다룰 내용)\n${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 기대 반응\n${expectedResponse || ''}\n\n## 전달 마무리 방향 (PrepTab에서 작성)\n${deliveryConclusion || '(설정되지 않음)'}\n\n## 이전 섹션들에서 작성된 내용 (결론이 이 흐름을 자연스럽게 수렴할 것)\n${previousContent || '(아직 작성된 내용 없음)'}\n\n## 준비 단계 데이터 (결론에서 이 내용을 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}\n\n위 정보를 바탕으로 설교 결론을 작성해주세요. 이전 섹션들의 흐름을 중심명제로 자연스럽게 수렴하고, 적용 포인트로 이어지는 다리를 놓으십시오. 준비 단계의 핵심 원어와 통찰을 결론 문장 속에 녹여내십시오.`
+      const { coreMessage, outlines, applicationPoints, sermonPurpose, expectedResponse, deliveryConclusion, previousContent, greekWords, prepInsights, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          if (mp.contextInfo?.before) studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          if (mp.contextInfo?.after) studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          if (mp.themes?.length > 0) studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          if (mp.words?.length > 0) studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+        }
+      }
+      userText = `설교 결론을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트 (결론 이후 적용 섹션에서 다룰 내용)\n${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 기대 반응\n${expectedResponse || ''}\n\n## 전달 마무리 방향 (PrepTab에서 작성)\n${deliveryConclusion || '(설정되지 않음)'}\n\n## 이전 섹션들에서 작성된 내용 (결론이 이 흐름을 자연스럽게 수렴할 것)\n${previousContent || '(아직 작성된 내용 없음)'}\n\n## 준비 단계 데이터 (결론에서 이 내용을 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 결론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 핵심 메시지를 종합하여 결론을 구성하세요. 이전 섹션들의 흐름을 중심명제로 자연스럽게 수렴하고, 적용 포인트로 이어지는 다리를 놓으십시오. 준비 단계의 핵심 원어와 통찰을 결론 문장 속에 녹여내십시오.`
       maxTokens = 2000
       temperature = 0.7
     } else if (type === 'manuscript-application') {
@@ -663,30 +794,63 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       maxTokens = 2000
       temperature = 0.7
     } else if (type === 'manuscript-body') {
-      const { passage, coreMessage, sermonTitle, outlinePoint, passageStructure, researchInsights, congregationProfile, sectionPosition, totalSections, previousContent, nextSections, greekWords, prepInsights } = data
-      userText = `설교 본론 한 대지를 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 해당 대지 (이 섹션이 다룰 내용)\n제목: ${outlinePoint?.title || ''}\n설명: ${outlinePoint?.content || ''}\n관련 구절: ${outlinePoint?.passage || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 연구 통찰\n${(researchInsights || []).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 본론 위치\n${sectionPosition || 1} / ${totalSections || 1} 번째 대지\n${sectionPosition === 1 ? '→ 첫 번째 대지: 본문의 기본적 의미와 맥락을 제시하는 토대 작업' : sectionPosition === 2 ? '→ 두 번째 대지: 첫 번째 대지의 진리를 심화하고 확장하는 신학적 전개' : sectionPosition === 3 ? '→ 세 번째 대지: 신학적 진리를 회중의 삶으로 연결하는 전환적 대지' : '→ 네 번째 대지: 그리스도 중심으로 모든 것을 수렴하는 복음의 완결성'}\n\n## 이전 섹션 내용 (이전 흐름을 이어갈 것)\n${previousContent || '(이전 섹션 내용 없음)'}\n\n## 이후 이어질 섹션들 (다음 섹션으로 자연스럽게 전환할 것)\n${nextSections || '결론 → 적용'}\n\n## 준비 단계 데이터 (본론 문장 속에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}${gw.note ? ` — ${gw.note}` : ''}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}\n\n위 정보를 바탕으로 해당 대지의 설교 원고를 작성해주세요. 반드시 구절 인용, 원어 통찰, 신학적 깊이, 회중 연결, 다음 섹션으로의 전환 문장을 포함해야 합니다. 제공된 핵심 원어(greekWords)와 통찰(prepInsights)을 원고에 자연스럽게 녹여 사용하십시오.`
+      const { passage, coreMessage, sermonTitle, outlinePoint, passageStructure, researchInsights, congregationProfile, sectionPosition, totalSections, previousContent, nextSections, greekWords, prepInsights, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.contextInfo?.bookStructure) studySection += `\n**본문 구조**: ${mp.contextInfo.bookStructure}`
+          if (mp.contextInfo?.before) studySection += `\n**앞 문맥**: ${mp.contextInfo.before}`
+          if (mp.contextInfo?.after) studySection += `\n**뒤 문맥**: ${mp.contextInfo.after}`
+          if (mp.themes?.length > 0) studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          if (mp.words?.length > 0) studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+          if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
+        }
+      }
+      userText = `설교 본론 한 대지를 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 해당 대지 (이 섹션이 다룰 내용)\n제목: ${outlinePoint?.title || ''}\n설명: ${outlinePoint?.content || ''}\n관련 구절: ${outlinePoint?.passage || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 연구 통찰\n${(researchInsights || []).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 본론 위치\n${sectionPosition || 1} / ${totalSections || 1} 번째 대지\n${sectionPosition === 1 ? '→ 첫 번째 대지: 본문의 기본적 의미와 맥락을 제시하는 토대 작업' : sectionPosition === 2 ? '→ 두 번째 대지: 첫 번째 대지의 진리를 심화하고 확장하는 신학적 전개' : sectionPosition === 3 ? '→ 세 번째 대지: 신학적 진리를 회중의 삶으로 연결하는 전환적 대지' : '→ 네 번째 대지: 그리스도 중심으로 모든 것을 수렴하는 복음의 완결성'}\n\n## 이전 섹션 내용 (이전 흐름을 이어갈 것)\n${previousContent || '(이전 섹션 내용 없음)'}\n\n## 이후 이어질 섹션들 (다음 섹션으로 자연스럽게 전환할 것)\n${nextSections || '결론 → 적용'}\n\n## 준비 단계 데이터 (본론 문장 속에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}${gw.note ? ` — ${gw.note}` : ''}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 해당 대지의 설교 원고를 작성해주세요. 다중 본문이 제공된 경우 현재 대지와 가장 관련 있는 본문의 연구 데이터를 우선 활용하세요. 반드시 구절 인용, 원어 통찰, 신학적 깊이, 회중 연결, 다음 섹션으로의 전환 문장을 포함해야 합니다. 제공된 핵심 원어(greekWords)와 통찰(prepInsights)을 원고에 자연스럽게 녹여 사용하십시오.`
       maxTokens = 3000
       temperature = 0.7
     } else if (type === 'manuscript-application-reconstruct') {
-      const { coreMessage, outlines, applicationPoints, congregationProfile, existingContent, previousContent, greekWords, prepInsights } = data
-      userText = `설교 적용 문장을 재구성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 준비 단계에서 정리한 적용 포인트 (반드시 모두 포함)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag || '전체'}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 결론에서 작성된 내용 (적용이 이 흐름에서 자연스럽게 이어질 것)\n${previousContent || '(아직 결론이 작성되지 않음)'}\n\n## 기존 적용 원고 (연속성 유지 참고)\n${existingContent || '(기존 내용 없음)'}\n\n## 준비 단계 데이터 (적용 문장에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}\n\n위 적용 포인트들을 하나의 완성된 설교 적용 문장으로 재구성해주세요. 설교자가 준비 단계에서 작성한 적용 포인트를 반드시 모두 포함하고, 새로운 적용을 추가하거나 기존 포인트를 삭제하지 마십시오. 결론의 흐름에서 자연스럽게 이어지도록 하십시오. 준비 단계의 핵심 원어와 통찰을 적용 문장 속에 자연스럽게 녹여내십시오.`
+      const { coreMessage, outlines, applicationPoints, congregationProfile, existingContent, previousContent, greekWords, prepInsights, multiPassageData } = data
+      let studySection = ''
+      if (multiPassageData?.length > 0) {
+        studySection = '\n\n## 연구 데이터 (다중 본문)'
+        for (let i = 0; i < multiPassageData.length; i++) {
+          const mp = multiPassageData[i]
+          studySection += `\n\n### 본문 ${i + 1}: ${mp.label || ''}`
+          if (mp.themes?.length > 0) studySection += `\n**주제**:\n${mp.themes.join('\n')}`
+          if (mp.words?.length > 0) studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
+        }
+      }
+      userText = `설교 적용 문장을 재구성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 준비 단계에서 정리한 적용 포인트 (반드시 모두 포함)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag || '전체'}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 결론에서 작성된 내용 (적용이 이 흐름에서 자연스럽게 이어질 것)\n${previousContent || '(아직 결론이 작성되지 않음)'}\n\n## 기존 적용 원고 (연속성 유지 참고)\n${existingContent || '(기존 내용 없음)'}\n\n## 준비 단계 데이터 (적용 문장에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 적용 포인트들을 하나의 완성된 설교 적용 문장으로 재구성해주세요. 설교자가 준비 단계에서 작성한 적용 포인트를 반드시 모두 포함하고, 새로운 적용을 추가하거나 기존 포인트를 삭제하지 마십시오. 다중 본문이 제공된 경우 각 본문의 주제가 적용에 반영되도록 하세요. 결론의 흐름에서 자연스럽게 이어지도록 하십시오. 준비 단계의 핵심 원어와 통찰을 적용 문장 속에 자연스럽게 녹여내십시오.`
       maxTokens = 3000
       temperature = 0.7
     } else if (type === 'illustration') {
-      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme } = data
-      userText = `설교 섹션 내용을 분석해 관련 예화 3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}\n\n위 내용을 바탕으로 이 섹션에 어울리는 예화 3가지를 생성해주세요.`
+      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme, multiPassageData } = data
+      let mpSection = ''
+      if (multiPassageData?.length > 0) {
+        mpSection = '\n\n## 다중 본문 주제\n' + multiPassageData.map((mp: any) =>
+          `- ${mp.label || mp.passage}: ${(mp.themes || []).join('; ')}`
+        ).join('\n')
+      }
+      userText = `설교 섹션 내용을 분석해 관련 예화 3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}${mpSection}\n\n위 내용을 바탕으로 이 섹션에 어울리는 예화 3가지를 생성해주세요. 다중 본문이 제공된 경우 각 본문의 주제와 연결되는 예화를 추천하세요.`
       maxTokens = 2000
       temperature = 0.7
     } else if (type === 'reference') {
-      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme } = data
-      userText = `설교 섹션 내용을 분석해 관련 참고 메모 2-3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}\n\n위 내용을 바탕으로 이 섹션에 깊이와 통찰을 더할 참고 메모 2-3가지를 생성해주세요.`
+      const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme, multiPassageData } = data
+      let mpSection = ''
+      if (multiPassageData?.length > 0) {
+        mpSection = '\n\n## 다중 본문 정보\n' + multiPassageData.map((mp: any) => {
+          let info = `- ${mp.label || mp.passage}`
+          if (mp.contextInfo?.bookStructure) info += ` (${mp.contextInfo.bookStructure})`
+          if (mp.themes?.length > 0) info += `\n  주제: ${mp.themes.join('; ')}`
+          return info
+        }).join('\n')
+      }
+      userText = `설교 섹션 내용을 분석해 관련 참고 메모 2-3가지를 추천해주세요:\n\n## 섹션\n${sectionLabel || ''} (${sectionType || ''})\n\n## 섹션 내용\n${sectionContent?.slice(0, 500) || '(아직 작성 전)'}\n\n## 중심명제\n${coreMessage || ''}\n\n## 본문\n${passage || ''}\n\n## 주제\n${theme || ''}${mpSection}\n\n위 내용을 바탕으로 이 섹션에 깊이와 통찰을 더할 참고 메모 2-3가지를 생성해주세요. 다중 본문이 제공된 경우 각 본문의 맥락과 주제를 고려한 참고 자료를 추천하세요.`
       maxTokens = 1500
-      temperature = 0.5
-    } else if (type === 'study-to-prep') {
-      const { passage, themes, commentaries, words, contextInfo, memoText } = data
-      userText = `연구 결과를 설교 준비 자료로 변환해주세요:\n\n## 본문\n${passage || ''}\n\n## 문맥 정보\n앞 문맥: ${contextInfo?.before || ''}\n뒤 문맥: ${contextInfo?.after || ''}\n책 구조: ${contextInfo?.bookStructure || ''}\n\n## 주제\n${(themes || []).map((t: any) => `- ${t.name}: ${t.description}`).join('\n')}\n\n## 주석 통찰\n${(commentaries || []).slice(0, 6).map((c: any) => `- ${c.author}: ${c.text}`).join('\n')}\n\n## 원어 연구\n${Object.values(words || {}).slice(0, 5).map((w: any) => `- ${w.lemmaGreek || w.word}: ${w.basicMeaning}`).join('\n')}\n\n## 연구 메모\n${memoText || '(없음)'}\n\n위 연구 결과를 바탕으로 설교 준비 자료 전체를 생성해주세요.`
-      model = 'gpt-4o-mini'
-      maxTokens = 4000
       temperature = 0.5
     } else if (type === 'manuscript-diagnosis') {
       const { sections, coreMessage, passage, referenceNotes, illustrationNotes } = data
@@ -696,8 +860,14 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       maxTokens = 1500
       temperature = 0.3
     } else if (type === 'reference-weave') {
-      const { sectionContent, referenceContent, referenceAuthor, referenceBook } = data
-      userText = `현재 섹션 내용:\n${sectionContent || ''}\n\n참고 자료:\n내용: ${referenceContent || ''}\n저자: ${referenceAuthor || ''}\n출처: ${referenceBook || ''}\n\n위 참고 자료를 현재 섹션의 흐름에 자연스럽게 녹여낸 문장이나 단락을 작성해주세요. 설교자의 구어체 톤을 유지하고, 회중이 이해하기 쉽게 설명하십시오.`
+      const { sectionContent, referenceContent, referenceAuthor, referenceBook, multiPassageData } = data
+      let mpSection = ''
+      if (multiPassageData?.length > 0) {
+        mpSection = '\n\n## 설교가 다루는 다중 본문\n' + multiPassageData.map((mp: any) =>
+          `- ${mp.label || mp.passage}: ${(mp.themes || []).join('; ')}`
+        ).join('\n')
+      }
+      userText = `현재 섹션 내용:\n${sectionContent || ''}\n\n참고 자료:\n내용: ${referenceContent || ''}\n저자: ${referenceAuthor || ''}\n출처: ${referenceBook || ''}${mpSection}\n\n위 참고 자료를 현재 섹션의 흐름에 자연스럽게 녹여낸 문장이나 단락을 작성해주세요. 설교자의 구어체 톤을 유지하고, 회중이 이해하기 쉽게 설명하십시오. 다중 본문이 제공된 경우 해당 본문의 주제와도 연결되도록 하세요.`
       model = 'gpt-4o-mini'
       maxTokens = 500
       temperature = 0.7
@@ -830,7 +1000,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       ],
       temperature,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
+      response_format: (type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
     }
 
     try {
@@ -877,7 +1047,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}
       output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'study-to-prep' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
+    if ((type === 'bible-study' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
       try {
         JSON.parse(output)
       } catch (e) {

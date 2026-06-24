@@ -10,6 +10,7 @@ import type { SermonSection, IllustrationNote, ReferenceNote, JohnManuscriptData
 import { AppSectionHeader } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
+import { computeProjectProgress, toStageStatusMap } from '@/lib/advanced/projectProgress'
 import { MOCK_VERSIONS } from '@/lib/advanced/statusData'
 import {
   MANUSCRIPT_VERSIONS as JOHN_MANUSCRIPT_VERSIONS,
@@ -47,18 +48,14 @@ const STATUS_DOTS: Record<WritingStatus, string> = {
 }
 
 const OVERALL_STATUS_LABELS: Record<string, string> = {
+  empty: '시작 전',
   draft: '초안 작성 중',
-  first_draft_done: '1차 원고 완료',
-  revising: '수정 진행 중',
-  final_review: '최종 검토 중',
   complete: '설교 완료',
 }
 
 const OVERALL_STATUS_COLORS: Record<string, string> = {
+  empty: 'bg-white/5 text-slate-400',
   draft: 'bg-blue-500/10 text-blue-300',
-  first_draft_done: 'bg-indigo-500/10 text-indigo-300',
-  revising: 'bg-amber-500/10 text-amber-300',
-  final_review: 'bg-purple-500/10 text-purple-300',
   complete: 'bg-indigo-500/10 text-indigo-300',
 }
 
@@ -360,10 +357,10 @@ export default function ManuscriptTab({ project }: Props) {
   const rehearsalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const rehearsalAnimRef = useRef<number | null>(null)
   const [presentationSectionIdx, setPresentationSectionIdx] = useState(0)
-  const [writingStatus, setWritingStatus] = useState<string>('draft')
   const [boostingSections, setBoostingSections] = useState<Set<string>>(new Set())
   const [showStudio, setShowStudio] = useState(false)
   const [weavingRefId, setWeavingRefId] = useState<string | null>(null)
+  const [cachedStudies, setCachedStudies] = useState<Record<string, { label: string; data: any }>>({})
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -416,6 +413,12 @@ export default function ManuscriptTab({ project }: Props) {
     const total = statuses.reduce((sum, s) => sum + (scores[s] || 0), 0)
     return Math.round(total / statuses.length)
   }, [sectionStatuses])
+
+  const writingStatus = useMemo(() => {
+    if (writingProgress === 0) return 'empty'
+    if (writingProgress < 100) return 'draft'
+    return 'complete'
+  }, [writingProgress])
 
   const emptySections = useMemo(() =>
     manuscript.sections.filter(s => sectionStatuses[s.id] === 'empty'),
@@ -716,6 +719,26 @@ export default function ManuscriptTab({ project }: Props) {
     }
   }, [project.id])
 
+  // Load study cache for each passage (for multi-passage AI prompts)
+  useEffect(() => {
+    try {
+      const results: Record<string, { label: string; data: any }> = {}
+      for (const p of (project.passages || [])) {
+        const vs = p.verseStart ?? 1
+        const ve = p.verseEnd ?? vs
+        const key = `${p.book}_${p.chapter}_${vs}-${ve}`
+        const cached = getStorageItem<any | null>(`study_${key}`, null)
+        if (cached) {
+          const label = p.passage || `${p.book} ${p.chapter}:${vs}${ve !== vs ? `-${ve}` : ''}`
+          results[key] = { label, data: cached }
+        }
+      }
+      setCachedStudies(results)
+    } catch (e) {
+      console.error('[ManuscriptTab] Failed to read study cache:', e)
+    }
+  }, [project.passages])
+
   // Persist to localStorage whenever manuscript changes (after initial load)
   useEffect(() => {
     if (!manuscriptLoadedRef.current) return
@@ -862,6 +885,13 @@ export default function ManuscriptTab({ project }: Props) {
             referenceContent: note.content,
             referenceAuthor: note.author,
             referenceBook: note.book,
+            multiPassageData: Object.entries(cachedStudies).length > 0
+              ? Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+                  label,
+                  passage: key,
+                  themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+                }))
+              : undefined,
           },
         }),
       })
@@ -874,7 +904,7 @@ export default function ManuscriptTab({ project }: Props) {
       }
     } catch { /* ignore */ }
     setWeavingRefId(null)
-  }, [updateSection])
+  }, [updateSection, cachedStudies])
 
   const scrollToSection = useCallback((id: string) => {
     setActiveSectionId(id)
@@ -903,21 +933,34 @@ export default function ManuscriptTab({ project }: Props) {
     const researchInsights = prepRaw?.researchInsights || []
     const passageStructure = prepRaw?.passageStructure || ''
 
+    // 다중 본문 연구 데이터 구성
+    const multiPassageEntries = Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+      label,
+      passage: key,
+      words: study?.words ? Object.values(study.words).slice(0, 5).map((w: any) => ({
+        word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+        meaning: w.basicMeaning || '',
+        note: w.contextualMeaning || w.simpleExplanation || '',
+      })) : [],
+      commentaries: (study?.commentaries || []).map((c: any) => c.text).filter(Boolean).slice(0, 3),
+      themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+      contextInfo: study?.contextInfo || null,
+    }))
+
     const payload: any = {
       passage: project.passage,
       coreMessage: manuscript.coreMessage,
       sermonTitle: manuscript.title,
       sermonPurpose: manuscript.oneSentenceSummary,
       congregationProfile,
-      // Prep data for natural weaving
       greekWords: manuscript.greekWords || [],
       prepInsights: manuscript.prepInsights || [],
+      multiPassageData: multiPassageEntries.length > 0 ? multiPassageEntries : undefined,
     }
 
     if (sectionType === 'introduction') {
       payload.passageStructure = passageStructure || manuscript.outlinePoints.map(o => o.title).join(' → ')
       payload.deliveryIntro = deliveryIntro
-      // Next sections preview
       const bodySections = manuscript.sections.filter(s => s.type === 'body')
       payload.nextSections = bodySections.map(s => s.label).join(' → ') + ' → 결론 → 적용'
 
@@ -1010,7 +1053,7 @@ export default function ManuscriptTab({ project }: Props) {
       return json.data.output
     }
     return ''
-  }, [project, manuscript])
+  }, [project, manuscript, cachedStudies])
 
   /* ─── 원클릭 건강도 높이기 ─── */
   const handleBoostHealth = useCallback(async () => {
@@ -1049,6 +1092,16 @@ export default function ManuscriptTab({ project }: Props) {
           data: {
             passage: project.passage,
             coreMessage: manuscript.coreMessage,
+            multiPassageData: Object.entries(cachedStudies).length > 0
+              ? Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+                  label,
+                  passage: key,
+                  words: study?.words ? Object.values(study.words).slice(0, 5).map((w: any) => ({
+                    word: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || ''})` : w.word || '',
+                    meaning: w.basicMeaning || '',
+                  })) : [],
+                }))
+              : undefined,
           },
         }),
       })
@@ -1080,7 +1133,7 @@ export default function ManuscriptTab({ project }: Props) {
       console.error('Greek word analysis failed:', e)
     }
     setAnalyzingGreek(false)
-  }, [project.passage, manuscript.coreMessage, setStorageItem, setManuscriptSafe])
+  }, [project.passage, manuscript.coreMessage, setStorageItem, setManuscriptSafe, cachedStudies])
 
   const startRehearsal = useCallback((minutes: number) => {
     setRehearsalDuration(minutes)
@@ -1523,7 +1576,7 @@ export default function ManuscriptTab({ project }: Props) {
       <ProjectContextRow
         project={project}
         currentStage="manuscript"
-        stageStatus={{ study: 'done', prep: 'done', manuscript: 'progress' }}
+        stageStatus={toStageStatusMap(computeProjectProgress(project.id, project.passages))}
         lastSaved={lastSaved || undefined}
       />
 
@@ -1684,6 +1737,7 @@ export default function ManuscriptTab({ project }: Props) {
             <IllustrationNotesSection
               notes={manuscript.illustrationNotes}
               manuscript={manuscript}
+              cachedStudies={cachedStudies}
               onAdd={addIllustration}
               onDelete={deleteIllustration}
               onStatusChange={updateIllustrationStatus}
@@ -1694,6 +1748,7 @@ export default function ManuscriptTab({ project }: Props) {
             <ReferenceNotesSection
               notes={manuscript.referenceNotes}
               manuscript={manuscript}
+              cachedStudies={cachedStudies}
               onAdd={addReference}
               onDelete={deleteReference}
               onLinkToSection={updateReferenceLink}
@@ -2163,6 +2218,7 @@ function SermonSectionBlock({
 function IllustrationNotesSection({
   notes,
   manuscript,
+  cachedStudies,
   onAdd,
   onDelete,
   onStatusChange,
@@ -2170,6 +2226,7 @@ function IllustrationNotesSection({
 }: {
   notes: IllustrationNote[]
   manuscript: JohnManuscriptData
+  cachedStudies: Record<string, { label: string; data: any }>
   onAdd: (note: IllustrationNote) => void
   onDelete: (id: string) => void
   onStatusChange: (id: string, status: IllustrationNote['status']) => void
@@ -2185,7 +2242,6 @@ function IllustrationNotesSection({
   const statusColors: Record<string, string> = {
     '사용': 'bg-indigo-500/10 text-indigo-300',
     '보류': 'bg-amber-500/10 text-amber-300',
-    '검토중': 'bg-blue-500/10 text-blue-300',
   }
   const categoryIcons: Record<string, any> = {
     '일상': Home,
@@ -2213,6 +2269,13 @@ function IllustrationNotesSection({
             coreMessage: manuscript.coreMessage,
             passage: manuscript.passage,
             theme: manuscript.title,
+            multiPassageData: Object.entries(cachedStudies).length > 0
+              ? Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+                  label,
+                  passage: key,
+                  themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+                }))
+              : undefined,
           },
         }),
       })
@@ -2223,7 +2286,7 @@ function IllustrationNotesSection({
           id: `ill-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
           title: item.title,
           content: item.content,
-          status: '검토중' as const,
+          status: '사용' as const,
           source: item.source || '',
           category: item.category,
           tags: item.tags || [],
@@ -2242,7 +2305,7 @@ function IllustrationNotesSection({
       id: `ill-manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: newNote.title,
       content: newNote.content,
-      status: '검토중',
+      status: '사용',
       source: newNote.source,
     })
     setNewNote({ title: '', content: '', source: '' })
@@ -2318,7 +2381,11 @@ function IllustrationNotesSection({
           </div>
           <div className="space-y-3">
             {aiSuggestions.map((note) => (
-              <div key={note.id} className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4">
+              <div
+                key={note.id}
+                onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
+                className="bg-[#04060f]/80 border border-white/10 rounded-xl p-4 cursor-pointer hover:border-indigo-500/30 hover:bg-[#04060f]/90 transition-all"
+              >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     {(() => {
@@ -2328,10 +2395,15 @@ function IllustrationNotesSection({
                     <h4 className="text-sm font-medium text-white">{note.title}</h4>
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">{note.category}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div onClick={e => e.stopPropagation()}>
                     <select
-                      onChange={(e) => e.target.value && onInsertToSection(note, e.target.value)}
-                      className="text-[10px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1 text-slate-300 outline-none"
+                      onChange={(e) => {
+                        if (!e.target.value) return
+                        onAdd(note)
+                        onInsertToSection(note, e.target.value)
+                        setAiSuggestions(prev => prev.filter(n => n.id !== note.id))
+                      }}
+                      className="text-[10px] bg-[#04060f] border border-white/10 rounded-lg px-2 py-1 text-slate-300 outline-none cursor-pointer"
                       defaultValue=""
                     >
                       <option value="" disabled>섹션에 삽입</option>
@@ -2339,12 +2411,6 @@ function IllustrationNotesSection({
                         <option key={s.id} value={s.id}>{s.label}</option>
                       ))}
                     </select>
-                    <button
-                      onClick={() => { onAdd(note); setAiSuggestions(prev => prev.filter(n => n.id !== note.id)) }}
-                      className="text-[10px] px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors"
-                    >
-                      저장
-                    </button>
                   </div>
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed mb-2">{note.content}</p>
@@ -2437,7 +2503,6 @@ function IllustrationNotesSection({
                 >
                   <option value="사용">사용</option>
                   <option value="보류">보류</option>
-                  <option value="검토중">검토중</option>
                 </select>
                 <button
                   onClick={() => onDelete(note.id)}
@@ -2480,12 +2545,14 @@ function IllustrationNotesSection({
 function ReferenceNotesSection({
   notes,
   manuscript,
+  cachedStudies,
   onAdd,
   onDelete,
   onLinkToSection,
 }: {
   notes: ReferenceNote[]
   manuscript: JohnManuscriptData
+  cachedStudies: Record<string, { label: string; data: any }>
   onAdd: (note: ReferenceNote) => void
   onDelete: (id: string) => void
   onLinkToSection: (noteId: string, sectionId: string | null) => void
@@ -2530,6 +2597,14 @@ function ReferenceNotesSection({
             coreMessage: manuscript.coreMessage,
             passage: manuscript.passage,
             theme: manuscript.title,
+            multiPassageData: Object.entries(cachedStudies).length > 0
+              ? Object.entries(cachedStudies).map(([key, { label, data: study }]) => ({
+                  label,
+                  passage: key,
+                  themes: (study?.themes || []).map((t: any) => `${t.name}: ${t.description}`).slice(0, 3),
+                  contextInfo: study?.contextInfo || null,
+                }))
+              : undefined,
           },
         }),
       })
