@@ -373,7 +373,13 @@ export default function BibleStudyTab({ project, passages }: Props) {
 
     // 1) 신 캐시 확인
     const cached = getStorageItem<any[] | null>(`study_${passageKey}_trans_${version}`, null)
-    if (cached) {
+    // [버그픽스] 옛 신 캐시 형식({verse, text}) 감지 시 무효화하고 재fetch
+    //   - 이전 fetchTranslation이 {verse, text}로 저장했지만 mergedVerses는 {verse, [version]}을 찾음
+    //   - 브라우저에 남은 broken cache를 자동 정리하여 즉시 정상화
+    if (cached && Array.isArray(cached) && cached[0] && 'text' in cached[0] && !(version in cached[0])) {
+      removeStorageItem(`study_${passageKey}_trans_${version}`)
+      // fall through to API call below
+    } else if (cached) {
       setTranslationData(prev => ({
         ...prev,
         [passageKey]: { ...(prev[passageKey] || {}), [version]: cached },
@@ -411,7 +417,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
         if (json.success) {
           try {
             const parsed = JSON.parse(json.data.output)
-            const list = parsed.verses || []
+            // [버그픽스] API 응답 {verse, text}를 {verse, [version]: text}로 변환
+            //   - mergedVerses가 n?.[version]을 찾으므로 저장 형식 일치 필요
+            const list = (parsed.verses || []).map((v: any) => ({ verse: v.verse, [version]: v.text }))
             setTranslationData(prev => ({
               ...prev,
               [passageKey]: { ...(prev[passageKey] || {}), [version]: list },
