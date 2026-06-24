@@ -37,7 +37,7 @@ export default function ProjectContextRow({
             ))}
           </div>
         )}
-        {project.audience && project.audience.length > 0 && (
+        {Array.isArray(project.audience) && project.audience.length > 0 && (
           <>
             <span className="text-slate-600">·</span>
             <span className="text-slate-400 whitespace-nowrap">회중: {project.audience.join(', ')}</span>
