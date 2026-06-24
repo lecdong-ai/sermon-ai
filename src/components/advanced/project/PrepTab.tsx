@@ -120,6 +120,7 @@ export default function PrepTab({ project }: Props) {
   const [outlineLoading, setOutlineLoading] = useState(false)
   const [outlineCandidates, setOutlineCandidates] = useState<AiOutlineCandidate[] | null>(null)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
+  const [cachedStudies, setCachedStudies] = useState<Record<string, { label: string; data: any }>>({})
   const prepLoadedRef = useRef(false)
   const prepDataRef = useRef(prepData)
   prepDataRef.current = prepData
@@ -144,6 +145,26 @@ export default function PrepTab({ project }: Props) {
     }, 600)
     return () => clearTimeout(timer)
   }, [prepData, project.id])
+
+  // 각 passage의 study cache 직접 읽기 (handoff 불필요)
+  useEffect(() => {
+    try {
+      const results: Record<string, { label: string; data: any }> = {}
+      for (const p of (project.passages || [])) {
+        const vs = p.verseStart ?? 1
+        const ve = p.verseEnd ?? vs
+        const key = `${p.book}_${p.chapter}_${vs}-${ve}`
+        const cached = getStorageItem<any | null>(`study_${key}`, null)
+        if (cached) {
+          const label = p.passage || `${p.book} ${p.chapter}:${vs}${ve !== vs ? `-${ve}` : ''}`
+          results[key] = { label, data: cached }
+        }
+      }
+      setCachedStudies(results)
+    } catch (e) {
+      console.error('[PrepTab] Failed to read study cache:', e)
+    }
+  }, [project.passages])
 
   useEffect(() => {
     try {
@@ -407,6 +428,24 @@ export default function PrepTab({ project }: Props) {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 본문 연구 결과 (study cache 직접 읽기, handoff 불필요) ─── */}
+      {Object.keys(cachedStudies).length > 0 && (
+        <div className="px-6 pt-4 pb-3 border-b border-white/5">
+          <div className="max-w-[1100px] mx-auto">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Sparkles className="w-3 h-3 text-cyan-300" />
+              <span className="text-[10px] font-semibold text-cyan-300/80 uppercase tracking-widest">본문 연구 결과</span>
+              <span className="text-[10px] text-slate-500">· 성경연구 탭 분석 결과</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {Object.entries(cachedStudies).map(([cacheKey, { label, data }]) => (
+                <StudyResultCard key={cacheKey} label={label} data={data} />
+              ))}
             </div>
           </div>
         </div>
@@ -2078,6 +2117,94 @@ function PrepStatusBar({
           이 구조로 원고 쓰기 →
         </button>
       </div>
+    </div>
+  )
+}
+
+/* ─── Study Result Card (본문별 연구 결과) ─── */
+
+function StudyResultCard({ label, data }: { label: string; data: any }) {
+  // 핵심 단어 추출 (최대 5개)
+  const words: any[] = []
+  const wordsObj = data?.words || {}
+  for (const k of Object.keys(wordsObj).slice(0, 5)) {
+    const w = wordsObj[k]
+    if (w?.word || w?.lemmaGreek) {
+      words.push({
+        title: w.lemmaGreek ? `${w.lemmaGreek} (${w.lemma || w.word || ''})` : (w.word || ''),
+        meaning: w.basicMeaning || w.contextualMeaning || '',
+      })
+    }
+  }
+  // 주석 통찰 추출 (최대 3개)
+  const insights: any[] = (data?.commentaries || []).slice(0, 3)
+  // 문맥 정보
+  const contextInfo = data?.contextInfo || {}
+  const bookStructure = contextInfo.bookStructure || ''
+  const before = contextInfo.before || ''
+  const after = contextInfo.after || ''
+  const themes: any[] = (data?.themes || []).slice(0, 5)
+
+  const hasContent = words.length > 0 || insights.length > 0 || bookStructure || before || after || themes.length > 0
+  if (!hasContent) return null
+
+  return (
+    <div className="rounded-lg bg-white/[0.02] border border-white/5 p-3 space-y-2.5">
+      <div className="flex items-center gap-1.5 pb-1.5 border-b border-white/5">
+        <BookOpen className="w-3 h-3 text-cyan-300" />
+        <span className="text-[11px] font-bold text-cyan-200">{label}</span>
+      </div>
+
+      {words.length > 0 && (
+        <div>
+          <div className="text-[9.5px] font-bold text-emerald-300/80 uppercase tracking-wider mb-1">🔑 핵심 단어</div>
+          <ul className="space-y-0.5 text-[10.5px] text-slate-300">
+            {words.map((w, i) => (
+              <li key={i} className="leading-snug">
+                <span className="font-semibold text-slate-100">{w.title}</span>
+                {w.meaning && <span className="text-slate-400"> · {w.meaning}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {insights.length > 0 && (
+        <div>
+          <div className="text-[9.5px] font-bold text-amber-300/80 uppercase tracking-wider mb-1">💡 주석 통찰</div>
+          <ul className="space-y-1 text-[10.5px] text-slate-300">
+            {insights.map((c: any, i: number) => (
+              <li key={i} className="leading-snug">
+                <span className="text-amber-300/80">{c.author || '주석'}:</span> {c.text || c.content || ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {(bookStructure || before || after) && (
+        <div>
+          <div className="text-[9.5px] font-bold text-indigo-300/80 uppercase tracking-wider mb-1">🔗 문맥</div>
+          <div className="text-[10.5px] text-slate-400 leading-snug space-y-0.5">
+            {bookStructure && <div><span className="text-slate-300">📚 책 구조:</span> {bookStructure}</div>}
+            {before && <div><span className="text-slate-300">↑ 앞:</span> {before}</div>}
+            {after && <div><span className="text-slate-300">↓ 뒤:</span> {after}</div>}
+          </div>
+        </div>
+      )}
+
+      {themes.length > 0 && (
+        <div>
+          <div className="text-[9.5px] font-bold text-purple-300/80 uppercase tracking-wider mb-1">🏷️ 주제</div>
+          <div className="flex flex-wrap gap-1">
+            {themes.map((t: any, i: number) => (
+              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300">
+                {t.name || t}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
