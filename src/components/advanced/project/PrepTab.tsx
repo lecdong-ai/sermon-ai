@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, Plus, X, Users, Settings2, Quote, FileText } from 'lucide-react'
+import { Loader2, Sparkles, Plus, X, Users, Settings2, Quote, FileText, BookOpen } from 'lucide-react'
 import { ProjectDetail, CongregationProfile, DEFAULT_CONGREGATION_PROFILE, AGE_GROUP_OPTIONS, FAITH_MATURITY_OPTIONS } from '@/lib/advanced/types'
 import { AppSectionHeader, PrepVersionHistory } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
@@ -57,8 +57,7 @@ interface PrepData {
   deliveryTransitions: string[]
   deliveryConclusion: string
   prepStatus: 'draft' | 'review' | 'ready'
-  memoText: string
-  memoTags: string[]
+  memosByPassage: Record<string, { label: string; text: string; tags: string[] }>
 }
 
 type SectionId = 'direction' | 'passage' | 'outline' | 'application' | 'delivery'
@@ -114,8 +113,7 @@ export default function PrepTab({ project }: Props) {
     deliveryTransitions: [],
     deliveryConclusion: '',
     prepStatus: 'draft',
-    memoText: '',
-    memoTags: [],
+    memosByPassage: {},
   }))
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -179,8 +177,9 @@ export default function PrepTab({ project }: Props) {
           contextPoints: studyData.contextPoints?.length ? studyData.contextPoints : prev.contextPoints,
           keyWords: studyData.keyWords?.length ? studyData.keyWords : prev.keyWords,
           researchInsights: studyData.researchInsights?.length ? studyData.researchInsights : prev.researchInsights,
-          memoText: studyData.memoText || prev.memoText,
-          memoTags: studyData.memoTags?.length ? studyData.memoTags : prev.memoTags,
+          memosByPassage: studyData.memosByPassage && Object.keys(studyData.memosByPassage).length > 0
+            ? studyData.memosByPassage
+            : prev.memosByPassage,
         }))
       }
     } catch (e) {
@@ -214,8 +213,9 @@ export default function PrepTab({ project }: Props) {
           deliveryTransitions: prev.deliveryTransitions.length ? prev.deliveryTransitions : (savedPrep.deliveryTransitions || []),
           deliveryConclusion: prev.deliveryConclusion || savedPrep.deliveryConclusion,
           prepStatus: savedPrep.prepStatus || 'draft',
-          memoText: prev.memoText || savedPrep.memoText || '',
-          memoTags: prev.memoTags?.length ? prev.memoTags : (savedPrep.memoTags || []),
+          memosByPassage: prev.memosByPassage && Object.keys(prev.memosByPassage).length > 0
+            ? prev.memosByPassage
+            : (savedPrep.memosByPassage || {}),
         }
       })
       if (_savedAt) {
@@ -372,29 +372,42 @@ export default function PrepTab({ project }: Props) {
         onGoToManuscript={() => router.push(`/advanced/projects/${project.id}?tab=manuscript`)}
       />
 
-      {/* ─── Research Memo (handoff from Study tab) ─── */}
-      {(prepData.memoText?.trim() || prepData.memoTags?.length > 0) && (
-        <div className="px-6 pt-4 pb-2 border-b border-white/5">
+      {/* ─── Research Memo (handoff from Study tab, per-passage) ─── */}
+      {Object.values(prepData.memosByPassage || {}).some(m => m.text?.trim() || (m.tags?.length || 0) > 0) && (
+        <div className="px-6 pt-4 pb-3 border-b border-white/5">
           <div className="max-w-[1100px] mx-auto">
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-1.5 mb-3">
               <FileText className="w-3 h-3 text-amber-300" />
               <span className="text-[10px] font-semibold text-amber-300/80 uppercase tracking-widest">본문 연구 메모</span>
               <span className="text-[10px] text-slate-500">· 연구 탭에서 가져옴</span>
             </div>
-            {prepData.memoText?.trim() && (
-              <p className="text-[12.5px] text-slate-300 leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                {prepData.memoText}
-              </p>
-            )}
-            {prepData.memoTags?.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {prepData.memoTags.map((t, i) => (
-                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
-                    #{t}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {Object.entries(prepData.memosByPassage).map(([key, m]) => {
+                if (!m.text?.trim() && !(m.tags?.length || 0)) return null
+                return (
+                  <div key={key} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <BookOpen className="w-3 h-3 text-indigo-300" />
+                      <span className="text-[11px] font-bold text-indigo-200">{m.label || '본문'}</span>
+                    </div>
+                    {m.text?.trim() && (
+                      <p className="text-[11.5px] text-slate-300 leading-relaxed line-clamp-4 whitespace-pre-wrap">
+                        {m.text}
+                      </p>
+                    )}
+                    {m.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {m.tags.map((t, i) => (
+                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}

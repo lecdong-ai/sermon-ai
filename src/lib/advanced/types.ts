@@ -36,6 +36,7 @@ export interface SaveState {
 }
 
 export interface BiblePassage {
+  id?: string
   book: string
   chapter: number
   verseStart: number
@@ -69,8 +70,6 @@ export interface AdvancedProject {
   studyCount: number
   createdAt: string
   updatedAt: string
-  memoText?: string
-  memoTags?: string[]
 }
 
 export interface OutlinePoint {

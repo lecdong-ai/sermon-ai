@@ -41,8 +41,6 @@ function toSermon(row: any) {
     themeIds: result.themeIds || [],
     tagIds: result.tagIds || [],
     relatedSermonIds: result.relatedSermonIds || [],
-    memoText: result.memoText || '',
-    memoTags: result.memoTags || [],
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
     result: result,
@@ -134,8 +132,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...(body.tagIds !== undefined && { tagIds: body.tagIds }),
       ...(body.relatedSermonIds !== undefined && { relatedSermonIds: body.relatedSermonIds }),
       ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
-      ...(body.result?.memoText !== undefined && { memoText: body.result.memoText }),
-      ...(body.result?.memoTags !== undefined && { memoTags: body.result.memoTags }),
     }
     updates.result = resultUpdate
 

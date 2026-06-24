@@ -96,19 +96,29 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
-  const [memoText, setMemoText] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    try { return localStorage.getItem(`study_memo_${project.id}`) || '' } catch { return '' }
-  })
-  const [memoTags, setMemoTags] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
+  const [memosByPassage, setMemosByPassage] = useState<Record<string, { text: string; tags: string[] }>>(() => {
+    if (typeof window === 'undefined') return {}
     try {
-      const saved = localStorage.getItem(`study_memo_tags_${project.id}`)
-      return saved ? JSON.parse(saved) : []
-    } catch { return [] }
+      // 새 포맷: study_memos_${id} → JSON 객체
+      const newFormat = localStorage.getItem(`study_memos_${project.id}`)
+      if (newFormat) return JSON.parse(newFormat)
+      // 마이그레이션: 옛 포맷 → legacy 키로 이관
+      const oldText = localStorage.getItem(`study_memo_${project.id}`)
+      if (oldText !== null) {
+        const oldTags = localStorage.getItem(`study_memo_tags_${project.id}`)
+        return { legacy: { text: oldText, tags: oldTags ? JSON.parse(oldTags) : [] } }
+      }
+    } catch (e) {
+      console.error('[memo] init failed:', e)
+    }
+    return {}
   })
   const [suggestingMemo, setSuggestingMemo] = useState<'insight' | 'questions' | 'application' | null>(null)
   const [memoActionError, setMemoActionError] = useState<string | null>(null)
+
+  // 현재 선택된 passage의 메모 key
+  const currentMemoKey = currentPassage?.id || 'legacy'
+  const currentMemo = memosByPassage[currentMemoKey] || { text: '', tags: [] }
   const [expandedCommentary, setExpandedCommentary] = useState<number | null>(null)
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
     greek: true, translit: false, niv: true, esv: true, korean: true,
@@ -435,17 +445,16 @@ export default function BibleStudyTab({ project, passages }: Props) {
   }, [])
 
   const handleSaveMemo = useCallback(() => {
-    if (!memoText.trim()) return
+    if (!currentMemo.text.trim()) return
     setIsSaving(true)
     try {
-      localStorage.setItem(`study_memo_${project.id}`, memoText)
-      localStorage.setItem(`study_memo_tags_${project.id}`, JSON.stringify(memoTags))
+      localStorage.setItem(`study_memos_${project.id}`, JSON.stringify(memosByPassage))
     } catch (e) {
       console.error('[memo] localStorage save failed:', e)
     }
     setIsSaving(false)
     setLastSaved(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
-  }, [memoText, memoTags, project.id])
+  }, [currentMemo.text, memosByPassage, project.id])
 
   const handleSendToPrep = useCallback(() => {
     if (!studyData) {
@@ -464,33 +473,64 @@ export default function BibleStudyTab({ project, passages }: Props) {
       ...(studyData?.themes || []).map((t: any) => `${t.name}: ${t.description}`),
       ...(studyData?.translationNotes || []).map((n: any) => `[${n.verse}절 번역] ${n.note}`),
     ].slice(0, 5)
+    // 각 passage의 메모에 라벨 부여
+    const memosByPassageWithLabel: Record<string, { label: string; text: string; tags: string[] }> = {}
+    for (const p of (passages || [])) {
+      const key = p.id || 'legacy'
+      const m = memosByPassage[key]
+      memosByPassageWithLabel[key] = {
+        label: p.passage || `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && p.verseEnd !== p.verseStart ? `-${p.verseEnd}` : ''}`,
+        text: m?.text || '',
+        tags: m?.tags || [],
+      }
+    }
+    // legacy 단일 passage fallback (passages prop에 항목이 1개도 없을 때)
+    if (Object.keys(memosByPassageWithLabel).length === 0 && memosByPassage.legacy) {
+      memosByPassageWithLabel.legacy = {
+        label: project.passage || `${project.book} ${project.chapter}:${project.verseStart}${project.verseEnd && project.verseEnd !== project.verseStart ? `-${project.verseEnd}` : ''}`,
+        text: memosByPassage.legacy.text,
+        tags: memosByPassage.legacy.tags,
+      }
+    }
     const prepPayload = {
       passageStructure: studyData?.contextInfo?.bookStructure || '',
       contextPoints: contextEntries,
       keyWords: keyWordEntries,
       researchInsights: insightEntries,
-      memoText,
-      memoTags,
+      memosByPassage: memosByPassageWithLabel,
     }
     setStorageItem(`study_to_prep_${project.id}`, prepPayload)
     sessionStorage.setItem(`sermonai_study_to_prep_${project.id}`, JSON.stringify(prepPayload))
     ;(window as any).__prepDataBuffer = prepPayload
     router.push(`/advanced/projects/${project.id}?tab=prep`)
-  }, [project.id, router, studyData, wordLookup, memoText, memoTags])
+  }, [project.id, router, studyData, wordLookup, memosByPassage, passages, project])
 
   const toggleTranslation = useCallback((key: string) => {
     setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))
   }, [])
 
   const toggleMemoTag = useCallback((tag: string) => {
-    setMemoTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
-  }, [])
+    setMemosByPassage(prev => {
+      const cur = prev[currentMemoKey] || { text: '', tags: [] }
+      const newTags = cur.tags.includes(tag) ? cur.tags.filter(t => t !== tag) : [...cur.tags, tag]
+      return { ...prev, [currentMemoKey]: { ...cur, tags: newTags } }
+    })
+  }, [currentMemoKey])
+
+  const updateMemoText = useCallback((value: string) => {
+    setMemosByPassage(prev => {
+      const cur = prev[currentMemoKey] || { text: '', tags: [] }
+      return { ...prev, [currentMemoKey]: { ...cur, text: value } }
+    })
+  }, [currentMemoKey])
 
   const handleMemoAction = useCallback(async (type: 'insight' | 'questions' | 'application') => {
     setSuggestingMemo(type)
     setMemoActionError(null)
     const apiType = type === 'insight' ? 'memo-insight' : type === 'questions' ? 'memo-questions' : 'memo-application-idea'
     const headerLabel = type === 'insight' ? 'AI 통찰' : type === 'questions' ? '질문' : '적용 아이디어'
+    const currentText = memosByPassage[currentMemoKey]?.text || ''
+    const currentTags = memosByPassage[currentMemoKey]?.tags || []
     try {
       const res = await fetch('/api/advanced/ai', {
         method: 'POST',
@@ -502,8 +542,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
             chapter: currentPassage?.chapter ?? (currentPassage as any)?.chapterStart ?? project.chapter,
             verseStart: currentPassage?.verseStart ?? project.verseStart,
             verseEnd: currentPassage?.verseEnd ?? project.verseEnd,
-            memoText,
-            memoTags,
+            memoText: currentText,
+            memoTags: currentTags,
           },
         }),
       })
@@ -517,16 +557,19 @@ export default function BibleStudyTab({ project, passages }: Props) {
         throw new Error('AI 응답이 비어 있습니다')
       }
       const bulletText = items.map(i => `- ${i}`).join('\n')
-      const separator = memoText.trim() ? '\n\n' : ''
+      const separator = currentText.trim() ? '\n\n' : ''
       const newBlock = `${separator}## ${headerLabel}\n${bulletText}\n`
-      setMemoText(prev => prev + newBlock)
+      setMemosByPassage(prev => {
+        const cur = prev[currentMemoKey] || { text: '', tags: [] }
+        return { ...prev, [currentMemoKey]: { ...cur, text: cur.text + newBlock } }
+      })
     } catch (e: any) {
       setMemoActionError(e?.message || 'AI 요청 중 오류가 발생했습니다')
       setTimeout(() => setMemoActionError(null), 3000)
     } finally {
       setSuggestingMemo(null)
     }
-  }, [memoText, memoTags, currentPassage, project])
+  }, [memosByPassage, currentMemoKey, currentPassage, project])
 
   const handleCopyStudyResults = useCallback(() => {
     if (!studyData) return
@@ -549,10 +592,18 @@ export default function BibleStudyTab({ project, passages }: Props) {
     themes.forEach((t: any) => {
       text += `- ${t.name}: ${t.description}\n`
     })
-    if (memoText) text += `\n## 연구 메모\n${memoText}\n`
+    const memoEntries = Object.entries(memosByPassage).filter(([, m]) => m.text?.trim())
+    if (memoEntries.length > 0) {
+      text += `\n## 연구 메모\n`
+      for (const [key, m] of memoEntries) {
+        const p = (passages || []).find(pp => (pp.id || 'legacy') === key)
+        const label = p?.passage || key
+        text += `\n### ${label}\n${m.text.trim()}\n`
+      }
+    }
 
     navigator.clipboard.writeText(text)
-  }, [studyData, memoText])
+  }, [studyData, memosByPassage, passages])
 
   const handleViewFullChapter = useCallback(() => {
     window.open(`/advanced/study/${activeBook}/${activeChapter}`, '_blank')
@@ -875,9 +926,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
 
         {/* Research Notes Editor */}
         <ResearchNotesEditor
-          value={memoText}
-          onChange={setMemoText}
-          tags={memoTags}
+          value={currentMemo.text}
+          onChange={updateMemoText}
+          tags={currentMemo.tags}
           onToggleTag={toggleMemoTag}
           onSave={handleSaveMemo}
           isSaving={isSaving}
@@ -908,8 +959,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
           selectedTheme={selectedTheme}
           onCloseDetail={handleCloseDetail}
           onSendToPrep={handleSendToPrep}
-          memoText={memoText}
-          memoTags={memoTags}
+          memosByPassage={memosByPassage}
+          currentMemoLabel={memosByPassage[currentMemoKey] ? (currentPassage?.passage || '') : ''}
+          passages={passages || []}
           commentaries={studyData?.commentaries || []}
           verses={studyData?.verses || []}
           themes={studyData?.themes || []}
@@ -2002,7 +2054,7 @@ function ResearchNotesEditor({
 
 function RightPanel({
   words, selectedWordId, selectedFallbackWord, lookupLoading, selectedEnglishWord, englishLookup, englishLookupLoading, selectedVerse, selectedTheme, onCloseDetail,
-  onSendToPrep, memoText, memoTags, commentaries, verses, themes,
+  onSendToPrep, memosByPassage, currentMemoLabel, passages, commentaries, verses, themes,
   onCopyResults, onViewFullChapter, onStudyComplete,
 }: {
   words: Record<string, JohnWordDetail>
@@ -2016,8 +2068,9 @@ function RightPanel({
   selectedTheme: string | null
   onCloseDetail: () => void
   onSendToPrep: () => void
-  memoText: string
-  memoTags: string[]
+  memosByPassage: Record<string, { text: string; tags: string[] }>
+  currentMemoLabel: string
+  passages: BiblePassage[]
   commentaries: any[]
   verses: any[]
   themes: any[]
@@ -2334,18 +2387,30 @@ function RightPanel({
       </div>
 
       {/* 연구 메모 미리보기 */}
-      {memoText && (
+      {Object.values(memosByPassage).some(m => m.text?.trim() || (m.tags?.length || 0) > 0) && (
         <div>
-          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">현재 메모</h3>
-          <div className="bg-white/5 rounded-xl p-3">
-            <p className="text-xs text-slate-200 leading-relaxed line-clamp-4">{memoText}</p>
-            {memoTags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {memoTags.map(tag => (
-                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300">{tag}</span>
-                ))}
-              </div>
-            )}
+          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">연구 메모</h3>
+          <div className="space-y-2">
+            {Object.entries(memosByPassage).map(([key, m]) => {
+              if (!m.text?.trim() && !(m.tags?.length || 0)) return null
+              const p = passages.find(pp => (pp.id || 'legacy') === key)
+              const label = p?.passage || (key === 'legacy' ? '본문' : key)
+              return (
+                <div key={key} className="bg-white/5 rounded-xl p-3">
+                  <div className="text-[9px] font-semibold text-indigo-300 mb-1">{label}</div>
+                  {m.text?.trim() && (
+                    <p className="text-xs text-slate-200 leading-relaxed line-clamp-4 whitespace-pre-wrap">{m.text}</p>
+                  )}
+                  {m.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {m.tags.map(tag => (
+                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300">#{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
