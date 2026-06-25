@@ -48,6 +48,16 @@ function mapApiItem(item: any): AdvancedProject {
     studyCount: item.studyCount ?? 0,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+    passages: item.passages && item.passages.length > 0
+      ? item.passages.map((p: any) => ({
+          id: p.id,
+          book: p.book ?? '',
+          chapter: p.chapter ?? p.chapterStart ?? 0,
+          verseStart: p.verseStart ?? 1,
+          verseEnd: p.verseEnd ?? p.chapterEnd ?? null,
+          passage: p.passage ?? p.label ?? '',
+        }))
+      : undefined,
   }
 }
 

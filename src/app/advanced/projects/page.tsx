@@ -100,10 +100,18 @@ function ProjectCard({ project, onClick, onDelete }: { project: AdvancedProject;
             <h3 className="text-[15px] font-bold text-white group-hover:text-indigo-300 transition-colors leading-snug line-clamp-2">
               {project.title}
             </h3>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-[11px] font-extrabold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
-                {project.passage}
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              {project.passages && project.passages.length > 0 ? (
+                project.passages.map((p, i) => (
+                  <span key={i} className="text-[11px] font-extrabold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                    {p.passage}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] font-extrabold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                  {project.passage}
+                </span>
+              )}
               <span className="text-[10px] text-slate-500 font-bold">{project.sermonType}</span>
             </div>
           </div>
@@ -219,10 +227,18 @@ function ArchivedProjectCard({ project, onOpen, onUnarchive, onDelete }: {
             <h3 className="text-[15px] font-bold text-slate-300 group-hover:text-white transition-colors leading-snug line-clamp-2">
               {project.title}
             </h3>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-[11px] font-extrabold text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded">
-                {project.passage}
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              {project.passages && project.passages.length > 0 ? (
+                project.passages.map((p, i) => (
+                  <span key={i} className="text-[11px] font-extrabold text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded">
+                    {p.passage}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] font-extrabold text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded">
+                  {project.passage}
+                </span>
+              )}
               <span className="text-[10px] text-slate-500 font-bold">{project.sermonType}</span>
             </div>
           </div>
@@ -298,6 +314,7 @@ function ProjectsContent() {
       list = list.filter(p =>
         p.title.toLowerCase().includes(q) ||
         p.passage.toLowerCase().includes(q) ||
+        p.passages?.some(pg => pg.passage.toLowerCase().includes(q)) ||
         p.coreMessage.toLowerCase().includes(q) ||
         p.sermonType.toLowerCase().includes(q)
       )
