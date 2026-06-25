@@ -802,7 +802,7 @@ export default function HomePage() {
             {/* 설교 대시보드 카드 */}
             <Link
               href="/dashboard"
-              onClick={() => setShowDashboardPopup(false)}
+              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
               className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
             >
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10">
@@ -819,7 +819,7 @@ export default function HomePage() {
             {supporter ? (
               <Link
                 href="/advanced"
-                onClick={() => setShowDashboardPopup(false)}
+                onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
                 className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-200"
               >
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/10">
@@ -833,22 +833,36 @@ export default function HomePage() {
               </Link>
             ) : (
               <Link
-                href="/preview"
-                onClick={() => setShowDashboardPopup(false)}
-                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:border-indigo-500/20 hover:bg-white/[0.04] transition-all duration-200"
+                href="/advanced/projects"
+                onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
+                className="group relative flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-amber-500/[0.06] to-indigo-500/[0.04] border border-amber-500/30 hover:border-amber-400/50 hover:bg-amber-500/[0.08] transition-all duration-200"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-indigo-300/60" />
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-[15px] font-bold text-slate-300 group-hover:text-indigo-300 transition-colors">말씀 연구실</h4>
-                  <p className="text-[12px] text-slate-500 mt-0.5">구경하기 · 프로젝트 · 성경 연구</p>
+                  <h4 className="text-[15px] font-bold text-white group-hover:text-amber-300 transition-colors">말씀 연구실</h4>
+                  <p className="text-[12px] text-amber-200/80 mt-0.5">본문 주해 · 성경 연구 · 원고 작성</p>
                 </div>
-                <span className="text-[11px] font-bold text-indigo-300/80 border border-indigo-400/20 bg-indigo-400/5 rounded-lg px-2.5 py-1 mt-1.5 shrink-0">
-                  체험하기
+                <span className="text-[10.5px] font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-500 border border-amber-400 rounded-lg px-2.5 py-1 mt-1.5 shrink-0 shadow-md shadow-amber-500/20">
+                  🎁 1회 체험
                 </span>
               </Link>
             )}
+
+            {/* 다시 보지 않기 */}
+            <label className="mt-5 flex items-center gap-2 cursor-pointer select-none group/check">
+              <input
+                type="checkbox"
+                onChange={(e) => {
+                  if (e.target.checked) localStorage.setItem('bunker_dashboard_prompt_seen', '1')
+                }}
+                className="w-3.5 h-3.5 rounded border-slate-500 bg-white/5 text-indigo-500 focus:ring-indigo-500/30 focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-[11.5px] text-slate-500 group-hover/check:text-slate-300 transition-colors">
+                다음부터 대시보드로 바로 이동
+              </span>
+            </label>
           </div>
         </div>
       )}

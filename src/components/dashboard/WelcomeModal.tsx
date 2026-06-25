@@ -164,6 +164,27 @@ export default function WelcomeModal() {
           </button>
         </div>
 
+        {/* 🎁 1회 체험 — 말씀 연구실 */}
+        <div className="px-6 sm:px-8 py-5 border-b border-white/5 bg-gradient-to-br from-indigo-500/[0.05] to-purple-500/[0.03]">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold">
+              🎁 1회 체험
+            </span>
+            <h3 className="text-[13px] font-extrabold text-white">말씀 연구실을 먼저 경험해보세요</h3>
+          </div>
+          <p className="text-[12px] text-slate-400 leading-relaxed">
+            본문 주해 · 성경 정밀 연구 · 원고 작성까지. 회원가입 후 1편/30일 무료로 직접 사용해보실 수 있어요.
+          </p>
+          <button
+            onClick={() => { close(); router.push('/advanced/projects/new') }}
+            className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-[13px] shadow-lg shadow-indigo-500/20 transition-all group"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            지금 1회 체험하기
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+
         {/* 푸터 CTA */}
         <div className="px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <button

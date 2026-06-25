@@ -199,12 +199,12 @@ export default function UsagePanel({ hideTitle = false }: UsagePanelProps) {
                 <div key={key} className="flex flex-col items-center gap-0.5 flex-1">
                   <div className="flex items-center gap-0.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${colors.dot} ${isPulsing ? 'animate-pulse-soft' : ''}`} />
-                    <span className={`tabular-nums font-bold ${isFull ? 'text-rose-300' : isAlmost ? 'text-amber-300' : 'text-slate-300'}`}>
-                      {isUnlimited ? '∞' : isZero ? '🔒' : action.current}
+                    <span className={`tabular-nums font-bold ${isFull ? 'text-rose-300' : isAlmost ? 'text-amber-300' : isZero ? 'text-amber-300' : 'text-slate-300'}`}>
+                      {isUnlimited ? '∞' : isZero ? <Crown className="w-2.5 h-2.5 inline" /> : action.current}
                     </span>
                   </div>
-                  <span className="text-[8.5px] text-slate-500 leading-none">
-                    {meta.shortLabel}
+                  <span className={`text-[8.5px] leading-none ${isZero ? 'text-amber-300/80' : 'text-slate-500'}`}>
+                    {isZero ? '사역전용' : meta.shortLabel}
                   </span>
                 </div>
               )
@@ -247,7 +247,7 @@ export default function UsagePanel({ hideTitle = false }: UsagePanelProps) {
                 )}
                 {isZero && (
                   <p className="text-[9px] text-amber-400/80 leading-tight">
-                    사역 동참자 전용 · 1편/30일 체험 가능
+                    📖 본문 주해 · 구조 분석 · 원고 작성
                   </p>
                 )}
               </div>

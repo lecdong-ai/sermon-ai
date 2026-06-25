@@ -476,6 +476,84 @@ export default function MyPage() {
               </div>
             </article>
 
+            {/* ── 등급별 한도 비교 (일반회원에게만 노출) ── */}
+            {!isSupporter && (
+              <article className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.05] via-orange-500/[0.02] to-transparent backdrop-blur-sm p-6 sm:p-7 overflow-hidden">
+                <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-500/8 blur-3xl" />
+                <header className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/80 font-bold mb-1">
+                      30일 한도 비교
+                    </p>
+                    <h2 className="text-[18px] font-bold text-white">
+                      한도를 2배로 늘려보세요
+                    </h2>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold">
+                    +250%
+                  </span>
+                </header>
+
+                {/* 막대 비교 */}
+                <div className="space-y-4">
+                  {(() => {
+                    const generalTotals = 20 // 일반회원 합산
+                    const supporterTotals = 70 // 사역동참자 합산
+                    const userTotals = usage?.limits
+                      ? Object.values(usage.limits.actions).reduce((s, a) => s + (a.limit > 0 ? a.limit : 0), 0)
+                      : generalTotals
+                    return (
+                      <>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[12px] font-semibold text-slate-300">일반 회원</span>
+                            <span className="text-[12px] font-bold text-slate-400 tabular-nums">{generalTotals}회/30일</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-slate-500 to-slate-400"
+                              style={{ width: `${(generalTotals / supporterTotals) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[12px] font-semibold text-amber-200 inline-flex items-center gap-1">
+                              <Crown className="w-3 h-3" /> 사역 동참자
+                            </span>
+                            <span className="text-[12px] font-bold text-amber-200 tabular-nums">{supporterTotals}회/30일</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-amber-200/70 leading-relaxed pt-1">
+                          ✨ <strong className="text-amber-300">월 10,000원</strong>으로 커피 한 잔 값. 벌써 47명의 목회자가 동참하며 한도를 2배로 늘렸습니다.
+                        </p>
+                        {userTotals <= generalTotals && (
+                          <p className="text-[10.5px] text-slate-500 leading-relaxed">
+                            💡 현재 한도: {userTotals}회 — 사역 동참 시 {supporterTotals}회로 자동 상향
+                          </p>
+                        )}
+                      </>
+                    )
+                  })()}
+                </div>
+
+                <Link
+                  href="/support"
+                  className="mt-5 w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-[13px] shadow-lg shadow-amber-500/20 transition-all group"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  사역에 동참하기
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </article>
+            )}
+
             {/* 빠른 이동 — 카드 그리드 */}
             <article>
               <h2 className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-4">워크스페이스</h2>

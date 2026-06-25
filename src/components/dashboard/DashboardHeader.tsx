@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { LogOut, User, LayoutDashboard } from 'lucide-react'
@@ -48,13 +49,13 @@ export default function DashboardHeader() {
 
   return (
     <header className="h-14 border-b border-white/5 bg-[#050814]/80 backdrop-blur-md flex items-center justify-between px-6 shrink-0 relative z-10">
-      <button
-        onClick={() => router.push('/')}
+      <Link
+        href="/"
         className="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors font-medium"
       >
         <span>←</span>
         <span>메인 페이지</span>
-      </button>
+      </Link>
 
       <div className="flex items-center gap-3">
         {plan && (

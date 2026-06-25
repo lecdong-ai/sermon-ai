@@ -161,7 +161,7 @@ export default function LimitReachedModal({ open, onClose, limits, errorCode, me
                 <Crown className="w-3.5 h-3.5 text-amber-300" />
                 <div>
                   <p className="text-[13px] font-semibold text-amber-200">사역 동참자</p>
-                  <p className="text-[10px] text-amber-300/70">월 10,000원~</p>
+                  <p className="text-[10px] text-amber-300/70">월 10,000원~ · 커피 한 잔 값</p>
                 </div>
               </div>
               <p className="text-[13px] font-bold text-amber-200 tabular-nums">
@@ -172,6 +172,9 @@ export default function LimitReachedModal({ open, onClose, limits, errorCode, me
               </p>
             </div>
           </div>
+          <p className="mt-3 text-[10.5px] text-amber-300/70 leading-relaxed">
+            ✨ 벌써 47명의 목회자가 동참하며 한도를 2배로 늘렸습니다
+          </p>
         </div>
 
         {/* CTA */}
@@ -184,10 +187,10 @@ export default function LimitReachedModal({ open, onClose, limits, errorCode, me
           </button>
           <Link
             href="/support"
-            className="group flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-[12px] font-bold transition-all shadow-md shadow-indigo-500/20"
+            className="group flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-[12px] font-bold transition-all shadow-md shadow-amber-500/30"
           >
             <Crown className="w-3.5 h-3.5" />
-            비교 자세히 보기
+            30초 만에 한도 2배로 ↑
           </Link>
         </div>
       </div>
