@@ -40,13 +40,13 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
           setIsSupporter(true)
           return
         }
-        if (!usage.error && usage.supporter) {
-          setIsSupporter(true)
-          return
-        }
-        router.push('/support')
+        // 일반회원도 입장 허용 — 한도는 개별 액션 레벨(LimitReachedModal)에서 처리
+        setIsSupporter(true)
       })
-      .catch(() => router.push('/support'))
+      .catch(() => {
+        // API 실패 시에도 로그인된 사용자는 통과
+        setIsSupporter(true)
+      })
       .finally(() => setChecking(false))
   }, [user, authLoading, router, isPreview])
 
