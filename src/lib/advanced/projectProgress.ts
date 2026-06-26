@@ -127,9 +127,12 @@ function deriveOverallStatus(
   prep: TabStageStatus,
   manuscript: TabStageStatus
 ): ProjectStatus {
+  // 원고가 작성 중이거나 완성됐으면 우선 반영 (사용자가 실제로 설교를 쓰고 있으면)
+  if (manuscript === 'complete') return 'review'
+  if (manuscript === 'draft') return 'writing'
+  // 원고가 없으면 기존 흐름
   if (study === 'empty') return 'research'
   if (study !== 'complete' || prep !== 'complete') return 'prepare'
-  if (manuscript !== 'complete') return 'writing'
   return 'review'
 }
 

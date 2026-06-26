@@ -1,18 +1,20 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef, useLayoutEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { Anchor, ArrowRight, BookMarked, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Volume2, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/advanced/types'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 import {
-  JOHN_VERSES, JOHN_WORDS, JOHN_COMMENTARIES,
-  JOHN_TRANSLATION_NOTES, JOHN_PARALLEL_PASSAGES,
-  JOHN_THEMES, JOHN_CONTEXT,
+  JOHN_VERSES,
+  JOHN_TRANSLATION_NOTES,
+  JOHN_COMMENTARIES,
+  JOHN_PARALLEL_PASSAGES,
+  JOHN_THEMES,
+  type JohnWordDetail,
+  type JohnCommentary,
 } from '@/lib/advanced/johnStudyData'
-import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
-import type { JohnWordDetail, JohnCommentary } from '@/lib/advanced/johnStudyData'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import { computeProjectProgress, toStageStatusMap } from '@/lib/advanced/projectProgress'
 
@@ -29,43 +31,12 @@ const STUDY_DATA_REGISTRY: Record<string, {
     historicalBackground?: string; culturalContext?: string;
     theologicalContext?: string; redemptiveHistory?: string;
     keyThemes?: string[]; narrativeArc?: string;
-  }}> = {
-  '로마서_8': {
-    passage: '롬 8:1-11',
-    verses: MOCK_BIBLE_STUDY.verses,
-    words: MOCK_BIBLE_STUDY.words,
-    commentaries: MOCK_BIBLE_STUDY.commentaries,
-    translationNotes: MOCK_BIBLE_STUDY.translationNotes,
-    parallelPassages: MOCK_BIBLE_STUDY.parallelPassages,
-    themes: MOCK_BIBLE_STUDY.themes,
-    contextInfo: {
-      before: MOCK_BIBLE_STUDY.contextInfo.before,
-      after: MOCK_BIBLE_STUDY.contextInfo.after,
-      bookStructure: '로마서: 1-3장(죄) → 4-5장(칭의) → 6-8장(성화) → 9-11장(이스라엘) → 12-16장(실천)',
-    },
-  },
-  '요한복음_1': {
-    passage: '요한복음 1:1-5',
-    verses: JOHN_VERSES as any[],
-    words: JOHN_WORDS as Record<string, any>,
-    commentaries: JOHN_COMMENTARIES as any[],
-    translationNotes: JOHN_TRANSLATION_NOTES as any[],
-    parallelPassages: JOHN_PARALLEL_PASSAGES as any[],
-    themes: JOHN_THEMES,
-    contextInfo: {
-      before: JOHN_CONTEXT.before,
-      after: JOHN_CONTEXT.after,
-      bookStructure: JOHN_CONTEXT.bookStructure,
-    },
-  },
-}
+  }}> = {}
 
 function getStudyData(book: string, chapter: number) {
   const key = `${book}_${chapter}`
   return STUDY_DATA_REGISTRY[key] || null
-}
-
-interface Props { project: ProjectDetail; passages?: BiblePassage[] }
+}interface Props { project: ProjectDetail; passages?: BiblePassage[] }
 
 type ViewMode = 'parallel' | 'focused' | 'compare'
 
@@ -96,6 +67,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
+  const rightPanelRef = useRef<HTMLDivElement>(null)
+  const scrollPosRef = useRef(0)
+  const prevViewKeyRef = useRef('')
   const [memosByPassage, setMemosByPassage] = useState<Record<string, { text: string; tags: string[] }>>(() => {
     if (typeof window === 'undefined') return {}
     try {
@@ -163,6 +137,22 @@ export default function BibleStudyTab({ project, passages }: Props) {
   } | null>(null)
   const [multiStudyLoading, setMultiStudyLoading] = useState(false)
   const [multiStudyError, setMultiStudyError] = useState<string | null>(null)
+
+  const currentViewKey = selectedWordId
+    || `${selectedFallbackWord?.word}_${selectedFallbackWord?.verse}`
+    || `${selectedEnglishWord?.word}_${selectedEnglishWord?.verse}`
+    || `verse_${selectedVerse}`
+    || `theme_${selectedTheme}`
+    || 'default'
+  useLayoutEffect(() => {
+    if (!rightPanelRef.current) return
+    if (prevViewKeyRef.current === currentViewKey) {
+      rightPanelRef.current.scrollTop = scrollPosRef.current
+    } else {
+      rightPanelRef.current.scrollTop = 0
+    }
+    prevViewKeyRef.current = currentViewKey
+  })
 
   const multiCacheKey = useMemo(() => {
     if (!isMulti || !passages) return null
@@ -1151,9 +1141,6 @@ export default function BibleStudyTab({ project, passages }: Props) {
               })()}
             />
 
-            {/* Context Explorer - always visible */}
-            <ContextExplorer info={studyData.contextInfo} />
-
             {/* Auto Diff: NIV + ESV 등 2개 영어 버전 켜졌을 때 비교 인사이트 */}
             {viewMode !== 'compare' && (
               <TranslationDiffSummary
@@ -1162,6 +1149,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 onScrollToVerse={handleScrollToVerse}
               />
             )}
+
+            {/* Context Explorer - 본문(Diff) 다음에 표시 */}
+            <ContextExplorer info={studyData.contextInfo} />
 
             {/* 병렬 모드: 여러 번역본 나란히 */}
             {viewMode === 'parallel' && (
@@ -1296,7 +1286,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
       </div>
 
       {/* ─── Right Panel ─── */}
-      <div className="w-80 shrink-0 border-l border-white/5 bg-[#04060f]/60 overflow-y-auto scrollbar-thin">
+      <div ref={rightPanelRef} onScroll={(e) => { scrollPosRef.current = e.currentTarget.scrollTop }} className="w-80 shrink-0 border-l border-white/5 bg-[#04060f]/60 overflow-y-auto scrollbar-thin">
         <RightPanel
           words={allWords}
           selectedWordId={selectedWordId}
@@ -2643,16 +2633,18 @@ function RightPanel({
   // Word Detail - Fallback (unmatched word, loading or pending)
   if (selectedFallbackWord) {
     return (
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 ({selectedFallbackWord.verse}절)</h3>
-          <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div>
+        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 ({selectedFallbackWord.verse}절)</h3>
+            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="space-y-4">
+        <div className="p-5 space-y-4">
           <div className="text-center py-6 bg-white/5 rounded-xl">
             <p className="text-2xl font-greek text-white">{selectedFallbackWord.word}</p>
             <p className="text-sm text-slate-400 mt-1">{selectedFallbackWord.clean}</p>
@@ -2678,34 +2670,40 @@ function RightPanel({
     const wordData = englishLookup[cacheKey]
     if (englishLookupLoading && !wordData) {
       return (
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <div>
+          <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
+              <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className="flex flex-col items-center py-10 space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-            <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+          <div className="p-5">
+            <div className="flex flex-col items-center py-10 space-y-3">
+              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+              <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+            </div>
           </div>
         </div>
       )
     }
     if (wordData) {
       return (
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <div>
+          <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
+              <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className="space-y-4">
+          <div className="p-5 space-y-4">
             <div className="text-center py-4 bg-white/5 rounded-xl">
               <p className="text-2xl font-bold text-white font-serif">{wordData.word}</p>
               <p className="text-sm text-slate-400 mt-1">{wordData.pronunciation}</p>
@@ -2746,18 +2744,22 @@ function RightPanel({
       )
     }
     return (
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-          <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div>
+        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
+            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="text-center py-8">
-          <p className="text-2xl font-bold text-white font-serif">{selectedEnglishWord.word}</p>
-          <p className="text-xs text-slate-500 mt-2">분석 정보를 불러오는 중입니다...</p>
+        <div className="p-5">
+          <div className="text-center py-8">
+            <p className="text-2xl font-bold text-white font-serif">{selectedEnglishWord.word}</p>
+            <p className="text-xs text-slate-500 mt-2">분석 정보를 불러오는 중입니다...</p>
+          </div>
         </div>
       </div>
     )
@@ -2767,16 +2769,18 @@ function RightPanel({
   if (selectedWordId && words[selectedWordId]) {
     const word = words[selectedWordId]
     return (
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 분석</h3>
-          <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div>
+        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 분석</h3>
+            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="space-y-4">
+        <div className="p-5 space-y-4">
           <div className="text-center py-4 bg-white/5 rounded-xl">
             <p className="text-2xl font-greek text-white">{word.lemmaGreek}</p>
             <p className="text-sm text-slate-400 mt-1">{word.transliteration}</p>
@@ -2833,15 +2837,18 @@ function RightPanel({
     const verseCommentaries = (commentaries || []).filter((c: any) => c.verse === selectedVerse)
     const verseData = (verses || []).find((v: any) => v.verse === selectedVerse)
     return (
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{selectedVerse}절 주석</h3>
-          <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div>
+        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{selectedVerse}절 주석</h3>
+            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
+        <div className="p-5">
         {verseData && (
           <div className="bg-white/5 rounded-xl p-3 mb-4">
             <p className="text-xs text-slate-200 leading-relaxed">{verseData.korean}</p>
@@ -2866,6 +2873,7 @@ function RightPanel({
           <div className="text-xs text-slate-500 text-center py-8">이 절에 대한 주석이 없습니다.</div>
         )}
       </div>
+      </div>
     )
   }
 
@@ -2874,28 +2882,32 @@ function RightPanel({
     const themeData = (themes || []).find((t: any) => t.name === selectedTheme)
     if (themeData) {
       return (
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">주제 연결</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+        <div>
+          <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">주제 연결</h3>
+              <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="text-center py-4">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-sm font-medium">
+                {themeData.name}
+              </span>
+            </div>
+            <p className="text-sm text-slate-100 leading-relaxed mb-4">{themeData.description}</p>
+            <div className="flex items-center justify-between text-xs text-slate-400 bg-white/5 rounded-xl p-3">
+              <span>연결된 설교</span>
+              <span className="font-medium text-slate-100">{themeData.connectedSermons}편</span>
+            </div>
+            <button className="w-full mt-4 text-xs text-indigo-400 border border-indigo-500/20 rounded-xl py-2 hover:bg-indigo-500/10 transition-colors">
+              이 주제로 설교 검색 →
             </button>
           </div>
-          <div className="text-center py-4">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-sm font-medium">
-              {themeData.name}
-            </span>
-          </div>
-          <p className="text-sm text-slate-100 leading-relaxed mb-4">{themeData.description}</p>
-          <div className="flex items-center justify-between text-xs text-slate-400 bg-white/5 rounded-xl p-3">
-            <span>연결된 설교</span>
-            <span className="font-medium text-slate-100">{themeData.connectedSermons}편</span>
-          </div>
-          <button className="w-full mt-4 text-xs text-indigo-400 border border-indigo-500/20 rounded-xl py-2 hover:bg-indigo-500/10 transition-colors">
-            이 주제로 설교 검색 →
-          </button>
         </div>
       )
     }

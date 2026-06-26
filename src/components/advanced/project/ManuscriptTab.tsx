@@ -11,7 +11,8 @@ import { AppSectionHeader } from '@/components/advanced/shared'
 import ProjectContextRow from '@/components/advanced/shared/ProjectContextRow'
 import VersionHistoryDrawer from '@/components/advanced/shared/VersionHistoryDrawer'
 import { computeProjectProgress, toStageStatusMap } from '@/lib/advanced/projectProgress'
-import { MOCK_VERSIONS } from '@/lib/advanced/statusData'
+import { detectCurrentStage } from '@/lib/advanced/stageChecker'
+import { PROJECT_STATUS_ORDER, type ProjectStatus } from '@/lib/advanced/types'
 import {
   MANUSCRIPT_VERSIONS as JOHN_MANUSCRIPT_VERSIONS,
   RECENT_ACTIVITY as JOHN_RECENT_ACTIVITY,
@@ -21,7 +22,10 @@ import { getStorageItem, setStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 import ManuscriptStudio from './ManuscriptStudio'
 
-interface Props { project: ProjectDetail }
+interface Props {
+  project: ProjectDetail
+  onStatusUpdate?: (status: ProjectStatus) => void
+}
 
 type ViewMode = 'edit' | 'preview' | 'presentation' | 'print'
 type WritingStatus = 'empty' | 'draft' | 'revised' | 'complete'
@@ -321,7 +325,7 @@ function buildManuscriptFromPrep(project: ProjectDetail, prepRaw: any): JohnManu
   }
 }
 
-export default function ManuscriptTab({ project }: Props) {
+export default function ManuscriptTab({ project, onStatusUpdate }: Props) {
   const router = useRouter()
   const [manuscript, setManuscript] = useState<JohnManuscriptData>(() => ({
     ...EMPTY_MANUSCRIPT,
@@ -656,23 +660,44 @@ export default function ManuscriptTab({ project }: Props) {
     setSaveError(null)
     // Save to localStorage
     setStorageItem(`manuscript_${project.id}`, { ...manuscriptToSave, _savedAt: Date.now() })
+
+    // 진행단계 자동 갱신: 원고 작성/완성 시 status 상향
+    const detected = detectCurrentStage(project.id)
+    const currentIdx = PROJECT_STATUS_ORDER.indexOf(project.status)
+    const detectedIdx = PROJECT_STATUS_ORDER.indexOf(detected)
+    const shouldUpgrade =
+      currentIdx !== -1 &&
+      detectedIdx !== -1 &&
+      detectedIdx > currentIdx
+    const newStatus: ProjectStatus | undefined = shouldUpgrade ? detected : undefined
+
     // Save to server
     try {
+      const payload: { manuscript: string; status?: ProjectStatus } = {
+        manuscript: JSON.stringify(manuscriptToSave),
+      }
+      if (newStatus) payload.status = newStatus
+
       const res = await fetch('/api/sermons/' + project.id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ manuscript: JSON.stringify(manuscriptToSave) }),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error('서버 저장 실패')
       setAutoSaveStatus('saved')
       const now = new Date()
       setLastSaved(now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+
+      // 헤더의 진행단계 배지 즉시 갱신
+      if (newStatus && onStatusUpdate) {
+        onStatusUpdate(newStatus)
+      }
     } catch (e: any) {
       setAutoSaveStatus('saved')
       setSaveError(null)
       // localStorage save succeeded even if server fails — don't alarm user
     }
-  }, [project.id])
+  }, [project.id, project.status, onStatusUpdate])
 
   const triggerSave = useCallback(() => {
     setAutoSaveStatus('unsaved')
@@ -1657,7 +1682,7 @@ export default function ManuscriptTab({ project }: Props) {
       <VersionHistoryDrawer
         isOpen={showVersions}
         onClose={() => setShowVersions(false)}
-        versions={MOCK_VERSIONS}
+        versions={project.versions}
         projectId={project.id}
       />
 

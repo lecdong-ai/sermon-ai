@@ -10,6 +10,107 @@ import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
 
 type DetailView = 'word' | 'verse' | 'theme' | 'none'
 
+/* ─── 빠른 입력: 성경 참조 파싱 ─── */
+
+const BIBLE_ABBR_MAP: Record<string, string> = {
+  // OT
+  '창': '창세기', '창세기': '창세기',
+  '출': '출애굽기', '출애굽기': '출애굽기',
+  '레': '레위기', '레위기': '레위기',
+  '민': '민수기', '민수기': '민수기',
+  '신': '신명기', '신명기': '신명기',
+  '수': '여호수아', '여호수아': '여호수아',
+  '삿': '사사기', '사사기': '사사기',
+  '룻': '룻기', '룻기': '룻기',
+  '삼상': '사무엘상', '사무엘상': '사무엘상',
+  '삼하': '사무엘하', '사무엘하': '사무엘하',
+  '왕상': '열왕기상', '열왕기상': '열왕기상',
+  '왕하': '열왕기하', '열왕기하': '열왕기하',
+  '대상': '역대상', '역대상': '역대상',
+  '대하': '역대하', '역대하': '역대하',
+  '스': '에스라', '에스라': '에스라',
+  '느': '느헤미야', '느헤미야': '느헤미야',
+  '에': '에스더', '에스더': '에스더',
+  '욥': '욥기', '욥기': '욥기',
+  '시': '시편', '시편': '시편',
+  '잠': '잠언', '잠언': '잠언',
+  '전': '전도서', '전도서': '전도서',
+  '아': '아가', '아가': '아가',
+  '사': '이사야', '이사야': '이사야',
+  '렘': '예레미야', '예레미야': '예레미야',
+  '애': '예레미야애가', '예레미야애가': '예레미야애가',
+  '겔': '에스겔', '에스겔': '에스겔',
+  '단': '다니엘', '다니엘': '다니엘',
+  '호': '호세아', '호세아': '호세아',
+  '욜': '요엘', '요엘': '요엘',
+  '암': '아모스', '아모스': '아모스',
+  '옵': '오바댜', '오바댜': '오바댜',
+  '욘': '요나', '요나': '요나',
+  '미': '미가', '미가': '미가',
+  '나': '나훔', '나훔': '나훔',
+  '합': '하박국', '하박국': '하박국',
+  '습': '스바냐', '스바냐': '스바냐',
+  '학': '학개', '학개': '학개',
+  '슥': '스가랴', '스가랴': '스가랴',
+  '말': '말라기', '말라기': '말라기',
+  // NT
+  '마': '마태복음', '마태복음': '마태복음',
+  '막': '마가복음', '마가복음': '마가복음',
+  '눅': '누가복음', '누가복음': '누가복음',
+  '요': '요한복음', '요한복음': '요한복음',
+  '행': '사도행전', '사도행전': '사도행전',
+  '롬': '로마서', '로마서': '로마서',
+  '고전': '고린도전서', '고린도전서': '고린도전서',
+  '고후': '고린도후서', '고린도후서': '고린도후서',
+  '갈': '갈라디아서', '갈라디아서': '갈라디아서',
+  '엡': '에베소서', '에베소서': '에베소서',
+  '빌': '빌립보서', '빌립보서': '빌립보서',
+  '골': '골로새서', '골로새서': '골로새서',
+  '살전': '데살로니가전서', '데살로니가전서': '데살로니가전서',
+  '살후': '데살로니가후서', '데살로니가후서': '데살로니가후서',
+  '딤전': '디모데전서', '디모데전서': '디모데전서',
+  '딤후': '디모데후서', '디모데후서': '디모데후서',
+  '딛': '디도서', '디도서': '디도서',
+  '몬': '빌레몬서', '빌레몬서': '빌레몬서',
+  '히': '히브리서', '히브리서': '히브리서',
+  '약': '야고보서', '야고보서': '야고보서',
+  '벧전': '베드로전서', '베드로전서': '베드로전서',
+  '벧후': '베드로후서', '베드로후서': '베드로후서',
+  '요일': '요한일서', '요한일서': '요한일서',
+  '요이': '요한이서', '요한이서': '요한이서',
+  '요삼': '요한삼서', '요한삼서': '요한삼서',
+  '유': '유다서', '유다서': '유다서',
+  '계': '요한계시록', '요한계시록': '요한계시록',
+}
+
+interface QuickRef {
+  book: string
+  chapter: number
+  verseStart: number
+  verseEnd: number
+}
+
+function parseQuickRef(input: string): QuickRef | null {
+  const cleaned = input.trim().replace(/\s+/g, '')
+  if (!cleaned) return null
+
+  // 패턴: 책이름(가-힣) + 장(숫자) + ":" + 시작(숫자) + (옵션: -끝(숫자))
+  const m = cleaned.match(/^([가-힣]+)(\d+):(\d+)(?:[-–~](\d+))?$/)
+  if (!m) return null
+
+  const [, bookInput, chapterStr, startStr, endStr] = m
+  const book = BIBLE_ABBR_MAP[bookInput]
+  if (!book) return null
+
+  const chapter = parseInt(chapterStr, 10)
+  const verseStart = parseInt(startStr, 10)
+  const verseEnd = endStr ? parseInt(endStr, 10) : verseStart
+
+  if (verseStart > verseEnd) return null
+  if (verseStart < 1 || chapter < 1) return null
+  return { book, chapter, verseStart, verseEnd }
+}
+
 export default function BiblePage() {
   const router = useRouter()
 
@@ -22,6 +123,9 @@ export default function BiblePage() {
   const [savingMemo, setSavingMemo] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [quickRefInput, setQuickRefInput] = useState('')
+  const [quickRefError, setQuickRefError] = useState<string | null>(null)
+  const [dynamicMaxVerses, setDynamicMaxVerses] = useState(50)
 
   const [detailView, setDetailView] = useState<DetailView>('none')
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null)
@@ -342,6 +446,44 @@ export default function BiblePage() {
     setVerseEnd(11)
   }, [])
 
+  const handleQuickRef = useCallback(() => {
+    const parsed = parseQuickRef(quickRefInput)
+    if (!parsed) {
+      setQuickRefError('형식: "요 3:16" 또는 "롬 8:1-11"')
+      return
+    }
+    const bookData = BIBLE_BOOKS.find(b => b.name === parsed.book)
+    if (!bookData) {
+      setQuickRefError('책을 찾을 수 없습니다')
+      return
+    }
+    if (parsed.chapter < 1 || parsed.chapter > bookData.chapters) {
+      setQuickRefError(`${parsed.book}는 ${bookData.chapters}장까지 있습니다`)
+      return
+    }
+    setBook(parsed.book)
+    setTestament(bookData.testament)
+    setChapter(parsed.chapter)
+    setVerseStart(parsed.verseStart)
+    setVerseEnd(parsed.verseEnd)
+    setQuickRefInput('')
+    setQuickRefError(null)
+  }, [quickRefInput])
+
+  // 책/장이 변경되면 해당 장의 실제 절 수를 동적으로 조회
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/bible/max-verses?book=${encodeURIComponent(book)}&chapter=${chapter}`)
+      .then(r => r.json())
+      .then(json => {
+        if (!cancelled && json.success && typeof json.maxVerses === 'number') {
+          setDynamicMaxVerses(json.maxVerses)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [book, chapter])
+
   const handleWordClick = useCallback((wordId: string, verse: number, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => {
     if (fallbackWord && fallbackWord.version) {
       const cacheKey = `_englk_${verse}_${fallbackWord.version}_${fallbackWord.clean}`
@@ -505,8 +647,15 @@ export default function BiblePage() {
         verseEnd={verseEnd}
         onVerseStartChange={setVerseStart}
         onVerseEndChange={setVerseEnd}
-        maxVerses={50}
+        maxVerses={dynamicMaxVerses}
         onLoad={handleLoad}
+        quickRefInput={quickRefInput}
+        onQuickRefChange={(q) => {
+          setQuickRefInput(q)
+          if (quickRefError) setQuickRefError(null)
+        }}
+        onQuickRef={handleQuickRef}
+        quickRefError={quickRefError}
       />
 
       <div className="flex-1 flex flex-col min-w-0" key={passageKey}>
@@ -768,6 +917,7 @@ function BibleSidebar({
   onBookSelect, onChapterSelect, searchQuery, onSearchChange,
   chapterOptions, verseStart, verseEnd, onVerseStartChange, onVerseEndChange,
   maxVerses, onLoad,
+  quickRefInput, onQuickRefChange, onQuickRef, quickRefError,
 }: {
   books: { name: string; chapters: number }[]
   selectedBook: string
@@ -785,9 +935,40 @@ function BibleSidebar({
   onVerseEndChange: (v: number) => void
   maxVerses: number
   onLoad: () => void
+  quickRefInput: string
+  onQuickRefChange: (q: string) => void
+  onQuickRef: () => void
+  quickRefError: string | null
 }) {
   return (
     <aside className="w-56 shrink-0 border-r border-white/5 bg-[#04060f]/70 backdrop-blur-md flex flex-col overflow-hidden">
+      <div className="p-3 border-b border-white/5">
+        <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">빠른 입력</div>
+        <div className="flex gap-1.5">
+          <input
+            type="text"
+            value={quickRefInput}
+            onChange={e => onQuickRefChange(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') onQuickRef()
+            }}
+            placeholder="요 3:16"
+            className="flex-1 min-w-0 text-xs bg-[#0c1020] border border-white/5 rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500/50 placeholder:text-slate-600 text-slate-200 font-medium"
+          />
+          <button
+            onClick={onQuickRef}
+            className="text-[11px] font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 px-3 rounded-xl transition-colors"
+          >
+            이동
+          </button>
+        </div>
+        {quickRefError ? (
+          <p className="text-[10px] text-red-400 mt-1.5">{quickRefError}</p>
+        ) : (
+          <p className="text-[9px] text-slate-600 mt-1.5">예: 요 3:16, 롬 8:1-11, 창 1:1</p>
+        )}
+      </div>
+
       <div className="p-3 border-b border-white/5">
         <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">본문 선택</div>
         <div className="flex rounded-xl overflow-hidden border border-white/5 mb-2 bg-[#090d20] p-0.5 gap-0.5">

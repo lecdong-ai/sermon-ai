@@ -160,7 +160,7 @@ function ProjectContent() {
             {currentTab === 'overview' && <OverviewTab project={project} onProjectUpdated={refetch} updateStatus={updateStatus} />}
             {currentTab === 'study' && <BibleStudyTab project={project} passages={project.passages} />}
             {currentTab === 'prep' && <PrepTab project={project} />}
-            {currentTab === 'manuscript' && <ManuscriptTab project={project} />}
+            {currentTab === 'manuscript' && <ManuscriptTab project={project} onStatusUpdate={updateStatus} />}
             {currentTab === 'connections' && <ConnectionsTab project={project} />}
             {currentTab === 'versions' && <VersionsTab project={project} />}
           </div>
