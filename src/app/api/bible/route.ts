@@ -14,11 +14,17 @@ let cachedData: Verse[] | null = null
 
 async function loadBibleData(): Promise<Verse[]> {
   if (cachedData) return cachedData
-  const res = await fetch(DATA_URL, { next: { revalidate: 86400 } })
-  if (!res.ok) throw new Error('성경 데이터를 불러오지 못했습니다')
-  const data: Verse[] = await res.json()
-  cachedData = data
-  return data
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(DATA_URL, { next: { revalidate: 86400 }, signal: controller.signal })
+    if (!res.ok) throw new Error('성경 데이터를 불러오지 못했습니다')
+    const data: Verse[] = await res.json()
+    cachedData = data
+    return data
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 export async function GET(request: NextRequest) {

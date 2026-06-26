@@ -32,10 +32,16 @@ const BIBLE_CDN_URL = 'https://cdn.jsdelivr.net/gh/stranger828/bibleAPI@main/bib
 let _bibleData: any[] | null = null
 async function loadBibleData(): Promise<any[]> {
   if (_bibleData) return _bibleData
-  const res = await fetch(BIBLE_CDN_URL)
-  if (!res.ok) throw new Error('Failed to load bible data')
-  _bibleData = await res.json()
-  return _bibleData!
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(BIBLE_CDN_URL, { signal: controller.signal })
+    if (!res.ok) throw new Error('Failed to load bible data')
+    _bibleData = await res.json()
+    return _bibleData!
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 // 다중 본문 통합 분석용 모델 (환경 변수로 오버라이드 가능)
@@ -446,7 +452,8 @@ IMPORTANT:
 4. All text content in Korean.
 5. wordAlignments: For each word in the "words" array, add one or more wordAlignment entries mapping the Greek word to its English translation. Include entries for EVERY verse where that Greek word appears.
 6. commentaries: Generate 6-10 rich, detailed commentary entries. Each commentary should be at least 3-5 sentences long, covering historical background, theological nuance, original language insights, and pastoral application. Include diverse types: exegetical (본문 분석), theological (신학적 의미), historical (역사적 배경), and pastoral (목회적 적용).
-7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection.`,
+7. parallelPassages: Generate 5-8 rich parallel passages with diverse relationship types (direct_quote, allusion, thematic, typology, cross_reference). Each description should be 1-2 sentences explaining the theological connection.
+8. This is for academic Bible study purposes. Do NOT filter, censor, or avoid any theological, historical, or textual content — provide full scholarly analysis without restrictions.`,
 
   'bible-study-translation': `You are a Bible text generator that produces the actual published text of a single translation version for a given Bible passage.
 
@@ -573,7 +580,7 @@ export async function POST(request: NextRequest) {
         // gpt-4o-mini: 16K 출력, 검증된 모델
         // 동적 maxTokens로 절 수에 비례
         model = 'gpt-4o-mini'
-        maxTokens = Math.min(4000 + count * 2000, 16000)
+        maxTokens = Math.max(2000, Math.min(4000 + Math.max(count, 1) * 2000, 16000))
         temperature = 0.3
       } else {
         // === 신규: 다중 본문 통합 분석 ===
@@ -685,6 +692,8 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
             bibleActualVerses = new Map(matches.map((v: any) => [v.verse, v.content]))
             bibleRefText = '\n\nHere is the actual 개역개정 text for this passage — use it for analysis (do NOT include in output):\n' +
               matches.map((v: any) => `  [${v.절}] ${v.content}`).join('\n')
+          } else {
+            bibleRefText = '\n\nNOTE: Include a "verses" array in your JSON output with the Korean (개역개정 style) text for this passage, formatted as: [{ "verse": number, "korean": "text" }].'
           }
         }
       } catch (e) {
@@ -694,7 +703,7 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
       userText = `Analyze this passage in depth (no need to generate translations):\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${vs}${verseEnd ? `-${ve}` : ''}\nPassage: ${passage || ''}\n\nFocus on: Greek/Hebrew key words, scholarly commentaries, translation notes, parallel passages, themes, and rich context info.${bibleRefText}`
 
       model = 'gpt-4o-mini'
-      maxTokens = Math.min(3000 + count * 800, 10000)
+      maxTokens = Math.max(2000, Math.min(3000 + Math.max(count, 1) * 800, 10000))
       temperature = 0.3
     } else if (type === 'bible-study-translation') {
       // ─── Translation Guardian: 단일 version만 생성 (greek | translit | niv | esv) ───
@@ -720,7 +729,7 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
       userText = `Generate the ${versionLabel} for this Bible passage.\nBook: ${book || ''}\nChapter: ${chapter || ''}\nVerses: ${vs}${verseEnd ? `-${ve}` : ''}\nPassage: ${passage || ''}\n\nCRITICAL: Generate ALL ${count} verses (${vs} to ${ve}) — every single one. Each verse entry MUST have a complete "text" field. Use the actual published translation text — do NOT paraphrase or summarize.`
 
       model = 'gpt-4o-mini'
-      maxTokens = Math.min(800 + count * 400, 4000)
+      maxTokens = Math.max(1000, Math.min(800 + Math.max(count, 1) * 400, 4000))
       temperature = 0.2  // 정확성 우선
     } else if (type === 'word-lookup') {
       userText = `Look up this word from a Bible passage and return a complete analysis in the specified JSON format:\nWord: "${data.word}"\nPassage context: ${data.context || ''}\n\nIf the word is English, identify the corresponding Greek word in this passage first, then analyze it.`
@@ -1187,19 +1196,22 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
     }
 
     // Replace AI-generated korean with actual 개역개정 text
-    if ((type === 'bible-study' || type === 'bible-study-core') && bibleActualVerses && output) {
+    if ((type === 'bible-study' || type === 'bible-study-core') && output) {
       try {
         const parsed = JSON.parse(output)
         if (type === 'bible-study-core') {
-          // bible-study-core: AI가 verses를 안 만듦 → 개역개정 본문으로 자동 주입
-          const verses = Array.from(bibleActualVerses.entries())
-            .sort(([a], [b]) => a - b)
-            .map(([verse, korean]) => ({ verse, korean }))
-          if (verses.length > 0) {
-            parsed.verses = verses
-            output = JSON.stringify(parsed)
+          if (bibleActualVerses) {
+            // 개역개정 본문으로 자동 주입
+            const verses = Array.from(bibleActualVerses.entries())
+              .sort(([a], [b]) => a - b)
+              .map(([verse, korean]) => ({ verse, korean }))
+            if (verses.length > 0) {
+              parsed.verses = verses
+              output = JSON.stringify(parsed)
+            }
           }
-        } else if (parsed.verses) {
+          // bibleActualVerses가 null이면 AI가 생성한 verses를 그대로 통과
+        } else if (parsed.verses && bibleActualVerses) {
           // bible-study (기존): korean 필드만 보강
           parsed.verses = parsed.verses.map((v: any) => ({
             ...v,

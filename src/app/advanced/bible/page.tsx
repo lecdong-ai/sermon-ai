@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, BookOpen } from 'lucide-react'
-import { MOCK_BIBLE_STUDY } from '@/lib/advanced/bibleStudyData'
 import type { BibleStudyData, WordDetail, CommentaryItem, VerseParallel } from '@/lib/advanced/bibleStudyData'
 import { BIBLE_BOOKS } from '@/lib/advanced/bibleBooks'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
@@ -37,14 +36,98 @@ export default function BiblePage() {
   const [englishLookupLoading, setEnglishLookupLoading] = useState(false)
 
   const [showTranslations, setShowTranslations] = useState<Record<string, boolean>>({
-    greek: true, krv: true, niv: true, esv: true, translit: false,
+    greek: false, krv: true, niv: false, esv: false, translit: false,
   })
+  const [translationData, setTranslationData] = useState<Record<string, Record<string, any[]>>>({})
+  const [translationLoading, setTranslationLoading] = useState<Record<string, Record<string, boolean>>>({})
 
   const [data, setData] = useState<BibleStudyData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isAILoading, setIsAILoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const passageKey = `${book}_${chapter}_${verseStart}_${verseEnd}`
+
+  const fetchTranslation = useCallback((version: 'greek' | 'translit' | 'niv' | 'esv') => {
+    if (!data) return
+    if (translationData[passageKey]?.[version]) return
+    if (translationLoading[passageKey]?.[version]) return
+
+    const cached = getStorageItem<any[] | null>(`bible_${passageKey}_trans_${version}`, null)
+    if (cached && Array.isArray(cached) && cached[0] && 'text' in cached[0] && !(version in cached[0])) {
+      removeStorageItem(`bible_${passageKey}_trans_${version}`)
+    } else if (cached) {
+      setTranslationData(prev => ({
+        ...prev,
+        [passageKey]: { ...(prev[passageKey] || {}), [version]: cached },
+      }))
+      return
+    }
+
+    setTranslationLoading(prev => ({
+      ...prev,
+      [passageKey]: { ...(prev[passageKey] || {}), [version]: true },
+    }))
+
+    const start = Math.min(verseStart, verseEnd)
+    const end = Math.max(verseStart, verseEnd)
+    fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'bible-study-translation',
+        data: {
+          book,
+          chapter: String(chapter),
+          verseStart: String(start),
+          verseEnd: String(end),
+          passage: `${book} ${chapter}:${start}${end > start ? `-${end}` : ''}`,
+          version,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          try {
+            const parsed = JSON.parse(json.data.output)
+            const list = (parsed.verses || []).map((v: any) => ({ verse: v.verse, [version]: v.text }))
+            setTranslationData(prev => ({
+              ...prev,
+              [passageKey]: { ...(prev[passageKey] || {}), [version]: list },
+            }))
+            setStorageItem(`bible_${passageKey}_trans_${version}`, list)
+          } catch {
+            // ignore parse error
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setTranslationLoading(prev => ({
+          ...prev,
+          [passageKey]: { ...(prev[passageKey] || {}), [version]: false },
+        }))
+      })
+  }, [data, passageKey, book, chapter, verseStart, verseEnd, translationData, translationLoading])
+
+  const cycleTranslation = useCallback(() => {
+    setShowTranslations(prev => {
+      if (!prev.greek) {
+        fetchTranslation('greek')
+        return { ...prev, greek: true, translit: true }
+      }
+      if (!prev.niv) {
+        fetchTranslation('niv')
+        return { ...prev, niv: true }
+      }
+      if (!prev.esv) {
+        fetchTranslation('esv')
+        return { ...prev, esv: true }
+      }
+      return { ...prev, greek: false, niv: false, esv: false, translit: false }
+    })
+  }, [fetchTranslation])
 
   useEffect(() => {
     setDetailView('none')
@@ -55,12 +138,10 @@ export default function BiblePage() {
     setSelectedTheme(null)
     setWordLookup({})
     setEnglishLookup({})
+    setTranslationData({})
+    setTranslationLoading({})
 
     const registeredKey = `bible_${book}_${chapter}_${verseStart}_${verseEnd}`
-    if (registeredKey === 'bible_로마서_8_1_11') {
-      setData(MOCK_BIBLE_STUDY as BibleStudyData)
-      return
-    }
     const cached = getStorageItem<BibleStudyData | null>(registeredKey, null)
     if (cached) {
       setData(cached)
@@ -69,12 +150,8 @@ export default function BiblePage() {
     setData(null)
   }, [book, chapter, verseStart, verseEnd])
 
-  const handleLoad = useCallback(() => {
+  const handleLoad = useCallback(async () => {
     const key = `bible_${book}_${chapter}_${verseStart}_${verseEnd}`
-    if (key === 'bible_로마서_8_1_11') {
-      setData(MOCK_BIBLE_STUDY as BibleStudyData)
-      return
-    }
     setDetailView('none')
     setSelectedWordId(null)
     setSelectedFallbackWord(null)
@@ -84,54 +161,103 @@ export default function BiblePage() {
     setWordLookup({})
     setEnglishLookup({})
     setError(null)
-    
-    const cached = getStorageItem<BibleStudyData | null>(key, null)
-    if (cached) {
-      setData(cached)
-      return
-    }
+    setTranslationData({})
+    setTranslationLoading({})
     
     setData(null)
     setIsLoading(true)
-    fetch('/api/advanced/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'bible-study',
-        data: {
-          book,
-          chapter: String(chapter),
-          verseStart: String(verseStart),
-          verseEnd: String(verseEnd),
-          passage: `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
-        },
-      }),
-    })
-      .then(r => r.json())
-      .then(json => {
-        if (json.success) {
-          const parsed = JSON.parse(json.data.output)
-          const studyData: BibleStudyData = {
-            passage: `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
-            verses: parsed.verses || [],
-            words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
-            commentaries: parsed.commentaries || [],
-            translationNotes: parsed.translationNotes || [],
-            parallelPassages: parsed.parallelPassages || [],
-            themes: parsed.themes || [],
-            contextInfo: parsed.contextInfo || { before: '', after: '', bookStructure: '' },
+    setIsAILoading(false)
+    
+    const start = Math.min(verseStart, verseEnd)
+    const end = Math.max(verseStart, verseEnd)
+    const passageRef = `${book} ${chapter}:${start}${end > start ? `-${end}` : ''}`
+    
+    // Phase 1: Korean text from bible API (instant)
+    let basicData: BibleStudyData | null = null
+    try {
+      const bibleRes = await fetch(`/api/bible?book=${encodeURIComponent(book)}&chapter=${chapter}&verseStart=${start}&verseEnd=${end}`)
+      if (bibleRes.ok) {
+        const bibleJson = await bibleRes.json()
+        if (bibleJson.success) {
+          basicData = {
+            passage: passageRef,
+            verses: bibleJson.verses.map((v: any) => ({
+              verse: v.verse, korean: v.content,
+              greek: '', translit: '', niv: '', esv: '',
+            })),
+            words: {}, commentaries: [],
+            translationNotes: [], parallelPassages: [],
+            themes: [], contextInfo: { before: '', after: '' },
           }
-          setData(studyData)
-          setStorageItem(key, studyData)
-        } else {
-          setError(json.error || 'AI 분석에 실패했습니다.')
+          setData(basicData)
+          setIsLoading(false)
+          setIsAILoading(true)
         }
+      }
+    } catch (e) {
+      console.error('Phase 1 (bible API) failed:', e)
+    }
+    
+    // Phase 2: AI analysis
+    try {
+      const aiRes = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'bible-study-core',
+          data: {
+            book,
+            chapter: String(chapter),
+            verseStart: String(start),
+            verseEnd: String(end),
+            passage: passageRef,
+          },
+        }),
       })
-      .catch(() => {
-        setError('AI 서버에 연결할 수 없습니다.')
-      })
-      .finally(() => setIsLoading(false))
+      const aiJson = await aiRes.json()
+      if (aiJson.success) {
+        const parsed = JSON.parse(aiJson.data.output)
+        const finalData: BibleStudyData = {
+          passage: passageRef,
+          verses: (parsed.verses && parsed.verses.length > 0)
+            ? parsed.verses
+            : (basicData?.verses || []),
+          words: Object.fromEntries((parsed.words || []).map((w: any) => [w.id, w])),
+          commentaries: parsed.commentaries || [],
+          translationNotes: parsed.translationNotes || [],
+          parallelPassages: parsed.parallelPassages || [],
+          themes: parsed.themes || [],
+          contextInfo: parsed.contextInfo || { before: '', after: '' },
+        }
+        if (finalData.verses.length === 0) {
+          setError('본문 데이터를 불러올 수 없습니다. 다시 시도해주세요.')
+          setIsLoading(false)
+          setIsAILoading(false)
+          return
+        }
+        setData(finalData)
+        setStorageItem(key, finalData)
+      } else if (!basicData) {
+        setError(aiJson.error || 'AI 분석에 실패했습니다.')
+      }
+    } catch (e) {
+      if (!basicData) setError('AI 서버에 연결할 수 없습니다.')
+    } finally {
+      setIsLoading(false)
+      setIsAILoading(false)
+    }
   }, [book, chapter, verseStart, verseEnd])
+
+  const reAnalyze = useCallback(() => {
+    const key = `bible_${passageKey}`
+    removeStorageItem(key)
+    ;(['greek', 'niv', 'esv', 'translit'] as const).forEach(v => {
+      removeStorageItem(`bible_${passageKey}_trans_${v}`)
+    })
+    setTranslationData({})
+    setTranslationLoading({})
+    handleLoad()
+  }, [passageKey, handleLoad])
 
   const handleSaveMemo = async () => {
     if (!data) return
@@ -323,15 +449,44 @@ export default function BiblePage() {
     setSelectedTheme(null)
   }, [])
 
-  const filteredVerses = useMemo(() => {
+  const mergedVerses = useMemo(() => {
     if (!data) return []
-    return data.verses.filter(v => v.verse >= verseStart && v.verse <= verseEnd)
-  }, [data, verseStart, verseEnd])
+    const trans = translationData[passageKey] || {}
+    return data.verses.map(cv => {
+      const g = trans.greek?.find((v: any) => v.verse === cv.verse)
+      const t = trans.translit?.find((v: any) => v.verse === cv.verse)
+      const n = trans.niv?.find((v: any) => v.verse === cv.verse)
+      const e = trans.esv?.find((v: any) => v.verse === cv.verse)
+      return {
+        ...cv,
+        greek: g?.greek ?? cv.greek ?? '',
+        translit: t?.translit ?? cv.translit ?? '',
+        niv: n?.niv ?? cv.niv ?? '',
+        esv: e?.esv ?? cv.esv ?? '',
+      }
+    })
+  }, [data, translationData, passageKey])
+
+  const filteredVerses = useMemo(() => {
+    return mergedVerses.filter(v => v.verse >= verseStart && v.verse <= verseEnd)
+  }, [mergedVerses, verseStart, verseEnd])
 
   const allWords = useMemo(() => ({
     ...(data?.words || {}),
     ...wordLookup,
   }), [data?.words, wordLookup])
+
+  useEffect(() => {
+    if (!passageKey || !data) return
+    if (data.verses[0]?.greek) return
+    const trans = translationData[passageKey] || {}
+    const loading = translationLoading[passageKey] || {}
+    ;(['greek', 'translit', 'niv', 'esv'] as const).forEach(v => {
+      if (showTranslations[v] && !trans[v] && !loading[v]) {
+        fetchTranslation(v)
+      }
+    })
+  }, [showTranslations, passageKey, data, translationData, translationLoading, fetchTranslation])
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -352,8 +507,6 @@ export default function BiblePage() {
         onVerseEndChange={setVerseEnd}
         maxVerses={50}
         onLoad={handleLoad}
-        showTranslations={showTranslations}
-        onToggleTranslation={key => setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))}
       />
 
       <div className="flex-1 flex flex-col min-w-0" key={passageKey}>
@@ -366,9 +519,13 @@ export default function BiblePage() {
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">성경 연구</span>
                 </div>
                 <h2 className="text-xl font-extrabold text-white mt-1">성경 연구</h2>
-                <p className="text-xs text-slate-500 font-bold mt-0.5">
+                <p
+                  className="text-xs text-slate-500 font-bold mt-0.5 cursor-pointer select-none transition-colors hover:text-slate-300"
+                  onClick={cycleTranslation}
+                  title="번역 순환: 한글 → 원문 → NIV → ESV"
+                >
                   {book} {chapter}장 {verseStart}절~{verseEnd}절
-                  {data && ` · ${data.verses.length}절`}
+                  {!showTranslations.greek ? '' : !showTranslations.niv ? ' · +원문' : !showTranslations.esv ? ' · +NIV' : ' · +ESV'}
                 </p>
               </div>
               {data && (
@@ -380,7 +537,7 @@ export default function BiblePage() {
               )}
             </div>
 
-            {isLoading && (
+            {isLoading && !data && (
               <div className="flex flex-col items-center justify-center py-20 space-y-6">
                 <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
@@ -388,7 +545,7 @@ export default function BiblePage() {
                 <div className="text-center">
                   <h3 className="text-lg font-bold text-white">AI가 본문을 분석하고 있습니다</h3>
                   <p className="text-sm text-slate-400 mt-1">{book} {chapter}:{verseStart}{verseEnd > verseStart ? `-${verseEnd}` : ''}</p>
-                  <p className="text-sm text-slate-400">원문 분석, 주석, 번역 비교 등을 생성하는 중입니다 (10-20초 소요)</p>
+                  <p className="text-sm text-slate-400">원문 분석, 주석 등을 생성하는 중입니다 (3-5초 소요)</p>
                 </div>
                 <div className="w-full max-w-lg space-y-3 animate-pulse">
                   <div className="h-4 bg-white/5 rounded-xl w-3/4" />
@@ -399,7 +556,7 @@ export default function BiblePage() {
               </div>
             )}
 
-            {error && !isLoading && (
+            {error && !data && (
               <div className="flex flex-col items-center justify-center py-20 space-y-6">
                 <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
                   <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -434,14 +591,56 @@ export default function BiblePage() {
               </div>
             )}
 
-            {data && !isLoading && (
+            {data && (
               <>
-                <ContextInfoCard before={data.contextInfo.before} after={data.contextInfo.after} />
+                {isAILoading ? (
+                  <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 p-5">
+                    <div className="animate-pulse space-y-3">
+                      <div className="flex gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="h-2.5 bg-white/5 rounded-xl w-1/4" />
+                          <div className="h-3 bg-white/5 rounded-xl w-full" />
+                          <div className="h-3 bg-white/5 rounded-xl w-5/6" />
+                        </div>
+                        <div className="w-px bg-white/5" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-2.5 bg-white/5 rounded-xl w-1/4" />
+                          <div className="h-3 bg-white/5 rounded-xl w-full" />
+                          <div className="h-3 bg-white/5 rounded-xl w-5/6" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ContextInfoCard before={data.contextInfo.before} after={data.contextInfo.after} />
+                )}
 
                 <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 overflow-hidden">
                   <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">본문 연구</span>
-                    <span className="text-[10px] text-slate-600 font-bold">원어 단어를 클릭하면 상세 분석을 볼 수 있습니다</span>
+                    <div className="flex items-center gap-1.5">
+                      {(['greek', 'krv', 'niv', 'esv', 'translit'] as const).map(key => (
+                        <button
+                          key={key}
+                          onClick={() => setShowTranslations(prev => ({ ...prev, [key]: !prev[key] }))}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all border ${
+                            showTranslations[key]
+                              ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+                              : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          {{ greek: '원문', krv: '개역', niv: 'NIV', esv: 'ESV', translit: '음역' }[key]}
+                        </button>
+                      ))}
+                      <div className="w-px h-4 bg-white/5 mx-1" />
+                      <button
+                        onClick={reAnalyze}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all border border-white/5 text-slate-500 hover:text-indigo-300 hover:border-indigo-500/30"
+                        title="재분석"
+                      >
+                        ↻ 재분석
+                      </button>
+                    </div>
                   </div>
                   <div className="divide-y divide-white/5">
                     {filteredVerses.map(v => (
@@ -459,17 +658,56 @@ export default function BiblePage() {
                   </div>
                 </div>
 
-                <TranslationNotesSection notes={data.translationNotes} />
-
-                <CommentarySection
-                  commentaries={data.commentaries}
-                  selectedVerse={selectedVerse}
-                  onVerseClick={handleVerseClick}
-                />
-
-                <ParallelPassagesSection passages={data.parallelPassages} router={router} />
-
-                <ThemeSection themes={data.themes} onThemeClick={handleThemeClick} selectedTheme={selectedTheme} />
+                {isAILoading ? (
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 p-5">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-2.5 bg-white/5 rounded-xl w-1/5" />
+                        <div className="h-3 bg-white/5 rounded-xl w-3/4" />
+                        <div className="h-3 bg-white/5 rounded-xl w-full" />
+                        <div className="h-3 bg-white/5 rounded-xl w-2/3" />
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 p-5">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-2.5 bg-white/5 rounded-xl w-1/6" />
+                        <div className="h-3 bg-white/5 rounded-xl w-5/6" />
+                        <div className="h-3 bg-white/5 rounded-xl w-3/4" />
+                        <div className="h-3 bg-white/5 rounded-xl w-full" />
+                        <div className="h-3 bg-white/5 rounded-xl w-1/2" />
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 p-5">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-2.5 bg-white/5 rounded-xl w-1/5" />
+                        <div className="h-3 bg-white/5 rounded-xl w-full" />
+                        <div className="h-3 bg-white/5 rounded-xl w-4/5" />
+                        <div className="h-3 bg-white/5 rounded-xl w-3/5" />
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-[#04060f]/60 p-5">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-2.5 bg-white/5 rounded-xl w-[12%]" />
+                        <div className="flex gap-2">
+                          <div className="h-6 bg-white/5 rounded-full w-16" />
+                          <div className="h-6 bg-white/5 rounded-full w-20" />
+                          <div className="h-6 bg-white/5 rounded-full w-14" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <TranslationNotesSection notes={data.translationNotes} />
+                    <CommentarySection
+                      commentaries={data.commentaries}
+                      selectedVerse={selectedVerse}
+                      onVerseClick={handleVerseClick}
+                    />
+                    <ParallelPassagesSection passages={data.parallelPassages} router={router} />
+                    <ThemeSection themes={data.themes} onThemeClick={handleThemeClick} selectedTheme={selectedTheme} />
+                  </>
+                )}
 
                 <StudyMemoSection value={memoText} onChange={setMemoText} />
 
@@ -529,7 +767,7 @@ function BibleSidebar({
   books, selectedBook, selectedChapter, testament, onTestamentChange,
   onBookSelect, onChapterSelect, searchQuery, onSearchChange,
   chapterOptions, verseStart, verseEnd, onVerseStartChange, onVerseEndChange,
-  maxVerses, onLoad, showTranslations, onToggleTranslation,
+  maxVerses, onLoad,
 }: {
   books: { name: string; chapters: number }[]
   selectedBook: string
@@ -547,8 +785,6 @@ function BibleSidebar({
   onVerseEndChange: (v: number) => void
   maxVerses: number
   onLoad: () => void
-  showTranslations: Record<string, boolean>
-  onToggleTranslation: (key: string) => void
 }) {
   return (
     <aside className="w-56 shrink-0 border-r border-white/5 bg-[#04060f]/70 backdrop-blur-md flex flex-col overflow-hidden">
@@ -643,24 +879,7 @@ function BibleSidebar({
         >
           본문 불러오기
         </button>
-        <div className="pt-1">
-          <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest block mb-1.5">표시 번역</label>
-          <div className="flex flex-wrap gap-1">
-            {(['greek', 'krv', 'niv', 'esv', 'translit'] as const).map(key => (
-              <button
-                key={key}
-                onClick={() => onToggleTranslation(key)}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all border ${
-                  showTranslations[key]
-                    ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
-                    : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                {{ greek: '원문', krv: '개역', niv: 'NIV', esv: 'ESV', translit: '음역' }[key]}
-              </button>
-            ))}
-          </div>
-        </div>
+
       </div>
     </aside>
   )
