@@ -275,10 +275,10 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const isPortrait = project.orientation === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
-    const margin = 2 * SCALE_FACTOR
+    const margin = 3 * SCALE_FACTOR
     const availableW = canvasW - margin * 2
     const availableH = canvasH - margin * 2
-    const gap = 1.5 * SCALE_FACTOR
+    const gap = 2 * SCALE_FACTOR
 
     function getNaturalSize(fixedW: number) {
       return (el: CanvasElementData) => {
