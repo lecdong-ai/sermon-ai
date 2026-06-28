@@ -31,7 +31,6 @@ export default function CanvasElement({
 }: Props) {
   const [dragging, setDragging] = useState(false)
   const [resizeDir, setResizeDir] = useState<ResizeDir | null>(null)
-  const [hover, setHover] = useState(false)
   const [cursorY, setCursorY] = useState<number | null>(null)
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
   const start = useRef({
@@ -163,7 +162,7 @@ export default function CanvasElement({
     }
   }, [dragging, resizeDir, element.id, element.width, element.height, imgDisplayH, onUpdate, scale])
 
-  const showControls = (hover || isSelected) && !cropMode
+  const showControls = isSelected && !cropMode
 
   return (
     <div
@@ -180,8 +179,6 @@ export default function CanvasElement({
       onClick={handleCanvasClick}
       onMouseMove={handleCanvasMouseMove}
       onMouseLeave={handleCanvasMouseLeave}
-      onMouseEnter={() => setHover(true)}
-      onMouseOver={() => setHover(true)}
     >
       {/* 호버 미리보기 라인 (요소 루트 기준) */}
       {cropMode && cursorY !== null && (
@@ -198,7 +195,7 @@ export default function CanvasElement({
               ? 'border-amber-400 shadow-lg shadow-amber-500/20'
               : 'border-indigo-400 shadow-lg shadow-indigo-500/20'
             : 'border-transparent'
-        } ${hover && !cropMode ? 'border-white/30' : ''}`}
+        }`}
         style={{ transform: `rotate(${element.rotation}deg)` }}
       >
         {element.type === 'image' && imageDataUrl && imgNatural.w > 0 ? (
