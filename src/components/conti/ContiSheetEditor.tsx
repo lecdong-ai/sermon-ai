@@ -289,22 +289,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       }
     }
 
-    function placeBatch(items: Array<CanvasElementData & { calcW: number; calcH: number }>) {
-      const totalH = items.reduce((sum, item, idx) => sum + (idx > 0 ? gap : 0) + item.calcH, 0)
-      const scale = totalH > availableH ? availableH / totalH : 1
-      let y = margin
-      return items.map((item) => {
-        const w = item.calcW * scale
-        const h = item.calcH * scale
-        const result: CanvasElementData = {
-          ...item, x: margin, y, width: w, height: h,
-          cropTop: 0, cropBottom: 0, rotation: 0,
-        }
-        y += h + gap * scale
-        return result
-      })
-    }
-
     if (isPortrait) {
       const cols = imgEls.length <= 2 ? 1 : 2
       const colW = (availableW - gap * (cols - 1)) / cols
@@ -343,19 +327,35 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       pages[currentPageIdx] = { ...currentPage, elements: updated }
       setProject({ ...project, pages })
     } else {
-      const colW = availableW
+      const colW = (availableW - gap) / 2
       const sized = imgEls.map(getNaturalSize(colW))
       const nonImages = currentPage.elements.filter((el) => el.type !== 'image')
 
+      function placePair(items: Array<CanvasElementData & { calcW: number; calcH: number }>) {
+        const rowH = Math.max(...items.map((e) => e.calcH), 0)
+        const scale = rowH > availableH ? availableH / rowH : 1
+        let x = margin
+        return items.map((item) => {
+          const w = item.calcW * scale
+          const h = item.calcH * scale
+          const result: CanvasElementData = {
+            ...item, x, y: margin, width: w, height: h,
+            cropTop: 0, cropBottom: 0, rotation: 0,
+          }
+          x += w + gap * scale
+          return result
+        })
+      }
+
       const pages = [...project.pages]
 
-      const firstBatch = sized.slice(0, 2)
-      const firstPlaced = placeBatch(firstBatch)
+      const firstPair = sized.slice(0, 2)
+      const firstPlaced = placePair(firstPair)
       pages[currentPageIdx] = { ...pages[currentPageIdx], elements: [...nonImages, ...firstPlaced] }
 
       for (let i = 2; i < sized.length; i += 2) {
-        const batch = sized.slice(i, i + 2)
-        const placed = placeBatch(batch)
+        const pair = sized.slice(i, i + 2)
+        const placed = placePair(pair)
         pages.push({ id: `page-${pages.length + 1}`, elements: placed })
       }
 
