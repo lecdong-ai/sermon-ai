@@ -619,7 +619,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                 <div
                   key={page.id}
                   onClick={() => setCurrentPageIdx(idx)}
-                  className={`cursor-pointer rounded-lg border overflow-hidden transition-all ${
+                  className={`cursor-pointer rounded-lg border overflow-hidden transition-all group ${
                     isActive
                       ? 'border-indigo-400/60 ring-1 ring-indigo-400/30'
                       : 'border-white/10 hover:border-white/30'
@@ -650,10 +650,10 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); deletePage(idx) }}
-                      className={`flex items-center gap-0.5 p-0.5 rounded transition-colors ${
+                      className={`flex items-center gap-0.5 p-0.5 rounded transition-all ${
                         project.pages.length <= 1
-                          ? 'opacity-30 cursor-not-allowed'
-                          : 'hover:bg-white/10 text-red-400/70 hover:text-red-300'
+                          ? 'opacity-0'
+                          : 'opacity-0 group-hover:opacity-100 text-red-400/70 hover:text-red-300'
                       }`}
                       disabled={project.pages.length <= 1}
                     >
