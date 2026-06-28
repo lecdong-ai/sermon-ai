@@ -278,48 +278,89 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const margin = 5 * SCALE_FACTOR
     const availableW = canvasW - margin * 2
     const availableH = canvasH - margin * 2
-    const cols = imgEls.length <= 2 ? 1 : 2
     const gap = 3 * SCALE_FACTOR
-    const colW = (availableW - gap * (cols - 1)) / cols
 
-    let x = margin, y = margin
-    let colIdx = 0
-    let maxH = 0
+    function getNaturalSize(fixedW: number) {
+      return (el: CanvasElementData) => {
+        const img = uploadedImages.find((i) => i.id === el.imageId)
+        const aspect = img && img.naturalWidth && img.naturalHeight
+          ? img.naturalWidth / img.naturalHeight : 1
+        return { ...el, calcW: fixedW, calcH: fixedW / aspect }
+      }
+    }
 
-    const updated = currentPage.elements.map((el) => {
-      if (el.type !== 'image') return el
-      const img = uploadedImages.find((i) => i.id === el.imageId)
-      if (!img || !img.naturalWidth || !img.naturalHeight) return el
-      const aspect = img.naturalWidth / img.naturalHeight
-      let w = colW
-      let h = w / aspect
-      if (h > availableH) {
-        h = availableH
-        w = h * aspect
+    function placeBatch(items: Array<CanvasElementData & { calcW: number; calcH: number }>) {
+      const totalH = items.reduce((sum, item, idx) => sum + (idx > 0 ? gap : 0) + item.calcH, 0)
+      const scale = totalH > availableH ? availableH / totalH : 1
+      let y = margin
+      return items.map((item) => {
+        const w = item.calcW * scale
+        const h = item.calcH * scale
+        const result: CanvasElementData = {
+          ...item, x: margin, y, width: w, height: h,
+          cropTop: 0, cropBottom: 0, rotation: 0,
+        }
+        y += h + gap * scale
+        return result
+      })
+    }
+
+    if (isPortrait) {
+      const cols = imgEls.length <= 2 ? 1 : 2
+      const colW = (availableW - gap * (cols - 1)) / cols
+      const sized = imgEls.map(getNaturalSize(colW))
+
+      let totalH = 0
+      for (let i = 0; i < sized.length; i += cols) {
+        const rowH = Math.max(...sized.slice(i, i + cols).map((e) => e.calcH))
+        totalH += (i > 0 ? gap : 0) + rowH
+      }
+      const scale = totalH > availableH ? availableH / totalH : 1
+
+      let x = margin, y = margin, colIdx = 0
+      const updated = currentPage.elements.map((el) => {
+        if (el.type !== 'image') return el
+        const item = sized.find((s) => s.id === el.id)
+        if (!item) return el
+        const w = item.calcW * scale
+        const h = item.calcH * scale
+        const result = {
+          ...el, x, y, width: w, height: h,
+          cropTop: 0, cropBottom: 0, rotation: 0,
+        }
+        colIdx++
+        if (colIdx >= cols) {
+          colIdx = 0
+          x = margin
+          y += h + gap * scale
+        } else {
+          x += w + gap * scale
+        }
+        return result
+      })
+
+      const pages = [...project.pages]
+      pages[currentPageIdx] = { ...currentPage, elements: updated }
+      setProject({ ...project, pages })
+    } else {
+      const colW = availableW
+      const sized = imgEls.map(getNaturalSize(colW))
+      const nonImages = currentPage.elements.filter((el) => el.type !== 'image')
+
+      const pages = [...project.pages]
+
+      const firstBatch = sized.slice(0, 2)
+      const firstPlaced = placeBatch(firstBatch)
+      pages[currentPageIdx] = { ...pages[currentPageIdx], elements: [...nonImages, ...firstPlaced] }
+
+      for (let i = 2; i < sized.length; i += 2) {
+        const batch = sized.slice(i, i + 2)
+        const placed = placeBatch(batch)
+        pages.push({ id: `page-${pages.length + 1}`, elements: placed })
       }
 
-      const result = {
-        ...el,
-        x, y, width: w, height: h,
-        cropTop: 0, cropBottom: 0, rotation: 0,
-      }
-
-      colIdx++
-      maxH = Math.max(maxH, h)
-      if (colIdx >= cols) {
-        colIdx = 0
-        x = margin
-        y += maxH + gap
-        maxH = 0
-      } else {
-        x += colW + gap
-      }
-      return result
-    })
-
-    const pages = [...project.pages]
-    pages[currentPageIdx] = { ...currentPage, elements: updated }
-    setProject({ ...project, pages })
+      setProject({ ...project, pages })
+    }
   }
 
   function exportPdf() {
