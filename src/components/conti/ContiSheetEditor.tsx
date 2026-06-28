@@ -47,6 +47,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       setProject({
         ...saved,
         uploadedImages: metaImages,
+        marginMm: saved.marginMm ?? 3,
       })
       // load blobs from IndexedDB → create object URLs
       loadBlobUrls(metaImages)
@@ -57,6 +58,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       orientation: 'portrait',
       pages: [firstPage],
       uploadedImages: [],
+      marginMm: 3,
     })
   }, [conti.id])
 
@@ -120,6 +122,13 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         })),
       })),
     } : prev)
+  }
+
+  function handleMarginChange(delta: number) {
+    if (!project) return
+    const newMargin = Math.max(1, Math.min(10, (project.marginMm ?? 3) + delta))
+    setProject({ ...project, marginMm: newMargin })
+    setTimeout(() => handleAutoArrange(), 0)
   }
 
   function addPage() {
@@ -275,10 +284,10 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const isPortrait = project.orientation === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
-    const margin = 3 * SCALE_FACTOR
+    const margin = (project.marginMm ?? 3) * SCALE_FACTOR
     const availableW = canvasW - margin * 2
     const availableH = canvasH - margin * 2
-    const gap = 2 * SCALE_FACTOR
+    const gap = (project.marginMm ?? 3) * 0.5 * SCALE_FACTOR
 
     function getBestFit(slotW: number, slotH: number) {
       return (el: CanvasElementData) => {
@@ -611,6 +620,20 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
             >
               <Plus className="w-2.5 h-2.5" /> 추가
             </button>
+          </div>
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
+            <span className="text-[10px] text-slate-400">여백</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleMarginChange(-1)}
+                className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/10"
+              >−</button>
+              <span className="text-[11px] font-bold text-slate-300 w-8 text-center">{project.marginMm ?? 3}mm</span>
+              <button
+                onClick={() => handleMarginChange(1)}
+                className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/10"
+              >+</button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {project.pages.map((page, idx) => {
