@@ -202,17 +202,21 @@ export default function CanvasElement({
         style={{ transform: `rotate(${element.rotation}deg)` }}
       >
         {element.type === 'image' && imageDataUrl && imgNatural.w > 0 ? (
-          <div className="w-full h-full relative overflow-hidden">
-            <div
-              style={{
-                width: '100%',
-                height: imgDisplayH,
-                marginTop: -(cropTopPct / 100) * imgDisplayH,
-              }}
-            >
-              <img src={imageDataUrl} alt="" className="w-full h-auto block" draggable={false} />
+          cropTopPct || cropBottomPct ? (
+            <div className="w-full h-full relative overflow-hidden">
+              <div
+                style={{
+                  width: '100%',
+                  height: imgDisplayH,
+                  marginTop: -(cropTopPct / 100) * imgDisplayH,
+                }}
+              >
+                <img src={imageDataUrl} alt="" className="w-full h-auto block" draggable={false} />
+              </div>
             </div>
-          </div>
+          ) : (
+            <img src={imageDataUrl} alt="" className="w-full h-full object-fill" draggable={false} />
+          )
         ) : element.type === 'text' ? (
           <div className="w-full h-full bg-transparent flex items-center justify-center text-white/90 text-[12px] font-bold p-1 text-center overflow-hidden">
             {element.text || '텍스트'}
