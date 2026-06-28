@@ -652,8 +652,8 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                       onClick={(e) => { e.stopPropagation(); deletePage(idx) }}
                       className={`flex items-center gap-0.5 p-0.5 rounded transition-colors ${
                         project.pages.length <= 1
-                          ? 'opacity-20 cursor-not-allowed'
-                          : 'hover:bg-white/10 text-slate-500 hover:text-red-400'
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'hover:bg-white/10 text-red-400/70 hover:text-red-300'
                       }`}
                       disabled={project.pages.length <= 1}
                     >
