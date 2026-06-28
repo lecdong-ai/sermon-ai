@@ -358,9 +358,12 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         }
       })
 
-      const pages = [...project.pages]
-      pages[currentPageIdx] = { ...currentPage, elements: updated }
-      setProject({ ...project, pages })
+      setProject((prev) => {
+        if (!prev) return prev
+        const pages = [...prev.pages]
+        pages[currentPageIdx] = { ...pages[currentPageIdx], elements: updated }
+        return { ...prev, pages }
+      })
     } else {
       const colW = (availableW - gap) / 2
       const sized = imgEls.map(getBestFit(colW, availableH))
@@ -395,7 +398,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         pages.push({ id: `page-${pages.length + 1}`, elements: placed })
       }
 
-      setProject({ ...project, pages })
+      setProject((prev) => prev ? { ...prev, pages } : prev)
     }
   }
 
