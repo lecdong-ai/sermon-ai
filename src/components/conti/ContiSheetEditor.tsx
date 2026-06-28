@@ -280,20 +280,24 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const availableH = canvasH - margin * 2
     const gap = 2 * SCALE_FACTOR
 
-    function getNaturalSize(fixedW: number) {
+    function getBestFit(slotW: number, slotH: number) {
       return (el: CanvasElementData) => {
         const img = uploadedImages.find((i) => i.id === el.imageId)
         const aspect = img && img.naturalWidth && img.naturalHeight
           ? img.naturalWidth / img.naturalHeight : 1
-        return { ...el, calcW: fixedW, calcH: fixedW / aspect }
+        let w = slotW, h = w / aspect
+        if (h > slotH) {
+          h = slotH
+          w = h * aspect
+        }
+        return { ...el, calcW: w, calcH: h }
       }
     }
 
     if (isPortrait) {
       const cols = imgEls.length <= 2 ? 1 : 2
       const colW = (availableW - gap * (cols - 1)) / cols
-      const sized = imgEls.map(getNaturalSize(colW))
-
+      const sized = imgEls.map(getBestFit(colW, availableH))
       let totalH = 0
       for (let i = 0; i < sized.length; i += cols) {
         const rowH = Math.max(...sized.slice(i, i + cols).map((e) => e.calcH))
@@ -328,7 +332,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       setProject({ ...project, pages })
     } else {
       const colW = (availableW - gap) / 2
-      const sized = imgEls.map(getNaturalSize(colW))
+      const sized = imgEls.map(getBestFit(colW, availableH))
       const nonImages = currentPage.elements.filter((el) => el.type !== 'image')
 
       function placePair(items: Array<CanvasElementData & { calcW: number; calcH: number }>) {
