@@ -243,9 +243,11 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
     const margin = 5 * SCALE_FACTOR
+    const availableW = canvasW - margin * 2
+    const availableH = canvasH - margin * 2
     const cols = imgEls.length <= 2 ? 1 : 2
     const gap = 3 * SCALE_FACTOR
-    const colW = (canvasW - margin * 2 - gap * (cols - 1)) / cols
+    const colW = (availableW - gap * (cols - 1)) / cols
 
     let x = margin, y = margin
     let colIdx = 0
@@ -256,11 +258,16 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       const img = uploadedImages.find((i) => i.id === el.imageId)
       if (!img || !img.naturalWidth || !img.naturalHeight) return el
       const aspect = img.naturalWidth / img.naturalHeight
-      const h = colW / aspect
+      let w = colW
+      let h = w / aspect
+      if (h > availableH) {
+        h = availableH
+        w = h * aspect
+      }
 
       const result = {
         ...el,
-        x, y, width: colW, height: h,
+        x, y, width: w, height: h,
         cropTop: 0, cropBottom: 0, rotation: 0,
       }
 
