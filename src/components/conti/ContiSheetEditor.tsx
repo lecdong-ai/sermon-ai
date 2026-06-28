@@ -648,14 +648,18 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                     <span className={`text-[9px] font-medium ${isActive ? 'text-indigo-300' : 'text-slate-500'}`}>
                       {page.id}
                     </span>
-                    {project.pages.length > 1 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deletePage(idx) }}
-                        className="p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deletePage(idx) }}
+                      className={`flex items-center gap-0.5 p-0.5 rounded transition-colors ${
+                        project.pages.length <= 1
+                          ? 'opacity-20 cursor-not-allowed'
+                          : 'hover:bg-white/10 text-slate-500 hover:text-red-400'
+                      }`}
+                      disabled={project.pages.length <= 1}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span className="text-[8px]">삭제</span>
+                    </button>
                   </div>
                 </div>
               )
