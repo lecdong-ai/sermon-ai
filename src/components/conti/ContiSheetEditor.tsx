@@ -30,6 +30,12 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   const [cropMode, setCropMode] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
   const imageUrlsRef = useRef<Record<string, string>>({})
+  const mounted = useRef(false)
+
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return }
+    handleAutoArrange()
+  }, [project?.orientation])
 
   useEffect(() => {
     const saved = loadMockSheetProject(conti.id)
@@ -114,8 +120,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         })),
       })),
     } : prev)
-
-    setTimeout(() => handleAutoArrange(), 0)
   }
 
   function addPage() {
