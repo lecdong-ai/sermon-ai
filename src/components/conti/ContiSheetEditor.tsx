@@ -89,6 +89,35 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   const currentPage = project?.pages[currentPageIdx]
   const selectedElement = currentPage?.elements.find((el) => el.id === selectedElementId)
 
+  function handleOrientationChange(newOrientation: SheetOrientation) {
+    if (!project || project.orientation === newOrientation) return
+
+    const oldW = (project.orientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
+    const oldH = (project.orientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
+    const newW = (newOrientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
+    const newH = (newOrientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
+
+    const sx = newW / oldW
+    const sy = newH / oldH
+
+    setProject((prev) => prev ? {
+      ...prev,
+      orientation: newOrientation,
+      pages: prev.pages.map((page) => ({
+        ...page,
+        elements: page.elements.map((el) => ({
+          ...el,
+          x: el.x * sx,
+          y: el.y * sy,
+          width: el.width * sx,
+          height: el.height * sy,
+        })),
+      })),
+    } : prev)
+
+    setTimeout(() => handleAutoArrange(), 0)
+  }
+
   function addPage() {
     if (!project) return
     const newPage: SheetPage = { id: `page-${project.pages.length + 1}`, elements: [] }
@@ -487,7 +516,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <span className="text-[11px] font-bold text-slate-300">페이지</span>
               <div className="flex items-center gap-0.5 bg-white/5 rounded-md p-0.5 border border-white/10">
                 <button
-                  onClick={() => setProject((prev) => prev ? { ...prev, orientation: 'portrait' } : prev)}
+                  onClick={() => handleOrientationChange('portrait')}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                     project.orientation === 'portrait'
                       ? 'bg-indigo-600 text-white shadow-sm'
@@ -495,7 +524,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                   }`}
                 >세로</button>
                 <button
-                  onClick={() => setProject((prev) => prev ? { ...prev, orientation: 'landscape' } : prev)}
+                  onClick={() => handleOrientationChange('landscape')}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                     project.orientation === 'landscape'
                       ? 'bg-indigo-600 text-white shadow-sm'
