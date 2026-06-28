@@ -305,26 +305,48 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       }
       const scale = totalH > availableH ? availableH / totalH : 1
 
-      let x = margin, y = margin, colIdx = 0
+      // Pre-calculate row Y positions and item sizes
+      const rowLayouts: { y: number; ids: string[] }[] = []
+      const itemSizes = new Map<string, { w: number; h: number }>()
+      let yPos = margin, ri = 0
+
+      while (ri < sized.length) {
+        const rowItems = sized.slice(ri, ri + cols)
+        const rowY = yPos
+        const rowIds: string[] = []
+        let rowItemH = 0
+        for (const item of rowItems) {
+          const w = item.calcW * scale
+          const h = item.calcH * scale
+          itemSizes.set(item.id, { w, h })
+          rowIds.push(item.id)
+          rowItemH = Math.max(rowItemH, h)
+        }
+        rowLayouts.push({ y: rowY, ids: rowIds })
+        yPos += rowItemH + gap * scale
+        ri += cols
+      }
+
       const updated = currentPage.elements.map((el) => {
         if (el.type !== 'image') return el
-        const item = sized.find((s) => s.id === el.id)
-        if (!item) return el
-        const w = item.calcW * scale
-        const h = item.calcH * scale
-        const result = {
-          ...el, x, y, width: w, height: h,
+        const size = itemSizes.get(el.id)
+        if (!size) return el
+        const row = rowLayouts.find((r) => r.ids.includes(el.id))
+        if (!row) return el
+        const rowW = row.ids.reduce((sum, id, i) => {
+          const s = itemSizes.get(id)!
+          return sum + (i > 0 ? gap * scale : 0) + s.w
+        }, 0)
+        let sx = (canvasW - rowW) / 2
+        for (const id of row.ids) {
+          if (id === el.id) break
+          sx += itemSizes.get(id)!.w + gap * scale
+        }
+        return {
+          ...el, x: sx, y: row.y,
+          width: size.w, height: size.h,
           cropTop: 0, cropBottom: 0, rotation: 0,
         }
-        colIdx++
-        if (colIdx >= cols) {
-          colIdx = 0
-          x = margin
-          y += h + gap * scale
-        } else {
-          x += w + gap * scale
-        }
-        return result
       })
 
       const pages = [...project.pages]
@@ -338,7 +360,8 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       function placePair(items: Array<CanvasElementData & { calcW: number; calcH: number }>) {
         const rowH = Math.max(...items.map((e) => e.calcH), 0)
         const scale = rowH > availableH ? availableH / rowH : 1
-        let x = margin
+        const totalW = items.reduce((sum, item, i) => sum + (i > 0 ? gap * scale : 0) + item.calcW * scale, 0)
+        let x = (canvasW - totalW) / 2
         return items.map((item) => {
           const w = item.calcW * scale
           const h = item.calcH * scale
