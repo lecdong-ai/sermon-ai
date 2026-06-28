@@ -7,7 +7,7 @@ import { saveImageBlob, loadImageBlob, deleteImageBlob, deleteImageBlobs } from 
 import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
 import {
   X, Download, RotateCcw, ZoomIn, ZoomOut,
-  FolderOpen, Plus, Trash2, Scissors, Maximize,
+  FolderOpen, Plus, Trash2, Scissors,
   LayoutGrid,
 } from 'lucide-react'
 
@@ -88,11 +88,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
 
   const currentPage = project?.pages[currentPageIdx]
   const selectedElement = currentPage?.elements.find((el) => el.id === selectedElementId)
-
-  function toggleOrientation() {
-    if (!project) return
-    setProject((prev) => prev ? { ...prev, orientation: prev.orientation === 'portrait' ? 'landscape' : 'portrait' } : prev)
-  }
 
   function addPage() {
     if (!project) return
@@ -241,74 +236,50 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
 
   function handleAutoArrange() {
     if (!project || !currentPage) return
-    const elements = currentPage.elements.filter((el) => el.type === 'image')
-    if (elements.length === 0) return
+    const imgEls = currentPage.elements.filter((el) => el.type === 'image')
+    if (imgEls.length === 0) return
 
     const isPortrait = project.orientation === 'portrait'
-    const canvasW = isPortrait ? 210 : 297
-    const canvasH = isPortrait ? 297 : 210
-    const cols = elements.length <= 2 ? 1 : 2
-    const rows = Math.ceil(elements.length / cols)
-    const margin = 5
-    const elW = (canvasW - margin * (cols + 1)) / cols
-    const totalH = (canvasH - margin * (rows + 1))
-    const elH = totalH / rows
+    const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
+    const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
+    const margin = 5 * SCALE_FACTOR
+    const cols = imgEls.length <= 2 ? 1 : 2
+    const gap = 3 * SCALE_FACTOR
+    const colW = (canvasW - margin * 2 - gap * (cols - 1)) / cols
 
-    let imgIdx = 0
+    let x = margin, y = margin
+    let colIdx = 0
+    let maxH = 0
+
     const updated = currentPage.elements.map((el) => {
       if (el.type !== 'image') return el
-      const col = imgIdx % cols
-      const row = Math.floor(imgIdx / cols)
-      imgIdx++
-      return {
+      const img = uploadedImages.find((i) => i.id === el.imageId)
+      if (!img || !img.naturalWidth || !img.naturalHeight) return el
+      const aspect = img.naturalWidth / img.naturalHeight
+      const h = colW / aspect
+
+      const result = {
         ...el,
-        x: margin + col * (elW + margin),
-        y: margin + row * (elH + margin),
-        width: elW,
-        height: elH,
+        x, y, width: colW, height: h,
+        cropTop: 0, cropBottom: 0, rotation: 0,
       }
+
+      colIdx++
+      maxH = Math.max(maxH, h)
+      if (colIdx >= cols) {
+        colIdx = 0
+        x = margin
+        y += maxH + gap
+        maxH = 0
+      } else {
+        x += colW + gap
+      }
+      return result
     })
 
     const pages = [...project.pages]
     pages[currentPageIdx] = { ...currentPage, elements: updated }
     setProject({ ...project, pages })
-  }
-
-  function handleBatchSplit() {
-    if (!project || !currentPage) return
-    const imgEls = currentPage.elements.filter((el) => el.type === 'image' && !el.cropTop)
-    if (imgEls.length === 0) return
-
-    const newEls: CanvasElementData[] = []
-
-    currentPage.elements.forEach((el) => {
-      if (el.type !== 'image' || el.cropTop) {
-        newEls.push(el)
-        return
-      }
-
-      const topPart: CanvasElementData = {
-        ...el,
-        id: generateId(),
-        cropTop: 0,
-        height: el.height / 2,
-      }
-      const botPart: CanvasElementData = {
-        ...el,
-        id: generateId(),
-        y: el.y + el.height / 2 + 2,
-        cropTop: 50,
-        height: el.height / 2,
-      }
-      newEls.push(topPart, botPart)
-    })
-
-    const pages = [...project.pages]
-    pages[currentPageIdx] = { ...currentPage, elements: newEls }
-    setProject({ ...project, pages })
-
-    // 자동 배치 실행
-    setTimeout(() => handleAutoArrange(), 0)
   }
 
   function exportPdf() {
@@ -402,17 +373,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
             </button>
           )}
 
-          {/* 연속 분할 + 자동 배치 */}
-          {!cropMode && (
-            <button
-              onClick={handleBatchSplit}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-[11px] font-bold transition-colors border border-purple-500/30"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              연속 배치
-            </button>
-          )}
-
           {!cropMode && (
             <button
               onClick={handleAutoArrange}
@@ -423,14 +383,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
             </button>
           )}
 
-          {/* 가로/세로 */}
-          <button
-            onClick={toggleOrientation}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-bold text-slate-300 transition-colors border border-white/10"
-          >
-            <Maximize className="w-3.5 h-3.5" />
-            {project.orientation === 'portrait' ? '세로' : '가로'}
-          </button>
+
 
           {/* 줌 */}
           <div className="flex items-center gap-1 bg-white/5 rounded-lg px-1.5 py-1 border border-white/10">
@@ -523,7 +476,27 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         {/* 오른쪽: 페이지 네비게이터 */}
         <div className="w-48 flex-shrink-0 border-l border-white/10 bg-[#080d1a] flex flex-col">
           <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-            <span className="text-[11px] font-bold text-slate-300">페이지</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-300">페이지</span>
+              <div className="flex items-center gap-0.5 bg-white/5 rounded-md p-0.5 border border-white/10">
+                <button
+                  onClick={() => setProject((prev) => prev ? { ...prev, orientation: 'portrait' } : prev)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                    project.orientation === 'portrait'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >세로</button>
+                <button
+                  onClick={() => setProject((prev) => prev ? { ...prev, orientation: 'landscape' } : prev)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                    project.orientation === 'landscape'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >가로</button>
+              </div>
+            </div>
             <button
               onClick={addPage}
               className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-[10px] font-bold transition-colors"
@@ -544,7 +517,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                       : 'border-white/10 hover:border-white/30'
                   }`}
                 >
-                  <div className="aspect-[210/297] bg-white flex items-center justify-center relative">
+                  <div className={`${project.orientation === 'portrait' ? 'aspect-[210/297]' : 'aspect-[297/210]'} bg-white flex items-center justify-center relative`}>
                     {page.elements.length > 0 ? (
                       <div className="text-[8px] text-slate-300 font-medium">
                         {page.elements.length}개 요소
