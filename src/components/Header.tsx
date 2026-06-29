@@ -3,7 +3,7 @@
 import { useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { LogIn, User, LogOut, LayoutDashboard, Cross, Heart, ScrollText, Crown } from 'lucide-react'
+import { LogIn, User, LogOut, LayoutDashboard, Cross, Heart, ScrollText, Crown, Music2 } from 'lucide-react'
 import { useAuth } from './AuthProvider'
 
 export default memo(function Header() {
@@ -135,6 +135,14 @@ export default memo(function Header() {
                       >
                         <LayoutDashboard className="w-4 h-4 text-indigo-400" />
                         설교 아카이브
+                      </Link>
+                      <Link
+                        href="/conti"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
+                      >
+                        <Music2 className="w-4 h-4 text-indigo-400" />
+                        예배 콘티
                       </Link>
                       {supporter?.active ? (
                         <Link

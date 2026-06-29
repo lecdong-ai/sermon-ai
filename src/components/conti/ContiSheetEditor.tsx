@@ -8,7 +8,7 @@ import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
 import {
   X, Download, RotateCcw, ZoomIn, ZoomOut,
   FolderOpen, Plus, Trash2, Scissors,
-  LayoutGrid,
+  LayoutGrid, Type,
 } from 'lucide-react'
 
 interface Props {
@@ -211,6 +211,33 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       imageId,
     }
 
+    const updatedPages = [...project.pages]
+    updatedPages[currentPageIdx] = {
+      ...currentPage,
+      elements: [...currentPage.elements, newEl],
+    }
+    setProject({ ...project, pages: updatedPages })
+    setSelectedElementId(newEl.id)
+  }
+
+  function handleAddText() {
+    if (!project || !currentPage) return
+    const isPortrait = project.orientation === 'portrait'
+    const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
+    const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
+    const w = 200
+    const h = 50
+    const newEl: CanvasElementData = {
+      id: generateId(),
+      type: 'text',
+      x: (canvasW - w) / 2,
+      y: (canvasH - h) / 2,
+      width: w,
+      height: h,
+      rotation: 0,
+      text: '텍스트 입력',
+      fontSize: 16,
+    }
     const updatedPages = [...project.pages]
     updatedPages[currentPageIdx] = {
       ...currentPage,
@@ -541,6 +568,15 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <input type="file" accept="image/*" multiple onChange={handleImport} className="hidden" />
             </label>
           </div>
+          <div className="p-2 border-b border-white/5">
+            <button
+              onClick={handleAddText}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-dashed border-white/20 hover:border-indigo-400/50 cursor-pointer transition-colors text-slate-400 hover:text-indigo-300 w-full"
+            >
+              <Type className="w-4 h-4" />
+              <span className="text-[11px] font-bold">텍스트 추가</span>
+            </button>
+          </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {uploadedImages.length === 0 ? (
               <p className="text-[10px] text-slate-600 text-center py-6">
@@ -638,6 +674,28 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               >+</button>
             </div>
           </div>
+          {selectedElement?.type === 'text' && (
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
+              <span className="text-[10px] text-slate-400">글자 크기</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    const fs = Math.max(8, (selectedElement.fontSize || 16) - 2)
+                    updateElement(selectedElement.id, { fontSize: fs })
+                  }}
+                  className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/10"
+                >−</button>
+                <span className="text-[11px] font-bold text-slate-300 w-8 text-center">{selectedElement.fontSize || 16}</span>
+                <button
+                  onClick={() => {
+                    const fs = Math.min(72, (selectedElement.fontSize || 16) + 2)
+                    updateElement(selectedElement.id, { fontSize: fs })
+                  }}
+                  className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors border border-white/10"
+                >+</button>
+              </div>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {project.pages.map((page, idx) => {
               const isActive = idx === currentPageIdx

@@ -1,5 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
+export const hasSupabaseConfig = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 function makeLazyClient(init: () => SupabaseClient): SupabaseClient {
   let client: SupabaseClient | null = null
   return new Proxy({} as SupabaseClient, {

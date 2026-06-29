@@ -296,6 +296,7 @@ export interface CanvasElementData {
   height: number
   rotation: number
   text?: string
+  fontSize?: number
   imageId?: string
   songId?: string
   cropTop?: number           // 원본 이미지 상단에서 잘라낼 px (overflow hidden)

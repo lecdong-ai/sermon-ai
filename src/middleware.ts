@@ -72,6 +72,8 @@ export async function middleware(request: NextRequest) {
     },
   )
 
+  // getSession() 으로 쿠키 동기화 후 getUser() 로 검증
+  await supabase.auth.getSession()
   let { data: { user } } = await supabase.auth.getUser()
 
   // Protect /advanced/* routes — require authentication
@@ -82,7 +84,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (!isPublic && !user && !pathname.startsWith('/advanced')) {
+  if (!isPublic && !user && !pathname.startsWith('/advanced') && !pathname.startsWith('/conti') && !pathname.startsWith('/api/conti')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

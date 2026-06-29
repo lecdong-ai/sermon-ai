@@ -33,6 +33,8 @@ export default function CanvasElement({
   const [resizeDir, setResizeDir] = useState<ResizeDir | null>(null)
   const [cursorY, setCursorY] = useState<number | null>(null)
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
+  const [editing, setEditing] = useState(false)
+  const editRef = useRef<HTMLDivElement>(null)
   const start = useRef({
     x: 0, y: 0, elX: 0, elY: 0, elW: 0, elH: 0, lockedAspect: 0,
   })
@@ -52,15 +54,15 @@ export default function CanvasElement({
     : null
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (cropMode) return
+    if (cropMode || editing) return
     e.stopPropagation()
     onSelect(element.id)
     setDragging(true)
     start.current = { x: e.clientX, y: e.clientY, elX: element.x, elY: element.y, elW: 0, elH: 0, lockedAspect: 0 }
-  }, [element.id, element.x, element.y, onSelect, cropMode])
+  }, [element.id, element.x, element.y, onSelect, cropMode, editing])
 
   const handleResizeStart = useCallback((dir: ResizeDir) => (e: React.MouseEvent) => {
-    if (cropMode) return
+    if (cropMode || editing) return
     e.stopPropagation()
     onSelect(element.id)
     setResizeDir(dir)
@@ -70,7 +72,7 @@ export default function CanvasElement({
       elW: element.width, elH: element.height,
       lockedAspect: e.shiftKey ? (element.width / element.height) : 0,
     }
-  }, [element.id, element.x, element.y, element.width, element.height, onSelect, cropMode])
+  }, [element.id, element.x, element.y, element.width, element.height, onSelect, cropMode, editing])
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (!cropMode || !onSplit) return
@@ -97,6 +99,40 @@ export default function CanvasElement({
   const handleCanvasMouseLeave = useCallback(() => {
     setCursorY(null)
   }, [])
+
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    if (cropMode || element.type !== 'text') return
+    e.stopPropagation()
+    setEditing(true)
+    requestAnimationFrame(() => {
+      if (editRef.current) {
+        editRef.current.focus()
+        const range = document.createRange()
+        range.selectNodeContents(editRef.current)
+        range.collapse(false)
+        const sel = window.getSelection()
+        sel?.removeAllRanges()
+        sel?.addRange(range)
+      }
+    })
+  }, [cropMode, element.type])
+
+  const handleBlur = useCallback(() => {
+    setEditing(false)
+    const text = editRef.current?.innerText?.trim() || ''
+    onUpdate(element.id, { text })
+  }, [element.id, onUpdate])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      if (editRef.current) {
+        editRef.current.innerText = element.text || ''
+      }
+      setEditing(false)
+      editRef.current?.blur()
+    }
+  }, [element.text])
 
   useEffect(() => {
     if (!dragging && !resizeDir) return
@@ -162,7 +198,7 @@ export default function CanvasElement({
     }
   }, [dragging, resizeDir, element.id, element.width, element.height, imgDisplayH, onUpdate, scale])
 
-  const showControls = isSelected && !cropMode
+  const showControls = isSelected && !cropMode && !editing
 
   return (
     <div
@@ -179,6 +215,7 @@ export default function CanvasElement({
       onClick={handleCanvasClick}
       onMouseMove={handleCanvasMouseMove}
       onMouseLeave={handleCanvasMouseLeave}
+      onDoubleClick={handleDoubleClick}
     >
       {/* 호버 미리보기 라인 (요소 루트 기준) */}
       {cropMode && cursorY !== null && (
@@ -215,8 +252,20 @@ export default function CanvasElement({
             <img src={imageDataUrl} alt="" className="w-full h-full object-fill" draggable={false} />
           )
         ) : element.type === 'text' ? (
-          <div className="w-full h-full bg-transparent flex items-center justify-center text-white/90 text-[12px] font-bold p-1 text-center overflow-hidden">
-            {element.text || '텍스트'}
+          <div
+            ref={editRef}
+            contentEditable={editing}
+            suppressContentEditableWarning
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className={`w-full h-full bg-transparent font-bold p-1.5 text-left overflow-hidden whitespace-pre-wrap break-words ${
+              element.text ? 'text-gray-900' : 'text-gray-400'
+            } ${
+              editing ? 'cursor-text outline-none ring-1 ring-indigo-400/40' : 'pointer-events-none'
+            }`}
+            style={{ fontSize: (element.fontSize || 16) + 'px', lineHeight: 1.4 }}
+          >
+            {element.text || '텍스트 입력'}
           </div>
         ) : (
           <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/30 text-[10px]">

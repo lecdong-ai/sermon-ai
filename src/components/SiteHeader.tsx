@@ -9,7 +9,8 @@ export default function SiteHeader() {
   const isAdmin = pathname.startsWith('/admin')
   const isAdvanced = pathname.startsWith('/advanced')
   const isIntro = pathname === '/intro'
-  const showHeader = !(isDashboard || isAdmin || isAdvanced || isIntro)
+  const isConti = pathname.startsWith('/conti')
+  const showHeader = !(isDashboard || isAdmin || isAdvanced || isIntro || isConti)
 
   if (!showHeader) return null
 
@@ -22,5 +23,6 @@ export function useShowSiteHeader(): boolean {
   const isAdmin = pathname.startsWith('/admin')
   const isAdvanced = pathname.startsWith('/advanced')
   const isIntro = pathname === '/intro'
-  return !(isDashboard || isAdmin || isAdvanced || isIntro)
+  const isConti = pathname.startsWith('/conti')
+  return !(isDashboard || isAdmin || isAdvanced || isIntro || isConti)
 }
