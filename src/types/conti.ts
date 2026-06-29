@@ -285,6 +285,7 @@ export interface UploadedImage {
   dataUrl?: string     // session-only (not persisted), replaced by IndexedDB blob + object URL
   naturalWidth: number
   naturalHeight: number
+  songId?: string
 }
 
 export interface CanvasElementData {

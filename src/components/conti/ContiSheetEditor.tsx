@@ -8,7 +8,7 @@ import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
 import {
   X, Download, RotateCcw, ZoomIn, ZoomOut,
   FolderOpen, Plus, Trash2, Scissors,
-  LayoutGrid, Type,
+  LayoutGrid, Type, Music,
 } from 'lucide-react'
 
 interface Props {
@@ -238,6 +238,56 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       text: '텍스트 입력',
       fontSize: 16,
     }
+    const updatedPages = [...project.pages]
+    updatedPages[currentPageIdx] = {
+      ...currentPage,
+      elements: [...currentPage.elements, newEl],
+    }
+    setProject({ ...project, pages: updatedPages })
+    setSelectedElementId(newEl.id)
+  }
+
+  function handleGenerateChordChart(item: ContiItem) {
+    if (!project || !currentPage) return
+    const song = item.song
+    if (!song?.lyrics) return
+
+    const lyricLines = song.lyrics.split('\n')
+    const chordLines = song.chords?.split('\n') || []
+    const isPortrait = project.orientation === 'portrait'
+    const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
+    const margin = (project.marginMm ?? 3) * SCALE_FACTOR
+    const contentW = canvasW - margin * 2
+
+    let chartText = `${song.title}`
+    if (song.original_key) chartText += `  ·  ${song.original_key}`
+    chartText += '\n\n'
+
+    for (let i = 0; i < lyricLines.length; i++) {
+      const lyric = lyricLines[i]
+      const chord = chordLines[i] || ''
+      if (!lyric && !chord) { chartText += '\n'; continue }
+      if (chord) chartText += chord + '\n'
+      chartText += lyric + '\n'
+    }
+
+    const lineCount = chartText.split('\n').length
+    const lineHeight = 11 * 1.5
+    const estHeight = Math.min(lineCount * lineHeight + 40, (isPortrait ? 297 : 210) * SCALE_FACTOR - margin * 2)
+
+    const newEl: CanvasElementData = {
+      id: generateId(),
+      type: 'text',
+      x: margin,
+      y: margin + (currentPage.elements.length * 20),
+      width: contentW,
+      height: estHeight,
+      rotation: 0,
+      text: chartText,
+      fontSize: 11,
+      songId: song.id,
+    }
+
     const updatedPages = [...project.pages]
     updatedPages[currentPageIdx] = {
       ...currentPage,
@@ -568,6 +618,34 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <input type="file" accept="image/*" multiple onChange={handleImport} className="hidden" />
             </label>
           </div>
+          {items.length > 0 && (
+            <div className="border-b border-white/5">
+              <div className="px-3 py-2">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Music className="w-3 h-3 text-slate-500" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">콘티 곡 ({items.length})</span>
+                </div>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {items.map((item, idx) => (
+                    <div key={item.id} className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-white/5 group">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-indigo-400 w-4 flex-shrink-0">{idx + 1}</span>
+                        <span className="text-[11px] text-slate-300 truncate">{item.song?.title || '알 수 없음'}</span>
+                        {item.key && <span className="text-[9px] text-slate-500 flex-shrink-0">{item.key}</span>}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleGenerateChordChart(item) }}
+                        className="opacity-0 group-hover:opacity-100 px-1.5 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-[9px] font-bold transition-all whitespace-nowrap flex-shrink-0 ml-1"
+                        title="가사+코드로 시트 생성"
+                      >
+                        시트 생성
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="p-2 border-b border-white/5">
             <button
               onClick={handleAddText}
@@ -729,8 +807,13 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                     })()}
                   </div>
                   <div className="flex items-center justify-between px-1.5 py-1 bg-white/5">
-                    <span className={`text-[9px] font-medium ${isActive ? 'text-indigo-300' : 'text-slate-500'}`}>
-                      {page.id}
+                    <span className={`text-[9px] font-medium truncate ${isActive ? 'text-indigo-300' : 'text-slate-500'}`}>
+                      {(() => {
+                        const songEl = page.elements.find(el => el.songId)
+                        const songItem = songEl ? items.find(i => i.song?.id === songEl.songId) : undefined
+                        if (songItem?.song) return `${items.indexOf(songItem) + 1}. ${songItem.song.title}`
+                        return page.id
+                      })()}
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); deletePage(idx) }}
