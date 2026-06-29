@@ -546,7 +546,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
           <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
             <X className="w-4 h-4" />
           </button>
-          <h1 className="text-[15px] font-bold text-white">악보 편집</h1>
+          <h1 className="text-[15px] font-bold text-white">콘티 제작</h1>
           <span className="text-[11px] text-slate-500">{conti.title}</span>
         </div>
 

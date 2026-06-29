@@ -14,7 +14,6 @@ import {
   loadMockTeamMembers, saveMockTeamMembers,
   loadMockAssignments, saveMockAssignments,
 } from '@/lib/conti/mockStorage'
-import ContiSidebar from '@/components/conti/ContiSidebar'
 import TeamRoleBadge from '@/components/conti/TeamRoleBadge'
 import MemberAvatar, { getRandomColor } from '@/components/conti/MemberAvatar'
 import { ALL_MEMBER_ROLES, MEMBER_ROLE_META } from '@/types/conti'
@@ -151,16 +150,6 @@ function TeamsPageInner() {
       </div>
 
       <div className="relative z-10 flex w-full h-full">
-        <ContiSidebar
-          contis={SAMPLE_CONTIS}
-          loading={false}
-          selectedId={null}
-          searchText=""
-          onSearchChange={() => {}}
-          onSelect={(id) => router.push(`/conti?id=${id}`)}
-          onNew={() => router.push('/conti')}
-        />
-
         <div className="w-72 flex-shrink-0 border-r border-white/5 bg-[#070b18] flex flex-col h-full">
           {/* 팀 헤더 */}
           <div className="px-4 pt-4 pb-3 border-b border-white/5">

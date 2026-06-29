@@ -259,6 +259,21 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <div className="relative z-10">
+        <div className="glass-dark rounded-2xl p-5 border border-white/10">
+          <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">콘티 제작</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            A4 악보를 편집하고 PDF로 내보내세요.
+          </p>
+          <button
+            onClick={() => router.push('/conti')}
+            className="w-full text-center py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+          >
+            콘티 제작하러 가기 →
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

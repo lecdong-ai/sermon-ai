@@ -6,7 +6,6 @@ import { Suspense } from 'react'
 import type { ContiSet } from '@/types/conti'
 import { getSampleContiList, SAMPLE_CONTIS } from '@/lib/conti/samples'
 import { loadMockContiList } from '@/lib/conti/mockStorage'
-import ContiSidebar from '@/components/conti/ContiSidebar'
 import WorshipCalendar from '@/components/conti/WorshipCalendar'
 import { Loader2, Calendar, Music, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -48,18 +47,7 @@ function CalendarPageInner() {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[120px]" />
       </div>
 
-      <div className="relative z-10 flex w-full h-full">
-        <ContiSidebar
-          contis={contis}
-          loading={false}
-          selectedId={null}
-          searchText=""
-          onSearchChange={() => {}}
-          onSelect={(id) => router.push(`/conti?id=${id}`)}
-          onNew={() => router.push('/conti')}
-        />
-
-        <div className="flex-1 flex flex-col min-w-0 bg-[#080d22]/30 overflow-hidden">
+      <div className="relative z-10 flex flex-col min-w-0 bg-[#080d22]/30 overflow-hidden w-full h-full">
           {/* 헤더 */}
           <div className="px-6 py-4 border-b border-white/5 bg-[#0a0f1f]/60 backdrop-blur-sm">
             <div className="flex items-center gap-3">
@@ -90,7 +78,6 @@ function CalendarPageInner() {
           </div>
         </div>
       </div>
-    </div>
   )
 }
 

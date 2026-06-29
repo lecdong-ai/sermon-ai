@@ -14,6 +14,7 @@ const MENUS = [
   { key: 'statistics', label: '통계', icon: '▤', href: '/dashboard/statistics' },
   { key: 'series', label: '시리즈', icon: '◈', href: '/dashboard/series' },
   { key: 'tags', label: '태그 관리', icon: '▪', href: '/dashboard/tags' },
+  { key: 'conti', label: '콘티 제작', icon: '🎵', href: '/conti' },
   { key: 'settings', label: '설정', icon: '◇', href: '/dashboard/settings' },
 ]
 
