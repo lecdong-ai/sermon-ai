@@ -709,24 +709,24 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                       : 'border-white/10 hover:border-white/30'
                   }`}
                 >
-                  <div className={`${project.orientation === 'portrait' ? 'aspect-[210/297]' : 'aspect-[297/210]'} bg-white flex items-center justify-center relative`}>
-                    {page.elements.length > 0 ? (
-                      <div className="text-[8px] text-slate-300 font-medium">
-                        {page.elements.length}개 요소
-                      </div>
-                    ) : (
-                      <div className="text-[8px] text-slate-300">빈 페이지</div>
-                    )}
-                    <div className="absolute inset-0 flex flex-wrap gap-px p-0.5 opacity-30 overflow-hidden">
-                      {page.elements.slice(0, 4).map((el) => {
-                        const imgData = el.imageId ? uploadedImages.find((i) => i.id === el.imageId)?.dataUrl : undefined
-                        return imgData ? (
-                          <div key={el.id} className="w-1/2 h-1/2 overflow-hidden">
-                            <img src={imgData} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        ) : null
-                      })}
-                    </div>
+                  <div className={`${project.orientation === 'portrait' ? 'aspect-[210/297]' : 'aspect-[297/210]'} bg-white relative overflow-hidden`}>
+                    {(() => {
+                      const cw = (project.orientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
+                      const ch = (project.orientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
+                      const images = page.elements.filter(el => el.type === 'image')
+                      if (images.length === 0) {
+                        return <div className="absolute inset-0 flex items-center justify-center"><span className="text-[8px] text-slate-300">빈 페이지</span></div>
+                      }
+                      return (
+                        <svg viewBox={`0 0 ${cw} ${ch}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full">
+                          {images.map(el => {
+                            const imgData = el.imageId ? uploadedImages.find(i => i.id === el.imageId)?.dataUrl : undefined
+                            if (!imgData) return null
+                            return <image key={el.id} href={imgData} x={el.x} y={el.y} width={el.width} height={el.height} preserveAspectRatio="xMidYMid slice" />
+                          })}
+                        </svg>
+                      )
+                    })()}
                   </div>
                   <div className="flex items-center justify-between px-1.5 py-1 bg-white/5">
                     <span className={`text-[9px] font-medium ${isActive ? 'text-indigo-300' : 'text-slate-500'}`}>
