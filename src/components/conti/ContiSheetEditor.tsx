@@ -539,7 +539,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   if (!project) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#03050c]">
+    <div className="flex flex-col w-full h-full bg-[#03050c] relative">
       {/* ─── 툴바 ─── */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0a0f1f] flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -618,34 +618,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <input type="file" accept="image/*" multiple onChange={handleImport} className="hidden" />
             </label>
           </div>
-          {items.length > 0 && (
-            <div className="border-b border-white/5">
-              <div className="px-3 py-2">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Music className="w-3 h-3 text-slate-500" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">콘티 곡 ({items.length})</span>
-                </div>
-                <div className="space-y-0.5 max-h-48 overflow-y-auto">
-                  {items.map((item, idx) => (
-                    <div key={item.id} className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-white/5 group">
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-indigo-400 w-4 flex-shrink-0">{idx + 1}</span>
-                        <span className="text-[11px] text-slate-300 truncate">{item.song?.title || '알 수 없음'}</span>
-                        {item.key && <span className="text-[9px] text-slate-500 flex-shrink-0">{item.key}</span>}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleGenerateChordChart(item) }}
-                        className="opacity-0 group-hover:opacity-100 px-1.5 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-[9px] font-bold transition-all whitespace-nowrap flex-shrink-0 ml-1"
-                        title="가사+코드로 시트 생성"
-                      >
-                        시트 생성
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+
           <div className="p-2 border-b border-white/5">
             <button
               onClick={handleAddText}

@@ -8,7 +8,7 @@ export default async function ContiPage({
 }: {
   searchParams: { id?: string }
 }) {
-  const { contis, selectedConti, items, isAuthenticated } = await getServerContiData({
+  const { contis, selectedConti } = await getServerContiData({
     id: searchParams.id || null,
   })
 
@@ -21,9 +21,7 @@ export default async function ContiPage({
       <ContiPageClient
         initialContis={contis}
         initialSelectedConti={selectedConti}
-        initialItems={items}
         initialSelectedId={searchParams.id || null}
-        isAuthenticated={isAuthenticated}
       />
     </Suspense>
   )
