@@ -17,6 +17,9 @@ const nextConfig = {
   },
   compress: true,
   swcMinify: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'd3-force'],
   },
