@@ -276,6 +276,7 @@ export interface SheetProject {
 
 export interface SheetPage {
   id: string
+  orientation?: SheetOrientation
   elements: CanvasElementData[]
 }
 

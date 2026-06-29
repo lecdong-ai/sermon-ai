@@ -30,12 +30,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   const [cropMode, setCropMode] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
   const imageUrlsRef = useRef<Record<string, string>>({})
-  const mounted = useRef(false)
-
-  useEffect(() => {
-    if (!mounted.current) { mounted.current = true; return }
-    handleAutoArrange()
-  }, [project?.orientation])
 
   useEffect(() => {
     const saved = loadMockSheetProject(conti.id)
@@ -97,31 +91,38 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   const currentPage = project?.pages[currentPageIdx]
   const selectedElement = currentPage?.elements.find((el) => el.id === selectedElementId)
 
-  function handleOrientationChange(newOrientation: SheetOrientation) {
-    if (!project || project.orientation === newOrientation) return
+  function pageOrientation(page: SheetPage): SheetOrientation {
+    return page.orientation ?? project!.orientation
+  }
 
-    const oldW = (project.orientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
-    const oldH = (project.orientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
+  function handleOrientationChange(newOrientation: SheetOrientation) {
+    if (!project || !currentPage || pageOrientation(currentPage) === newOrientation) return
+
+    const oldW = (pageOrientation(currentPage) === 'portrait' ? 210 : 297) * SCALE_FACTOR
+    const oldH = (pageOrientation(currentPage) === 'portrait' ? 297 : 210) * SCALE_FACTOR
     const newW = (newOrientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
     const newH = (newOrientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
 
     const sx = newW / oldW
     const sy = newH / oldH
 
-    setProject((prev) => prev ? {
-      ...prev,
-      orientation: newOrientation,
-      pages: prev.pages.map((page) => ({
-        ...page,
-        elements: page.elements.map((el) => ({
+    setProject((prev) => {
+      if (!prev) return prev
+      const pages = [...prev.pages]
+      pages[currentPageIdx] = {
+        ...pages[currentPageIdx],
+        orientation: newOrientation,
+        elements: pages[currentPageIdx].elements.map((el) => ({
           ...el,
           x: el.x * sx,
           y: el.y * sy,
           width: el.width * sx,
           height: el.height * sy,
         })),
-      })),
-    } : prev)
+      }
+      return { ...prev, pages }
+    })
+    setTimeout(() => handleAutoArrange(), 0)
   }
 
   function handleMarginChange(delta: number) {
@@ -133,7 +134,11 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
 
   function addPage() {
     if (!project) return
-    const newPage: SheetPage = { id: `page-${project.pages.length + 1}`, elements: [] }
+    const newPage: SheetPage = {
+      id: `page-${project.pages.length + 1}`,
+      elements: [],
+      orientation: currentPage ? pageOrientation(currentPage) : undefined,
+    }
     setProject({ ...project, pages: [...project.pages, newPage] })
     setCurrentPageIdx(project.pages.length)
   }
@@ -185,7 +190,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const img = uploadedImages.find((i) => i.id === imageId)
     if (!img) return
 
-    const isPortrait = project.orientation === 'portrait'
+    const isPortrait = pageOrientation(currentPage) === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
 
@@ -222,7 +227,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
 
   function handleAddText() {
     if (!project || !currentPage) return
-    const isPortrait = project.orientation === 'portrait'
+    const isPortrait = pageOrientation(currentPage) === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
     const w = 200
@@ -254,7 +259,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
 
     const lyricLines = song.lyrics.split('\n')
     const chordLines = song.chords?.split('\n') || []
-    const isPortrait = project.orientation === 'portrait'
+    const isPortrait = pageOrientation(currentPage) === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const margin = (project.marginMm ?? 3) * SCALE_FACTOR
     const contentW = canvasW - margin * 2
@@ -358,7 +363,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const imgEls = currentPage.elements.filter((el) => el.type === 'image')
     if (imgEls.length === 0) return
 
-    const isPortrait = project.orientation === 'portrait'
+    const isPortrait = pageOrientation(currentPage) === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const canvasH = (isPortrait ? 297 : 210) * SCALE_FACTOR
     const margin = (project.marginMm ?? 3) * SCALE_FACTOR
@@ -485,11 +490,12 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     setTimeout(() => {
       import('html2canvas').then(({ default: html2canvas }) => {
         import('jspdf').then(({ jsPDF }) => {
-          const orientation = project?.orientation === 'landscape' ? 'l' : 'p'
-          const pdf = new jsPDF(orientation, 'mm', 'a4')
+          const pages = project!.pages
+          const firstOrient = pageOrientation(pages[0]) === 'landscape' ? 'l' : 'p'
+          const pdf = new jsPDF(firstOrient, 'mm', 'a4')
 
           const renderNext = (idx: number) => {
-            if (idx >= project!.pages.length) {
+            if (idx >= pages.length) {
               pdf.save(`${conti.title}_악보.pdf`)
               return
             }
@@ -500,9 +506,13 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                 scale: 2, useCORS: true, backgroundColor: '#ffffff',
               }).then((canvas) => {
                 const imgData = canvas.toDataURL('image/png')
-                if (idx > 0) pdf.addPage()
-                const pdfW = orientation === 'l' ? 297 : 210
-                const pdfH = orientation === 'l' ? 210 : 297
+                if (idx > 0) {
+                  const orient = pageOrientation(pages[idx]) === 'landscape' ? 'l' : 'p'
+                  pdf.addPage([297, 210], orient)
+                }
+                const orient = pageOrientation(pages[idx]) === 'landscape' ? 'l' : 'p'
+                const pdfW = orient === 'l' ? 297 : 210
+                const pdfH = orient === 'l' ? 210 : 297
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH)
                 renderNext(idx + 1)
               })
@@ -666,7 +676,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <A4Canvas
                 ref={canvasRef}
                 page={currentPage}
-                orientation={project.orientation}
+                orientation={pageOrientation(currentPage)}
                 zoom={zoom}
                 selectedElementId={selectedElementId}
                 uploadedImages={uploadedImages}
@@ -689,7 +699,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                 <button
                   onClick={() => handleOrientationChange('portrait')}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                    project.orientation === 'portrait'
+                    currentPage && pageOrientation(currentPage) === 'portrait'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -697,7 +707,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                 <button
                   onClick={() => handleOrientationChange('landscape')}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                    project.orientation === 'landscape'
+                    currentPage && pageOrientation(currentPage) === 'landscape'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -760,10 +770,10 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                       : 'border-white/10 hover:border-white/30'
                   }`}
                 >
-                  <div className={`${project.orientation === 'portrait' ? 'aspect-[210/297]' : 'aspect-[297/210]'} bg-white relative overflow-hidden`}>
+                  <div className={`${pageOrientation(page) === 'portrait' ? 'aspect-[210/297]' : 'aspect-[297/210]'} bg-white relative overflow-hidden`}>
                     {(() => {
-                      const cw = (project.orientation === 'portrait' ? 210 : 297) * SCALE_FACTOR
-                      const ch = (project.orientation === 'portrait' ? 297 : 210) * SCALE_FACTOR
+                      const cw = (pageOrientation(page) === 'portrait' ? 210 : 297) * SCALE_FACTOR
+                      const ch = (pageOrientation(page) === 'portrait' ? 297 : 210) * SCALE_FACTOR
                       const images = page.elements.filter(el => el.type === 'image')
                       if (images.length === 0) {
                         return <div className="absolute inset-0 flex items-center justify-center"><span className="text-[8px] text-slate-300">빈 페이지</span></div>
