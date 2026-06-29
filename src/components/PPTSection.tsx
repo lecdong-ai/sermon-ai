@@ -1,16 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import SectionCard from './SectionCard'
-import { FileDown, Loader2, AlertCircle, ChevronLeft, ChevronRight, Palette } from 'lucide-react'
+import { ExternalLink, FileDown, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PPTData, PPTShare } from '@/types'
+import { PPT_THEME_KEYS, PPT_THEME_META } from '@/lib/pptTheme'
+import type { PPTThemeKey } from '@/lib/pptTheme'
 
 interface Props {
   data: PPTData
   sermonId: string
 }
-
-type ThemeKey = 'modern' | 'classic' | 'minimal'
 
 const STYLE_META: Record<string, { label: string; icon: string }> = {
   list: { label: '일반', icon: '📄' },
@@ -19,22 +20,11 @@ const STYLE_META: Record<string, { label: string; icon: string }> = {
   apply: { label: '적용', icon: '✓' },
 }
 
-const THEMES: Record<ThemeKey, {
-  name: string
-  accent: string
-  light: string
-  gradient: string
-}> = {
-  modern: { name: '모던', accent: '#4F46E5', light: '#EEF2FF', gradient: 'from-indigo-50 via-white to-white' },
-  classic: { name: '클래식', accent: '#92400E', light: '#FFFBEB', gradient: 'from-amber-50 via-white to-white' },
-  minimal: { name: '미니멀', accent: '#1E293B', light: '#F8FAFC', gradient: 'from-slate-50 via-white to-white' },
-}
+const THEMES = PPT_THEME_META
 
-const THEME_KEYS: ThemeKey[] = ['modern', 'classic', 'minimal']
-
-function getNextTheme(key: ThemeKey): ThemeKey {
-  const idx = THEME_KEYS.indexOf(key)
-  return THEME_KEYS[(idx + 1) % THEME_KEYS.length]
+function getNextTheme(key: PPTThemeKey): PPTThemeKey {
+  const idx = PPT_THEME_KEYS.indexOf(key)
+  return PPT_THEME_KEYS[(idx + 1) % PPT_THEME_KEYS.length]
 }
 
 function getBulletItems(content: string): string[] {
@@ -45,10 +35,11 @@ function getBulletItems(content: string): string[] {
 }
 
 export default function PPTSection({ data, sermonId }: Props) {
+  const router = useRouter()
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [theme, setTheme] = useState<ThemeKey>('modern')
+  const [theme, setTheme] = useState<PPTThemeKey>('modern')
 
   const slides = data.slides || []
   const total = slides.length
@@ -60,7 +51,7 @@ export default function PPTSection({ data, sermonId }: Props) {
     setDownloading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/ppt/${sermonId}`)
+      const res = await fetch(`/api/ppt/${sermonId}?theme=${theme}`)
       if (!res.ok) {
         const errData = await res.json().catch(() => null)
         throw new Error(errData?.error || 'PPT 다운로드 실패')
@@ -120,13 +111,32 @@ export default function PPTSection({ data, sermonId }: Props) {
       action={
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setTheme(getNextTheme(theme))}
+            onClick={() => router.push(`/workspace/${sermonId}/ppt`)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-            title={th.name}
+            title="PPT 스튜디오 열기"
           >
-            <Palette className="w-3.5 h-3.5" />
-            <span className="font-medium">{th.name}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span className="font-medium hidden sm:inline">스튜디오</span>
           </button>
+          <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5 shadow-sm">
+            {PPT_THEME_KEYS.map((k) => {
+              const m = THEMES[k]
+              return (
+                <button
+                  key={k}
+                  onClick={() => setTheme(k)}
+                  className={`px-2.5 py-1 rounded-md text-[12px] font-bold transition-all ${
+                    theme === k
+                      ? 'text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                  style={theme === k ? { backgroundColor: m.accent } : {}}
+                >
+                  {m.name}
+                </button>
+              )
+            })}
+          </div>
           <button
             onClick={handleDownload}
             disabled={downloading}

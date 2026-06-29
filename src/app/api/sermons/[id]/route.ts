@@ -132,6 +132,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...(body.tagIds !== undefined && { tagIds: body.tagIds }),
       ...(body.relatedSermonIds !== undefined && { relatedSermonIds: body.relatedSermonIds }),
       ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
+      ...(body.result?.pptData !== undefined && { pptData: body.result.pptData }),
     }
     updates.result = resultUpdate
 
