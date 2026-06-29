@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   List,
   Plus,
+  Presentation,
   X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -335,6 +336,14 @@ function WorkspacePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => router.push(`/workspace/${sermonId}/ppt`)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[13px] font-bold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                    title="PPT 스튜디오 열기"
+                  >
+                    <Presentation className="w-4 h-4" />
+                    <span>PPT 스튜디오</span>
+                  </button>
                   <button
                     onClick={() => setShowUploadModal(true)}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#8d7a5b] text-white text-[13px] font-medium hover:bg-[#7a694e] active:scale-[0.98] transition-all duration-200"

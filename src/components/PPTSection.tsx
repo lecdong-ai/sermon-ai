@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import SectionCard from './SectionCard'
-import { ExternalLink, FileDown, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ExternalLink, FileDown, Loader2, AlertCircle, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PPTData, PPTShare } from '@/types'
 import { PPT_THEME_KEYS, PPT_THEME_META } from '@/lib/pptTheme'
 import type { PPTThemeKey } from '@/lib/pptTheme'
@@ -112,31 +112,13 @@ export default function PPTSection({ data, sermonId }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push(`/workspace/${sermonId}/ppt`)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:shadow-sm transition-all"
             title="PPT 스튜디오 열기"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="font-medium hidden sm:inline">스튜디오</span>
+            <span>스튜디오</span>
           </button>
-          <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5 shadow-sm">
-            {PPT_THEME_KEYS.map((k) => {
-              const m = THEMES[k]
-              return (
-                <button
-                  key={k}
-                  onClick={() => setTheme(k)}
-                  className={`px-2.5 py-1 rounded-md text-[12px] font-bold transition-all ${
-                    theme === k
-                      ? 'text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
-                  }`}
-                  style={theme === k ? { backgroundColor: m.accent } : {}}
-                >
-                  {m.name}
-                </button>
-              )
-            })}
-          </div>
+          <ThemeDropdown theme={theme} setTheme={setTheme} />
           <button
             onClick={handleDownload}
             disabled={downloading}
@@ -364,5 +346,56 @@ export default function PPTSection({ data, sermonId }: Props) {
         </div>
       </div>
     </SectionCard>
+  )
+}
+
+function ThemeDropdown({ theme, setTheme }: { theme: PPTThemeKey; setTheme: (k: PPTThemeKey) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const m = PPT_THEME_META[theme]
+
+  useEffect(() => {
+    if (!open) return
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[12px] font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+        title="테마 선택"
+      >
+        <span className="w-3 h-3 rounded-full border border-slate-200" style={{ backgroundColor: m.accent }} />
+        <span>테마: {m.name}</span>
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/60 p-1 min-w-[160px] animate-in">
+          {PPT_THEME_KEYS.map(k => {
+            const meta = PPT_THEME_META[k]
+            const active = theme === k
+            return (
+              <button
+                key={k}
+                onClick={() => { setTheme(k); setOpen(false) }}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] font-bold transition-colors ${
+                  active ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="w-4 h-4 rounded border border-slate-200 shrink-0" style={{ backgroundColor: meta.accent }} />
+                <span className="flex-1 text-left">{meta.name}</span>
+                {active && <span className="text-[10px] text-indigo-600">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
