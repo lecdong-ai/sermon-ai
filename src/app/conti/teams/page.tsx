@@ -173,7 +173,7 @@ function TeamsPageInner() {
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {teams.length === 0 ? (
               <div className="text-center py-12 px-4 text-[13px] text-slate-500 font-medium">
-                아직 팀이 없습니다.<br />"새 팀" 버튼으로 시작하세요.
+                아직 팀이 없습니다.<br />&quot;새 팀&quot; 버튼으로 시작하세요.
               </div>
             ) : (
               <ul className="py-1">
@@ -266,7 +266,7 @@ function TeamsPageInner() {
                   </h2>
                   {teamMembers.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-[13px] text-slate-500 font-medium">
-                      아직 팀원이 없습니다. "팀원 추가" 버튼으로 시작하세요.
+                      아직 팀원이 없습니다. &quot;팀원 추가&quot; 버튼으로 시작하세요.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -307,7 +307,7 @@ function TeamsPageInner() {
                   </h2>
                   {teamContis.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-[13px] text-slate-500 font-medium">
-                      콘티 헤더의 "팀 배정" 으로 이 팀을 콘티에 추가하세요.
+                      콘티 헤더의 &quot;팀 배정&quot; 으로 이 팀을 콘티에 추가하세요.
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -350,7 +350,7 @@ function TeamsPageInner() {
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 text-[14px]">
-              왼쪽에서 팀을 선택하거나 "새 팀" 으로 시작하세요.
+              왼쪽에서 팀을 선택하거나 &quot;새 팀&quot; 으로 시작하세요.
             </div>
           )}
         </div>

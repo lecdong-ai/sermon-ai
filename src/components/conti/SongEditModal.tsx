@@ -94,7 +94,7 @@ export default function SongEditModal({ song, onClose, onSave, onDelete }: Props
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-500/10 border border-slate-500/20">
               <Lock className="w-3.5 h-3.5 text-slate-400" />
               <p className="text-[13px] text-slate-300 font-medium">
-                시스템 제공 곡은 편집할 수 없습니다. 새 곡을 추가하려면 "곡 추가" 를 사용하세요.
+                시스템 제공 곡은 편집할 수 없습니다. 새 곡을 추가하려면 &quot;곡 추가&quot; 를 사용하세요.
               </p>
             </div>
           )}
