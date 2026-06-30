@@ -5,10 +5,12 @@ import type { SheetProject, SheetOrientation, SheetPage, UploadedImage, CanvasEl
 import { loadMockSheetProject, saveMockSheetProject } from '@/lib/conti/mockStorage'
 import { saveImageBlob, loadImageBlob, deleteImageBlob, deleteImageBlobs } from '@/lib/conti/imageStorage'
 import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
+import OcrReviewModal from './OcrReviewModal'
+import type { VisionChord } from '@/lib/conti/visionAi'
 import {
   X, Download, RotateCcw, ZoomIn, ZoomOut,
   FolderOpen, Plus, Trash2, Scissors,
-  LayoutGrid, Type, Music,
+  LayoutGrid, Type, Music, Scan,
 } from 'lucide-react'
 
 interface Props {
@@ -28,6 +30,16 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [cropMode, setCropMode] = useState(false)
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const [ocrResult, setOcrResult] = useState<{
+    title: string
+    artist: string | null
+    originalKey: string | null
+    lyrics: string
+    chords: VisionChord[]
+  } | null>(null)
+  const [ocrToast, setOcrToast] = useState<string | null>(null)
+  const [hoveredImgId, setHoveredImgId] = useState<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const imageUrlsRef = useRef<Record<string, string>>({})
 
@@ -183,6 +195,72 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
       reader.readAsDataURL(file)
     })
     e.target.value = ''
+  }
+
+  async function handleOcr(imageId: string) {
+    const img = uploadedImages.find((i) => i.id === imageId)
+    if (!img) return
+    setOcrLoading(true)
+    try {
+      const blob = await loadImageBlob(imageId)
+      if (!blob) throw new Error('이미지를 불러올 수 없습니다.')
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(blob)
+      })
+      const res = await fetch('/api/conti/songs/extract-vision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || 'OCR 분석에 실패했습니다.')
+      setOcrResult(json.data)
+    } catch (err: any) {
+      alert(err.message || 'OCR 분석 중 오류가 발생했습니다.')
+    } finally {
+      setOcrLoading(false)
+    }
+  }
+
+  async function handleOcrSave(data: {
+    title: string
+    artist: string
+    originalKey: string
+    lyrics: string
+    chords: VisionChord[]
+  }) {
+    try {
+      const songRes = await fetch('/api/conti/songs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          artist: data.artist || null,
+          original_key: data.originalKey || null,
+          lyrics: data.lyrics,
+          chords: JSON.stringify(data.chords),
+          source: 'image',
+          category: 'CCM',
+        }),
+      })
+      const songJson = await songRes.json()
+      if (!songJson.success) throw new Error(songJson.error || '곡 저장에 실패했습니다.')
+
+      await fetch(`/api/conti/${conti.id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_id: songJson.data.id }),
+      })
+
+      setOcrResult(null)
+      setOcrToast('OCR 완료')
+      setTimeout(() => setOcrToast(null), 3000)
+    } catch (err: any) {
+      alert(err.message || '저장 중 오류가 발생했습니다.')
+    }
   }
 
   function addImageToCanvas(imageId: string) {
@@ -645,27 +723,45 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
                 이미지를 드래그하거나<br />
                 위 버튼으로 선택하세요.
               </p>
-            ) : (
-              uploadedImages.map((img) => (
-                <div key={img.id} className="group relative rounded-lg overflow-hidden border border-white/10 bg-white/5">
+            ) : uploadedImages.map((img) => {
+              const isHovered = hoveredImgId === img.id
+              return (
+                <div
+                  key={img.id}
+                  className="relative rounded-lg overflow-hidden border border-white/10 bg-white/5"
+                  onMouseEnter={() => setHoveredImgId(img.id)}
+                  onMouseLeave={() => setHoveredImgId(null)}
+                >
                   <button
                     onClick={() => addImageToCanvas(img.id)}
                     className="w-full aspect-[3/4] overflow-hidden"
                   >
                     <img src={img.dataUrl} alt={img.name} className="w-full h-full object-cover hover:scale-105 transition-transform" />
                   </button>
+                  {isHovered && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleOcr(img.id) }}
+                      disabled={ocrLoading}
+                      className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-indigo-600/80 hover:bg-indigo-500 disabled:bg-slate-600/50 text-white text-[9px] font-extrabold transition-all z-10 flex items-center gap-1"
+                    >
+                      <Scan className="w-2.5 h-2.5" />
+                      {ocrLoading ? '...' : 'OCR'}
+                    </button>
+                  )}
                   <div className="p-1.5 flex items-center justify-between">
                     <span className="text-[9px] text-slate-500 truncate flex-1">{img.name}</span>
-                    <button
-                      onClick={() => deleteUploadedImage(img.id)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-all"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {isHovered && (
+                      <button
+                        onClick={() => deleteUploadedImage(img.id)}
+                        className="p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
+              )
+            })}
           </div>
         </div>
 
@@ -817,6 +913,37 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* OCR 로딩 오버레이 */}
+      {ocrLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 bg-[#0d1225] border border-white/10 rounded-2xl px-8 py-6 shadow-2xl">
+            <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-[13px] text-slate-300 font-medium">악보 분석 중...</p>
+            <p className="text-[11px] text-slate-500">잠시만 기다려주세요</p>
+          </div>
+        </div>
+      )}
+
+      {/* OCR 리뷰 모달 */}
+      {ocrResult && (
+        <OcrReviewModal
+          title={ocrResult.title}
+          artist={ocrResult.artist}
+          originalKey={ocrResult.originalKey}
+          lyrics={ocrResult.lyrics}
+          chords={ocrResult.chords}
+          onCancel={() => setOcrResult(null)}
+          onSave={handleOcrSave}
+        />
+      )}
+
+      {/* OCR 완료 토스트 */}
+      {ocrToast && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-[13px] font-bold shadow-lg backdrop-blur-md animate-fade-in">
+          {ocrToast}
+        </div>
+      )}
 
       {/* 분할 모드 안내 */}
       {cropMode && (
