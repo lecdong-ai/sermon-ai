@@ -11,9 +11,9 @@ function getOpenAI(): OpenAI {
   return _openai
 }
 
-export interface VisionChord {
+export interface ChordPlacement {
   chord: string
-  index: number
+  word_index: number
 }
 
 export interface VisionExtractionResult {
@@ -21,49 +21,62 @@ export interface VisionExtractionResult {
   artist: string | null
   original_key: string | null
   lyrics: string
-  chords: VisionChord[]
+  chord_data: ChordPlacement[][]
+  aligned_preview: string
 }
 
-const COT_PROMPT = `You are an expert at reading Korean worship sheet music (찬양 악보).
+const PROMPT = `You are analyzing a Korean worship sheet music image (찬양 악보).
 
-Step-by-step process:
-1. SCAN: Look at the entire image and identify all text regions — title, artist, key signature, lyrics, chord symbols.
-2. LOCATE CHORDS: Find every chord written above the lyrics. Korean worship chords use letters like C, G, Am, F, Dm7, G/B, C#m7, F#m, Bb, Eb, Ab etc. They are positioned ABOVE specific syllables.
-3. LOCATE LYRICS: Find all Korean lyrics text. Preserve every line break exactly as it appears in the image.
-4. ALIGN: For each chord, determine exactly which character it sits above by looking at the vertical position. The index is 0-based in the lyrics string. Spaces and newlines count as characters.
-5. EXTRACT METADATA: Find the song title (usually at top), artist/composer, and key signature (조표).
+FIRST: Scan the entire image to find ALL text.
 
-Rules:
-- Every chord symbol MUST have its correct 0-based character index in the full lyrics string
-- Do NOT invent chords that don't exist in the image
-- Do NOT merge chords that are separate (e.g., "C G" is two chords, not "CG")
-- If you see 'NC', 'N.C.', or no chord, skip it
-- Korean lyrics must be extracted exactly — do not correct spelling or spacing
-- Pay special attention to two-syllable chords: C#, F#, G#, D#, A#, and slash chords like G/B, D/F#, C/E
-- For duplicate chords on adjacent syllables, each gets its own index entry
+SECOND: Identify the song title, artist, and key signature.
 
-Return JSON with this exact structure:
+THIRD: Identify the lyrics. Write them EXACTLY as they appear, keeping line breaks. Each line of lyrics is a separate element in the output.
+
+FOURTH: For each line of lyrics, identify every chord symbol that appears ABOVE that line. A chord symbol is a letter like C, G, Am, F, Dm7, G/B, C#m7, F#m, Bb, Eb, Ab, etc.
+
+FIFTH: For each chord, determine which WORD in the lyrics line it is placed above. The word_index is a 0-based index into the words of that lyrics line. Words are separated by spaces.
+
+IMPORTANT RULES:
+- Each chord is paired with the word it sits directly above on the sheet music
+- If a chord is between two words, assign it to the word it is closest to
+- If the line has no chords above it, use an empty array []
+- Do NOT include 'NC', 'N.C.', or empty chord markers
+- Slash chords like "G/B" are one item
+- Sharp/flat chords like "C#", "F#" are one item
+- The aligned_preview must use SPACES to align each chord above its word, like:
+  D          G           A
+  당신은    영광의    왕이십니
+
+Return JSON:
 {
-  "title": "곡 제목 (string)",
-  "artist": "작사/작곡가 이름" or null,
-  "original_key": "key signature like C, G, Am, Dm, etc." or null,
-  "lyrics": "가사 전체 (줄바꿈 유지, 띄어쓰기 정확히)",
-  "chords": [
-    { "chord": "C", "index": 0 },
-    { "chord": "G", "index": 8 },
-    { "chord": "Am", "index": 14 }
-  ]
+  "title": "string",
+  "artist": "string or null",
+  "original_key": "string or null (e.g. C, G, Am, Dm, F)",
+  "lyrics": "string (full lyrics with EXACT line breaks)",
+  "chord_data": [
+    [
+      { "chord": "D", "word_index": 0 },
+      { "chord": "G", "word_index": 1 },
+      { "chord": "A", "word_index": 2 }
+    ],
+    [
+      { "chord": "Em", "word_index": 0 }
+    ],
+    []
+  ],
+  "aligned_preview": "string (monospace-aligned text showing chords above lyrics, for copy-paste)"
 }`
 
 export async function extractFromImage(base64Image: string): Promise<VisionExtractionResult> {
   const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: PROMPT },
       {
         role: 'user',
         content: [
-          { type: 'text', text: '이 찬양 악보 이미지를 분석해 코드와 가사를 추출해주세요. 악보의 레이아웃을 주의깊게 보고, 가사 위에 적힌 코드를 정확히 매칭해주세요.' },
+          { type: 'text', text: '이 찬양 악보 이미지를 분석해주세요. 각 코드가 어떤 단어 위에 있는지 word_index로 정확히 알려주세요.' },
           { type: 'image_url', image_url: { url: base64Image, detail: 'high' } },
         ] as any,
       },
