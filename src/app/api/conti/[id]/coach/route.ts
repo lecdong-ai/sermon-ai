@@ -15,6 +15,15 @@ export async function POST(
   const user = await getUser(request)
   if (!user) return unauthorized()
 
+  // conti set 소유권 확인
+  const { data: contiSet } = await supabaseAdmin
+    .from('conti_sets')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+  if (!contiSet) return notFound()
+
   // items 조회
   const { data: items, error } = await supabaseAdmin
     .from('conti_items')

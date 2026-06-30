@@ -46,6 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         is_edited: false,
       })
       .eq('id', params.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 

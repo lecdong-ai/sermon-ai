@@ -56,6 +56,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       .from('study_guides')
       .delete()
       .eq('id', params.id)
+      .eq('user_id', user.id)
 
     if (error) throw error
 
@@ -101,6 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from('study_guides')
       .update(updates)
       .eq('id', params.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 

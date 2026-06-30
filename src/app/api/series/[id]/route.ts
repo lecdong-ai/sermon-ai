@@ -54,6 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from('series')
       .update(updates)
       .eq('id', params.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
@@ -82,6 +83,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       .from('series')
       .delete()
       .eq('id', params.id)
+      .eq('user_id', user.id)
 
     if (error) throw error
 

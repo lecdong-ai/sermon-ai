@@ -140,6 +140,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from('sermons')
       .update(updates)
       .eq('id', params.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
@@ -174,6 +175,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       .from('sermons')
       .delete()
       .eq('id', params.id)
+      .eq('user_id', user.id)
 
     if (error) throw error
 

@@ -46,6 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .from('sermons')
       .update({ result: mergedResult, updated_at: new Date().toISOString() })
       .eq('id', params.id)
+      .eq('user_id', user.id)
 
     return NextResponse.json({ success: true, sermonId: params.id })
   } catch (err: any) {
