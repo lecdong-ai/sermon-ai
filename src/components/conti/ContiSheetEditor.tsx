@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { SheetProject, SheetOrientation, SheetPage, UploadedImage, CanvasElementData, ContiSet, ContiItem } from '@/types/conti'
 import { loadMockSheetProject, saveMockSheetProject } from '@/lib/conti/mockStorage'
 import { saveImageBlob, loadImageBlob, deleteImageBlob, deleteImageBlobs } from '@/lib/conti/imageStorage'
+import { preprocessImage } from '@/lib/conti/imagePreprocess'
 import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
 import OcrReviewModal from './OcrReviewModal'
 import type { VisionChord } from '@/lib/conti/visionAi'
@@ -204,16 +205,17 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     try {
       const blob = await loadImageBlob(imageId)
       if (!blob) throw new Error('이미지를 불러올 수 없습니다.')
-      const base64 = await new Promise<string>((resolve, reject) => {
+      const rawBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve(reader.result as string)
         reader.onerror = () => reject(reader.error)
         reader.readAsDataURL(blob)
       })
+      const processedBase64 = await preprocessImage(rawBase64)
       const res = await fetch('/api/conti/songs/extract-vision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
+        body: JSON.stringify({ image: processedBase64 }),
       })
       const json = await res.json()
       if (!json.success) throw new Error(json.error || 'OCR 분석에 실패했습니다.')

@@ -24,48 +24,52 @@ export interface VisionExtractionResult {
   chords: VisionChord[]
 }
 
-const SYSTEM_PROMPT = `You are analyzing a Korean worship sheet music image.
+const COT_PROMPT = `You are an expert at reading Korean worship sheet music (찬양 악보).
 
-Extract the following from the image:
-1. Song title (곡 제목)
-2. Artist or composer (작사/작곡가)
-3. Original key (조표 — e.g., C, G, D, A, E, F, Bb, Eb, Ab, Db, or minor keys like Am, Em, Dm, etc.)
-4. Full lyrics (가사 전체 — Korean text only, preserve line breaks exactly as shown)
-5. All chord symbols with their exact character positions in the lyrics
+Step-by-step process:
+1. SCAN: Look at the entire image and identify all text regions — title, artist, key signature, lyrics, chord symbols.
+2. LOCATE CHORDS: Find every chord written above the lyrics. Korean worship chords use letters like C, G, Am, F, Dm7, G/B, C#m7, F#m, Bb, Eb, Ab etc. They are positioned ABOVE specific syllables.
+3. LOCATE LYRICS: Find all Korean lyrics text. Preserve every line break exactly as it appears in the image.
+4. ALIGN: For each chord, determine exactly which character it sits above by looking at the vertical position. The index is 0-based in the lyrics string. Spaces and newlines count as characters.
+5. EXTRACT METADATA: Find the song title (usually at top), artist/composer, and key signature (조표).
 
-For chords:
-- Identify every chord symbol (C, G, Am, F, Dm7, G/B, C#m7, F#m, Bb, Eb, Ab, etc.)
-- For each chord, determine which character in the lyrics it is positioned above
-- Index is 0-based character position in the lyrics string (spaces and newlines count as characters)
-- Be very precise about alignment: look at the vertical position of each chord relative to the lyrics
+Rules:
+- Every chord symbol MUST have its correct 0-based character index in the full lyrics string
+- Do NOT invent chords that don't exist in the image
+- Do NOT merge chords that are separate (e.g., "C G" is two chords, not "CG")
+- If you see 'NC', 'N.C.', or no chord, skip it
+- Korean lyrics must be extracted exactly — do not correct spelling or spacing
+- Pay special attention to two-syllable chords: C#, F#, G#, D#, A#, and slash chords like G/B, D/F#, C/E
+- For duplicate chords on adjacent syllables, each gets its own index entry
 
 Return JSON with this exact structure:
 {
-  "title": "곡 제목",
+  "title": "곡 제목 (string)",
   "artist": "작사/작곡가 이름" or null,
-  "original_key": "C" or null,
-  "lyrics": "가사 전체 (줄바꿈 유지)",
+  "original_key": "key signature like C, G, Am, Dm, etc." or null,
+  "lyrics": "가사 전체 (줄바꿈 유지, 띄어쓰기 정확히)",
   "chords": [
     { "chord": "C", "index": 0 },
-    { "chord": "G", "index": 8 }
+    { "chord": "G", "index": 8 },
+    { "chord": "Am", "index": 14 }
   ]
 }`
 
 export async function extractFromImage(base64Image: string): Promise<VisionExtractionResult> {
   const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-5.4-mini',
+    model: 'gpt-4o',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'user',
         content: [
-          { type: 'text', text: '이 찬양 악보 이미지에서 코드와 가사를 추출해주세요.' },
-          { type: 'image_url', image_url: { url: base64Image } },
+          { type: 'text', text: '이 찬양 악보 이미지를 분석해 코드와 가사를 추출해주세요. 악보의 레이아웃을 주의깊게 보고, 가사 위에 적힌 코드를 정확히 매칭해주세요.' },
+          { type: 'image_url', image_url: { url: base64Image, detail: 'high' } },
         ] as any,
       },
     ],
     temperature: 0.1,
-    max_completion_tokens: 4000,
+    max_tokens: 4096,
     response_format: { type: 'json_object' } as any,
   })
 
