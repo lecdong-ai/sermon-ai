@@ -11,42 +11,37 @@ function getOpenAI(): OpenAI {
   return _openai
 }
 
-export interface ChordPlacement {
-  chord: string
-  word_index: number
-}
-
 export interface VisionExtractionResult {
   title: string
   artist: string | null
   original_key: string | null
   lyrics: string
-  chord_data: ChordPlacement[][]
   aligned_preview: string
 }
 
 const PROMPT = `You are analyzing a Korean worship sheet music image (찬양 악보).
 
 FIRST: Scan the entire image to find ALL text.
-
 SECOND: Identify the song title, artist, and key signature.
+THIRD: Identify the lyrics exactly as they appear, preserving line breaks.
 
-THIRD: Identify the lyrics. Write them EXACTLY as they appear, keeping line breaks. Each line of lyrics is a separate element in the output.
+FOURTH: Create an "aligned_preview" text that shows chord symbols placed ABOVE their corresponding lyrics using SPACES for alignment. This is the most critical output.
 
-FOURTH: For each line of lyrics, identify every chord symbol that appears ABOVE that line. A chord symbol is a letter like C, G, Am, F, Dm7, G/B, C#m7, F#m, Bb, Eb, Ab, etc.
-
-FIFTH: For each chord, determine which WORD in the lyrics line it is placed above. The word_index is a 0-based index into the words of that lyrics line. Words are separated by spaces.
-
-IMPORTANT RULES:
-- Each chord is paired with the word it sits directly above on the sheet music
-- If a chord is between two words, assign it to the word it is closest to
-- If the line has no chords above it, use an empty array []
-- Do NOT include 'NC', 'N.C.', or empty chord markers
+RULES for aligned_preview:
+- Use a monospace-like alignment with SPACES
+- Each line of chords is followed by its corresponding line of lyrics
+- Each chord is positioned directly above the word it belongs to
+- Use enough spaces so the chord is centered above its word
 - Slash chords like "G/B" are one item
 - Sharp/flat chords like "C#", "F#" are one item
-- The aligned_preview must use SPACES to align each chord above its word, like:
-  D          G           A
-  당신은    영광의    왕이십니
+- If a line has no chords, include it without a chord line above
+
+Example aligned_preview:
+  D                    A             G            Em
+  당신은          영광의       왕이십니다
+
+  C                G              Am
+  주님의        은혜가        나를
 
 Return JSON:
 {
@@ -54,18 +49,7 @@ Return JSON:
   "artist": "string or null",
   "original_key": "string or null (e.g. C, G, Am, Dm, F)",
   "lyrics": "string (full lyrics with EXACT line breaks)",
-  "chord_data": [
-    [
-      { "chord": "D", "word_index": 0 },
-      { "chord": "G", "word_index": 1 },
-      { "chord": "A", "word_index": 2 }
-    ],
-    [
-      { "chord": "Em", "word_index": 0 }
-    ],
-    []
-  ],
-  "aligned_preview": "string (monospace-aligned text showing chords above lyrics, for copy-paste)"
+  "aligned_preview": "string (chord lines interleaved with lyrics lines, aligned with spaces)"
 }`
 
 export async function extractFromImage(base64Image: string): Promise<VisionExtractionResult> {
@@ -76,7 +60,7 @@ export async function extractFromImage(base64Image: string): Promise<VisionExtra
       {
         role: 'user',
         content: [
-          { type: 'text', text: '이 찬양 악보 이미지를 분석해주세요. 각 코드가 어떤 단어 위에 있는지 word_index로 정확히 알려주세요.' },
+          { type: 'text', text: '이 찬양 악보 이미지에서 가사와 코드를 추출하고 aligned_preview로 정렬해주세요.' },
           { type: 'image_url', image_url: { url: base64Image, detail: 'high' } },
         ] as any,
       },

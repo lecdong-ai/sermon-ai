@@ -7,7 +7,6 @@ import { saveImageBlob, loadImageBlob, deleteImageBlob, deleteImageBlobs } from 
 import { preprocessImage } from '@/lib/conti/imagePreprocess'
 import A4Canvas, { SCALE_FACTOR } from './A4Canvas'
 import OcrReviewModal from './OcrReviewModal'
-import type { ChordPlacement } from '@/lib/conti/visionAi'
 import {
   X, Download, RotateCcw, ZoomIn, ZoomOut,
   FolderOpen, Plus, Trash2, Scissors,
@@ -37,7 +36,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     artist: string | null
     originalKey: string | null
     lyrics: string
-    chordData: ChordPlacement[][]
     alignedPreview: string
   } | null>(null)
   const [ocrToast, setOcrToast] = useState<string | null>(null)
@@ -225,7 +223,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
         artist: json.data.artist,
         originalKey: json.data.original_key,
         lyrics: json.data.lyrics,
-        chordData: json.data.chord_data || [],
         alignedPreview: json.data.aligned_preview || '',
       })
     } catch (err: any) {
@@ -240,7 +237,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     artist: string
     originalKey: string
     lyrics: string
-    chordData: ChordPlacement[][]
     alignedPreview: string
   }) {
     try {
@@ -252,7 +248,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
           artist: data.artist || null,
           original_key: data.originalKey || null,
           lyrics: data.lyrics,
-          chords: JSON.stringify(data.chordData),
+          chords: data.alignedPreview,  // aligned_preview stored as chords
           source: 'image',
           category: 'CCM',
         }),
@@ -346,20 +342,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     const song = item.song
     if (!song?.lyrics) return
 
-    const lyricLines = song.lyrics.split('\n')
-    const chordLines: string[] = (() => {
-      if (!song.chords) return []
-      try {
-        const parsed = JSON.parse(song.chords)
-        if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
-          return parsed.map((line: ChordPlacement[]) => {
-            if (!line.length) return ''
-            return line.map((p) => p.chord).join(' - ')
-          })
-        }
-      } catch {}
-      return song.chords.split('\n')
-    })()
     const isPortrait = pageOrientation(currentPage) === 'portrait'
     const canvasW = (isPortrait ? 210 : 297) * SCALE_FACTOR
     const margin = (project.marginMm ?? 3) * SCALE_FACTOR
@@ -368,14 +350,7 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
     let chartText = `${song.title}`
     if (song.original_key) chartText += `  ·  ${song.original_key}`
     chartText += '\n\n'
-
-    for (let i = 0; i < lyricLines.length; i++) {
-      const lyric = lyricLines[i]
-      const chord = chordLines[i] || ''
-      if (!lyric && !chord) { chartText += '\n'; continue }
-      if (chord) chartText += chord + '\n'
-      chartText += lyric + '\n'
-    }
+    chartText += song.chords || ''
 
     const lineCount = chartText.split('\n').length
     const lineHeight = 11 * 1.5
@@ -955,7 +930,6 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
           artist={ocrResult.artist}
           originalKey={ocrResult.originalKey}
           lyrics={ocrResult.lyrics}
-          chordData={ocrResult.chordData}
           alignedPreview={ocrResult.alignedPreview}
           onCancel={() => setOcrResult(null)}
           onSave={handleOcrSave}
