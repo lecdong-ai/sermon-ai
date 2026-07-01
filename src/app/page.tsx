@@ -850,6 +850,22 @@ export default function HomePage() {
               </Link>
             )}
 
+            {/* 예배 콘티 제작 카드 */}
+            <Link
+              href="/conti"
+              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
+              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-rose-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/10">
+                <Heart className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-bold text-white group-hover:text-rose-300 transition-colors">예배 콘티 제작</h4>
+                <p className="text-[12px] text-slate-400 mt-0.5">찬양 악보 편집</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+            </Link>
+
             {/* 다시 보지 않기 */}
             <label className="mt-5 flex items-center gap-2 cursor-pointer select-none group/check">
               <input
