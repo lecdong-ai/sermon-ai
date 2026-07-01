@@ -83,12 +83,24 @@ export interface ShortsScript {
   script: string
 }
 
+export interface PPTShare {
+  title: string
+  content: string
+  style?: 'list' | 'scripture' | 'highlight' | 'apply'
+  icon?: string
+}
+
+export interface PPTData {
+  slides: PPTShare[]
+}
+
 export interface SermonResultData {
   summary?: Summary | null
   groupDiscussion?: GroupDiscussion | null
   cardNews?: CardNews | null
   sermonScript?: string | null
   shortsScript?: string | null
+  pptData?: PPTData | null
   hymn_title?: string
   hymn_number?: string
   sermon_title?: string
@@ -304,6 +316,36 @@ export const SHORTS_SCRIPT_SCHEMA = {
   },
 }
 
+export const PPT_SCHEMA = {
+  type: 'json_schema' as const,
+  json_schema: {
+    name: 'ppt_outline',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        slides: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: '슬라이드 제목 (12자 이내 간결하게)' },
+              content: { type: 'string', description: '슬라이드 내용 — 반드시 5~8개의 불릿 포인트로 구성, 각 불릿은 15~20자 내외의 완전한 문장, 설교자가 30~60초간 설명 가능한 충분한 분량' },
+              style: { type: 'string', enum: ['list', 'scripture', 'highlight', 'apply'], description: '슬라이드 성격에 맞는 스타일. list=일반, scripture=성경인용, highlight=핵심강조, apply=적용/실천' },
+              icon: { type: 'string', description: '슬라이드 분위기에 맞는 lucide 아이콘 이름 (heart, cross, book, star, lightbulb, check, quote, bible, pray 중 하나)' },
+            },
+            required: ['title', 'content', 'style', 'icon'],
+            additionalProperties: false,
+          },
+          description: '16~20장 PPT 슬라이드 (표지/말씀/개요/본문배경/포인트4개/요약/교훈/적용/결단/인용/기도/마무리)',
+        },
+      },
+      required: ['slides'],
+      additionalProperties: false,
+    },
+  },
+}
+
 // ─── Study Guide (소그룹 리더가이드) ───
 
 export interface StudyGuideInput {
@@ -441,6 +483,7 @@ export type GenerationItem =
   | 'cardNews'
   | 'sermonScript'
   | 'shortsScript'
+  | 'pptData'
 
 export type GenerationStatus = 'idle' | 'generating' | 'done' | 'error'
 

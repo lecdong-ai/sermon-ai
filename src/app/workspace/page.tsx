@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   List,
   Plus,
+  Presentation,
   X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -24,6 +25,7 @@ const GroupDiscussionSection = dynamic(() => import('@/components/GroupDiscussio
 const CardNewsSection = dynamic(() => import('@/components/CardNewsSection'), { ssr: false })
 const SermonScriptSection = dynamic(() => import('@/components/SermonScriptSection'), { ssr: false })
 const ShortsScriptSection = dynamic(() => import('@/components/ShortsScriptSection'), { ssr: false })
+const PPTSection = dynamic(() => import('@/components/PPTSection'), { ssr: false })
 const WorkspaceSidebar = dynamic(() => import('@/components/WorkspaceSidebar'), { ssr: false })
 
 const TABS = [
@@ -32,6 +34,7 @@ const TABS = [
   { id: 'cardNews', label: '🎴 카드뉴스' },
   { id: 'sermonScript', label: '🎙️ 유튜브 설교대본' },
   { id: 'shortsScript', label: '📱 유튜브 쇼츠대본' },
+  { id: 'pptData', label: '📊 PPT' },
 ]
 
 type ViewMode = 'tabs' | 'all'
@@ -130,7 +133,7 @@ function WorkspacePage() {
 
   const doneCount = [
     'summary', 'groupDiscussion', 'cardNews',
-    'sermonScript', 'shortsScript',
+    'sermonScript', 'shortsScript', 'pptData',
   ].filter((key) => (sermon?.result as any)?.[key]).length
 
   const handleGenerate = async (item: GenerationItem) => {
@@ -197,6 +200,22 @@ function WorkspacePage() {
       await navigator.clipboard.writeText(url)
       setToast({ visible: true, message: '링크가 복사되었습니다!', type: 'success' })
     } catch {}
+  }
+
+  const handleDownloadPPT = async () => {
+    if (!sermonId) return
+    try {
+      const res = await fetch(`/api/ppt/${sermonId}`)
+      if (!res.ok) throw new Error('PPT 생성 실패')
+      const blob = await res.blob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `sermon-${sermonId}.pptx`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (err: any) {
+      setToast({ visible: true, message: err.message || 'PPT 다운로드 실패', type: 'error' })
+    }
   }
 
   const handleUploadSuccess = (newSermonId: string) => {
@@ -271,6 +290,8 @@ function WorkspacePage() {
         return result.sermonScript ? <SermonScriptSection data={result.sermonScript} /> : null
       case 'shortsScript':
         return result.shortsScript ? <ShortsScriptSection data={result.shortsScript} /> : null
+      case 'pptData':
+        return result.pptData ? <PPTSection data={result.pptData} sermonId={sermonId || ''} /> : null
       default:
         return null
     }
@@ -286,6 +307,7 @@ function WorkspacePage() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onShare={handleShare}
+        onDownloadPPT={handleDownloadPPT}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -314,6 +336,14 @@ function WorkspacePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => router.push(`/workspace/${sermonId}/ppt`)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[13px] font-bold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                    title="PPT 스튜디오 열기"
+                  >
+                    <Presentation className="w-4 h-4" />
+                    <span>PPT 스튜디오</span>
+                  </button>
                   <button
                     onClick={() => setShowUploadModal(true)}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#8d7a5b] text-white text-[13px] font-medium hover:bg-[#7a694e] active:scale-[0.98] transition-all duration-200"
