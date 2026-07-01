@@ -101,7 +101,6 @@ export interface SermonResultData {
   sermonScript?: string | null
   shortsScript?: string | null
   pptData?: PPTData | null
-  hymn_title?: string
   hymn_number?: string
   sermon_title?: string
   sermon_passage?: string
@@ -476,6 +475,24 @@ export const STUDY_GUIDE_SCHEMA = {
 }
 
 // ─── Generation Status ───
+
+export interface PptSlide {
+  title: string
+  content: string[]
+  layout: 'title' | 'bullets' | 'section-header' | 'quote' | 'two-column' | 'closing' | 'vs-contrast' | 'timeline-flow' | 'central-focus' | 'grid-matrix'
+  /** 핵심 메시지 요약 (1~2문장) */
+  coreMessage?: string
+  /** 발표자 스크립트 (청중과의 상호작용 포함) */
+  speakerNotes?: string
+  /** 비주얼 추천 (일러스트, 아이콘, 배치 아이디어) */
+  visualRecommendation?: string
+  /** 디자이너 노트 (색상 강조, 폰트 사이즈, 배경 요소) */
+  designNote?: string
+}
+
+export interface PptData {
+  slides: PptSlide[]
+}
 
 export type GenerationItem =
   | 'summary'

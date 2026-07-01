@@ -106,6 +106,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [translationError, setTranslationError] = useState<Record<string, Record<string, string | null>>>({})
   const [aiStudyLoading, setAiStudyLoading] = useState(false)
   const [aiStudyError, setAiStudyError] = useState<string | null>(null)
+  const [bibleTextReady, setBibleTextReady] = useState(false)
   const [selectedFallbackWord, setSelectedFallbackWord] = useState<{ word: string; clean: string; verse: number; version?: string } | null>(null)
   const [wordLookup, setWordLookup] = useState<Record<string, JohnWordDetail>>({})
   const [lookupLoading, setLookupLoading] = useState(false)
@@ -273,7 +274,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   // - words, commentaries, themes, contextInfo, parallelPassages, translationNotes, wordAlignments
   // - verses에는 korean만 (서버에서 개역개정 자동 주입)
   // - greek/translit/niv/esv는 별도 lazy fetch (fetchTranslation)
-  const fetchCore = useCallback(() => {
+  const fetchCore = useCallback(async () => {
     if (getStudyData(activeBook, activeChapter)) return
     if (coreData[passageKey]) return
 
@@ -297,8 +298,41 @@ export default function BibleStudyTab({ project, passages }: Props) {
       return
     }
 
-    // 3) API 호출
+    // 3) Phase 1: Bible API로 한글 본문 즉시 로딩 (서버 메모리 캐시 → < 50ms)
     setAiStudyError(null)
+    setBibleTextReady(false)
+    try {
+      const bibleRes = await fetch(
+        `/api/bible?book=${encodeURIComponent(activeBook)}&chapter=${activeChapter}&verseStart=${activeVerseStart}&verseEnd=${activeVerseEnd || activeVerseStart}`
+      )
+      if (bibleRes.ok) {
+        const bibleJson = await bibleRes.json()
+        if (bibleJson.success) {
+          const partialData = {
+            passage: activePassageDisplay,
+            verses: bibleJson.verses.map((v: any) => ({ verse: v.verse, korean: v.content })),
+            words: {},
+            commentaries: [],
+            translationNotes: [],
+            parallelPassages: [],
+            themes: [],
+            contextInfo: {
+              before: '', after: '', bookStructure: '',
+              historicalBackground: '', culturalContext: '',
+              theologicalContext: '', redemptiveHistory: '',
+              keyThemes: [], narrativeArc: '',
+            },
+            wordAlignments: [],
+          }
+          setCoreData(prev => ({ ...prev, [passageKey]: partialData }))
+          setBibleTextReady(true)
+        }
+      }
+    } catch {
+      // Bible API 실패 → AI에 의존
+    }
+
+    // 4) Phase 2: AI 분석 (words, commentaries, themes, ...)
     setAiStudyLoading(true)
     fetch('/api/advanced/ai', {
       method: 'POST',
@@ -464,11 +498,11 @@ export default function BibleStudyTab({ project, passages }: Props) {
       delete next[key]
       return next
     })
-    setTimeout(() => fetchCore(), 50)
+    setTimeout(() => { void fetchCore() }, 50)
   }, [fetchCore])
 
   useEffect(() => {
-    fetchCore()
+    void fetchCore()
   }, [fetchCore])
 
   // 마이그레이션: 다중 본문에서 'legacy'로 저장된 메모를 'tab_0'으로 이관
@@ -1140,6 +1174,14 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 }
               })()}
             />
+
+            {/* AI 분석 진행 중 (Phase 1 본문 표시 완료, Phase 2 AI 분석 중) */}
+            {aiStudyLoading && bibleTextReady && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[12px] text-indigo-300">
+                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                <span>AI가 단어 분석, 주석, 테마를 생성하는 중입니다...</span>
+              </div>
+            )}
 
             {/* Auto Diff: NIV + ESV 등 2개 영어 버전 켜졌을 때 비교 인사이트 */}
             {viewMode !== 'compare' && (

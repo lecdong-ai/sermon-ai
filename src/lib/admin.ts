@@ -97,59 +97,34 @@ export async function getAllUsers(params: GetUsersParams = {}): Promise<GetUsers
   const sortField: UserSortField = params.sortField || 'created_at'
   const sortOrder: 'asc' | 'desc' = params.sortOrder || 'desc'
 
-  // 1) user_profiles에서 search 적용 → 매칭 user_id 목록
-  let profileQuery = supabaseAdmin
+  // 1) Auth 유저 전체 조회
+  const { data: authData } = await supabaseAdmin.auth.admin.listUsers()
+  const authUsers = authData?.users || []
+
+  // 2) user_profiles 조회 (옵셔널)
+  const { data: profileMatches } = await supabaseAdmin
     .from('user_profiles')
     .select('id, name, email')
-
-  if (search) {
-    const like = `%${search.toLowerCase().replace(/[%_]/g, '\\$&')}%`
-    profileQuery = profileQuery.or(`email.ilike.${like},name.ilike.${like}`)
-  }
-
-  // 안전 상한 (너무 큰 결과는 거부)
-  profileQuery = profileQuery.range(0, 9999)
-
-  const { data: profileMatches } = await profileQuery
-  const matchedIds = (profileMatches || []).map(p => p.id)
+    .range(0, 9999)
   const profileMap = new Map((profileMatches || []).map(p => [p.id, p]))
 
-  if (matchedIds.length === 0) {
-    return { users: [], total: 0, page, limit, totalPages: 0 }
-  }
-
-  // 2) 매칭된 user_id들에 대한 auth 메타데이터 일괄 조회 (200명씩 배치)
-  const authUserMap = new Map<string, any>()
-  for (let i = 0; i < matchedIds.length; i += 200) {
-    const batch = matchedIds.slice(i, i + 200)
-    const results = await Promise.all(batch.map(async (id) => {
-      try {
-        const r = await supabaseAdmin.auth.admin.getUserById(id)
-        return (r as any)?.user || (r as any)?.data?.user || null
-      } catch {
-        return null
-      }
-    }))
-    for (const u of results) {
-      if (u) authUserMap.set(u.id, u)
-    }
-  }
-
   // 3) user_usage에서 supporter_until 일괄 조회
-  const { data: usageList } = await supabaseAdmin
-    .from('user_usage')
-    .select('user_id, supporter_until')
-    .in('user_id', matchedIds)
-  const usageMap = new Map((usageList || []).map(u => [u.user_id, u.supporter_until]))
+  const profileIds = (profileMatches || []).map(p => p.id)
+  let usageMap = new Map<string, string | null>()
+  if (profileIds.length > 0) {
+    const { data: usageList } = await supabaseAdmin
+      .from('user_usage')
+      .select('user_id, supporter_until')
+      .in('user_id', profileIds)
+    usageMap = new Map((usageList || []).map(u => [u.user_id, u.supporter_until]))
+  }
 
-  // 4) 조합
+  // 4) Auth 유저 기준으로 결합 (user_profiles는 옵셔널)
   const now = new Date()
-  const combined = matchedIds.map(id => {
-    const u = authUserMap.get(id)
-    const p = profileMap.get(id)
-    if (!u) return null
+  const combined = authUsers.map(u => {
+    const p = profileMap.get(u.id)
+    const usageUntil = usageMap.get(u.id) || null
     const appMetaUntil = (u.app_metadata as any)?.supporter_until
-    const usageUntil = usageMap.get(id) || null
     let finalUntil: string | null = null
     if (appMetaUntil && usageUntil) {
       finalUntil = new Date(appMetaUntil) > new Date(usageUntil) ? appMetaUntil : usageUntil
@@ -163,19 +138,29 @@ export async function getAllUsers(params: GetUsersParams = {}): Promise<GetUsers
       role: isAdminFromMeta(u) ? 'admin' : 'user',
       supporter_until: finalUntil,
       created_at: u.created_at,
-      last_sign_in_at: u.last_sign_in_at,
-      confirmed_at: u.confirmed_at,
+      last_sign_in_at: u.last_sign_in_at ?? null,
+      confirmed_at: u.confirmed_at ?? null,
     }
-  }).filter(Boolean) as GetUsersResult['users']
+  })
 
-  // filter: supporter/general은 supporter_until 기준 후처리
-  const filtered = combined.filter(u => {
+  // 5) search 필터 (email + name)
+  let filtered = combined
+  if (search) {
+    const q = search.toLowerCase()
+    filtered = combined.filter(u =>
+      u.email.toLowerCase().includes(q) ||
+      (u.name && u.name.toLowerCase().includes(q))
+    )
+  }
+
+  // 6) supporter/general 필터
+  filtered = filtered.filter(u => {
     if (filter === 'supporter') return u.supporter_until && new Date(u.supporter_until) > now
     if (filter === 'general') return !u.supporter_until || new Date(u.supporter_until) <= now
     return true
   })
 
-  // 정렬
+  // 7) 정렬
   const dir = sortOrder === 'asc' ? 1 : -1
   filtered.sort((a, b) => {
     const av = (a as any)[sortField]
@@ -188,7 +173,7 @@ export async function getAllUsers(params: GetUsersParams = {}): Promise<GetUsers
     return 0
   })
 
-  // 페이지 슬라이스
+  // 8) 페이지 슬라이스
   const offset = (page - 1) * limit
   const paged = filtered.slice(offset, offset + limit)
   const totalPages = Math.ceil(filtered.length / limit)

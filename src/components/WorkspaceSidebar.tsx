@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Share2, FileDown, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload } from 'lucide-react'
+import { X, Share2, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload, Presentation } from 'lucide-react'
 import Link from 'next/link'
 import type { SermonRecord } from '@/types'
 
@@ -17,7 +17,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'cardNews', label: '카드뉴스', icon: '🎴', description: 'SNS 카드 콘텐츠' },
   { id: 'sermonScript', label: '유튜브 설교대본', icon: '🎙️', description: '유튜브 설교 대본' },
   { id: 'shortsScript', label: '유튜브 쇼츠대본', icon: '📱', description: '유튜브 쇼츠 스크립트' },
-  { id: 'pptData', label: 'PPT 자료', icon: '📊', description: '슬라이드 아웃라인' },
 ]
 
 interface Props {
@@ -154,6 +153,19 @@ export default function WorkspaceSidebar({
                 </button>
               )
             })}
+            {/* PPT 스튜디오 링크 */}
+            <div className="px-2 pt-4 mt-[576px] border-t border-[#e4e2dd]">
+              <Link
+                href="/ppt-studio"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[#6b6764] hover:text-[#2c2a29] hover:bg-[#eae8e3]/50 transition-all duration-200"
+              >
+                <Presentation className="w-5 h-5 text-[#8d7a5b]" />
+                <div>
+                  <span className="block text-[14px] font-bold tracking-tight text-[#2c2a29]">📽️ PPT 스튜디오</span>
+                  <span className="block text-[11px] mt-0.5 font-medium text-[#8a8580]">슬라이드 생성 및 편집</span>
+                </div>
+              </Link>
+            </div>
           </nav>
 
           {/* 하단 버전 */}

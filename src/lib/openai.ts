@@ -139,7 +139,7 @@ export async function generateSingleItem(
   if (!VALID_ITEMS.includes(item)) {
     throw new Error(`유효하지 않은 생성 항목입니다: ${item}`)
   }
-  const configs: Record<GenerationItem, {
+  const configs: Record<string, {
     prompt: string
     schema: any
     mapper: (data: any) => Partial<SermonResultData>
