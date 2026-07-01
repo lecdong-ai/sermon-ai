@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Share2, FileDown, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload } from 'lucide-react'
+import { X, Share2, Menu, CheckCircle, Loader2, AlertCircle, ChevronRight, BookOpen, Upload } from 'lucide-react'
 import Link from 'next/link'
 import type { SermonRecord } from '@/types'
 
@@ -17,7 +17,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'cardNews', label: '카드뉴스', icon: '🎴', description: 'SNS 카드 콘텐츠' },
   { id: 'sermonScript', label: '유튜브 설교대본', icon: '🎙️', description: '유튜브 설교 대본' },
   { id: 'shortsScript', label: '유튜브 쇼츠대본', icon: '📱', description: '유튜브 쇼츠 스크립트' },
-  { id: 'pptData', label: 'PPT 자료', icon: '📊', description: '슬라이드 아웃라인' },
 ]
 
 interface Props {
@@ -25,7 +24,6 @@ interface Props {
   activeTab: string
   onTabChange: (id: string) => void
   onShare: () => void
-  onDownloadPPT: () => void
   open: boolean
   onClose: () => void
   sermonId?: string
@@ -41,7 +39,6 @@ export default function WorkspaceSidebar({
   activeTab,
   onTabChange,
   onShare,
-  onDownloadPPT,
   open,
   onClose,
   sermonId,

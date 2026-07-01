@@ -25,7 +25,6 @@ interface UploadedSermon {
     cardNews?: any
     sermonScript?: string | null
     shortsScript?: string | null
-    pptData?: any
     hymn_title?: string
     sermon_title?: string
     sermon_passage?: string
@@ -38,7 +37,6 @@ const SERVICES = [
   { key: 'cardNews', label: '카드뉴스', icon: '🖼️' },
   { key: 'sermonScript', label: '설교문', icon: '📝' },
   { key: 'shortsScript', label: '유튜브', icon: '▶️' },
-  { key: 'pptData', label: 'PPT', icon: '📊' },
 ]
 
 export default function UploadedSermonsPage() {

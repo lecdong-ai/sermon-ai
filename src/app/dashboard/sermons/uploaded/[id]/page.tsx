@@ -34,9 +34,6 @@ interface SermonDetail {
     } | null
     sermonScript?: string | null
     shortsScript?: string | null
-    pptData?: {
-      slides?: Array<{ title: string; content: string }>
-    } | null
     hymn_title?: string
     hymn_number?: string
     sermon_title?: string
@@ -50,7 +47,6 @@ const SECTIONS = [
   { key: 'cardNews', label: '🖼️ 카드뉴스', has: (r: any) => r?.cardNews },
   { key: 'sermonScript', label: '📝 설교문', has: (r: any) => r?.sermonScript },
   { key: 'shortsScript', label: '▶️ 유튜브 대본', has: (r: any) => r?.shortsScript },
-  { key: 'pptData', label: '📊 PPT 개요', has: (r: any) => r?.pptData },
 ]
 
 export default function UploadedSermonDetailPage({ params }: { params: { id: string } }) {
@@ -245,20 +241,6 @@ export default function UploadedSermonDetailPage({ params }: { params: { id: str
             {activeSection === 'shortsScript' && result.shortsScript && (
               <div className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
                 {result.shortsScript}
-              </div>
-            )}
-
-            {activeSection === 'pptData' && result.pptData && (
-              <div className="space-y-4">
-                {result.pptData.slides && result.pptData.slides.map((slide, i) => (
-                  <div key={i} className="bg-background rounded-lg p-5 border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Slide {i + 1}</span>
-                      <h4 className="text-sm font-semibold text-foreground">{slide.title}</h4>
-                    </div>
-                    <p className="text-sm text-muted leading-relaxed whitespace-pre-wrap">{slide.content}</p>
-                  </div>
-                ))}
               </div>
             )}
           </div>
