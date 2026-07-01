@@ -16,3 +16,4 @@ Thumbs.db
 # 빌드 산출물
 *.tsbuildinfo
 .vercel
+.env*
