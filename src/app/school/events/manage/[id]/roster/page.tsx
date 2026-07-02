@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Download, Printer, ChevronDown, ArrowLeft, Check, X, Filter } from 'lucide-react'
+import { Search, Download, Printer, ChevronDown, ArrowLeft, Check, X, Filter, Plus } from 'lucide-react'
 import { getRegistrations, getEventById, updateRegistration, getGroups, getTeams, getVehicles } from '@/lib/events/db'
+import AddRegistrationModal from '@/components/events/AddRegistrationModal'
 import { PAYMENT_STATUS_LABELS, REGISTRATION_STATUS_LABELS, type Registration, type Event, type EventGroup, type EventTeam, type EventVehicle } from '@/types/event'
 
 type FilterKey = 'all' | 'pending_payment' | 'confirmed' | 'cancelled'
@@ -20,7 +21,7 @@ export default function RosterPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterKey>('all')
   const [selected, setSelected] = useState<string[]>([])
-  const [editingPayment, setEditingPayment] = useState<string | null>(null)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const loadData = () => {
     Promise.all([
@@ -108,6 +109,9 @@ export default function RosterPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h1 className="text-xl font-extrabold text-cs-navy-900">참가자 명단</h1>
           <div className="flex items-center gap-2">
+            <button onClick={() => setAddModalOpen(true)} className="btn-primary btn-sm">
+              <Plus className="w-4 h-4" /> 참가자 등록
+            </button>
             <button className="btn-outline btn-sm" onClick={() => window.print()}><Printer className="w-4 h-4" /> 인쇄</button>
             <button className="btn-secondary btn-sm"><Download className="w-4 h-4" /> 엑셀</button>
           </div>
@@ -210,6 +214,8 @@ export default function RosterPage() {
 
         <div className="text-xs text-cs-navy-500 mt-3">총 {filtered.length}명 (필터 적용)</div>
       </div>
+
+      <AddRegistrationModal event={event} open={addModalOpen} onClose={() => setAddModalOpen(false)} onSuccess={loadData} />
     </div>
   )
 }

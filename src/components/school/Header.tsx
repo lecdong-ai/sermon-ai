@@ -8,7 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 const NAV_ITEMS = [
   { href: '/school', label: '홈' },
   { href: '/school/resources', label: '자료센터' },
-  { href: '/school/events', label: '행사 관리' },
+  { href: '/school/events/manage', label: '행사 관리' },
   { href: '/school/notice-writer', label: '공지문 작성기' },
   { href: '/school/free', label: '무료자료' },
   { href: '/school/pricing', label: '요금제' },
