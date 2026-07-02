@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Users, Wallet, Layers, Truck, Bell, CheckSquare, FileDown, Settings, ArrowLeft, BarChart3, Edit2 } from 'lucide-react'
+import { Users, Wallet, Layers, Truck, Bell, CheckSquare, FileDown, Settings, ArrowLeft, BarChart3, Edit2, Link2, Check } from 'lucide-react'
 import { getEventById, getEventStats, updateEvent } from '@/lib/events/db'
 import { EVENT_TYPE_LABELS, EVENT_STATUS_LABELS, type Event, type EventStats } from '@/types/event'
 
@@ -22,6 +22,15 @@ export default function EventManageHubPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [stats, setStats] = useState<EventStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  const copyLink = () => {
+    const url = `${window.location.origin}/school/events/${id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   useEffect(() => {
     Promise.all([getEventById(id), getEventStats(id)]).then(([ev, st]) => {
@@ -77,9 +86,15 @@ export default function EventManageHubPage() {
             <h1 className="text-2xl font-extrabold text-cs-navy-900">{event.title}</h1>
             <p className="text-sm text-cs-navy-500">{event.eventStart} ~ {event.eventEnd} · {event.location}</p>
           </div>
-          <Link href={`/school/events/manage/${event.id}/settings`} className="btn-outline btn-sm">
-            <Settings className="w-4 h-4" /> 설정
-          </Link>
+          <div className="flex items-center gap-2">
+            <button onClick={copyLink} className={`btn-outline btn-sm ${copied ? '!bg-cs-mint-500 !text-white !border-cs-mint-500' : ''}`}>
+              {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+              {copied ? '복사됨' : '신청 링크 복사'}
+            </button>
+            <Link href={`/school/events/manage/${event.id}/settings`} className="btn-outline btn-sm">
+              <Settings className="w-4 h-4" /> 설정
+            </Link>
+          </div>
         </div>
 
         {stats && (
