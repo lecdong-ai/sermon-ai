@@ -9,7 +9,7 @@ import {
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
 import LoginModal from '@/components/LoginModal';
-import { supabase } from '@/lib/supabase';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 
 interface GeneratedResults {
   version1: string;
@@ -19,6 +19,7 @@ interface GeneratedResults {
 }
 
 export default function NoticeWriterPage() {
+  const supabase = createSupabaseClient();
   const [situation, setSituation] = useState('welcome');
   const [target, setTarget] = useState('kinder_parents');
   const [tone, setTone] = useState('warm');

@@ -18,8 +18,10 @@ export function createApiAuthClient(request: NextRequest) {
 
 export async function getUserFromRequest(request: NextRequest) {
   const sb = createApiAuthClient(request)
-  const { data } = await sb.auth.getUser()
-  return data?.user ?? null
+  // getUser() 대신 getSession() 사용: 토큰 만료 시 setAll()이 비어있어
+  // 갱신이 실패하는 문제를 우회. 쿠키에서 직접 session을 읽어 user 반환.
+  const { data } = await sb.auth.getSession()
+  return data?.session?.user ?? null
 }
 
 /** OpenAI 호출 등 비용이 큰 라우트에 적용하는 rate limit. 인증된 경우 userId 기준, 아니면 IP 기준. */
@@ -53,6 +55,6 @@ export async function getUserFromCookies() {
       },
     },
   )
-  const { data } = await sb.auth.getUser()
-  return data?.user ?? null
+  const { data } = await sb.auth.getSession()
+  return data?.session?.user ?? null
 }

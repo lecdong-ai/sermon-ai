@@ -234,10 +234,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return existingData.data
         }
       }
+      // 에러 발생 시 콘솔에 자세한 정보 출력
+      console.error('[createSermon] API error:', { status: res.status, body: data })
+      throw new Error(data.error || `저장 실패 (HTTP ${res.status})`)
     } catch (err) {
       console.error('Failed to create sermon:', err)
+      throw err
     }
-    return null
   }, [])
 
   const updateSermon = useCallback(async (sermon: Sermon) => {
@@ -252,10 +255,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'UPDATE_SERMON', payload: data.data || sermon })
         return data.data || sermon
       }
+      console.error('[updateSermon] API error:', { status: res.status, body: data })
+      throw new Error(data.error || `수정 실패 (HTTP ${res.status})`)
     } catch (err) {
       console.error('Failed to update sermon:', err)
+      throw err
     }
-    return null
   }, [])
 
   const deleteSermon = useCallback(async (id: string) => {

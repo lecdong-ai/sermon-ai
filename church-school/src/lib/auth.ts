@@ -1,4 +1,8 @@
 import { supabase } from './supabase';
+import { createClient as createBrowserSupabase } from './supabase/client';
+import { createServerClient } from '@supabase/ssr';
+import { NextRequest, NextResponse } from 'next/server';
+import { checkRate, type RateLimitConfig } from './rate-limit';
 
 export interface UserProfile {
   id: string;
@@ -10,9 +14,9 @@ export interface UserProfile {
   created_at: string;
 }
 
-// 1. 회원가입 (Auth Sign-up + users 테이블 추가 프로필 저장)
 export async function signUpUser(email: string, password: string, name: string, churchName: string) {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const sb = createBrowserSupabase();
+  const { data: authData, error: authError } = await sb.auth.signUp({
     email,
     password,
     options: {
@@ -26,8 +30,7 @@ export async function signUpUser(email: string, password: string, name: string, 
   if (authError) throw authError;
   if (!authData.user) throw new Error('회원가입에 실패했습니다.');
 
-  // Auth 가입 성공 시 users 메타데이터 테이블에 추가 정보 생성
-  const { error: profileError } = await supabase
+  const { error: profileError } = await sb
     .from('users')
     .insert([
       {
@@ -42,15 +45,14 @@ export async function signUpUser(email: string, password: string, name: string, 
 
   if (profileError) {
     console.error('프로필 테이블 생성 에러:', profileError);
-    // 가입 자체는 성공했으므로 우선 진행
   }
 
   return authData.user;
 }
 
-// 2. 로그인 (Auth Sign-in)
 export async function signInUser(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const sb = createBrowserSupabase();
+  const { data, error } = await sb.auth.signInWithPassword({
     email,
     password,
   });
@@ -59,25 +61,24 @@ export async function signInUser(email: string, password: string) {
   return data.user;
 }
 
-// 3. 로그아웃 (Auth Sign-out)
 export async function signOutUser() {
-  const { error } = await supabase.auth.signOut();
+  const sb = createBrowserSupabase();
+  const { error } = await sb.auth.signOut();
   if (error) throw error;
 }
 
-// 4. 현재 유저 정보 및 프로필 통합 조회
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const sb = createBrowserSupabase();
+  const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
 
-  const { data: profile, error } = await supabase
+  const { data: profile, error } = await sb
     .from('users')
     .select('*')
     .eq('id', user.id)
     .single();
 
   if (error || !profile) {
-    // 만약 users 프로필 테이블에 없으면 임시 복구용 프로필 반환
     return {
       id: user.id,
       email: user.email || '',
@@ -90,4 +91,37 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   }
 
   return profile as UserProfile;
+}
+
+export async function getUserFromRequest(request: NextRequest) {
+  const sb = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll() {},
+      },
+    },
+  )
+  const { data } = await sb.auth.getSession()
+  return data?.session?.user ?? null
+}
+
+export function checkOpenAIRateLimit(
+  request: NextRequest,
+  userId: string | null,
+  config: RateLimitConfig = { max: 20, windowSec: 60 },
+): NextResponse | null {
+  const key = userId
+    ? `u:${userId}`
+    : `ip:${request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+       || request.headers.get('x-real-ip')
+       || 'unknown'}`
+  const r = checkRate(key, config)
+  if (r.allowed) return null
+  return NextResponse.json(
+    { success: false, error: `요청이 너무 많습니다. ${r.retryAfterSec}초 후 다시 시도해주세요.` },
+    { status: 429, headers: { 'Retry-After': String(r.retryAfterSec) } },
+  )
 }

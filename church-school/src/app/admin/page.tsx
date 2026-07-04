@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   LayoutDashboard, FileText, Settings, Plus, Edit2, Trash2, Check, X, Search, 
   Users, Download, HelpCircle, Shield, ShoppingCart, Calendar, Eye, ShieldAlert, KeyRound 
 } from 'lucide-react';
-import { resources as initialResources, CATEGORY_LABELS, type Resource, type Category, type ContentType } from '@/data/resources';
 import { noticeTemplates as initialTemplates, SITUATIONS, TARGETS, TONES, type NoticeTemplate } from '@/data/notice-templates';
 import { mockUsers as initialUsers, mockProducts as initialProducts, type AdminUser, type AdminProduct } from '@/data/mock-admin';
 
@@ -16,36 +15,20 @@ interface ExtendedNoticeTemplate extends NoticeTemplate {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'resources' | 'templates' | 'users' | 'products'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'templates' | 'users' | 'products'>('dashboard');
   
   // Authorization simulation
   const [isAdmin, setIsAdmin] = useState(true);
 
   // States
-  const [resources, setResources] = useState<Resource[]>([]);
   const [templates, setTemplates] = useState<ExtendedNoticeTemplate[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
 
   // Search
-  const [resSearch, setResSearch] = useState('');
   const [tempSearch, setTempSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [prodSearch, setProdSearch] = useState('');
-
-  // Resource Form Modal
-  const [resModalOpen, setResModalOpen] = useState(false);
-  const [selectedRes, setSelectedRes] = useState<Resource | null>(null);
-  const [resTitle, setResTitle] = useState('');
-  const [resDesc, setResDesc] = useState('');
-  const [resCategory, setResCategory] = useState<Category>('parent_comm');
-  const [resTags, setResTags] = useState('');
-  const [resType, setResType] = useState<ContentType>('template');
-  const [resContent, setResContent] = useState('');
-  const [resIsFree, setResIsFree] = useState(true);
-  const [resPrice, setResPrice] = useState(0);
-  const [resTargetUser, setResTargetUser] = useState('');
-  const [resIncludes, setResIncludes] = useState('');
 
   // Template Form Modal
   const [tempModalOpen, setTempModalOpen] = useState(false);
@@ -70,18 +53,10 @@ export default function AdminPage() {
 
   // Load Data
   useEffect(() => {
-    const savedRes = localStorage.getItem('cs_admin_resources');
     const savedTemp = localStorage.getItem('cs_admin_templates');
     const savedUsers = localStorage.getItem('cs_admin_users');
     const savedProducts = localStorage.getItem('cs_admin_products');
     
-    if (savedRes) {
-      setResources(JSON.parse(savedRes));
-    } else {
-      setResources(initialResources);
-      localStorage.setItem('cs_admin_resources', JSON.stringify(initialResources));
-    }
-
     if (savedTemp) {
       setTemplates(JSON.parse(savedTemp));
     } else {
@@ -106,11 +81,6 @@ export default function AdminPage() {
   }, []);
 
   // Save Helpers
-  const saveResources = (data: Resource[]) => {
-    setResources(data);
-    localStorage.setItem('cs_admin_resources', JSON.stringify(data));
-  };
-
   const saveTemplates = (data: ExtendedNoticeTemplate[]) => {
     setTemplates(data);
     localStorage.setItem('cs_admin_templates', JSON.stringify(data));
@@ -126,13 +96,6 @@ export default function AdminPage() {
     localStorage.setItem('cs_admin_products', JSON.stringify(data));
   };
 
-  // Resource Delete
-  const handleDeleteResource = (id: string) => {
-    if (!confirm('이 자료를 삭제하시겠습니까?')) return;
-    const updated = resources.filter(r => r.id !== id);
-    saveResources(updated);
-  };
-
   // Template Delete
   const handleDeleteTemplate = (id: string) => {
     if (!confirm('이 템플릿을 삭제하시겠습니까?')) return;
@@ -145,78 +108,6 @@ export default function AdminPage() {
     if (!confirm('이 상품을 삭제하시겠습니까?')) return;
     const updated = products.filter(p => p.id !== id);
     saveProducts(updated);
-  };
-
-  // Open Resource Modal
-  const openResModal = (res: Resource | null = null) => {
-    setSelectedRes(res);
-    if (res) {
-      setResTitle(res.title);
-      setResDesc(res.description);
-      setResCategory(res.category);
-      setResTags(res.tags.join(', '));
-      setResType(res.contentType);
-      setResContent(res.content);
-      setResIsFree(res.isFree);
-      setResPrice(res.price);
-      setResTargetUser(res.targetUser || '');
-      setResIncludes((res.includes || []).join(', '));
-    } else {
-      setResTitle('');
-      setResDesc('');
-      setResCategory('parent_comm');
-      setResTags('');
-      setResType('template');
-      setResContent('');
-      setResIsFree(true);
-      setResPrice(0);
-      setResTargetUser('');
-      setResIncludes('');
-    }
-    setResModalOpen(true);
-  };
-
-  // Submit Resource Form
-  const handleResSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const tagsArray = resTags.split(',').map(t => t.trim()).filter(Boolean);
-    const includesArray = resIncludes.split(',').map(i => i.trim()).filter(Boolean);
-
-    if (selectedRes) {
-      const updated = resources.map(r => r.id === selectedRes.id ? {
-        ...r,
-        title: resTitle,
-        description: resDesc,
-        category: resCategory,
-        tags: tagsArray,
-        contentType: resType,
-        content: resContent,
-        isFree: resIsFree,
-        price: resIsFree ? 0 : Number(resPrice),
-        targetUser: resTargetUser,
-        includes: includesArray,
-      } : r);
-      saveResources(updated);
-    } else {
-      const newRes: Resource = {
-        id: 'new-' + Math.random().toString(36).substr(2, 9),
-        title: resTitle,
-        description: resDesc,
-        category: resCategory,
-        tags: tagsArray,
-        contentType: resType,
-        content: resContent,
-        isFree: resIsFree,
-        price: resIsFree ? 0 : Number(resPrice),
-        downloadCount: 0,
-        viewCount: 0,
-        createdAt: new Date().toISOString().split('T')[0],
-        targetUser: resTargetUser,
-        includes: includesArray,
-      };
-      saveResources([newRes, ...resources]);
-    }
-    setResModalOpen(false);
   };
 
   // Open Template Modal
@@ -348,11 +239,6 @@ export default function AdminPage() {
   };
 
   // Filters
-  const filteredResources = resources.filter(r => 
-    r.title.toLowerCase().includes(resSearch.toLowerCase()) ||
-    r.description.toLowerCase().includes(resSearch.toLowerCase())
-  );
-
   const filteredTemplates = templates.filter(t =>
     t.title.toLowerCase().includes(tempSearch.toLowerCase()) ||
     (t.shortVersion || '').toLowerCase().includes(tempSearch.toLowerCase()) ||
@@ -371,13 +257,6 @@ export default function AdminPage() {
     p.name.toLowerCase().includes(prodSearch.toLowerCase()) ||
     p.description.toLowerCase().includes(prodSearch.toLowerCase())
   );
-
-  // Recent 5 uploads
-  const recentResources = useMemo(() => {
-    return [...resources]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5);
-  }, [resources]);
 
   // Auth lock screen
   if (!isAdmin) {
@@ -446,15 +325,6 @@ export default function AdminPage() {
             대시보드
           </button>
           <button
-            onClick={() => setActiveTab('resources')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'resources' ? 'bg-mint-500 text-white' : 'text-navy-300 hover:bg-navy-800'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            자료 관리 ({resources.length})
-          </button>
-          <button
             onClick={() => setActiveTab('templates')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
               activeTab === 'templates' ? 'bg-mint-500 text-white' : 'text-navy-300 hover:bg-navy-800'
@@ -493,41 +363,7 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-navy-900">시스템 관리 대시보드</h1>
             
             {/* Stat Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-              <div className="card-flat p-5 bg-white flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-navy-400 uppercase">전체 자료</p>
-                  <p className="text-xl font-bold text-navy-950 mt-1">{resources.length}개</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-navy-50 text-navy-600 flex items-center justify-center">
-                  <FileText className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="card-flat p-5 bg-white flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-navy-400 uppercase">무료 자료</p>
-                  <p className="text-xl font-bold text-mint-600 mt-1">
-                    {resources.filter(r => r.isFree).length}개
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-mint-50 text-mint-500 flex items-center justify-center">
-                  <Download className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="card-flat p-5 bg-white flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-navy-400 uppercase">유료 자료</p>
-                  <p className="text-xl font-bold text-orange-500 mt-1">
-                    {resources.filter(r => !r.isFree).length}개
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4" />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="card-flat p-5 bg-white flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-bold text-navy-400 uppercase">공지 템플릿</p>
@@ -547,30 +383,19 @@ export default function AdminPage() {
                   <Users className="w-4 h-4" />
                 </div>
               </div>
+
+              <div className="card-flat p-5 bg-white flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-navy-400 uppercase">상품 패키지</p>
+                  <p className="text-xl font-bold text-navy-950 mt-1">{products.length}개</p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4" />
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* Recently registered resources list */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-warm-100 space-y-4">
-                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-1.5">
-                  <FileText className="w-4.5 h-4.5 text-mint-500" />
-                  최근 등록 자료 (최신 5개)
-                </h3>
-                <div className="divide-y divide-warm-100 text-xs">
-                  {recentResources.map(res => (
-                    <div key={res.id} className="py-3 flex items-center justify-between gap-4">
-                      <div>
-                        <span className="font-semibold text-navy-800 block truncate max-w-xs">{res.title}</span>
-                        <span className="text-[10px] text-navy-400">{CATEGORY_LABELS[res.category]} · {res.createdAt}</span>
-                      </div>
-                      <span className={res.isFree ? 'badge-free text-[9px]' : 'badge-paid text-[9px]'}>
-                        {res.isFree ? '무료' : '유료'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               {/* Tips & Instructions */}
               <div className="bg-gradient-to-br from-mint-50 to-warm-50 rounded-2xl p-6 border border-mint-200 flex flex-col justify-between">
@@ -592,80 +417,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 2. RESOURCES */}
-        {activeTab === 'resources' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold text-navy-900">자료 관리</h1>
-              <button
-                onClick={() => openResModal(null)}
-                className="btn-secondary btn-sm gap-1.5 self-start sm:self-auto"
-              >
-                <Plus className="w-4 h-4" />
-                신규 자료 등록
-              </button>
-            </div>
-
-            <div className="relative max-w-md bg-white rounded-xl shadow-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
-              <input
-                type="text"
-                placeholder="자료명 검색..."
-                value={resSearch}
-                onChange={(e) => setResSearch(e.target.value)}
-                className="input-field pl-10 py-2 text-sm"
-              />
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-warm-100 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs md:text-sm text-navy-800">
-                  <thead className="bg-warm-50 text-navy-600 font-bold border-b border-warm-100">
-                    <tr>
-                      <th className="p-4">카테고리</th>
-                      <th className="p-4">제목</th>
-                      <th className="p-4">유무료</th>
-                      <th className="p-4">가격</th>
-                      <th className="p-4">사용 대상</th>
-                      <th className="p-4 text-center">액션</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-warm-100">
-                    {filteredResources.map((res) => (
-                      <tr key={res.id} className="hover:bg-warm-50/50">
-                        <td className="p-4 font-semibold text-navy-600">{CATEGORY_LABELS[res.category]}</td>
-                        <td className="p-4 max-w-xs truncate font-bold text-navy-900">{res.title}</td>
-                        <td className="p-4">
-                          {res.isFree ? <span className="badge-free">무료</span> : <span className="badge-paid">유료</span>}
-                        </td>
-                        <td className="p-4 font-medium">{res.isFree ? '₩0' : `₩${res.price.toLocaleString()}`}</td>
-                        <td className="p-4 text-navy-500">{res.targetUser}</td>
-                        <td className="p-4 text-center flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => openResModal(res)}
-                            className="p-1.5 text-navy-400 hover:text-mint-600 transition-colors animate-hover"
-                            title="수정"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteResource(res.id)}
-                            className="p-1.5 text-navy-400 hover:text-red-500 transition-colors animate-hover"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 3. TEMPLATES */}
+        {/* 2. TEMPLATES */}
         {activeTab === 'templates' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -889,168 +641,6 @@ export default function AdminPage() {
         )}
 
       </div>
-
-      {/* RESOURCE MODAL */}
-      {resModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl relative">
-            <button
-              onClick={() => setResModalOpen(false)}
-              className="absolute right-4 top-4 p-2 rounded-xl text-navy-400 hover:bg-warm-50"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h2 className="text-xl font-bold text-navy-900">
-              {selectedRes ? '자료 수정' : '새 자료 등록'}
-            </h2>
-
-            <form onSubmit={handleResSubmit} className="space-y-4 text-xs md:text-sm">
-              <div>
-                <label className="block font-semibold text-navy-800 mb-1">제목</label>
-                <input
-                  type="text"
-                  required
-                  value={resTitle}
-                  onChange={(e) => setResTitle(e.target.value)}
-                  placeholder="예: 2025 여름 성경학교 오리엔테이션"
-                  className="input-field py-2"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-navy-800 mb-1">한줄 요약 설명</label>
-                <input
-                  type="text"
-                  required
-                  value={resDesc}
-                  onChange={(e) => setResDesc(e.target.value)}
-                  placeholder="예: 오리엔테이션 준비를 위한 템플릿입니다."
-                  className="input-field py-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-navy-800 mb-1">카테고리</label>
-                  <select
-                    value={resCategory}
-                    onChange={(e) => setResCategory(e.target.value as Category)}
-                    className="select-field py-2"
-                  >
-                    <option value="parent_comm">학부모 소통</option>
-                    <option value="teacher_edu">교사교육</option>
-                    <option value="operation">운영문서</option>
-                    <option value="season_event">시즌행사</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold text-navy-800 mb-1">콘텐츠 종류</label>
-                  <select
-                    value={resType}
-                    onChange={(e) => setResType(e.target.value as ContentType)}
-                    className="select-field py-2"
-                  >
-                    <option value="template">템플릿</option>
-                    <option value="document">문서</option>
-                    <option value="guide">가이드</option>
-                    <option value="checklist">체크리스트</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-navy-800 mb-1">사용 대상</label>
-                  <input
-                    type="text"
-                    required
-                    value={resTargetUser}
-                    onChange={(e) => setResTargetUser(e.target.value)}
-                    placeholder="예: 영유아부 교역자 및 부장"
-                    className="input-field py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-navy-800 mb-1">포함 항목 (쉼표로 구분)</label>
-                  <input
-                    type="text"
-                    required
-                    value={resIncludes}
-                    onChange={(e) => setResIncludes(e.target.value)}
-                    placeholder="계획서 서식 1부, 평가 양식, 이미지 예시"
-                    className="input-field py-2"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 items-center pt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isFree"
-                    checked={resIsFree}
-                    onChange={(e) => setResIsFree(e.target.checked)}
-                    className="w-4 h-4 accent-mint-500 rounded cursor-pointer"
-                  />
-                  <label htmlFor="isFree" className="font-semibold text-navy-800 cursor-pointer">무료 자료 여부</label>
-                </div>
-                {!resIsFree && (
-                  <div>
-                    <label className="block font-semibold text-navy-800 mb-1">가격 (원)</label>
-                    <input
-                      type="number"
-                      required
-                      value={resPrice}
-                      onChange={(e) => setResPrice(Number(e.target.value))}
-                      placeholder="₩ 1900"
-                      className="input-field py-2"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block font-semibold text-navy-800 mb-1">태그 (쉼표로 구분)</label>
-                <input
-                  type="text"
-                  value={resTags}
-                  onChange={(e) => setResTags(e.target.value)}
-                  placeholder="오리엔테이션, 학기초, 여름캠프"
-                  className="input-field py-2"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-navy-800 mb-1">자료 본문 내용 (Markdown 형식)</label>
-                <textarea
-                  required
-                  value={resContent}
-                  onChange={(e) => setResContent(e.target.value)}
-                  placeholder="# 대제목\n본문 내용을 입력하세요."
-                  className="input-field min-h-[140px] font-mono resize-none py-2 text-xs"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setResModalOpen(false)}
-                  className="btn-outline btn-sm"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="btn-secondary btn-sm"
-                >
-                  저장하기
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* TEMPLATE MODAL */}
       {tempModalOpen && (

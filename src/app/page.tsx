@@ -7,7 +7,7 @@ import {
   Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard, 
   ArrowRight, CheckCircle, Star, Shield, Zap, Globe, 
   ChevronDown, ChevronUp, Play, Users, FileCheck, BrainCircuit, 
-  ArrowUpRight, Heart, X, HardDrive, Cross, Crown
+  ArrowUpRight, Heart, X, HardDrive, Cross, Crown, GraduationCap
 } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import { useAuth } from '@/components/AuthProvider'
@@ -864,6 +864,22 @@ export default function HomePage() {
                 <p className="text-[12px] text-slate-400 mt-0.5">찬양 악보 편집</p>
               </div>
               <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+            </Link>
+
+            {/* 교회학교 솔루션 카드 */}
+            <Link
+              href="/school"
+              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
+              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.07] transition-all duration-200"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-bold text-white group-hover:text-emerald-300 transition-colors">교회학교 솔루션</h4>
+                <p className="text-[12px] text-slate-400 mt-0.5">서식 자료 · 공지문 작성기</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
             </Link>
 
             {/* 다시 보지 않기 */}

@@ -6,18 +6,12 @@ import {
   User, Mail, School, Sparkles, Award, FileText, Download, Bookmark, 
   Trash2, Clipboard, Check, Eye, ExternalLink, Settings, ShieldCheck, Lock, X
 } from 'lucide-react';
-import { resources, CATEGORY_LABELS } from '@/data/resources';
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import { 
   getSavedNotices, 
-  getFavorites, 
-  getRecentViews, 
-  getPurchasedResources, 
   deleteSavedNotice, 
-  toggleFavorite, 
-  removeRecentView 
 } from '@/lib/db';
 import LoginModal from '@/components/LoginModal';
 
@@ -31,17 +25,10 @@ interface SavedNotice {
   tone?: string;
 }
 
-interface RecentViewed {
-  id: string;
-  title: string;
-  category: string;
-  viewedAt: string;
-  resourceId?: string;
-}
-
 export default function MyPage() {
+  const supabase = createSupabaseClient();
   const { isLoggedIn, user, refreshUser, isPremium } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'purchased' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'settings'>('dashboard');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Profile State
@@ -62,9 +49,6 @@ export default function MyPage() {
 
   // Data States
   const [savedNotices, setSavedNotices] = useState<SavedNotice[]>([]);
-  const [purchasedResources, setPurchasedResources] = useState<any[]>([]);
-  const [bookmarkedResources, setBookmarkedResources] = useState<any[]>([]);
-  const [recentViewed, setRecentViewed] = useState<RecentViewed[]>([]);
   const [loadingData, setLoadingData] = useState(false);
 
   // Clipboard copies
@@ -91,17 +75,11 @@ export default function MyPage() {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [notices, bookmarks, recent, purchased] = await Promise.all([
+        const [notices] = await Promise.all([
           getSavedNotices(user.id),
-          getFavorites(user.id),
-          getRecentViews(user.id),
-          getPurchasedResources(user.id)
         ]);
 
         setSavedNotices(notices as SavedNotice[]);
-        setBookmarkedResources(bookmarks);
-        setRecentViewed(recent as RecentViewed[]);
-        setPurchasedResources(purchased);
       } catch (err) {
         console.error('마이페이지 데이터 조회 에러:', err);
       } finally {
@@ -185,26 +163,6 @@ export default function MyPage() {
   };
 
   // Remove Bookmark
-  const handleRemoveBookmark = async (id: string) => {
-    if (!user) return;
-    try {
-      await toggleFavorite(user.id, id);
-      setBookmarkedResources(prev => prev.filter(b => b.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Remove Recent View
-  const handleRemoveRecentView = async (id: string) => {
-    try {
-      await removeRecentView(id);
-      setRecentViewed(prev => prev.filter(r => r.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-warm-50 py-24 flex items-center justify-center">
@@ -344,14 +302,6 @@ export default function MyPage() {
                 <span>📝 저장한 공지문 ({savedNotices.length})</span>
               </button>
               <button
-                onClick={() => setActiveTab('purchased')}
-                className={`text-left text-xs md:text-sm px-4 py-2.5 rounded-xl font-bold transition-all flex items-center justify-between ${
-                  activeTab === 'purchased' ? 'bg-navy-900 text-white shadow-sm' : 'text-navy-500 hover:bg-warm-50'
-                }`}
-              >
-                <span>📦 구매한 자료 ({purchasedResources.length})</span>
-              </button>
-              <button
                 onClick={() => setActiveTab('settings')}
                 className={`text-left text-xs md:text-sm px-4 py-2.5 rounded-xl font-bold transition-all flex items-center justify-between ${
                   activeTab === 'settings' ? 'bg-navy-900 text-white shadow-sm' : 'text-navy-500 hover:bg-warm-50'
@@ -369,93 +319,6 @@ export default function MyPage() {
             {/* VIEW 1: DASHBOARD OVERVIEW */}
             {activeTab === 'dashboard' && (
               <div className="space-y-6">
-                
-                {/* Bookmarks Section */}
-                <div className="bg-white rounded-3xl p-6 shadow-card border border-warm-100 space-y-4">
-                  <h3 className="text-sm md:text-base font-bold text-navy-900 flex items-center gap-1.5">
-                    <Bookmark className="w-5 h-5 text-mint-500" />
-                    즐겨찾기한 자료 ({bookmarkedResources.length})
-                  </h3>
-                  
-                  {bookmarkedResources.length === 0 ? (
-                    <div className="text-center py-10 space-y-3 border border-dashed border-warm-200 rounded-2xl bg-warm-50/20">
-                      <Bookmark className="w-8 h-8 text-warm-300 mx-auto" />
-                      <p className="text-xs text-navy-400">아직 즐겨찾기한 자료가 없습니다.</p>
-                      <Link href="/resources" className="btn-secondary btn-xs inline-block">
-                        자료센터 둘러보기
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {bookmarkedResources.map((res) => (
-                        <div key={res.id} className="bg-warm-50/50 rounded-xl p-4 border border-warm-100 flex flex-col justify-between hover:border-mint-200 transition-colors">
-                          <div>
-                            <span className="text-[9px] px-1.5 py-0.5 bg-white text-navy-500 rounded border border-warm-100 mb-1 inline-block">
-                              {CATEGORY_LABELS[res.category as keyof typeof CATEGORY_LABELS] || res.category}
-                            </span>
-                            <h4 className="text-xs md:text-sm font-bold text-navy-900 line-clamp-1">{res.title}</h4>
-                            <p className="text-[10px] text-navy-400 line-clamp-2 mt-1 leading-normal">{res.description}</p>
-                          </div>
-                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-warm-100">
-                            <button
-                              onClick={() => handleRemoveBookmark(res.id)}
-                              className="text-[10px] text-red-500 font-semibold hover:underline"
-                            >
-                              해제
-                            </button>
-                            <Link href={`/resources/${res.id}`} className="text-[10px] text-mint-600 font-bold flex items-center gap-0.5">
-                              상세보기 <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Recent Viewed Section */}
-                <div className="bg-white rounded-3xl p-6 shadow-card border border-warm-100 space-y-4">
-                  <h3 className="text-sm md:text-base font-bold text-navy-900 flex items-center gap-1.5">
-                    <Eye className="w-5 h-5 text-mint-500" />
-                    최근 본 자료
-                  </h3>
-
-                  {recentViewed.length === 0 ? (
-                    <div className="text-center py-10 space-y-3 border border-dashed border-warm-200 rounded-2xl bg-warm-50/20">
-                      <Eye className="w-8 h-8 text-warm-300 mx-auto" />
-                      <p className="text-xs text-navy-400">최근에 열람한 문서 양식이 없습니다.</p>
-                      <Link href="/resources" className="btn-secondary btn-xs inline-block">
-                        추천 자료 구경하기
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-warm-100">
-                      {recentViewed.map((view) => (
-                        <div key={view.id} className="py-3 flex items-center justify-between gap-4 text-xs">
-                          <div>
-                            <span className="font-semibold text-navy-800 block truncate max-w-xs">{view.title}</span>
-                            <span className="text-[10px] text-navy-400">
-                              {CATEGORY_LABELS[view.category as keyof typeof CATEGORY_LABELS] || view.category} · {view.viewedAt}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Link href={`/resources/${view.id}`} className="text-mint-600 font-bold hover:underline whitespace-nowrap">
-                              다시 보기
-                            </Link>
-                            <button
-                              onClick={() => handleRemoveRecentView(view.id)}
-                              className="text-navy-300 hover:text-red-500 p-0.5"
-                              title="삭제"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
               </div>
             )}
 
@@ -540,53 +403,7 @@ export default function MyPage() {
               </div>
             )}
 
-            {/* VIEW 3: PURCHASED RESOURCES LIST */}
-            {activeTab === 'purchased' && (
-              <div className="bg-white rounded-3xl p-6 shadow-card border border-warm-100 space-y-4">
-                <h3 className="text-sm md:text-base font-bold text-navy-900 flex items-center gap-1.5 border-b border-warm-100 pb-3">
-                  <Download className="w-5 h-5 text-mint-500" />
-                  구매 / 소장 자료실
-                </h3>
-
-                {purchasedResources.length === 0 ? (
-                  <div className="text-center py-16 space-y-3 border border-dashed border-warm-200 rounded-2xl bg-warm-50/20">
-                    <Download className="w-8 h-8 text-warm-300 mx-auto" />
-                    <p className="text-xs text-navy-400">구매하신 개별 결제 유료 자료가 없습니다.</p>
-                    <Link href="/resources" className="btn-secondary btn-xs inline-block">
-                      유료 패키지 보러가기
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {purchasedResources.map((res) => (
-                      <div key={res.id} className="bg-warm-50/50 rounded-xl p-4 border border-warm-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-mint-200 transition-colors">
-                        <div>
-                          <span className="text-[9px] px-1.5 py-0.5 bg-orange-50 text-orange-600 font-bold rounded mb-1 inline-block">
-                            {CATEGORY_LABELS[res.category as keyof typeof CATEGORY_LABELS] || res.category}
-                          </span>
-                          <h4 className="text-xs md:text-sm font-bold text-navy-900">{res.title}</h4>
-                          <span className="text-[9px] text-navy-400 block mt-0.5">{res.purchasedAt} 결제 승인 완료</span>
-                        </div>
-                        <div className="flex gap-2 self-end sm:self-auto">
-                          <Link href={`/resources/${res.id}`} className="btn-outline btn-xs py-1.5">
-                            자료 상세 보기
-                          </Link>
-                          <button
-                            onClick={() => alert(`'${res.title}' 원본 다운로드가 정상 완료되었습니다.`)}
-                            className="btn-secondary btn-xs py-1.5 gap-1"
-                          >
-                            <Download className="w-3 h-3" />
-                            다운로드
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* VIEW 4: SETTINGS & ACCOUNT MANAGEMENT */}
+            {/* VIEW 3: SETTINGS & ACCOUNT MANAGEMENT */}
             {activeTab === 'settings' && (
               <div className="space-y-6">
                 

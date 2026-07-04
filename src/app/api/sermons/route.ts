@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     if (sourceFilter === 'upload') {
       query = query.eq('source', 'upload')
     } else if (sourceFilter !== 'all') {
-      query = query.neq('source', 'upload')
+      // source=NULL (legacy) 또는 source != 'upload' (manual) — .neq는 NULL 제외하므로 .or 사용
+      query = query.or('source.is.null,source.neq.upload')
     }
     if (statusFilter) {
       query = query.eq('status', statusFilter)
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest) {
       season: body.season || null,
       audience: [],
       church_context: null,
+      source: body.source || 'manual',
       status: body.status || 'draft',
       version: 1,
       // B5: 다중 본문. 없으면 단일 본문으로 자동 변환

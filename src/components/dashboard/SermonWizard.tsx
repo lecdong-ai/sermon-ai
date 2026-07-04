@@ -179,6 +179,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   const [manuscriptLength, setManuscriptLength] = useState('30분')
   const [manuscriptStyle, setManuscriptStyle] = useState('강해식')
   const [manuscriptHistory, setManuscriptHistory] = useState<string[]>([])
+  const [toast, setToast] = useState<{ kind: 'success' | 'error' | 'info'; text: string } | null>(null)
 
   // ── Draft / Auto-save ──
   const DRAFT_KEY = editId ? `sermon-wizard-${editId}` : `sermon-wizard-new`
@@ -253,6 +254,14 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [saveDraft])
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
 
   // Auto-save on meaningful state change (debounced)
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -735,10 +744,11 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
   /* ── Save ── */
   const handleSave = async () => {
     if (!stepDone(s, 7)) {
-      alert('모든 단계를 완료한 후 저장할 수 있습니다.')
+      setToast({ kind: 'error', text: '모든 단계를 완료한 후 저장할 수 있습니다.' })
       return
     }
     setSaving(true)
+    setToast(null)
     try {
       const flat: any = {
         title: s.title,
@@ -768,7 +778,7 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
 
       if (editId) {
         const existing = getSermon(editId)
-        if (!existing) { alert('수정할 설교를 찾을 수 없습니다.'); setSaving(false); return }
+        if (!existing) { setToast({ kind: 'error', text: '수정할 설교를 찾을 수 없습니다.' }); setSaving(false); return }
         const patched: Sermon = {
           ...existing,
           ...flat,
@@ -781,9 +791,10 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         if (result) {
           clearDraft()
           cleanupDrafts()
-          router.push(`/dashboard/sermons/${editId}`)
+          setToast({ kind: 'success', text: '수정 완료!' })
+          setTimeout(() => router.push(`/dashboard/sermons/${editId}`), 600)
         } else {
-          alert('수정에 실패했습니다.')
+          setToast({ kind: 'error', text: '수정에 실패했습니다. 로그인 상태와 한도를 확인해주세요.' })
         }
       } else {
         const result = await createSermon({
@@ -793,12 +804,15 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         if (result) {
           clearDraft()
           cleanupDrafts()
-          router.push(`/dashboard/sermons/${result.id}`)
+          setToast({ kind: 'success', text: '저장 완료!' })
+          setTimeout(() => router.push(`/dashboard/sermons/${result.id}`), 600)
         } else {
-          alert('저장에 실패했습니다.')
+          setToast({ kind: 'error', text: '저장에 실패했습니다. 잠시 후 다시 시도해주세요.' })
         }
       }
-    } catch { alert('저장 중 오류가 발생했습니다.') }
+    } catch (e: any) {
+      setToast({ kind: 'error', text: `저장 중 오류: ${e?.message || '알 수 없는 오류'}` })
+    }
     finally { setSaving(false) }
   }
 
@@ -1491,6 +1505,19 @@ export default function SermonWizard({ initialTitle, initialPassage, initialDate
         </div>
       </StepContainer>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl border backdrop-blur-md text-sm font-medium transition-all shadow-lg ${
+          toast.kind === 'success'
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+            : toast.kind === 'error'
+            ? 'bg-red-500/15 border-red-500/40 text-red-200'
+            : 'bg-blue-500/15 border-blue-500/40 text-blue-200'
+        }`}>
+          {toast.text}
+        </div>
+      )}
     </div>
   )
 }

@@ -20,12 +20,8 @@ const PILLARS = [
   { title: '운영문서 템플릿', desc: '연간 예산/결산 양식, 부서 일지, 출석부 통계표 등 정형화된 교육 실무 행정 양식입니다.', icon: ClipboardList, color: 'text-navy-600', bgColor: 'bg-navy-50' },
 ];
 
-const CATEGORIES = [
-  { title: '학부모 소통', icon: MessageSquare, desc: '개학/방학 안내문, 여름캠프 신청서, 간담회 초대장 등 12개 템플릿', path: '/resources?category=parent_comm', color: 'text-mint-600', bgColor: 'bg-mint-50' },
-  { title: '교사 교육', icon: BookOpen, desc: '오리엔테이션 가이드, 분반 매뉴얼, 찬양 리더십 지침 등 6개 양식', path: '/resources?category=teacher_edu', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  { title: '운영 문서', icon: ClipboardList, desc: '예배 순서지, 출석부 통계, 예결산 보고서 등 6개 정수 문서', path: '/resources?category=operation', color: 'text-navy-600', bgColor: 'bg-navy-50' },
-  { title: '시즌 행사', icon: CalendarHeart, desc: '여름 성경학교, 절기 발표회, 크리스마스 등 시즈널 특별 체크리스트', path: '/resources?category=season_event', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-];
+
+
 
 const FREE_ITEMS = [
   { title: '학부모 공지문 샘플 10종', desc: '가장 많이 쓰는 절기 안내, 개학, 수련회 등 공지문 모음집', size: 'PDF / HWP', count: '1,205회 다운로드' },
@@ -163,36 +159,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. 대표 자료 섹션 */}
-      <section className="section bg-warm-50">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold text-navy-400 uppercase tracking-wider">주요 카테고리</span>
-            <h2 className="section-title mt-2">필요한 모든 실무 영역을 포괄합니다</h2>
-            <p className="section-subtitle mx-auto">사역 현장에서 반복해 마주하는 4가지 카테고리의 템플릿입니다.</p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {CATEGORIES.map((cat, i) => {
-              const Icon = cat.icon;
-              return (
-                <Link key={i} href={cat.path} className="card p-6 bg-white border border-warm-200 flex flex-col justify-between group">
-                  <div>
-                    <div className={`w-12 h-12 rounded-xl ${cat.bgColor} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-base font-bold text-navy-900 mb-2 group-hover:text-mint-600 transition-colors">{cat.title}</h3>
-                    <p className="text-xs text-navy-400 leading-relaxed mb-4">{cat.desc}</p>
-                  </div>
-                  <span className="text-xs font-bold text-mint-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-                    자료 리스트 보기 <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       {/* 5. 공지문 작성기 소개 섹션 */}
       <section className="section bg-white border-y border-warm-100">
@@ -321,7 +288,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-mint-500" /> 유료 개별 자료 영구 보관</li>
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-mint-500" /> 하루 10회 공지문 작성</li>
               </ul>
-              <Link href="/resources" className="btn-secondary btn-sm w-full">자료 보기</Link>
+              <Link href="/pricing" className="btn-secondary btn-sm w-full">요금제 보기</Link>
             </div>
 
             {/* Monthly */}

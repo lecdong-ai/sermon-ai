@@ -1,14 +1,16 @@
 'use client'
 
-import { Suspense, useState, useMemo } from 'react'
+import { Suspense, useState, useMemo, useEffect } from 'react'
 import { useApp } from '@/lib/dashboard/store'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/components/AuthProvider'
 import { ViewMode, Sermon } from '@/lib/dashboard/types'
 import { BIBLE_BOOKS, SERMON_TYPES, AUDIENCES, SEASONS } from '@/lib/dashboard/constants'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ChevronDown, ChevronRight, Bug } from 'lucide-react'
 
 function SermonsContent() {
   const { state, getSeries, getTheme } = useApp()
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { sermons, themes, series, seminars } = state
@@ -24,6 +26,20 @@ function SermonsContent() {
   const [filterSeries, setFilterSeries] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title' | 'book'>('date-desc')
   const [generatingId, setGeneratingId] = useState<string | null>(null)
+  const [debugOpen, setDebugOpen] = useState(false)
+  const [rawApiData, setRawApiData] = useState<any>(null)
+  const [rawApiError, setRawApiError] = useState<string | null>(null)
+
+  const fetchRaw = async () => {
+    setRawApiError(null)
+    try {
+      const res = await fetch('/api/sermons')
+      const data = await res.json()
+      setRawApiData({ status: res.status, ...data })
+    } catch (e: any) {
+      setRawApiError(e.message)
+    }
+  }
 
   const handleGenerate = async (sermon: Sermon) => {
     if (generatingId) return
@@ -208,6 +224,57 @@ function SermonsContent() {
           ))}
         </div>
       )}
+
+      {/* ── 진단 패널 (임시) ── */}
+      <div className="mt-8 border-t border-white/10 pt-4">
+        <button
+          onClick={() => { setDebugOpen(!debugOpen); if (!debugOpen) fetchRaw() }}
+          className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300 font-bold"
+        >
+          <Bug className="w-3.5 h-3.5" />
+          {debugOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          진단 패널 (F5 후 새 설교 보임/안보임 확인용)
+        </button>
+        {debugOpen && (
+          <div className="mt-3 p-4 rounded-xl bg-black/30 border border-white/10 text-[11px] font-mono space-y-2">
+            <div className="text-slate-400">
+              <span className="text-amber-400">useAuth.user.id</span>: <span className="text-white">{user?.id || '(null)'}</span> {user?.id && <span className="text-slate-500">(앞 8자: {user.id.slice(0, 8)})</span>}
+            </div>
+            <div className="text-slate-400">
+              <span className="text-amber-400">state.sermons.length</span>: <span className="text-white">{sermons.length}</span>
+              <span className="text-slate-500"> | completed 필터 후: </span>
+              <span className="text-white">{sermons.filter(s => s.status === 'completed').length}</span>
+            </div>
+            <div className="text-slate-400">
+              <span className="text-amber-400">/api/sermons raw response</span>:
+              {rawApiError ? (
+                <span className="text-red-400"> 에러: {rawApiError}</span>
+              ) : !rawApiData ? (
+                <span className="text-slate-500"> 로딩 안됨</span>
+              ) : (
+                <span className="text-white"> success={String(rawApiData.success)}, status={rawApiData.status}, count={rawApiData.data?.length ?? 0}</span>
+              )}
+              <button onClick={fetchRaw} className="ml-2 px-2 py-0.5 rounded bg-white/10 text-slate-300 hover:bg-white/20">재조회</button>
+            </div>
+            {rawApiData?.data && rawApiData.data.length > 0 && (
+              <div className="mt-2">
+                <div className="text-amber-400 mb-1">API 응답 설교 목록:</div>
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {rawApiData.data.map((s: any, i: number) => (
+                    <div key={s.id || i} className="text-slate-300 pl-2 border-l-2 border-white/10">
+                      [{i + 1}] <span className="text-cyan-300">id={s.id?.slice(0, 8)}</span> | status=<span className={s.status === 'completed' ? 'text-emerald-400' : s.status === 'draft' ? 'text-amber-400' : 'text-slate-400'}>&quot;{s.status}&quot;</span> | title=&quot;{s.title?.slice(0, 30) || '(제목없음)'}&quot;
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="text-[10px] text-slate-500 mt-2">
+              💡 새로고침 후 새 설교가 raw 목록에는 있는데 completed 필터에서 사라지면 → status 문제.
+              <br />raw 목록에 아예 안 보이면 → user_id 불일치 문제.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

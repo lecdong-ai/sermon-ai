@@ -1,70 +1,7 @@
 import { supabase, toUUID, fromUUID } from './supabase';
 
 // --------------------------------------------------
-// 1. 자료실 리소스 (resources)
-// --------------------------------------------------
-export async function getDBResources(category?: string) {
-  try {
-    let query = supabase.from('resources').select('*');
-    if (category && category !== 'all') {
-      query = query.eq('category', category);
-    }
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) throw error;
-    
-    return (data || []).map((r: any) => ({
-      ...r,
-      id: fromUUID(r.id),
-      isFree: r.is_free,
-      downloadCount: r.download_count || 0,
-      viewCount: r.view_count || 0,
-      createdAt: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : '',
-    }));
-  } catch (err) {
-    console.warn('getDBResources API 실패, 로컬 데이터로 대체 동작합니다:', err);
-    const { resources } = require('@/data/resources');
-    const filtered = category && category !== 'all' 
-      ? resources.filter((r: any) => r.category === category)
-      : resources;
-    return filtered.map((r: any) => ({
-      ...r,
-      createdAt: r.createdAt || new Date().toISOString().split('T')[0]
-    }));
-  }
-}
-
-export async function getDBResourceById(id: string) {
-  try {
-    const uuid = toUUID(id);
-    const { data, error } = await supabase
-      .from('resources')
-      .select('*')
-      .eq('id', uuid)
-      .single();
-    if (error) throw error;
-    
-    return {
-      ...data,
-      id: fromUUID(data.id),
-      isFree: data.is_free,
-      downloadCount: data.download_count || 0,
-      viewCount: data.view_count || 0,
-      createdAt: data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : '',
-    };
-  } catch (err) {
-    console.warn(`getDBResourceById(${id}) 실패, 로컬 데이터로 대체 동작합니다:`, err);
-    const { resources } = require('@/data/resources');
-    const item = resources.find((r: any) => r.id === id);
-    if (!item) return null;
-    return {
-      ...item,
-      createdAt: item.createdAt || new Date().toISOString().split('T')[0]
-    };
-  }
-}
-
-// --------------------------------------------------
-// 2. 저장한 공지문 (saved_messages)
+// 1. 저장한 공지문 (saved_messages)
 // --------------------------------------------------
 export async function getSavedNotices(userId: string) {
   try {
@@ -150,7 +87,7 @@ export async function deleteSavedNotice(id: string) {
 }
 
 // --------------------------------------------------
-// 3. 즐겨찾기 (favorites)
+// 2. 즐겨찾기 (favorites)
 // --------------------------------------------------
 export async function getFavorites(userId: string) {
   try {
@@ -212,29 +149,13 @@ export async function toggleFavorite(userId: string, resourceId: string) {
       return true;
     }
   } catch (err) {
-    console.warn('toggleFavorite 실패, localStorage 즐겨찾기 목록을 업데이트합니다:', err);
-    if (typeof window !== 'undefined') {
-      const list = JSON.parse(localStorage.getItem('cs_bookmarks') || '[]');
-      const exists = list.some((b: any) => b.id === resourceId);
-      if (exists) {
-        const updated = list.filter((b: any) => b.id !== resourceId);
-        localStorage.setItem('cs_bookmarks', JSON.stringify(updated));
-        return false;
-      } else {
-        const { resources } = require('@/data/resources');
-        const res = resources.find((r: any) => r.id === resourceId);
-        if (res) {
-          localStorage.setItem('cs_bookmarks', JSON.stringify([...list, res]));
-          return true;
-        }
-      }
-    }
+    console.warn('toggleFavorite 실패:', err);
     return false;
   }
 }
 
 // --------------------------------------------------
-// 4. 최근 본 자료 (recent_views)
+// 3. 최근 본 자료 (recent_views)
 // --------------------------------------------------
 export async function getRecentViews(userId: string) {
   try {
@@ -287,27 +208,7 @@ export async function addRecentView(userId: string, resourceId: string) {
       .insert([{ user_id: userId, resource_id: uuid }]);
     if (error) throw error;
   } catch (err) {
-    console.warn('addRecentView 실패, localStorage 최근 본 목록에 반영합니다:', err);
-    if (typeof window !== 'undefined' && resourceId) {
-      const recent = JSON.parse(localStorage.getItem('cs_recent_viewed') || '[]');
-      const filtered = recent.filter((r: any) => r.id !== resourceId);
-      const { resources } = require('@/data/resources');
-      const item = resources.find((r: any) => r.id === resourceId);
-      if (item) {
-        const updated = [
-          { 
-            id: 'rv_' + Date.now(), 
-            resourceId: item.id, 
-            id_original: item.id,
-            title: item.title, 
-            category: item.category, 
-            viewedAt: new Date().toLocaleDateString() 
-          },
-          ...filtered
-        ].slice(0, 5);
-        localStorage.setItem('cs_recent_viewed', JSON.stringify(updated));
-      }
-    }
+    console.warn('addRecentView 실패:', err);
   }
 }
 
@@ -329,7 +230,7 @@ export async function removeRecentView(id: string) {
 }
 
 // --------------------------------------------------
-// 5. 구매 / 소장 목록 (purchases)
+// 4. 구매/소장 목록 (purchases)
 // --------------------------------------------------
 export async function getPurchasedResources(userId: string) {
   try {
@@ -386,24 +287,7 @@ export async function addPurchase(userId: string, resourceId: string, amount: nu
     if (error) throw error;
     return data?.[0];
   } catch (err) {
-    console.warn('addPurchase 실패, localStorage 구매 내역에 반영합니다:', err);
-    if (typeof window !== 'undefined') {
-      const list = JSON.parse(localStorage.getItem('cs_purchased_resources') || '[]');
-      const { resources } = require('@/data/resources');
-      const item = resources.find((r: any) => r.id === resourceId);
-      if (item) {
-        const newPurchase = {
-          id: resourceId,
-          purchaseId: 'pur_' + Date.now(),
-          purchasedAt: new Date().toLocaleDateString(),
-          amount: amount,
-          title: item.title,
-          category: item.category
-        };
-        localStorage.setItem('cs_purchased_resources', JSON.stringify([newPurchase, ...list]));
-        return newPurchase;
-      }
-    }
+    console.warn('addPurchase 실패:', err);
     return null;
   }
 }

@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, getCurrentUserProfile, signInUser, signUpUser, signOutUser } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -21,6 +22,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+  useEffect(() => {
+    try {
+      setSupabase(createSupabaseClient());
+    } catch (err) {
+      console.error('Supabase 클라이언트 생성 실패:', err);
+    }
+  }, []);
 
   // 1. 유저 프로필 조회 및 상태 동기화
   const refreshUser = async () => {
@@ -37,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 2. 초기 로드 및 Supabase Auth 상태 리스너 연동
   useEffect(() => {
+    if (!supabase) return;
     refreshUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
@@ -51,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   // 3. 로그인 함수
   const login = async (email: string, password: string) => {

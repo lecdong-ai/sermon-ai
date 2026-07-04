@@ -27,9 +27,7 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-4">서비스</h4>
             <ul className="space-y-2.5">
-              <li><Link href="/resources" className="text-sm text-navy-300 hover:text-mint-400 transition-colors">자료센터</Link></li>
               <li><Link href="/notice-writer" className="text-sm text-navy-300 hover:text-mint-400 transition-colors">공지문 작성기</Link></li>
-              <li><Link href="/free" className="text-sm text-navy-300 hover:text-mint-400 transition-colors">무료자료</Link></li>
               <li><Link href="/pricing" className="text-sm text-navy-300 hover:text-mint-400 transition-colors">요금제</Link></li>
             </ul>
           </div>

@@ -117,10 +117,11 @@ const FAQS = [
 ];
 
 import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import LoginModal from '@/components/LoginModal';
 
 export default function PricingPage() {
+  const supabase = createSupabaseClient();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [paySuccess, setPaySuccess] = useState(false);
   const [selectedPlanName, setSelectedPlanName] = useState('');
@@ -134,13 +135,13 @@ export default function PricingPage() {
         setShowLoginModal(true);
       } else {
         alert('이미 무료 플랜으로 이용 중이십니다! 자료실이나 공지문 작성기를 마음껏 시작해 보세요.');
-        window.location.href = '/resources';
+        window.location.href = '/';
       }
       return;
     }
 
     if (planId === 'single') {
-      window.location.href = '/resources';
+      window.location.href = '/';
       return;
     }
 

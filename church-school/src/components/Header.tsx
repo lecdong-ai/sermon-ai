@@ -8,9 +8,8 @@ import LoginModal from './LoginModal';
 
 const NAV_ITEMS = [
   { href: '/', label: '홈' },
-  { href: '/resources', label: '자료센터' },
+  { href: '/projects', label: '설교 프로젝트' },
   { href: '/notice-writer', label: '공지문 작성기' },
-  { href: '/free', label: '무료자료' },
   { href: '/pricing', label: '요금제' },
 ];
 
@@ -20,6 +19,7 @@ export default function Header() {
   const { isLoggedIn, user, logout } = useAuth();
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-warm-100 shadow-nav">
       <div className="container-custom">
         <div className="flex items-center justify-between h-16">
@@ -153,8 +153,10 @@ export default function Header() {
         </div>
       )}
 
-      {/* Auth Modal */}
-      <LoginModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </header>
+
+      {/* Auth Modal (header 밖으로 이동 — fixed z-stacking 이슈 해결) */}
+      <LoginModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+    </>
   );
 }

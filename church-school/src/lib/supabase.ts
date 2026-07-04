@@ -1,24 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 const isValidUrl = supabaseUrl.startsWith('http') && !supabaseUrl.includes('YOUR_PROJECT');
 
-// Next.js 빌드 및 실행 시 에러 방지용 프록시 객체 생성
 const createDummyClient = () => {
-  return new Proxy({} as any, {
-    get: () => {
-      return () => Promise.resolve({ data: null, error: new Error('Supabase URL이 유효하지 않습니다.') });
-    }
-  });
+  const _dummyError = new Error('Supabase URL이 유효하지 않습니다.');
+
+  const buildProxy = () => {
+    const fn = (...args: any[]) => {
+      if (args.length === 1 && typeof args[0] === 'function') {
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      }
+      return Promise.resolve({ data: null, error: _dummyError });
+    };
+    return new Proxy(fn, {
+      get(_target, prop) {
+        if (prop === 'then' || prop === 'catch') return undefined;
+        if (prop === 'subscription') return { unsubscribe: () => {} };
+        return buildProxy();
+      },
+      apply(_target, _thisArg, args) {
+        return fn(...args);
+      },
+    });
+  };
+
+  return buildProxy();
 };
 
-export const supabase = isValidUrl 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : createDummyClient();
+export const supabaseAdmin = (isValidUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : createDummyClient()) as unknown as SupabaseClient;
 
-// r1 ~ r24 등 mock 리소스 ID를 Supabase UUID 표준 포맷으로 맵핑하는 헬퍼
 export function toUUID(id: string): string {
   if (id.startsWith('r') && !isNaN(Number(id.slice(1)))) {
     const num = id.slice(1).padStart(12, '0');
@@ -35,4 +53,3 @@ export function fromUUID(uuid: string): string {
   }
   return uuid;
 }
-
