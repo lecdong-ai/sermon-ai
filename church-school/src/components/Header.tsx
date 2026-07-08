@@ -9,6 +9,8 @@ import LoginModal from './LoginModal';
 const NAV_ITEMS = [
   { href: '/', label: '홈' },
   { href: '/projects', label: '설교 프로젝트' },
+  { href: '/workspace', label: '워크스페이스' },
+  { href: '/ppt-studio', label: 'PPT 스튜디오' },
   { href: '/notice-writer', label: '공지문 작성기' },
   { href: '/pricing', label: '요금제' },
 ];

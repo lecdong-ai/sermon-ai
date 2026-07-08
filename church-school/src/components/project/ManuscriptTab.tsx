@@ -20,6 +20,7 @@ import {
 import type { ManuscriptVersion } from '@/lib/project/johnVersionData'
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/project/projectStorage'
+import { syncToSupabase } from '@/lib/project/projectSync'
 import ManuscriptStudio from './ManuscriptStudio'
 
 interface Props {
@@ -716,6 +717,58 @@ export default function ManuscriptTab({ project, onStatusUpdate }: Props) {
     doSave(manuscriptRef.current)
   }, [doSave])
 
+  const [sendingToWorkspace, setSendingToWorkspace] = useState(false)
+  const handleSendToWorkspace = useCallback(async () => {
+    if (sendingToWorkspace) return
+    setSendingToWorkspace(true)
+    try {
+      const ms = manuscriptRef.current
+      const parts: string[] = []
+      if (ms.coreMessage) parts.push(`[핵심 메시지]\n${ms.coreMessage}`)
+      for (const s of ms.sections) {
+        if (s.content.trim()) parts.push(`[${s.label}]\n${s.content}`)
+      }
+      const rawText = parts.join('\n\n')
+      if (!rawText.trim()) {
+        alert('원고 내용이 없습니다. 먼저 설교 원고를 작성해주세요.')
+        return
+      }
+      const passageText = project.passages && project.passages.length > 0
+        ? project.passages.map(p => p.passage).join(', ')
+        : project.passage
+      const res = await fetch('/api/sermons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: project.title || '제목 없음',
+          normalizedPassage: passageText || '',
+          bibleBook: project.book || '',
+          chapterStart: project.chapter || null,
+          verseStart: project.verseStart || null,
+          verseEnd: project.verseEnd || null,
+          date: project.sermonDate || null,
+          preacher: project.preacher || '',
+          sermonType: project.sermonType || '',
+          audience: project.audience || [],
+          season: project.season || '',
+          source: 'manuscript',
+          raw_text: rawText,
+          file_name: `${project.title || '설교원고'}.txt`,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.data?.id) {
+        window.location.href = `/workspace?id=${data.data.id}`
+      } else {
+        alert(data.error || '워크스페이스 생성 중 오류가 발생했습니다.')
+      }
+    } catch (e: any) {
+      alert(e?.message || '네트워크 오류가 발생했습니다.')
+    } finally {
+      setSendingToWorkspace(false)
+    }
+  }, [sendingToWorkspace, project])
+
   useEffect(() => {
     mountedRef.current = true
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -765,11 +818,14 @@ export default function ManuscriptTab({ project, onStatusUpdate }: Props) {
     }
   }, [project.passages])
 
-  // Persist to localStorage whenever manuscript changes (after initial load)
+  // Persist to localStorage + Supabase whenever manuscript changes (after initial load)
   useEffect(() => {
     if (!manuscriptLoadedRef.current) return
+    const data = { ...manuscript, _savedAt: Date.now() }
     const timer = setTimeout(() => {
-      setStorageItem(`manuscript_${project.id}`, { ...manuscript, _savedAt: Date.now() })
+      setStorageItem(`manuscript_${project.id}`, data)
+      syncToSupabase(project.id, 'manuscriptData', data)
+        .catch(() => {})
     }, 800)
     return () => clearTimeout(timer)
   }, [manuscript, project.id])
@@ -1645,6 +1701,19 @@ export default function ManuscriptTab({ project, onStatusUpdate }: Props) {
         >
           <BookOpen className="w-3.5 h-3.5" />
           원고 스튜디오
+        </button>
+        <div className="w-px h-4 bg-white/10" />
+        <button
+          onClick={handleSendToWorkspace}
+          disabled={sendingToWorkspace}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition-colors disabled:opacity-50"
+        >
+          {sendingToWorkspace ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="w-3.5 h-3.5" />
+          )}
+          워크스페이스로
         </button>
         <div className="w-px h-4 bg-white/10" />
         <button

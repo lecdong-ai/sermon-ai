@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
-import { generatePptSlides } from '@/lib/gemini'
+import { generatePptSlidesGpt } from '@/lib/openai'
 
 function getSupabaseAdmin(request: NextRequest) {
   return createServerClient(
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    const slides = await generatePptSlides(text, { theme, slideCount })
+    const slides = await generatePptSlidesGpt(text, { theme, slideCount })
 
     if (sermonId && user) {
       const { data: ownerCheck } = await supabaseAdmin

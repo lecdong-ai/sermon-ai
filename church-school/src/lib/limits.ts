@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase'
+import { projectSupabaseAdmin } from './project/supabase'
 import { isAdmin } from './admin'
 import { getUserFromRequest } from './auth'
 
@@ -10,12 +11,14 @@ import { getUserFromRequest } from './auth'
  *   - 새 설교 등록 (manual): 10편/30일
  *   - 말씀 연구실 (project): 1편/30일
  *   - 유튜브: 1회/30일
+ *   - PPT 이미지 생성: 5장/30일
  *
  * 사역 동참자:
  *   - AI 분석 6종: 20편/30일
  *   - 새 설교 등록: 20편/30일
  *   - 설교 프로젝트: 20편/30일
  *   - 유튜브: 10회/30일
+ *   - PPT 이미지 생성: 15장/30일
  *
  * 리셋: 가입일 기준 30일 롤링
  */
@@ -168,6 +171,39 @@ async function countYoutubeInPeriod(userId: string, periodStart: Date): Promise<
     .gte('created_at', periodStart.toISOString())
 
   return count || 0
+}
+
+/** ppt_image_generations 카운트 (슬라이드 장 단위, project Supabase) */
+async function countPptImageInPeriod(userId: string, periodStart: Date): Promise<number> {
+  const { count, error } = await projectSupabaseAdmin
+    .from('ppt_image_generations')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', periodStart.toISOString())
+
+  if (error) {
+    // 테이블이 아직 없을 수 있음 → 0으로 처리
+    return 0
+  }
+  return count || 0
+}
+
+/** PPT 이미지 생성 기록 insert (슬라이드 장 수만큼, project Supabase) */
+export async function recordPptImageGenerations(
+  userId: string,
+  sermonId: string | null,
+  count: number,
+  mode: 'hybrid' | 'full',
+): Promise<void> {
+  if (count <= 0) return
+  const now = new Date().toISOString()
+  const rows = Array.from({ length: count }, () => ({
+    user_id: userId,
+    sermon_id: sermonId,
+    mode,
+    created_at: now,
+  }))
+  await projectSupabaseAdmin.from('ppt_image_generations').insert(rows)
 }
 
 /** 사용자 등급 + 한도 정보 조회 (UI 표시용) */

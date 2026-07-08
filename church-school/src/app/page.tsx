@@ -62,7 +62,7 @@ export default function HomePage() {
               무료자료 받기
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link href="/notice-writer" className="btn-outline btn-lg w-full sm:w-auto border-white/20 text-white hover:bg-white/10">
+            <Link href="/notice-writer" className="btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-navy-900 font-semibold rounded-xl shadow-button hover:bg-warm-100 transition-all duration-200 hover:-translate-y-0.5">
               <Sparkles className="w-5 h-5" />
               공지문 작성해보기
             </Link>

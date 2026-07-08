@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Loader2, Plus, X } from 'lucide-react'
 import PptStudio from '@/components/PptStudio'
 import FileUpload from '@/components/FileUpload'
@@ -17,8 +17,10 @@ interface SermonListItem {
 
 function PageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialSermonId = searchParams.get('id')
   const [sermonList, setSermonList] = useState<SermonListItem[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(initialSermonId)
   const [selectedSermon, setSelectedSermon] = useState<SermonListItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)

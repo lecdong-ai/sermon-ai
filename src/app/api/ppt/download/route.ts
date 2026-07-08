@@ -10,7 +10,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '슬라이드 데이터가 필요합니다.' }, { status: 400 })
     }
 
-    const buffer = await generatePptx(slides as PptSlide[], title || 'PPT', theme || 'modern')
+    const buffer = await generatePptx(
+      slides as PptSlide[],
+      title || 'PPT',
+      theme || 'modern',
+    )
 
     const fileName = encodeURIComponent(`${title || 'ppt'}-${Date.now()}.pptx`)
 

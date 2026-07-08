@@ -170,6 +170,39 @@ async function countYoutubeInPeriod(userId: string, periodStart: Date): Promise<
   return count || 0
 }
 
+/** ppt_image_generations 카운트 (슬라이드 장 단위) */
+async function countPptImageInPeriod(userId: string, periodStart: Date): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('ppt_image_generations')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', periodStart.toISOString())
+
+  if (error) {
+    // 테이블이 아직 없을 수 있음 → 0으로 처리
+    return 0
+  }
+  return count || 0
+}
+
+/** PPT 이미지 생성 기록 insert (슬라이드 장 수만큼) */
+export async function recordPptImageGenerations(
+  userId: string,
+  sermonId: string | null,
+  count: number,
+  mode: 'hybrid' | 'full',
+): Promise<void> {
+  if (count <= 0) return
+  const now = new Date().toISOString()
+  const rows = Array.from({ length: count }, () => ({
+    user_id: userId,
+    sermon_id: sermonId,
+    mode,
+    created_at: now,
+  }))
+  await supabaseAdmin.from('ppt_image_generations').insert(rows)
+}
+
 /** 사용자 등급 + 한도 정보 조회 (UI 표시용) */
 export async function getLimitInfo(
   userId: string,

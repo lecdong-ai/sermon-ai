@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '접근 권한이 없습니다.' }, { status: 403 })
     }
 
+    const slidesCleaned = slides as any[]
+
     const { data: existing } = await supabaseAdmin
       .from('sermons')
       .select('result')
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const merged = {
       ...(existing?.result || {}),
-      ppt: { slides },
+      ppt: { slides: slidesCleaned },
     }
 
     const { error } = await supabaseAdmin

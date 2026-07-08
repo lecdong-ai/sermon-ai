@@ -1,5 +1,5 @@
 import PptxGenJS from 'pptxgenjs'
-import type { PptSlide } from '@/types'
+import type { PptSlide, PptTextStyle, PptSlideTextPosition } from '@/types'
 
 interface ThemeColors {
   primary: string
@@ -37,184 +37,176 @@ function getTheme(themeName: string): ThemeColors {
   return THEMES[themeName] || THEMES.modern
 }
 
+function getSlideColors(slide: PptSlide, theme: ThemeColors) {
+  return {
+    primary: slide.color?.primary || theme.primary,
+    accent: slide.color?.accent || theme.secondary,
+    background: slide.color?.background || theme.background,
+  }
+}
+
+function isDarkColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length !== 6) return false
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum < 0.5
+}
+
+// ─── 텍스트 스타일 병합 유틸 (사용자 편집값 → 기본값 폴백) ────
+
+const DEFAULT_FONT = 'Malgun Gothic'
+
+/** 레이아웃별 제목 기본 스타일 */
+function defaultTitleStyle(layout: string, textColor: string): PptTextStyle {
+  const sizeMap: Record<string, number> = {
+    'title': 36, 'closing': 32, 'section-header': 36, 'quote': 22,
+    'bullets': 24, 'two-column': 24, 'vs-contrast': 24, 'timeline-flow': 24,
+    'central-focus': 24, 'grid-matrix': 24,
+  }
+  const alignMap: Record<string, 'left' | 'center'> = {
+    'title': 'center', 'closing': 'center', 'section-header': 'center', 'quote': 'left',
+  }
+  return {
+    fontFace: DEFAULT_FONT,
+    fontSize: sizeMap[layout] || 24,
+    bold: true,
+    italic: false,
+    underline: false,
+    color: textColor,
+    align: alignMap[layout] || 'left',
+    valign: 'middle',
+    lineSpacing: 1.2,
+  }
+}
+
+/** 레이아웃별 본문 기본 스타일 */
+function defaultBodyStyle(layout: string, textColor: string): PptTextStyle {
+  const sizeMap: Record<string, number> = {
+    'title': 18, 'closing': 16, 'section-header': 15, 'quote': 17,
+    'bullets': 16, 'two-column': 14, 'vs-contrast': 12, 'timeline-flow': 12,
+    'central-focus': 14, 'grid-matrix': 12,
+  }
+  const alignMap: Record<string, 'left' | 'center'> = {
+    'title': 'center', 'closing': 'center', 'section-header': 'center', 'quote': 'left',
+  }
+  return {
+    fontFace: DEFAULT_FONT,
+    fontSize: sizeMap[layout] || 16,
+    bold: false,
+    italic: layout === 'quote',
+    underline: false,
+    color: textColor,
+    align: alignMap[layout] || 'left',
+    valign: 'top',
+    lineSpacing: 1.5,
+  }
+}
+
+/** 사용자 스타일 + 기본 스타일 병합 (사용자값 우선) */
+function mergeStyle(user: PptTextStyle | undefined, fallback: PptTextStyle): PptTextStyle {
+  if (!user) return fallback
+  return {
+    fontFace: user.fontFace || fallback.fontFace,
+    fontSize: user.fontSize ?? fallback.fontSize,
+    bold: user.bold ?? fallback.bold,
+    italic: user.italic ?? fallback.italic,
+    underline: user.underline ?? fallback.underline,
+    color: user.color || fallback.color,
+    align: user.align || fallback.align,
+    valign: user.valign || fallback.valign,
+    lineSpacing: user.lineSpacing ?? fallback.lineSpacing,
+  }
+}
+
+/** PptTextStyle → pptxgenjs addText 옵션 변환 */
+function textOptions(
+  style: PptTextStyle,
+  pos: PptSlideTextPosition | undefined,
+  fallbackPos: { x: number; y: number; w: number; h: number },
+): PptxGenJS.TextPropsOptions {
+  return {
+    x: pos?.x ?? fallbackPos.x,
+    y: pos?.y ?? fallbackPos.y,
+    w: pos?.w ?? fallbackPos.w,
+    h: pos?.h ?? fallbackPos.h,
+    fontSize: style.fontSize,
+    fontFace: style.fontFace,
+    color: style.color,
+    bold: style.bold,
+    italic: style.italic,
+    underline: style.underline ? { style: 'sng' } : undefined,
+    align: style.align as any,
+    valign: style.valign as any,
+    lineSpacingMultiple: style.lineSpacing,
+  }
+}
+
+// ─── 텍스트 전용 렌더러 ─────────────────────
+
 function addTitleSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
   const s = pres.addSlide()
-  s.background = { color: theme.primary }
-  s.addText(slide.title, {
-    x: 0.5, y: 1.5, w: 9, h: 2,
-    fontSize: 36,
-    fontFace: 'Malgun Gothic',
-    color: 'FFFFFF',
-    bold: true,
-    align: 'center',
-    valign: 'middle',
-  })
+  const colors = getSlideColors(slide, theme)
+  s.background = { color: colors.primary }
+  const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('title', 'FFFFFF'))
+  const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('title', 'FFFFFF'))
+  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 1.5, w: 9, h: 2 }))
   if (slide.content.length > 0) {
-    s.addText(slide.content.join('\n'), {
-      x: 1, y: 3.8, w: 8, h: 2,
-      fontSize: 18,
-      fontFace: 'Malgun Gothic',
-      color: 'FFFFFF',
-      align: 'center',
-      valign: 'top',
-      lineSpacingMultiple: 1.5,
-    })
+    s.addText(slide.content.join('\n'), textOptions(bStyle, slide.bodyPosition, { x: 1, y: 3.8, w: 8, h: 2 }))
   }
 }
 
 function addBulletsSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
   const s = pres.addSlide()
-  s.background = { color: theme.background }
-
-  const titleShape = s.addText(slide.title, {
-    x: 0.5, y: 0.3, w: 9, h: 0.8,
-    fontSize: 24,
-    fontFace: 'Malgun Gothic',
-    color: theme.primary,
-    bold: true,
-    align: 'left',
-    valign: 'middle',
-  })
-
-  const bulletText = slide.content.map((c) => `• ${c}`).join('\n')
-  s.addText(bulletText, {
-    x: 0.7, y: 1.3, w: 8.6, h: 4.5,
-    fontSize: 16,
-    fontFace: 'Malgun Gothic',
-    color: theme.text,
-    valign: 'top',
-    lineSpacingMultiple: 1.6,
+  const colors = getSlideColors(slide, theme)
+  s.background = { color: colors.background }
+  const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('bullets', colors.primary))
+  const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('bullets', theme.text))
+  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 0.3, w: 9, h: 0.8 }))
+  s.addText(slide.content.map((c) => `• ${c}`).join('\n'), {
+    ...textOptions(bStyle, slide.bodyPosition, { x: 0.7, y: 1.3, w: 8.6, h: 4.5 }),
     paraSpaceAfter: 8,
   })
-
   s.addShape(pres.ShapeType.line, {
     x: 0.5, y: 1.15, w: 9, h: 0,
-    line: { color: theme.secondary, width: 2 },
+    line: { color: colors.accent, width: 2 },
   })
 }
 
 function addSectionHeaderSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
   const s = pres.addSlide()
-  s.background = { color: theme.accent }
-  s.addText(slide.title, {
-    x: 0.5, y: 1.5, w: 9, h: 3,
-    fontSize: 36,
-    fontFace: 'Malgun Gothic',
-    color: theme.primary,
-    bold: true,
-    align: 'center',
-    valign: 'middle',
-  })
+  const colors = getSlideColors(slide, theme)
+  s.background = { color: colors.accent }
+  const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('section-header', colors.primary))
+  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 1.5, w: 9, h: 3 }))
 }
 
 function addQuoteSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
   const s = pres.addSlide()
-  s.background = { color: theme.accent }
-
+  const colors = getSlideColors(slide, theme)
+  s.background = { color: colors.accent }
   s.addShape(pres.ShapeType.rect, {
     x: 0.8, y: 0.6, w: 0.08, h: 5,
-    fill: { color: theme.primary },
+    fill: { color: colors.primary },
   })
-
   const quoteText = slide.content.map((c) => `"${c}"`).join('\n\n')
-  s.addText(`❝\n${slide.title}`, {
-    x: 1.2, y: 0.5, w: 7.5, h: 1,
-    fontSize: 22,
-    fontFace: 'Malgun Gothic',
-    color: theme.primary,
-    bold: true,
-    align: 'left',
-  })
-  s.addText(quoteText, {
-    x: 1.2, y: 1.5, w: 7.5, h: 4,
-    fontSize: 18,
-    fontFace: 'Malgun Gothic',
-    color: theme.text,
-    italic: true,
-    valign: 'top',
-    lineSpacingMultiple: 1.6,
-  })
-}
-
-function addTwoColumnSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
-  const s = pres.addSlide()
-  s.background = { color: theme.background }
-
-  s.addText(slide.title, {
-    x: 0.5, y: 0.3, w: 9, h: 0.8,
-    fontSize: 24,
-    fontFace: 'Malgun Gothic',
-    color: theme.primary,
-    bold: true,
-    align: 'left',
-  })
-
-  s.addShape(pres.ShapeType.line, {
-    x: 0.5, y: 1.15, w: 9, h: 0,
-    line: { color: theme.secondary, width: 2 },
-  })
-
-  const mid = slide.content.length
-  const leftItems = slide.content.slice(0, Math.ceil(mid / 2))
-  const rightItems = slide.content.slice(Math.ceil(mid / 2))
-
-  if (leftItems.length > 0) {
-    s.addShape(pres.ShapeType.rect, {
-      x: 0.5, y: 1.4, w: 4.2, h: 3.8,
-      fill: { color: theme.accent },
-      rectRadius: 0.2,
-    })
-    s.addText(leftItems.map((c) => `• ${c}`).join('\n'), {
-      x: 0.7, y: 1.6, w: 3.8, h: 3.4,
-      fontSize: 14,
-      fontFace: 'Malgun Gothic',
-      color: theme.text,
-      valign: 'top',
-      lineSpacingMultiple: 1.5,
-    })
-  }
-
-  if (rightItems.length > 0) {
-    s.addShape(pres.ShapeType.rect, {
-      x: 5.3, y: 1.4, w: 4.2, h: 3.8,
-      fill: { color: theme.accent },
-      rectRadius: 0.2,
-    })
-    s.addText(rightItems.map((c) => `• ${c}`).join('\n'), {
-      x: 5.5, y: 1.6, w: 3.8, h: 3.4,
-      fontSize: 14,
-      fontFace: 'Malgun Gothic',
-      color: theme.text,
-      valign: 'top',
-      lineSpacingMultiple: 1.5,
-    })
-  }
+  const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('quote', colors.primary))
+  const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('quote', theme.text))
+  s.addText(`❝\n${slide.title}`, textOptions(tStyle, slide.titlePosition, { x: 1.2, y: 0.5, w: 7.5, h: 1 }))
+  s.addText(quoteText, textOptions(bStyle, slide.bodyPosition, { x: 1.2, y: 1.5, w: 7.5, h: 4 }))
 }
 
 function addClosingSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors): void {
   const s = pres.addSlide()
-  s.background = { color: theme.primary }
-
-  s.addText(slide.title || '은혜가 함께 하시길', {
-    x: 0.5, y: 1.5, w: 9, h: 1.5,
-    fontSize: 32,
-    fontFace: 'Malgun Gothic',
-    color: 'FFFFFF',
-    bold: true,
-    align: 'center',
-    valign: 'middle',
-  })
-
+  const colors = getSlideColors(slide, theme)
+  s.background = { color: colors.primary }
+  const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('closing', 'FFFFFF'))
+  const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('closing', 'FFFFFF'))
+  s.addText(slide.title || '은혜가 함께 하시길', textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 1.5, w: 9, h: 1.5 }))
   if (slide.content.length > 0) {
-    s.addText(slide.content.join('\n'), {
-      x: 1, y: 3.5, w: 8, h: 2.5,
-      fontSize: 16,
-      fontFace: 'Malgun Gothic',
-      color: 'FFFFFF',
-      align: 'center',
-      valign: 'top',
-      lineSpacingMultiple: 1.5,
-    })
+    s.addText(slide.content.join('\n'), textOptions(bStyle, slide.bodyPosition, { x: 1, y: 3.5, w: 8, h: 2.5 }))
   }
 }
 
@@ -223,9 +215,10 @@ const LAYOUT_RENDERERS: Record<string, (pres: PptxGenJS, slide: PptSlide, theme:
   'bullets': addBulletsSlide,
   'section-header': addSectionHeaderSlide,
   'quote': addQuoteSlide,
-  'two-column': addTwoColumnSlide,
   'closing': addClosingSlide,
 }
+
+
 
 export async function generatePptx(
   slides: PptSlide[],
@@ -238,7 +231,8 @@ export async function generatePptx(
 
   const theme = getTheme(themeName)
 
-  for (const slide of slides) {
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i]
     const renderer = LAYOUT_RENDERERS[slide.layout] || addBulletsSlide
     renderer(pres, slide, theme)
   }

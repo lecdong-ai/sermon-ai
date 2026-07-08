@@ -6,6 +6,7 @@ import { getCustomProjects, removeCustomProject } from './customProjects'
 import { setStorageItem, removeStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/project/projectStorage'
 import { computeProjectProgress } from '@/lib/project/projectProgress'
+import { useProjectMigration } from './useProjectMigration'
 
 const STATUS_MAP: Record<string, ProjectStatus> = {
   draft: 'research',
@@ -81,6 +82,15 @@ export function useProjects(): UseProjectsResult {
   useEffect(() => {
     setCustomProjects(getCustomProjects())
   }, [refreshKey])
+
+  const allProjectIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const p of apiProjects) ids.add(p.id)
+    for (const p of customProjects) ids.add(p.id)
+    return Array.from(ids)
+  }, [apiProjects, customProjects])
+
+  useProjectMigration(allProjectIds)
 
   const fetchProjects = useCallback(async () => {
     setLoading(true)

@@ -11,9 +11,11 @@ import {
   List,
   Plus,
   Presentation,
+  Sparkles,
   X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import ResultTabs from '@/components/ResultTabs'
 import GenerateButton from '@/components/GenerateButton'
 import Toast from '@/components/Toast'
@@ -245,19 +247,84 @@ function WorkspacePage() {
           </div>
           <h2 className="font-extrabold text-[20px] text-slate-800 mb-2">설교를 불러올 수 없습니다</h2>
           <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">{error}</p>
-          <button
-            onClick={loadSermon}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 text-[15px] font-bold hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-500/10"
-          >
-            <RefreshCw className="w-4 h-4" />
-            다시 불러오기
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={loadSermon}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 text-[15px] font-bold hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-500/10"
+            >
+              <RefreshCw className="w-4 h-4" />
+              다시 불러오기
+            </button>
+            <Link
+              href="/ppt-studio"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 text-[15px] font-bold hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-md shadow-purple-500/10"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI PPT 만들기
+            </Link>
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!sermon) return null
+  if (!sermon) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="glass-panel glass-border-neon p-8 md:p-10 rounded-3xl shadow-xl animate-in">
+          <div className="w-16 h-16 rounded-2xl bg-[#eae7e0] border border-[#d4d1c9] flex items-center justify-center mx-auto mb-5 shadow-sm">
+            <Presentation className="w-7 h-7 text-[#8d7a5b]" />
+          </div>
+          <h2 className="font-extrabold text-[20px] text-slate-800 mb-2">워크스페이스가 비어 있습니다</h2>
+          <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">설교 원고를 업로드하거나 AI PPT 스튜디오로 바로 이동할 수 있습니다.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#8d7a5b] text-white px-6 py-3 text-[15px] font-bold hover:bg-[#7a694e] active:scale-[0.98] transition-all duration-200"
+            >
+              <Plus className="w-4 h-4" />
+              설교 업로드
+            </button>
+            <Link
+              href="/ppt-studio"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 text-[15px] font-bold hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-md shadow-purple-500/10"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI PPT 만들기
+            </Link>
+          </div>
+        </div>
+
+        {showUploadModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => setShowUploadModal(false)}
+          >
+            <div
+              className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">새 설교 원고 업로드</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">PDF, TXT, DOCX 파일을 업로드하면 AI가 6개 서비스를 생성합니다</p>
+                </div>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-4">
+                <FileUpload onSuccess={handleUploadSuccess} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const result = sermon.result as any
 
@@ -335,6 +402,15 @@ function WorkspacePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <Link
+                    href={`/ppt-studio${sermonId ? `?id=${sermonId}` : ''}`}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[13px] font-bold hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-md shadow-purple-500/10"
+                    title="GPT-5.5 + gpt-image-1로 전문가급 PPT 제작"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span className="hidden sm:inline">AI PPT 만들기</span>
+                    <span className="sm:hidden">PPT</span>
+                  </Link>
                   <button
                     onClick={() => setShowUploadModal(true)}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#8d7a5b] text-white text-[13px] font-medium hover:bg-[#7a694e] active:scale-[0.98] transition-all duration-200"

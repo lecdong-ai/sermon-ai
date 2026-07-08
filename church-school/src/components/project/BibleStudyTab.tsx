@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Anchor, ArrowRight, BookMarked, BookOpen, Check, ChevronDown, ChevronRight, Cross, FileText, Globe, Heart, History, Lightbulb, Loader2, PenLine, Plus, Sparkles, Tags, Volume2, Waypoints, X } from 'lucide-react'
 import { ProjectDetail, BiblePassage } from '@/lib/project/types'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
+import { syncToSupabase } from '@/lib/project/projectSync'
 import type { SermonSection, ReferenceNote, JohnManuscriptData } from '@/lib/project/johnManuscriptData'
 import {
   JOHN_VERSES,
@@ -728,6 +729,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
     } catch (e) {
       console.error('[memo] localStorage save failed:', e)
     }
+    syncToSupabase(project.id, 'studyMemos', memosByPassage)
+      .then(() => {})
+      .catch(() => {})
     setIsSaving(false)
     setLastSaved(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
   }, [currentMemo.text, memosByPassage, project.id])

@@ -476,23 +476,137 @@ export const STUDY_GUIDE_SCHEMA = {
 
 // ─── Generation Status ───
 
+export type PptSlideLayout =
+  | 'title' | 'bullets' | 'section-header' | 'quote' | 'two-column' | 'closing'
+  | 'vs-contrast' | 'timeline-flow' | 'central-focus' | 'grid-matrix'
+
+export interface PptSlideColor {
+  /** hex (# 없이, 예: "1B3A5C") */
+  primary: string
+  /** hex (# 없이) */
+  accent: string
+  /** hex (# 없이) */
+  background: string
+}
+
+/** 텍스트 스타일 (사용자 편집 가능) */
+export interface PptTextStyle {
+  /** 글꼴 — 'Malgun Gothic' | 'Nanum Gothic' | 'Nanum Myeongjo' | 'Batang' | 'Dotum' | 'Pretendard' */
+  fontFace?: string
+  /** 글자 크기 (pt) */
+  fontSize?: number
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  /** 텍스트 색상 hex 6자리 (# 제외) */
+  color?: string
+  align?: 'left' | 'center' | 'right'
+  valign?: 'top' | 'middle' | 'bottom'
+  /** 행간 배수 (1.0~2.0) */
+  lineSpacing?: number
+}
+
+/** 텍스트 박스 위치 (inches, pptxgenJS 좌표계) */
+export interface PptSlideTextPosition {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
 export interface PptSlide {
   title: string
   content: string[]
-  layout: 'title' | 'bullets' | 'section-header' | 'quote' | 'two-column' | 'closing' | 'vs-contrast' | 'timeline-flow' | 'central-focus' | 'grid-matrix'
-  /** 핵심 메시지 요약 (1~2문장) */
+  layout: PptSlideLayout
+  /** 핵심 메시지 요약 (1~2문장) — 발표자 참고용, 이미지에 포함되지 않음 */
   coreMessage?: string
-  /** 발표자 스크립트 (청중과의 상호작용 포함) */
+  /** 발표자 스크립트 (청중과의 상호작용 포함) — 발표자 참고용 */
   speakerNotes?: string
-  /** 비주얼 추천 (일러스트, 아이콘, 배치 아이디어) */
+  /** 슬라이드 색상 팔레트 — 렌더링용 */
+  color?: PptSlideColor
+  /** 카메라 구도 */
+  cameraAngle?: string
+  /** 조명 */
+  lighting?: string
+  /** 폰트 스타일 */
+  fontStyle?: string
+  /** 아이콘/여백 위치 */
+  iconPosition?: string
+  /** 제목 텍스트 스타일 (사용자 편집, PPTX + 미리보기에 적용) */
+  titleStyle?: PptTextStyle
+  /** 본문 텍스트 스타일 (사용자 편집) */
+  bodyStyle?: PptTextStyle
+  /** 제목 텍스트 박스 위치 (inches, 편집용) */
+  titlePosition?: PptSlideTextPosition
+  /** 본문 텍스트 박스 위치 (inches, 편집용) */
+  bodyPosition?: PptSlideTextPosition
+
+  /** @deprecated color/cameraAngle/lighting으로 대체 */
   visualRecommendation?: string
-  /** 디자이너 노트 (색상 강조, 폰트 사이즈, 배경 요소) */
+  /** @deprecated color/fontStyle로 대체 */
   designNote?: string
 }
 
 export interface PptData {
   slides: PptSlide[]
 }
+
+// ─── PPT Slide Structured Schema (GPT-5.4-mini용, 10레이아웃 + 8필드 디자인 메타) ───
+
+export const PPT_SLIDE_STRUCTURED_SCHEMA = {
+  type: 'json_schema' as const,
+  json_schema: {
+    name: 'ppt_slides_structured',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        slides: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: '슬라이드 제목 (12자 이내, 간결하고 기억에 남게)' },
+              content: {
+                type: 'array',
+                items: { type: 'string' },
+                description: '슬라이드 내용 항목들 (각 15~30자 내외). 레이아웃에 맞춰 1~8개. quote는 [구절본문, 출처]. vs-contrast는 ["A제목: 항목1|항목2", "B제목: 항목1|항목2"]. timeline-flow는 ["1단계: 내용", ...]. central-focus는 [핵심어, 보조1, 보조2, ...]. grid-matrix는 ["라벨: 설명", ...]',
+              },
+              layout: {
+                type: 'string',
+                enum: ['title', 'bullets', 'section-header', 'quote', 'two-column', 'closing', 'vs-contrast', 'timeline-flow', 'central-focus', 'grid-matrix'],
+                description: '슬라이드 레이아웃 타입',
+              },
+              color: {
+                type: 'object',
+                properties: {
+                  primary: { type: 'string', description: '주 색상 hex 6자리 (# 제외, 예: 1B3A5C)' },
+                  accent: { type: 'string', description: '포인트 색상 hex 6자리 (# 제외, 예: 4A90D9)' },
+                  background: { type: 'string', description: '배경 색상 hex 6자리 (# 제외, 예: FFFFFF)' },
+                },
+                required: ['primary', 'accent', 'background'],
+                additionalProperties: false,
+              },
+              cameraAngle: { type: 'string', description: '카메라 구도 (영어, 예: "wide establishing shot", "top-down flat lay", "centered symmetrical composition")' },
+              lighting: { type: 'string', description: '조명 (영어, 예: "warm golden hour light", "soft diffused studio lighting", "dramatic side lighting")' },
+              fontStyle: { type: 'string', description: '폰트 스타일 (영어, 예: "clean modern sans-serif bold", "elegant serif italic", "warm hand-lettered script")' },
+              iconPosition: { type: 'string', description: '아이콘/여백 위치 (영어, 예: "icon top-left, text center", "leave bottom third empty for text overlay", "centered cross symbol above title")' },
+              coreMessage: { type: 'string', description: '이 슬라이드의 핵심 메시지 1~2문장 (한국어, 발표자 참고용)' },
+              speakerNotes: { type: 'string', description: '발표자 스크립트 (한국어, 200~400자, 따뜻하고 생동감 있는 내러티브)' },
+            },
+            required: ['title', 'content', 'layout', 'color', 'cameraAngle', 'lighting', 'fontStyle', 'iconPosition', 'coreMessage', 'speakerNotes'],
+            additionalProperties: false,
+          },
+          description: '8~12장 PPT 슬라이드 (표지 포함)',
+        },
+      },
+      required: ['slides'],
+      additionalProperties: false,
+    },
+  },
+}
+
+
 
 export type GenerationItem =
   | 'summary'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { refineSlide } from '@/lib/gemini'
+import { refineSlideGpt } from '@/lib/openai'
 import type { PptSlide } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '슬라이드와 수정 요청이 필요합니다.' }, { status: 400 })
     }
 
-    const refined = await refineSlide(slide as PptSlide, instruction, theme)
+    const refined = await refineSlideGpt(slide as PptSlide, instruction, theme)
 
     return NextResponse.json({ success: true, slide: refined })
   } catch (err: any) {

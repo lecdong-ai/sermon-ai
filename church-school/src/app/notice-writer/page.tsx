@@ -269,7 +269,7 @@ export default function NoticeWriterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full py-3.5 gap-2 text-sm justify-center"
+                className="btn-secondary w-full py-3.5 gap-2 text-sm justify-center"
               >
                 {loading ? (
                   <>

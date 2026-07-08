@@ -11,6 +11,7 @@ import { PREP_VERSIONS, RECENT_ACTIVITY } from '@/lib/project/johnVersionData'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/project/projectStorage'
 import { computeProjectProgress, toStageStatusMap } from '@/lib/project/projectProgress'
+import { syncToSupabase } from '@/lib/project/projectSync'
 
 interface Props { project: ProjectDetail }
 
@@ -136,13 +137,16 @@ export default function PrepTab({ project }: Props) {
     }
   }, [project.id])
 
-  // Auto-save: debounced save to localStorage whenever prepData changes
+  // Auto-save: debounced save to localStorage + Supabase whenever prepData changes
   useEffect(() => {
     if (!prepLoadedRef.current) return
     const timer = setTimeout(() => {
       const now = Date.now()
-      setStorageItem(`prep_${project.id}`, { ...prepData, _savedAt: now })
+      const data = { ...prepData, _savedAt: now }
+      setStorageItem(`prep_${project.id}`, data)
       setLastSaved(new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+      syncToSupabase(project.id, 'prepData', data)
+        .catch(() => {})
     }, 600)
     return () => clearTimeout(timer)
   }, [prepData, project.id])

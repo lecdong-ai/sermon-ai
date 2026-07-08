@@ -154,6 +154,8 @@ export async function POST(request: NextRequest) {
       source: body.source || 'manual',
       status: body.status || 'draft',
       version: 1,
+      ...(body.raw_text && { raw_text: body.raw_text }),
+      ...(body.file_name && { file_name: body.file_name }),
       // B5: 다중 본문. 없으면 단일 본문으로 자동 변환
       passages: body.passages && body.passages.length > 0
         ? body.passages

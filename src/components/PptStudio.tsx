@@ -4,13 +4,16 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Sparkles, Download, FileDown, Loader2, ChevronLeft, ChevronRight,
   Settings, BookOpen, Trash2, Plus, Save, GripVertical, Copy, Undo2, Redo2, Presentation,
+
 } from 'lucide-react'
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import PptSlideCard from './PptSlideCard'
+import TextStyleEditor from './ppt/TextStyleEditor'
 import Toast from './Toast'
-import type { PptSlide } from '@/types'
+import type { PptSlide, PptTextStyle } from '@/types'
+import { TEMPLATES, type TemplateKey, applyTemplate } from '@/lib/templates'
 
 interface SermonItem {
   id: string
@@ -40,6 +43,8 @@ const LAYOUT_OPTIONS = [
   { value: 'grid-matrix', label: '그리드' },
 ] as const
 
+
+
 interface Props {
   sermon?: SermonItem | null
   sermons: SermonItem[]
@@ -63,6 +68,7 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
   const lastSavedSlides = useRef<string>('')
   const historyPast = useRef<string[]>([])
   const historyFuture = useRef<string[]>([])
+
 
   const pushHistory = useCallback(() => {
     historyPast.current.push(JSON.stringify(slides))
@@ -261,7 +267,9 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
   const updateSlide = useCallback((index: number, updated: PptSlide) => {
     pushHistory()
     setSlides((prev) => prev.map((s, i) => (i === index ? updated : s)))
+
   }, [pushHistory])
+
 
   const handleRefine = useCallback(async (instruction: string) => {
     const slide = slides[activeIndex]
@@ -306,6 +314,8 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
       return next
     })
   }, [activeIndex])
+
+  const [templateKey, setTemplateKey] = useState<TemplateKey>('modern')
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -412,11 +422,11 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto">
-            {currentSlide ? (
+              {currentSlide ? (
               <div className="w-full max-w-3xl">
                 <div
                   id={`slide-preview-${activeIndex}`}
-                  className="w-full aspect-video rounded-xl border-2 border-[#e4e2dd] overflow-hidden bg-white shadow-lg"
+                  className="w-full aspect-video rounded-xl border-2 overflow-hidden bg-white shadow-lg relative border-[#e4e2dd]"
                 >
                   <PptSlidePreview slide={currentSlide} />
                 </div>
@@ -458,8 +468,8 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                 <div className="w-16 h-16 rounded-2xl bg-[#eae7e0] flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-7 h-7 text-[#8d7a5b]" />
                 </div>
-                <p className="text-[15px] font-bold text-[#2c2a29] mb-1">PPT를 생성해보세요</p>
-                <p className="text-[13px] text-[#8a8580]">좌측에서 원고를 선택하고 AI 도구로 슬라이드를 만드세요.</p>
+                <p className="text-[15px] font-bold text-[#2c2a29] mb-1">AI PPT 스튜디오</p>
+                <p className="text-[13px] text-[#8a8580] max-w-xs mx-auto">좌측에서 원고를 선택하고 GPT-5.4-mini로 슬라이드를 생성한 뒤, 템플릿을 적용해보세요.</p>
               </div>
             )}
           </div>
@@ -481,9 +491,44 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                   ) : (
                     <Sparkles className="w-5 h-5" />
                   )}
-                  {generating ? '생성 중...' : '슬라이드 생성'}
+                  {generating ? '생성 중...' : '슬라이드 생성 (GPT-5.4-mini)'}
                 </button>
               </div>
+
+              {/* ── 템플릿 선택 ── */}
+              {slides.length > 0 && (
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#2c2a29] mb-3 flex items-center gap-1.5">
+                    <Settings className="w-4 h-4 text-[#8d7a5b]" />
+                    템플릿
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(TEMPLATES).map(([key, t]) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setTemplateKey(key as TemplateKey)
+                          pushHistory()
+                          setSlides((prev) => prev.map((sl) => applyTemplate(sl, key as TemplateKey)))
+                          setToast({ visible: true, message: `${t.name} 템플릿이 적용되었습니다`, type: 'success' })
+                        }}
+                        className={`px-3 py-2.5 rounded-xl text-[12px] font-medium transition-all border ${
+                          templateKey === key
+                            ? 'border-[#8d7a5b] bg-[#eae7e0] text-[#2c2a29]'
+                            : 'border-[#e4e2dd] text-[#6b6764] hover:bg-[#f5f4f0]'
+                        }`}
+                      >
+                        <span className="block text-[11px] font-bold mb-0.5">{t.name}</span>
+                        <span className="flex gap-1 mt-1">
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.primary}` }} />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.accent}` }} />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.background}` }} />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-[13px] font-bold text-[#2c2a29] mb-3 flex items-center gap-1.5">
@@ -608,6 +653,8 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                         ))}
                       </select>
                     </div>
+
+                    
                     <div>
                       <label className="text-[11px] font-medium text-[#6b6764] block mb-1">내용</label>
                       <div className="space-y-1.5">
@@ -647,6 +694,41 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                         </button>
                       </div>
                     </div>
+                  </div>
+
+                  {/* ── 텍스트 스타일 편집 ── */}
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[13px] font-bold text-[#2c2a29]">텍스트 스타일</h3>
+                      <button
+                        onClick={() => {
+                          pushHistory()
+                          const titleStyle = currentSlide.titleStyle
+                          const bodyStyle = currentSlide.bodyStyle
+                          setSlides((prev) => prev.map((sl) => ({
+                            ...sl,
+                            titleStyle: titleStyle ? { ...titleStyle } : sl.titleStyle,
+                            bodyStyle: bodyStyle ? { ...bodyStyle } : sl.bodyStyle,
+                          })))
+                          setToast({ visible: true, message: '전체 슬라이드에 스타일이 적용되었습니다', type: 'success' })
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#8d7a5b] text-white hover:bg-[#7a694e] transition-all"
+                      >
+                        전체 적용
+                      </button>
+                    </div>
+                    <TextStyleEditor
+                      label="제목"
+                      style={currentSlide.titleStyle}
+                      defaultSize={32}
+                      onChange={(titleStyle) => updateSlide(activeIndex, { ...currentSlide, titleStyle })}
+                    />
+                    <TextStyleEditor
+                      label="본문"
+                      style={currentSlide.bodyStyle}
+                      defaultSize={16}
+                      onChange={(bodyStyle) => updateSlide(activeIndex, { ...currentSlide, bodyStyle })}
+                    />
                   </div>
 
                   {/* ── AI 생성 메타 정보 패널 ── */}
@@ -828,22 +910,59 @@ function SortableSlideItem({
   )
 }
 
+function isDarkColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length !== 6) return false
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum < 0.5
+}
+
 function PptSlidePreview({ slide }: { slide: PptSlide }) {
+  // 스타일 → CSS 변환 유틸
+  const toCss = (style: PptTextStyle | undefined, fallback: Partial<PptTextStyle>): React.CSSProperties => {
+    const s = { ...fallback, ...style }
+    return {
+      fontFamily: s.fontFace ? `"${s.fontFace}", sans-serif` : undefined,
+      fontSize: s.fontSize ? `${s.fontSize * 0.5}px` : undefined,
+      fontWeight: s.bold ? 'bold' : 'normal',
+      fontStyle: s.italic ? 'italic' : 'normal',
+      textDecoration: s.underline ? 'underline' : 'none',
+      color: s.color ? `#${s.color}` : undefined,
+      textAlign: s.align as any,
+      lineHeight: s.lineSpacing ?? undefined,
+    }
+  }
+
+  // ── 이미지가 있으면 이미지 기반 렌더링 ──
+  // ── 이미지 없음: 기존 텍스트 레이아웃 렌더링 ──
+  // 색상 팔레트 적용 (slide.color 우선)
+  const c = slide.color
+  const primary = c?.primary || '#1B3A5C'
+  const accent = c?.accent || '#4A90D9'
+  const bg = c?.background || '#FFFFFF'
+
+  const titleCss = toCss(slide.titleStyle, { color: primary.replace('#', ''), bold: true, fontSize: 32, align: 'center' })
+  const bodyCss = toCss(slide.bodyStyle, { color: '333333', fontSize: 16, align: 'left' })
+
   switch (slide.layout) {
 
     // ── 표지 ──────────────────────────────────────────────────
     case 'title':
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#0f2744] via-[#1B3A5C] to-[#2C5F8A] flex flex-col items-center justify-center text-white p-8 relative overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center text-white p-8 relative overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-12 h-1 bg-[#4A90D9] rounded-full mb-6" />
-            <p className="text-4xl font-bold text-center leading-tight tracking-tight">{slide.title}</p>
+            <div className="w-12 h-1 rounded-full mb-6" style={{ backgroundColor: accent }} />
+            <p className="leading-tight tracking-tight" style={{ ...titleCss, color: '#FFFFFF' }}>{slide.title}</p>
             {slide.content.map((c, i) => (
-              <p key={i} className="text-base mt-3 text-blue-200 text-center font-light">{c}</p>
+              <p key={i} className="mt-3 font-light" style={{ ...bodyCss, color: '#FFFFFF', textAlign: 'center' }}>{c}</p>
             ))}
-            <div className="w-12 h-1 bg-[#4A90D9] rounded-full mt-6" />
+            <div className="w-12 h-1 rounded-full mt-6" style={{ backgroundColor: accent }} />
           </div>
         </div>
       )

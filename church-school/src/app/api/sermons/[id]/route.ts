@@ -24,6 +24,9 @@ function toSermon(row: any) {
     sermonType: result.sermonType || '',
     audience: result.audience || '',
     season: row.season || '',
+    passage: row.passage || '',
+    file_name: row.file_name || '',
+    created_at: row.created_at || new Date().toISOString(),
     seriesId: result.seriesId || '',
     bibleBook: row.book || '',
     chapterStart: row.chapter_start || 0,
@@ -131,9 +134,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...(body.themeIds !== undefined && { themeIds: body.themeIds }),
       ...(body.tagIds !== undefined && { tagIds: body.tagIds }),
       ...(body.relatedSermonIds !== undefined && { relatedSermonIds: body.relatedSermonIds }),
-      ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
-      ...(body.result?.pptData !== undefined && { pptData: body.result.pptData }),
-    }
+       ...(body.result?.wizardSnapshot !== undefined && { wizardSnapshot: body.result.wizardSnapshot }),
+       ...(body.result?.pptData !== undefined && { pptData: body.result.pptData }),
+       ...(body.result?.manuscriptData !== undefined && { manuscriptData: body.result.manuscriptData }),
+       ...(body.result?.prepData !== undefined && { prepData: body.result.prepData }),
+       ...(body.result?.studyMemos !== undefined && { studyMemos: body.result.studyMemos }),
+       ...(body.result?.quickfill !== undefined && { quickfill: body.result.quickfill }),
+     }
     updates.result = resultUpdate
 
     const { error: sermonError } = await projectSupabaseAdmin
