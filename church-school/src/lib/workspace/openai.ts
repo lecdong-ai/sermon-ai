@@ -4,6 +4,7 @@ import {
   GROUP_DISCUSSION_SCHEMA,
   SERMON_SCRIPT_SCHEMA,
   SHORTS_SCRIPT_SCHEMA,
+  CARD_NEWS_SCHEMA,
   PPT_SLIDE_STRUCTURED_SCHEMA,
   PPT_IMAGE_PROMPT_SCHEMA,
   type SermonResultData,
@@ -16,6 +17,7 @@ import * as SummaryPrompt from './prompts/summary'
 import * as GroupDiscussionPrompt from './prompts/groupDiscussion'
 import * as SermonScriptPrompt from './prompts/sermonScript'
 import * as ShortsScriptPrompt from './prompts/shortsScript'
+import * as CardNewsPrompt from './prompts/cardNews'
 import * as PptStructuredPrompt from './prompts/pptStructured'
 
 const SLIDE_MODEL = 'gpt-5.4-mini'
@@ -83,10 +85,11 @@ async function safeCallAI<T>(
 }
 
 export async function generateAll(text: string): Promise<SermonResultData> {
-  const [summary, groupDiscussion, sermonScript, shortsScript] =
+  const [summary, groupDiscussion, cardNews, sermonScript, shortsScript] =
     await Promise.all([
       safeCallAI<SummaryResponse>(SummaryPrompt.SYSTEM_PROMPT, text, SUMMARY_SCHEMA, 'summary', 6000),
       safeCallAI<any>(GroupDiscussionPrompt.SYSTEM_PROMPT, text, GROUP_DISCUSSION_SCHEMA, 'groupDiscussion', 8000),
+      safeCallAI<any>(CardNewsPrompt.SYSTEM_PROMPT, text, CARD_NEWS_SCHEMA, 'cardNews', 3000),
       safeCallAI<any>(SermonScriptPrompt.SYSTEM_PROMPT, text, SERMON_SCRIPT_SCHEMA, 'sermonScript', 4000, 0.3),
       safeCallAI<any>(ShortsScriptPrompt.SYSTEM_PROMPT, text, SHORTS_SCRIPT_SCHEMA, 'shortsScript', 2000),
     ])
@@ -110,6 +113,10 @@ export async function generateAll(text: string): Promise<SermonResultData> {
     result.groupDiscussion = groupDiscussion
   }
 
+  if (cardNews) {
+    result.cardNews = cardNews
+  }
+
   if (sermonScript) {
     result.sermonScript = sermonScript.script
   }
@@ -121,7 +128,7 @@ export async function generateAll(text: string): Promise<SermonResultData> {
   return result
 }
 
-const VALID_ITEMS: GenerationItem[] = ['summary', 'groupDiscussion', 'sermonScript', 'shortsScript']
+const VALID_ITEMS: GenerationItem[] = ['summary', 'groupDiscussion', 'cardNews', 'sermonScript', 'shortsScript']
 
 export async function generateSingleItem(
   text: string,
@@ -152,6 +159,12 @@ export async function generateSingleItem(
       schema: GROUP_DISCUSSION_SCHEMA,
       maxTokens: 8000,
       mapper: (d: any) => ({ groupDiscussion: d }),
+    },
+    cardNews: {
+      prompt: CardNewsPrompt.SYSTEM_PROMPT,
+      schema: CARD_NEWS_SCHEMA,
+      maxTokens: 3000,
+      mapper: (d: any) => ({ cardNews: d }),
     },
     sermonScript: {
       prompt: SermonScriptPrompt.SYSTEM_PROMPT,

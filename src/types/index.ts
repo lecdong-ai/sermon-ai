@@ -541,6 +541,13 @@ export interface PptSlide {
   /** 본문 텍스트 박스 위치 (inches, 편집용) */
   bodyPosition?: PptSlideTextPosition
 
+  /** 개별 슬라이드별 템플릿 테마 ID */
+  templateId?: string
+  /** 개별 슬라이드별 다크모드(배경 반전) 토글 여부 */
+  darkMode?: boolean
+  /** 그리드 슬라이드 등의 열 개수 설정 */
+  columnCount?: number
+
   /** @deprecated color/cameraAngle/lighting으로 대체 */
   visualRecommendation?: string
   /** @deprecated color/fontStyle로 대체 */

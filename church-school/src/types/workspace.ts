@@ -1,5 +1,4 @@
 // ─── Workspace Types (church-school) ───
-// 메인 앱과 동일한 스키마이지만 4개 탭만 포함 (cardNews, pptData 제외)
 
 export interface Summary {
   central_topic: string
@@ -35,9 +34,20 @@ export interface GroupDiscussion {
   representativePrayer: string
 }
 
+export interface CardSlide {
+  title: string
+  content: string
+  imagePrompt: string
+}
+
+export interface CardNews {
+  slides: CardSlide[]
+}
+
 export interface SermonResultData {
   summary?: Summary | null
   groupDiscussion?: GroupDiscussion | null
+  cardNews?: CardNews | null
   sermonScript?: string | null
   shortsScript?: string | null
   sermon_title?: string
@@ -57,6 +67,7 @@ export interface SermonRecord {
 export type GenerationItem =
   | 'summary'
   | 'groupDiscussion'
+  | 'cardNews'
   | 'sermonScript'
   | 'shortsScript'
 
@@ -98,6 +109,35 @@ export const SUMMARY_SCHEMA = {
         passage_text: { type: 'string', description: '설교 본문 성경 구절 전문 (개역개정, KRV)을 그대로 인용하세요. 예: "오순절 날이 이미 이르매 그들이 다 같이 한 곳에 모였더니..."' },
       },
       required: ['title', 'passage', 'central_topic', 'intro', 'body', 'conclusion', 'application', 'passage_text'],
+      additionalProperties: false,
+    },
+  },
+}
+
+export const CARD_NEWS_SCHEMA = {
+  type: 'json_schema' as const,
+  json_schema: {
+    name: 'card_news',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        slides: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: '카드 제목 (12자 이내, 짧고 임팩트 있게)' },
+              content: { type: 'string', description: '카드 내용 (4~6문장, 150~250자, 풍성하게)' },
+              imagePrompt: { type: 'string', description: 'DALL-E 이미지 생성을 위한 상세 영어 프롬프트 (100~200자)' },
+            },
+            required: ['title', 'content', 'imagePrompt'],
+            additionalProperties: false,
+          },
+          description: '8장의 카드뉴스 (커버/도입, 배경+메시지1, 메시지2, 메시지3, 메시지4+예화, 적용1, 적용2, 마무리)',
+        },
+      },
+      required: ['slides'],
       additionalProperties: false,
     },
   },

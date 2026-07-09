@@ -8,8 +8,9 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
 export async function GET(request: NextRequest) {
+  // GET: 로그인 유저라면 모두 조회 가능 (관리자 전용 아님)
   const user = await getUserFromRequest(request)
-  if (!user || !(await isAdmin(user.id))) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

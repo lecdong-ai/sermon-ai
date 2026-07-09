@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/workspace', label: '워크스페이스' },
   { href: '/ppt-studio', label: 'PPT 스튜디오' },
   { href: '/notice-writer', label: '공지문 작성기' },
+  { href: '/events/manage', label: '행사 관리' },
   { href: '/pricing', label: '요금제' },
 ];
 

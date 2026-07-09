@@ -55,13 +55,29 @@ export default function TextStyleEditor({ label, style, onChange, defaultSize }:
 
       {/* 크기 */}
       <div>
-        <label className="text-[10px] font-medium text-navy-500 block mb-1">
-          크기: <span className="font-bold text-navy-700">{s.fontSize}pt</span>
-        </label>
+        <div className="flex justify-between items-center mb-1">
+          <label className="text-[10px] font-medium text-navy-500">크기</label>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={10}
+              max={200}
+              value={s.fontSize}
+              onChange={(e) => {
+                let val = Number(e.target.value)
+                if (val < 10) val = 10
+                if (val > 200) val = 200
+                update({ fontSize: val })
+              }}
+              className="w-12 px-1.5 py-0.5 text-center border border-warm-200 rounded text-[11px] font-bold text-navy-700 focus:outline-none focus:border-navy-500 bg-white"
+            />
+            <span className="text-[10px] font-medium text-navy-500">pt</span>
+          </div>
+        </div>
         <input
           type="range"
           min={10}
-          max={72}
+          max={200}
           value={s.fontSize}
           onChange={(e) => update({ fontSize: Number(e.target.value) })}
           className="w-full accent-navy-600"

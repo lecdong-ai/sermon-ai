@@ -23,6 +23,7 @@ import type { SermonRecord, GenerationItem, GenerationState } from '@/types/work
 
 const SummarySection = dynamic(() => import('@/components/workspace/SummarySection'), { ssr: false })
 const GroupDiscussionSection = dynamic(() => import('@/components/workspace/GroupDiscussionSection'), { ssr: false })
+const CardNewsSection = dynamic(() => import('@/components/CardNewsSection'), { ssr: false })
 const SermonScriptSection = dynamic(() => import('@/components/workspace/SermonScriptSection'), { ssr: false })
 const ShortsScriptSection = dynamic(() => import('@/components/workspace/ShortsScriptSection'), { ssr: false })
 const WorkspaceSidebar = dynamic(() => import('@/components/workspace/WorkspaceSidebar'), { ssr: false })
@@ -30,6 +31,7 @@ const WorkspaceSidebar = dynamic(() => import('@/components/workspace/WorkspaceS
 const TABS = [
   { id: 'summary', label: '📄 요약' },
   { id: 'groupDiscussion', label: '💬 나눔' },
+  { id: 'cardNews', label: '🎴 카드뉴스' },
   { id: 'sermonScript', label: '🎙️ 설교대본' },
   { id: 'shortsScript', label: '📱 쇼츠대본' },
 ]
@@ -315,6 +317,8 @@ function WorkspacePage() {
         return result.summary ? <SummarySection data={result.summary} /> : null
       case 'groupDiscussion':
         return result.groupDiscussion ? <GroupDiscussionSection data={result.groupDiscussion} passageText={result.summary?.passage_text || ''} /> : null
+      case 'cardNews':
+        return result.cardNews ? <CardNewsSection data={result.cardNews} /> : null
       case 'sermonScript':
         return result.sermonScript ? <SermonScriptSection data={result.sermonScript} /> : null
       case 'shortsScript':
