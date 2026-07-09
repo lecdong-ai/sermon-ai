@@ -13,7 +13,8 @@ import PptSlideCard from './PptSlideCard'
 import TextStyleEditor from './ppt/TextStyleEditor'
 import Toast from './Toast'
 import type { PptSlide, PptTextStyle } from '@/types'
-import { TEMPLATES, type TemplateKey, applyTemplate } from '@/lib/templates'
+import { getTemplates, applyTemplate, type TemplateRecord } from '@/lib/templateRegistry'
+import { recommendTemplate } from '@/lib/openai'
 
 interface SermonItem {
   id: string
@@ -68,7 +69,12 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
   const lastSavedSlides = useRef<string>('')
   const historyPast = useRef<string[]>([])
   const historyFuture = useRef<string[]>([])
+  const [templates, setTemplates] = useState<TemplateRecord[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
 
+  useEffect(() => {
+    getTemplates().then(setTemplates)
+  }, [])
 
   const pushHistory = useCallback(() => {
     historyPast.current.push(JSON.stringify(slides))
@@ -158,6 +164,11 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
     if (!sermon?.raw_text) return
     setGenerating(true)
     try {
+      let templateIdToUse = selectedTemplateId
+      if (!templateIdToUse && templates.length > 0) {
+        const recommended = await recommendTemplate(sermon.raw_text, templates)
+        if (recommended) templateIdToUse = recommended
+      }
       const res = await fetch('/api/ppt/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -166,20 +177,28 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
           text: sermon.raw_text,
           theme,
           slideCount,
+          templateId: templateIdToUse || undefined,
         }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
+      let newSlides = data.slides as PptSlide[]
+      const appliedTemplate = templateIdToUse ? templates.find(t => t.id === templateIdToUse) : null
+      if (appliedTemplate) {
+        newSlides = newSlides.map((sl) => applyTemplate(sl, appliedTemplate))
+        setSelectedTemplateId(templateIdToUse)
+      }
       pushHistory()
-      setSlides(data.slides)
+      setSlides(newSlides)
       setActiveIndex(0)
-      setToast({ visible: true, message: `PPT 생성 완료! (${data.slides.length}장)`, type: 'success' })
+      const tName = appliedTemplate ? ` (${appliedTemplate.name} 템플릿)` : ''
+      setToast({ visible: true, message: `PPT 생성 완료!${tName} (${newSlides.length}장)`, type: 'success' })
     } catch (err: any) {
       setToast({ visible: true, message: err.message || '생성 실패', type: 'error' })
     } finally {
       setGenerating(false)
     }
-  }, [sermon, theme, slideCount])
+  }, [sermon, theme, slideCount, selectedTemplateId, templates])
 
   const handleDownloadPptx = useCallback(async () => {
     if (slides.length === 0) return
@@ -314,8 +333,6 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
       return next
     })
   }, [activeIndex])
-
-  const [templateKey, setTemplateKey] = useState<TemplateKey>('modern')
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -503,26 +520,26 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                     템플릿
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(TEMPLATES).map(([key, t]) => (
+                    {(templates.length > 0 ? templates : [{ id: 'modern', name: '모던', primary_color: '1B3A5C', accent_color: '4A90D9', background_color: 'FFFFFF', text_color: '1A1A2E', font_title: 'Malgun Gothic', font_body: 'Malgun Gothic', gradient: 'from-[#1B3A5C] to-[#4A90D9]', ai_guide: null, file_url: null, is_active: true, category: 'general' }]).map((t) => (
                       <button
-                        key={key}
+                        key={t.id}
                         onClick={() => {
-                          setTemplateKey(key as TemplateKey)
+                          setSelectedTemplateId(t.id)
                           pushHistory()
-                          setSlides((prev) => prev.map((sl) => applyTemplate(sl, key as TemplateKey)))
+                          setSlides((prev) => prev.map((sl) => applyTemplate(sl, t)))
                           setToast({ visible: true, message: `${t.name} 템플릿이 적용되었습니다`, type: 'success' })
                         }}
                         className={`px-3 py-2.5 rounded-xl text-[12px] font-medium transition-all border ${
-                          templateKey === key
+                          selectedTemplateId === t.id
                             ? 'border-[#8d7a5b] bg-[#eae7e0] text-[#2c2a29]'
                             : 'border-[#e4e2dd] text-[#6b6764] hover:bg-[#f5f4f0]'
                         }`}
                       >
                         <span className="block text-[11px] font-bold mb-0.5">{t.name}</span>
                         <span className="flex gap-1 mt-1">
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.primary}` }} />
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.accent}` }} />
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.background}` }} />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.primary_color}` }} />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.accent_color}` }} />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `#${t.background_color}` }} />
                         </span>
                       </button>
                     ))}
@@ -940,16 +957,15 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
   // ── 이미지 없음: 기존 텍스트 레이아웃 렌더링 ──
   // 색상 팔레트 적용 (slide.color 우선)
   const c = slide.color
-  const primary = c?.primary || '#1B3A5C'
-  const accent = c?.accent || '#4A90D9'
-  const bg = c?.background || '#FFFFFF'
+  const primary = c?.primary ? `#${c.primary}` : '#1B3A5C'
+  const accent = c?.accent ? `#${c.accent}` : '#4A90D9'
+  const bg = c?.background ? `#${c.background}` : '#FFFFFF'
 
   const titleCss = toCss(slide.titleStyle, { color: primary.replace('#', ''), bold: true, fontSize: 32, align: 'center' })
   const bodyCss = toCss(slide.bodyStyle, { color: '333333', fontSize: 16, align: 'left' })
 
   switch (slide.layout) {
 
-    // ── 표지 ──────────────────────────────────────────────────
     case 'title':
       return (
         <div className="w-full h-full flex flex-col items-center justify-center text-white p-8 relative overflow-hidden"
@@ -967,71 +983,67 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
         </div>
       )
 
-    // ── 불릿 목록 ──────────────────────────────────────────────
     case 'bullets':
       return (
-        <div className="w-full h-full bg-white p-8 flex flex-col">
-          <p className="text-2xl font-bold text-[#1B3A5C] mb-2">{slide.title}</p>
-          <div className="h-0.5 w-12 bg-[#4A90D9] mb-5" />
+        <div className="w-full h-full p-8 flex flex-col" style={{ backgroundColor: bg }}>
+          <p className="mb-2" style={titleCss}>{slide.title}</p>
+          <div className="h-0.5 w-12 mb-5" style={{ backgroundColor: accent }} />
           <div className="space-y-2.5 flex-1">
             {slide.content.map((c, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span className="w-5 h-5 rounded-full bg-[#E8F0FE] flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[#4A90D9] text-xs font-bold">{i + 1}</span>
+                <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: `${accent}18` }}>
+                  <span className="text-xs font-bold" style={{ color: accent }}>{i + 1}</span>
                 </span>
-                <p className="text-sm text-gray-700 leading-relaxed">{c}</p>
+                <p className="leading-relaxed" style={bodyCss}>{c}</p>
               </div>
             ))}
           </div>
         </div>
       )
 
-    // ── 섹션 헤더 ──────────────────────────────────────────────
     case 'section-header':
       return (
-        <div className="w-full h-full bg-gradient-to-r from-[#E8F0FE] to-[#dce8ff] flex flex-col items-center justify-center p-8 relative">
-          <div className="absolute left-0 top-0 h-full w-1.5 bg-[#4A90D9]" />
-          <p className="text-4xl font-bold text-[#1B3A5C] text-center leading-tight">{slide.title}</p>
+        <div className="w-full h-full flex flex-col items-center justify-center p-8 relative" style={{ background: `linear-gradient(to right, ${accent}18, ${accent}08)`, backgroundColor: bg }}>
+          <div className="absolute left-0 top-0 h-full w-1.5" style={{ backgroundColor: accent }} />
+          <p className="text-center leading-tight" style={{ ...titleCss, fontSize: titleCss.fontSize ? `${parseInt(titleCss.fontSize) * 2}px` : '36px' }}>{slide.title}</p>
           {slide.content.map((c, i) => (
-            <p key={i} className="text-base text-[#3a5a8a] text-center mt-3">{c}</p>
+            <p key={i} className="text-center mt-3" style={bodyCss}>{c}</p>
           ))}
         </div>
       )
 
-    // ── 성경 인용 ──────────────────────────────────────────────
     case 'quote':
       return (
-        <div className="w-full h-full bg-[#f7f9ff] p-8 flex items-center relative">
-          <div className="absolute top-6 left-6 text-7xl text-[#4A90D9]/20 font-serif leading-none select-none">&ldquo;</div>
+        <div className="w-full h-full p-8 flex items-center relative" style={{ backgroundColor: `${primary}06` }}>
+          <div className="absolute top-6 left-6 text-7xl font-serif leading-none select-none" style={{ color: `${accent}30` }}>&ldquo;</div>
           <div className="relative z-10 flex gap-5 items-start w-full">
-            <div className="w-1 h-24 bg-gradient-to-b from-[#1B3A5C] to-[#4A90D9] rounded-full shrink-0 mt-2" />
+            <div className="w-1 h-24 rounded-full shrink-0 mt-2" style={{ background: `linear-gradient(to bottom, ${primary}, ${accent})` }} />
             <div className="flex-1">
-              <p className="text-lg font-bold text-[#1B3A5C] mb-3 italic leading-relaxed">{slide.title}</p>
+              <p className="mb-3 italic leading-relaxed" style={{ ...titleCss, fontStyle: 'italic' }}>{slide.title}</p>
               {slide.content.map((c, i) => (
-                <p key={i} className="text-base text-gray-600 italic mb-1.5 leading-relaxed">{c}</p>
+                <p key={i} className="italic mb-1.5 leading-relaxed" style={{ ...bodyCss, fontStyle: 'italic' }}>{c}</p>
               ))}
             </div>
           </div>
         </div>
       )
 
-    // ── 2단 컬럼 ───────────────────────────────────────────────
     case 'two-column':
       return (
-        <div className="w-full h-full bg-white p-6 flex flex-col">
-          <p className="text-xl font-bold text-[#1B3A5C] mb-4 shrink-0">{slide.title}</p>
+        <div className="w-full h-full p-6 flex flex-col" style={{ backgroundColor: bg }}>
+          <p className="mb-4 shrink-0" style={titleCss}>{slide.title}</p>
           <div className="flex gap-3 flex-1 min-h-0">
-            <div className="flex-1 bg-[#E8F0FE] rounded-xl p-4">
+            <div className="flex-1 rounded-xl p-4" style={{ backgroundColor: `${accent}18` }}>
               <div className="space-y-2">
                 {slide.content.slice(0, Math.ceil(slide.content.length / 2)).map((c, i) => (
-                  <p key={i} className="text-xs text-gray-700 leading-relaxed">• {c}</p>
+                  <p key={i} className="leading-relaxed" style={bodyCss}>• {c}</p>
                 ))}
               </div>
             </div>
-            <div className="flex-1 bg-[#FEF3E8] rounded-xl p-4">
+            <div className="flex-1 rounded-xl p-4" style={{ backgroundColor: `${primary}10` }}>
               <div className="space-y-2">
                 {slide.content.slice(Math.ceil(slide.content.length / 2)).map((c, i) => (
-                  <p key={i} className="text-xs text-gray-700 leading-relaxed">• {c}</p>
+                  <p key={i} className="leading-relaxed" style={bodyCss}>• {c}</p>
                 ))}
               </div>
             </div>
@@ -1039,24 +1051,21 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
         </div>
       )
 
-    // ── 마무리 ─────────────────────────────────────────────────
     case 'closing':
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#0f2744] via-[#1B3A5C] to-[#2C5F8A] flex flex-col items-center justify-center text-white p-8 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(74,144,217,0.15),transparent_70%)]" />
+        <div className="w-full h-full flex flex-col items-center justify-center text-white p-8 relative" style={{ background: `linear-gradient(135deg, ${primary}, #00000033, ${primary})` }}>
+          <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 50% 50%, ${accent}30, transparent 70%)` }} />
           <div className="relative z-10 text-center">
             <div className="text-3xl mb-4">🙏</div>
-            <p className="text-3xl font-bold mb-5 leading-tight">{slide.title}</p>
+            <p className="mb-5 leading-tight" style={{ ...titleCss, color: '#FFFFFF', fontSize: titleCss.fontSize ? `${parseInt(titleCss.fontSize) * 2}px` : '24px' }}>{slide.title}</p>
             {slide.content.map((c, i) => (
-              <p key={i} className="text-sm text-blue-200 mt-2 leading-relaxed max-w-xl">{c}</p>
+              <p key={i} className="mt-2 leading-relaxed max-w-xl" style={{ ...bodyCss, color: '#FFFFFF', opacity: 0.85 }}>{c}</p>
             ))}
           </div>
         </div>
       )
 
-    // ── VS 비교 ────────────────────────────────────────────────
     case 'vs-contrast': {
-      // content[0]: "A측 제목: 항목1|항목2|..." content[1]: "B측 제목: 항목1|항목2|..."
       const parseSide = (raw: string) => {
         const colonIdx = raw.indexOf(':')
         if (colonIdx === -1) return { label: raw, items: [] }
@@ -1068,51 +1077,49 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
       const right = parseSide(rightRaw)
       const extra = slide.content.slice(2)
       return (
-        <div className="w-full h-full bg-white p-6 flex flex-col">
-          <p className="text-xl font-bold text-[#1B3A5C] mb-4 text-center shrink-0">{slide.title}</p>
+        <div className="w-full h-full p-6 flex flex-col" style={{ backgroundColor: bg }}>
+          <p className="mb-4 text-center shrink-0" style={titleCss}>{slide.title}</p>
           <div className="flex gap-2 flex-1 min-h-0 items-stretch">
-            <div className="flex-1 bg-gradient-to-b from-[#1B3A5C] to-[#2C5F8A] rounded-2xl p-4 flex flex-col">
+            <div className="flex-1 rounded-2xl p-4 flex flex-col" style={{ background: `linear-gradient(180deg, ${primary}, ${primary}dd)` }}>
               <p className="text-white font-bold text-center text-sm mb-3 pb-2 border-b border-white/20">{left.label || '항목 A'}</p>
               <div className="space-y-2 flex-1">
                 {left.items.map((item, i) => (
-                  <p key={i} className="text-xs text-blue-100 text-center leading-relaxed">{item}</p>
+                  <p key={i} className="text-xs text-center leading-relaxed text-white/85">{item}</p>
                 ))}
               </div>
             </div>
             <div className="flex items-center justify-center px-1 shrink-0">
               <div className="flex flex-col items-center gap-1">
-                <div className="w-px h-8 bg-gray-300" />
-                <span className="text-xs font-black text-gray-400 bg-gray-100 rounded-full w-7 h-7 flex items-center justify-center">VS</span>
-                <div className="w-px h-8 bg-gray-300" />
+                <div className="w-px h-8" style={{ backgroundColor: `${primary}40` }} />
+                <span className="text-xs font-black rounded-full w-7 h-7 flex items-center justify-center" style={{ color: primary, backgroundColor: `${primary}10` }}>VS</span>
+                <div className="w-px h-8" style={{ backgroundColor: `${primary}40` }} />
               </div>
             </div>
-            <div className="flex-1 bg-gradient-to-b from-[#C65E2A] to-[#E8845A] rounded-2xl p-4 flex flex-col">
+            <div className="flex-1 rounded-2xl p-4 flex flex-col" style={{ background: `linear-gradient(180deg, ${accent}, ${accent}dd)` }}>
               <p className="text-white font-bold text-center text-sm mb-3 pb-2 border-b border-white/20">{right.label || '항목 B'}</p>
               <div className="space-y-2 flex-1">
                 {right.items.map((item, i) => (
-                  <p key={i} className="text-xs text-orange-100 text-center leading-relaxed">{item}</p>
+                  <p key={i} className="text-xs text-center leading-relaxed text-white/85">{item}</p>
                 ))}
               </div>
             </div>
           </div>
           {extra.length > 0 && (
             <div className="mt-3 text-center">
-              {extra.map((e, i) => <p key={i} className="text-xs text-gray-500">{e}</p>)}
+              {extra.map((e, i) => <p key={i} className="text-xs" style={{ color: bodyCss.color }}>{e}</p>)}
             </div>
           )}
         </div>
       )
     }
 
-    // ── 타임라인 / 흐름 ────────────────────────────────────────
     case 'timeline-flow':
       return (
-        <div className="w-full h-full bg-white p-6 flex flex-col">
-          <p className="text-xl font-bold text-[#1B3A5C] mb-5 shrink-0">{slide.title}</p>
+        <div className="w-full h-full p-6 flex flex-col" style={{ backgroundColor: bg }}>
+          <p className="mb-5 shrink-0" style={titleCss}>{slide.title}</p>
           <div className="flex-1 flex flex-col justify-center">
             <div className="relative">
-              {/* 연결선 */}
-              <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#4A90D9] to-[#1B3A5C] rounded-full" />
+              <div className="absolute left-4 top-4 bottom-4 w-0.5 rounded-full" style={{ background: `linear-gradient(180deg, ${accent}, ${primary})` }} />
               <div className="space-y-3">
                 {slide.content.map((step, i) => {
                   const colonIdx = step.indexOf(':')
@@ -1120,13 +1127,13 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
                   const stepContent = colonIdx !== -1 ? step.slice(colonIdx + 1).trim() : step
                   return (
                     <div key={i} className="flex gap-4 items-start relative">
-                      <div className="w-8 h-8 rounded-full bg-[#1B3A5C] text-white flex items-center justify-center text-xs font-bold shrink-0 z-10">
+                      <div className="w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0 z-10" style={{ backgroundColor: primary }}>
                         {i + 1}
                       </div>
-                      <div className="flex-1 bg-[#E8F0FE] rounded-xl p-3 min-h-[2rem]">
-                        <p className="text-xs font-bold text-[#1B3A5C]">{stepLabel}</p>
+                      <div className="flex-1 rounded-xl p-3 min-h-[2rem]" style={{ backgroundColor: `${accent}18` }}>
+                        <p className="text-xs font-bold" style={{ color: primary }}>{stepLabel}</p>
                         {stepContent && stepContent !== stepLabel && (
-                          <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{stepContent}</p>
+                          <p className="text-xs mt-0.5 leading-relaxed" style={{ ...bodyCss, fontSize: bodyCss.fontSize || '10px' }}>{stepContent}</p>
                         )}
                       </div>
                     </div>
@@ -1138,37 +1145,33 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
         </div>
       )
 
-    // ── 핵심 포커스 ────────────────────────────────────────────
     case 'central-focus': {
       const keyword = slide.content[0] || slide.title
       const supporting = slide.content.slice(1)
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#f0f5ff] to-[#e8f0fe] flex flex-col items-center justify-center p-6 relative">
-          <p className="text-base font-bold text-[#1B3A5C] mb-5 text-center opacity-70">{slide.title}</p>
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 relative" style={{ background: `linear-gradient(135deg, ${primary}08, ${accent}08)`, backgroundColor: bg }}>
+          <p className="mb-5 text-center" style={{ ...titleCss, opacity: 0.7, fontSize: titleCss.fontSize ? `${parseInt(titleCss.fontSize) * 0.75}px` : '12px' }}>{slide.title}</p>
           <div className="relative flex items-center justify-center">
-            {/* 방사형 선 */}
             {supporting.slice(0, 4).map((_, i) => {
               const angles = [315, 45, 225, 135]
               const angle = angles[i] || (i * 90)
               return (
                 <div
                   key={i}
-                  className="absolute w-16 h-0.5 bg-[#4A90D9]/30 origin-left"
-                  style={{ transform: `rotate(${angle}deg) translateX(52px)` }}
+                  className="absolute w-16 h-0.5 origin-left"
+                  style={{ transform: `rotate(${angle}deg) translateX(52px)`, backgroundColor: `${accent}40` }}
                 />
               )
             })}
-            {/* 중앙 원 */}
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#1B3A5C] to-[#2C5F8A] flex items-center justify-center shadow-xl z-10">
+            <div className="w-28 h-28 rounded-full flex items-center justify-center shadow-xl z-10" style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}>
               <p className="text-white font-black text-center text-sm leading-tight px-2">{keyword}</p>
             </div>
           </div>
-          {/* 보조 문장 */}
           {supporting.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-2 w-full max-w-sm">
               {supporting.slice(0, 4).map((s, i) => (
-                <div key={i} className="bg-white rounded-xl p-2.5 shadow-sm border border-[#4A90D9]/10 text-center">
-                  <p className="text-xs text-gray-700 leading-relaxed">{s}</p>
+                <div key={i} className="rounded-xl p-2.5 shadow-sm text-center" style={{ backgroundColor: bg, borderColor: `${accent}20`, borderWidth: 1 }}>
+                  <p className="text-xs leading-relaxed" style={bodyCss}>{s}</p>
                 </div>
               ))}
             </div>
@@ -1177,31 +1180,29 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
       )
     }
 
-    // ── 그리드 매트릭스 ────────────────────────────────────────
     case 'grid-matrix': {
       const cols = slide.content.length <= 4 ? 2 : slide.content.length <= 6 ? 3 : 3
+      const cardVariants = [
+        { bg: `${accent}15`, border: `${accent}30` },
+        { bg: `${primary}10`, border: `${primary}25` },
+        { bg: `${accent}08`, border: `${accent}20` },
+        { bg: `${primary}15`, border: `${primary}30` },
+        { bg: `${accent}20`, border: `${accent}35` },
+        { bg: `${primary}08`, border: `${primary}20` },
+      ]
       return (
-        <div className="w-full h-full bg-white p-6 flex flex-col">
-          <p className="text-xl font-bold text-[#1B3A5C] mb-4 shrink-0">{slide.title}</p>
-          <div className={`flex-1 grid gap-2`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        <div className="w-full h-full p-6 flex flex-col" style={{ backgroundColor: bg }}>
+          <p className="mb-4 shrink-0" style={titleCss}>{slide.title}</p>
+          <div className="flex-1 grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
             {slide.content.map((item, i) => {
               const colonIdx = item.indexOf(':')
               const label = colonIdx !== -1 ? item.slice(0, colonIdx).trim() : item
               const desc = colonIdx !== -1 ? item.slice(colonIdx + 1).trim() : ''
-              const colors = [
-                'from-blue-50 to-blue-100 border-blue-200',
-                'from-amber-50 to-amber-100 border-amber-200',
-                'from-emerald-50 to-emerald-100 border-emerald-200',
-                'from-purple-50 to-purple-100 border-purple-200',
-                'from-rose-50 to-rose-100 border-rose-200',
-                'from-cyan-50 to-cyan-100 border-cyan-200',
-                'from-orange-50 to-orange-100 border-orange-200',
-                'from-indigo-50 to-indigo-100 border-indigo-200',
-              ]
+              const v = cardVariants[i % cardVariants.length]
               return (
-                <div key={i} className={`bg-gradient-to-br ${colors[i % colors.length]} border rounded-xl p-3 flex flex-col justify-center`}>
-                  <p className="text-xs font-bold text-gray-800 text-center leading-tight">{label}</p>
-                  {desc && <p className="text-[10px] text-gray-500 text-center mt-1 leading-relaxed">{desc}</p>}
+                <div key={i} className="rounded-xl p-3 flex flex-col justify-center" style={{ backgroundColor: v.bg, borderColor: v.border, borderWidth: 1 }}>
+                  <p className="text-xs font-bold text-center leading-tight" style={{ color: primary }}>{label}</p>
+                  {desc && <p className="text-[10px] text-center mt-1 leading-relaxed" style={{ color: bodyCss.color }}>{desc}</p>}
                 </div>
               )
             })}
@@ -1210,11 +1211,10 @@ function PptSlidePreview({ slide }: { slide: PptSlide }) {
       )
     }
 
-    // ── 기본값 ─────────────────────────────────────────────────
     default:
       return (
-        <div className="w-full h-full bg-white flex flex-col items-center justify-center p-8">
-          <p className="text-xl font-bold text-gray-700">{slide.title}</p>
+        <div className="w-full h-full flex flex-col items-center justify-center p-8" style={{ backgroundColor: bg }}>
+          <p style={titleCss}>{slide.title}</p>
         </div>
       )
   }

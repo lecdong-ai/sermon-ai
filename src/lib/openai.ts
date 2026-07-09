@@ -233,6 +233,44 @@ const THEME_COLOR_HINTS: Record<string, string> = {
   classic: '클래식 — 진한 버건디(6B1A1A)와 골드(C9A84C), 품위 있는 전통적 레이아웃',
 }
 
+export async function recommendTemplate(
+  text: string,
+  templates: { id: string; name: string; ai_guide: string | null }[],
+): Promise<string | null> {
+  if (templates.length === 0) return null
+
+  const templateList = templates.map(t =>
+    `- ${t.name}${t.ai_guide ? `: ${t.ai_guide}` : ''}`
+  ).join('\n')
+
+  const systemPrompt = `당신은 프레젠테이션 디자이너입니다. 주어진 설교 원고의 분위기와 가장 잘 어울리는 템플릿을 선택해주세요.
+
+템플릿 목록:
+${templateList}
+
+반드시 템플릿 ID만 응답하세요. 다른 설명은 하지 마세요.`
+
+  try {
+    const res = await getOpenAI().chat.completions.create({
+      model: SLIDE_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `설교 원고:
+
+${truncate(text, 8000)}` },
+      ],
+      max_completion_tokens: 100,
+      temperature: 0.3,
+    })
+
+    const reply = res.choices[0].message.content?.trim() || ''
+    const matched = templates.find(t => reply.includes(t.id) || reply.includes(t.name))
+    return matched?.id || templates[0].id
+  } catch {
+    return templates[0].id
+  }
+}
+
 export async function generatePptSlidesGpt(
   text: string,
   options?: { theme?: string; slideCount?: number },
