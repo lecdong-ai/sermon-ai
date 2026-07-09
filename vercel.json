@@ -3,5 +3,15 @@
   "buildCommand": "next build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
-  "regions": ["icn1"]
+  "regions": ["icn1"],
+  "rewrites": [
+    {
+      "source": "/school",
+      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app"
+    },
+    {
+      "source": "/school/:path*",
+      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/:path*"
+    }
+  ]
 }
