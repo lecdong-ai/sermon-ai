@@ -51,9 +51,16 @@ export default function Header() {
           {/* Desktop CTA */}
           {isLoggedIn && (
             <div className="hidden md:flex items-center gap-3">
-              <Link href="/mypage" className="btn-ghost text-sm flex items-center gap-1">
+              <Link
+                href="/mypage"
+                className="btn-ghost text-sm flex items-center gap-2"
+                title={user?.email}
+              >
                 <UserIcon className="w-4 h-4 text-navy-500" />
-                <span className="font-bold">{user?.name}님</span>
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="font-bold text-navy-900">{user?.name}님</span>
+                  <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
+                </div>
               </Link>
               <button
                 onClick={() => logout()}
@@ -98,7 +105,10 @@ export default function Header() {
                   onClick={() => setMobileOpen(false)}
                   className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 block"
                 >
-                  마이페이지 ({user?.name}님)
+                  <div className="flex flex-col leading-tight">
+                    <span>마이페이지 ({user?.name}님)</span>
+                    <span className="text-xs text-navy-400 font-normal mt-0.5">{user?.email}</span>
+                  </div>
                 </Link>
                 <button
                   onClick={() => {
