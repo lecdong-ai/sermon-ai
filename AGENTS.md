@@ -44,7 +44,7 @@
 - `LoginModal.tsx`: Kakao(yellow) + Google(white) 버튼
 - `/auth/callback/route.ts`: OAuth 리다이렉트 핸들러
 
-### Done — Vercel Path-based 통합 (가장 최근 작업)
+### Done — Vercel Path-based 통합
 - Vercel API 토큰 (Full Access) 생성으로 Vercel 직접 제어 가능
 - `church-school` 프로젝트 진단: Vercel Authentication ON, Root Directory 잘못 설정
 - `passwordProtection: null` PATCH → OFF
@@ -61,9 +61,24 @@
   ]
   ```
 - church-school `next.config.mjs` 에 `basePath: '/school'` 추가 (production only)
-- `LoginModal.tsx` 의 `redirectTo` 에 pathname 감지 로직 추가 (`/school/auth/callback` vs `/auth/callback`)
 - `bunker.ai.kr/school` → church-school 정상, 내부 링크 모두 `/school/*` prefix ✓
-- church-school `package.json`/`package-lock.json` 변경 없음 (`--no-save`)
+
+### Done — 교회학교 자체 로그인 UI 완전 제거 (가장 최근 작업)
+- **사용자 결정**: 교회학교에서 로그인 기능 제거, 메인 페이지에서 로그인
+- **삭제 (2 파일, ~280줄)**:
+  - `church-school/src/components/LoginModal.tsx`
+  - `church-school/src/app/auth/callback/route.ts`
+- **신규 (1 파일)**: `church-school/src/lib/auth-redirect.ts` (메인 로그인으로 이동)
+- **수정 (7 파일, ~-150줄)**:
+  - `Header.tsx`: LoginModal/로그인/시작하기 버튼 제거, user info + 로그아웃만
+  - `AuthProvider.tsx`: login/register 함수 제거, logout/refreshUser 유지
+  - `auth.ts`: signInUser/signUpUser 제거, unused `supabase` import 제거
+  - `pricing/notice-writer`: LoginModal 사용 제거, 미로그인 시 redirectToMainLogin
+  - `mypage/projects`: 미로그인 시 useEffect 로 redirectToMainLogin
+  - `events/manage`: 권한 체크 추가 (useAuth + redirectToMainLogin)
+- **순 감소**: -347줄 (12 files, +225/-572)
+- **부수효과**: Supabase Dashboard / Kakao / Google Console 추가 설정 0건
+- **커밋**: `cbc1aaf` → 빌드 READY → `bunker.ai.kr/school` 정상 작동 확인
 
 ### Done — 유틸리티 스크립트
 - `church-school/vercel-fix.mjs`: Vercel Authentication 끄기
@@ -71,13 +86,8 @@
 - `church-school/check-deploys.mjs`: 배포 목록 확인
 - `church-school/token-diagnose.mjs`: 토큰 형식 진단
 
-### In Progress
-- **Supabase Dashboard 에 OAuth Redirect URL 추가** (사용자 작업 필요)
-  - 추가 필요: `https://bunker.ai.kr/school/auth/callback`
-  - 기존: `https://bunker.ai.kr/auth/callback`, `http://localhost:3000/auth/callback`
-
 ### Blocked
-- 없음
+- 없음 (Supabase OAuth Redirect URL 추가 불필요 — 자체 로그인 제거로)
 
 ## Key Decisions
 - `.pptx` 업로드 → 추출 방식 채택
@@ -88,28 +98,26 @@
 - 카드뉴스 DALL-E 없이 순수 CSS/SVG
 - 행사 시스템: admin 라우트는 supabaseAdmin (service_role)
 - Route group `(main)` 으로 공개/관리 페이지 레이아웃 분리
-- Kakao/Google OAuth: `signInWithOAuth` + `redirectTo` 설정
+- **Kakao/Google OAuth 제거됨**: church-school 자체 로그인 UI 완전 제거 (메인에서만 로그인)
 - **Vercel rewrite vs 별도 도메인**: rewrite 선택 (단일 도메인, DNS 불필요)
 - **basePath '/school' 사용**: 내부 절대 경로 자동 prefix
 - **Production only basePath**: dev 환경은 basePath 없이 (`VERCEL_ENV === 'production'` 체크)
-- **LoginModal pathname 감지**: 현재 경로가 /school 이면 /school/auth/callback, 아니면 /auth/callback
 - **Root Directory = `church-school/`**: GitHub 트리거 빌드가 church-school 코드만 사용
 - **Vercel API 직접 사용**: CLI npx 타임아웃 회피, POST /v13/deployments 로 배포 트리거
+- **로그인 공유**: 같은 도메인 (bunker.ai.kr) + 같은 Supabase → 쿠키 자동 공유 → 메인 로그인 시 church-school 자동 인증
+- **redirectToMainLogin 헬퍼**: 미로그인 시 메인 로그인 페이지로 이동 (`?next=` 파라미터로 복귀 경로 전달)
 
 ## Next Steps
-1. **Supabase Dashboard → Authentication → URL Configuration → Redirect URLs 에 추가:**
-   `https://bunker.ai.kr/school/auth/callback`
-2. Kakao Developers Console 에 Redirect URI 추가:
-   - `https://bunker.ai.kr/school/auth/callback` (Kakao)
-   - `https://bunker.ai.kr/auth/callback` (기존)
-3. Google Cloud Console 에 Authorized redirect URI 추가:
-   - `https://bunker.ai.kr/school/auth/callback` (Google)
-4. 최종 테스트:
-   - `bunker.ai.kr` → 메인 (정상)
-   - `bunker.ai.kr/school` → church-school (정상)
-   - 메인에서 로그인 → /school 에서도 로그인 유지
-   - /school 에서 Kakao/Google 로그인 → 정상 동작
-   - /school 내부 페이지 네비게이션 (예: /school/events/manage)
+1. 최종 테스트:
+   - `bunker.ai.kr` → 메인 (정상) ✓
+   - `bunker.ai.kr/school` → church-school (정상) ✓
+   - 메인에서 로그인 → `/school` 에서 자동 로그인 (쿠키 공유)
+   - 미로그인 상태로 `/school/mypage` → 메인 로그인으로 redirect
+   - `/school` 내부 네비게이션 (예: `/school/login`, `/school/events/manage`) 정상
+2. 추가 개선 가능 (선택):
+   - 메인 `/login` 페이지가 `?next=` 파라미터로 로그인 후 원래 경로로 복귀하는지 확인
+   - 메인 페이지에 church-school 카드 (이미 구현됨: `src/app/page.tsx:871`) 작동 확인
+   - church-school 자체 dev 환경 (`localhost:3000`) 에서 basePath 없이 정상 작동 확인
 
 ## Critical Context
 - **공유 Supabase**: `otzdebgfztoattfuvxqy.supabase.co` (auth + 양쪽 데이터)
