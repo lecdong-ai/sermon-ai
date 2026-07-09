@@ -7,11 +7,11 @@
   "rewrites": [
     {
       "source": "/school",
-      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app"
+      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/school"
     },
     {
       "source": "/school/:path*",
-      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/:path*"
+      "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/school/:path*"
     }
   ]
 }
