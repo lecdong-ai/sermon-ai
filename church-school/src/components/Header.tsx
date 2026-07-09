@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, BookOpen, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from './AuthProvider';
@@ -17,7 +17,15 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isLoggedIn, user, logout } = useAuth();
+  const [sbCookieCount, setSbCookieCount] = useState(0);
+  const { isLoggedIn, user, loading, logout } = useAuth();
+
+  useEffect(() => {
+    const cookies = document.cookie.split(';').filter(c => c.trim().startsWith('sb-'))
+    setSbCookieCount(cookies.length)
+    console.log('[Header] sb- cookies:', cookies.map(c => c.split('=')[0]))
+    console.log('[Header] isLoggedIn:', isLoggedIn, 'user:', user?.email)
+  }, [isLoggedIn, user])
 
   return (
     <>
@@ -81,6 +89,11 @@ export default function Header() {
             {mobileOpen ? <X className="w-5 h-5 text-navy-700" /> : <Menu className="w-5 h-5 text-navy-700" />}
           </button>
         </div>
+      </div>
+
+      {/* TEMP DEBUG */}
+      <div className="bg-red-500 text-white text-xs px-3 py-1 text-center font-mono">
+        DEBUG: isLoggedIn={String(isLoggedIn)} | loading={String(loading)} | sb-cookies={sbCookieCount} | user={user?.email || 'null'}
       </div>
 
       {/* Mobile Nav */}

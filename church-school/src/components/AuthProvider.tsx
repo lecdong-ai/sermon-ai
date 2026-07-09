@@ -32,11 +32,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 1. 유저 프로필 조회 및 상태 동기화
   const refreshUser = async () => {
+    console.log('[AuthProvider] refreshUser 시작');
     try {
       const profile = await getCurrentUserProfile();
+      console.log('[AuthProvider] profile 결과:', profile);
       setUser(profile);
     } catch (err) {
-      console.error('인증 상태 갱신 실패:', err);
+      console.error('[AuthProvider] 인증 상태 갱신 실패:', err);
       setUser(null);
     } finally {
       setLoading(false);
@@ -46,9 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 2. 초기 로드 및 Supabase Auth 상태 리스너 연동
   useEffect(() => {
     if (!supabase) return;
+    console.log('[AuthProvider] supabase 준비됨, refreshUser 호출');
     refreshUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+      console.log('[AuthProvider] onAuthStateChange:', event, session?.user?.email);
       if (session) {
         await refreshUser();
       } else {
