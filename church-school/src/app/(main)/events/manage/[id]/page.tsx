@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Copy, Share2, Users, CheckCircle2, Clock, MapPin, Calendar, Settings, Trash2, Download, Eye } from 'lucide-react'
+import { ArrowLeft, Share2, Users, CheckCircle2, Clock, MapPin, Calendar, Settings, Trash2, Download, MessageCircle } from 'lucide-react'
 import { EventRecord, EventStatus, EVENT_STATUS_LABELS, CustomField } from '@/types/event'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
@@ -43,18 +43,33 @@ export default function EventDetailPage() {
     }
   }
 
-  const copyLink = () => {
-    if (!event) return
+  const buildShareText = () => {
+    if (!event) return ''
     const url = `${window.location.origin}/events/${event.link_token}`
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const lines = [`📢 [${event.title}] 신청 안내`, '']
+    if (event.start_date) {
+      const start = new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+      if (event.end_date) {
+        const end = new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+        lines.push(`📅 일시: ${start} ~ ${end}`)
+      } else {
+        lines.push(`📅 일시: ${start}`)
+      }
+    }
+    if (event.location) lines.push(`📍 장소: ${event.location}`)
+    if (event.deadline) lines.push(`⏰ 신청마감: ${new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} ${new Date(event.deadline).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`)
+    if (event.capacity) lines.push(`👥 정원: ${event.capacity}명`)
+    if (event.description) { lines.push(''); lines.push(event.description) }
+    lines.push('')
+    lines.push('아래 링크를 눌러 신청해주세요! 👇')
+    lines.push(url)
+    return lines.join('\n')
   }
 
   const handleShare = async () => {
     if (!event) return
+    const text = buildShareText()
     const url = `${window.location.origin}/events/${event.link_token}`
-    const text = `[${event.title}]\n${event.start_date ? `일시: ${new Date(event.start_date).toLocaleDateString('ko-KR')}\n` : ''}${event.location ? `장소: ${event.location}\n` : ''}아래 링크에서 신청하세요!\n${url}`
     if (navigator.share) {
       try { await navigator.share({ title: event.title, text, url }) } catch {}
     } else {
@@ -62,6 +77,16 @@ export default function EventDetailPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  const copyLink = async () => {
+    if (!event) return
+    const text = buildShareText()
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 3000)
+    } catch {}
   }
 
   const handleSave = async () => {
@@ -126,15 +151,21 @@ export default function EventDetailPage() {
       {!event.is_template && (
         <div className="bg-gradient-to-br from-navy-800 to-navy-600 rounded-2xl p-6 mb-6 text-white">
           <h2 className="text-sm font-medium opacity-80 mb-3">학부모에게 공유하기</h2>
-          <p className="text-sm opacity-70 mb-4">아래 링크를 카카오톡으로 전송하면 학부모가 바로 신청할 수 있습니다.</p>
+          <p className="text-sm opacity-70 mb-4">버튼을 눌러 복사한 뒤, 카카오톡 대화방에 붙여넣으세요.</p>
+
+          {/* Preview */}
+          <div className="bg-white/10 rounded-xl p-4 mb-4 border border-white/20">
+            <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">{buildShareText()}</pre>
+          </div>
+
           <div className="flex gap-2">
-            <button onClick={handleShare} className="flex-1 py-3 bg-white text-navy-900 font-semibold rounded-xl hover:bg-warm-50 transition-colors flex items-center justify-center gap-2">
-              <Share2 className="w-5 h-5" />
-              공유하기
+            <button onClick={copyLink} className="flex-1 py-3 bg-[#FEE500] text-[#3C1E1E] font-bold rounded-xl hover:brightness-95 transition-all flex items-center justify-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              {copied ? '복사됨! 카톡에 붙여넣으세요' : '카카오톡으로 복사'}
             </button>
-            <button onClick={copyLink} className="flex-1 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors flex items-center justify-center gap-2 border border-white/30">
-              <Copy className="w-5 h-5" />
-              {copied ? '복사됨!' : '링크 복사'}
+            <button onClick={handleShare} className="px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors flex items-center justify-center gap-2 border border-white/30">
+              <Share2 className="w-5 h-5" />
+              공유
             </button>
           </div>
         </div>

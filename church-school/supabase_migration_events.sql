@@ -83,16 +83,23 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
 -- Events: users can CRUD their own events
+DROP POLICY IF EXISTS "events_select_own" ON events;
 CREATE POLICY "events_select_own" ON events FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "events_insert_own" ON events;
 CREATE POLICY "events_insert_own" ON events FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "events_update_own" ON events;
 CREATE POLICY "events_update_own" ON events FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "events_delete_own" ON events;
 CREATE POLICY "events_delete_own" ON events FOR DELETE USING (auth.uid() = user_id);
 
 -- Applications: only event owner can view/manage
+DROP POLICY IF EXISTS "applications_select_owner" ON applications;
 CREATE POLICY "applications_select_owner" ON applications FOR SELECT
   USING (event_id IN (SELECT id FROM events WHERE user_id = auth.uid()));
+DROP POLICY IF EXISTS "applications_update_owner" ON applications;
 CREATE POLICY "applications_update_owner" ON applications FOR UPDATE
   USING (event_id IN (SELECT id FROM events WHERE user_id = auth.uid()));
+DROP POLICY IF EXISTS "applications_delete_owner" ON applications;
 CREATE POLICY "applications_delete_owner" ON applications FOR DELETE
   USING (event_id IN (SELECT id FROM events WHERE user_id = auth.uid()));
 -- NOTE: INSERT is done via service_role (supabaseAdmin) in API routes, bypassing RLS
