@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
-import LoginModal from '@/components/LoginModal';
 import { createClient as createSupabaseClient } from '@/lib/supabase/client';
+import { redirectToMainLogin } from '@/lib/auth-redirect';
 
 interface GeneratedResults {
   version1: string;
@@ -32,7 +32,6 @@ export default function NoticeWriterPage() {
   const [freeCount, setFreeCount] = useState(3);
   // Auth Context 연동
   const { isLoggedIn, user, isPremium } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Copy success status per version
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -56,7 +55,7 @@ export default function NoticeWriterPage() {
     // Limits check for guest users (프리미엄 구독자는 무제한)
     const isRestricted = !isLoggedIn && freeCount <= 0;
     if (isRestricted) {
-      setShowLoginModal(true);
+      redirectToMainLogin('/notice-writer');
       return;
     }
 
@@ -109,7 +108,7 @@ export default function NoticeWriterPage() {
 
   const handleSave = async (text: string, versionIndex: 1 | 2 | 3 | 4) => {
     if (!isLoggedIn || !user) {
-      setShowLoginModal(true);
+      redirectToMainLogin('/notice-writer');
       return;
     }
 
@@ -171,7 +170,7 @@ export default function NoticeWriterPage() {
                   await supabase.auth.signOut();
                   window.location.reload();
                 } else {
-                  setShowLoginModal(true);
+                  redirectToMainLogin('/notice-writer');
                 }
               }}
               className={`text-xs font-bold px-3 py-2 rounded-xl border transition-all ${
@@ -490,9 +489,6 @@ export default function NoticeWriterPage() {
         </div>
 
       </div>
-
-      {/* LOGIN MODAL */}
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
     </div>
   );

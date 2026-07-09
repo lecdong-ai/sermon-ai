@@ -1,76 +1,165 @@
-# 세션 요약 — PPT Studio DB 템플릿 + AI 추천 시스템 구축
+# 세션 요약 — 통합 웹 플랫폼 (메인 + 교회학교)
 
 ## Goal
-Build a DB-driven PPT Studio where admins upload .pptx templates and AI automatically recommends + generates beautifully styled slides.
+1. **PPT Studio DB 템플릿 + AI 추천** — 관리자가 .pptx 업로드 시 색상/폰트 자동 추출, DB 저장, AI 자동 추천 및 스타일 적용
+2. **카드뉴스 생성기** — 설교 내용 기반 PNG/PDF 카드뉴스 (13개 테마, 3 SNS 사이즈)
+3. **교회 행사 신청 시스템** — 관리자/신청자/QR체크인/CSV내보내기
+4. **카카오/구글 OAuth 로그인** — 메인+교회학교 양쪽 동일
+5. **Vercel path-based 통합** — `bunker.ai.kr/school/*` 로 교회학교 서비스
 
 ## Constraints & Preferences
-- Templates stored in Supabase DB, manageable by admin via CRUD UI
-- Admin uploads .pptx → color/font auto-extracted via JSZip → stored as template
-- AI auto-recommends the best template based on sermon content
-- AI generation respects template-specific guides and auto-applies styles to generated slides
-- Church-school variant gets identical features as main project
-- All changes must compile in both `npm run build` builds
-- GET endpoint open to all users (not just admin) so non-admin PptStudio can fetch templates
-- Template delete should be hard delete (not soft) — user explicitly requested
-- Preview must reflect selected template colors/fonts in all 10 layouts immediately
+- 템플릿은 Supabase DB, 관리자 CRUD UI로 관리
+- `.pptx` 업로드 시 JSZip로 색상/폰트 자동 추출
+- AI 자동 추천은 수동 선택 없을 때만, 수동 선택 우선
+- 템플릿 스타일은 생성 슬라이드에 자동 적용
+- DELETE 는 hard delete
+- 모든 변경은 두 프로젝트 모두 build 통과해야 함
+- Vercel rewrite 방식으로 path-based 라우팅 (단일 도메인)
+- 같은 Supabase 인스턴스 공유 → 로그인 상태 공유
+- 커밋은 필요한 경우만 (사용자 선호)
 
 ## Progress
-### Done
-- Created `ppt_templates` Supabase table + 7 seed templates with AI guides
-- Created `@/lib/pptxParser.ts`: extracts primary/accent/background/text colors + title/body fonts from `.pptx` theme.xml via JSZip
-- Created `@/lib/templateRegistry.ts` in both projects: client-side fetch, localStorage cache (5min TTL), static fallback, `applyTemplate(slide, template)` helper, `invalidateCache()` function
-- Created `/api/admin/templates` API (GET list, POST create with .pptx upload → auto-extract → save) in both projects
-- Created `/api/admin/templates/[id]` API (PUT update, DELETE hard) in both projects
-- Created `/admin/templates` CRUD page in both projects (.pptx upload with color/font extraction preview, AI guide editor, color/font inputs, template list with swatches)
-- Modified both `/api/ppt/generate` to accept `templateId`, look up template from DB, pass to `generatePptSlidesGpt()`
-- Modified both `openai.ts`: `generatePptSlidesGpt()` accepts `template` object (name, primary/accent colors, fonts, ai_guide), injects into GPT system prompt; added `recommendTemplate()` function
-- Modified `handleGenerate()` in both PptStudio.tsx: auto-calls `recommendTemplate()` when no template pre-selected, sends `templateId` in request, auto-applies `applyTemplate()` to generated slides
-- Fixed PptSlidePreview in both projects: all 10 layouts + default use `titleCss`/`bodyCss`/`primary`/`accent`/`bg` template variables instead of hardcoded colors
-- Fixed `#` prefix bug: `primary = c?.primary ? `#${c.primary}` : '#1B3A5C'` so DB colors (no `#`) become valid CSS
-- Changed selectedTemplateId default from `'modern'` to `''` (empty → auto-recommend triggers)
-- Moved `templates`/`selectedTemplateId` state declarations before `handleGenerate` to fix ReferenceError (TDZ)
-- Changed DELETE endpoint from soft (`update({ is_active: false })`) to hard (`.delete()`) in both projects
-- Cache invalidation: admin CRUD (save/delete) calls `invalidateCache()` → `localStorage.removeItem(CACHE_KEY)` → PptStudio always fetches fresh list
-- Both projects build successfully (`npm run build` passes)
+### Done — PPT Studio
+- `ppt_templates` Supabase 테이블 + 7 seed 템플릿
+- `@/lib/pptxParser.ts`: .pptx theme.xml → 색상/폰트 추출
+- `@/lib/templateRegistry.ts`: 클라이언트 fetch, localStorage 캐시(5분), static fallback, `applyTemplate()`, `invalidateCache()`
+- `/api/admin/templates` GET(open)/POST(admin), `/api/admin/templates/[id]` PUT/DELETE(hard)
+- `/admin/templates` CRUD UI (.pptx 업로드 + 색상/폰트 미리보기)
+- `generatePptSlidesGpt()` 에 템플릿 주입, `recommendTemplate()` 함수
+- PptSlidePreview: 10개 레이아웃 모두 템플릿 색상/폰트 사용
+- 양 프로젝트 build 성공
+
+### Done — 카드뉴스 (church-school)
+- CardNewsSection.tsx: 13개 테마, 3 SNS 사이즈, 인라인 편집, PNG/PDF 내보내기
+- 10개 설교 테마, 풍부한 콘텐츠 생성
+
+### Done — 교회 행사 신청 시스템
+- `supabase_migration_events.sql`: events + applications 테이블, RLS, 트리거, UNIQUE 제약
+- 11 API 라우트: 3 공개(이벤트 정보/신청/중복+형제), QR 체크인, 8 관리(CRUD/복제/검색/상태/CSV/일괄)
+- 8 페이지: 3 공개(모바일 신청/완료+QR/체크인), 5 관리(목록/생성/상세+대시보드/신청목록+일괄/상세)
+- QR 체크인, 형제자매 자동완성, 템플릿 복제, 카톡 공유(포맷팅 텍스트), 스마트 대시보드
+- Route group `(main)/` 분리: 공개 페이지는 minimal layout
+
+### Done — OAuth 로그인 (church-school)
+- `LoginModal.tsx`: Kakao(yellow) + Google(white) 버튼
+- `/auth/callback/route.ts`: OAuth 리다이렉트 핸들러
+
+### Done — Vercel Path-based 통합 (가장 최근 작업)
+- Vercel API 토큰 (Full Access) 생성으로 Vercel 직접 제어 가능
+- `church-school` 프로젝트 진단: Vercel Authentication ON, Root Directory 잘못 설정
+- `passwordProtection: null` PATCH → OFF
+- `ssoProtection: null` PATCH → OFF
+- Root Directory `church-school/` 로 변경 (GitHub 빌드가 church-school 코드 사용)
+- 303bd79 (오래된) 배포가 실제로는 메인 프로젝트를 빌드한 것이었음 확인
+- Vercel API로 새 배포 트리거 (`POST /v13/deployments`)
+- 새 빌드 (commit 1eee6d4) READY, `<title>교회학교 솔루션</title>` 확인
+- 메인 `vercel.json` 에 rewrites 추가:
+  ```json
+  "rewrites": [
+    { "source": "/school", "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/school" },
+    { "source": "/school/:path*", "destination": "https://church-school-jun-jung-woo-s-projects.vercel.app/school/:path*" }
+  ]
+  ```
+- church-school `next.config.mjs` 에 `basePath: '/school'` 추가 (production only)
+- `LoginModal.tsx` 의 `redirectTo` 에 pathname 감지 로직 추가 (`/school/auth/callback` vs `/auth/callback`)
+- `bunker.ai.kr/school` → church-school 정상, 내부 링크 모두 `/school/*` prefix ✓
+- church-school `package.json`/`package-lock.json` 변경 없음 (`--no-save`)
+
+### Done — 유틸리티 스크립트
+- `church-school/vercel-fix.mjs`: Vercel Authentication 끄기
+- `church-school/cleanup-and-rebuild.mjs`: Root Directory 변경, 배포 정리
+- `church-school/check-deploys.mjs`: 배포 목록 확인
+- `church-school/token-diagnose.mjs`: 토큰 형식 진단
 
 ### In Progress
-- (none)
+- **Supabase Dashboard 에 OAuth Redirect URL 추가** (사용자 작업 필요)
+  - 추가 필요: `https://bunker.ai.kr/school/auth/callback`
+  - 기존: `https://bunker.ai.kr/auth/callback`, `http://localhost:3000/auth/callback`
 
 ### Blocked
-- Supabase migration SQL must be manually run in dashboard (`supabase_migration_ppt_templates.sql`) — user was going to run it but may not have yet
+- 없음
 
 ## Key Decisions
-- `.pptx` upload → extract theme approach chosen over manual color input (user preference)
-- Templates stored in DB so admin can manage without code deploy
-- Client caches in localStorage (5min) to reduce API calls; `invalidateCache()` called on CRUD for immediate refresh
-- Static fallback templates ensure functionality even when DB/API is unavailable
-- GET endpoint intentionally open to all authenticated users (templates are not sensitive)
-- AI auto-recommend only triggers when no template pre-selected; manual selection takes priority
-- Template styles auto-applied to generated slides immediately, so user sees styled result without extra click
-- DELETE is hard delete (`.delete()`) per user request — soft delete rejected
-- User declined template preview card enhancement request — current small color-dot buttons kept as-is
-- Template preview in PptStudio sidebar intentionally not enhanced (user chose to leave it)
+- `.pptx` 업로드 → 추출 방식 채택
+- 템플릿 DB 저장 (배포 불필요)
+- localStorage 5분 캐시 + invalidateCache()
+- Static fallback 템플릿
+- DELETE hard
+- 카드뉴스 DALL-E 없이 순수 CSS/SVG
+- 행사 시스템: admin 라우트는 supabaseAdmin (service_role)
+- Route group `(main)` 으로 공개/관리 페이지 레이아웃 분리
+- Kakao/Google OAuth: `signInWithOAuth` + `redirectTo` 설정
+- **Vercel rewrite vs 별도 도메인**: rewrite 선택 (단일 도메인, DNS 불필요)
+- **basePath '/school' 사용**: 내부 절대 경로 자동 prefix
+- **Production only basePath**: dev 환경은 basePath 없이 (`VERCEL_ENV === 'production'` 체크)
+- **LoginModal pathname 감지**: 현재 경로가 /school 이면 /school/auth/callback, 아니면 /auth/callback
+- **Root Directory = `church-school/`**: GitHub 트리거 빌드가 church-school 코드만 사용
+- **Vercel API 직접 사용**: CLI npx 타임아웃 회피, POST /v13/deployments 로 배포 트리거
 
 ## Next Steps
-1. Remind user to run SQL migration in Supabase dashboard SQL Editor (if not yet done)
-2. Restart dev servers (`npm run dev`) to pick up new files
-3. Verify: admin uploads .pptx → template appears in PptStudio → user clicks 생성 → AI recommends + generates + styles applied
+1. **Supabase Dashboard → Authentication → URL Configuration → Redirect URLs 에 추가:**
+   `https://bunker.ai.kr/school/auth/callback`
+2. Kakao Developers Console 에 Redirect URI 추가:
+   - `https://bunker.ai.kr/school/auth/callback` (Kakao)
+   - `https://bunker.ai.kr/auth/callback` (기존)
+3. Google Cloud Console 에 Authorized redirect URI 추가:
+   - `https://bunker.ai.kr/school/auth/callback` (Google)
+4. 최종 테스트:
+   - `bunker.ai.kr` → 메인 (정상)
+   - `bunker.ai.kr/school` → church-school (정상)
+   - 메인에서 로그인 → /school 에서도 로그인 유지
+   - /school 에서 Kakao/Google 로그인 → 정상 동작
+   - /school 내부 페이지 네비게이션 (예: /school/events/manage)
 
 ## Critical Context
-- Both projects share same Supabase instance (`otzdebgfztoattfuvxqy.supabase.co`)
-- Both use `supabaseAdmin` from `@/lib/supabase`
-- `PptSlidePreview` handles 10 layout types (title, bullets, section-header, quote, two-column, closing, vs-contrast, timeline-flow, central-focus, grid-matrix)
-- Current state is commit `a2b1128` with all session's re-done changes uncommitted: 11 files modified (main + church PptStudio.tsx, openai.ts, API routes)
-- Previous reset to `2838d55` then back to `a2b1128` lost uncommitted work — all fixes re-applied in this session
-- Template colors stored without `#` prefix in DB; `#` is now added in PptSlidePreview to produce valid CSS
+- **공유 Supabase**: `otzdebgfztoattfuvxqy.supabase.co` (auth + 양쪽 데이터)
+- **별도 Supabase**: `wpvcsxencajgmunnndjs.supabase.co` (설교 프로젝트 전용, PPT 이미지)
+- **Vercel 프로젝트**:
+  - `sermon-dashboard` (prj_PDAy19aQvpFcRZXYULDyiovljsE2) — `bunker.ai.kr`
+  - `church-school` (prj_bpDO10wPvg1V9G3oDoe8vkZ6Ro6f) — `church-school-jun-jung-woo-s-projects.vercel.app`
+  - Vercel Authentication: **OFF** (passwordProtection, ssoProtection 둘 다 null)
+  - Root Directory (church-school): `church-school/`
+- **GitHub repo**: `lecdong-ai/sermon-ai` (monorepo, main 브랜치)
+- **현재 HEAD**: `1eee6d4` (모든 변경사항 커밋됨, 푸시됨)
+- **Vercel API**: 사용자 Vercel 토큰 (`vcp_4X37...`) 보유, Full Access
+- **공유 도메인 (`bunker.ai.kr`)**: sermon-dashboard 에서 호스팅, /school/* → church-school 로 rewrite
+- **로그인 공유**: 같은 도메인 + 같은 Supabase → 쿠키 자동 공유
+- **PPTX 템플릿**: DB에 `#` 없이 저장, PptSlidePreview 에서 `#` prefix 추가
+- **church-school church-school.vercel.app 도메인**: 다른 프로젝트에 할당됨 (사용 안 함)
 
 ## Relevant Files
-- `supabase_migration_ppt_templates.sql`: DDL + 7 seed templates
-- `src/lib/pptxParser.ts`: .pptx → theme extraction (JSZip + regex)
-- `src/lib/templateRegistry.ts` / `church-school/src/lib/templateRegistry.ts`: client loader, cache, fallback, `applyTemplate()`, `invalidateCache()`
-- `src/app/api/admin/templates/route.ts` / `church-school/src/app/api/admin/templates/route.ts`: GET (open) + POST (admin only)
-- `src/app/api/admin/templates/[id]/route.ts` / `church-school/src/app/api/admin/templates/[id]/route.ts`: PUT (admin) + DELETE (hard, admin)
-- `src/app/admin/templates/page.tsx` / `church-school/src/app/admin/templates/page.tsx`: CRUD UI with .pptx upload + color/font preview
-- `src/components/PptStudio.tsx` / `church-school/src/components/ppt/PptStudio.tsx`: dynamic template loading, auto-recommendation, auto-apply on generate, PptSlidePreview with full template variable support
-- `src/lib/openai.ts` / `church-school/src/lib/workspace/openai.ts`: `generatePptSlidesGpt()` with template injection, `recommendTemplate()`
-- `src/app/api/ppt/generate/route.ts` / `church-school/src/app/api/ppt/generate/route.ts`: accepts `templateId`, fetches DB template, passes to AI
+
+### Vercel 통합
+- `vercel.json`: rewrites 추가됨 (`/school` → church-school)
+- `church-school/next.config.mjs`: `basePath: '/school'` (production only)
+- `church-school/src/components/LoginModal.tsx`: `redirectTo` pathname 감지
+- `church-school/vercel-fix.mjs`, `cleanup-and-rebuild.mjs`, `check-deploys.mjs`, `token-diagnose.mjs`: 유틸리티 스크립트 (모두 커밋됨)
+
+### PPT Studio
+- `supabase_migration_ppt_templates.sql`: DDL + 7 seed
+- `src/lib/pptxParser.ts`, `src/lib/templateRegistry.ts`: 핵심 로직
+- `src/app/api/admin/templates/route.ts`, `src/app/api/admin/templates/[id]/route.ts`: CRUD API
+- `src/app/admin/templates/page.tsx`: CRUD UI
+- `src/components/PptStudio.tsx`: 동적 템플릿, 자동 추천, 자동 적용
+- `src/lib/openai.ts`: `generatePptSlidesGpt()` 템플릿 주입, `recommendTemplate()`
+- `src/app/api/ppt/generate/route.ts`: templateId 처리
+- `church-school/` 대응 파일들: 동일한 구조
+
+### 카드뉴스
+- `church-school/src/components/CardNewsSection.tsx`: 13 테마, 3 사이즈, 인라인 편집, PNG/PDF
+
+### 행사 시스템
+- `church-school/supabase_migration_events.sql`: events + applications DDL
+- `church-school/src/types/event.ts`: 타입 정의
+- `church-school/src/app/api/events/...`: 공개 API 3개
+- `church-school/src/app/api/manage/events/...`: 관리 API 8개
+- `church-school/src/app/events/[token]/...`: 공개 페이지 3개
+- `church-school/src/app/(main)/events/manage/...`: 관리 페이지 5개
+- `church-school/src/components/Header.tsx`: '행사 관리' nav 추가
+- `church-school/src/app/(main)/layout.tsx`: route group layout
+
+### OAuth
+- `church-school/src/components/LoginModal.tsx`: Kakao + Google 버튼
+- `church-school/src/app/auth/callback/route.ts`: OAuth 핸들러
+- `church-school/next.config.mjs`: `eslint.ignoreDuringBuilds: true`
+- `church-school/vercel.json`: Vercel 배포 설정

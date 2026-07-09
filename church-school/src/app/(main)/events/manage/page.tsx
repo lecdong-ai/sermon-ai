@@ -4,12 +4,22 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Calendar, Plus, Users, Copy, Trash2, MoreVertical, Clock, MapPin, Settings } from 'lucide-react'
 import { EventRecord, EVENT_STATUS_LABELS } from '@/types/event'
+import { useAuth } from '@/components/AuthProvider'
+import { redirectToMainLogin } from '@/lib/auth-redirect'
 
 export default function ManageEventsPage() {
+  const { isLoggedIn, loading: authLoading } = useAuth()
   const [events, setEvents] = useState<(EventRecord & { application_count: number })[]>([])
   const [loading, setLoading] = useState(true)
   const [showTemplates, setShowTemplates] = useState(false)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
+
+  // 미로그인 시 메인 페이지 로그인으로 자동 이동
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      redirectToMainLogin('/events/manage')
+    }
+  }, [authLoading, isLoggedIn])
 
   const fetchEvents = async () => {
     setLoading(true)
@@ -19,7 +29,9 @@ export default function ManageEventsPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchEvents() }, [showTemplates])
+  useEffect(() => {
+    if (isLoggedIn) fetchEvents()
+  }, [showTemplates, isLoggedIn])
 
   const handleClone = async (id: string) => {
     if (!confirm('이 행사를 복사하여 새 행사를 만드시겠습니까?')) return
@@ -39,6 +51,17 @@ export default function ManageEventsPage() {
     navigator.clipboard.writeText(url)
     setMenuOpen(null)
     alert('신청 링크가 복사되었습니다!\n\n' + url)
+  }
+
+  if (authLoading || !isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-warm-50 py-24 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-navy-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-navy-500">로그인 페이지로 이동 중...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

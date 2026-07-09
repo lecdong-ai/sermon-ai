@@ -118,21 +118,19 @@ const FAQS = [
 
 import { useAuth } from '@/components/AuthProvider';
 import { createClient as createSupabaseClient } from '@/lib/supabase/client';
-import LoginModal from '@/components/LoginModal';
+import { redirectToMainLogin } from '@/lib/auth-redirect';
 
 export default function PricingPage() {
   const supabase = createSupabaseClient();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [paySuccess, setPaySuccess] = useState(false);
   const [selectedPlanName, setSelectedPlanName] = useState('');
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
   const { isLoggedIn, user, isPremium, refreshUser } = useAuth();
 
   const handleSubscribe = async (planId: string, planName: string) => {
     if (planId === 'free') {
       if (!isLoggedIn) {
-        setShowLoginModal(true);
+        redirectToMainLogin('/pricing');
       } else {
         alert('이미 무료 플랜으로 이용 중이십니다! 자료실이나 공지문 작성기를 마음껏 시작해 보세요.');
         window.location.href = '/';
@@ -148,7 +146,7 @@ export default function PricingPage() {
     // 로그인하지 않은 사용자는 프리미엄 정기 구독 결제 불가
     if (!isLoggedIn || !user) {
       alert('정기 구독을 신청하시려면 먼저 로그인이 필요합니다.');
-      setShowLoginModal(true);
+      redirectToMainLogin('/pricing');
       return;
     }
 
@@ -377,7 +375,6 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

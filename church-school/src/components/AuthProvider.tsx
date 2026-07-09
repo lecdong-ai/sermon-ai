@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, getCurrentUserProfile, signInUser, signUpUser, signOutUser } from '@/lib/auth';
+import { UserProfile, getCurrentUserProfile, signOutUser } from '@/lib/auth';
 import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -12,8 +12,6 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   refreshUser: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, churchName: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -64,31 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase]);
 
-  // 3. 로그인 함수
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      await signInUser(email, password);
-      await refreshUser();
-    } catch (err) {
-      setLoading(false);
-      throw err;
-    }
-  };
-
-  // 4. 회원가입 함수
-  const register = async (email: string, password: string, name: string, churchName: string) => {
-    setLoading(true);
-    try {
-      await signUpUser(email, password, name, churchName);
-      await refreshUser();
-    } catch (err) {
-      setLoading(false);
-      throw err;
-    }
-  };
-
-  // 5. 로그아웃 함수
+  // 3. 로그아웃 함수
   const logout = async () => {
     setLoading(true);
     try {
@@ -108,8 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: user?.role === 'admin',
     loading,
     refreshUser,
-    login,
-    register,
     logout,
   };
 

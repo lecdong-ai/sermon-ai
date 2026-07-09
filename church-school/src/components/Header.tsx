@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, BookOpen, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import LoginModal from './LoginModal';
 
 const NAV_ITEMS = [
   { href: '/', label: '홈' },
@@ -18,7 +17,6 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
 
   return (
@@ -51,38 +49,21 @@ export default function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            {isLoggedIn ? (
-              <>
-                <Link href="/mypage" className="btn-ghost text-sm flex items-center gap-1">
-                  <UserIcon className="w-4 h-4 text-navy-500" />
-                  <span className="font-bold">{user?.name}님</span>
-                </Link>
-                <button
-                  onClick={() => logout()}
-                  className="btn-outline btn-sm py-1.5 flex items-center gap-1"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="btn-outline btn-sm py-1.5"
-                >
-                  로그인
-                </button>
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="btn-primary btn-sm py-1.5"
-                >
-                  시작하기
-                </button>
-              </>
-            )}
-          </div>
+          {isLoggedIn && (
+            <div className="hidden md:flex items-center gap-3">
+              <Link href="/mypage" className="btn-ghost text-sm flex items-center gap-1">
+                <UserIcon className="w-4 h-4 text-navy-500" />
+                <span className="font-bold">{user?.name}님</span>
+              </Link>
+              <button
+                onClick={() => logout()}
+                className="btn-outline btn-sm py-1.5 flex items-center gap-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                로그아웃
+              </button>
+            </div>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -110,7 +91,7 @@ export default function Header() {
               </Link>
             ))}
             <hr className="my-2 border-warm-100" />
-            {isLoggedIn ? (
+            {isLoggedIn && (
               <>
                 <Link
                   href="/mypage"
@@ -130,36 +111,12 @@ export default function Header() {
                   로그아웃
                 </button>
               </>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setModalOpen(true);
-                  }}
-                  className="w-full text-center btn-outline py-2.5"
-                >
-                  로그인
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setModalOpen(true);
-                  }}
-                  className="w-full text-center btn-primary py-2.5 mt-2"
-                >
-                  시작하기
-                </button>
-              </>
             )}
           </nav>
         </div>
       )}
 
     </header>
-
-      {/* Auth Modal (header 밖으로 이동 — fixed z-stacking 이슈 해결) */}
-      <LoginModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }

@@ -13,7 +13,7 @@ import {
   getSavedNotices, 
   deleteSavedNotice, 
 } from '@/lib/db';
-import LoginModal from '@/components/LoginModal';
+import { redirectToMainLogin } from '@/lib/auth-redirect';
 
 interface SavedNotice {
   id: string;
@@ -27,9 +27,15 @@ interface SavedNotice {
 
 export default function MyPage() {
   const supabase = createSupabaseClient();
-  const { isLoggedIn, user, refreshUser, isPremium } = useAuth();
+  const { isLoggedIn, user, refreshUser, isPremium, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'settings'>('dashboard');
-  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 미로그인 시 메인 페이지 로그인으로 자동 이동
+  useEffect(() => {
+    if (!loading && !isLoggedIn) {
+      redirectToMainLogin('/mypage')
+    }
+  }, [loading, isLoggedIn])
 
   // Profile State
   const [name, setName] = useState('');
@@ -163,26 +169,12 @@ export default function MyPage() {
   };
 
   // Remove Bookmark
-  if (!isLoggedIn) {
+  if (loading || !isLoggedIn) {
     return (
       <div className="min-h-screen bg-warm-50 py-24 flex items-center justify-center">
-        <div className="bg-white p-8 md:p-12 rounded-3xl shadow-card max-w-md w-full text-center space-y-6 border border-warm-100">
-          <div className="w-16 h-16 bg-navy-50 rounded-2xl flex items-center justify-center mx-auto text-navy-600 animate-pulse">
-            <Lock className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-navy-950">로그인이 필요합니다</h1>
-            <p className="text-sm text-navy-500 leading-relaxed">
-              마이페이지 및 내 보관함, 결제 내역 확인은 로그인한 사역자만 접근하실 수 있습니다.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowLoginModal(true)}
-            className="w-full btn-primary py-3 rounded-xl shadow-button"
-          >
-            로그인 / 회원가입하기
-          </button>
-          <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-navy-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-navy-500">로그인 페이지로 이동 중...</p>
         </div>
       </div>
     );

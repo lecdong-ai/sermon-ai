@@ -14,7 +14,7 @@ import {
 import { getStorageItem, setStorageItem } from '@/lib/storage'
 import type { JohnManuscriptData } from '@/lib/project/johnManuscriptData'
 import { useAuth } from '@/components/AuthProvider'
-import LoginModal from '@/components/LoginModal'
+import { redirectToMainLogin } from '@/lib/auth-redirect'
 
 /* ── 상태별 색상 매핑 (다크 테마) ── */
 const STATUS_COLORS: Record<ProjectStatus, { bg: string; text: string; border: string; dot: string }> = {
@@ -285,27 +285,21 @@ function ProjectsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
-  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const { isLoggedIn, loading: authLoading } = useAuth()
   const { projects, stats, loading, error, deleteProject, refetch } = useProjects()
   const visibleProjects = projects
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
-      setLoginModalOpen(true)
+      redirectToMainLogin('/projects')
     }
   }, [authLoading, isLoggedIn])
 
   useEffect(() => {
     if (error === '로그인이 필요합니다.' && !isLoggedIn) {
-      setLoginModalOpen(true)
+      redirectToMainLogin('/projects')
     }
   }, [error, isLoggedIn])
-
-  const handleLoginSuccess = () => {
-    setLoginModalOpen(false)
-    refetch()
-  }
 
   const handleDelete = async (id: string) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return
@@ -421,7 +415,7 @@ function ProjectsContent() {
           )}
           {isAuthError ? (
             <button
-              onClick={() => setLoginModalOpen(true)}
+              onClick={() => redirectToMainLogin('/projects')}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[13px] font-bold transition-all shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/30"
             >
               <Lock className="w-4 h-4" />
@@ -648,12 +642,6 @@ function ProjectsContent() {
           </div>
         )}
       </div>
-
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        onSuccess={handleLoginSuccess}
-      />
     </div>
   )
 }

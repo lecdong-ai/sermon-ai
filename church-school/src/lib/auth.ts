@@ -1,4 +1,3 @@
-import { supabase } from './supabase';
 import { createClient as createBrowserSupabase } from './supabase/client';
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,53 +11,6 @@ export interface UserProfile {
   role: 'user' | 'admin';
   plan_type: 'free' | 'subscriber' | 'purchaser';
   created_at: string;
-}
-
-export async function signUpUser(email: string, password: string, name: string, churchName: string) {
-  const sb = createBrowserSupabase();
-  const { data: authData, error: authError } = await sb.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        church_name: churchName,
-      }
-    }
-  });
-
-  if (authError) throw authError;
-  if (!authData.user) throw new Error('회원가입에 실패했습니다.');
-
-  const { error: profileError } = await sb
-    .from('users')
-    .insert([
-      {
-        id: authData.user.id,
-        name,
-        email,
-        church_name: churchName,
-        role: 'user',
-        plan_type: 'free'
-      }
-    ]);
-
-  if (profileError) {
-    console.error('프로필 테이블 생성 에러:', profileError);
-  }
-
-  return authData.user;
-}
-
-export async function signInUser(email: string, password: string) {
-  const sb = createBrowserSupabase();
-  const { data, error } = await sb.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) throw error;
-  return data.user;
 }
 
 export async function signOutUser() {
