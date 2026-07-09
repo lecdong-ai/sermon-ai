@@ -51,10 +51,13 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
     setOauthLoading('kakao')
     try {
       const supabase = createSupabaseClient()
+      const callbackPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/school')
+        ? '/school/auth/callback'
+        : '/auth/callback'
       await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}${callbackPath}?next=/`,
           scopes: 'profile_nickname, profile_image',
         },
       })
@@ -69,10 +72,13 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
     setOauthLoading('google')
     try {
       const supabase = createSupabaseClient()
+      const callbackPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/school')
+        ? '/school/auth/callback'
+        : '/auth/callback'
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}${callbackPath}?next=/`,
         },
       })
     } catch (err: any) {
