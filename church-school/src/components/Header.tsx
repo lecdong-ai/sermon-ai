@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X, BookOpen, LogOut, User as UserIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import LoginModal from './LoginModal';
 
 const NAV_ITEMS = [
   { href: '/', label: '홈' },
@@ -17,114 +19,158 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginNext, setLoginNext] = useState<string | null>(null);
   const { isLoggedIn, user, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('login') === '1' && !isLoggedIn) {
+        setLoginNext(params.get('next'));
+        setLoginOpen(true);
+      }
+    }
+  }, [isLoggedIn]);
+
+  const handleCloseLogin = () => {
+    setLoginOpen(false);
+    if (isLoggedIn && loginNext) {
+      router.push(loginNext);
+    }
+  };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-warm-100 shadow-nav">
-      <div className="container-custom">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy-800 to-navy-600 flex items-center justify-center shadow-button group-hover:shadow-card-hover transition-shadow">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base font-bold text-navy-900 leading-tight">교회학교</span>
-              <span className="text-[10px] text-navy-400 font-medium -mt-0.5 tracking-wide">SOLUTION</span>
-            </div>
-          </Link>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-warm-100 shadow-nav">
+        <div className="container-custom">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy-800 to-navy-600 flex items-center justify-center shadow-button group-hover:shadow-card-hover transition-shadow">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-base font-bold text-navy-900 leading-tight">교회학교</span>
+                <span className="text-[10px] text-navy-400 font-medium -mt-0.5 tracking-wide">SOLUTION</span>
+              </div>
+            </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-4 py-2 text-sm font-medium text-navy-600 rounded-lg hover:text-navy-900 hover:bg-navy-50 transition-colors"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop CTA */}
-          {isLoggedIn && (
-            <div className="hidden md:flex items-center gap-3">
-              <Link
-                href="/mypage"
-                className="btn-ghost text-sm flex items-center gap-2"
-                title={user?.email}
-              >
-                <UserIcon className="w-4 h-4 text-navy-500" />
-                <div className="flex flex-col items-start leading-tight">
-                  <span className="font-bold text-navy-900">{user?.name}님</span>
-                  <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
-                </div>
-              </Link>
-              <button
-                onClick={() => logout()}
-                className="btn-outline btn-sm py-1.5 flex items-center gap-1"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                로그아웃
-              </button>
-            </div>
-          )}
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-navy-50 transition-colors"
-            aria-label="메뉴"
-          >
-            {mobileOpen ? <X className="w-5 h-5 text-navy-700" /> : <Menu className="w-5 h-5 text-navy-700" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Nav */}
-      {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-warm-100 animate-slide-up">
-          <nav className="container-custom py-4 flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 transition-colors"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <hr className="my-2 border-warm-100" />
-            {isLoggedIn && (
-              <>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {NAV_ITEMS.map((item) => (
                 <Link
-                  href="/mypage"
-                  onClick={() => setMobileOpen(false)}
-                  className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 block"
+                  key={item.href}
+                  href={item.href}
+                  className="px-4 py-2 text-sm font-medium text-navy-600 rounded-lg hover:text-navy-900 hover:bg-navy-50 transition-colors"
                 >
-                  <div className="flex flex-col leading-tight">
-                    <span>마이페이지 ({user?.name}님)</span>
-                    <span className="text-xs text-navy-400 font-normal mt-0.5">{user?.email}</span>
-                  </div>
+                  {item.label}
                 </Link>
+              ))}
+            </nav>
+
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-3">
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/mypage"
+                    className="btn-ghost text-sm flex items-center gap-2"
+                    title={user?.email}
+                  >
+                    <UserIcon className="w-4 h-4 text-navy-500" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="font-bold text-navy-900">{user?.name}님</span>
+                      <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => logout()}
+                    className="btn-outline btn-sm py-1.5 flex items-center gap-1"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    로그아웃
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setLoginOpen(true)}
+                  className="btn-primary btn-sm py-1.5 flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  로그인
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-navy-50 transition-colors"
+              aria-label="메뉴"
+            >
+              {mobileOpen ? <X className="w-5 h-5 text-navy-700" /> : <Menu className="w-5 h-5 text-navy-700" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        {mobileOpen && (
+          <div className="md:hidden bg-white border-t border-warm-100 animate-slide-up">
+            <nav className="container-custom py-4 flex flex-col gap-1">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <hr className="my-2 border-warm-100" />
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/mypage"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 block"
+                  >
+                    <div className="flex flex-col leading-tight">
+                      <span>마이페이지 ({user?.name}님)</span>
+                      <span className="text-xs text-navy-400 font-normal mt-0.5">{user?.email}</span>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-4 py-3 text-base font-medium text-red-500 rounded-xl hover:bg-red-50 flex items-center gap-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    로그아웃
+                  </button>
+                </>
+              ) : (
                 <button
                   onClick={() => {
                     setMobileOpen(false);
-                    logout();
+                    setLoginOpen(true);
                   }}
-                  className="w-full text-left px-4 py-3 text-base font-medium text-red-500 rounded-xl hover:bg-red-50 flex items-center gap-1"
+                  className="w-full text-left px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-1"
                 >
-                  <LogOut className="w-4 h-4" />
-                  로그아웃
+                  <LogIn className="w-4 h-4" />
+                  로그인
                 </button>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
+              )}
+            </nav>
+          </div>
+        )}
+      </header>
 
-    </header>
+      <LoginModal open={loginOpen} onClose={handleCloseLogin} next={loginNext} />
+    </>
   );
 }

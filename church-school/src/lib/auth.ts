@@ -13,6 +13,24 @@ export interface UserProfile {
   created_at: string;
 }
 
+export async function signInUser(email: string, password: string) {
+  const sb = createBrowserSupabase();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+export async function signUpUser(email: string, password: string) {
+  const sb = createBrowserSupabase();
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback` },
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function signOutUser() {
   const sb = createBrowserSupabase();
   const { error } = await sb.auth.signOut();
