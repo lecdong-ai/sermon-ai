@@ -13,16 +13,6 @@ export default memo(function Header() {
   const isHome = pathname === '/'
   const [menuOpen, setMenuOpen] = useState(false)
   const [supporter, setSupporter] = useState<{ active: boolean; until: string | null } | null>(null)
-  const [sbCookieCount, setSbCookieCount] = useState(0)
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const cookies = document.cookie.split(';').filter(c => c.trim().startsWith('sb-'))
-      setSbCookieCount(cookies.length)
-      console.log('[MainHeader] sb- cookies:', cookies.map(c => c.split('=')[0]))
-      console.log('[MainHeader] user:', user?.email, 'loading:', loading)
-    }
-  }, [user, loading])
 
   useEffect(() => {
     if (user) {
@@ -33,19 +23,6 @@ export default memo(function Header() {
     }
   }, [user])
 
-  // TEMP DEBUG
-  const DebugBar = () => (
-    <div className="bg-red-500 text-white text-xs px-3 py-1 text-center font-mono flex items-center justify-center gap-2">
-      <span>MAIN-DEBUG: user={user?.email || 'null'} | loading={String(loading)} | sb-cookies={sbCookieCount}</span>
-      <button
-        onClick={() => window.location.reload()}
-        className="bg-white text-red-500 px-2 py-0.5 rounded text-[10px] font-bold"
-      >
-        RELOAD
-      </button>
-    </div>
-  )
-
   const handleSignOut = async () => {
     setMenuOpen(false)
     await signOut()
@@ -53,7 +30,6 @@ export default memo(function Header() {
   }
 
   return (
-    <>
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isHome
         ? 'bg-[#0B1020]/80 backdrop-blur-md border-b border-white/10 text-white shadow-lg shadow-black/10'
@@ -229,8 +205,6 @@ export default memo(function Header() {
            )}
          </nav>
        </div>
-     </header>
-     <DebugBar />
-   </>
-   )
+      </header>
+    )
 })

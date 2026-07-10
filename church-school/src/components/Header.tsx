@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, BookOpen, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from './AuthProvider';
@@ -17,18 +17,9 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [sbCookieCount, setSbCookieCount] = useState(0);
-  const { isLoggedIn, user, loading, logout } = useAuth();
-
-  useEffect(() => {
-    const cookies = document.cookie.split(';').filter(c => c.trim().startsWith('sb-'))
-    setSbCookieCount(cookies.length)
-    console.log('[Header] sb- cookies:', cookies.map(c => c.split('=')[0]))
-    console.log('[Header] isLoggedIn:', isLoggedIn, 'user:', user?.email)
-  }, [isLoggedIn, user])
+  const { isLoggedIn, user, logout } = useAuth();
 
   return (
-    <>
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-warm-100 shadow-nav">
       <div className="container-custom">
         <div className="flex items-center justify-between h-16">
@@ -91,11 +82,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* TEMP DEBUG */}
-      <div className="bg-red-500 text-white text-xs px-3 py-1 text-center font-mono">
-        DEBUG: isLoggedIn={String(isLoggedIn)} | loading={String(loading)} | sb-cookies={sbCookieCount} | user={user?.email || 'null'}
-      </div>
-
       {/* Mobile Nav */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-warm-100 animate-slide-up">
@@ -140,6 +126,5 @@ export default function Header() {
       )}
 
     </header>
-    </>
   );
 }
