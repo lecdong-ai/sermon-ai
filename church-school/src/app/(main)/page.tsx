@@ -253,18 +253,21 @@ export default function HomePage() {
             매주 반복되는 실무를 AI와 검증된 템플릿으로 덜어드립니다.
           </p>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-20 animate-fade-up" style={{ animationDelay: '0.3s' }}>
+          {/* CTA — 순차 등장 */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-lg mx-auto mb-20">
             <Link
               href="/notice-writer"
-              className="group btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-navy-900 font-bold rounded-2xl shadow-card-hover hover:bg-warm-50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(46,196,182,0.25)]"
+              className="group btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-7 bg-white text-navy-900 font-bold rounded-2xl shadow-card-hover hover:bg-warm-50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(46,196,182,0.25)] animate-fade-up"
+              style={{ animationDelay: '0.3s' }}
             >
               <Sparkles className="w-5 h-5 text-mint-500 group-hover:rotate-12 transition-transform" />
               공지문 만들어보기
+              <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-mint-100 text-mint-700 group-hover:bg-mint-200 transition-colors">FREE</span>
             </Link>
             <Link
               href="/workspace"
-              className="group btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 glass text-white font-semibold rounded-2xl hover:bg-white/15 transition-all duration-300 hover:-translate-y-0.5"
+              className="group btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-7 glass text-white font-semibold rounded-2xl hover:bg-white/15 transition-all duration-300 hover:-translate-y-0.5 animate-fade-up"
+              style={{ animationDelay: '0.4s' }}
             >
               워크스페이스 둘러보기
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
