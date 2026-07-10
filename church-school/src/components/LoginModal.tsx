@@ -79,7 +79,7 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
         provider,
         options: {
           redirectTo,
-          ...(provider === 'kakao' && { scopes: 'profile_nickname, profile_image' }),
+          ...(provider === 'kakao' && { scopes: 'account_email profile_nickname profile_image' }),
         },
       });
     } catch (err: any) {
