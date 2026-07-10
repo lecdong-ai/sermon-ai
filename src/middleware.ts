@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/intro', '/preview']
-const publicPrefixes = ['/share/', '/api/auth', '/api/bible', '/school', '/api/ppt', '/api/admin/templates']
+const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password']
+const publicPrefixes = ['/api/auth', '/school']
 
 const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -36,18 +36,13 @@ function buildCsp(nonce: string): string {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const isDev = process.env.NODE_ENV === 'development'
-  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
-
-  const isPublic = publicRoutes.some((route) => pathname === route) ||
-    publicPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
-    (isDev && isAdminRoute) ||
-    (isDev && (pathname === '/api/admin' || pathname.startsWith('/api/admin/')))
+  const isPublic = publicRoutes.includes(pathname) ||
+    publicPrefixes.some((prefix) => pathname.startsWith(prefix))
 
   const response = NextResponse.next({ request })
 
   if (!hasSupabaseConfig) {
-    if (!isPublic && !pathname.startsWith('/advanced')) {
+    if (!isPublic) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('redirect', pathname)
@@ -77,19 +72,10 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  // getSession() 으로 쿠키 동기화 후 getUser() 로 검증
   await supabase.auth.getSession()
-  let { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /advanced/* routes — require authentication
-  if (pathname.startsWith('/advanced') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  if (!isPublic && !user && !pathname.startsWith('/advanced') && !pathname.startsWith('/conti') && !pathname.startsWith('/api/conti')) {
+  if (!isPublic && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

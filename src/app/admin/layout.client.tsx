@@ -30,12 +30,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (loading || !mounted) return
-    const isDev = process.env.NODE_ENV === 'development'
-    if (isDev) {
-      setIsAdminUser(true)
-      setChecking(false)
-      return
-    }
     if (!user) {
       router.push('/login?redirect=/admin')
       return
