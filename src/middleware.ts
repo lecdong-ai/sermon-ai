@@ -36,8 +36,13 @@ function buildCsp(nonce: string): string {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  const isDev = process.env.NODE_ENV === 'development'
+  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
+
   const isPublic = publicRoutes.some((route) => pathname === route) ||
-    publicPrefixes.some((prefix) => pathname.startsWith(prefix))
+    publicPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
+    (isDev && isAdminRoute) ||
+    (isDev && (pathname === '/api/admin' || pathname.startsWith('/api/admin/')))
 
   const response = NextResponse.next({ request })
 

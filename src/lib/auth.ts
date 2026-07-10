@@ -21,7 +21,21 @@ export async function getUserFromRequest(request: NextRequest) {
   // getUser() 대신 getSession() 사용: 토큰 만료 시 setAll()이 비어있어
   // 갱신이 실패하는 문제를 우회. 쿠키에서 직접 session을 읽어 user 반환.
   const { data } = await sb.auth.getSession()
-  return data?.session?.user ?? null
+  const realUser = data?.session?.user ?? null
+  if (realUser) return realUser
+
+  // dev 환경: 미인증 시 admin email 로 위장 (로컬 회원상황 확인용)
+  if (process.env.NODE_ENV === 'development') {
+    return {
+      id: '00000000-0000-0000-0000-000000000000',
+      email: 'lecdong@gmail.com',
+      app_metadata: { is_admin: true },
+      user_metadata: { name: 'dev-admin' },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    } as any
+  }
+  return null
 }
 
 /** OpenAI 호출 등 비용이 큰 라우트에 적용하는 rate limit. 인증된 경우 userId 기준, 아니면 IP 기준. */
