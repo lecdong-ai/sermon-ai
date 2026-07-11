@@ -114,47 +114,76 @@ export default function Header() {
                   {menuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-warm-200 py-2 z-50">
-                        <div className="px-4 py-2.5 border-b border-warm-100 mb-1.5">
-                          <p className="text-[11px] text-navy-400 font-medium">로그인 정보</p>
-                          <p className="text-[13px] font-bold text-navy-900 truncate mt-0.5">{user?.email}</p>
-                          {isAdmin && (
-                            <span className="inline-flex mt-1.5 items-center px-2 py-0.5 rounded text-[10px] font-bold bg-navy-100 text-navy-700">
-                              👑 총관리자
+                      <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-warm-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* User Profile Header */}
+                        <div className="bg-gradient-to-br from-navy-700 to-navy-600 px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                              <UserIcon className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{user?.name || '사용자'}님</p>
+                              <p className="text-[11px] text-white/70 truncate mt-0.5">{user?.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 mt-3">
+                            {isAdmin && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/15 text-white/90 backdrop-blur-sm border border-white/10">
+                                👑 총관리자
+                              </span>
+                            )}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/10 text-white/70 backdrop-blur-sm border border-white/10">
+                              🌿 교회학교
                             </span>
-                          )}
+                          </div>
                         </div>
 
-                        <Link
-                          href="/mypage"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
-                        >
-                          <UserIcon className="w-4 h-4 text-navy-400" />
-                          마이페이지
-                        </Link>
+                        {/* Menu Items */}
+                        <div className="px-3 pt-3 pb-1.5 space-y-0.5">
+                          <Link
+                            href="/mypage"
+                            onClick={() => setMenuOpen(false)}
+                            className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-all"
+                          >
+                            <UserIcon className="w-4 h-4 text-navy-400 group-hover:text-navy-600 transition-colors" />
+                            <span className="flex-1">마이페이지</span>
+                            <span className="text-navy-300 group-hover:text-navy-500 group-hover:translate-x-0.5 transition-all">→</span>
+                          </Link>
+                        </div>
 
-                        <div className="border-t border-warm-100 my-1.5" />
+                        {/* Bunker 목양 Card */}
+                        <div className="px-3 py-1.5">
+                          <a
+                            href="https://bunker.ai.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setMenuOpen(false)}
+                            className="group block relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/70 border border-indigo-200/60 px-4 py-3.5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                          >
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-200/20 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm shrink-0">
+                                <Cross className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[13px] font-bold text-indigo-800">Bunker 목양</span>
+                                  <span className="text-indigo-400 group-hover:translate-x-0.5 transition-transform">↗</span>
+                                </div>
+                                <p className="text-[11px] text-indigo-500/80 mt-0.5">메인 사역 플랫폼 바로가기</p>
+                              </div>
+                            </div>
+                          </a>
+                        </div>
 
-                        <a
-                          href="https://bunker.ai.kr"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 mx-2 text-[13px] font-bold text-indigo-600 bg-indigo-50/60 rounded-xl hover:bg-indigo-100 transition-colors"
-                        >
-                          <Cross className="w-4 h-4 text-indigo-500" />
-                          <span>Bunker 목양</span>
-                          <ExternalLink className="w-3.5 h-3.5 ml-auto text-indigo-400" />
-                        </a>
-
-                        <div className="border-t border-warm-100 mt-1.5 pt-1.5">
+                        {/* Logout */}
+                        <div className="border-t border-warm-100 mx-3 mt-1.5 pt-1.5 pb-2">
                           <button
                             onClick={handleLogout}
-                            className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            className="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[13px] font-bold text-red-500 hover:bg-red-50 transition-all"
                           >
-                            <LogOut className="w-4 h-4 text-red-400" />
-                            로그아웃
+                            <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-500 transition-colors" />
+                            <span>로그아웃</span>
                           </button>
                         </div>
                       </div>
