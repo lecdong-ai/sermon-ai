@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon, ChevronDown, Calendar, LayoutDashboard, Heart } from 'lucide-react';
+import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon, ChevronDown, Cross, ExternalLink } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import LoginModal from './LoginModal';
 
@@ -133,38 +133,20 @@ export default function Header() {
                           <UserIcon className="w-4 h-4 text-navy-400" />
                           마이페이지
                         </Link>
-                        <Link
-                          href="/projects"
+
+                        <div className="border-t border-warm-100 my-1.5" />
+
+                        <a
+                          href="https://bunker.ai.kr"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2.5 mx-2 text-[13px] font-bold text-indigo-600 bg-indigo-50/60 rounded-xl hover:bg-indigo-100 transition-colors"
                         >
-                          <LayoutDashboard className="w-4 h-4 text-navy-400" />
-                          설교 프로젝트
-                        </Link>
-                        <Link
-                          href="/workspace"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
-                        >
-                          <BookOpen className="w-4 h-4 text-navy-400" />
-                          워크스페이스
-                        </Link>
-                        <Link
-                          href="/events/manage"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
-                        >
-                          <Calendar className="w-4 h-4 text-navy-400" />
-                          행사 관리
-                        </Link>
-                        <Link
-                          href="/pricing"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
-                        >
-                          <Heart className="w-4 h-4 text-navy-400" />
-                          요금제
-                        </Link>
+                          <Cross className="w-4 h-4 text-indigo-500" />
+                          <span>Bunker 목양</span>
+                          <ExternalLink className="w-3.5 h-3.5 ml-auto text-indigo-400" />
+                        </a>
 
                         <div className="border-t border-warm-100 mt-1.5 pt-1.5">
                           <button
