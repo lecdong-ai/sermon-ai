@@ -1,13 +1,11 @@
 import Link from 'next/link'
+import LoginModal from '@/components/LoginModal'
 
 export default function AuthRequiredPage({
   searchParams,
 }: {
   searchParams: { next?: string }
 }) {
-  const next = searchParams.next || '/'
-  const loginUrl = `https://bunker.ai.kr/?login=1&next=${encodeURIComponent(`https://school.bunker.ai.kr${next}`)}`
-
   return (
     <div className="min-h-screen bg-warm-50 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -25,25 +23,18 @@ export default function AuthRequiredPage({
             <div className="text-3xl mb-3">🔒</div>
             <h1 className="text-lg font-bold text-navy-950">로그인이 필요한 페이지입니다</h1>
             <p className="text-sm text-navy-500 leading-relaxed">
-              이 페이지를 보시려면 교회학교 계정으로 로그인해 주세요.<br />
-              로그인 후 원래 페이지로 자동 이동합니다.
+              이 페이지를 보시려면 로그인해 주세요.
             </p>
           </div>
 
-          <div className="space-y-2.5">
-            <a
-              href={loginUrl}
-              className="btn-secondary w-full py-3 text-sm justify-center block text-center"
-            >
-              로그인 하러 가기
-            </a>
-            <Link
-              href="/"
-              className="btn-outline w-full py-3 text-sm justify-center block text-center"
-            >
-              홈으로 돌아가기
-            </Link>
-          </div>
+          <LoginModal next={searchParams.next} />
+
+          <Link
+            href="/"
+            className="block text-xs text-navy-400 hover:text-navy-600 underline underline-offset-2"
+          >
+            홈으로 돌아가기
+          </Link>
         </div>
 
         <p className="text-center text-[11px] text-navy-400 mt-6">
