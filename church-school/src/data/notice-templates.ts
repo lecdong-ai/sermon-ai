@@ -18,6 +18,13 @@ export const SITUATIONS = [
   { value: 'remind', label: '행사 전날 리마인드' },
   { value: 'thanks', label: '감사 메시지' },
   { value: 'teacher', label: '교사 모임 공지' },
+  { value: 'season', label: '새학기/새학년 시작' },
+  { value: 'holiday', label: '절기 및 교회력' },
+  { value: 'emergency', label: '긴급/비상 안내' },
+  { value: 'recruit', label: '모집/지원' },
+  { value: 'prayer', label: '중보기도 요청' },
+  { value: 'special', label: '특별 프로그램' },
+  { value: 'graduation', label: '수료/졸업' },
 ];
 
 export const TARGETS = [
