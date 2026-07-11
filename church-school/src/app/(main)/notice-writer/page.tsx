@@ -6,6 +6,8 @@ import {
    Mail, MessageSquare, ListTodo, Pencil 
 } from 'lucide-react';
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
+import { useAuth } from '@/components/AuthProvider';
+import { redirectToMainLogin } from '@/lib/auth-redirect';
 
 interface GeneratedResults {
   version1: string;
@@ -138,6 +140,14 @@ export default function NoticeWriterPage() {
   const [target, setTarget] = useState('kinder_parents');
   const [tone, setTone] = useState('warm');
   const [extra, setExtra] = useState('');
+
+  const { isLoggedIn, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      redirectToMainLogin('/notice-writer');
+    }
+  }, [authLoading, isLoggedIn]);
 
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<GeneratedResults | null>(null);

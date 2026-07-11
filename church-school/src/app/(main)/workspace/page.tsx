@@ -19,6 +19,8 @@ import GenerateButton from '@/components/workspace/GenerateButton'
 import Toast from '@/components/workspace/Toast'
 import UploadModal from '@/components/workspace/UploadModal'
 import WorkspaceDashboard from '@/components/workspace/WorkspaceDashboard'
+import { useAuth } from '@/components/AuthProvider'
+import { redirectToMainLogin } from '@/lib/auth-redirect'
 import type { SermonRecord, GenerationItem, GenerationState } from '@/types/workspace'
 
 const SummarySection = dynamic(() => import('@/components/workspace/SummarySection'), { ssr: false })
@@ -73,6 +75,14 @@ function WorkspacePage() {
   const [generationStates, setGenerationStates] = useState<Record<string, GenerationState>>({})
   const [generatingItem, setGeneratingItem] = useState<string | null>(null)
   const [kakaoLoaded, setKakaoLoaded] = useState(false)
+
+  const { isLoggedIn, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      redirectToMainLogin('/workspace')
+    }
+  }, [authLoading, isLoggedIn])
 
   useEffect(() => {
     const loadKakao = async () => {

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Loader2, Plus } from 'lucide-react'
 import PptStudio from '@/components/ppt/PptStudio'
 import UploadModal from '@/components/workspace/UploadModal'
+import { useAuth } from '@/components/AuthProvider'
+import { redirectToMainLogin } from '@/lib/auth-redirect'
 
 interface SermonListItem {
   id: string
@@ -24,6 +26,14 @@ function PageContent() {
   const [loading, setLoading] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
+
+  const { isLoggedIn, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      redirectToMainLogin('/ppt-studio')
+    }
+  }, [authLoading, isLoggedIn])
 
   const listUploaded = useCallback(async () => {
     setLoading(true)
