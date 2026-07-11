@@ -103,17 +103,11 @@ export default function MyPage() {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ name: editName, church_name: editChurch })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      // Auth metadata 업데이트
-      await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: { name: editName, church_name: editChurch }
       });
+
+      if (error) throw error;
 
       await refreshUser();
       setName(editName);
