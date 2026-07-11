@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
    Sparkles, Clipboard, Check, Bookmark, RefreshCw, Info, Lock, 
-   ArrowRight, ShieldCheck, Mail, MessageSquare, ListTodo, AlertTriangle, AlertCircle 
+   ArrowRight, Mail, MessageSquare, ListTodo, AlertTriangle, AlertCircle 
 } from 'lucide-react';
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
@@ -467,22 +467,7 @@ export default function NoticeWriterPage() {
               </div>
             )}
 
-            {/* Subscribe Banner */}
-            <div className="bg-gradient-to-r from-navy-900 to-navy-850 text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden shadow-sm">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-mint-500/10 rounded-full blur-2xl" />
-              <div className="space-y-1.5 text-center md:text-left relative z-10">
-                <h3 className="text-sm md:text-base font-bold text-white flex items-center justify-center md:justify-start gap-1.5">
-                  <ShieldCheck className="w-5 h-5 text-mint-400" />
-                  프리미엄 사역 연간 멤버십 혜택
-                </h3>
-                <p className="text-[11px] text-navy-200">
-                  구독 회원은 AI 작성 제한이 영구 면제되며, 소속 교회 맞춤형 사역 서식을 1:1로 주문제작 요청할 수 있습니다.
-                </p>
-              </div>
-              <Link href="/pricing" className="btn-secondary btn-sm whitespace-nowrap relative z-10 w-full md:w-auto text-center">
-                멤버십 둘러보기
-              </Link>
-            </div>
+
 
           </div>
 
