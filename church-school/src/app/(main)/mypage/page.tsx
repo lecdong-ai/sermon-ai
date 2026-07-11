@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  User, Mail, School, Sparkles, Award, FileText, Download, Bookmark, 
-  Trash2, Clipboard, Check, Eye, ExternalLink, Settings, ShieldCheck, Lock, X
+  User, Mail, School, Sparkles, FileText, 
+  Trash2, Clipboard, Check, Eye, ExternalLink, Lock, X,
+  Calendar, Heart, Quote, PenLine, ArrowUpRight, BookOpen
 } from 'lucide-react';
 import { SITUATIONS, TARGETS, TONES } from '@/data/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
@@ -27,7 +28,7 @@ interface SavedNotice {
 
 export default function MyPage() {
   const supabase = createSupabaseClient();
-  const { isLoggedIn, user, refreshUser, isPremium, loading } = useAuth();
+  const { isLoggedIn, user, refreshUser, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'settings'>('dashboard');
 
   // 미로그인 시 메인 페이지 로그인으로 자동 이동
@@ -201,13 +202,10 @@ export default function MyPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-navy-950 text-base md:text-lg">{name}</span>
-                    {isPremium ? (
-                      <span className="badge-free text-[9px] flex items-center gap-0.5">
-                        <Award className="w-3 h-3 fill-mint-600 text-mint-600" />
-                        PREMIUM
+                    {isAdmin && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-navy-100 text-navy-700">
+                        👑 관리자
                       </span>
-                    ) : (
-                      <span className="badge-paid text-[9px]">FREE</span>
                     )}
                   </div>
                   <span className="text-xs text-navy-400 block mt-0.5">{email}</span>
@@ -224,8 +222,8 @@ export default function MyPage() {
                     <span className="font-semibold text-navy-800">{church || '미등록'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-navy-400 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-navy-300" /> 가입 요금 플랜</span>
-                    <span className="font-semibold text-navy-800">{isPremium ? '프리미엄 멤버십 (월구독)' : '무료 체험회원'}</span>
+                    <span className="text-navy-400 flex items-center gap-1.5"><Heart className="w-4 h-4 text-navy-300" /> 회원 가입</span>
+                    <span className="font-semibold text-navy-800">모든 서비스 무료</span>
                   </div>
                   <button
                     onClick={() => setIsEditingProfile(true)}
@@ -299,7 +297,7 @@ export default function MyPage() {
                   activeTab === 'settings' ? 'bg-navy-900 text-white shadow-sm' : 'text-navy-500 hover:bg-warm-50'
                 }`}
               >
-                <span>⚙️ 계정 및 요금관리</span>
+                <span>⚙️ 계정 설정</span>
               </button>
             </div>
 
@@ -311,6 +309,153 @@ export default function MyPage() {
             {/* VIEW 1: DASHBOARD OVERVIEW */}
             {activeTab === 'dashboard' && (
               <div className="space-y-6">
+                {/* Welcome Banner */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-700 to-navy-600 px-6 md:px-8 py-6 md:py-7">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-2xl pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-mint-400/5 rounded-full translate-y-8 -translate-x-8 blur-xl pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+                          반갑습니다, {name}님
+                          <span className="text-white/50 text-sm font-normal">🙏</span>
+                        </h2>
+                        <p className="text-[12px] text-white/70 mt-1">
+                          오늘도 함께 섬겨주셔서 감사합니다. 교회학교의 모든 도구를 자유롭게 사용하세요.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white/80 border border-white/10">
+                        <Heart className="w-3 h-3 text-mint-300" />
+                        모든 서비스 무료
+                      </span>
+                      {isAdmin && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white/80 border border-white/10">
+                          👑 총관리자
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-2xl p-5 shadow-card border border-warm-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-mint-50 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-mint-500" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-navy-900">{savedNotices.length}</p>
+                        <p className="text-[11px] text-navy-400 font-medium">저장한 공지문</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 shadow-card border border-warm-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-navy-900">
+                          {savedNotices.length > 0 ? '✓' : '-'}
+                        </p>
+                        <p className="text-[11px] text-navy-400 font-medium">활성 서비스</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 shadow-card border border-warm-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-navy-900">{user?.name || '회원'}</p>
+                        <p className="text-[11px] text-navy-400 font-medium">교회학교 회원</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div>
+                  <h3 className="text-sm font-bold text-navy-900 mb-3 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-navy-400" />
+                    바로 시작하기
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      href="/notice-writer"
+                      className="group bg-white rounded-2xl p-4 shadow-card border border-warm-100 hover:border-mint-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-mint-50 flex items-center justify-center mb-2.5 group-hover:bg-mint-100 transition-colors">
+                        <PenLine className="w-4 h-4 text-mint-600" />
+                      </div>
+                      <p className="text-[13px] font-bold text-navy-900">공지문 작성</p>
+                      <p className="text-[10px] text-navy-400 mt-0.5">AI가 초안을 만들어드려요</p>
+                    </Link>
+                    <Link
+                      href="/ppt-studio"
+                      className="group bg-white rounded-2xl p-4 shadow-card border border-warm-100 hover:border-purple-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center mb-2.5 group-hover:bg-purple-100 transition-colors">
+                        <FileText className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <p className="text-[13px] font-bold text-navy-900">PPT 스튜디오</p>
+                      <p className="text-[10px] text-navy-400 mt-0.5">10가지 레이아웃으로 슬라이드</p>
+                    </Link>
+                    <Link
+                      href="/events/manage"
+                      className="group bg-white rounded-2xl p-4 shadow-card border border-warm-100 hover:border-amber-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center mb-2.5 group-hover:bg-amber-100 transition-colors">
+                        <Calendar className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <p className="text-[13px] font-bold text-navy-900">행사 관리</p>
+                      <p className="text-[10px] text-navy-400 mt-0.5">QR 체크인·신청 접수</p>
+                    </Link>
+                    <Link
+                      href="/projects"
+                      className="group bg-white rounded-2xl p-4 shadow-card border border-warm-100 hover:border-navy-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-navy-50 flex items-center justify-center mb-2.5 group-hover:bg-navy-100 transition-colors">
+                        <BookOpen className="w-4 h-4 text-navy-600" />
+                      </div>
+                      <p className="text-[13px] font-bold text-navy-900">설교 프로젝트</p>
+                      <p className="text-[10px] text-navy-400 mt-0.5">연구·준비·작성·연결보기</p>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                {savedNotices.length > 0 && (
+                  <div className="bg-white rounded-3xl p-5 shadow-card border border-warm-100">
+                    <h3 className="text-sm font-bold text-navy-900 mb-3 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-mint-500" />
+                      최근 저장한 공지문
+                    </h3>
+                    <div className="space-y-2">
+                      {savedNotices.slice(0, 3).map((notice) => (
+                        <div key={notice.id} className="flex items-center justify-between p-3 bg-warm-50/50 rounded-xl hover:bg-warm-100/50 transition-colors cursor-pointer" onClick={() => setViewNotice(notice)}>
+                          <div className="flex-1 min-w-0 mr-3">
+                            <p className="text-[13px] font-bold text-navy-900 truncate">{notice.title}</p>
+                            <p className="text-[10px] text-navy-400 mt-0.5">{notice.createdAt}</p>
+                          </div>
+                          <ArrowUpRight className="w-4 h-4 text-navy-300 shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                    {savedNotices.length > 3 && (
+                      <button
+                        onClick={() => setActiveTab('notices')}
+                        className="w-full text-center text-[12px] font-bold text-navy-500 hover:text-navy-700 py-2.5 mt-2 rounded-xl hover:bg-warm-50 transition-colors"
+                      >
+                        저장 공지문 모두 보기 ({savedNotices.length}개)
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -442,20 +587,20 @@ export default function MyPage() {
                   )}
                 </div>
 
-                {/* Plan Upgrade section */}
-                <div className="bg-gradient-to-r from-navy-900 to-navy-800 text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-mint-500/10 rounded-full blur-2xl" />
-                  <div className="space-y-1.5 text-center md:text-left relative z-10">
+                {/* Account Info Card */}
+                <div className="bg-gradient-to-r from-navy-700 to-navy-600 text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+                  <div className="space-y-1 text-center md:text-left relative z-10">
                     <h3 className="text-sm md:text-base font-bold text-white flex items-center justify-center md:justify-start gap-1.5">
-                      <ShieldCheck className="w-5 h-5 text-mint-400" />
-                      프리미엄 요금 플랜 안내
+                      <BookOpen className="w-5 h-5 text-mint-300" />
+                      교회학교 솔루션
                     </h3>
                     <p className="text-[11px] text-navy-200">
-                      정기구독을 시작하시면 매달 업데이트되는 최신 교육 프로그램 원본 서식 파일과 고도화된 AI 공지문 작성기를 제한 없이 무한 사용하실 수 있습니다.
+                      모든 서비스를 제한 없이 무료로 이용하실 수 있습니다. 사역에 필요한 도구를 자유롭게 활용하세요.
                     </p>
                   </div>
-                  <Link href="/pricing" className="btn-secondary btn-sm whitespace-nowrap relative z-10 w-full md:w-auto text-center">
-                    요금제 살펴보기
+                  <Link href="/" className="btn-ghost btn-sm whitespace-nowrap relative z-10 text-white border border-white/20 hover:bg-white/10">
+                    서비스 둘러보기
                   </Link>
                 </div>
 
