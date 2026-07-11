@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon } from 'lucide-react';
+import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon, ChevronDown, Calendar, LayoutDashboard, Heart } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import LoginModal from './LoginModal';
 
@@ -21,8 +21,10 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginNext, setLoginNext] = useState<string | null>(null);
-  const { isLoggedIn, user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isLoggedIn, user, logout, isAdmin } = useAuth();
   const router = useRouter();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -34,11 +36,34 @@ export default function Header() {
     }
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
   const handleCloseLogin = () => {
     setLoginOpen(false);
     if (isLoggedIn && loginNext) {
       router.push(loginNext);
     }
+  };
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
   };
 
   return (
@@ -73,26 +98,87 @@ export default function Header() {
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               {isLoggedIn ? (
-                <>
-                  <Link
-                    href="/mypage"
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
                     className="btn-ghost text-sm flex items-center gap-2"
-                    title={user?.email}
                   >
                     <UserIcon className="w-4 h-4 text-navy-500" />
                     <div className="flex flex-col items-start leading-tight">
                       <span className="font-bold text-navy-900">{user?.name}님</span>
                       <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
                     </div>
-                  </Link>
-                  <button
-                    onClick={() => logout()}
-                    className="btn-outline btn-sm py-1.5 flex items-center gap-1"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    로그아웃
+                    <ChevronDown className={`w-4 h-4 text-navy-400 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
                   </button>
-                </>
+
+                  {menuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-warm-200 py-2 z-50">
+                        <div className="px-4 py-2.5 border-b border-warm-100 mb-1.5">
+                          <p className="text-[11px] text-navy-400 font-medium">로그인 정보</p>
+                          <p className="text-[13px] font-bold text-navy-900 truncate mt-0.5">{user?.email}</p>
+                          {isAdmin && (
+                            <span className="inline-flex mt-1.5 items-center px-2 py-0.5 rounded text-[10px] font-bold bg-navy-100 text-navy-700">
+                              👑 총관리자
+                            </span>
+                          )}
+                        </div>
+
+                        <Link
+                          href="/mypage"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                        >
+                          <UserIcon className="w-4 h-4 text-navy-400" />
+                          마이페이지
+                        </Link>
+                        <Link
+                          href="/projects"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-navy-400" />
+                          설교 프로젝트
+                        </Link>
+                        <Link
+                          href="/workspace"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                        >
+                          <BookOpen className="w-4 h-4 text-navy-400" />
+                          워크스페이스
+                        </Link>
+                        <Link
+                          href="/events/manage"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                        >
+                          <Calendar className="w-4 h-4 text-navy-400" />
+                          행사 관리
+                        </Link>
+                        <Link
+                          href="/pricing"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:bg-navy-50 transition-colors"
+                        >
+                          <Heart className="w-4 h-4 text-navy-400" />
+                          요금제
+                        </Link>
+
+                        <div className="border-t border-warm-100 mt-1.5 pt-1.5">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <LogOut className="w-4 h-4 text-red-400" />
+                            로그아웃
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={() => setLoginOpen(true)}
