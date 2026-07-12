@@ -12,11 +12,13 @@ export default function EventDetailPage() {
   const router = useRouter()
   const eventId = params.id as string
 
+  type ShareStyle = 'warm' | 'formal' | 'short'
   const [event, setEvent] = useState<(EventRecord & { application_count: number; checked_in_count: number }) | null>(null)
-  const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shareStyle, setShareStyle] = useState<ShareStyle>('warm')
   const [gradeData, setGradeData] = useState<{ grade: string; count: number }[]>([])
 
   const [editForm, setEditForm] = useState<Partial<EventRecord>>({})
@@ -43,26 +45,56 @@ export default function EventDetailPage() {
     }
   }
 
-  const buildShareText = () => {
+  const buildShareText = (style: ShareStyle = shareStyle) => {
     if (!event) return ''
     const url = `${window.location.origin}/events/${event.link_token}`
-    const lines = [`📢 [${event.title}] 신청 안내`, '']
-    if (event.start_date) {
-      const start = new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
-      if (event.end_date) {
-        const end = new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
-        lines.push(`📅 일시: ${start} ~ ${end}`)
-      } else {
-        lines.push(`📅 일시: ${start}`)
-      }
+    const dateStr = event.start_date
+      ? new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) +
+        (event.end_date
+          ? ' ~ ' + new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+          : '')
+      : ''
+    const deadlineStr = event.deadline
+      ? new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + '까지'
+      : ''
+
+    const lines: string[] = []
+
+    if (style === 'warm') {
+      lines.push(`💌 우리 아이들과 함께하는`)
+      lines.push(`   [${event.title}]에 초대합니다!`)
+      lines.push('')
+      if (dateStr) lines.push(`📅 일시: ${dateStr}`)
+      if (event.location) lines.push(`📍 장소: ${event.location}`)
+      if (deadlineStr) lines.push(`⏰ 마감: ${deadlineStr}`)
+      if (event.description) { lines.push(''); lines.push(event.description) }
+      lines.push('')
+      lines.push('선생님들이 기다리고 있어요 😊')
+      lines.push('아래 링크에서 참석 여부를 알려주세요 👇')
+      lines.push(url)
+    } else if (style === 'formal') {
+      lines.push(`📢 [${event.title}] 신청 안내`)
+      lines.push('')
+      if (dateStr) lines.push(`📅 일시: ${dateStr}`)
+      if (event.location) lines.push(`📍 장소: ${event.location}`)
+      if (deadlineStr) lines.push(`⏰ 신청마감: ${deadlineStr}`)
+      if (event.capacity) lines.push(`👥 정원: ${event.capacity}명`)
+      if (event.description) { lines.push(''); lines.push(event.description) }
+      lines.push('')
+      lines.push('아래 링크에서 신청해주세요 👇')
+      lines.push(url)
+    } else {
+      // short — OG 미리보기와 함께 쓸 때 효과적
+      const parts = [`[${event.title}]`]
+      if (dateStr) parts.push(`📅 ${dateStr}`)
+      if (event.location) parts.push(`📍 ${event.location}`)
+      lines.push(parts.join(' | '))
+      if (event.description) lines.push('')
+      if (event.description) lines.push(event.description.length > 60 ? event.description.slice(0, 60) + '…' : event.description)
+      lines.push('')
+      lines.push(`👉 ${url}`)
     }
-    if (event.location) lines.push(`📍 장소: ${event.location}`)
-    if (event.deadline) lines.push(`⏰ 신청마감: ${new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} ${new Date(event.deadline).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`)
-    if (event.capacity) lines.push(`👥 정원: ${event.capacity}명`)
-    if (event.description) { lines.push(''); lines.push(event.description) }
-    lines.push('')
-    lines.push('아래 링크를 눌러 신청해주세요! 👇')
-    lines.push(url)
+
     return lines.join('\n')
   }
 
@@ -150,12 +182,27 @@ export default function EventDetailPage() {
       {/* Share Card */}
       {!event.is_template && (
         <div className="bg-gradient-to-br from-navy-800 to-navy-600 rounded-2xl p-6 mb-6 text-white">
-          <h2 className="text-sm font-medium opacity-80 mb-3">학부모에게 공유하기</h2>
-          <p className="text-sm opacity-70 mb-4">버튼을 눌러 복사한 뒤, 카카오톡 대화방에 붙여넣으세요.</p>
+          <h2 className="text-sm font-medium opacity-80 mb-1">학부모에게 공유하기</h2>
+          <p className="text-xs opacity-60 mb-3">카카오톡에 붙여넣으면 학부모가 바로 내용을 알 수 있어요</p>
+
+          {/* Style Tabs */}
+          <div className="flex gap-1.5 mb-3 bg-white/10 rounded-xl p-1 w-fit">
+            {([{ id: 'warm', label: '따뜻하게' }, { id: 'formal', label: '정식' }, { id: 'short', label: '짧게' }] as { id: ShareStyle; label: string }[]).map(s => (
+              <button
+                key={s.id}
+                onClick={() => setShareStyle(s.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  shareStyle === s.id ? 'bg-white text-navy-800' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
 
           {/* Preview */}
           <div className="bg-white/10 rounded-xl p-4 mb-4 border border-white/20">
-            <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">{buildShareText()}</pre>
+            <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">{buildShareText(shareStyle)}</pre>
           </div>
 
           <div className="flex gap-2">

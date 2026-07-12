@@ -46,11 +46,34 @@ export default function ManageEventsPage() {
     if (res.ok) { fetchEvents(); setMenuOpen(null) }
   }
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/events/${token}`
-    navigator.clipboard.writeText(url)
+  const copyLink = (event: EventRecord & { application_count: number }) => {
+    const url = `${window.location.origin}/events/${event.link_token}`
+    const dateStr = event.start_date
+      ? new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) +
+        (event.end_date
+          ? ' ~ ' + new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+          : '')
+      : ''
+    const deadlineStr = event.deadline
+      ? new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + '까지'
+      : ''
+
+    const lines: string[] = []
+    lines.push(`💌 우리 아이들과 함께하는`)
+    lines.push(`   [${event.title}]에 초대합니다!`)
+    lines.push('')
+    if (dateStr) lines.push(`📅 일시: ${dateStr}`)
+    if (event.location) lines.push(`📍 장소: ${event.location}`)
+    if (deadlineStr) lines.push(`⏰ 마감: ${deadlineStr}`)
+    if (event.description) { lines.push(''); lines.push(event.description) }
+    lines.push('')
+    lines.push('선생님들이 기다리고 있어요 😊')
+    lines.push('아래 링크에서 참석 여부를 알려주세요 👇')
+    lines.push(url)
+
+    navigator.clipboard.writeText(lines.join('\n'))
     setMenuOpen(null)
-    alert('신청 링크가 복사되었습니다!\n\n' + url)
+    alert('✅ 학부모에게 보낼 메시지가 복사되었습니다!\n\n카카오톡에 붙여넣으세요.')
   }
 
   if (authLoading || !isLoggedIn) {
@@ -124,7 +147,7 @@ export default function ManageEventsPage() {
                   {menuOpen === event.id && (
                     <div className="absolute right-0 top-8 z-10 bg-white rounded-xl shadow-lg border border-warm-200 py-1 min-w-[160px]">
                       {!event.is_template && (
-                        <button onClick={() => copyLink(event.link_token)}
+                        <button onClick={() => copyLink(event)}
                           className="w-full px-4 py-2 text-left text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2">
                           <Copy className="w-4 h-4" /> 링크 복사
                         </button>
