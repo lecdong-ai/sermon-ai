@@ -5,7 +5,7 @@ export function openKakaoApp() {
     if (isMobile) {
       window.location.href = 'https://apps.apple.com/kr/app/kakaotalk/id362057947'
     } else {
-      window.location.href = 'https://desktop.kakao.com'
+      window.location.href = 'https://www.kakao.com'
     }
   }, 1500)
 
