@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
-  ArrowRight, Sparkles, Download, Check, Users, Heart,
+  ArrowRight, Sparkles, Download, Users, Heart,
   MessageSquare, BookOpen, CalendarHeart, Presentation, FolderKanban,
   ChevronDown, UserCheck, GraduationCap, Handshake, Bell, Wand2,
-  ClipboardList, QrCode, Layers, PenLine,
+  QrCode, Layers, PenLine,
 } from 'lucide-react';
 
 /* ════════════════════════════════════════════
@@ -160,27 +160,6 @@ const FREE_ITEMS = [
   { title: '학부모 공지문 샘플 10종', desc: '절기 안내, 개학, 수련회 등 가장 많이 쓰는 공지문 모음', size: 'PDF / HWP', count: '1,205회' },
   { title: '신입교사 체크리스트 & 가이드', desc: '신임 교사가 부서에 왔을 때 챙겨야 할 10가지 실무 지침', size: 'PDF / DOCX', count: '980회' },
   { title: '운영문서 필수 샘플 3종', desc: '예배 순서지, 연간계획 양식, 기본 지출 결의서', size: 'XLSX / PPTX', count: '670회' },
-];
-
-const PLANS = [
-  {
-    role: '교사 · 봉사자', icon: Heart, plan: '무료 플랜', price: '₩0',
-    desc: '가벼운 시작. 무료 자료와 하루 3회 공지문으로 먼저 경험하세요.',
-    features: ['무료 자료 자유 다운로드', '하루 3회 공지문 작성', '워크스페이스 저장'],
-    highlight: false,
-  },
-  {
-    role: '목회자 · 사역자', icon: GraduationCap, plan: '월 구독', price: '₩9,900/월',
-    desc: '전체 자료 무제한 + AI 공지문 무제한. 부서 운영 전반을 한 도구로.',
-    features: ['유료 자료실 전수 다운로드', 'AI 공지문 무제한', '매월 신규 콘텐츠', '1:1 서식 제작 요청권'],
-    highlight: true,
-  },
-  {
-    role: '절기 담당자', icon: ClipboardList, plan: '단건 구매', price: '자료별',
-    desc: '구독 부담 없이 필요한 절기 자료만. 평생 영구 소장.',
-    features: ['개별 자료 영구 보관', '하루 10회 공지문', '구매 자료 업데이트 평생'],
-    highlight: false,
-  },
 ];
 
 const NOTICE_EXAMPLE = `사랑하는 학부모님께,
@@ -447,7 +426,7 @@ export default function HomePage() {
                   <h3 className="text-base font-bold mb-2">함께하는 사역의 시작</h3>
                   <p className="text-xs text-navy-200 leading-relaxed mb-5">한 번의 가입으로 모든 도구를 함께 쓸 수 있습니다.</p>
                   <Link href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-bold text-mint-300 hover:text-mint-200 group">
-                    요금제 보기 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    후원하기 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
@@ -571,12 +550,9 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center justify-between mt-5 pt-4 border-t border-warm-200">
                   <span className="text-[10px] text-navy-400 flex items-center gap-1 font-medium">
-                    <Download className="w-3.5 h-3.5 group-hover:text-mint-500 transition-colors" />
+                    <Download className="w-3.5 h-3.5 text-mint-500 transition-colors" />
                     {item.count}
                   </span>
-                  <Link href="/pricing" className="text-xs font-bold text-mint-600 hover:text-mint-700 flex items-center gap-1 group-hover:gap-1.5 transition-all">
-                    받기 <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
               </div>
             ))}
@@ -585,72 +561,33 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-         7. 역할별 요금제
+         7. 후원 안내
          ════════════════════════════════════════════ */}
       <section className="section bg-warm-50">
         <div className="container-custom">
           <Reveal className="text-center mb-14">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy-400 uppercase tracking-wider mb-3">
               <span className="w-8 h-px bg-navy-200" />
-              역할에 맞는 선택
+              후원 안내
               <span className="w-8 h-px bg-navy-200" />
             </span>
-            <h2 className="section-title">함께하는 사역, 함께하는 선택</h2>
-            <p className="section-subtitle mx-auto">사역의 규모와 주기에 맞춰 자유롭게 선택하세요.</p>
+            <h2 className="section-title">사역을 함께 만들어갑니다</h2>
+            <p className="section-subtitle mx-auto">모든 서비스는 무료입니다. 교회학교 사역에 동참해 주세요.</p>
           </Reveal>
 
-          <RevealStagger className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto items-stretch">
-            {PLANS.map((plan, i) => {
-              const Icon = plan.icon;
-              return (
-                <div
-                  key={i}
-                  className={`relative p-7 rounded-2xl text-center transition-all duration-300 hover:-translate-y-1 ${
-                    plan.highlight
-                      ? 'bg-white border-2 border-mint-400 glow-mint shadow-card-hover md:scale-105'
-                      : 'bg-white border border-warm-200 hover:shadow-card'
-                  }`}
-                >
-                  {plan.highlight && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-mint-500 to-mint-400 text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-button">
-                      ★ 추천
-                    </span>
-                  )}
-                  <div className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-transform hover:scale-110 duration-300 ${
-                    plan.highlight ? 'bg-mint-50 text-mint-600' : 'bg-warm-50 text-navy-500'
-                  }`}>
-                    <Icon className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xs font-bold text-navy-400 uppercase tracking-wide">{plan.role}</h3>
-                  <p className="text-2xl font-extrabold text-navy-950 mt-2">{plan.price}</p>
-                  <p className="text-[10px] text-navy-400 mt-1 font-medium">{plan.plan}</p>
-                  <p className="text-xs text-navy-500 leading-relaxed mt-4 mb-5">{plan.desc}</p>
-                  <ul className="text-left space-y-2.5 mb-6">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-center gap-2 text-[12px] text-navy-600">
-                        <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 ${plan.highlight ? 'bg-mint-50' : 'bg-warm-50'}`}>
-                          <Check className={`w-3 h-3 ${plan.highlight ? 'text-mint-600' : 'text-navy-400'}`} />
-                        </div>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/pricing"
-                    className={`w-full ${plan.highlight ? 'btn-secondary' : 'btn-outline'} btn-sm`}
-                  >
-                    {plan.highlight ? '구독 시작하기' : '자세히 보기'}
-                  </Link>
-                </div>
-              );
-            })}
-          </RevealStagger>
-
-          <Reveal delay={200} className="text-center mt-10">
-            <p className="text-xs text-navy-400 inline-flex items-center gap-1.5">
-              <Handshake className="w-3.5 h-3.5 text-mint-500" />
-              교회 전체 도입(단체 플랜)도 준비 중입니다.
-            </p>
+          <Reveal delay={100}>
+            <div className="max-w-md mx-auto bg-white rounded-3xl p-10 shadow-card border border-warm-200 text-center">
+              <Heart className="w-12 h-12 text-mint-500 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-navy-950 mb-2">후원으로 함께하는 사역</h3>
+              <p className="text-sm text-navy-500 leading-relaxed mb-6">
+                교회학교 솔루션은 모든 교회가 부담 없이 사용할 수 있도록<br />
+                무료로 제공됩니다. 후원은 서비스 운영과 발전에 사용됩니다.
+              </p>
+              <Link href="/pricing" className="btn-secondary inline-flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                후원하기
+              </Link>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -694,7 +631,7 @@ export default function HomePage() {
               href="/pricing"
               className="group btn-lg w-full sm:w-auto inline-flex items-center justify-center gap-2 glass text-white font-semibold rounded-2xl hover:bg-white/15 transition-all duration-300 hover:-translate-y-0.5"
             >
-              요금제 보기
+              후원하기
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
             </Link>
           </div>

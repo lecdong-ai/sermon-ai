@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: '/ppt-studio', label: 'PPT 스튜디오' },
   { href: '/notice-writer', label: '공지문 작성기' },
   { href: '/events/manage', label: '행사 관리' },
-  { href: '/pricing', label: '요금제' },
+  { href: '/pricing', label: '후원하기' },
 ];
 
 export default function Header() {

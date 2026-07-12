@@ -1,380 +1,454 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  Check, Star, Zap, Shield, HelpCircle, CheckCircle2, 
-  ArrowRight, ShieldAlert, Award, Building, Landmark, Lock, HelpCircle as HelpIcon
+import {
+  Heart, ShoppingBag, ArrowRight, Coffee, Apple, Sparkles,
+  HandHeart, Store, ChevronRight, Gift, Users, Church,
 } from 'lucide-react';
 
-const PLANS = [
-  {
-    id: 'free',
-    name: '무료 체험 플랜',
-    price: '₩0',
-    period: '영구 무료',
-    targetAudience: '사역을 처음 구상하거나 가볍게 체험해보고 싶은 신임 사역자',
-    description: '기본적인 기능과 일부 무료 서식을 부담 없이 체험할 수 있는 요금제입니다.',
-    icon: Shield,
-    iconColor: 'text-navy-400',
-    borderColor: 'border-warm-200',
-    features: [
-      '일부 무료 자료만 열람 & 다운로드',
-      '공지문 작성기 월 3회 체험 한도',
-      '작성한 공지문 보관함 저장 불가',
-      '최근 본 자료 트래킹 미지원',
-    ],
-    ctaText: '무료로 시작하기',
-    popular: false,
-  },
-  {
-    id: 'premium',
-    name: '프리미엄 월 구독',
-    price: '₩9,900',
-    period: '매월 정기결제',
-    targetAudience: '교회학교의 모든 서식과 소통 도구를 무제한으로 사용하고 싶은 부서 담당자',
-    description: '가장 합리적인 비용으로 사역 행정을 완전히 자동화하고 모든 콘텐츠를 무제한으로 활용하는 패키지입니다.',
-    icon: Zap,
-    iconColor: 'text-orange-500',
-    borderColor: 'border-mint-400 shadow-md ring-2 ring-mint-400/20',
-    features: [
-      '전체 프리미엄 자료 무제한 열람 & 다운로드',
-      '공지문 작성기 AI 무제한 이용',
-      '내 보관함 영구 저장 및 즐겨찾기 지원',
-      '매월 추가되는 신규 콘텐츠 즉시 제공',
-      '1:1 실무 서식 제작 우선 요청권 제공',
-    ],
-    ctaText: '구독 시작하기',
-    popular: true, // Emphasized as recommended
-  },
-  {
-    id: 'single',
-    name: '자료 단건 구매',
-    price: '자료별 상이',
-    period: '영구 소장',
-    targetAudience: '구독 부담 없이 절기별 행사나 특정 교육 자료만 쏙쏙 골라 사용하고 싶으신 분',
-    description: '개별 단품 패키지 상품을 일시불로 구매하여 제한 없이 영구적으로 보관할 수 있습니다.',
-    icon: Star,
-    iconColor: 'text-mint-600',
-    borderColor: 'border-warm-200',
-    features: [
-      '필요한 유료 패키지 자료만 개별 결제',
-      '공지문 작성기 일일 10회 권한 부여',
-      '구매한 자료의 업데이트 평생 제공',
-      '인쇄용 PPT 원본 서식 영구 소장',
-    ],
-    ctaText: '자료 보러가기',
-    popular: false,
-  },
-];
-
-const COMPARISON_ROWS = [
-  {
-    feature: '자료 접근 범위',
-    free: '일부 무료 자료만 가능',
-    single: '구매한 자료에 한해 영구 소장',
-    premium: '전체 유료 자료 무제한 열람',
-  },
-  {
-    feature: '공지문 작성기 권한',
-    free: '월 최대 3회 체험 제공',
-    single: '구매자 대상 일일 10회 완화',
-    premium: 'AI 무제한 자동 작성',
-  },
-  {
-    feature: '보관함 저장 기능',
-    free: '지원 안 함 (단순 복사만 가능)',
-    single: '구매한 자료 목록만 아카이빙',
-    premium: '공지문/즐겨찾기 무제한 보관',
-  },
-  {
-    feature: '신규 업데이트 자료',
-    free: '받아볼 수 없음',
-    single: '구매 자료의 패치만 제공',
-    premium: '매월 신규 자료 즉시 무료 다운',
-  },
-  {
-    feature: '다운로드/구매 방식',
-    free: '일부 무료 파일만 다운',
-    single: '원하는 자료별 단건 간편 결제',
-    premium: '구독 기간 내 모든 파일 프리패스',
-  },
-];
-
-const FAQS = [
-  {
-    q: '결제한 단건 자료는 언제까지 다운로드할 수 있나요?',
-    a: '개별 단건 결제로 소장하신 자료나 구독 기간 내에 다운로드하여 마이페이지 보관함에 보관해 둔 자료는 서비스 해지 여부와 상관없이 평생 동안 안전하게 다시 다운로드받으실 수 있습니다.',
-  },
-  {
-    q: '정기구독 해지는 언제든지 가능한가요?',
-    a: '네, 물론입니다. 마이페이지의 계정 관리 탭에서 언제든지 수수료나 별도의 약정 기간 없이 1클릭 해지가 가능합니다. 해지하셔도 남은 구독 기간까지는 프리미엄 권한이 정상 유지됩니다.',
-  },
-  {
-    q: '자료를 가공하여 우리 교회학교 배포물로 써도 저작권에 문제가 없나요?',
-    a: '네, 저희가 제공하는 모든 서식과 안내 템플릿은 교회 내부 인쇄 배포 및 부서 카카오톡 소통 채널 전송용 라이선스가 모두 기본 포함되어 있어 저작권 염려 없이 안전하게 변경하여 쓰셔도 됩니다. (단, 타인에게 템플릿 자체를 유료로 재판매하는 것은 금지됩니다.)',
-  },
-];
-
-import { useAuth } from '@/components/AuthProvider';
-import { createClient as createSupabaseClient } from '@/lib/supabase/client';
-import { redirectToMainLogin } from '@/lib/auth-redirect';
+function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  return (
+    <div className={className} style={{ animationDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
 
 export default function PricingPage() {
-  const supabase = createSupabaseClient();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [paySuccess, setPaySuccess] = useState(false);
-  const [selectedPlanName, setSelectedPlanName] = useState('');
-  const { isLoggedIn, user, isPremium, refreshUser } = useAuth();
-
-  const handleSubscribe = async (planId: string, planName: string) => {
-    if (planId === 'free') {
-      if (!isLoggedIn) {
-        redirectToMainLogin('/pricing');
-      } else {
-        alert('이미 무료 플랜으로 이용 중이십니다! 자료실이나 공지문 작성기를 마음껏 시작해 보세요.');
-        window.location.href = '/';
-      }
-      return;
-    }
-
-    if (planId === 'single') {
-      window.location.href = '/';
-      return;
-    }
-
-    // 로그인하지 않은 사용자는 프리미엄 정기 구독 결제 불가
-    if (!isLoggedIn || !user) {
-      alert('정기 구독을 신청하시려면 먼저 로그인이 필요합니다.');
-      redirectToMainLogin('/pricing');
-      return;
-    }
-
-    // Premium Subscription simulator
-    const confirmPay = confirm(
-      `'${planName}' 혜택을 이용하기 위해 가상 결제창을 호출합니다.\n(실제 카드 청구 없이 즉시 프리미엄 'subscriber' 멤버십 승격이 진행됩니다)`
-    );
-
-    if (confirmPay) {
-      try {
-        const { error } = await supabase
-          .from('users')
-          .update({ plan_type: 'subscriber' })
-          .eq('id', user.id);
-
-        if (error) throw error;
-
-        // Auth metadata도 업데이트 (필요시)
-        await supabase.auth.updateUser({
-          data: { plan_type: 'subscriber' }
-        });
-
-        await refreshUser();
-        setSelectedPlanName(planName);
-        setPaySuccess(true);
-        
-        setTimeout(() => {
-          setPaySuccess(false);
-          window.location.href = '/mypage';
-        }, 2000);
-      } catch (err: any) {
-        console.error('구독 결제 승격 중 오류 발생:', err);
-        alert('멤버십 등급 변경 중 오류가 발생했습니다: ' + err.message);
-      }
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-warm-50 py-12 md:py-20 text-navy-950 font-sans">
-      <div className="container-custom max-w-5xl space-y-16">
-        
-        {/* Header Block */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint-50 text-mint-700 text-xs font-bold border border-mint-200">
-            <Award className="w-3.5 h-3.5" />
-            현명한 사역 행정의 시작
-          </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-navy-950 leading-tight tracking-tight">
-            부서 상황에 알맞은<br />합리적인 요금을 선택하세요
-          </h1>
-          <p className="text-xs md:text-sm text-navy-500 leading-relaxed">
-            무료 체험 플랜부터 단품 영구 소장, 무제한 AI 행정 작성이 가능한 프리미엄 구독까지 다양한 방식을 제안합니다. 과도한 약정이나 위약금 없이 유연하게 해지할 수 있습니다.
-          </p>
-
-          {isPremium && (
-            <div className="inline-block bg-mint-50 text-mint-800 text-xs font-bold px-4 py-2 rounded-2xl border border-mint-200 mt-2">
-              🎉 성도님은 현재 <strong>프리미엄 요금제 구독 중</strong>입니다. 무제한 혜택을 누려보세요.
-            </div>
-          )}
+    <div className="min-h-screen bg-warm-50 text-navy-950 font-sans overflow-x-hidden">
+      {/* ════════════════════════════════════════════
+          1. HERO
+         ════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden gradient-navy text-white py-20 md:py-32">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[-15%] right-[-5%] w-[500px] h-[500px] bg-mint-500/15 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[450px] h-[450px] bg-orange-500/12 rounded-full blur-[110px]" style={{ animationDelay: '3s' }} />
         </div>
-
-        {/* Action success alert */}
-        {paySuccess && (
-          <div className="max-w-md mx-auto bg-mint-50 border border-mint-200 rounded-3xl p-6 text-center space-y-3 animate-pulse shadow-lg">
-            <CheckCircle2 className="w-10 h-10 text-mint-600 mx-auto" />
-            <h3 className="text-base font-bold text-mint-900">'{selectedPlanName}' 가상 결제 및 승인 완료!</h3>
-            <p className="text-xs text-mint-600 leading-relaxed">
-              성공적으로 결제 처리되었습니다. 회원 계정이 프리미엄 등급으로 연동 승격되었습니다. 마이페이지로 즉시 리다이렉트합니다.
-            </p>
+        <div className="relative z-10 container-custom text-center">
+          <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-mint-300 text-sm font-semibold mb-6">
+            <HandHeart className="w-4 h-4" />
+            쇼핑이 곧 후원입니다
           </div>
-        )}
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-4">
+            당신의 소비가<br />
+            <span className="text-mint-300">교회학교를 살립니다</span>
+          </h1>
+          <p className="text-sm md:text-base text-navy-200 leading-relaxed max-w-lg mx-auto">
+            교회학교 솔루션의 모든 서비스는 무료입니다. 파트너 스토어에서의 쇼핑이<br className="hidden sm:block" />
+            서비스 운영과 발전을 위한 후원이 됩니다.
+          </p>
+        </div>
+      </section>
 
-        {/* 3-Column Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {PLANS.map((plan) => {
-            const Icon = plan.icon;
-            return (
-              <div
-                key={plan.id}
-                className={`bg-white rounded-3xl p-6 md:p-8 flex flex-col justify-between relative border-2 ${plan.borderColor} transition-transform hover:-translate-y-1 duration-200 ${
-                  plan.popular ? 'shadow-lg ring-4 ring-mint-400/10' : 'shadow-sm'
-                }`}
-              >
-                {plan.popular && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-mint-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-md tracking-wider uppercase">
-                    추천 요금제
-                  </span>
-                )}
+      {/* ════════════════════════════════════════════
+          2. 철학 — 왜 쇼핑이 후원인가
+         ════════════════════════════════════════════ */}
+      <section className="section">
+        <div className="container-custom max-w-3xl">
+          <Reveal className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy-400 uppercase tracking-wider mb-3">
+              <span className="w-8 h-px bg-navy-200" />
+              OUR PHILOSOPHY
+              <span className="w-8 h-px bg-navy-200" />
+            </span>
+            <h2 className="section-title">왜 쇼핑이 후원이 될까요?</h2>
+          </Reveal>
 
-                <div className="space-y-5">
-                  {/* Plan Meta */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-warm-50 flex items-center justify-center border border-warm-100 shrink-0">
-                      <Icon className={`w-5 h-5 ${plan.iconColor}`} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-navy-400 font-bold block">FOR WHOM</span>
-                      <h3 className="text-sm md:text-base font-extrabold text-navy-950 leading-none">{plan.name}</h3>
-                    </div>
-                  </div>
+          <div className="space-y-8">
+            <Reveal delay={100} className="bg-white rounded-3xl p-8 shadow-card border border-warm-200">
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-mint-50 text-mint-600 flex items-center justify-center shrink-0">
+                  <Heart className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-950 mb-2">모든 서비스는 영구 무료</h3>
+                  <p className="text-sm text-navy-500 leading-relaxed">
+                    교회학교 솔루션은 AI 공지문 작성기, PPT 스튜디오, 워크스페이스, 행사 신청 시스템까지 
+                    모든 기능을 무료로 제공합니다. 교회 사역에 비용이 걸림돌이 되어서는 안 된다고 믿기 때문입니다.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
 
-                  <div>
-                    <span className="text-3xl md:text-4xl font-black text-navy-950">{plan.price}</span>
-                    <span className="text-xs text-navy-400 ml-1.5">/ {plan.period}</span>
-                  </div>
+            <Reveal delay={200} className="bg-white rounded-3xl p-8 shadow-card border border-warm-200">
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-950 mb-2">쇼핑이 곧 선한 영향력</h3>
+                  <p className="text-sm text-navy-500 leading-relaxed">
+                    파트너 스토어에서 상품을 구매하시면 판매 수익의 일부가 교회학교 서비스 운영비로 
+                    환원됩니다. 특별한 기부나 추가 부담 없이, 당신의 일상적인 소비가 자연스럽게 
+                    교회학교 사역을 후원하게 됩니다.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
 
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-bold text-mint-600 bg-mint-50/50 p-2 rounded-xl border border-mint-100/50">
-                      🎯 권장 대상: {plan.targetAudience}
-                    </p>
-                    <p className="text-[11px] text-navy-500 leading-relaxed pt-1">
-                      {plan.description}
-                    </p>
-                  </div>
+            <Reveal delay={300} className="bg-white rounded-3xl p-8 shadow-card border border-warm-200">
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                  <HandHeart className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-950 mb-2">사역과 상생의 선순환</h3>
+                  <p className="text-sm text-navy-500 leading-relaxed">
+                    좋은 상품을 합리적인 가격에 구매하고, 그 구매가 다시 교회학교 서비스로 
+                    돌아오는 선순환 구조입니다. 당신의 선택이 교회학교 사역자들의 사역을 
+                    가볍게 하고, 더 많은 교회가 혜택을 누릴 수 있게 합니다.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
-                  <hr className="border-warm-100" />
+      {/* ════════════════════════════════════════════
+          3. 파트너 스토어 — 거창한벙커
+         ════════════════════════════════════════════ */}
+      <section className="section bg-white">
+        <div className="container-custom max-w-4xl">
+          <Reveal className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy-400 uppercase tracking-wider mb-3">
+              <span className="w-8 h-px bg-navy-200" />
+              STORE 01
+              <span className="w-8 h-px bg-navy-200" />
+            </span>
+            <h2 className="section-title">거창한벙커</h2>
+            <p className="section-subtitle mx-auto">레터링 수제캔커피 — 마음을 담은 한 캔</p>
+          </Reveal>
 
-                  {/* Bullet points */}
-                  <ul className="space-y-3 pt-1">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-xs text-navy-700 leading-relaxed">
-                        <Check className="w-4 h-4 text-mint-500 shrink-0 mt-0.5" />
-                        <span>{feature}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <Reveal delay={100}>
+              <div className="bg-warm-50 rounded-3xl p-8 border border-warm-200 h-full flex flex-col">
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5">
+                  <Coffee className="w-7 h-7" />
+                </div>
+                <h3 className="text-lg font-bold text-navy-950 mb-3">레터링으로 전하는 따뜻한 마음</h3>
+                <p className="text-sm text-navy-500 leading-relaxed mb-4">
+                  거창한벙커는 수제 캔커피에 감사의 메시지, 응원의 문구, 
+                  교회 이름을 레터링으로 담아주는 스토어입니다. 하나하나 수작업으로 
+                  제작되는 캔커피는 선물하는 마음만큼이나 정성이 가득합니다.
+                </p>
+
+                <div className="bg-white rounded-2xl p-5 border border-warm-100 mb-5 space-y-3">
+                  <p className="text-xs font-bold text-navy-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-mint-500" />
+                    교회학교 활용 아이디어
+                  </p>
+                  <ul className="space-y-2">
+                    {[
+                      '주일학교 교사 감사 답례품',
+                      '수련회·캠프 기념 선물',
+                      '행사·세미나 참가자 기념품',
+                      '성탄절·부활절 교회 선물세트',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs text-navy-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-mint-400 shrink-0" />
+                        {item}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Plan Call-to-action button */}
-                <button
-                  onClick={() => handleSubscribe(plan.id, plan.name)}
-                  className={`w-full text-center py-4 rounded-2xl text-xs font-bold transition-all mt-8 ${
-                    plan.popular
-                      ? 'bg-mint-500 text-white hover:bg-mint-600 shadow-md shadow-mint-500/10'
-                      : 'bg-navy-900 text-white hover:bg-navy-850'
-                  }`}
-                >
-                  {plan.ctaText}
-                </button>
+                <div className="mt-auto">
+                  <a
+                    href="https://smartstore.naver.com/geochangbunker/products/4551068056"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3.5 rounded-2xl text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <Store className="w-4 h-4" />
+                    스토어 바로가기
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </Reveal>
 
-        {/* Enterprise Coming-Soon Banner */}
-        <div className="bg-gradient-to-r from-navy-950 to-navy-900 text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
-          <div className="flex gap-4 items-center text-center md:text-left">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 mx-auto">
-              <Building className="w-6 h-6 text-mint-400" />
+            <Reveal delay={200}>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border border-amber-100 text-center">
+                  <Coffee className="w-16 h-16 text-amber-500 mx-auto mb-3" />
+                  <p className="text-lg font-bold text-navy-950">수제 레터링 캔커피</p>
+                  <p className="text-xs text-navy-400 mt-1">한 캔에 담긴 정성과 마음</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-warm-50 rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">수제</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">핸드메이드</p>
+                  </div>
+                  <div className="bg-warm-50 rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">레터링</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">메시지 각인</p>
+                  </div>
+                  <div className="bg-warm-50 rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">선물용</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">감사·응원</p>
+                  </div>
+                  <div className="bg-warm-50 rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">교회</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">행사·기념</p>
+                  </div>
+                </div>
+
+                <div className="bg-navy-900 text-white rounded-2xl p-5 text-center">
+                  <Users className="w-5 h-5 text-mint-400 mx-auto mb-2" />
+                  <p className="text-xs font-bold leading-relaxed">
+                    "교회에서 답례품으로 거창한벙커 캔커피를 선택했어요.<br />
+                    선생님들이 너무 좋아하셨습니다!"
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          4. 파트너 스토어 — 프레시 네이쳐
+         ════════════════════════════════════════════ */}
+      <section className="section bg-warm-50">
+        <div className="container-custom max-w-4xl">
+          <Reveal className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy-400 uppercase tracking-wider mb-3">
+              <span className="w-8 h-px bg-navy-200" />
+              STORE 02
+              <span className="w-8 h-px bg-navy-200" />
+            </span>
+            <h2 className="section-title">프레시 네이쳐</h2>
+            <p className="section-subtitle mx-auto">국내산부터 수입과일까지, 모든 과일을 한곳에서</p>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <Reveal delay={200} className="order-2 md:order-1">
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 border border-green-100 text-center">
+                  <Apple className="w-16 h-16 text-green-500 mx-auto mb-3" />
+                  <p className="text-lg font-bold text-navy-950">국내산 · 수입과일</p>
+                  <p className="text-xs text-navy-400 mt-1">신선함을 그대로, 합리적인 가격으로</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">국내산</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">제철 과일</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">수입과일</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">다양한 선택</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">합리적</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">가격 경쟁력</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center border border-warm-200">
+                    <p className="text-2xl font-extrabold text-navy-950">신선</p>
+                    <p className="text-[10px] text-navy-400 mt-0.5">당일 발송</p>
+                  </div>
+                </div>
+
+                <div className="bg-navy-900 text-white rounded-2xl p-5 text-center">
+                  <Church className="w-5 h-5 text-mint-400 mx-auto mb-2" />
+                  <p className="text-xs font-bold leading-relaxed">
+                    "교회 모임 간식으로 과일을 자주 주문합니다.<br />
+                    품질이 좋고 가격도 착해서 계속 이용 중이에요."
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100} className="order-1 md:order-2">
+              <div className="bg-white rounded-3xl p-8 border border-warm-200 h-full flex flex-col">
+                <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-5">
+                  <Apple className="w-7 h-7" />
+                </div>
+                <h3 className="text-lg font-bold text-navy-950 mb-3">신선한 과일로 전하는 정성</h3>
+                <p className="text-sm text-navy-500 leading-relaxed mb-4">
+                  프레시 네이쳐는 국내산 제철 과일부터 엄선된 수입과일까지 
+                  모든 종류의 과일을 합리적인 가격에 공급하는 과일 전문 스토어입니다. 
+                  교회 모임, 행사, 예배 후 친교 시간을 신선한 과일로 풍성하게 채워보세요.
+                </p>
+
+                <div className="bg-warm-50 rounded-2xl p-5 border border-warm-100 mb-5 space-y-3">
+                  <p className="text-xs font-bold text-navy-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-mint-500" />
+                    교회학교 활용 아이디어
+                  </p>
+                  <ul className="space-y-2">
+                    {[
+                      '주일 예배 후 친교 간식',
+                      '행사·세미나 다과 준비',
+                      '절기별 교회 선물용 과일',
+                      '수련회·캠프 간식 준비',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs text-navy-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-auto">
+                  <a
+                    href="https://smartstore.naver.com/roaster"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3.5 rounded-2xl text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <Store className="w-4 h-4" />
+                    스토어 바로가기
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          5. 큐레이션 — 이런 상품은 어떠세요?
+         ════════════════════════════════════════════ */}
+      <section className="section bg-white">
+        <div className="container-custom max-w-4xl">
+          <Reveal className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy-400 uppercase tracking-wider mb-3">
+              <span className="w-8 h-px bg-navy-200" />
+              CURATION
+              <span className="w-8 h-px bg-navy-200" />
+            </span>
+            <h2 className="section-title">상황별 추천 아이디어</h2>
+            <p className="section-subtitle mx-auto">당신의 상황에 맞는 쇼핑을 제안합니다</p>
+          </Reveal>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                icon: Gift, label: '교사 감사 선물',
+                desc: '레터링 캔커피로 마음을 전하세요',
+                store: '거창한벙커', color: 'amber',
+              },
+              {
+                icon: Users, label: '친교 간식',
+                desc: '신선한 과일로 예배 후를 풍성하게',
+                store: '프레시 네이쳐', color: 'green',
+              },
+              {
+                icon: Church, label: '절기 행사',
+                desc: '과일과 커피로 특별한 날을 장식',
+                store: '두 스토어 모두', color: 'navy',
+              },
+              {
+                icon: Heart, label: '답례품',
+                desc: '수제 캔커피는 언제나 옳은 선택',
+                store: '거창한벙커', color: 'rose',
+              },
+            ].map((item, i) => {
+              const colorMap: Record<string, { bg: string; text: string; border: string; icon: string }> = {
+                amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', icon: 'bg-amber-100 text-amber-600' },
+                green: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200', icon: 'bg-green-100 text-green-600' },
+                navy: { bg: 'bg-navy-50', text: 'text-navy-600', border: 'border-navy-200', icon: 'bg-navy-100 text-navy-600' },
+                rose: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200', icon: 'bg-rose-100 text-rose-600' },
+              };
+              const c = colorMap[item.color];
+              const Icon = item.icon;
+              return (
+                <Reveal key={i} delay={i * 100}>
+                  <div className={`${c.bg} rounded-2xl p-5 border ${c.border} h-full flex flex-col items-center text-center`}>
+                    <div className={`w-10 h-10 rounded-xl ${c.icon} flex items-center justify-center mb-3`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-navy-950 mb-1">{item.label}</h3>
+                    <p className="text-[11px] text-navy-500 leading-relaxed mb-3">{item.desc}</p>
+                    <span className={`text-[10px] font-bold ${c.text} mt-auto`}>
+                      {item.store}
+                    </span>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          6. 후원 현황 + 무료 서비스 리마인드
+         ════════════════════════════════════════════ */}
+      <section className="section bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white">
+        <div className="container-custom max-w-3xl text-center">
+          <Reveal>
+            <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-mint-300 text-sm font-semibold mb-6">
+              <Sparkles className="w-4 h-4" />
+              계속 무료입니다
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2 justify-center md:justify-start">
-                교회 전체 플랜 (단체 도입형)
-                <span className="text-[9px] bg-mint-500/20 text-mint-300 border border-mint-500/30 px-2 py-0.5 rounded-full font-bold">준비 중</span>
-              </h3>
-              <p className="text-xs text-navy-300 mt-1">
-                담임 목사님부터 영아부, 초등부, 중고등부까지 교회 전체 부서의 서식 라이선스를 단체 가격으로 묶어 구독하는 멀티 계정 플랜입니다.
+            <h2 className="text-2xl md:text-4xl font-extrabold leading-tight mb-4">
+              당신의 쇼핑이<br />
+              <span className="text-mint-300">모든 서비스를 무료로</span> 유지합니다
+            </h2>
+            <p className="text-sm text-navy-300 leading-relaxed max-w-md mx-auto mb-8">
+              AI 공지문 작성기 · PPT 스튜디오 · 워크스페이스 · 행사 신청 시스템<br />
+              모든 기능을 계속 무료로 제공할 수 있는 이유는 바로 당신의 참여 덕분입니다.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/notice-writer" className="inline-flex items-center gap-2 bg-white text-navy-900 font-bold px-6 py-3.5 rounded-2xl text-sm hover:bg-warm-50 transition-all">
+                무료로 시작하기
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          7. CTA — 같이 쇼핑하고 후원하세요
+         ════════════════════════════════════════════ */}
+      <section className="section">
+        <div className="container-custom max-w-3xl text-center">
+          <Reveal>
+            <div className="bg-white rounded-3xl p-10 shadow-card border border-warm-200">
+              <Heart className="w-12 h-12 text-mint-500 mx-auto mb-4" />
+              <h2 className="text-xl md:text-2xl font-extrabold text-navy-950 mb-3">
+                지금 쇼핑하고 후원에 참여하세요
+              </h2>
+              <p className="text-sm text-navy-500 leading-relaxed max-w-sm mx-auto mb-8">
+                당신의 일상적인 소비가 교회학교 사역자의 사역을 가볍게 하고,<br />
+                다음 세대 신앙교육의 든든한 기반이 됩니다.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href="https://smartstore.naver.com/geochangbunker/products/4551068056"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3.5 rounded-2xl text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg w-full sm:w-auto justify-center"
+                >
+                  <Coffee className="w-4 h-4" />
+                  거창한벙커 쇼핑하기
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://smartstore.naver.com/roaster"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3.5 rounded-2xl text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg w-full sm:w-auto justify-center"
+                >
+                  <Apple className="w-4 h-4" />
+                  프레시 네이쳐 쇼핑하기
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+              <p className="text-xs text-navy-400 mt-4">
+                네이버 스마트스토어에서 바로 구매하실 수 있습니다
               </p>
             </div>
-          </div>
-          <button 
-            disabled 
-            className="btn-secondary btn-sm bg-white/10 border-white/20 text-white/50 cursor-not-allowed whitespace-nowrap"
-          >
-            단체 제휴 문의
-          </button>
+          </Reveal>
         </div>
-
-        {/* Feature Matrix Table */}
-        <div className="space-y-6">
-          <div className="text-center space-y-1.5">
-            <h2 className="text-lg md:text-xl font-bold text-navy-950">한눈에 비교하는 플랜 차이점</h2>
-            <p className="text-xs text-navy-400">나에게 꼭 필요한 옵션을 꼼꼼하게 따져보고 합리적인 소비를 계획하세요.</p>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-warm-100 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs md:text-sm">
-                <thead>
-                  <tr className="bg-warm-50 border-b border-warm-100 text-navy-600 font-bold">
-                    <th className="p-4 md:p-5">비교 기능</th>
-                    <th className="p-4 md:p-5">무료 체험</th>
-                    <th className="p-4 md:p-5">단건 구매</th>
-                    <th className="p-4 md:p-5 bg-mint-50/30 text-mint-900">프리미엄 구독</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-warm-100 text-navy-800 font-medium">
-                  {COMPARISON_ROWS.map((row, index) => (
-                    <tr key={index} className="hover:bg-warm-50/30">
-                      <td className="p-4 md:p-5 font-bold text-navy-950">{row.feature}</td>
-                      <td className="p-4 md:p-5 text-navy-500">{row.free}</td>
-                      <td className="p-4 md:p-5 text-navy-700">{row.single}</td>
-                      <td className="p-4 md:p-5 bg-mint-50/20 text-mint-800 font-semibold">{row.premium}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQs */}
-        <div className="bg-white rounded-3xl p-6 md:p-10 shadow-card border border-warm-100 max-w-3xl mx-auto space-y-6">
-          <h2 className="text-base md:text-lg font-bold text-navy-950 text-center flex items-center justify-center gap-2 border-b border-warm-100 pb-4">
-            <HelpIcon className="w-5 h-5 text-mint-500" />
-            요금 관련 자주 묻는 질문 (FAQ)
-          </h2>
-
-          <div className="divide-y divide-warm-100">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="py-4 first:pt-0 last:pb-0">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 text-left font-bold text-xs md:text-sm text-navy-850 hover:text-navy-950 transition-colors"
-                >
-                  <span>Q. {faq.q}</span>
-                  <span className="text-navy-400 font-bold text-base">{openFaq === i ? '−' : '+'}</span>
-                </button>
-                {openFaq === i && (
-                  <p className="mt-2.5 text-xs text-navy-500 leading-relaxed bg-warm-50 p-4 rounded-2xl border border-warm-100">
-                    {faq.a}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
