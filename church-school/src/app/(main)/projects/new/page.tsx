@@ -625,7 +625,7 @@ function NewProjectPageContent() {
                 )}
               </div>
 
-              {showSuggestions && selectedBook && (
+              {showSuggestions && (selectedBook || selectedPassages.length > 0) && (
                 <div className="animate-fade-in mt-3 rounded-2xl bg-slate-950/70 border border-indigo-500/30 p-4 space-y-3 shadow-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
