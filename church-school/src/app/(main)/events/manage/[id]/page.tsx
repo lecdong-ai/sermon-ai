@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Share2, Users, CheckCircle2, Clock, MapPin, Calendar, Settings, Trash2, Download, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Share2, Users, CheckCircle2, Clock, MapPin, Calendar, Settings, Trash2, Download, MessageCircle, ExternalLink } from 'lucide-react'
 import { EventRecord, EventStatus, EVENT_STATUS_LABELS, CustomField } from '@/types/event'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { copyAndOpenKakao } from '@/lib/kakao-share'
 
 export default function EventDetailPage() {
   const params = useParams()
@@ -18,6 +19,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [kakaoStatus, setKakaoStatus] = useState<'idle' | 'copying' | 'opening'>('idle')
   const [shareStyle, setShareStyle] = useState<ShareStyle>('warm')
   const [gradeData, setGradeData] = useState<{ grade: string; count: number }[]>([])
 
@@ -114,11 +116,10 @@ export default function EventDetailPage() {
   const copyLink = async () => {
     if (!event) return
     const text = buildShareText()
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 3000)
-    } catch {}
+    setKakaoStatus('copying')
+    await copyAndOpenKakao(text)
+    setKakaoStatus('opening')
+    setTimeout(() => setKakaoStatus('idle'), 3000)
   }
 
   const handleSave = async () => {
@@ -206,15 +207,20 @@ export default function EventDetailPage() {
           </div>
 
           <div className="flex gap-2">
-            <button onClick={copyLink} className="flex-1 py-3 bg-[#FEE500] text-[#3C1E1E] font-bold rounded-xl hover:brightness-95 transition-all flex items-center justify-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              {copied ? '복사됨! 카톡에 붙여넣으세요' : '카카오톡으로 복사'}
+            <button onClick={copyLink} className="flex-1 py-3 bg-[#FEE500] text-[#3C1E1E] font-bold rounded-xl hover:brightness-95 transition-all flex items-center justify-center gap-2 relative">
+              <MessageCircle className={`w-5 h-5 ${kakaoStatus === 'copying' ? 'animate-bounce' : ''}`} />
+              {kakaoStatus === 'idle' && '카카오톡으로 보내기'}
+              {kakaoStatus === 'copying' && '복사 중...'}
+              {kakaoStatus === 'opening' && '카톡을 실행 중입니다...'}
             </button>
             <button onClick={handleShare} className="px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors flex items-center justify-center gap-2 border border-white/30">
               <Share2 className="w-5 h-5" />
               공유
             </button>
           </div>
+          <p className="text-[10px] opacity-50 mt-2 text-center">
+            메시지가 자동으로 복사된 후 카카오톡이 실행됩니다
+          </p>
         </div>
       )}
 
