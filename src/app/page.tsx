@@ -7,7 +7,7 @@ import {
   Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard, 
   ArrowRight, CheckCircle, Star, Shield, Zap, Globe, 
   ChevronDown, ChevronUp, Play, Users, FileCheck, BrainCircuit, 
-  ArrowUpRight, Heart, X, HardDrive, Cross, Crown, GraduationCap
+  ArrowUpRight, Heart, X, HardDrive, Cross, GraduationCap
 } from 'lucide-react'
 import FileUpload from '@/components/FileUpload'
 import { useAuth } from '@/components/AuthProvider'
@@ -90,7 +90,6 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
   const [showDashboardPopup, setShowDashboardPopup] = useState(false)
-  const [supporter, setSupporter] = useState<boolean | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
@@ -119,14 +118,6 @@ export default function HomePage() {
     els.forEach((el) => observerRef.current?.observe(el))
     return () => observerRef.current?.disconnect()
   }, [])
-
-  useEffect(() => {
-    if (!mounted || loading || !user) return
-    fetch('/api/usage')
-      .then(r => r.json())
-      .then(d => { if (!d.error) setSupporter(d.supporter) })
-      .catch(() => setSupporter(false))
-  }, [mounted, loading, user])
 
   const handleUploadSuccess = (sermonId: string) => {
     router.push(`/workspace?id=${sermonId}`)
@@ -498,7 +489,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7. 일반 회원 무료 가치 섹션 */}
+      {/* 7. 무료 가치 섹션 */}
       <section className="relative pb-24 sm:pb-32 z-10">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <div className="reveal relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent p-8 sm:p-12">
@@ -696,37 +687,38 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 회원 등급 비교 — 일반 vs 사역 동참자 (간략) */}
+      {/* 8. 모든 기능 무료 섹션 */}
       <section className="relative pb-20 sm:pb-28 z-10">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-10">
             <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white">
-              무료로도 충분합니다
+              차별 없는 목회 도구
             </h2>
             <p className="reveal text-[14px] sm:text-[15px] text-slate-400 mt-3 leading-relaxed">
-              일반 회원도 AI 설교 도우미를 무제한 사용하실 수 있습니다.<br className="sm:hidden" />
-              사역 동참자는 더 깊은 도구를 함께 쓰고 싶을 때 선택하세요.
+              Bunker 목양의 모든 기능은 <strong className="text-emerald-300">모든 회원에게 무료</strong>로 제공됩니다.<br className="sm:hidden" />
+              등급이나 제한 없이, 목회에 필요한 모든 도구를 자유롭게 사용하세요.
             </p>
           </div>
 
           <div className="reveal grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 일반 회원 카드 */}
-            <div className="relative rounded-2xl bg-white/[0.03] border border-white/5 p-6 sm:p-7">
+            <div className="relative rounded-2xl bg-gradient-to-br from-indigo-500/[0.06] via-purple-500/[0.03] to-transparent border border-indigo-500/20 p-6 sm:p-7">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-indigo-300" />
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-white">일반 회원</h3>
-                  <p className="text-[10px] text-indigo-300 font-semibold">무료 · 가입 즉시</p>
+                  <h3 className="text-[15px] font-bold text-white">모든 회원</h3>
+                  <p className="text-[10px] text-indigo-300 font-semibold">전면 무료 · 제한 없음</p>
                 </div>
               </div>
               <ul className="space-y-2.5">
                 {[
-                  'AI 설교 원고 생성 무제한',
-                  '요약·소그룹·카드뉴스·PPT',
+                  'AI 설교 원고 6종 무제한 생성',
+                  '말씀 연구실 · 성경 정밀 연구',
+                  '예배 콘티 제작 · 악보 편집',
+                  '교회학교 솔루션 · 행사 관리',
                   '설교 아카이브 영구 보존',
-                  '워크스페이스 1개',
+                  '모든 신규 기능 즉시 이용',
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-[13px] text-slate-300">
                     <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2.5} />
@@ -736,42 +728,22 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* 사역 동참자 카드 */}
-            <div className="relative rounded-2xl bg-gradient-to-br from-amber-500/[0.08] via-rose-500/[0.04] to-transparent border border-amber-500/30 p-6 sm:p-7 overflow-hidden">
-              <div className="absolute top-3 right-3">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
-                  <Crown className="w-2.5 h-2.5" /> 추천
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-md shadow-amber-500/20">
-                  <Crown className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-[15px] font-bold text-white">사역 동참자</h3>
-                  <p className="text-[10px] text-amber-300 font-semibold">월 10,000원~ · 부가 가치</p>
-                </div>
-              </div>
-              <ul className="space-y-2.5">
-                {[
-                  '일반 회원 모든 혜택 포함',
-                  '말씀 연구실 + 성경 정밀 연구',
-                  '고급 AI 모델 우선 사용',
-                  '워크스페이스 20개 · 신규 기능 우선',
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-[13px] text-slate-200">
-                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" strokeWidth={2.5} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/support"
-                className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-bold text-amber-300 hover:text-amber-200 transition-colors group"
-              >
-                비교표 전체 보기
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+            <div className="relative rounded-2xl bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent border border-emerald-500/20 p-6 sm:p-7 flex flex-col items-center justify-center text-center">
+              <Sparkles className="w-8 h-8 text-emerald-300 mb-3" />
+              <h3 className="text-[17px] font-bold text-white mb-1">제한 없는 목회</h3>
+              <p className="text-[12px] text-slate-400 leading-relaxed">
+                Bunker 목양은 모든 기능을<br />
+                모든 회원에게 동일하게 제공합니다.
+              </p>
+              {!user && (
+                <Link
+                  href="/login?redirect=/"
+                  className="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-[13px] shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+                >
+                  무료로 시작하기
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -816,39 +788,20 @@ export default function HomePage() {
             </Link>
 
             {/* 말씀 연구실 카드 */}
-            {supporter ? (
-              <Link
-                href="/advanced"
-                onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-200"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/10">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[15px] font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
-                  <p className="text-[12px] text-slate-400 mt-0.5">프로젝트 · 성경 연구 · 원고</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-              </Link>
-            ) : (
-              <Link
-                href="/advanced/projects"
-                onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-                className="group relative flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-amber-500/[0.06] to-indigo-500/[0.04] border border-amber-500/30 hover:border-amber-400/50 hover:bg-amber-500/[0.08] transition-all duration-200"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[15px] font-bold text-white group-hover:text-amber-300 transition-colors">말씀 연구실</h4>
-                  <p className="text-[12px] text-amber-200/80 mt-0.5">본문 주해 · 성경 연구 · 원고 작성</p>
-                </div>
-                <span className="text-[10.5px] font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-500 border border-amber-400 rounded-lg px-2.5 py-1 mt-1.5 shrink-0 shadow-md shadow-amber-500/20">
-                  🎁 1회 체험
-                </span>
-              </Link>
-            )}
+            <Link
+              href="/advanced"
+              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
+              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-200"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/10">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
+                <p className="text-[12px] text-slate-400 mt-0.5">프로젝트 · 성경 연구 · 원고</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+            </Link>
 
             {/* 예배 콘티 제작 카드 */}
             <Link

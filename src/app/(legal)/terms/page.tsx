@@ -39,7 +39,6 @@ export default function TermsPage() {
               <li>"서비스"란 회사가 제공하는 AI 기반 설교 원고 작성, 성경 연구, 노트 정리 등 일체의 서비스를 말합니다.</li>
               <li>"이용자"란 본 약관에 동의하고 회사가 제공하는 서비스를 이용하는 회원을 말합니다.</li>
               <li>"AI 생성 콘텐츠"란 서비스 내에서 OpenAI 등 인공지능 모델이 생성한 일체의 텍스트, 분석, 제안 등을 말합니다.</li>
-              <li>"사역 동참자"이란 회사가 정한 절차에 따라 유료 후원(결제)을 완료하여 사역 동참자 자격을 부여받은 이용자를 말합니다.</li>
             </ol>
           </Section>
 
@@ -52,9 +51,10 @@ export default function TermsPage() {
             </ol>
           </Section>
 
-          <Section title="제4조 (회원 가입 및 자격)">
+          <Section title="제4조 (회원 가입 및 서비스 이용)">
             <ol className="list-decimal list-inside space-y-1.5">
               <li>이용자는 회사가 정한 양식에 따라 가입 정보를 기재한 후 본 약관에 동의한다는 의사표시를 함으로써 회원 가입이 완료됩니다.</li>
+              <li>회사가 제공하는 모든 서비스는 회원 가입 후 <strong>무료로 이용</strong>할 수 있습니다. 별도의 결제나 등급 구분 없이 모든 회원이 동일한 기능을 제한 없이 사용하실 수 있습니다.</li>
               <li>회사는 다음 각 호에 해당하는 경우 회원 가입을 거절하거나 사후에 자격을 박탈할 수 있습니다.
                 <ul className="list-disc list-inside ml-6 mt-1.5 space-y-1">
                   <li>타인의 명의를 도용하거나 허위 정보를 기재한 경우</li>
@@ -63,7 +63,6 @@ export default function TermsPage() {
                   <li>사회 질서·미풍 양신에 위배되는 행위를 할 우려가 있는 경우</li>
                 </ul>
               </li>
-              <li>사역 동참자 자격은 회사가 정한 후원 절차에 따라 결제가 완료된 시점에 부여되며, 후원 금액에 따라 30일/90일/365일 등 회사가 정한 기간 동안 유효합니다.</li>
             </ol>
           </Section>
 
@@ -122,21 +121,11 @@ export default function TermsPage() {
             </ol>
           </Section>
 
-          <Section title="제9조 (후원 및 환불)">
-            <ol className="list-decimal list-inside space-y-1.5">
-              <li>후원금은 회사가 정한 금액(현재 5,000원/30일, 12,000원/90일, 50,000원/365일)에 따라 결제됩니다.</li>
-              <li>후원금은 결제 후 <strong>7일 이내</strong> 단순 변심에 의한 환불 요청이 가능합니다 (단, 서비스를 이용한 이력이 있는 경우 환불이 제한될 수 있습니다).</li>
-              <li>회사의 귀책 사유로 서비스가 중단되는 경우 미사용 기간에 대해 일할 계산하여 환불합니다.</li>
-              <li>사역 동참자 자격이 만료된 후에는 추가 요금 없이 <strong>일반 회원</strong>으로 자동 전환되며, 작성한 콘텐츠는 보존됩니다.</li>
-              <li>환불은 원래 결제 수단(카드)에 따라 처리되며, PG사 정책에 따라 영업일 기준 3~7일이 소요될 수 있습니다.</li>
-            </ol>
-          </Section>
-
-          <Section title="제10조 (개인정보보호)">
+          <Section title="제9조 (개인정보보호)">
             회사는 「개인정보보호법」에 따라 이용자의 개인정보를 보호하기 위해 노력하며, 개인정보의 수집·이용·제공·파기 등에 관한 구체적 사항은 별도의 「개인정보처리방침」에 따릅니다.
           </Section>
 
-          <Section title="제11조 (계약 해지 및 이용 제한)">
+          <Section title="제10조 (계약 해지 및 이용 제한)">
             <ol className="list-decimal list-inside space-y-1.5">
               <li>이용자는 언제든지 서비스 내 설정 메뉴를 통해 회원 탈퇴를 요청할 수 있으며, 회사는 즉시 이를 처리합니다.</li>
               <li>이용자가 본 약관을 위반하거나 서비스의 정상적인 운영을 방해하는 경우, 회사는 사전 통지 없이 이용을 제한하거나 계약을 해지할 수 있습니다.</li>
@@ -144,7 +133,7 @@ export default function TermsPage() {
             </ol>
           </Section>
 
-          <Section title="제12조 (면책)">
+          <Section title="제11조 (면책)">
             <ol className="list-decimal list-inside space-y-1.5">
               <li>회사는 천재지변, 전쟁, 통신사업자의 서비스中断 등 불가항력적 사유로 서비스를 제공할 수 없는 경우 책임을 지지 않습니다.</li>
               <li>회사는 이용자의 귀책 사유로 인한 서비스 이용 장애에 대해 책임을 지지 않습니다.</li>
@@ -152,7 +141,7 @@ export default function TermsPage() {
             </ol>
           </Section>
 
-          <Section title="제13조 (분쟁 해결 및 준거법)">
+          <Section title="제12조 (분쟁 해결 및 준거법)">
             <ol className="list-decimal list-inside space-y-1.5">
               <li>본 약관과 회사와 이용자 사이의 서비스 이용에 관한 분쟁은 「민사소송법」상 관할 법원을 제1심 관할 법원으로 하며, 대한민국 법령을 준거법으로 합니다.</li>
               <li>회사와 이용자 간 분쟁이 발생할 경우 양 당사자는 원만한 해결을 위해 성실히 협의하며, 협의가 이루어지지 않을 경우 「소비자 분쟁 해결 기준」에 따라 분쟁을 해결합니다.</li>
