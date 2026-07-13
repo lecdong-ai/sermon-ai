@@ -59,6 +59,14 @@ const nextConfig = {
         source: '/og-image.png',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
       },
+      {
+        source: '/can.jpg',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+      },
+      {
+        source: '/fluit.png',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+      },
     ]
   },
   poweredByHeader: false,

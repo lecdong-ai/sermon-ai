@@ -171,10 +171,12 @@ export default function PricingPage() {
 
             <Reveal delay={200}>
               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border border-amber-100 text-center">
-                  <Coffee className="w-16 h-16 text-amber-500 mx-auto mb-3" />
-                  <p className="text-lg font-bold text-navy-950">수제 레터링 캔커피</p>
-                  <p className="text-xs text-navy-400 mt-1">한 캔에 담긴 정성과 마음</p>
+                <div className="overflow-hidden rounded-3xl border border-amber-100 shadow-lg shadow-amber-200/20 group">
+                  <img
+                    src="/can.jpg"
+                    alt="거창한벙커 수제 레터링 캔커피"
+                    className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -227,10 +229,12 @@ export default function PricingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <Reveal delay={200} className="order-2 md:order-1">
               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 border border-green-100 text-center">
-                  <Apple className="w-16 h-16 text-green-500 mx-auto mb-3" />
-                  <p className="text-lg font-bold text-navy-950">국내산 · 수입과일</p>
-                  <p className="text-xs text-navy-400 mt-1">신선함을 그대로, 합리적인 가격으로</p>
+                <div className="overflow-hidden rounded-3xl border border-green-100 shadow-lg shadow-green-200/20 group">
+                  <img
+                    src="/fluit.png"
+                    alt="프레시 네이쳐 신선한 과일"
+                    className="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
