@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   Users, Heart, Search, Loader2, Check, X, XCircle,
   Shield, Calendar, Mail, Clock, Sparkles, Trophy,
@@ -311,6 +311,38 @@ export default function AdminUsersPage() {
       setDeleteTarget(null)
     }
   }
+
+  const sorted = useMemo(() => {
+    if (!clientSortField) return members
+    return [...members].sort((a, b) => {
+      const aVal = clientSortField === 'total_donation'
+        ? (userSummary[a.id]?.total_donation_krw ?? 0)
+        : (userSummary[a.id]?.api_cost_krw ?? 0)
+      const bVal = clientSortField === 'total_donation'
+        ? (userSummary[b.id]?.total_donation_krw ?? 0)
+        : (userSummary[b.id]?.api_cost_krw ?? 0)
+      return clientSortOrder === 'asc' ? aVal - bVal : bVal - aVal
+    })
+  }, [members, clientSortField, clientSortOrder, userSummary])
+
+  const handleExportCSV = useCallback(() => {
+    const headers = ['이름', '이메일', '상태', '가입일', '최근접속일']
+    const rows = members.map(m => [
+      m.name || '',
+      m.email,
+      m.role === 'admin' ? '관리자' : '일반',
+      new Date(m.created_at).toLocaleDateString('ko-KR'),
+      m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString('ko-KR') : '-',
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `회원목록_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [members])
 
   const activeSortField: SortField | null = clientSortField || state.sort
   const activeSortOrder: 'asc' | 'desc' = clientSortField ? clientSortOrder : state.order
