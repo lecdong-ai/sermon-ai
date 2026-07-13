@@ -1113,18 +1113,69 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       maxTokens = 2500
       temperature = 0.5
     } else if (type === 'qt') {
-      const { bibleBook, weekNumber, sermon } = data
-      userText = `## 요청: 성도용 큐티 소책자 생성
-
-### 프로젝트 정보
+      const {
+        bibleBook, weekNumber, weekPosition, startPassage, endPassage,
+        audience, level, useCase,
+        tone, questionIntensity, applicationIntensity,
+        bibleTextPolicy, verseQuoteLimit, readingGuideMode,
+        pdfPurpose, sizeOption, designMood, colorMood,
+        seriesName, subtitle, churchNameOption, churchName,
+        outputGoal, requiredElements, avoidDirections,
+      } = data
+      userText = `## 기본 정보
 - 성경권: ${bibleBook || '설정되지 않음'}
 - 주차: ${weekNumber || 1}
-${sermon ? `- 참고 설교: ${sermon.title} (${sermon.passage})` : ''}
+- 예상 전체 주차 중 현재 위치: ${weekPosition || '설정되지 않음'}
+- 이번 주 시작 본문: ${startPassage || '설정되지 않음'}
+- 이번 주 종료 본문: ${endPassage || '설정되지 않음'}
 
-### 지시
-위 정보를 바탕으로 "${bibleBook || '성경'}"의 ${weekNumber || 1}주차 큐티 소책자 원고를 완성하세요.
-출력 순서(A→E)를 반드시 지키고, 일일 큐티 구조(1~12)를 모두 포함하세요.
-마크다운 형식으로 출력하되, PDF 편집자가 바로 활용할 수 있도록 구조화하세요.`
+## 독자 정보
+- 대상 독자: ${audience || '일반 성도'}
+- 독자 난이도: ${level || '중'}
+- 사용 환경: ${useCase || '개인 큐티'}
+
+## 톤과 스타일
+- 원하는 전체 톤: ${tone || '정중하고 따뜻한'}}
+- 질문 강도: ${questionIntensity || '중'}
+- 적용 강도: ${applicationIntensity || '중'}
+
+## 성경 본문 정책
+- 사용 번역 정책: ${bibleTextPolicy || '본문 범위 명시, 핵심 구절 발췌'}
+- 핵심 구절 인용 분량 기준: ${verseQuoteLimit || '2-3절'}
+- 본문 읽기 안내 방식: ${readingGuideMode || '관찰 포인트 제시'}
+
+## PDF / 편집 정보
+- PDF 목적: ${pdfPurpose || '개인 경건 훈련'}
+- 판형 선호: ${sizeOption || 'A5'}
+- 디자인 분위기: ${designMood || '정갈하고 고급스러운'}
+- 컬러 분위기: ${colorMood || '차분한 따뜻함'}
+
+## 브랜드 정보
+- 시리즈명: ${seriesName || '말씀과 함께하는 큐티'}
+- 부제: ${subtitle || ''}
+- 교회명 표기 여부: ${churchNameOption || '표기 안 함'}
+${churchNameOption === '표기' ? `- 교회명: ${churchName || ''}` : ''}
+
+## 결과물 요구사항
+- 이번 출력 목표: ${outputGoal || '7일분 큐티 소책자 완성'}
+- 꼭 포함해야 할 요소: ${requiredElements || '전체 구조 준수'}
+- 특히 피하고 싶은 방향: ${avoidDirections || '도덕주의, 감상주의'}
+
+## 매우 중요한 실행 지시
+- 본문은 반드시 문맥 안에서 해석하라.
+- 해설보다 먼저 본문을 보게 하라.
+- 질문은 감상형이 아니라 진단형으로 설계하라.
+- 적용은 반드시 오늘 실천 가능한 행동 단위로 제시하라.
+- 적용 전에 반드시 복음적 재해석이 있어야 한다.
+- 죄를 드러내되 정죄로 방치하지 말고 복음으로 다시 세우라.
+- 전체 결과물은 출판 가능한 PDF 소책자 품질을 목표로 하라.
+
+## 반드시 아래 순서로 출력하라
+1. 성경권 전체 설계 개요
+2. 이번 주 7일 편성표
+3. 주간 소책자 완성 원고
+4. PDF 편집 가이드
+5. 완간본 누적용 메타데이터`
       maxTokens = 12000
       temperature = 0.7
     } else {

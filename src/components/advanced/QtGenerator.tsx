@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, Sparkles, Loader2, Copy, Check, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronUp, Settings2 } from 'lucide-react'
 
 const BIBLE_BOOKS = [
   '창세기', '출애굽기', '레위기', '민수기', '신명기',
@@ -21,6 +21,62 @@ const BIBLE_BOOKS = [
   '유다서', '요한계시록',
 ]
 
+interface QTFormData {
+  bibleBook: string
+  weekNumber: number
+  weekPosition: string
+  startPassage: string
+  endPassage: string
+  audience: string
+  level: string
+  useCase: string
+  tone: string
+  questionIntensity: string
+  applicationIntensity: string
+  bibleTextPolicy: string
+  verseQuoteLimit: string
+  readingGuideMode: string
+  pdfPurpose: string
+  sizeOption: string
+  designMood: string
+  colorMood: string
+  seriesName: string
+  subtitle: string
+  churchNameOption: string
+  churchName: string
+  outputGoal: string
+  requiredElements: string
+  avoidDirections: string
+}
+
+const defaultForm: QTFormData = {
+  bibleBook: '',
+  weekNumber: 1,
+  weekPosition: '',
+  startPassage: '',
+  endPassage: '',
+  audience: '일반 성도',
+  level: '중',
+  useCase: '개인 큐티',
+  tone: '정중하고 따뜻한',
+  questionIntensity: '중',
+  applicationIntensity: '중',
+  bibleTextPolicy: '본문 범위 명시, 핵심 구절 발췌',
+  verseQuoteLimit: '2-3절',
+  readingGuideMode: '관찰 포인트 제시',
+  pdfPurpose: '개인 경건 훈련',
+  sizeOption: 'A5',
+  designMood: '정갈하고 고급스러운',
+  colorMood: '차분한 따뜻함',
+  seriesName: '말씀과 함께하는 큐티',
+  subtitle: '',
+  churchNameOption: '표기 안 함',
+  churchName: '',
+  outputGoal: '7일분 큐티 소책자 완성',
+  requiredElements: '전체 구조 준수',
+  avoidDirections: '도덕주의, 감상주의',
+}
+
 interface QTResult {
   projectOverview: string
   weeklySchedule: string
@@ -30,16 +86,38 @@ interface QTResult {
 }
 
 export default function QtGenerator() {
-  const [bibleBook, setBibleBook] = useState('')
-  const [weekNumber, setWeekNumber] = useState(1)
+  const [form, setForm] = useState<QTFormData>(defaultForm)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<QTResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
+  const update = (patch: Partial<QTFormData>) => setForm(prev => ({ ...prev, ...patch }))
+
+  const fields = [
+    { key: 'audience', label: '대상 독자', options: ['초신자', '일반 성도', '청년', '장년', '온 가족'] },
+    { key: 'level', label: '난이도', options: ['초급', '중', '중상', '심화'] },
+    { key: 'useCase', label: '사용 환경', options: ['개인 큐티', '가족 나눔', '소그룹', '교회 공용'] },
+  ] as const
+
+  const advancedFields = [
+    { key: 'tone', label: '전체 톤', options: ['정중하고 따뜻한', '직설적이고 도전적인', '부드럽고 배려있는', '엄숙하고 경건한'] },
+    { key: 'questionIntensity', label: '질문 강도', options: ['약', '중', '강', '매우 강'] },
+    { key: 'applicationIntensity', label: '적용 강도', options: ['약', '중', '강', '매우 강'] },
+    { key: 'bibleTextPolicy', label: '본문 정책', options: ['본문 범위 명시, 핵심 구절 발췌', '가능한 한 본문 전체 인용', '핵심 구절만 인용'] },
+    { key: 'sizeOption', label: '판형', options: ['A5', 'B5', 'A4', '모바일 최적화'] },
+    { key: 'designMood', label: '디자인 분위기', options: ['정갈하고 고급스러운', '미니멀하고 모던한', '따뜻하고 아날로그한', '클래식한'] },
+    { key: 'colorMood', label: '컬러 분위기', options: ['차분한 따뜻함', '청량하고 맑은', '어두운 우아함', '자연 친화적'] },
+    { key: 'pdfPurpose', label: 'PDF 목적', options: ['개인 경건 훈련', '교회 배포', '소그룹 교재', '판매용'] },
+    { key: 'seriesName', label: '시리즈명', custom: true },
+    { key: 'subtitle', label: '부제', custom: true },
+    { key: 'churchName', label: '교회명', custom: true, depends: 'churchNameOption' },
+  ] as const
+
   const handleGenerate = async () => {
-    if (!bibleBook) return
+    if (!form.bibleBook) return
     setGenerating(true)
     setError(null)
     setResult(null)
@@ -50,18 +128,18 @@ export default function QtGenerator() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'qt',
-          data: { bibleBook, weekNumber },
+          data: form,
         }),
       })
       const json = await res.json()
       if (json.success) {
         const output = json.data.output
         setResult({
-          projectOverview: extractSection(output, 'A.', 'B.'),
-          weeklySchedule: extractSection(output, 'B.', 'C.'),
-          fullManuscript: extractSection(output, 'C.', 'D.'),
-          pdfGuide: extractSection(output, 'D.', 'E.'),
-          metadata: extractSection(output, 'E.', null),
+          projectOverview: extractSection(output, '1.', '2.'),
+          weeklySchedule: extractSection(output, '2.', '3.'),
+          fullManuscript: extractSection(output, '3.', '4.'),
+          pdfGuide: extractSection(output, '4.', '5.'),
+          metadata: extractSection(output, '5.', null),
         })
         setExpandedSection('fullManuscript')
       } else {
@@ -81,7 +159,7 @@ export default function QtGenerator() {
       result.fullManuscript,
       result.pdfGuide,
       result.metadata,
-    ].filter(Boolean).join('\n\n')
+    ].filter(Boolean).join('\n\n---\n\n')
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -89,7 +167,6 @@ export default function QtGenerator() {
 
   return (
     <section className="space-y-5">
-      {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-emerald-400" />
@@ -98,14 +175,14 @@ export default function QtGenerator() {
         </div>
       </div>
 
-      {/* 입력 폼 */}
       <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
+        {/* 기본 정보 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-500">성경권</label>
             <select
-              value={bibleBook}
-              onChange={e => setBibleBook(e.target.value)}
+              value={form.bibleBook}
+              onChange={e => update({ bibleBook: e.target.value })}
               className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400 appearance-none"
             >
               <option value="">선택하세요</option>
@@ -117,19 +194,117 @@ export default function QtGenerator() {
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-500">주차</label>
             <input
-              type="number"
-              min={1}
-              max={200}
-              value={weekNumber}
-              onChange={e => setWeekNumber(Math.max(1, parseInt(e.target.value) || 1))}
+              type="number" min={1} max={200}
+              value={form.weekNumber}
+              onChange={e => update({ weekNumber: Math.max(1, parseInt(e.target.value) || 1) })}
+              className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500">전체 주차 중 위치 (예: 3/52)</label>
+            <input
+              type="text"
+              value={form.weekPosition}
+              onChange={e => update({ weekPosition: e.target.value })}
+              placeholder="예: 3/52"
+              className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500">시작 본문</label>
+            <input
+              type="text"
+              value={form.startPassage}
+              onChange={e => update({ startPassage: e.target.value })}
+              placeholder="예: 창 1:1"
+              className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500">종료 본문</label>
+            <input
+              type="text"
+              value={form.endPassage}
+              onChange={e => update({ endPassage: e.target.value })}
+              placeholder="예: 창 1:31"
               className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400"
             />
           </div>
         </div>
 
+        {/* 독자 정보 */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {fields.map(f => (
+            <div key={f.key} className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500">{f.label}</label>
+              <select
+                value={String((form as any)[f.key])}
+                onChange={e => update({ [f.key]: e.target.value } as any)}
+                className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400 appearance-none"
+              >
+                {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        {/* 고급 설정 토글 */}
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <Settings2 className="w-3.5 h-3.5" />
+          {showAdvanced ? '고급 설정 숨기기' : '고급 설정'}
+        </button>
+
+        {showAdvanced && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 border-t border-white/5">
+            {advancedFields.map(f => {
+              if ('depends' in f && f.depends && form.churchNameOption !== '표기') return null
+              if ('custom' in f && f.custom) {
+                return (
+                  <div key={f.key} className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500">{f.label}</label>
+                    <input
+                      type="text"
+                      value={String((form as any)[f.key] || '')}
+                      onChange={e => update({ [f.key]: e.target.value } as any)}
+                      placeholder={f.label}
+                      className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400"
+                    />
+                  </div>
+                )
+              }
+              return (
+                <div key={f.key} className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500">{f.label}</label>
+                  <select
+                    value={String((form as any)[f.key])}
+                    onChange={e => update({ [f.key]: e.target.value } as any)}
+                    className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400 appearance-none"
+                  >
+                    {(f as any).options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              )
+            })}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500">교회명 표기</label>
+              <select
+                value={form.churchNameOption}
+                onChange={e => update({ churchNameOption: e.target.value })}
+                className="w-full bg-[#070b18] border border-white/5 rounded-xl px-4 py-3 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-400 appearance-none"
+              >
+                <option value="표기 안 함">표기 안 함</option>
+                <option value="표기">표기</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={handleGenerate}
-          disabled={!bibleBook || generating}
+          disabled={!form.bibleBook || generating}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold text-[13px] hover:from-emerald-500 hover:to-green-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-emerald-600/20"
         >
           {generating ? (
@@ -151,7 +326,7 @@ export default function QtGenerator() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-slate-500 font-medium">
-              <span className="text-emerald-400 font-bold">{bibleBook}</span> {weekNumber}주차 큐티 소책자
+              <span className="text-emerald-400 font-bold">{form.bibleBook}</span> {form.weekNumber}주차 큐티 소책자
             </p>
             <button
               onClick={handleCopyAll}
@@ -162,13 +337,12 @@ export default function QtGenerator() {
             </button>
           </div>
 
-          {/* 접이식 섹션들 */}
           {[
-            { key: 'projectOverview', label: '프로젝트 개요', content: result.projectOverview },
-            { key: 'weeklySchedule', label: '주간 편성표', content: result.weeklySchedule },
-            { key: 'fullManuscript', label: '전체 원고', content: result.fullManuscript },
+            { key: 'projectOverview', label: '성경권 전체 설계 개요', content: result.projectOverview },
+            { key: 'weeklySchedule', label: '이번 주 7일 편성표', content: result.weeklySchedule },
+            { key: 'fullManuscript', label: '주간 소책자 완성 원고', content: result.fullManuscript },
             { key: 'pdfGuide', label: 'PDF 편집 가이드', content: result.pdfGuide },
-            { key: 'metadata', label: '완간본 메타데이터', content: result.metadata },
+            { key: 'metadata', label: '완간본 누적용 메타데이터', content: result.metadata },
           ].map(section => section.content ? (
             <div key={section.key} className="glass-dark rounded-2xl border border-white/5 overflow-hidden">
               <button
