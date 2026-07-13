@@ -16,6 +16,7 @@ import MinistryConstellation from '@/components/advanced/MinistryConstellation'
 import PipelineVisualization from '@/components/advanced/PipelineVisualization'
 import ActivityFeed from '@/components/advanced/ActivityFeed'
 import SmartRecommendations from '@/components/advanced/SmartRecommendations'
+import QtGenerator from '@/components/advanced/QtGenerator'
 
 // 감정 톤 매핑 유틸리티
 const getEmotionalTone = (sermon: ArchivedSermon) => {
@@ -367,6 +368,9 @@ export default function AdvancedDashboardPage() {
             })}
           </div>
         </section>
+
+        {/* ─── 5. 큐티(QT) 자료 생성기 ─── */}
+        <QtGenerator />
       </div>
 
       {/* ─── AI Generation Modal ─── */}

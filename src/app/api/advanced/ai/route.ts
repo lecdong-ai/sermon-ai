@@ -17,6 +17,7 @@ import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
 import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
 import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
 import { SYSTEM_PROMPT as COMMENTARY_TO_SECTION_PROMPT } from '@/lib/ai/prompts/commentaryToSection'
+import { SYSTEM_PROMPT as QT_PROMPT } from '@/lib/ai/prompts/qt'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -478,6 +479,7 @@ Return ONLY a JSON object (no markdown, no explanation):
 5. For "niv": return the actual New International Version English text (2011 revision).
 6. For "esv": return the actual English Standard Version English text (2016 revision).
 7. These are PUBLISHED translations — accuracy is critical. Do NOT paraphrase. If unsure, prefer the most widely accepted edition.`,
+  qt: QT_PROMPT,
 }
 
 export async function POST(request: NextRequest) {
@@ -1110,6 +1112,21 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       model = 'gpt-4o-mini'
       maxTokens = 2500
       temperature = 0.5
+    } else if (type === 'qt') {
+      const { bibleBook, weekNumber, sermon } = data
+      userText = `## 요청: 성도용 큐티 소책자 생성
+
+### 프로젝트 정보
+- 성경권: ${bibleBook || '설정되지 않음'}
+- 주차: ${weekNumber || 1}
+${sermon ? `- 참고 설교: ${sermon.title} (${sermon.passage})` : ''}
+
+### 지시
+위 정보를 바탕으로 "${bibleBook || '성경'}"의 ${weekNumber || 1}주차 큐티 소책자 원고를 완성하세요.
+출력 순서(A→E)를 반드시 지키고, 일일 큐티 구조(1~12)를 모두 포함하세요.
+마크다운 형식으로 출력하되, PDF 편집자가 바로 활용할 수 있도록 구조화하세요.`
+      maxTokens = 8000
+      temperature = 0.7
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`
