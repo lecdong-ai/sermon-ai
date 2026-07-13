@@ -1125,7 +1125,7 @@ ${sermon ? `- 참고 설교: ${sermon.title} (${sermon.passage})` : ''}
 위 정보를 바탕으로 "${bibleBook || '성경'}"의 ${weekNumber || 1}주차 큐티 소책자 원고를 완성하세요.
 출력 순서(A→E)를 반드시 지키고, 일일 큐티 구조(1~12)를 모두 포함하세요.
 마크다운 형식으로 출력하되, PDF 편집자가 바로 활용할 수 있도록 구조화하세요.`
-      maxTokens = 8000
+      maxTokens = 12000
       temperature = 0.7
     } else {
       const s = data.sermon
