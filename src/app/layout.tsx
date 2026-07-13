@@ -35,14 +35,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://bunker.ai.kr'),
   title: {
-    default: 'Bunker 목양 - AI 기반 설교 도우미',
+    default: 'Bunker 목양 - 목회의 모든 순간을 잇다',
     template: '%s | Bunker 목양',
   },
-  description: '설교 원고를 업로드하면 AI가 요약, 소그룹 나눔, 카드뉴스 등을 자동 생성합니다.',
-  keywords: ['설교', 'AI', '목회자', '설교준비', '카드뉴스', 'PPT', '소그룹'],
+  description: '설교 준비, 공지문 작성, 행사 운영까지 — 목회의 모든 순간을 함께합니다.',
+  keywords: ['설교', '목회', '교회학교', '공지문', '카드뉴스', 'PPT', '행사 관리'],
   openGraph: {
-    title: 'Bunker 목양 - AI 기반 설교 도우미',
-    description: '설교 원고를 업로드하면 AI가 요약, 소그룹 나눔, 카드뉴스 등을 자동 생성합니다.',
+    title: 'Bunker 목양 - 목회의 모든 순간을 잇다',
+    description: '설교 준비, 공지문 작성, 행사 운영까지 — 목회의 모든 순간을 함께합니다.',
     url: 'https://bunker.ai.kr',
     siteName: 'Bunker 목양',
     locale: 'ko_KR',

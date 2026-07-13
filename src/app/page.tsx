@@ -154,19 +154,19 @@ export default function HomePage() {
             <div className="lg:col-span-6 text-left space-y-6 sm:space-y-8">
               <div className="reveal inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-[13px] font-semibold">
                 <Cross className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                Bunker 목양 — AI 기반 설교 설계 도구
+                Bunker 목양 — 목회의 모든 순간을 잇다
               </div>
 
               <h1 className="reveal text-[clamp(2.25rem,5.5vw,3.75rem)] font-extrabold tracking-tight leading-[1.15] text-white">
-                설교 준비의 미래,
+                목회의 모든 순간을
                 <br />
-                <span className="text-gradient-neon glow-text-neon">한 편의 설교가</span>
+                <span className="text-gradient-neon glow-text-neon">함께하는 도구,</span>
                 <br />
-                <span className="text-gradient-neon glow-text-neon">여섯 개의 콘텐츠로</span>
+                <span className="text-gradient-neon glow-text-neon">Bunker 목양</span>
               </h1>
 
               <p className="reveal text-[clamp(1rem,2.2vw,1.125rem)] text-slate-400 leading-relaxed font-medium max-w-xl">
-                작성하신 한 편의 설교 원고만 있으면, 고도화된 목회 전문 AI가 소그룹 교재, 요약본, 카드뉴스, 유튜브 쇼츠, 설교 대본, 그리고 시각화된 PPT 완성 슬라이드까지 단 20초 만에 정교하게 완성합니다.
+                한 편의 설교가 여섯 가지 콘텐츠로 이어지고, 공지문은 상황과 대상에 맞춰 완성되며, 행사 신청부터 체크인까지 한 번에. 목회의 모든 순간을 돕습니다.
               </p>
 
               <div className="reveal pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -868,7 +868,7 @@ export default function HomePage() {
 
             {/* 교회학교 솔루션 카드 */}
             <Link
-              href="/school"
+              href="https://school.bunker.ai.kr"
               onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
               className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.07] transition-all duration-200"
             >

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
-import { assertWithinLimit } from '@/lib/limits'
 import { createApiClient } from '@/lib/supabase/api'
 import { YoutubeTranscript } from 'youtube-transcript'
 import OpenAI from 'openai'
@@ -26,12 +25,6 @@ export async function POST(request: NextRequest) {
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
-    }
-
-    // 한도 체크 (유튜브 분석)
-    const limitCheck = await assertWithinLimit(request, 'youtube')
-    if (!limitCheck.ok) {
-      return limitCheck.response
     }
 
     const { url, force } = await request.json()

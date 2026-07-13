@@ -23,6 +23,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'd3-force'],
   },
+  async redirects() {
+    return [
+      {
+        source: '/pricing',
+        destination: '/support',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

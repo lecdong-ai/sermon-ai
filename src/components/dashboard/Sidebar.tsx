@@ -18,48 +18,6 @@ const MENUS = [
   { key: 'settings', label: '설정', icon: '◇', href: '/dashboard/settings' },
 ]
 
-function SupporterBadge() {
-  const [data, setData] = useState<{ supporter: boolean; supporter_until: string | null } | null>(null)
-
-  useEffect(() => {
-    fetch('/api/usage')
-      .then(r => r.json())
-      .then(d => { if (!d.error) setData(d) })
-      .catch(() => {})
-  }, [])
-
-  if (!data) return null
-
-  return (
-    <div className="px-5 py-3 border-b border-white/10">
-      {data.supporter ? (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <span className="text-[14px]">🏅</span>
-          <div>
-            <p className="text-[12px] font-bold text-amber-300">사역 동참자</p>
-            {data.supporter_until && (
-              <p className="text-[9px] text-amber-400/60">
-                ~{new Date(data.supporter_until).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <Link
-          href="/support"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
-        >
-          <span className="text-[14px]">❤️</span>
-          <div>
-            <p className="text-[12px] font-semibold text-white/70">지금 후원하기</p>
-            <p className="text-[9px] text-white/30">일반회원</p>
-          </div>
-        </Link>
-      )}
-    </div>
-  )
-}
-
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -83,7 +41,6 @@ export default function Sidebar() {
           설교를 저장하고, 연결하고,<br />다시 찾는 목회 지식 지도
         </p>
       </div>
-      <SupporterBadge />
       <UsagePanel />
       <nav className="flex-1 py-3 overflow-y-auto">
         {MENUS.map((menu) => {

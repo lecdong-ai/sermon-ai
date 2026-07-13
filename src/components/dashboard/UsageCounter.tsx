@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Loader2, BarChart3, Sparkles, FileText, Youtube, Crown } from 'lucide-react'
+import { Loader2, Sparkles, FileText, Youtube } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 
 export interface LimitActionInfo {
@@ -31,10 +31,10 @@ const ACTION_META: Record<keyof LimitsData['actions'], {
   icon: any
   shortLabel: string
 }> = {
-  ai_analysis: { label: 'AI 분석 6종', shortLabel: 'AI 분석', icon: Sparkles },
-  manual_sermon: { label: '새 설교 등록', shortLabel: '설교 등록', icon: FileText },
-  project: { label: '말씀 연구실', shortLabel: '연구실', icon: FileText },
-  youtube: { label: '유튜브 연구소', shortLabel: '유튜브', icon: Youtube },
+  ai_analysis: { label: 'AI 분석 6종', shortLabel: 'AI 분석', icon: null },
+  manual_sermon: { label: '새 설교 등록', shortLabel: '설교 등록', icon: null },
+  project: { label: '말씀 연구실', shortLabel: '연구실', icon: null },
+  youtube: { label: '유튜브 연구소', shortLabel: '유튜브', icon: null },
 }
 
 export function useLimits(): { limits: LimitsData | null; loading: boolean; refresh: () => Promise<void> } {
@@ -86,62 +86,13 @@ interface UsageCounterProps {
 }
 
 export function UsageCounter({ actionKey, limits, size = 'md', showIcon = true, className = '' }: UsageCounterProps) {
-  const meta = ACTION_META[actionKey]
-  const action = limits.actions[actionKey]
-  const Icon = meta.icon
-  const isUnlimited = action.limit === -1 || limits.inGracePeriod
-  const isZeroLimit = action.limit === 0
-  const isFull = !isUnlimited && !isZeroLimit && action.current >= action.limit
-  const pct = !isUnlimited && action.limit > 0 ? Math.min(100, (action.current / action.limit) * 100) : 0
-
   const sizeClasses = size === 'sm'
     ? 'text-[11px] gap-1.5 px-2 py-0.5'
     : 'text-[12px] gap-2 px-2.5 py-1'
 
-  // 한도 0 (사역 동참자 전용)
-  if (isZeroLimit) {
-    return (
-      <div className={`inline-flex items-center ${sizeClasses} rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 ${className}`}>
-        {showIcon && <Crown className="w-3 h-3" />}
-        <span className="font-semibold">사역 동참자 전용</span>
-      </div>
-    )
-  }
-
-  // 유예 기간
-  if (limits.inGracePeriod) {
-    return (
-      <div className={`inline-flex items-center ${sizeClasses} rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 ${className}`}>
-        {showIcon && <Icon className="w-3 h-3" />}
-        <span className="font-semibold">유예 기간 · 기존 정책</span>
-      </div>
-    )
-  }
-
-  // 무제한
-  if (isUnlimited) {
-    return (
-      <div className={`inline-flex items-center ${sizeClasses} rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 ${className}`}>
-        {showIcon && <Icon className="w-3 h-3" />}
-        <span className="font-semibold">무제한</span>
-      </div>
-    )
-  }
-
-  // 한도 표시
-  const colorClass = isFull
-    ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
-    : pct >= 80
-    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-    : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
-
   return (
-    <div className={`inline-flex items-center ${sizeClasses} rounded-md border ${colorClass} ${className}`}>
-      {showIcon && <Icon className="w-3 h-3" />}
-      <span className="font-bold tabular-nums">{action.current}/{action.limit}</span>
-      {size === 'md' && (
-        <span className="text-current/70 font-medium">· D-{limits.daysUntilReset} 리셋</span>
-      )}
+    <div className={`inline-flex items-center ${sizeClasses} rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 ${className}`}>
+      <span className="font-semibold">무제한</span>
     </div>
   )
 }

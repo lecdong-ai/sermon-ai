@@ -7,34 +7,11 @@ import { useAuth } from '@/components/AuthProvider'
 import ActivityHeatmap from '@/components/mypage/ActivityHeatmap'
 import { getCustomProjects } from '@/lib/advanced/customProjects'
 import {
-  Mail, LogOut, KeyRound, Shield, Crown, Sparkles,
-  BookOpen, Network, BrainCircuit, Archive, ChevronRight, AlertCircle,
-  CheckCircle, Edit3, ExternalLink, ArrowUpRight,
-  Quote, Copy, Check, Heart, Users,
+  Mail, LogOut, KeyRound, Sparkles,
+  ChevronRight, AlertCircle,
+  CheckCircle, Edit3, ArrowUpRight,
+  Quote, Copy, Check,
 } from 'lucide-react'
-
-interface UsageInfo {
-  supporter: boolean
-  supporter_until: string | null
-  plan: string
-  monthly_limit: number
-  monthly_used: number
-  workspace_limit: number
-  workspace_used: number
-  limits?: {
-    tier: 'general' | 'supporter'
-    inGracePeriod: boolean
-    gracePeriodEnd: string | null
-    resetAt: string
-    daysUntilReset: number
-    actions: {
-      ai_analysis: { current: number; limit: number; remaining: number; allowed: boolean }
-      manual_sermon: { current: number; limit: number; remaining: number; allowed: boolean }
-      project: { current: number; limit: number; remaining: number; allowed: boolean }
-      youtube: { current: number; limit: number; remaining: number; allowed: boolean }
-    }
-  }
-}
 
 interface Profile {
   id: string
@@ -62,7 +39,6 @@ export default function MyPage() {
   const [saveMessage, setSaveMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [usage, setUsage] = useState<UsageInfo | null>(null)
   const [counts, setCounts] = useState<{ projects: number; inProgress: number; notes: number; completed: number; archived: number }>({
     projects: 0, inProgress: 0, notes: 0, completed: 0, archived: 0,
   })
@@ -85,13 +61,11 @@ export default function MyPage() {
         setName(p.name || '')
       }
 
-      const [usageRes, sermonsRes, insightsRes, localProjects] = await Promise.all([
-        fetch('/api/usage').then(r => r.json()).catch(() => null),
+      const [sermonsRes, insightsRes, localProjects] = await Promise.all([
         fetch('/api/sermons').then(r => r.json()).catch(() => ({ data: [] })),
         fetch('/api/insights').then(r => r.json()).catch(() => ({ data: [] })),
         Promise.resolve(getCustomProjects()),
       ])
-      if (usageRes && !usageRes.error) setUsage(usageRes)
       const apiSermons: any[] = Array.isArray(sermonsRes?.data) ? sermonsRes.data : []
       const insightsList = Array.isArray(insightsRes?.data) ? insightsRes.data : []
 
@@ -214,11 +188,6 @@ export default function MyPage() {
 
   if (!user) return null
 
-  const isSupporter = !!usage?.supporter
-  const workspacePct = usage && usage.workspace_limit > 0 && usage.workspace_limit !== -1
-    ? Math.round((usage.workspace_used / usage.workspace_limit) * 100)
-    : 0
-
   const displayName = profile?.name || user.email?.split('@')[0] || '사역자'
   const initial = displayName.slice(0, 1).toUpperCase()
   const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }) : ''
@@ -233,14 +202,10 @@ export default function MyPage() {
     <div className="min-h-screen bg-[#04060f] -mt-16">
       {/* ── 히어로: 풀-뷰포트 임팩트 ── */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
-        {/* 배경 그라데이션 오브 — 등급별 */}
+        {/* 배경 그라데이션 */}
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[120px] opacity-40 pointer-events-none"
-          style={{
-            background: isSupporter
-              ? 'rgba(245, 158, 11, 0.4)'
-              : 'rgba(99, 102, 241, 0.3)',
-          }}
+          style={{ background: 'rgba(99, 102, 241, 0.3)' }}
         />
         <div className="absolute top-0 left-0 w-96 h-96 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-violet-500/5 blur-3xl pointer-events-none" />
@@ -249,34 +214,14 @@ export default function MyPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black,transparent)] pointer-events-none" />
 
         <div className="relative max-w-[800px] mx-auto px-6 py-24 text-center">
-          {/* 아바타 — 거대하고 글래스 */}
+          {/* 아바타 */}
           <div className="relative inline-block mb-8">
             <div
               className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl font-light text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
-              style={{
-                background: isSupporter
-                  ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.5), rgba(15, 23, 42, 0.8))'
-                  : 'linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(15, 23, 42, 0.8))',
-              }}
+              style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(15, 23, 42, 0.8))' }}
             >
               {initial}
             </div>
-            {/* 등급 배지 (아바타 우하단) */}
-            {isSupporter ? (
-              <div
-                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-[#04060f] border border-amber-500/30 flex items-center justify-center shadow-lg"
-                title="사역 동참자"
-              >
-                <Heart className="w-4 h-4 text-amber-300 fill-amber-300" />
-              </div>
-            ) : (
-              <div
-                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-[#04060f] border border-indigo-500/30 flex items-center justify-center shadow-lg"
-                title="일반회원"
-              >
-                <Users className="w-4 h-4 text-indigo-300" />
-              </div>
-            )}
           </div>
 
           {/* 이름 — 거대한 타이포그래피 */}
@@ -284,24 +229,11 @@ export default function MyPage() {
             {displayName}
           </h1>
 
-          {/* 등급 배지 + 메타 라인 */}
+          {/* 메타 라인 */}
           <div className="flex items-center justify-center gap-3 text-[13px] text-slate-500 flex-wrap mb-2">
-            {isSupporter ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium">
-                <Heart className="w-3 h-3 fill-amber-300" />
-                사역 동참자
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-medium">
-                <Users className="w-3 h-3" />
-                일반회원
-              </span>
-            )}
-            {usage?.supporter_until && (
-              <span className="text-slate-500 text-[12px]">
-                후원 만료 {new Date(usage.supporter_until).toLocaleDateString('ko-KR')}
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-medium">
+              모든 기능 무료
+            </span>
             {joinDate && (
               <span className="text-slate-500 text-[12px]">
                 · {joinDate} 부터 함께 ({daysSinceJoin}일)
@@ -323,7 +255,7 @@ export default function MyPage() {
             )}
           </button>
 
-          {/* CTA — 사역 동참자에게는 후원 안내, 일반회원에게는 후원 유도 */}
+          {/* CTA */}
           <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
             <Link
               href="/advanced"
@@ -333,15 +265,6 @@ export default function MyPage() {
               워크스페이스 열기
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
-            {!isSupporter && (
-              <Link
-                href="/support"
-                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[13px] font-medium transition-all"
-              >
-                <Heart className="w-3.5 h-3.5 fill-amber-300" />
-                사역에 동참하기
-              </Link>
-            )}
           </div>
         </div>
       </section>
@@ -372,187 +295,7 @@ export default function MyPage() {
           {/* 좌측: 큰 카드들 */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* 사용량 카드 — 등급별 한도 안내 (Phase 1) */}
-            <article className="rounded-2xl border border-white/[0.06] bg-white/[0.015] backdrop-blur-sm p-8">
-              <header className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-2">
-                    이번 30일 사용량 · {isSupporter ? '사역 동참자' : '일반회원'}
-                  </h2>
-                  <p className="text-2xl font-light text-white">
-                    {usage?.limits ? (
-                      <>
-                        다음 리셋 <span className="font-semibold text-emerald-300">D-{usage.limits.daysUntilReset}</span>
-                        <span className="text-[14px] text-slate-400 ml-1">· 가입일 기준 30일</span>
-                      </>
-                    ) : (
-                      <span className="text-[14px] text-slate-400">한도 정보 없음</span>
-                    )}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">등급</div>
-                  <div className={`text-[12px] font-medium ${
-                    isSupporter ? 'text-amber-300' : 'text-indigo-300'
-                  }`}>
-                    {usage?.limits?.inGracePeriod ? '유예 기간 · 기존 정책' : isSupporter ? '사역 동참자' : '일반회원'}
-                  </div>
-                </div>
-              </header>
-
-              {/* 한도별 카운터 (Phase 1) */}
-              {usage?.limits && (
-                <div className="grid grid-cols-2 gap-3 py-4 border-y border-white/[0.06]">
-                  {[
-                    { key: 'ai_analysis', label: 'AI 분석 6종', note: '업로드 설교' },
-                    { key: 'manual_sermon', label: '새 설교 등록', note: 'manual' },
-                    { key: 'project', label: '말씀 연구실', note: '설교 프로젝트' },
-                    { key: 'youtube', label: '유튜브 연구소', note: '영상 분석' },
-                  ].map(item => {
-                    const a = usage.limits!.actions[item.key as keyof typeof usage.limits.actions]
-                    const isUnlimited = a.limit === -1
-                    const isZero = a.limit === 0
-                    const pct = !isUnlimited && a.limit > 0 ? Math.min(100, (a.current / a.limit) * 100) : 0
-                    const color = isZero
-                      ? 'text-amber-400'
-                      : isUnlimited
-                      ? 'text-blue-300'
-                      : pct >= 100
-                      ? 'text-rose-400'
-                      : pct >= 80
-                      ? 'text-amber-300'
-                      : isSupporter
-                      ? 'text-amber-300'
-                      : 'text-indigo-300'
-                    return (
-                      <div key={item.key} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">{item.label}</p>
-                        <p className="text-[10px] text-slate-600 mb-1.5">{item.note}</p>
-                        {isZero ? (
-                          <p className="text-[18px] font-extralight text-amber-400">사역 동참자 전용</p>
-                        ) : isUnlimited ? (
-                          <p className="text-[18px] font-extralight text-blue-300">무제한 · 유예 중</p>
-                        ) : (
-                          <>
-                            <p className={`text-[20px] font-extralight tabular-nums ${color}`}>
-                              {a.current}<span className="text-slate-600 text-[12px]"> / </span>{a.limit}
-                            </p>
-                            <div className="h-1 rounded-full bg-white/5 overflow-hidden mt-1.5">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  pct >= 100
-                                    ? 'bg-gradient-to-r from-rose-500 to-rose-400'
-                                    : pct >= 80
-                                    ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                                    : isSupporter
-                                    ? 'bg-gradient-to-r from-amber-500 to-rose-500'
-                                    : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-                                }`}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* 워크스페이스 */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between text-[13px] mb-3">
-                  <span className="text-slate-400">워크스페이스</span>
-                  <span className="text-slate-200 font-medium">
-                    {usage?.workspace_used ?? 0} <span className="text-slate-600">/</span> {usage?.workspace_limit ?? (isSupporter ? 20 : 1)}
-                  </span>
-                </div>
-                <div className="h-1 rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-1000"
-                    style={{ width: `${Math.min(workspacePct, 100)}%` }}
-                  />
-                </div>
-              </div>
-            </article>
-
-            {/* ── 등급별 한도 비교 (일반회원에게만 노출) ── */}
-            {!isSupporter && (
-              <article className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.05] via-orange-500/[0.02] to-transparent backdrop-blur-sm p-6 sm:p-7 overflow-hidden">
-                <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-500/8 blur-3xl" />
-                <header className="flex items-center justify-between mb-5">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/80 font-bold mb-1">
-                      30일 한도 비교
-                    </p>
-                    <h2 className="text-[18px] font-bold text-white">
-                      한도를 2배로 늘려보세요
-                    </h2>
-                  </div>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold">
-                    +250%
-                  </span>
-                </header>
-
-                {/* 막대 비교 */}
-                <div className="space-y-4">
-                  {(() => {
-                    const generalTotals = 20 // 일반회원 합산
-                    const supporterTotals = 70 // 사역동참자 합산
-                    const userTotals = usage?.limits
-                      ? Object.values(usage.limits.actions).reduce((s, a) => s + (a.limit > 0 ? a.limit : 0), 0)
-                      : generalTotals
-                    return (
-                      <>
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[12px] font-semibold text-slate-300">일반 회원</span>
-                            <span className="text-[12px] font-bold text-slate-400 tabular-nums">{generalTotals}회/30일</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-slate-500 to-slate-400"
-                              style={{ width: `${(generalTotals / supporterTotals) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[12px] font-semibold text-amber-200 inline-flex items-center gap-1">
-                              <Crown className="w-3 h-3" /> 사역 동참자
-                            </span>
-                            <span className="text-[12px] font-bold text-amber-200 tabular-nums">{supporterTotals}회/30일</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
-                              style={{ width: '100%' }}
-                            />
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-amber-200/70 leading-relaxed pt-1">
-                          ✨ <strong className="text-amber-300">월 10,000원</strong>으로 커피 한 잔 값. 벌써 47명의 목회자가 동참하며 한도를 2배로 늘렸습니다.
-                        </p>
-                        {userTotals <= generalTotals && (
-                          <p className="text-[10.5px] text-slate-500 leading-relaxed">
-                            💡 현재 한도: {userTotals}회 — 사역 동참 시 {supporterTotals}회로 자동 상향
-                          </p>
-                        )}
-                      </>
-                    )
-                  })()}
-                </div>
-
-                <Link
-                  href="/support"
-                  className="mt-5 w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-[13px] shadow-lg shadow-amber-500/20 transition-all group"
-                >
-                  <Crown className="w-3.5 h-3.5" />
-                  사역에 동참하기
-                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </Link>
-              </article>
-            )}
+            {/* 빠른 이동 — 카드 그리드 */}
 
             {/* 빠른 이동 — 카드 그리드 */}
             <article>

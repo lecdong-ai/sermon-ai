@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { projectSupabaseAdmin } from '@/lib/school/project/supabase'
 import { getUserFromRequest } from '@/lib/school/project/auth'
-import { assertWithinLimit } from '@/lib/school/limits'
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,12 +104,6 @@ export async function POST(request: NextRequest) {
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: '로그인이 필요합니다.' }, { status: 401 })
-    }
-
-    // 한도 체크 (manual 설교 등록)
-    const limitCheck = await assertWithinLimit(request, 'manual_sermon')
-    if (!limitCheck.ok) {
-      return limitCheck.response
     }
 
     const body = await request.json()

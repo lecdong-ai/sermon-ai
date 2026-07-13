@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/school/project/auth'
-import { assertWithinLimit } from '@/lib/school/limits'
+
 
 import OpenAI from 'openai'
 
@@ -146,12 +146,6 @@ export async function POST(request: NextRequest) {
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
-    }
-
-    // 한도 체크 (AI 분석 6종)
-    const limitCheck = await assertWithinLimit(request, 'ai_analysis')
-    if (!limitCheck.ok) {
-      return limitCheck.response
     }
 
     const body = await request.json()
