@@ -1,0 +1,193 @@
+export interface QtTemplate {
+  id: string
+  name: string
+  nameEn: string
+  description: string
+  font: string
+  fontHeading: string
+  pageBg: string
+  textColor: string
+  textMuted: string
+  accent: string
+  accentLight: string
+  border: string
+  borderLight: string
+  coverOrnament: string
+  coverAccentLine: string
+  sectionLabelBorder: string
+  bibleQuoteBg: string
+  bibleQuoteBorder: string
+  bibleQuoteText: string
+  prayerBoxBg: string
+  prayerBoxText: string
+  progressDotBg: string
+  progressDotBorder: string
+  progressDotActiveBg: string
+  pageNumberColor: string
+  coverTitleSize: string
+  coverSubtitleColor: string
+  bodyLineHeight: string
+  bodySize: string
+}
+
+export const QT_TEMPLATES: QtTemplate[] = [
+  {
+    id: 'warm-modern',
+    name: '따뜻한 모던',
+    nameEn: 'Warm Modern',
+    description: '깔끔하고 전문적인 인디고 테마 (기본)',
+    font: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    fontHeading: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    pageBg: '#ffffff',
+    textColor: '#1e1e2a',
+    textMuted: '#64748b',
+    accent: '#4F46E5',
+    accentLight: '#eef2ff',
+    border: '#e5e7eb',
+    borderLight: '#f1f5f9',
+    coverOrnament: '━━━',
+    coverAccentLine: '#4F46E5',
+    sectionLabelBorder: '#eef2ff',
+    bibleQuoteBg: '#f8fafc',
+    bibleQuoteBorder: '#4F46E5',
+    bibleQuoteText: '#334155',
+    prayerBoxBg: '#f1f5f9',
+    prayerBoxText: '#334155',
+    progressDotBg: '#e2e8f0',
+    progressDotBorder: '#cbd5e1',
+    progressDotActiveBg: '#4F46E5',
+    pageNumberColor: '#94a3b8',
+    coverTitleSize: '28px',
+    coverSubtitleColor: '#4F46E5',
+    bodyLineHeight: '2',
+    bodySize: '12px',
+  },
+  {
+    id: 'modern-dark',
+    name: '모던 다크',
+    nameEn: 'Modern Dark',
+    description: '세련된 다크 테마, 디지털 감성',
+    font: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    fontHeading: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    pageBg: '#0f172a',
+    textColor: '#e2e8f0',
+    textMuted: '#94a3b8',
+    accent: '#818cf8',
+    accentLight: '#1e1b4b',
+    border: '#334155',
+    borderLight: '#1e293b',
+    coverOrnament: '✦ ✦ ✦',
+    coverAccentLine: '#818cf8',
+    sectionLabelBorder: '#1e293b',
+    bibleQuoteBg: '#1e293b',
+    bibleQuoteBorder: '#818cf8',
+    bibleQuoteText: '#cbd5e1',
+    prayerBoxBg: '#1e293b',
+    prayerBoxText: '#cbd5e1',
+    progressDotBg: '#334155',
+    progressDotBorder: '#475569',
+    progressDotActiveBg: '#818cf8',
+    pageNumberColor: '#475569',
+    coverTitleSize: '28px',
+    coverSubtitleColor: '#818cf8',
+    bodyLineHeight: '2',
+    bodySize: '12px',
+  },
+  {
+    id: 'soft-pastel',
+    name: '차분한 파스텔',
+    nameEn: 'Soft Pastel',
+    description: '부드럽고 포근한 파스텔 톤',
+    font: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    fontHeading: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    pageBg: '#fdf2f8',
+    textColor: '#2d2a3d',
+    textMuted: '#a78ba0',
+    accent: '#d946ef',
+    accentLight: '#fdf4ff',
+    border: '#f1d7e8',
+    borderLight: '#fce7f3',
+    coverOrnament: '· · ·',
+    coverAccentLine: '#d946ef',
+    sectionLabelBorder: '#fce7f3',
+    bibleQuoteBg: '#fff1f2',
+    bibleQuoteBorder: '#d946ef',
+    bibleQuoteText: '#4a3f4a',
+    prayerBoxBg: '#fff1f2',
+    prayerBoxText: '#4a3f4a',
+    progressDotBg: '#f1d7e8',
+    progressDotBorder: '#e4b8d4',
+    progressDotActiveBg: '#d946ef',
+    pageNumberColor: '#c4a0b8',
+    coverTitleSize: '26px',
+    coverSubtitleColor: '#d946ef',
+    bodyLineHeight: '2',
+    bodySize: '12px',
+  },
+  {
+    id: 'classic',
+    name: '클래식',
+    nameEn: 'Classic',
+    description: '전통 교회 스타일, 골드 악센트 + 명조체',
+    font: "'Noto Serif KR', 'AppleMyungjo', serif",
+    fontHeading: "'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",
+    pageBg: '#faf8f5',
+    textColor: '#1e1e2a',
+    textMuted: '#888888',
+    accent: '#8b6914',
+    accentLight: '#f5f0e8',
+    border: '#e0d8c8',
+    borderLight: '#f0ebe0',
+    coverOrnament: '◆ ◆ ◆',
+    coverAccentLine: '#d4c5a9',
+    sectionLabelBorder: '#f0ebe0',
+    bibleQuoteBg: '#f5f0e8',
+    bibleQuoteBorder: '#8b6914',
+    bibleQuoteText: '#5a4a32',
+    prayerBoxBg: '#f5f0e8',
+    prayerBoxText: '#3a3a3a',
+    progressDotBg: '#fff',
+    progressDotBorder: '#d4c5a9',
+    progressDotActiveBg: '#8b6914',
+    pageNumberColor: '#bbb',
+    coverTitleSize: '26px',
+    coverSubtitleColor: '#8b6914',
+    bodyLineHeight: '2',
+    bodySize: '12px',
+  },
+  {
+    id: 'minimal-white',
+    name: '미니멀 화이트',
+    nameEn: 'Minimal White',
+    description: '극한의 가독성, 모던 심플',
+    font: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    fontHeading: "'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    pageBg: '#ffffff',
+    textColor: '#111827',
+    textMuted: '#6b7280',
+    accent: '#111827',
+    accentLight: '#f3f4f6',
+    border: '#e5e7eb',
+    borderLight: '#f3f4f6',
+    coverOrnament: '',
+    coverAccentLine: '#111827',
+    sectionLabelBorder: '#f3f4f6',
+    bibleQuoteBg: '#f9fafb',
+    bibleQuoteBorder: '#111827',
+    bibleQuoteText: '#374151',
+    prayerBoxBg: '#f3f4f6',
+    prayerBoxText: '#374151',
+    progressDotBg: '#e5e7eb',
+    progressDotBorder: '#d1d5db',
+    progressDotActiveBg: '#111827',
+    pageNumberColor: '#9ca3af',
+    coverTitleSize: '32px',
+    coverSubtitleColor: '#111827',
+    bodyLineHeight: '1.9',
+    bodySize: '11.5px',
+  },
+]
+
+export function getTemplate(id: string): QtTemplate {
+  return QT_TEMPLATES.find(t => t.id === id) || QT_TEMPLATES[0]
+}

@@ -17,7 +17,12 @@ import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
 import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
 import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
 import { SYSTEM_PROMPT as COMMENTARY_TO_SECTION_PROMPT } from '@/lib/ai/prompts/commentaryToSection'
-import { SYSTEM_PROMPT as QT_PROMPT } from '@/lib/ai/prompts/qt'
+import {
+  SYSTEM_PROMPT_SPLIT,
+  SYSTEM_PROMPT_DRAFT,
+  SYSTEM_PROMPT_REFINE,
+  SYSTEM_PROMPT_ASSEMBLE,
+} from '@/lib/ai/prompts/qt'
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -479,7 +484,10 @@ Return ONLY a JSON object (no markdown, no explanation):
 5. For "niv": return the actual New International Version English text (2011 revision).
 6. For "esv": return the actual English Standard Version English text (2016 revision).
 7. These are PUBLISHED translations — accuracy is critical. Do NOT paraphrase. If unsure, prefer the most widely accepted edition.`,
-  qt: QT_PROMPT,
+  'qt-split': SYSTEM_PROMPT_SPLIT,
+  'qt-draft': SYSTEM_PROMPT_DRAFT,
+  'qt-refine': SYSTEM_PROMPT_REFINE,
+  'qt-assemble': SYSTEM_PROMPT_ASSEMBLE,
 }
 
 export async function POST(request: NextRequest) {
@@ -1112,72 +1120,69 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       model = 'gpt-4o-mini'
       maxTokens = 2500
       temperature = 0.5
-    } else if (type === 'qt') {
+    } else if (type === 'qt-split') {
+      const { bibleBook, weekNumber, startPassage, endPassage, audience, level } = data
+      userText = `## 입력 정보
+- 성경권: ${bibleBook || ''}
+- 이번 주차: ${weekNumber || 1}
+- 시작 본문: ${startPassage || ''}
+- 종료 본문: ${endPassage || ''}
+- 대상 독자: ${audience || '일반 성도'}
+- 난이도: ${level || '중'}`
+      maxTokens = 2000
+      temperature = 0.5
+    } else if (type === 'qt-draft') {
       const {
-        bibleBook, weekNumber, weekPosition, startPassage, endPassage,
-        audience, level, useCase,
-        tone, questionIntensity, applicationIntensity,
-        bibleTextPolicy, verseQuoteLimit, readingGuideMode,
-        pdfPurpose, sizeOption, designMood, colorMood,
-        seriesName, subtitle, churchNameOption, churchName,
-        outputGoal, requiredElements, avoidDirections,
+        bibleBook, weekNumber, dayName, dayPassage, dayTitle, dayFocus,
+        audience, level, tone, bibleTextPolicy, verseQuoteLimit, seriesName,
+        bookOverview, passageContext, originalWordsHint, englishWordsHint
       } = data
       userText = `## 기본 정보
-- 성경권: ${bibleBook || '설정되지 않음'}
+- 성경권: ${bibleBook || ''}
 - 주차: ${weekNumber || 1}
-- 예상 전체 주차 중 현재 위치: ${weekPosition || '설정되지 않음'}
-- 이번 주 시작 본문: ${startPassage || '설정되지 않음'}
-- 이번 주 종료 본문: ${endPassage || '설정되지 않음'}
+- 요일: ${dayName || ''}
+- 오늘 본문: ${dayPassage || ''}
+- 오늘 제목: ${dayTitle || ''}
+- 오늘 핵심 초점: ${dayFocus || ''}
 
-## 독자 정보
+## 묵상 및 출력 설정
 - 대상 독자: ${audience || '일반 성도'}
-- 독자 난이도: ${level || '중'}
-- 사용 환경: ${useCase || '개인 큐티'}
-
-## 톤과 스타일
-- 원하는 전체 톤: ${tone || '정중하고 따뜻한'}}
-- 질문 강도: ${questionIntensity || '중'}
-- 적용 강도: ${applicationIntensity || '중'}
-
-## 성경 본문 정책
-- 사용 번역 정책: ${bibleTextPolicy || '본문 범위 명시, 핵심 구절 발췌'}
-- 핵심 구절 인용 분량 기준: ${verseQuoteLimit || '2-3절'}
-- 본문 읽기 안내 방식: ${readingGuideMode || '관찰 포인트 제시'}
-
-## PDF / 편집 정보
-- PDF 목적: ${pdfPurpose || '개인 경건 훈련'}
-- 판형 선호: ${sizeOption || 'A5'}
-- 디자인 분위기: ${designMood || '정갈하고 고급스러운'}
-- 컬러 분위기: ${colorMood || '차분한 따뜻함'}
-
-## 브랜드 정보
+- 난이도: ${level || '중'}
+- 톤: ${tone || '정중하고 따뜻한'}
+- 성경 본문 정책: ${bibleTextPolicy || '본문 범위와 핵심절만 제시'}
+- 핵심절 인용 기준: ${verseQuoteLimit || '최대 2구절'}
 - 시리즈명: ${seriesName || '말씀과 함께하는 큐티'}
-- 부제: ${subtitle || ''}
-- 교회명 표기 여부: ${churchNameOption || '표기 안 함'}
-${churchNameOption === '표기' ? `- 교회명: ${churchName || ''}` : ''}
 
-## 결과물 요구사항
-- 이번 출력 목표: ${outputGoal || '7일분 큐티 소책자 완성'}
-- 꼭 포함해야 할 요소: ${requiredElements || '전체 구조 준수'}
-- 특히 피하고 싶은 방향: ${avoidDirections || '도덕주의, 감상주의'}
-
-## 매우 중요한 실행 지시
-- 본문은 반드시 문맥 안에서 해석하라.
-- 해설보다 먼저 본문을 보게 하라.
-- 질문은 감상형이 아니라 진단형으로 설계하라.
-- 적용은 반드시 오늘 실천 가능한 행동 단위로 제시하라.
-- 적용 전에 반드시 복음적 재해석이 있어야 한다.
-- 죄를 드러내되 정죄로 방치하지 말고 복음으로 다시 세우라.
-- 전체 결과물은 출판 가능한 PDF 소책자 품질을 목표로 하라.
-
-## 반드시 아래 순서로 출력하라
-1. 성경권 전체 설계 개요
-2. 이번 주 7일 편성표
-3. 주간 소책자 완성 원고
-4. PDF 편집 가이드
-5. 완간본 누적용 메타데이터`
-      maxTokens = 12000
+## 추가 참조 데이터
+- 성경권 개요: ${bookOverview || '없음'}
+- 문맥 요약: ${passageContext || '없음'}
+- 원어 후보: ${originalWordsHint || '없음'}
+- 영어단어 후보: ${englishWordsHint || '없음'}`
+      maxTokens = 3000
       temperature = 0.7
+    } else if (type === 'qt-refine') {
+      const { draftContent } = data
+      userText = `아래 QT 초안을 검토하고 웹 및 PDF 가이드라인에 맞추어 최종본으로 다듬어주십시오.
+
+[QT 초안]
+${draftContent || ''}`
+      maxTokens = 3000
+      temperature = 0.5
+    } else if (type === 'qt-assemble') {
+      const { bibleBook, weekNumber, seriesName, subtitle, audience, sizeOption, designMood, days } = data
+      userText = `## 기본 정보
+- 성경권: ${bibleBook || ''}
+- 주차: ${weekNumber || 1}
+- 시리즈명: ${seriesName || ''}
+- 부제: ${subtitle || ''}
+- 대상 독자: ${audience || ''}
+- 판형: ${sizeOption || 'A5'}
+- 디자인 분위기: ${designMood || 'warm-modern'}
+
+## 완성된 요일별 QT 원고
+${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\n\n===\n\n')}`
+      maxTokens = 4000
+      temperature = 0.5
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`

@@ -19,6 +19,7 @@ const MENU_ICONS: Record<string, any> = {
   notes: Sparkles,
   series: BookOpen,
   settings: Settings,
+  qt: BookOpen,
 }
 
 const VERSES = [
