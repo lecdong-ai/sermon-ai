@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { 
   BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronRight, 
-  Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight 
+  Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight,
+  History, Trash2, Plus, Bookmark, Edit3, Save
 } from 'lucide-react'
 import QtReader from './QtReader'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
@@ -94,6 +95,24 @@ export interface QTResult {
   fullManuscript: string
 }
 
+export interface QtHistoryEntry {
+  id: string
+  bible_book: string
+  week_number: number
+  series_name: string
+  audience: string
+  level: string
+  tone: string
+  size_option: string
+  design_template: string
+  full_manuscript?: string
+  start_passage?: string
+  end_passage?: string
+  subtitle?: string
+  created_at: string
+  updated_at: string
+}
+
 // 마크다운 테이블 파싱 헬퍼
 function parseSplitTable(markdown: string): DaySplitData[] {
   const lines = markdown.split('\n')
@@ -155,7 +174,7 @@ export default function QtGenerator() {
     tone: '정중하고 따뜻한',
     seriesName: '말씀과 함께하는 큐티',
     sizeOption: 'A5',
-    designTemplate: 'warm-modern',
+    designTemplate: 'qtland-classic',
   })
 
   const updateForm = (patch: Partial<QTFormData>) => setForm(prev => ({ ...prev, ...patch }))
@@ -240,6 +259,153 @@ export default function QtGenerator() {
   
   // 최종 결과 (QtReader 연동용)
   const [finalManuscript, setFinalManuscript] = useState('')
+
+  // 히스토리 상태
+  const [historyEntries, setHistoryEntries] = useState<QtHistoryEntry[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [savingHistory, setSavingHistory] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<QtHistoryEntry | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [historyError, setHistoryError] = useState('')
+
+  // 히스토리 로드
+  const loadHistory = async () => {
+    setHistoryLoading(true)
+    setHistoryError('')
+    try {
+      const res = await fetch('/api/advanced/qt/history')
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        setHistoryError(`${res.status}: ${text || res.statusText}`)
+      } else {
+        const json = await res.json()
+        setHistoryEntries(json.entries || [])
+      }
+    } catch (e) {
+      setHistoryError(String(e))
+    }
+    setHistoryLoading(false)
+  }
+
+  useEffect(() => { loadHistory() }, [])
+
+  // 히스토리 저장
+  const saveToHistory = async (manuscript: string) => {
+    if (!manuscript) return
+    setSavingHistory(true)
+    try {
+      const dayData = Object.entries(dayManuscripts).map(([day, m]) => ({
+        dayName: day,
+        passage: m.passage,
+        title: m.title,
+        focus: m.focus,
+        finalContent: m.finalContent,
+      }))
+      const res = await fetch('/api/advanced/qt/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bible_book: form.bibleBook,
+          week_number: form.weekNumber,
+          audience: form.audience,
+          level: form.level,
+          tone: form.tone,
+          series_name: form.seriesName,
+          size_option: form.sizeOption,
+          design_template: form.designTemplate,
+          full_manuscript: manuscript,
+          day_data: dayData,
+          start_passage: startPassage,
+          end_passage: endPassage || null,
+          subtitle: subtitle || null,
+        }),
+      })
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        console.error('히스토리 저장 실패:', res.status, text)
+      } else {
+        loadHistory()
+      }
+    } catch (e) {
+      console.error('히스토리 저장 오류:', e)
+    }
+    setSavingHistory(false)
+  }
+
+  // 히스토리 조회 (전체 내용)
+  const fetchHistoryEntry = async (id: string): Promise<QtHistoryEntry | null> => {
+    try {
+      const res = await fetch(`/api/advanced/qt/history/${id}`)
+      if (res.ok) {
+        const json = await res.json()
+        return json.entry
+      }
+    } catch {}
+    return null
+  }
+
+  // 히스토리 삭제
+  const handleDeleteHistory = async (id: string) => {
+    if (!window.confirm('이 QT 기록을 삭제하시겠습니까?')) return
+    try {
+      await fetch(`/api/advanced/qt/history/${id}`, { method: 'DELETE' })
+      loadHistory()
+    } catch {}
+  }
+
+  // 히스토리 보기
+  const handleViewHistory = async (entry: QtHistoryEntry) => {
+    const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
+    if (full?.full_manuscript) {
+      setFinalManuscript(full.full_manuscript)
+      setShowHistory(false)
+    }
+  }
+
+  // 히스토리 재생성 (동일 설정으로 step 1)
+  const handleRegenerateHistory = (entry: QtHistoryEntry) => {
+    updateForm({
+      bibleBook: entry.bible_book,
+      weekNumber: entry.week_number,
+      audience: entry.audience,
+      level: entry.level,
+      tone: entry.tone,
+      seriesName: entry.series_name,
+      sizeOption: entry.size_option,
+      designTemplate: entry.design_template,
+    })
+    if (entry.start_passage) setStartPassage(entry.start_passage)
+    if (entry.end_passage) setEndPassage(entry.end_passage)
+    setStep(1)
+    setShowHistory(false)
+  }
+
+  // 히스토리 편집 모드
+  const handleEditHistory = async (entry: QtHistoryEntry) => {
+    const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
+    if (full?.full_manuscript) {
+      setEditingEntry(full)
+      setEditContent(full.full_manuscript)
+    }
+  }
+
+  // 편집 저장
+  const handleSaveEdit = async () => {
+    if (!editingEntry) return
+    setSavingHistory(true)
+    try {
+      await fetch(`/api/advanced/qt/history/${editingEntry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_manuscript: editContent }),
+      })
+      setEditingEntry(null)
+      setEditContent('')
+      loadHistory()
+    } catch {}
+    setSavingHistory(false)
+  }
 
   // 1단계: 주간 본문 분할 생성 API 호출
   const handleGenerateSplit = async () => {
@@ -442,6 +608,7 @@ export default function QtGenerator() {
           fullDoc += dayManuscripts[d].finalContent
         })
         setFinalManuscript(fullDoc)
+        saveToHistory(fullDoc)
       } else {
         setError(json.error || '주간 소책자 조립에 실패했습니다.')
       }
@@ -472,14 +639,22 @@ export default function QtGenerator() {
   // 최종 뷰어 모드 실행
   if (finalManuscript) {
     return (
-      <QtReader
-        form={form}
-        accumulatedManuscript={finalManuscript}
-        templateId={form.designTemplate}
-        startPassage={startPassage}
-        endPassage={endPassage}
-        onBack={() => setFinalManuscript('')}
-      />
+      <>
+        {savingHistory && (
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold shadow-lg animate-slideDown">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            기록 저장 중...
+          </div>
+        )}
+        <QtReader
+          form={form}
+          accumulatedManuscript={finalManuscript}
+          templateId={form.designTemplate}
+          startPassage={startPassage}
+          endPassage={endPassage}
+          onBack={() => setFinalManuscript('')}
+        />
+      </>
     )
   }
 
@@ -498,6 +673,22 @@ export default function QtGenerator() {
             </h2>
             <p className="text-[11px] text-slate-500">주간 본문 분할부터 정밀 집필, 소책자 조립까지 완벽한 순차 파이프라인</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+              showHistory
+                ? 'bg-indigo-500/20 border-indigo-400/40 text-indigo-300'
+                : 'bg-white/[0.02] border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+            }`}
+          >
+            <History className="w-3.5 h-3.5" />
+            {showHistory ? '새로 작성' : '기록'}
+            {historyEntries.length > 0 && !showHistory && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[9px] font-bold">{historyEntries.length}</span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -536,6 +727,140 @@ export default function QtGenerator() {
         </div>
       </div>
 
+      {/* 히스토리 패널 */}
+      {showHistory && !finalManuscript && !editingEntry && (
+        <div className="animate-fadeIn">
+          <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <h4 className="text-[13px] font-bold text-slate-300 flex items-center gap-2">
+                <History className="w-4 h-4 text-indigo-400" />
+                큐티 생성 기록
+              </h4>
+              <span className="text-[10px] text-slate-500">{historyEntries.length}개</span>
+            </div>
+
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-12 text-slate-500">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span className="text-[12px]">기록 로딩 중...</span>
+              </div>
+            ) : historyError ? (
+              <div className="text-center py-8 text-rose-400 space-y-2">
+                <p className="text-[12px]">기록을 불러오지 못했습니다</p>
+                <p className="text-[10px] text-rose-500/70 font-mono">{historyError}</p>
+                <button onClick={loadHistory} className="text-[10px] underline hover:text-rose-300">다시 시도</button>
+              </div>
+            ) : historyEntries.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 space-y-2">
+                <Bookmark className="w-8 h-8 mx-auto text-slate-600" />
+                <p className="text-[12px]">아직 저장된 큐티 기록이 없습니다.</p>
+                <p className="text-[10px] text-slate-600">QT를 생성하면 자동으로 여기에 저장됩니다.</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+                {historyEntries.map(entry => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-slate-200">{entry.bible_book}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold">{entry.week_number}주차</span>
+                        {entry.series_name && (
+                          <span className="text-[10px] text-slate-500 truncate">{entry.series_name}</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-600 mt-0.5">
+                        {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {entry.audience && ` · ${entry.audience}`}
+                        {entry.level && ` · Lv.${entry.level}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                      <button
+                        onClick={() => handleViewHistory(entry)}
+                        className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors"
+                        title="보기"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleRegenerateHistory(entry)}
+                        className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors"
+                        title="재생성"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleEditHistory(entry)}
+                        className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors"
+                        title="편집"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteHistory(entry.id)}
+                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors"
+                        title="삭제"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 편집 모드 */}
+      {showHistory && !finalManuscript && editingEntry && (
+        <div className="animate-fadeIn">
+          <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <h4 className="text-[13px] font-bold text-slate-300 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-amber-400" />
+                원고 편집 — {editingEntry.bible_book} {editingEntry.week_number}주차
+              </h4>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setEditingEntry(null); setEditContent('') }}
+                  className="px-3 py-1.5 rounded-lg border border-white/5 hover:border-white/10 text-slate-400 hover:text-white text-[11px] font-bold transition-all"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={savingHistory}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all disabled:opacity-40"
+                >
+                  {savingHistory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  {savingHistory ? '저장 중...' : '저장'}
+                </button>
+                <button
+                  onClick={() => { handleViewHistory(editingEntry); setEditingEntry(null); setEditContent('') }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition-all"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  뷰어
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              rows={24}
+              className="w-full bg-[#050914]/80 border border-white/5 rounded-xl p-4 text-[12px] leading-relaxed text-slate-200 font-mono outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 scrollbar-thin"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 새로 작성 모드: showHistory가 false일 때만 스텝 표시 */}
+      {!showHistory && (
+      <>
       {/* STEP 1: 주간 본문 분할 */}
       {step === 1 && (
         <div className="space-y-5 animate-fadeIn">
@@ -1148,6 +1473,9 @@ export default function QtGenerator() {
             </button>
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {/* 에러 발생 시 토스트 또는 박스 메시지 */}

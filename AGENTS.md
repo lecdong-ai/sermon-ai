@@ -80,6 +80,14 @@
 - **부수효과**: Supabase Dashboard / Kakao / Google Console 추가 설정 0건
 - **커밋**: `cbc1aaf` → 빌드 READY → `bunker.ai.kr/school` 정상 작동 확인
 
+### Done — QT 히스토리 (생성 기록 저장/조회)
+- `supabase_migration_qt_history.sql`: `qt_history` 테이블 + RLS + updated_at 트리거
+- `src/app/api/advanced/qt/history/route.ts`: GET(목록) + POST(저장)
+- `src/app/api/advanced/qt/history/[id]/route.ts`: GET(상세) + PUT(수정) + DELETE(삭제)
+- `QtGenerator.tsx`: 자동 저장, 기록 패널(헤더 `📋 기록` 버튼), 5개 액션 (보기/재생성/편집/삭제/PDF)
+- 양 프로젝트 build 성공
+- Supabase SQL Editor에서 `supabase_migration_qt_history.sql` 실행 필요
+
 ### Done — 유틸리티 스크립트
 - `church-school/vercel-fix.mjs`: Vercel Authentication 끄기
 - `church-school/cleanup-and-rebuild.mjs`: Root Directory 변경, 배포 정리

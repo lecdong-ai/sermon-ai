@@ -20,7 +20,7 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
-  const [templateId, setTemplateId] = useState(initialTemplateId || 'warm-modern')
+  const [templateId, setTemplateId] = useState(initialTemplateId || 'qtland-classic')
   const [pdfLoading, setPdfLoading] = useState(false)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
 
@@ -178,7 +178,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       </div>
 
       {/* Hidden PDF layout for export — 화면 밖에 렌더링하되 실제 크기로 그려서 html2canvas가 캡처 */}
-      <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1, opacity: 1 }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', opacity: 1 }}>
         <QtPdfLayout
           ref={pdfLayoutRef}
           form={form}
