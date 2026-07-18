@@ -1,11 +1,12 @@
-# 세션 요약 — 통합 웹 플랫폼 (메인 + 교회학교)
+# 세션 요약 — 통합 웹 플랫폼 (메인 + 교회학교 + Q.T)
 
 ## Goal
-1. **PPT Studio DB 템플릿 + AI 추천** — 관리자가 .pptx 업로드 시 색상/폰트 자동 추출, DB 저장, AI 자동 추천 및 스타일 적용
-2. **카드뉴스 생성기** — 설교 내용 기반 PNG/PDF 카드뉴스 (13개 테마, 3 SNS 사이즈)
-3. **교회 행사 신청 시스템** — 관리자/신청자/QR체크인/CSV내보내기
-4. **카카오/구글 OAuth 로그인** — 메인+교회학교 양쪽 동일
-5. **Vercel path-based 통합** — `bunker.ai.kr/school/*` 로 교회학교 서비스
+1. **Q.T 아카이브 (qt.bunker.ai.kr)** — Next.js 14 정적 사이트, Mock 데이터 큐티 아카이브
+2. **PPT Studio DB 템플릿 + AI 추천** — 관리자가 .pptx 업로드 시 색상/폰트 자동 추출, DB 저장, AI 자동 추천 및 스타일 적용
+3. **카드뉴스 생성기** — 설교 내용 기반 PNG/PDF 카드뉴스 (13개 테마, 3 SNS 사이즈)
+4. **교회 행사 신청 시스템** — 관리자/신청자/QR체크인/CSV내보내기
+5. **카카오/구글 OAuth 로그인** — 메인+교회학교 양쪽 동일
+6. **Vercel path-based 통합** — `bunker.ai.kr/school/*` 로 교회학교 서비스
 
 ## Constraints & Preferences
 - 템플릿은 Supabase DB, 관리자 CRUD UI로 관리
@@ -179,3 +180,12 @@
 - `church-school/src/app/auth/callback/route.ts`: OAuth 핸들러
 - `church-school/next.config.mjs`: `eslint.ignoreDuringBuilds: true`
 - `church-school/vercel.json`: Vercel 배포 설정
+
+### Q.T 아카이브 (qt.bunker.ai.kr)
+- `qt/` 디렉토리: 큐티 아카이브 Next.js 14 프로젝트 (Mock data, Supabase/DB 불필요)
+- Vercel 프로젝트: `qt-archive` (prj_ZBOh0L7lMGM5LzYs7QGF5CLfvN5l)
+- Root Directory: `qt/`
+- 도메인: `qt.bunker.ai.kr` → CNAME `cname.vercel-dns.com` (카페24)
+- Auth: OFF (passwordProtection: null, ssoProtection: null)
+- Node: 24.x
+- 특징: 순수 정적 사이트, API/DB/인증 없음, 목 데이터 기반
