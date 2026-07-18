@@ -31,7 +31,7 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
-  const [templateId, setTemplateId] = useState(initialTemplateId || 'qtland-classic')
+  const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
