@@ -63,8 +63,10 @@ export async function generateQtPdf(
     throw new Error('PDF 페이지 요소를 찾을 수 없습니다.')
   }
 
+  const isLandscapeLayout = widthMm > heightMm
+  const pagesPerDay = isLandscapeLayout ? 1 : 2
   const targetPages = dayIndex !== undefined
-    ? pages.slice(1 + dayIndex * 2, 1 + dayIndex * 2 + 2)
+    ? pages.slice(1 + dayIndex * pagesPerDay, 1 + dayIndex * pagesPerDay + pagesPerDay)
     : pages
 
   if (targetPages.length === 0) {
