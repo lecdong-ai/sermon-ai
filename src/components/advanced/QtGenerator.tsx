@@ -968,18 +968,26 @@ export default function QtGenerator() {
       
       setRecommendInfo({ book, passage, reason, coreMessage })
       
-      // 메타데이터 제외한 실제 큐티 본문 추출
+      // 메타데이터(AI 추천 정보 + 기본 정보 블록) 제외한 실제 큐티 본문 추출
       let finalContent = rawOutput
-      const bodyIndex = rawOutput.indexOf('## 기본 정보')
+      const bodyIndex = rawOutput.indexOf('## 오늘의 본문')
       if (bodyIndex !== -1) {
         finalContent = rawOutput.substring(bodyIndex)
       }
+      
+      // form 상태를 AI 추천 결과로 동기화 (PDF 표지, 다음 단계에서 사용)
+      updateForm({
+        bibleBook: book,
+        weekNumber: 1,
+        startDate: getTodayDateString(),
+      })
+      setStartPassage(passage)
+      setEndPassage(passage)
       
       // 뷰어 및 역사 저장 데이터 형태로 셋업
       setFinalManuscript(finalContent)
       
       // AI 추천 1일치용 단일 DayManuscripts 구성
-      const cleanBookName = book.replace(/요일/g, '').trim()
       setDayManuscripts({
         '오늘': {
           dayName: '오늘',
@@ -990,9 +998,6 @@ export default function QtGenerator() {
         }
       })
       setActiveDay('오늘')
-      
-      // 바로 4단계 뷰어 결과 화면으로 이동
-      setStep(4)
     } catch (e: any) {
       setError(e.message || '요청 중 오류가 발생했습니다.')
     } finally {
@@ -1190,7 +1195,11 @@ export default function QtGenerator() {
           templateId={form.designTemplate}
           startPassage={startPassage}
           endPassage={endPassage}
-          onBack={() => setFinalManuscript('')}
+          selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : null}
+          onBack={() => {
+            setFinalManuscript('')
+            setRecommendInfo(null)
+          }}
         />
       </>
     )

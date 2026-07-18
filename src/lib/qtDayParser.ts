@@ -130,6 +130,18 @@ function parseSingleDay(lines: string[]): ParsedDay | null {
       if (afterHeader) sectionBuffer.push(afterHeader)
     } else if (currentSection) {
       sectionBuffer.push(line)
+    } else {
+      // '## 기본 정보' 블록의 불릿 항목(- 제목:, - 본문:, - 성경권: 등) 처리
+      const titleBullet = line.match(/^\s*[-*·•]\s*제목\s*[:：]\s*(.+)$/)
+      if (titleBullet && !day.title) {
+        day.title = titleBullet[1].trim()
+        continue
+      }
+      const passageBullet = line.match(/^\s*[-*·•]\s*본문\s*[:：]\s*(.+)$/)
+      if (passageBullet && !day.passage) {
+        day.passage = passageBullet[1].trim()
+        continue
+      }
     }
   }
 

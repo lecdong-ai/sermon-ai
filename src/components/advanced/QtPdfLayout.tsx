@@ -7,6 +7,14 @@ import { parseDays } from '@/lib/qtDayParser'
 import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData, QTResult } from './QtGenerator'
 
+interface QtSelectedInfo {
+  book: string
+  passage: string
+  reason: string
+  coreMessage: string
+  isRecommended: boolean
+}
+
 interface QtPdfLayoutProps {
   form: QTFormData
   result: QTResult
@@ -17,6 +25,7 @@ interface QtPdfLayoutProps {
   userMemos?: Record<number, string>
   isBilingualSideBySide?: boolean
   audienceLevel?: 'adult' | 'youth'
+  selectedInfo?: QtSelectedInfo | null
 }
 
 // 회중별 묵상 필터링 헬퍼 (QtDayCard와 동일 로직)
@@ -87,7 +96,7 @@ function parseBibleVerses(passageText: string) {
   return { korVerse, nivVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'qtland-classic', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult' }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'qtland-classic', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult', selectedInfo }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4']
   const cssW = `${size.widthMm}mm`
   const cssH = `${size.heightMm}mm`
@@ -324,8 +333,22 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'qtland-classic', 
               {t.coverOrnament}
             </div>
           )}
+          {selectedInfo?.isRecommended && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: `${4 * scale}px`,
+              padding: `${4 * scale}px ${10 * scale}px`, marginBottom: `${14 * scale}px`,
+              borderRadius: `${12 * scale}px`,
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.18))',
+              border: `${1 * scale}px solid rgba(99,102,241,0.5)`,
+              fontFamily: t.fontHeading, fontSize: `${9 * scale}px`, fontWeight: 700,
+              color: t.accent, letterSpacing: `${2 * scale}px`, textTransform: 'uppercase',
+            }}>
+              <span style={{ fontSize: `${10 * scale}px` }}>✨</span>
+              AI 추천 본문
+            </div>
+          )}
           <div style={{ fontFamily: t.fontHeading, fontSize: `${parsedTitleSize * scale}px`, fontWeight: 700, color: t.textColor, letterSpacing: `${5 * scale}px`, marginBottom: `${4 * scale}px` }}>
-            QT 소책자
+            {selectedInfo?.isRecommended ? '오늘의 큐티' : 'QT 소책자'}
           </div>
           <div style={{ fontFamily: t.fontHeading, fontSize: `${11 * scale}px`, color: t.coverSubtitleColor, letterSpacing: `${2.5 * scale}px`, marginBottom: `${18 * scale}px` }}>
             {form.seriesName || '말씀과 함께하는 큐티'}

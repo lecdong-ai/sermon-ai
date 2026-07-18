@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Download, Edit3, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Edit3, Loader2, Sparkles, X } from 'lucide-react'
 import QtDayCard from './QtDayCard'
 import QtPdfLayout from './QtPdfLayout'
 import { parseDays } from '@/lib/qtDayParser'
@@ -11,16 +11,25 @@ import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
 
+export interface QtSelectedInfo {
+  book: string
+  passage: string
+  reason: string
+  coreMessage: string
+  isRecommended: boolean
+}
+
 interface QtReaderProps {
   form: QTFormData
   accumulatedManuscript: string
   templateId: string
   startPassage?: string
   endPassage?: string
+  selectedInfo?: QtSelectedInfo | null
   onBack: () => void
 }
 
-export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, onBack }: QtReaderProps) {
+export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'qtland-classic')
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4')
@@ -43,6 +52,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
   const weekdays = useMemo(() => {
     const dayCount = Math.max(days.length, 1)
+    // AI 추천 일일 큐티: 오늘 날짜 단일 표시
+    if (selectedInfo?.isRecommended) {
+      const today = new Date()
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+      return [`${today.getMonth() + 1}/${today.getDate()}(${dayNames[today.getDay()]})`]
+    }
     if (!form.startDate) {
       // 폴백: 오늘 기준 이번주 월요일부터 6일
       const today = new Date()
@@ -60,7 +75,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     const list = getFormattedDateList(form.startDate, dayCount)
     if (list.length > 0) return list
     return []
-  }, [form.startDate, days.length])
+  }, [form.startDate, days.length, selectedInfo?.isRecommended])
 
   const tmpl = useMemo(() => getTemplate(templateId), [templateId])
 
@@ -235,7 +250,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             🌱 에코
           </button>
           <span className="text-[11px] text-slate-500 font-medium">
-            {form.bibleBook} · {form.weekNumber}주차
+            {selectedInfo?.isRecommended ? '✨ AI 추천 일일 큐티' : `${form.bibleBook} · ${form.weekNumber}주차`}
           </span>
           <button
             onClick={handlePdfDownload}
@@ -251,6 +266,45 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       {/* Day content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
+          {/* AI 추천 정보 배너 (추천 일일 큐티일 때만 표시) */}
+          {selectedInfo?.isRecommended && (
+            <div className="mb-5 rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-4.5 h-4.5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">
+                      AI 추천
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">
+                      오늘의 큐티
+                    </span>
+                  </div>
+                  <div className="text-[14px] font-bold text-slate-100 leading-snug">
+                    {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
+                  </div>
+                  {selectedInfo.coreMessage && (
+                    <div className="text-[12px] text-slate-300 mt-1 italic">
+                      &ldquo;{selectedInfo.coreMessage}&rdquo;
+                    </div>
+                  )}
+                  {selectedInfo.reason && (
+                    <details className="mt-2">
+                      <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 select-none">
+                        선정 이유 보기
+                      </summary>
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                        {selectedInfo.reason}
+                      </p>
+                    </details>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navigation header */}
           <div className="flex items-center justify-between mb-6">
             <button
@@ -376,6 +430,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           userMemos={userMemos}
           isBilingualSideBySide={isBilingualSideBySide}
           audienceLevel={audienceLevel}
+          selectedInfo={selectedInfo}
         />
       </div>
     </div>

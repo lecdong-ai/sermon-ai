@@ -25,6 +25,7 @@ import {
   SYSTEM_PROMPT_RECOMMEND_DAILY,
 } from '@/lib/ai/prompts/qt'
 import { THEOLOGICAL_DNA } from '@/lib/ai/prompts/theologicalDna'
+import { isAdmin } from '@/lib/admin'
 
 
 let _openai: OpenAI | null = null
@@ -511,6 +512,11 @@ export async function POST(request: NextRequest) {
     let systemPrompt = SYSTEM_PROMPTS[type]
     if (!systemPrompt) {
       return NextResponse.json({ success: false, error: `알 수 없는 타입: ${type}` }, { status: 400 })
+    }
+
+    // QT 타입은 관리자만 접근 가능
+    if (type.startsWith('qt-') && !(await isAdmin(user.id))) {
+      return NextResponse.json({ success: false, error: '관리자만 접근할 수 있습니다.' }, { status: 403 })
     }
 
     // 다중 본문 fallback 지원용 변수
@@ -1189,7 +1195,7 @@ ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 �
     } else if (type === 'qt-recommend-daily') {
       userText = '성경 66권 전체를 검토하여 오늘 묵상하기 좋은 최적의 본문을 선정하고 1일치 프리미엄 큐티 원고(장년용/청소년·새신자용 이중화 적용 포함)를 집필하십시오.'
       model = 'gpt-4o-mini'
-      maxTokens = 4000
+      maxTokens = 6000
       temperature = 0.7
     } else if (type === 'qt-draft') {
       const {
