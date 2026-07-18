@@ -393,70 +393,108 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           </div>
         </div>
 
-        {/* 한/영 성경 첫 2-3절 미리보기 (55:45) */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '55fr 45fr',
-          gap: `${7 * scale}px`,
-          marginBottom: `${2 * scale}px`,
-        }}>
-          <div>
+        {/* 한/영 성경 — 5:5 정확 분할, 절 동기화, 동일 폰트 */}
+        {(() => {
+          const korLines = verses.korVerse.split('\n').filter(l => l.trim())
+          const nivLines = verses.nivVerse.split('\n').filter(l => l.trim())
+          const maxLen = Math.max(korLines.length, nivLines.length)
+          return (
             <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${9 * scale}px`,
-              fontWeight: 800,
-              color: t.accent,
-              letterSpacing: `${2.5 * scale}px`,
-              textTransform: 'uppercase',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: `${6 * scale}px`,
               marginBottom: `${2 * scale}px`,
-              paddingBottom: `${1.5 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
             }}>
-              한글 · 개역개정
+              {/* 좌: 한글 · 개역개정 */}
+              <div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${8 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale}px`,
+                  paddingBottom: `${1 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                }}>
+                  <span>한글 · 개역개정</span>
+                  {verses.passageRange && (
+                    <span style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${8 * scale}px`,
+                      fontWeight: 700,
+                      color: t.textColor,
+                      letterSpacing: `${0.3 * scale}px`,
+                      textTransform: 'none',
+                    }}>
+                      {verses.passageRange}
+                    </span>
+                  )}
+                </div>
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${10.5 * scale}px`,
+                  lineHeight: '1.45',
+                  color: t.textColor,
+                  textAlign: 'justify',
+                  wordBreak: 'keep-all',
+                }}>
+                  {Array.from({ length: maxLen }).map((_, i) => (
+                    <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                      {korLines[i] || ''}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* 우: English · NIV */}
+              <div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${8 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale}px`,
+                  paddingBottom: `${1 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                }}>
+                  <span>English · NIV</span>
+                  {verses.passageRange && (
+                    <span style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${8 * scale}px`,
+                      fontWeight: 700,
+                      color: t.textColor,
+                      letterSpacing: `${0.3 * scale}px`,
+                      textTransform: 'none',
+                    }}>
+                      {verses.passageRange}
+                    </span>
+                  )}
+                </div>
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${10.5 * scale}px`,
+                  lineHeight: '1.45',
+                  color: t.textColor,
+                  textAlign: 'justify',
+                }}>
+                  {Array.from({ length: maxLen }).map((_, i) => (
+                    <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                      {nivLines[i] || ''}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div style={{
-              fontFamily: t.font,
-              fontSize: `${11.5 * scale}px`,
-              lineHeight: '1.65',
-              color: t.textColor,
-              textAlign: 'justify',
-              wordBreak: 'keep-all',
-            }}>
-              {verses.korVerse.split('\n').map((l, i) => (
-                <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${9 * scale}px`,
-              fontWeight: 800,
-              color: t.accent,
-              letterSpacing: `${2.5 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${2 * scale}px`,
-              paddingBottom: `${1.5 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
-            }}>
-              English · NIV
-            </div>
-            <div style={{
-              fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
-              fontSize: `${10.5 * scale}px`,
-              lineHeight: '1.6',
-              color: t.textColor,
-              textAlign: 'justify',
-              fontStyle: 'italic',
-            }}>
-              {verses.nivVerse.split('\n').map((l, i) => (
-                <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
-              ))}
-            </div>
-          </div>
-        </div>
+          )
+        })()}
 
-        {/* 본문 한눈에 보기 (하단 풀폭) */}
+        {/* 본문 한눈에 — 2줄 풀폭 */}
         {day.passageOverview && (
           <div style={{
             paddingTop: `${2 * scale}px`,
@@ -467,7 +505,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
                 l.replace(/^[-*·•\s]*\s*(단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
               ).join('\n'),
-              11
+              10
             )}
           </div>
         )}
