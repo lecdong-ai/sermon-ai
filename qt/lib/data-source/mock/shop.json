@@ -1,0 +1,80 @@
+{
+  "items": [
+    {
+      "id": "shop-001",
+      "slug": "advent-candle-set",
+      "name": "대릴 촛불 세트",
+      "shortDescription": "대림절 4주를 위한 작은 촛불 세트",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/대릴-촛불-세트---아이보리-촛불-4개/1000/1000",
+        "alt": "대릴 촛불 세트 — 아이보리 촛불 4개",
+        "width": 1000,
+        "height": 1000
+      },
+      "category": "굿즈",
+      "price": 18000,
+      "externalStoreUrl": "https://store.example.com/advent-candle",
+      "isFree": false,
+      "story": "매주 하나씩 켜는 촛불로 기다림을 기억합니다.",
+      "publishedAt": "2026-11-01T00:00:00.000Z",
+      "salesCount": 124
+    },
+    {
+      "id": "shop-002",
+      "slug": "scripture-card-set-01",
+      "name": "말씀 카드 세트 — 시편",
+      "shortDescription": "시편 구절 30장을 담은 손바닥 크기 카드",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/말씀-카드-세트---시편/1000/1000",
+        "alt": "말씀 카드 세트 — 시편",
+        "width": 1000,
+        "height": 1000
+      },
+      "category": "문구",
+      "price": 12000,
+      "externalStoreUrl": "https://store.example.com/scripture-cards",
+      "isFree": false,
+      "story": "가방에 넣고 다니며, 하루 한 장씩 꺼내 읽습니다.",
+      "publishedAt": "2026-05-15T00:00:00.000Z",
+      "salesCount": 286
+    },
+    {
+      "id": "shop-003",
+      "slug": "reading-bookmark-brass",
+      "name": "황동 책갈피",
+      "shortDescription": "오래 쓰는 단단한 책갈피, 묵상용 성경에 끼워두세요",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/황동-책갈피/1000/1000",
+        "alt": "황동 책갈피",
+        "width": 1000,
+        "height": 1000
+      },
+      "category": "독서용품",
+      "price": 8000,
+      "externalStoreUrl": "https://store.example.com/brass-bookmark",
+      "isFree": false,
+      "story": "한 번 사면 오래 쓰는 책갈피. 묵상의 자리를 표시합니다.",
+      "publishedAt": "2026-03-20T00:00:00.000Z",
+      "salesCount": 412
+    },
+    {
+      "id": "shop-004",
+      "slug": "qt-journal-notebook",
+      "name": "큐티 저널 노트",
+      "shortDescription": "매일 묵상을 손으로 기록하는 노트, A5 120p",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/큐티-저널-노트---아이보리-표지/1000/1000",
+        "alt": "큐티 저널 노트 — 아이보리 표지",
+        "width": 1000,
+        "height": 1000
+      },
+      "category": "문구",
+      "price": 15000,
+      "externalStoreUrl": "https://store.example.com/qt-journal",
+      "isFree": false,
+      "story": "화면이 아닌 종이에 쓰는 묵상이 남깁니다.",
+      "publishedAt": "2026-01-10T00:00:00.000Z",
+      "salesCount": 198
+    }
+  ]
+}

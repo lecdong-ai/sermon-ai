@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background — 따뜻한 종이 질감 */
+    --background: 38 25% 94%;
+    --surface: 42 36% 97%;
+    --surface-2: 40 20% 91%;
+    --surface-muted: 38 14% 84%;
+
+    /* Foreground — 부드러운 차콜 */
+    --foreground: 26 25% 14%;
+    --foreground-muted: 28 12% 35%;
+    --foreground-subtle: 30 6% 55%;
+
+    /* Border */
+    --border: 36 16% 82%;
+    --border-strong: 34 20% 72%;
+
+    /* Accent — 따뜻한 황동 */
+    --accent: 36 65% 44%;
+    --accent-foreground: 42 40% 98%;
+    --accent-soft: 38 50% 92%;
+    --accent-muted: 36 40% 82%;
+
+    /* Free — 차분한 세이지 */
+    --free: 148 20% 38%;
+    --free-soft: 145 25% 92%;
+
+    /* Shop — 부드러운 테라코타 */
+    --shop: 18 40% 48%;
+    --shop-soft: 20 35% 93%;
+
+    /* 그림자 */
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+    --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03);
+    --shadow-elevated: 0 8px 24px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+
+    /* Ring */
+    --ring: 36 60% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    @apply bg-accent-soft text-accent;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+}

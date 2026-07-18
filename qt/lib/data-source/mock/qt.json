@@ -1,0 +1,194 @@
+{
+  "items": [
+    {
+      "id": "qt-001",
+      "slug": "waiting-in-advent-day-1",
+      "title": "기다림의 시간이 낭비가 아닐 때",
+      "excerpt": "대릴 첫날, 우리는 무엇을 기다리는가. 빠른 응답에 익숙한 우리에게 기다림은 낭비처럼 느껴지지만, 하나님의 시간에는 기다림 자체가 은혜다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/조용한-새벽,-촛불-하나가-켜진-서재/800/1000",
+        "alt": "조용한 새벽, 촛불 하나가 켜진 서재",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "대림",
+      "series": {
+        "id": "s-01",
+        "slug": "advent-2026",
+        "title": "대릴 묵상 2026: 기다림"
+      },
+      "bibleRange": "이사야 40:27-31",
+      "tags": [
+        {
+          "id": "t-01",
+          "slug": "waiting",
+          "name": "기다림"
+        },
+        {
+          "id": "t-02",
+          "slug": "grace",
+          "name": "은혜"
+        }
+      ],
+      "publishedAt": "2026-12-01T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 5,
+      "viewCount": 248
+    },
+    {
+      "id": "qt-002",
+      "slug": "psalm-1-two-ways",
+      "title": "두 길, 한 선택 — 시편 1편",
+      "excerpt": "복된 사람의 길과 악인의 길. 매일의 선택이 모여 삶의 방향이 된다. 시편 1편이 말하는 복의 시작점은 어디인가.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/강가에-심긴-나무/800/1000",
+        "alt": "강가에 심긴 나무",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "연중",
+      "bibleRange": "시편 1:1-6",
+      "tags": [
+        {
+          "id": "t-03",
+          "slug": "psalms",
+          "name": "시편"
+        },
+        {
+          "id": "t-04",
+          "slug": "meditation",
+          "name": "묵상"
+        }
+      ],
+      "publishedAt": "2026-11-20T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 6,
+      "viewCount": 412
+    },
+    {
+      "id": "qt-003",
+      "slug": "lenten-silence-day-3",
+      "title": "침묵이 기도가 될 때",
+      "excerpt": "사순 묵상 셋째 날. 말이 많은 시대에 침묵은 어떻게 기도가 되는가. 하나님은 우리의 긴 말이 아니라 잠잠한 마음을 듣는다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/비-오는-창밖,-열린-성경/800/1000",
+        "alt": "비 오는 창밖, 열린 성경",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "사순",
+      "series": {
+        "id": "s-02",
+        "slug": "lent-2026",
+        "title": "사순 묵상 2026: 침묵"
+      },
+      "bibleRange": "열왕기상 19:11-13",
+      "tags": [
+        {
+          "id": "t-05",
+          "slug": "silence",
+          "name": "침묵"
+        },
+        {
+          "id": "t-06",
+          "slug": "prayer",
+          "name": "기도"
+        }
+      ],
+      "publishedAt": "2026-02-26T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 4,
+      "viewCount": 186
+    },
+    {
+      "id": "qt-004",
+      "slug": "resurrection-morning",
+      "title": "빈 무덤이 주는 첫 질문",
+      "excerpt": "부활 아침, 여인들이 본 것은 빈 무덤이었다. 빈 무덤이 우리에게 던지는 질문은 무엇인가. 부활은 끝이 아니라 시작이다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/이른-아침,-동터오는-하늘/800/1000",
+        "alt": "이른 아침, 동터오는 하늘",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "부활",
+      "bibleRange": "마태복음 28:1-10",
+      "tags": [
+        {
+          "id": "t-07",
+          "slug": "resurrection",
+          "name": "부활"
+        },
+        {
+          "id": "t-08",
+          "slug": "hope",
+          "name": "소망"
+        }
+      ],
+      "publishedAt": "2026-04-05T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 5,
+      "viewCount": 521
+    },
+    {
+      "id": "qt-005",
+      "slug": "john-316-love",
+      "title": "하나님이 사랑하사 — 요한복음 3:16",
+      "excerpt": "가장 많이 인용되는 구절, 요한복음 3:16. 그러나 익숙함이 가린 것이 있을지 모른다. '이처럼'이라는 작은 단어가 품은 깊이.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/열린-성경-위로-떨어지는-빛/800/1000",
+        "alt": "열린 성경 위로 떨어지는 빛",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "연중",
+      "bibleRange": "요한복음 3:16-21",
+      "tags": [
+        {
+          "id": "t-02",
+          "slug": "grace",
+          "name": "은혜"
+        },
+        {
+          "id": "t-09",
+          "slug": "love",
+          "name": "사랑"
+        }
+      ],
+      "publishedAt": "2026-06-15T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 4,
+      "viewCount": 367
+    },
+    {
+      "id": "qt-006",
+      "slug": "romans-8-all-things",
+      "title": "모든 것이 합력하여 — 로마서 8:28",
+      "excerpt": "모든 것이 합력하여 선을 이룬다는 말의 무게. '합력'이라는 단어가 가리키는 것은 결과가 아니라 과정에 있는 하나님이다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/조용한-숲길/800/1000",
+        "alt": "조용한 숲길",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "연중",
+      "bibleRange": "로마서 8:28-30",
+      "tags": [
+        {
+          "id": "t-08",
+          "slug": "hope",
+          "name": "소망"
+        },
+        {
+          "id": "t-02",
+          "slug": "grace",
+          "name": "은혜"
+        }
+      ],
+      "publishedAt": "2026-07-02T00:00:00.000Z",
+      "isFree": true,
+      "readTime": 5,
+      "viewCount": 298
+    }
+  ]
+}

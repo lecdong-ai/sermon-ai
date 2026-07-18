@@ -1,0 +1,247 @@
+{
+  "items": [
+    {
+      "slug": "daily-qt-journal",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/매일-큐티-노트-전체-화면/1280/800",
+          "alt": "매일 큐티 노트 전체 화면",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "src": "https://picsum.photos/seed/매일-큐티-노트-작성-예시/1280/800",
+          "alt": "매일 큐티 노트 작성 예시",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "src": "https://picsum.photos/seed/매일-큐티-노트-월간-뷰/1280/800",
+          "alt": "매일 큐티 노트 월간 뷰",
+          "width": 1280,
+          "height": 800
+        }
+      ],
+      "usageSteps": [
+        {
+          "order": 1,
+          "title": "Notion에 복제하기",
+          "description": "아래 버튼을 누르면 본인의 Notion 워크스페이스로 템플릿이 복제됩니다. Notion 계정만 있으면 무료로 사용할 수 있습니다."
+        },
+        {
+          "order": 2,
+          "title": "오늘 날짜 페이지 만들기",
+          "description": "데이터베이스에 새로운 페이지를 추가해 오늘의 묵상을 시작합니다. 날짜와 제목만 입력하면 됩니다."
+        },
+        {
+          "order": 3,
+          "title": "4단계로 묵상 기록하기",
+          "description": "본문, 관찰, 적용, 기도 — 네 개의 칸에 맞춰 묵상을 기록합니다. 길게 쓰지 않아도 괜찮습니다. 한 줄이라도 매일 쌓이는 것이 중요합니다."
+        },
+        {
+          "order": 4,
+          "title": "주간 회고하기",
+          "description": "한 주가 끝나면 주간 회고 페이지를 열어 7일간의 묵상을 돌아봅니다. 하나님이 하신 일이 보이기 시작합니다."
+        }
+      ],
+      "includedSections": [
+        "날짜 / 요일 자동 입력",
+        "오늘의 말씀 (본문) 기록 칸",
+        "관찰 — 말씀에서 보이는 것",
+        "적용 — 오늘 살아낼 것",
+        "기도 — 마음을 담아",
+        "주간 회고 템플릿",
+        "월간 인덱스 뷰"
+      ],
+      "recommendedTemplates": [
+        "family-worship-template",
+        "dawn-prayer-90days"
+      ],
+      "relatedQt": [
+        {
+          "slug": "waiting-in-advent-day-1",
+          "title": "기다림의 시간이 낭비가 아닐 때",
+          "excerpt": "대릴 첫날 묵상"
+        },
+        {
+          "slug": "psalm-1-two-ways",
+          "title": "두 길, 한 선택 — 시편 1편",
+          "excerpt": "시편으로 시작하는 묵상"
+        }
+      ]
+    },
+    {
+      "slug": "family-worship-template",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/가정-예배-노트-전체-화면/1280/800",
+          "alt": "가정 예배 노트 전체 화면",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "src": "https://picsum.photos/seed/가정-예배-노트---아이들과-함께/1280/800",
+          "alt": "가정 예배 노트 — 아이들과 함께",
+          "width": 1280,
+          "height": 800
+        }
+      ],
+      "usageSteps": [
+        {
+          "order": 1,
+          "title": "Notion에 복제하기",
+          "description": "Notion 계정으로 템플릿을 복제하고, 가족 구성원을 초대합니다."
+        },
+        {
+          "order": 2,
+          "title": "가족 구성원 추가",
+          "description": "각 가족 구성원의 이름과 나이를 입력합니다. 아이들의 수준에 맞는 질문이 자동으로 생성됩니다."
+        },
+        {
+          "order": 3,
+          "title": "함께 묵상하고 기록하기",
+          "description": "말씀을 읽고, 각자 느낀 점을 나눕니다. 아이들의 대답을 기록하는 칸이 따로 있어 대화를 놓치지 않습니다."
+        },
+        {
+          "order": 4,
+          "title": "기도 제목 공유",
+          "description": "가족의 기도 제목을 모아 기록하고, 다음 주에 어떻게 응답되었는지 확인합니다."
+        }
+      ],
+      "includedSections": [
+        "가족 프로필 설정",
+        "오늘의 말씀 나눔 칸",
+        "아이들의 질문과 대답 기록",
+        "가족 기도 제목",
+        "주간 감사 노트",
+        "특별 기도일 (생일, 기념일)"
+      ],
+      "recommendedTemplates": [
+        "daily-qt-journal",
+        "small-group-study"
+      ],
+      "relatedQt": [
+        {
+          "slug": "romans-8-all-things",
+          "title": "모든 것이 합력하여 — 로마서 8:28",
+          "excerpt": "가족과 함께 읽는 묵상"
+        }
+      ]
+    },
+    {
+      "slug": "dawn-prayer-90days",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/새벽-기도-90일-기록지/1280/800",
+          "alt": "새벽 기도 90일 기록지",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "src": "https://picsum.photos/seed/새벽-기도-기록-예시/1280/800",
+          "alt": "새벽 기도 기록 예시",
+          "width": 1280,
+          "height": 800
+        }
+      ],
+      "usageSteps": [
+        {
+          "order": 1,
+          "title": "90일 목표 설정",
+          "description": "90일 동안의 새벽 기도 목표를 설정합니다. 말씀 통독, 특별 기도 제목, 매일의 루틴을 계획합니다."
+        },
+        {
+          "order": 2,
+          "title": "매일 기록하기",
+          "description": "기도한 날짜, 말씀 본문, 기도 제목, 마음에 남은 말씀을 간단히 기록합니다. 5분이면 충분합니다."
+        },
+        {
+          "order": 3,
+          "title": "진행률 확인",
+          "description": "90일 중 현재 위치를 한눈에 볼 수 있습니다. 30일, 60일, 90일을 향해 조금씩 나아갑니다."
+        },
+        {
+          "order": 4,
+          "title": "회고와 나눔",
+          "description": "90일이 끝나면 전체를 돌아봅니다. 하나님이 이루신 일을 기록하고, 필요하면 다시 90일을 시작합니다."
+        }
+      ],
+      "includedSections": [
+        "90일 트래킹 대시보드",
+        "매일 기도 기록 카드 (본문, 기도제목, 응답)",
+        "주간 점검 페이지",
+        "30일 / 60일 / 90일 회고",
+        "기도 응답 아카이브"
+      ],
+      "recommendedTemplates": [
+        "daily-qt-journal",
+        "family-worship-template"
+      ],
+      "relatedQt": [
+        {
+          "slug": "lenten-silence-day-3",
+          "title": "침묵이 기도가 될 때",
+          "excerpt": "사순절 새벽 묵상"
+        },
+        {
+          "slug": "resurrection-morning",
+          "title": "빈 무덤이 주는 첫 질문",
+          "excerpt": "부활 아침 묵상"
+        }
+      ]
+    },
+    {
+      "slug": "small-group-study",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/소그룹-큐티-나눔지-전체/1280/800",
+          "alt": "소그룹 큐티 나눔지 전체",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "src": "https://picsum.photos/seed/소그룹-나눔-예시/1280/800",
+          "alt": "소그룹 나눔 예시",
+          "width": 1280,
+          "height": 800
+        }
+      ],
+      "usageSteps": [
+        {
+          "order": 1,
+          "title": "모임 전 개인 묵상",
+          "description": "각 구성원이 큐티를 개인적으로 묵상하고, 나눔지에 기록해 옵니다."
+        },
+        {
+          "order": 2,
+          "title": "모임에서 나누기",
+          "description": "각자의 묵상을 돌아가며 나누고, 공통으로 나온 기도 제목을 기록합니다."
+        },
+        {
+          "order": 3,
+          "title": "기도와 적용",
+          "description": "함께 기도하고, 이번 주 적용할 점을 공유합니다. 다음 모임에서 확인할 항목을 남깁니다."
+        }
+      ],
+      "includedSections": [
+        "개인 묵상 기록 칸",
+        "나눔 노트 (각자 의견 기록)",
+        "공통 기도 제목",
+        "이번 주 적용 과제",
+        "다음 모임 준비 사항",
+        "구성원 기도 목록"
+      ],
+      "recommendedTemplates": [
+        "daily-qt-journal",
+        "dawn-prayer-90days"
+      ],
+      "relatedQt": [
+        {
+          "slug": "psalm-1-two-ways",
+          "title": "두 길, 한 선택 — 시편 1편",
+          "excerpt": "함께 읽고 나누는 묵상"
+        }
+      ]
+    }
+  ]
+}
