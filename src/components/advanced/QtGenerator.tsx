@@ -10,6 +10,7 @@ import QtReader from './QtReader'
 import QtPdfLayout from './QtPdfLayout'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
+import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import {
   getTodayDateString,
   getDaysInMonth,
@@ -284,7 +285,7 @@ export default function QtGenerator() {
     level: '중',
     tone: '정중하고 따뜻한',
     seriesName: '말씀과 함께하는 큐티',
-    sizeOption: 'A4',
+    sizeOption: 'A4Landscape',
     designTemplate: 'qtland-classic',
     startDate: getMondayOfWeek(getTodayDateString()),
   })
@@ -1158,7 +1159,7 @@ export default function QtGenerator() {
     try {
       if (singleDayRef.current) {
         // dayIndex=0 으로 표지를 건너뛰고 콘텐츠 페이지만 추출
-        await generateQtPdf(singleDayRef.current, form, { fullManuscript: synthetic }, form.sizeOption || 'A4', form.designTemplate || 'qtland-classic', 0)
+        await generateQtPdf(singleDayRef.current, form, { fullManuscript: synthetic }, form.sizeOption || 'A4Landscape', form.designTemplate || 'qtland-classic', 0)
       } else {
         console.error('singleDayRef is null')
         alert('PDF 레이아웃이 준비되지 않았습니다. 다시 시도해주세요.')
@@ -2066,7 +2067,7 @@ export default function QtGenerator() {
                   onChange={e => updateForm({ sizeOption: e.target.value })}
                   className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 appearance-none"
                 >
-                  {['A4', 'A5', 'A6', 'B5', '엽서'].map(o => <option key={o} value={o}>{o}</option>)}
+                  {Object.keys(PAGE_SIZES).map(o => <option key={o} value={o}>{PAGE_SIZES[o].label}</option>)}
                 </select>
               </div>
 
@@ -2257,7 +2258,7 @@ export default function QtGenerator() {
             ref={singleDayRef}
             form={form}
             result={{ fullManuscript: singleDayPdf }}
-            sizeOption={form.sizeOption || 'A4'}
+            sizeOption={form.sizeOption || 'A4Landscape'}
             templateId={form.designTemplate || 'qtland-classic'}
           />
         </div>

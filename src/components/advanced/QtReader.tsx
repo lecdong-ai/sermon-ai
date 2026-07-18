@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Download, Edit3, Loader2, Sparkles, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Edit3, Loader2, Sparkles, X, LayoutGrid } from 'lucide-react'
 import QtDayCard from './QtDayCard'
 import QtPdfLayout from './QtPdfLayout'
 import { parseDays } from '@/lib/qtDayParser'
@@ -32,7 +32,7 @@ interface QtReaderProps {
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
-  const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4')
+  const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
   const [audienceLevel, setAudienceLevel] = useState<'adult' | 'youth'>('adult')
@@ -45,8 +45,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     }
   })
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfLayoutMode, setPdfLayoutMode] = useState<'daily' | 'weekly-spread'>('daily')
   const [dayPdfLoading, setDayPdfLoading] = useState<number | null>(null)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
+  const spreadLayoutRef = useRef<HTMLDivElement>(null)
 
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
 
@@ -152,6 +154,26 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     setDayPdfLoading(null)
   }
 
+  const handleSpreadDownload = async () => {
+    setPdfLoading(true)
+    setPdfLayoutMode('weekly-spread')
+    // DOM이 완전히 렌더링되도록 2번 대기 (모드 전환 + 폰트 로드)
+    await new Promise(r => setTimeout(r, 800))
+    try {
+      if (spreadLayoutRef.current) {
+        const result = { fullManuscript: accumulatedManuscript }
+        await generateQtPdf(spreadLayoutRef.current, form, result, 'A4Landscape', activeTmpl.id)
+      } else {
+        console.error('Spread layout ref is null')
+      }
+    } catch (e: any) {
+      console.error('Spread PDF generation error:', e)
+      alert(`주간 펼침 PDF 생성 중 오류: ${e.message || '알 수 없는 오류'}`)
+    }
+    setPdfLayoutMode('daily')
+    setPdfLoading(false)
+  }
+
   return (
     <div className="flex flex-col min-h-0 flex-1 h-full">
       {/* Toolbar */}
@@ -196,7 +218,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
                 }`}
               >
-                {sz.replace(' (iPad 4:3)', '').replace('Pro ', '')}
+                {PAGE_SIZES[sz]?.label?.split(' (')[0] || sz}
               </button>
             ))}
           </div>
@@ -259,6 +281,15 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           >
             {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             {pdfLoading ? 'PDF 생성 중...' : 'PDF 다운로드'}
+          </button>
+          <button
+            onClick={handleSpreadDownload}
+            disabled={pdfLoading || days.length === 0}
+            title="한 면에 한 주 7일치 미리보기 펼침 PDF"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600/80 hover:bg-amber-500 text-white text-[11px] font-bold transition-all disabled:opacity-40"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            주간 펼침
           </button>
         </div>
       </div>
@@ -361,7 +392,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 color: activeTmpl.textColor,
                 borderColor: activeTmpl.border,
                 width: '100%',
-                maxWidth: sizeOption === 'A4' ? '540px' : sizeOption === 'B5' ? '460px' : sizeOption === 'A5' ? '380px' : sizeOption === 'Tablet (iPad 4:3)' ? '500px' : '520px',
+                maxWidth: sizeOption === 'A4Portrait' ? '540px' : sizeOption === 'A4Landscape' ? '760px' : sizeOption === 'B5' ? '460px' : sizeOption === 'A5' ? '380px' : sizeOption === 'Tablet (iPad 4:3)' ? '500px' : '520px',
                 aspectRatio: `${PAGE_SIZES[sizeOption].widthMm} / ${PAGE_SIZES[sizeOption].heightMm}`,
                 height: 'auto',
                 minHeight: '600px',
@@ -431,6 +462,24 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           isBilingualSideBySide={isBilingualSideBySide}
           audienceLevel={audienceLevel}
           selectedInfo={selectedInfo}
+        />
+      </div>
+
+      {/* Hidden 주간 펼침 layout — A4 가로 1면 (PDF export용) */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1, opacity: 1 }}>
+        <QtPdfLayout
+          ref={spreadLayoutRef}
+          form={form}
+          result={{ fullManuscript: accumulatedManuscript }}
+          sizeOption="A4Landscape"
+          templateId={activeTmpl.id}
+          startPassage={startPassage}
+          endPassage={endPassage}
+          userMemos={userMemos}
+          isBilingualSideBySide={isBilingualSideBySide}
+          audienceLevel={audienceLevel}
+          selectedInfo={selectedInfo}
+          layoutMode="weekly-spread"
         />
       </div>
     </div>

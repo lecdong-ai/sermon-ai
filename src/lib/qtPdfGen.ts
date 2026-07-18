@@ -38,7 +38,7 @@ export async function generateQtPdf(
   templateId: string = 'warm-modern',
   dayIndex?: number,
 ) {
-  const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4']
+  const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
   const tmpl = getTemplate(templateId)
 
