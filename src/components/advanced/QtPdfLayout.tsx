@@ -208,14 +208,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     // ============= 페이지 헤더 (네이비 풀폭 바) =============
     const landscapeHeader = (subtitle: string) => (
       <div style={{
-        marginBottom: `${5 * scale}px`,
+        marginBottom: `${3.5 * scale}px`,
       }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: t.accent,
           color: '#ffffff',
-          padding: `${3.5 * scale}px ${9 * scale}px`,
-          marginBottom: `${4 * scale}px`,
+          padding: `${2.5 * scale}px ${9 * scale}px`,
+          marginBottom: `${2.5 * scale}px`,
         }}>
           <div style={{
             fontFamily: t.fontHeading,
@@ -238,11 +238,11 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         <div style={{
           display: 'flex', alignItems: 'baseline', gap: `${8 * scale}px`,
           borderBottom: `${0.75 * scale}px solid ${t.accent}`,
-          paddingBottom: `${3 * scale}px`,
+          paddingBottom: `${2 * scale}px`,
         }}>
           <div style={{
             fontFamily: t.fontHeading,
-            fontSize: `${20 * scale}px`,
+            fontSize: `${18 * scale}px`,
             fontWeight: 800,
             color: t.textColor,
             lineHeight: '1.2',
@@ -275,8 +275,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
         {/* ═══ 주간 펼침 미니 (7일치 가로 네비게이션) ═══ */}
         <div style={{
-          marginBottom: `${5 * scale}px`,
-          padding: `${5 * scale}px ${6 * scale}px`,
+          marginBottom: `${3 * scale}px`,
+          padding: `${4 * scale}px ${5 * scale}px`,
           background: t.accentLight,
           borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
           borderTop: `0.5px solid ${t.borderLight}`,
@@ -286,8 +286,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 주간 펼침 헤더 */}
           <div style={{
             display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-            marginBottom: `${3 * scale}px`,
-            paddingBottom: `${1.5 * scale}px`,
+            marginBottom: `${2 * scale}px`,
+            paddingBottom: `${1 * scale}px`,
             borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
           }}>
             <div style={{
@@ -302,7 +302,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${7 * scale}px`,
+              fontSize: `${7.5 * scale}px`,
               fontWeight: 500,
               color: t.textMuted,
               letterSpacing: `${0.5 * scale}px`,
@@ -315,7 +315,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: `${2 * scale}px`,
+            gap: `${1.5 * scale}px`,
           }}>
             {parsedDays.slice(0, 7).map((d, i) => {
               const dv = parseBibleVerses(d.passage || '')
@@ -332,25 +332,25 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   {/* 요일 + ★ */}
                   <div style={{
                     fontFamily: t.fontHeading,
-                    fontSize: `${7.5 * scale}px`,
+                    fontSize: `${8.5 * scale}px`,
                     fontWeight: 800,
                     color: isCurrent ? '#ffffff' : t.accent,
-                    letterSpacing: `${1.2 * scale}px`,
+                    letterSpacing: `${1 * scale}px`,
                     textTransform: 'uppercase',
-                    marginBottom: `${1.5 * scale}px`,
+                    marginBottom: `${1 * scale}px`,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span>{weekdays[i]?.label || `Day ${i + 1}`}</span>
-                    {isCurrent && <span style={{ fontSize: `${8 * scale}px` }}>★</span>}
+                    {isCurrent && <span style={{ fontSize: `${9 * scale}px` }}>★</span>}
                   </div>
                   {/* 본문 (짧게) */}
                   {passageShort && (
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${7 * scale}px`,
+                      fontSize: `${8.5 * scale}px`,
                       fontWeight: 700,
                       color: isCurrent ? '#ffffff' : t.textColor,
-                      marginBottom: `${1 * scale}px`,
+                      marginBottom: `${1.5 * scale}px`,
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -361,12 +361,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   {/* 제목 */}
                   <div style={{
                     fontFamily: t.fontHeading,
-                    fontSize: `${7 * scale}px`,
-                    fontWeight: 600,
+                    fontSize: `${8 * scale}px`,
+                    fontWeight: 700,
                     color: isCurrent ? '#ffffff' : t.textColor,
                     lineHeight: '1.2',
-                    marginBottom: `${2 * scale}px`,
-                    height: `${16 * scale}px`,
+                    marginBottom: `${2.5 * scale}px`,
+                    height: `${11 * scale}px`,
                     overflow: 'hidden',
                   }}>
                     {d.title || `Day ${i + 1}`}
@@ -374,14 +374,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   {/* 메모란 */}
                   <div style={{
                     flex: 1,
-                    display: 'flex', flexDirection: 'column', gap: `${3 * scale}px`,
-                    paddingTop: `${2 * scale}px`,
+                    display: 'flex', flexDirection: 'column', gap: `${4.5 * scale}px`,
+                    paddingTop: `${3 * scale}px`,
                     borderTop: isCurrent ? `0.5px solid rgba(255,255,255,0.3)` : `0.5px solid ${t.borderLight}`,
                   }}>
                     {[1, 2].map(line => (
                       <div key={line} style={{
                         borderBottom: isCurrent ? `0.5px solid rgba(255,255,255,0.3)` : `0.5px solid ${t.borderLight}`,
-                        height: `${5 * scale}px`,
+                        height: `${9 * scale}px`,
                       }} />
                     ))}
                   </div>
@@ -396,7 +396,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           display: 'grid',
           gridTemplateColumns: '55fr 45fr',
           gap: `${8 * scale}px`,
-          marginBottom: `${5 * scale}px`,
+          marginBottom: `${3 * scale}px`,
         }}>
           <div>
             <div style={{
@@ -457,7 +457,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* 본문 한눈에 보기 (하단 풀폭) */}
         {day.passageOverview && (
           <div style={{
-            paddingTop: `${4 * scale}px`,
+            paddingTop: `${2 * scale}px`,
             borderTop: `0.5px solid ${t.border}`,
           }}>
             {sectionLabel('본문 한눈에 보기')}
