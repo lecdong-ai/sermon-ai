@@ -143,7 +143,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     color: t.textColor,
     fontFamily: t.font,
     position: 'relative',
-    padding: `${11 * scale}mm ${13 * scale}mm`,
+    padding: `${10 * scale}mm ${12 * scale}mm`,
     pageBreakAfter: 'always',
     overflow: 'hidden',
   }
@@ -157,10 +157,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     }}>
       <span style={{
         fontFamily: t.fontHeading,
-        fontSize: `${8.2 * scale}px`,
+        fontSize: `${10 * scale}px`,
         fontWeight: 800,
         color: accent,
-        letterSpacing: `${2 * scale}px`,
+        letterSpacing: `${2.5 * scale}px`,
         textTransform: 'uppercase',
       }}>
         {text}
@@ -169,7 +169,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   )
 
   const bodyText = (text: string, opts?: { size?: number; indent?: boolean }) => {
-    const fs = opts?.size ?? 9.5
+    const fs = opts?.size ?? 11.5
     return (
       <div style={{
         fontSize: `${fs * scale}px`,
@@ -222,10 +222,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
       <div style={{
         fontFamily: t.fontHeading,
-        fontSize: `${14 * scale}px`,
+        fontSize: `${17 * scale}px`,
         fontWeight: 800,
         color: t.textColor,
-        lineHeight: '1.3',
+        lineHeight: '1.25',
         letterSpacing: `${0.5 * scale}px`,
         marginBottom: `${2 * scale}px`,
       }}>
@@ -235,7 +235,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       {verses.passageRange && (
         <div style={{
           fontFamily: t.fontHeading,
-          fontSize: `${8.8 * scale}px`,
+          fontSize: `${10.5 * scale}px`,
           fontWeight: 500,
           color: t.textMuted,
           letterSpacing: `${0.5 * scale}px`,
@@ -261,10 +261,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       }}>
         <div style={{
           fontFamily: t.fontHeading,
-          fontSize: `${7 * scale}px`,
+          fontSize: `${8.5 * scale}px`,
           fontWeight: 700,
           color: t.accent,
-          letterSpacing: `${1.8 * scale}px`,
+          letterSpacing: `${2 * scale}px`,
           textTransform: 'uppercase',
           marginBottom: `${2 * scale}px`,
         }}>
@@ -272,10 +272,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
         <div style={{
           fontFamily: t.font,
-          fontSize: `${9.5 * scale}px`,
+          fontSize: `${11.5 * scale}px`,
           fontWeight: 500,
           color: t.textColor,
-          lineHeight: '1.55',
+          lineHeight: '1.5',
           fontStyle: 'italic',
         }}>
           {firstSentence}.
@@ -294,7 +294,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div style={{ minWidth: 0 }}>
         <div style={{
           fontFamily: t.fontHeading,
-          fontSize: `${7.5 * scale}px`,
+          fontSize: `${9 * scale}px`,
           fontWeight: 800,
           color: t.accent,
           letterSpacing: `${2.2 * scale}px`,
@@ -307,8 +307,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
         <div style={{
           fontFamily: t.font,
-          fontSize: `${9 * scale}px`,
-          lineHeight: '1.7',
+          fontSize: `${11 * scale}px`,
+          lineHeight: '1.65',
           color: t.textColor,
           textAlign: 'justify',
           wordBreak: 'keep-all',
@@ -321,7 +321,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div style={{ minWidth: 0 }}>
         <div style={{
           fontFamily: t.fontHeading,
-          fontSize: `${7.5 * scale}px`,
+          fontSize: `${9 * scale}px`,
           fontWeight: 800,
           color: t.accent,
           letterSpacing: `${2.2 * scale}px`,
@@ -334,8 +334,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
         <div style={{
           fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
-          fontSize: `${8.5 * scale}px`,
-          lineHeight: '1.65',
+          fontSize: `${10.5 * scale}px`,
+          lineHeight: '1.6',
           color: t.textColor,
           textAlign: 'justify',
           fontStyle: 'italic',
@@ -356,8 +356,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {sectionLabel('본문 한눈에 보기')}
         <div style={{
           fontFamily: t.font,
-          fontSize: `${9.2 * scale}px`,
-          lineHeight: '1.65',
+          fontSize: `${11 * scale}px`,
+          lineHeight: '1.6',
           color: t.textColor,
           textAlign: 'justify',
           padding: `${2 * scale}px 0`,
@@ -379,14 +379,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {original && (
           <div>
             <div style={{
-              fontFamily: t.fontHeading, fontSize: `${7.5 * scale}px`, fontWeight: 800,
+              fontFamily: t.fontHeading, fontSize: `${9 * scale}px`, fontWeight: 800,
               color: t.accent, letterSpacing: `${2 * scale}px`, textTransform: 'uppercase',
               marginBottom: `${2 * scale}px`, paddingBottom: `${1.5 * scale}px`,
               borderBottom: `0.5px solid ${t.border}`,
             }}>
               원어 묵상
             </div>
-            <div style={{ fontFamily: t.font, fontSize: `${8.8 * scale}px`, lineHeight: '1.6', color: t.textColor, textAlign: 'justify' }}>
+            <div style={{ fontFamily: t.font, fontSize: `${10.5 * scale}px`, lineHeight: '1.55', color: t.textColor, textAlign: 'justify' }}>
               {original.split('\n').filter(l => l.trim()).slice(0, 3).map((l, i) => (
                 <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
               ))}
@@ -396,14 +396,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {english && (
           <div>
             <div style={{
-              fontFamily: t.fontHeading, fontSize: `${7.5 * scale}px`, fontWeight: 800,
+              fontFamily: t.fontHeading, fontSize: `${9 * scale}px`, fontWeight: 800,
               color: t.accent, letterSpacing: `${2 * scale}px`, textTransform: 'uppercase',
               marginBottom: `${2 * scale}px`, paddingBottom: `${1.5 * scale}px`,
               borderBottom: `0.5px solid ${t.border}`,
             }}>
               영어 묵상
             </div>
-            <div style={{ fontFamily: t.font, fontSize: `${8.8 * scale}px`, lineHeight: '1.6', color: t.textColor, textAlign: 'justify' }}>
+            <div style={{ fontFamily: t.font, fontSize: `${10.5 * scale}px`, lineHeight: '1.55', color: t.textColor, textAlign: 'justify' }}>
               {english.split('\n').filter(l => l.trim()).slice(0, 3).map((l, i) => (
                 <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
               ))}
@@ -423,8 +423,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         background: t.prayerBoxBg,
         borderLeft: `${1.5 * scale}px solid ${t.accent}`,
         fontFamily: t.font,
-        fontSize: `${9 * scale}px`,
-        lineHeight: '1.7',
+        fontSize: `${11 * scale}px`,
+        lineHeight: '1.6',
         color: t.prayerBoxText,
         fontStyle: 'italic',
       }}>
@@ -446,7 +446,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       </div>
       {memo ? (
         <div style={{
-          fontFamily: t.font, fontSize: `${9.5 * scale}px`, lineHeight: '1.6',
+          fontFamily: t.font, fontSize: `${11.5 * scale}px`, lineHeight: '1.55',
           color: t.textColor, fontStyle: 'italic', minHeight: `${14 * scale}px`,
           paddingBottom: `${2 * scale}px`, borderBottom: `0.5px solid ${t.border}`,
           wordBreak: 'break-all',
@@ -467,7 +467,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       position: 'absolute',
       bottom: `${5 * scale}mm`,
       right: `${13 * scale}mm`,
-      fontSize: `${7 * scale}px`,
+      fontSize: `${8.5 * scale}px`,
       color: t.pageNumberColor,
       fontFamily: t.fontHeading,
       letterSpacing: `${1.5 * scale}px`,
