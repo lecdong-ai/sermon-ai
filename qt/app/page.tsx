@@ -10,6 +10,7 @@ import { TopicExplorer } from '@/components/home/TopicExplorer'
 import { CurationSection } from '@/components/home/CurationSection'
 import { ShopBanner } from '@/components/home/ShopBanner'
 import { LatestContent } from '@/components/home/LatestContent'
+import { RecentPublishedSection } from '@/components/home/RecentPublishedSection'
 import { NewsletterSection } from '@/components/home/NewsletterSection'
 
 export default async function HomePage() {
@@ -31,6 +32,7 @@ export default async function HomePage() {
       <CurationSection curations={curations} />
       <ShopBanner />
       <LatestContent posts={latestPosts} />
+      <RecentPublishedSection />
       <NewsletterSection />
     </>
   )

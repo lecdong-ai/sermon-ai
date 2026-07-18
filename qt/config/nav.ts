@@ -1,6 +1,7 @@
 export const mainNav = [
   { label: '홈', href: '/' },
   { label: '큐티', href: '/qt' },
+  { label: 'QT 모음', href: '/qt/published' },
   { label: '템플릿', href: '/templates' },
   { label: '큐레이션', href: '/curation' },
   { label: '후원샵', href: '/shop' },

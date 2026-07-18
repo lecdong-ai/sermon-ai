@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { 
   BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronRight, 
   Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight,
-  History, Trash2, Plus, Bookmark, Edit3, Save
+  History, Trash2, Plus, Bookmark, Edit3, Save, Download, Globe
 } from 'lucide-react'
 import QtReader from './QtReader'
+import QtPdfLayout from './QtPdfLayout'
+import { generateQtPdf } from '@/lib/qtPdfGen'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
 
 const BOOK_CATEGORIES = [
@@ -173,7 +175,7 @@ export default function QtGenerator() {
     level: '중',
     tone: '정중하고 따뜻한',
     seriesName: '말씀과 함께하는 큐티',
-    sizeOption: 'A5',
+    sizeOption: 'A4',
     designTemplate: 'qtland-classic',
   })
 
@@ -269,6 +271,11 @@ export default function QtGenerator() {
   const [editContent, setEditContent] = useState('')
   const [historyError, setHistoryError] = useState('')
 
+  // 단일 day PDF 상태
+  const [singleDayPdf, setSingleDayPdf] = useState<string | null>(null)
+  const [downloadingDay, setDownloadingDay] = useState<string | null>(null)
+  const singleDayRef = useRef<HTMLDivElement>(null)
+
   // 히스토리 로드
   const loadHistory = async () => {
     setHistoryLoading(true)
@@ -333,6 +340,56 @@ export default function QtGenerator() {
     setSavingHistory(false)
   }
 
+  // QT 아카이브에 공개
+  const [publishing, setPublishing] = useState(false)
+  const [publishedId, setPublishedId] = useState<string | null>(null)
+  const publishToArchive = async (manuscript: string) => {
+    if (!manuscript) return
+    setPublishing(true)
+    try {
+      const dayData = Object.entries(dayManuscripts).map(([day, m]) => ({
+        dayName: day,
+        passage: m.passage,
+        title: m.title,
+        focus: m.focus,
+        finalContent: m.finalContent,
+      }))
+      const res = await fetch('/api/qt/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: subtitle || form.seriesName,
+          subtitle: subtitle || null,
+          bible_book: form.bibleBook,
+          week_number: form.weekNumber,
+          audience: form.audience,
+          level: form.level,
+          tone: form.tone,
+          series_name: form.seriesName,
+          size_option: form.sizeOption,
+          design_template: form.designTemplate,
+          full_manuscript: manuscript,
+          day_data: dayData,
+          start_passage: startPassage,
+          end_passage: endPassage || null,
+        }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setPublishedId(json.id)
+        alert('✅ 큐티 아카이브(qt.bunker.ai.kr)에 공개되었습니다!')
+      } else {
+        const text = await res.text().catch(() => '')
+        console.error('아카이브 공개 실패:', res.status, text)
+        alert('아카이브 공개에 실패했습니다. 다시 시도해주세요.')
+      }
+    } catch (e) {
+      console.error('아카이브 공개 오류:', e)
+      alert('아카이브 공개 중 오류가 발생했습니다.')
+    }
+    setPublishing(false)
+  }
+
   // 히스토리 조회 (전체 내용)
   const fetchHistoryEntry = async (id: string): Promise<QtHistoryEntry | null> => {
     try {
@@ -358,6 +415,16 @@ export default function QtGenerator() {
   const handleViewHistory = async (entry: QtHistoryEntry) => {
     const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
     if (full?.full_manuscript) {
+      updateForm({
+        bibleBook: full.bible_book,
+        weekNumber: full.week_number,
+        audience: full.audience,
+        level: full.level,
+        tone: full.tone,
+        seriesName: full.series_name,
+        sizeOption: full.size_option,
+        designTemplate: full.design_template,
+      })
       setFinalManuscript(full.full_manuscript)
       setShowHistory(false)
     }
@@ -501,8 +568,8 @@ export default function QtGenerator() {
             audience: form.audience,
             level: form.level,
             tone: form.tone,
-            bibleTextPolicy: '본문 범위와 핵심절만 제시',
-            verseQuoteLimit: '최대 2구절',
+            bibleTextPolicy: '전체 본문 제시 — 개역개정과 NIV 모두 본문 범위의 모든 절을 빠짐없이 포함',
+            verseQuoteLimit: '전체 본문 — 모든 절',
             seriesName: form.seriesName
           }
         })
@@ -625,6 +692,34 @@ export default function QtGenerator() {
       ...prev,
       [dayName]: { ...prev[dayName], finalContent: newContent }
     }))
+  }
+
+  // 단일 day PDF 다운로드 (현재 step의 day finalContent 기준)
+  const handleStepDayPdf = async (dayName: string) => {
+    const dm = dayManuscripts[dayName]
+    const content = dm.finalContent
+    if (!content) return
+    setDownloadingDay(dayName)
+
+    // parseDays가 인식할 수 있는 구조화된 마크다운 생성
+    // finalContent 내에 이미 섹션 헤더(## 제목, ## 오늘의 본문 등)가 포함되어 있으므로
+    // Day 구분 마커만 감싸주면 됩니다
+    const synthetic = `### Day 1 — ${dm.title || dayName}요일\n\n${content}`
+    setSingleDayPdf(synthetic)
+    await new Promise(r => setTimeout(r, 600))
+    try {
+      if (singleDayRef.current) {
+        // dayIndex=0 으로 표지를 건너뛰고 콘텐츠 페이지만 추출
+        await generateQtPdf(singleDayRef.current, form, { fullManuscript: synthetic }, form.sizeOption || 'A4', form.designTemplate || 'qtland-classic', 0)
+      } else {
+        console.error('singleDayRef is null')
+        alert('PDF 레이아웃이 준비되지 않았습니다. 다시 시도해주세요.')
+      }
+    } catch (e: any) {
+      alert(`PDF 생성 실패: ${e.message || '알 수 없는 오류'}`)
+    }
+    setSingleDayPdf(null)
+    setDownloadingDay(null)
   }
 
   // 스텝 제어 헬퍼
@@ -1239,6 +1334,15 @@ export default function QtGenerator() {
                 <div className="space-y-4 animate-slideUp">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-slate-400">최종 교열 완료된 큐티 원고</span>
+                    <button
+                      onClick={() => handleStepDayPdf(activeDay)}
+                      disabled={downloadingDay === activeDay}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[10px] font-bold transition-all disabled:opacity-30"
+                      title="이 day만 PDF 저장"
+                    >
+                      {downloadingDay === activeDay ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                      PDF
+                    </button>
                     <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
                       웹 & PDF 가독성 최적화 완료
@@ -1320,7 +1424,7 @@ export default function QtGenerator() {
                   onChange={e => updateForm({ sizeOption: e.target.value })}
                   className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 appearance-none"
                 >
-                  {['A5', 'A6', 'B5', '엽서'].map(o => <option key={o} value={o}>{o}</option>)}
+                  {['A4', 'A5', 'A6', 'B5', '엽서'].map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
 
@@ -1394,6 +1498,18 @@ export default function QtGenerator() {
                   주간 소책자 조립이 무사히 완료되었습니다!
                 </h4>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => publishToArchive(finalManuscript)}
+                    disabled={publishing || !finalManuscript}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-[11px] font-bold transition-all shadow-md"
+                  >
+                    {publishing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Globe className="w-3.5 h-3.5" />
+                    )}
+                    {publishing ? '공개 중...' : publishedId ? '✅ 공개됨' : 'QT 아카이브에 공개'}
+                  </button>
                   <button
                     onClick={goNextStep}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all shadow-md"
@@ -1489,6 +1605,19 @@ export default function QtGenerator() {
           >
             닫기
           </button>
+        </div>
+      )}
+
+      {/* 단일 day PDF용 숨김 레이아웃 */}
+      {singleDayPdf && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1, opacity: 1 }}>
+          <QtPdfLayout
+            ref={singleDayRef}
+            form={form}
+            result={{ fullManuscript: singleDayPdf }}
+            sizeOption={form.sizeOption || 'A4'}
+            templateId={form.designTemplate || 'qtland-classic'}
+          />
         </div>
       )}
     </section>
