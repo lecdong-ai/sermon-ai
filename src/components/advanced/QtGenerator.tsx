@@ -593,10 +593,9 @@ export default function QtGenerator() {
   }
 
   // 본문 참조에서 시작 장 번호 추출 (출력 검증용)
-  // "에베소서 2:4" → 2, "마태복음 5:1-10" → 5
-  function getPassageStartChapter(passage: string): number | null {
-    const m = passage.match(/(\d+)\s*[:：]/)
-    return m ? parseInt(m[1]) : null
+  function getPassageStartVerse(passage: string): { chap: number; verse: number } | null {
+    const m = passage.match(/(\d+)\s*[:：]\s*(\d+)/)
+    return m ? { chap: parseInt(m[1]), verse: parseInt(m[2]) } : null
   }
 
   // 1단계: 단일 청크 본문 분할 API 호출 헬퍼 (주간/월간 청킹 공통 사용)
@@ -732,12 +731,12 @@ export default function QtGenerator() {
           output = result.output
           parsed = result.parsed
 
-          // 검증: 첫 번째 passage의 장 번호가 expected보다 낮으면 반복으로 간주
+          // 검증: 첫 번째 passage의 장/절이 expected보다 낮으면 반복으로 간주
           if (attempt < MAX_RETRIES && !isFirst && parsed.length > 0) {
-            const expectedChap = getPassageStartChapter(chunkStartPassage)
-            const actualChap = getPassageStartChapter(parsed[0].passage)
-            if (expectedChap !== null && actualChap !== null && actualChap < expectedChap) {
-              console.warn(`[QT] 청크 ${ci + 1} 반복 감지: 기대=${chunkStartPassage}(장${expectedChap}), 실제=${parsed[0].passage}(장${actualChap}). 재시도 ${attempt + 1}/${MAX_RETRIES}`)
+            const expected = getPassageStartVerse(chunkStartPassage)
+            const actual = getPassageStartVerse(parsed[0].passage)
+            if (expected && actual && (actual.chap < expected.chap || (actual.chap === expected.chap && actual.verse < expected.verse))) {
+              console.warn(`[QT] 청크 ${ci + 1} 반복 감지: 기대=${chunkStartPassage}(장${expected.chap}:${expected.verse}), 실제=${parsed[0].passage}(장${actual.chap}:${actual.verse}). 재시도 ${attempt + 1}/${MAX_RETRIES}`)
               continue
             }
           }
@@ -745,16 +744,28 @@ export default function QtGenerator() {
         }
 
         accumulatedOutput += (ci > 0 ? '\n\n---\n\n' : '') + output
-        // dateList[chunk.offset + i]로 강제 매핑 (AI가 날짜를 변형해도 정확한 날짜로 덮어씀)
+        // dateList 강제 매핑 (AI 날짜 변형 방어) + 컬럼 오정렬 보정
         parsed.forEach((p, i) => {
-          const globalIdx = chunk.offset + i
+          const globalIdx = accumulatedParsed.length
           const cleanDay = dateList[globalIdx] || p.day.trim()
+
+          // 컬럼 오정렬 보정: passage가 비었고 title에 성경 참조가 있으면 swap
+          let passage = p.passage?.trim()
+          let title = p.title?.trim()
+          if (!passage && title && /[가-힣]+\s*\d+\s*[:：]/.test(title)) {
+            passage = title
+            title = ''
+          }
+
           accumulatedParsed.push({
             day: cleanDay,
-            passage: p.passage,
-            title: p.title,
-            focus: p.focus,
-            reason: p.reason?.trim() || `${p.focus || p.title || '본문'}의 신학적 의미를 묵상하기 위해`,
+            passage: passage || getNextStartPassage(
+              accumulatedParsed[accumulatedParsed.length - 1]?.passage || startPassage,
+              form.bibleBook
+            ),
+            title: title || '말씀 묵상',
+            focus: p.focus?.trim() || '본문 중심 묵상',
+            reason: p.reason?.trim() || `${p.focus?.trim() || title || '본문'}의 신학적 의미를 묵상하기 위해`,
           })
         })
 
@@ -781,12 +792,11 @@ export default function QtGenerator() {
       setSplitMarkdown(accumulatedOutput)
       setSplitDays(accumulatedParsed)
 
-      // 2단계 날짜별 기본 데이터 세팅
+      // 2단계 날짜별 기본 데이터 세팅 (accumulatedParsed.day는 이미 dateList[i]로 강제 세팅됨)
       const updatedManuscripts: Record<string, DayManuscript> = {}
-      accumulatedParsed.forEach((p, i) => {
-        const cleanDay = dateList[i] || p.day.trim()
-        updatedManuscripts[cleanDay] = {
-          dayName: cleanDay,
+      accumulatedParsed.forEach((p) => {
+        updatedManuscripts[p.day] = {
+          dayName: p.day,
           passage: p.passage,
           title: p.title,
           focus: p.focus,
