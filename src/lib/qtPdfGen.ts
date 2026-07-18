@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas'
+import { toCanvas } from 'html-to-image'
 import jsPDF from 'jspdf'
 import { PAGE_SIZES } from './qtPdfSizes'
 import { getTemplate } from './qtTemplates'
@@ -36,6 +36,7 @@ export async function generateQtPdf(
   result: QTResult,
   sizeOption: string,
   templateId: string = 'warm-modern',
+  dayIndex?: number,
 ) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4']
   const { widthMm, heightMm } = size
@@ -62,32 +63,38 @@ export async function generateQtPdf(
     throw new Error('PDF 페이지 요소를 찾을 수 없습니다.')
   }
 
+  const targetPages = dayIndex !== undefined
+    ? pages.slice(1 + dayIndex * 2, 1 + dayIndex * 2 + 2)
+    : pages
+
+  if (targetPages.length === 0) {
+    throw new Error('해당 day의 페이지를 찾을 수 없습니다.')
+  }
+
   const pdf = new jsPDF({
     orientation: widthMm > heightMm ? 'landscape' : 'portrait',
     unit: 'mm',
     format: [widthMm, heightMm],
   })
 
+  await document.fonts.ready
   let hasContent = false
 
-  for (let i = 0; i < pages.length; i++) {
-    const pageEl = pages[i]
+  for (let i = 0; i < targetPages.length; i++) {
+    const pageEl = targetPages[i]
 
     try {
-      const canvas = await html2canvas(pageEl, {
-        scale: 1.5,
-        useCORS: true,
+      const canvas = await toCanvas(pageEl, {
+        pixelRatio: 2,
         backgroundColor: tmpl.pageBg,
-        width: pageEl.scrollWidth,
-        height: pageEl.scrollHeight,
-        logging: false,
-        allowTaint: true,
+        cacheBust: true,
+        skipAutoScale: true,
       })
 
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
-      const imgW = canvas.width
-      const imgH = canvas.height
-      const aspect = imgW / imgH
+      console.log(`[QtPdfGen] page ${i}: ${canvas.width}x${canvas.height}, dataUrl=${(imgData.length / 1024).toFixed(0)}KB`)
+
+      const aspect = canvas.width / canvas.height
       const pageAspect = widthMm / heightMm
 
       let drawW: number, drawH: number, drawX: number, drawY: number
@@ -106,8 +113,8 @@ export async function generateQtPdf(
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
       hasContent = true
-    } catch (e) {
-      console.warn(`Page ${i + 1} skipped due to render error:`, e)
+    } catch (e: any) {
+      console.warn(`[QtPdfGen] page ${i} failed:`, e?.message || e)
     }
   }
 
@@ -116,6 +123,9 @@ export async function generateQtPdf(
   }
 
   const engBook = BOOK_EN[form.bibleBook] || 'Bible'
-  const filename = `QT_${engBook}_W${form.weekNumber}_${sizeOption.replace(/\s/g, '')}.pdf`
+  const daySuffix = dayIndex !== undefined ? `_D${dayIndex + 1}` : ''
+  const filename = `QT_${engBook}_W${form.weekNumber}${daySuffix}_${sizeOption.replace(/\s/g, '')}.pdf`
+  console.log(`[QtPdfGen] Done: ${filename}`)
+
   pdf.save(filename)
 }

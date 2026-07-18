@@ -17,9 +17,75 @@ interface QtDayCardProps {
   variant: 'web' | 'pdf'
   template?: QtTemplate
   studyRef?: StudyRef
+  isBilingualSideBySide?: boolean
+  audienceLevel?: 'adult' | 'youth'
 }
 
-export default function QtDayCard({ day, dayNumber, dateLabel, variant, template, studyRef }: QtDayCardProps) {
+// 회중별 묵상 필터링 헬퍼
+function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
+  if (!rawText) return ''
+  const lines = rawText.split('\n')
+  
+  // 텍스트 전체에 분할 키워드가 없으면 그냥 다 리턴
+  const lower = rawText.toLowerCase()
+  if (!lower.includes('장년') && !lower.includes('청소년') && !lower.includes('새신자')) {
+    return rawText
+  }
+  
+  let isAdultSection = true
+  let resultLines: string[] = []
+  
+  for (let line of lines) {
+    const trimmed = line.trim()
+    if (trimmed.includes('장년용') || trimmed.includes('[장년용]') || trimmed.includes('장년') || (trimmed.startsWith('#') && trimmed.includes('장년'))) {
+      isAdultSection = true
+      continue
+    }
+    if (trimmed.includes('청소년') || trimmed.includes('새신자') || trimmed.includes('[청소년') || (trimmed.startsWith('#') && (trimmed.includes('청소년') || trimmed.includes('새신자')))) {
+      isAdultSection = false
+      continue
+    }
+    
+    if (level === 'adult' && isAdultSection) {
+      resultLines.push(line)
+    } else if (level === 'youth' && !isAdultSection) {
+      resultLines.push(line)
+    }
+  }
+  
+  return resultLines.join('\n').trim()
+}
+
+// 한영 본문 분리 헬퍼
+function splitPassageText(passageRaw: string) {
+  if (!passageRaw) return { kr: '', en: '' }
+  
+  // NIV 전체 본문 또는 영어 본문 헤더 탐지
+  const indexNiv = passageRaw.search(/(?:NIV\s*전체\s*본문|NIV\s*본문|영어\s*본문)/i)
+  if (indexNiv === -1) {
+    return { kr: passageRaw.replace(/개역개정\s*전체\s*본문:?/g, '').trim(), en: '' }
+  }
+  
+  let krPart = passageRaw.substring(0, indexNiv)
+  let enPart = passageRaw.substring(indexNiv)
+  
+  // 헤더 정제
+  krPart = krPart.replace(/(?:##\s*개역개정\s*전체\s*본문|개역개정\s*전체\s*본문|#\s*개역개정\s*본문):?/gi, '').trim()
+  enPart = enPart.replace(/(?:##\s*NIV\s*전체\s*본문|NIV\s*전체\s*본문|#\s*NIV\s*본문):?/gi, '').trim()
+  
+  return { kr: krPart, en: enPart }
+}
+
+export default function QtDayCard({ 
+  day, 
+  dayNumber, 
+  dateLabel, 
+  variant, 
+  template, 
+  studyRef,
+  isBilingualSideBySide = false,
+  audienceLevel = 'adult'
+}: QtDayCardProps) {
   const isPdf = variant === 'pdf'
   const t = template
 
@@ -43,7 +109,7 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
             {content.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2px' }}>{l}</div>)}
           </div>
         ) : (
-          <div className="text-[12px] leading-relaxed text-slate-300 bg-white/[0.03] border-l-2 border-indigo-500/50 rounded-r-lg px-4 py-3 my-1.5">
+          <div className="text-[12px] leading-relaxed text-slate-300 bg-white/[0.03] border-l-2 border-indigo-500/50 rounded-r-lg px-4 py-3 my-1.5 font-sans">
             {content.split('\n').map((l, i) => <div key={i}>{l}</div>)}
           </div>
         )
@@ -54,7 +120,7 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
             {content.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2px' }}>{l}</div>)}
           </div>
         ) : (
-          <div className="text-[12px] leading-relaxed text-slate-300 bg-white/[0.04] rounded-xl px-4 py-3 mt-1.5 border border-white/5">
+          <div className="text-[12px] leading-relaxed text-slate-300 bg-white/[0.04] rounded-xl px-4 py-3 mt-1.5 border border-white/5 font-sans">
             {content.split('\n').map((l, i) => <div key={i}>{l}</div>)}
           </div>
         )
@@ -65,7 +131,7 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
             {content.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2px' }}>{l}</div>)}
           </div>
         ) : (
-          <div className="text-[12px] leading-relaxed text-indigo-200 bg-indigo-500/5 border border-indigo-500/10 rounded-xl px-4 py-3 my-1.5">
+          <div className="text-[12px] leading-relaxed text-indigo-200 bg-indigo-500/5 border border-indigo-500/10 rounded-xl px-4 py-3 my-1.5 font-sans">
             {content.split('\n').map((l, i) => <div key={i}>{l}</div>)}
           </div>
         )
@@ -75,16 +141,65 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
           {content.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '4px' }}>{l}</div>)}
         </div>
       ) : (
-        <div className="text-[12px] leading-relaxed text-slate-300">
+        <div className="text-[12px] leading-relaxed text-slate-300 font-sans">
           {content.split('\n').map((l, i) => <div key={i} className="mb-1">{l}</div>)}
         </div>
       )
     })()
 
     return (
-      <div className={isPdf ? '' : ''}>
+      <div>
         {labelEl}
         {contentEl}
+      </div>
+    )
+  }
+
+  // 본문 전용 한영 2단 대조 렌더링 함수
+  const renderPassage = () => {
+    const { kr, en } = splitPassageText(day.passage)
+    
+    if (!isBilingualSideBySide || !en) {
+      return section('오늘의 본문', day.passage, 'box')
+    }
+
+    // 2단 대조 레이아웃
+    const labelEl = isPdf ? (
+      <div style={{ fontFamily: t!.fontHeading, fontSize: '10.5px', fontWeight: 600, color: t!.accent, letterSpacing: '2.5px', marginTop: '18px', marginBottom: '8px', paddingBottom: '4px', borderBottom: `1px solid ${t!.sectionLabelBorder}`, textTransform: 'uppercase' as const }}>
+        오늘의 본문 (한영 대조)
+      </div>
+    ) : (
+      <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mt-4 mb-1.5 pb-1 border-b border-white/5">
+        오늘의 본문 (한영 대조)
+      </div>
+    )
+
+    return (
+      <div>
+        {labelEl}
+        {isPdf ? (
+          <div style={{ display: 'flex', gap: '16px', margin: '6px 0' }}>
+            <div style={{ flex: 1, color: t!.bibleQuoteText, padding: '12px 14px', borderLeft: `3px solid ${t!.bibleQuoteBorder}`, background: t!.bibleQuoteBg, borderRadius: '0 6px 6px 0', fontSize: '9.5px', lineHeight: '1.4' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8.5px', color: t!.accent, marginBottom: '6px' }}>개역개정</div>
+              {kr.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2.5px' }}>{l}</div>)}
+            </div>
+            <div style={{ flex: 1, color: t!.bibleQuoteText, padding: '12px 14px', borderLeft: `3px solid ${t!.bibleQuoteBorder}`, background: t!.bibleQuoteBg, borderRadius: '0 6px 6px 0', fontSize: '9px', lineHeight: '1.4', fontStyle: 'italic' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8.5px', color: t!.accent, marginBottom: '6px', fontStyle: 'normal' }}>NIV English</div>
+              {en.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2.5px' }}>{l}</div>)}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+            <div className="text-[11.5px] leading-relaxed text-slate-200 bg-white/[0.02] border-l-2 border-indigo-500/40 rounded-r-lg p-3.5 font-sans">
+              <div className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-400 mb-2">개역개정</div>
+              {kr.split('\n').map((l, i) => <div key={i} className="mb-0.5">{l}</div>)}
+            </div>
+            <div className="text-[11px] leading-relaxed text-slate-300 bg-white/[0.01] border-l-2 border-emerald-500/30 rounded-r-lg p-3.5 italic font-sans">
+              <div className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 mb-2 not-italic">NIV English</div>
+              {en.split('\n').map((l, i) => <div key={i} className="mb-0.5">{l}</div>)}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -105,7 +220,7 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
             {studyRef.parallelPassages && <div style={{ marginBottom: '6px' }}>🔗 {studyRef.parallelPassages}</div>}
           </div>
         ) : (
-          <div className="mt-6 pt-3 border-t border-white/5 text-[11px] text-slate-500 leading-relaxed">
+          <div className="mt-6 pt-3 border-t border-white/5 text-[11px] text-slate-500 leading-relaxed font-sans">
             <div className="text-[9px] font-bold uppercase tracking-widest text-slate-600 mb-1.5">참고자료</div>
             {studyRef.background && <div className="mb-1">📖 {studyRef.background}</div>}
             {studyRef.keyWords && <div className="mb-1">🔑 {studyRef.keyWords}</div>}
@@ -117,9 +232,13 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
     )
   }
 
+  // 회중 필터 적용
+  const filteredReflection = filterAudienceContent(day.reflection, audienceLevel)
+  const filteredApplication = filterAudienceContent(day.application, audienceLevel)
+
   const mainContent = (
     <>
-      <div className={isPdf ? '' : 'flex items-center gap-2 mb-3'}>
+      <div className={isPdf ? '' : 'flex items-center gap-2 mb-3 font-sans'}>
         {isPdf ? (
           <div style={{ fontFamily: t!.fontHeading, fontSize: '13px', fontWeight: 600, color: t!.accent, letterSpacing: '1.5px', marginBottom: '4px' }}>
             DAY {dayNumber} · {dateLabel}
@@ -136,12 +255,12 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
           {day.title || `Day ${dayNumber}`}
         </div>
       ) : (
-        <div className="text-[14px] font-bold text-white mb-4">
+        <div className="text-[14px] font-extrabold text-white mb-4 font-sans">
           {day.title || `Day ${dayNumber}`}
         </div>
       )}
 
-      {section('오늘의 본문', day.passage, 'box')}
+      {renderPassage()}
       {section('본문 한눈에 보기', day.passageOverview)}
       {section('천천히 읽기', day.slowReading)}
       {section('본문 관찰하기', day.observation, 'question')}
@@ -149,8 +268,8 @@ export default function QtDayCard({ day, dayNumber, dateLabel, variant, template
       {section('영어 핵심단어', day.englishWords, 'box')}
       {section('말씀 이해하기', day.understanding)}
       {section('복음으로 보기', day.gospel, 'accent')}
-      {section('나를 비추어 보기', day.reflection, 'question')}
-      {section('오늘의 적용', day.application, 'accent')}
+      {section('나를 비추어 보기', filteredReflection, 'question')}
+      {section('오늘의 적용', filteredApplication, 'accent')}
       {section('영어로 붙드는 말씀', day.englishVerse, 'box')}
       {section('공동체 연결', day.community)}
       {section('오늘의 기도', day.prayer, 'prayer')}

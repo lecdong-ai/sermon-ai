@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { X, FileDown, Loader2, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
 import QtPdfLayout from '@/components/advanced/QtPdfLayout'
+import { parseDays } from '@/lib/qtDayParser'
+import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData, QTResult } from './QtGenerator'
 
 interface QtPreviewProps {
@@ -23,18 +25,37 @@ export default function QtPreview({ form, result, templateId: initialTemplateId,
   const [pdfLoading, setPdfLoading] = useState(false)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
 
-  const today = new Date()
-  const dayNames = ['일', '월', '화', '수', '목', '금', '토']
-  const weekdays = Array.from({ length: 7 }, (_, i) => {
-    const mon = new Date(today)
-    mon.setDate(mon.getDate() - mon.getDay() + 1)
-    const day = new Date(mon)
-    day.setDate(mon.getDate() + i)
-    return {
-      date: day,
-      label: `${day.getMonth() + 1}/${day.getDate()}(${dayNames[day.getDay()]})`,
+  const parsedDays = useMemo(() => {
+    try {
+      const { days } = parseDays(result.fullManuscript || '')
+      return days
+    } catch {
+      return []
     }
-  })
+  }, [result.fullManuscript])
+
+  const weekdays = useMemo(() => {
+    const dayCount = Math.max(parsedDays.length, 1)
+    if (!form.startDate) {
+      const today = new Date()
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+      return Array.from({ length: Math.max(dayCount, 7) }, (_, i) => {
+        const mon = new Date(today)
+        mon.setDate(mon.getDate() - mon.getDay() + 1)
+        const day = new Date(mon)
+        day.setDate(mon.getDate() + i)
+        return { date: day, label: `${day.getMonth() + 1}/${day.getDate()}(${dayNames[day.getDay()]})` }
+      })
+    }
+    // 월~토(일요일 제외) 일수와 일치하면 주말 제외 모드
+    if (dayCount === getWeekdayCountInMonth(form.startDate)) {
+      const labels = getWeekdayDateLabels(form.startDate)
+      return labels.map(label => ({ date: new Date(), label }))
+    }
+    const list = getFormattedDateList(form.startDate, dayCount)
+    if (list.length > 0) return list.map(label => ({ date: new Date(), label }))
+    return []
+  }, [form.startDate, parsedDays.length])
 
   const pages = [
     { type: 'cover', label: 'COVER', subtitle: `${form.bibleBook} · 제${form.weekNumber}주`, passage: '' },
@@ -63,12 +84,12 @@ export default function QtPreview({ form, result, templateId: initialTemplateId,
     if (mode !== 'reader') return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') setActivePage(p => Math.max(0, p - 1))
-      if (e.key === 'ArrowRight') setActivePage(p => Math.min(7, p + 1))
+      if (e.key === 'ArrowRight') setActivePage(p => Math.min(pages.length - 1, p + 1))
       if (e.key === 'Escape') setMode('gallery')
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [mode])
+  }, [mode, pages.length])
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col">

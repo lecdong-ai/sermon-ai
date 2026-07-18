@@ -7,6 +7,8 @@ import QtPdfLayout from './QtPdfLayout'
 import { parseDays } from '@/lib/qtDayParser'
 import { getTemplate, QT_TEMPLATES } from '@/lib/qtTemplates'
 import { generateQtPdf } from '@/lib/qtPdfGen'
+import { PAGE_SIZES } from '@/lib/qtPdfSizes'
+import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
 
 interface QtReaderProps {
@@ -21,22 +23,86 @@ interface QtReaderProps {
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'qtland-classic')
+  const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4')
+  const [isEcoPrint, setIsEcoPrint] = useState(false)
+  const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
+  const [audienceLevel, setAudienceLevel] = useState<'adult' | 'youth'>('adult')
+  const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
+    try {
+      const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}`)
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
+  })
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [dayPdfLoading, setDayPdfLoading] = useState<number | null>(null)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
 
-  const weekdays = useMemo(() => {
-    const today = new Date()
-    const dayNames = ['일', '월', '화', '수', '목', '금', '토']
-    const mon = new Date(today); mon.setDate(mon.getDate() - mon.getDay() + 1)
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(mon); d.setDate(mon.getDate() + i)
-      return `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`
-    })
-  }, [])
-
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
+
+  const weekdays = useMemo(() => {
+    const dayCount = Math.max(days.length, 1)
+    if (!form.startDate) {
+      // 폴백: 오늘 기준 이번주 월요일부터 6일
+      const today = new Date()
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+      const mon = new Date(today); mon.setDate(mon.getDate() - mon.getDay() + 1)
+      return Array.from({ length: Math.max(dayCount, 6) }, (_, i) => {
+        const d = new Date(mon); d.setDate(mon.getDate() + i)
+        return `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`
+      })
+    }
+    // 월~토(일요일 제외) 일수와 일치하면 주말 제외 모드
+    if (dayCount === getWeekdayCountInMonth(form.startDate)) {
+      return getWeekdayDateLabels(form.startDate)
+    }
+    const list = getFormattedDateList(form.startDate, dayCount)
+    if (list.length > 0) return list
+    return []
+  }, [form.startDate, days.length])
+
   const tmpl = useMemo(() => getTemplate(templateId), [templateId])
+
+  const activeTmpl = useMemo(() => {
+    if (isEcoPrint) {
+      return {
+        ...tmpl,
+        pageBg: '#ffffff',
+        textColor: '#000000',
+        textMuted: '#4b5563',
+        accent: '#000000',
+        accentLight: '#f3f4f6',
+        border: '#9ca3af',
+        borderLight: '#e5e7eb',
+        coverAccentLine: '#000000',
+        sectionLabelBorder: '#6b7280',
+        bibleQuoteBg: '#ffffff',
+        bibleQuoteBorder: '#000000',
+        bibleQuoteText: '#000000',
+        prayerBoxBg: '#ffffff',
+        prayerBoxText: '#000000',
+        progressDotBg: '#e5e7eb',
+        progressDotBorder: '#9ca3af',
+        progressDotActiveBg: '#000000',
+        pageNumberColor: '#6b7280',
+        coverSubtitleColor: '#000000',
+      }
+    }
+    return tmpl
+  }, [tmpl, isEcoPrint])
+
   const currentDay = days[dayIndex]
+
+  const handleMemoChange = (val: string) => {
+    const next = { ...userMemos, [dayIndex]: val }
+    setUserMemos(next)
+    try {
+      localStorage.setItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}`, JSON.stringify(next))
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const handlePdfDownload = async () => {
     setPdfLoading(true)
@@ -45,7 +111,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     try {
       if (pdfLayoutRef.current) {
         const result = { fullManuscript: accumulatedManuscript }
-        await generateQtPdf(pdfLayoutRef.current, form, result, form.sizeOption || 'A4', templateId)
+        await generateQtPdf(pdfLayoutRef.current, form, result, sizeOption, activeTmpl.id)
       } else {
         console.error('PDF layout ref is null')
       }
@@ -54,6 +120,21 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       alert(`PDF 생성 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`)
     }
     setPdfLoading(false)
+  }
+
+  const handleDayPdfDownload = async (dayIdx: number) => {
+    setDayPdfLoading(dayIdx)
+    await new Promise(r => setTimeout(r, 500))
+    try {
+      if (pdfLayoutRef.current) {
+        const result = { fullManuscript: accumulatedManuscript }
+        await generateQtPdf(pdfLayoutRef.current, form, result, sizeOption, activeTmpl.id, dayIdx)
+      }
+    } catch (e: any) {
+      console.error('Day PDF generation error:', e)
+      alert(`PDF 생성 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`)
+    }
+    setDayPdfLoading(null)
   }
 
   return (
@@ -88,8 +169,71 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </button>
             ))}
           </div>
+          <div className="w-px h-5 bg-white/10" />
+          <div className="flex items-center gap-1">
+            {Object.keys(PAGE_SIZES).map(sz => (
+              <button
+                key={sz}
+                onClick={() => setSizeOption(sz)}
+                className={`px-2 py-1 rounded-md text-[9px] font-bold border transition-all ${
+                  sizeOption === sz
+                    ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {sz.replace(' (iPad 4:3)', '').replace('Pro ', '')}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* 한영 2단 대조 토글 */}
+          <button
+            onClick={() => setIsBilingualSideBySide(!isBilingualSideBySide)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+              isBilingualSideBySide
+                ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="한국어/영어 본문을 좌우 2단으로 대조하여 표시합니다."
+          >
+            🌐 한영대조
+          </button>
+          {/* 회중 레벨 토글 */}
+          <div className="flex items-center border border-white/10 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setAudienceLevel('adult')}
+              className={`px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                audienceLevel === 'adult'
+                  ? 'bg-amber-600/20 text-amber-300'
+                  : 'bg-white/5 text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              👨‍🦳 장년
+            </button>
+            <button
+              onClick={() => setAudienceLevel('youth')}
+              className={`px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                audienceLevel === 'youth'
+                  ? 'bg-cyan-600/20 text-cyan-300'
+                  : 'bg-white/5 text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              👦 청소년
+            </button>
+          </div>
+          {/* 에코 모드 스위치 */}
+          <button
+            onClick={() => setIsEcoPrint(!isEcoPrint)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+              isEcoPrint
+                ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="잉크 절약을 위해 배경색을 화이트로 출력합니다."
+          >
+            🌱 에코
+          </button>
           <span className="text-[11px] text-slate-500 font-medium">
             {form.bibleBook} · {form.weekNumber}주차
           </span>
@@ -117,7 +261,19 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="text-center">
-              <div className="text-[13px] font-bold text-slate-200">DAY {dayIndex + 1}</div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="text-[13px] font-bold text-slate-200">DAY {dayIndex + 1}</div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
+                  disabled={dayPdfLoading === dayIndex || days.length === 0}
+                  className="p-1 rounded bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 transition-all disabled:opacity-30"
+                  title="이 Day만 PDF 저장"
+                >
+                  {dayPdfLoading === dayIndex
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : <Download className="w-3 h-3" />}
+                </button>
+              </div>
               <div className="text-[10px] text-slate-500">{weekdays[dayIndex] || ''}</div>
               <div className="flex items-center justify-center gap-1.5 mt-3">
                 {days.map((_, i) => (
@@ -145,28 +301,37 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           {/* Day card */}
           {currentDay ? (
             <div
-              className="rounded-2xl p-8 border"
+              className="rounded-2xl p-8 border mx-auto shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col"
               style={{
-                background: tmpl.pageBg,
-                color: tmpl.textColor,
-                borderColor: tmpl.border,
+                background: activeTmpl.pageBg,
+                color: activeTmpl.textColor,
+                borderColor: activeTmpl.border,
+                width: '100%',
+                maxWidth: sizeOption === 'A4' ? '540px' : sizeOption === 'B5' ? '460px' : sizeOption === 'A5' ? '380px' : sizeOption === 'Tablet (iPad 4:3)' ? '500px' : '520px',
+                aspectRatio: `${PAGE_SIZES[sizeOption].widthMm} / ${PAGE_SIZES[sizeOption].heightMm}`,
+                height: 'auto',
+                minHeight: '600px',
               }}
             >
-              <QtDayCard
-                day={currentDay}
-                dayNumber={dayIndex + 1}
-                dateLabel={weekdays[dayIndex] || ''}
-                variant="pdf"
-                template={tmpl}
-              />
+              <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
+                <QtDayCard
+                  day={currentDay}
+                  dayNumber={dayIndex + 1}
+                  dateLabel={weekdays[dayIndex] || ''}
+                  variant="pdf"
+                  template={activeTmpl}
+                  isBilingualSideBySide={isBilingualSideBySide}
+                  audienceLevel={audienceLevel}
+                />
+              </div>
             </div>
           ) : (
             <div
               className="rounded-2xl p-8 border max-h-[75vh] overflow-y-auto scrollbar-thin"
               style={{
-                background: tmpl.pageBg,
-                color: tmpl.textColor,
-                borderColor: tmpl.border,
+                background: activeTmpl.pageBg,
+                color: activeTmpl.textColor,
+                borderColor: activeTmpl.border,
               }}
             >
               <div className="text-[12px] leading-relaxed whitespace-pre-wrap font-mono opacity-80">
@@ -174,19 +339,43 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </div>
             </div>
           )}
+
+          {/* ✍️ 오늘 나의 묵상 노트 입력창 */}
+          {currentDay && (
+            <div className="mt-6 max-w-xl mx-auto bg-slate-900/50 border border-white/5 rounded-2xl p-4 shadow-inner">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                  ✍️ {weekdays[dayIndex] || ''} 묵상 노트 (기록 시 PDF에 함께 저장됩니다)
+                </span>
+                {userMemos[dayIndex] && (
+                  <span className="text-[9px] text-emerald-400 font-medium animate-pulse">자동 저장됨</span>
+                )}
+              </div>
+              <textarea
+                value={userMemos[dayIndex] || ''}
+                onChange={(e) => handleMemoChange(e.target.value)}
+                placeholder="묵상하면서 깨달은 점이나 개인 적용을 자유롭게 적어보세요. PDF 인쇄 시 한 줄 기록란에 깔끔하게 인쇄됩니다..."
+                rows={3}
+                className="w-full bg-slate-950/80 border border-white/10 rounded-xl p-3 text-[12px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all resize-none"
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Hidden PDF layout for export — 화면 밖에 렌더링하되 실제 크기로 그려서 html2canvas가 캡처 */}
-      <div style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', opacity: 1 }}>
+      <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1, opacity: 1 }}>
         <QtPdfLayout
           ref={pdfLayoutRef}
           form={form}
           result={{ fullManuscript: accumulatedManuscript }}
-          sizeOption={form.sizeOption || 'A4'}
-          templateId={templateId}
+          sizeOption={sizeOption}
+          templateId={activeTmpl.id}
           startPassage={startPassage}
           endPassage={endPassage}
+          userMemos={userMemos}
+          isBilingualSideBySide={isBilingualSideBySide}
+          audienceLevel={audienceLevel}
         />
       </div>
     </div>

@@ -10,6 +10,19 @@ import QtReader from './QtReader'
 import QtPdfLayout from './QtPdfLayout'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
+import {
+  getTodayDateString,
+  getDaysInMonth,
+  getFormattedDateList,
+  formatDayLabel,
+  getMondayOfWeek,
+  normalizeMonthlyDate,
+  formatDateRangeLabel,
+  getNextStartPassage,
+  getNextMonthFirstDay,
+  getWeekdayDateLabels,
+  getWeekdayCountInMonth,
+} from '@/lib/qtDates'
 
 const BOOK_CATEGORIES = [
   { name: '모세오경', testament: '구약', color: 'amber', books: ['창세기', '출애굽기', '레위기', '민수기', '신명기'] },
@@ -72,6 +85,7 @@ export interface QTFormData {
   seriesName: string
   sizeOption: string
   designTemplate: string
+  startDate: string // YYYY-MM-DD
 }
 
 export interface DaySplitData {
@@ -119,17 +133,35 @@ export interface QtHistoryEntry {
 function parseSplitTable(markdown: string): DaySplitData[] {
   const lines = markdown.split('\n')
   const results: DaySplitData[] = []
-  
+
+  const HEADER_KEYWORDS = ['순서', '요일', '날짜', '본문 분할표']
+
   for (const line of lines) {
     const trimmed = line.trim()
-    if (trimmed.startsWith('|') && (
-      trimmed.includes('월') || trimmed.includes('화') || trimmed.includes('수') || 
-      trimmed.includes('목') || trimmed.includes('금') || trimmed.includes('토')
-    )) {
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      // 헤더나 구분선 행 건너뛰기
+      if (
+        trimmed.includes('---|') ||
+        trimmed.includes('===') ||
+        trimmed.includes('본문 분할표')
+      ) {
+        continue
+      }
+
       const parts = trimmed.split('|').map(p => p.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
       if (parts.length >= 4) {
+        const dayValue = parts[0]
+        // 첫 칸이 구분선(----)이거나 비어있으면 스킵
+        if (!dayValue || /^[-:\s]+$/.test(dayValue)) {
+          continue
+        }
+        // 헤더 행 감지 (첫 칸이 헤더 키워드와 정확히 일치)
+        if (HEADER_KEYWORDS.includes(dayValue)) {
+          continue
+        }
+
         results.push({
-          day: parts[0],
+          day: dayValue,
           passage: parts[1],
           title: parts[2],
           focus: parts[3],
@@ -140,6 +172,68 @@ function parseSplitTable(markdown: string): DaySplitData[] {
   }
   return results
 }
+
+// 월간 모드에서 종료 본문이 지정되었을 때 청크별 endPassage를 균등 분할
+// 예: startPassage="창세기 1:1", endPassage="창세기 50:26", chunks=3
+// → ["창세기 16:1", "창세기 33:1", "창세기 50:26"] (마지막은 실제 endPassage)
+// 파싱 실패 시 마지막 청크만 endPassage, 나머지는 null (자동 이어가기 폴백)
+function computeChunkEndPassages(
+  startPassage: string,
+  endPassage: string,
+  chunks: { offset: number; size: number; dateList: string[] }[],
+): (string | null)[] {
+  const result: (string | null)[] = []
+  // 시작/종료 장절 파싱
+  const startMatch = startPassage.match(/(\d+)\s*[:：]\s*(\d+)/)
+  const endMatch = endPassage.match(/(\d+)\s*[:：]\s*(\d+)/)
+  if (!startMatch || !endMatch) {
+    // 장만 있는 경우
+    const startChapMatch = startPassage.match(/(\d+)\s*$/)
+    const endChapMatch = endPassage.match(/(\d+)\s*$/)
+    if (!startChapMatch || !endChapMatch) {
+      // 파싱 실패: 마지막 청크만 endPassage, 나머지는 null
+      for (let i = 0; i < chunks.length; i++) {
+        result.push(i === chunks.length - 1 ? endPassage : null)
+      }
+      return result
+    }
+    const startChap = parseInt(startChapMatch[1])
+    const endChap = parseInt(endChapMatch[1])
+    const totalChaps = endChap - startChap + 1
+    const bookName = startPassage.replace(/\s*\d+\s*$/, '').trim()
+    for (let i = 0; i < chunks.length; i++) {
+      if (i === chunks.length - 1) {
+        result.push(endPassage)
+      } else {
+        const ratio = (i + 1) / chunks.length
+        const chap = Math.floor(startChap + totalChaps * ratio)
+        result.push(`${bookName} ${chap}`)
+      }
+    }
+    return result
+  }
+  // 장절 파싱 성공: 절 단위로 균등 분할
+  const startChap = parseInt(startMatch[1])
+  const startVerse = parseInt(startMatch[2])
+  const endChap = parseInt(endMatch[1])
+  const endVerse = parseInt(endMatch[2])
+  // 총 절 수 추정 (장별 30절 가정으로 단순 추정)
+  const totalVerses = (endChap - startChap) * 30 + (endVerse - startVerse)
+  const bookName = startPassage.replace(/\s*\d+\s*[:：]\s*\d+\s*$/, '').trim()
+  for (let i = 0; i < chunks.length; i++) {
+    if (i === chunks.length - 1) {
+      result.push(endPassage)
+    } else {
+      const ratio = (i + 1) / chunks.length
+      const verseOffset = Math.floor(totalVerses * ratio)
+      const approxChap = startChap + Math.floor(verseOffset / 30)
+      const approxVerse = startVerse + (verseOffset % 30)
+      result.push(`${bookName} ${approxChap}:${approxVerse}`)
+    }
+  }
+  return result
+}
+
 
 // 최종본 마크다운 추출 헬퍼
 function extractFinalContent(content: string): string {
@@ -167,6 +261,21 @@ function extractMetadataJson(output: string): any {
 export default function QtGenerator() {
   const [step, setStep] = useState<number>(1)
   
+  // 서비스 모드 설정: weekly(주간), monthly(월간), recommend(AI 추천 일일)
+  const [qtMode, setQtMode] = useState<'weekly' | 'monthly' | 'recommend'>('weekly')
+  
+  // 월간 자동 생성 큐(Queue) 상태
+  const [monthlyGenerating, setMonthlyGenerating] = useState(false)
+  const [monthlyProgress, setMonthlyProgress] = useState(0)
+  
+  // AI 추천 정보 카드 상태
+  const [recommendInfo, setRecommendInfo] = useState<{
+    book: string
+    passage: string
+    reason: string
+    coreMessage: string
+  } | null>(null)
+
   // 기본 설정 폼
   const [form, setForm] = useState<QTFormData>({
     bibleBook: '창세기',
@@ -177,9 +286,23 @@ export default function QtGenerator() {
     seriesName: '말씀과 함께하는 큐티',
     sizeOption: 'A4',
     designTemplate: 'qtland-classic',
+    startDate: getMondayOfWeek(getTodayDateString()),
   })
 
   const updateForm = (patch: Partial<QTFormData>) => setForm(prev => ({ ...prev, ...patch }))
+
+  // 모드별 정규화된 시작 날짜와 일수 (UI 미리보기 + 분할 생성에 공통 사용)
+  const normalizedStartDate = useMemo(() => {
+    if (qtMode === 'monthly') return normalizeMonthlyDate(form.startDate)
+    if (qtMode === 'weekly') return getMondayOfWeek(form.startDate)
+    return form.startDate
+  }, [form.startDate, qtMode])
+
+  const previewDaysCount = useMemo(() => {
+    if (qtMode === 'weekly') return 7
+    if (qtMode === 'monthly') return getWeekdayCountInMonth(normalizedStartDate)
+    return 1
+  }, [qtMode, normalizedStartDate])
 
   // 1단계 상태
   const [startPassage, setStartPassage] = useState('창세기 1:1')
@@ -192,6 +315,8 @@ export default function QtGenerator() {
   const [splitMarkdown, setSplitMarkdown] = useState('')
   const [splitDays, setSplitDays] = useState<DaySplitData[]>([])
   const [error, setError] = useState<string | null>(null)
+  // 월간 청킹 분할 진행 상태 (10일 단위 순차 호출)
+  const [chunkProgress, setChunkProgress] = useState<{ current: number; total: number; dayRange: string } | null>(null)
 
   // 성경권 선택 변경 시 처리
   const handleBookChange = (book: string) => {
@@ -241,15 +366,8 @@ export default function QtGenerator() {
     }
   }
 
-  // 2단계 상태 (월~토 QT 집필)
-  const [dayManuscripts, setDayManuscripts] = useState<Record<string, DayManuscript>>({
-    '월': { dayName: '월', passage: '', title: '', focus: '' },
-    '화': { dayName: '화', passage: '', title: '', focus: '' },
-    '수': { dayName: '수', passage: '', title: '', focus: '' },
-    '목': { dayName: '목', passage: '', title: '', focus: '' },
-    '금': { dayName: '금', passage: '', title: '', focus: '' },
-    '토': { dayName: '토', passage: '', title: '', focus: '' },
-  })
+  // 2단계 상태 (동적 리스트 기반으로 수용하도록 초기 빈 객체 선언)
+  const [dayManuscripts, setDayManuscripts] = useState<Record<string, DayManuscript>>({})
   const [activeDay, setActiveDay] = useState<string>('월')
   const [showAdvanced, setShowAdvanced] = useState(false)
   
@@ -474,7 +592,48 @@ export default function QtGenerator() {
     setSavingHistory(false)
   }
 
-  // 1단계: 주간 본문 분할 생성 API 호출
+  // 본문 참조에서 시작 장 번호 추출 (출력 검증용)
+  // "에베소서 2:4" → 2, "마태복음 5:1-10" → 5
+  function getPassageStartChapter(passage: string): number | null {
+    const m = passage.match(/(\d+)\s*[:：]/)
+    return m ? parseInt(m[1]) : null
+  }
+
+  // 1단계: 단일 청크 본문 분할 API 호출 헬퍼 (주간/월간 청킹 공통 사용)
+  const callSplitApi = async (params: {
+    chunkStartPassage: string
+    chunkEndPassage: string
+    chunkDaysCount: number
+    chunkDateList: string[]
+    chunkInfo: { current: number; total: number; offset: number }
+  }): Promise<{ output: string; parsed: DaySplitData[] }> => {
+    const res = await fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'qt-split',
+        data: {
+          bibleBook: form.bibleBook,
+          weekNumber: form.weekNumber,
+          startPassage: params.chunkStartPassage,
+          endPassage: params.chunkEndPassage,
+          audience: form.audience,
+          level: form.level,
+          daysCount: params.chunkDaysCount,
+          startDate: normalizedStartDate,
+          dateList: params.chunkDateList,
+          chunkInfo: params.chunkInfo,
+        },
+      }),
+    })
+    const json = await res.json()
+    if (!json.success) throw new Error(json.error || '본문 분할안 생성에 실패했습니다.')
+    const output = json.data.output as string
+    const parsed = parseSplitTable(output)
+    return { output, parsed }
+  }
+
+  // 1단계: 주간/월간 본문 분할 생성 (월간은 10일 단위 청킹 순차 호출)
   const handleGenerateSplit = async () => {
     if (!form.bibleBook || !startPassage) {
       setError('성경권과 시작 본문은 필수 입력 사항입니다.')
@@ -482,53 +641,170 @@ export default function QtGenerator() {
     }
     setError(null)
     setSplitting(true)
+    setChunkProgress(null)
     setSplitMarkdown('')
     setSplitDays([])
 
+    const daysCount = previewDaysCount
+    const dateList = qtMode === 'monthly' ? getWeekdayDateLabels(normalizedStartDate) : getFormattedDateList(normalizedStartDate, daysCount)
+
+    if (dateList.length === 0) {
+      setError('시작 날짜가 올바르지 않습니다. 날짜를 다시 선택해주세요.')
+      setSplitting(false)
+      return
+    }
+
     try {
-      const res = await fetch('/api/advanced/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'qt-split',
-          data: {
-            bibleBook: form.bibleBook,
-            weekNumber: form.weekNumber,
-            startPassage,
-            endPassage,
-            audience: form.audience,
-            level: form.level
-          }
-        }),
-      })
-      const json = await res.json()
-      if (json.success) {
-        const output = json.data.output
-        setSplitMarkdown(output)
-        const parsed = parseSplitTable(output)
-        setSplitDays(parsed)
-        
-        // 2단계 요일별 기본 데이터 세팅
-        const updatedManuscripts = { ...dayManuscripts }
-        parsed.forEach(p => {
-          const cleanDay = p.day.replace(/요일/g, '').trim()
-          if (updatedManuscripts[cleanDay]) {
-            updatedManuscripts[cleanDay] = {
-              dayName: cleanDay,
-              passage: p.passage,
-              title: p.title,
-              focus: p.focus
+      // 월간 모드 (~26일, 일요일 제외): 10일 단위 청킹 분할
+      // 주간 모드 (7일치): 단일 호출
+      const isMonthly = qtMode === 'monthly'
+      const CHUNK_SIZE = 10
+
+      // 청크 계획 생성
+      const chunks: { offset: number; size: number; dateList: string[] }[] = []
+      if (isMonthly) {
+        for (let offset = 0; offset < daysCount; offset += CHUNK_SIZE) {
+          const size = Math.min(CHUNK_SIZE, daysCount - offset)
+          chunks.push({
+            offset,
+            size,
+            dateList: dateList.slice(offset, offset + size),
+          })
+        }
+      } else {
+        chunks.push({ offset: 0, size: daysCount, dateList })
+      }
+
+      const totalChunks = chunks.length
+      let accumulatedOutput = ''
+      let accumulatedParsed: DaySplitData[] = []
+      let lastEndPassage = endPassage // 청크 간 이어가기용 (자동 이어가기 모드에서만 사용)
+      const hasUserEndPassage = !!endPassage && endPassage.trim().length > 0
+
+      // 종료 본문이 있을 때 청크별 endPassage 균등 분할 (장절 파싱 시도)
+      let chunkEndPassages: (string | null)[] = []
+      if (isMonthly && hasUserEndPassage) {
+        chunkEndPassages = computeChunkEndPassages(startPassage, endPassage, chunks)
+      }
+
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const chunk = chunks[ci]
+        const isFirst = ci === 0
+        const isLast = ci === chunks.length - 1
+
+        // 청크 시작 본문 결정
+        const chunkStartPassage = isFirst
+          ? startPassage
+          : (hasUserEndPassage
+              ? (chunkEndPassages[ci - 1] ? getNextStartPassage(chunkEndPassages[ci - 1]!, form.bibleBook) : startPassage)
+              : lastEndPassage || startPassage)
+
+        // 청크 종료 본문 결정
+        let chunkEndPassage = ''
+        if (hasUserEndPassage) {
+          chunkEndPassage = isLast ? endPassage : (chunkEndPassages[ci] || '')
+        }
+        // 자동 이어가기 모드: chunkEndPassage = '' (빈 값)
+
+        // 진행 상태 업데이트
+        if (totalChunks > 1) {
+          setChunkProgress({
+            current: ci + 1,
+            total: totalChunks,
+            dayRange: chunk.dateList.length > 0
+              ? `${chunk.dateList[0]}~${chunk.dateList[chunk.dateList.length - 1]}`
+              : `${chunk.offset + 1}~${chunk.offset + chunk.size}일차`,
+          })
+        }
+
+        // 출력 검증 + 최대 2회 재시도
+        let parsed: DaySplitData[] = []
+        let output = ''
+        const MAX_RETRIES = 2
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          const result = await callSplitApi({
+            chunkStartPassage,
+            chunkEndPassage,
+            chunkDaysCount: chunk.size,
+            chunkDateList: chunk.dateList,
+            chunkInfo: { current: ci + 1, total: totalChunks, offset: chunk.offset },
+          })
+          output = result.output
+          parsed = result.parsed
+
+          // 검증: 첫 번째 passage의 장 번호가 expected보다 낮으면 반복으로 간주
+          if (attempt < MAX_RETRIES && !isFirst && parsed.length > 0) {
+            const expectedChap = getPassageStartChapter(chunkStartPassage)
+            const actualChap = getPassageStartChapter(parsed[0].passage)
+            if (expectedChap !== null && actualChap !== null && actualChap < expectedChap) {
+              console.warn(`[QT] 청크 ${ci + 1} 반복 감지: 기대=${chunkStartPassage}(장${expectedChap}), 실제=${parsed[0].passage}(장${actualChap}). 재시도 ${attempt + 1}/${MAX_RETRIES}`)
+              continue
             }
           }
+          break // 검증 통과 또는 첫 청크 → 종료
+        }
+
+        accumulatedOutput += (ci > 0 ? '\n\n---\n\n' : '') + output
+        // dateList[chunk.offset + i]로 강제 매핑 (AI가 날짜를 변형해도 정확한 날짜로 덮어씀)
+        parsed.forEach((p, i) => {
+          const globalIdx = chunk.offset + i
+          const cleanDay = dateList[globalIdx] || p.day.trim()
+          accumulatedParsed.push({
+            day: cleanDay,
+            passage: p.passage,
+            title: p.title,
+            focus: p.focus,
+            reason: p.reason?.trim() || `${p.focus || p.title || '본문'}의 신학적 의미를 묵상하기 위해`,
+          })
         })
-        setDayManuscripts(updatedManuscripts)
-      } else {
-        setError(json.error || '본문 분할안 생성에 실패했습니다.')
+
+        // 다음 청크 시작 본문 추출 (자동 이어가기 모드)
+        if (!hasUserEndPassage && !isLast && parsed.length > 0) {
+          lastEndPassage = getNextStartPassage(parsed[parsed.length - 1].passage, form.bibleBook)
+        }
+      }
+
+      // 누락된 날짜 보강: AI가 일부 행을 생략한 경우 dateList 기준으로 채움
+      while (accumulatedParsed.length < dateList.length) {
+        const missingIdx = accumulatedParsed.length
+        const lastPassage = accumulatedParsed[missingIdx - 1]?.passage || startPassage
+        accumulatedParsed.push({
+          day: dateList[missingIdx],
+          passage: getNextStartPassage(lastPassage, form.bibleBook),
+          title: '말씀 묵상',
+          focus: '본문 중심 묵상',
+          reason: '연속 본문 이어가기',
+        })
+        console.warn(`[QT] 누락된 날짜 보강: ${dateList[missingIdx]}`)
+      }
+
+      setSplitMarkdown(accumulatedOutput)
+      setSplitDays(accumulatedParsed)
+
+      // 2단계 날짜별 기본 데이터 세팅
+      const updatedManuscripts: Record<string, DayManuscript> = {}
+      accumulatedParsed.forEach((p, i) => {
+        const cleanDay = dateList[i] || p.day.trim()
+        updatedManuscripts[cleanDay] = {
+          dayName: cleanDay,
+          passage: p.passage,
+          title: p.title,
+          focus: p.focus,
+        }
+      })
+      setDayManuscripts(updatedManuscripts)
+
+      console.log(`[QT] 본문 분할안 생성 완료: ${accumulatedParsed.length}/${dateList.length}일`)
+
+      if (accumulatedParsed.length > 0) {
+        const firstDay = dateList[0] || accumulatedParsed[0].day.trim()
+        setActiveDay(firstDay)
       }
     } catch (e: any) {
       setError(e.message || '요청 중 오류가 발생했습니다.')
     } finally {
       setSplitting(false)
+      setChunkProgress(null)
     }
   }
 
@@ -536,7 +812,7 @@ export default function QtGenerator() {
   const handleGenerateDay = async (dayName: string) => {
     const target = dayManuscripts[dayName]
     if (!target.passage || !target.title) {
-      setError(`${dayName}요일의 본문과 제목이 작성되지 않았습니다.`)
+      setError(`${formatDayLabel(dayName)}의 본문과 제목이 작성되지 않았습니다.`)
       return
     }
     setError(null)
@@ -613,11 +889,168 @@ export default function QtGenerator() {
         }
       }))
     } catch (e: any) {
-      setError(`${dayName}요일 생성 중 오류: ${e.message || '요청 실패'}`)
+      setError(`${formatDayLabel(dayName)} 생성 중 오류: ${e.message || '요청 실패'}`)
       setDayManuscripts(prev => ({
         ...prev,
         [dayName]: { ...prev[dayName], isGenerating: false, generatingStep: '' }
       }))
+    }
+  }
+
+  // 월간 큐티집 전체 자동 생성 (순차 큐 루프)
+  const handleGenerateAllMonthly = async () => {
+    const days = Object.keys(dayManuscripts)
+    if (days.length === 0) return
+    
+    setError(null)
+    setMonthlyGenerating(true)
+    setMonthlyProgress(0)
+    
+    try {
+      for (let i = 0; i < days.length; i++) {
+        const dayName = days[i]
+        // 이미 생성 완료된 것은 건너뛰고 싶다면 주석 해제 가능. 여기선 전체 순차 생성
+        await handleGenerateDay(dayName)
+        setMonthlyProgress(Math.round(((i + 1) / days.length) * 100))
+      }
+    } catch (e: any) {
+      setError(`연속 생성 중 오류가 발생했습니다: ${e.message || e}`)
+    } finally {
+      setMonthlyGenerating(false)
+    }
+  }
+
+  // AI 추천 일일 큐티 생성
+  const handleGenerateRecommendDaily = async () => {
+    setError(null)
+    setSplitting(true)
+    setRecommendInfo(null)
+    
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'qt-recommend-daily',
+          data: {}
+        })
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || '추천 큐티 생성 실패')
+      
+      const rawOutput = json.data.output
+      
+      // 추천 정보 파싱
+      let book = '추천 성경'
+      let passage = '본문 범위'
+      let reason = '추천 사유가 여기에 표시됩니다.'
+      let coreMessage = '핵심 메시지'
+      
+      const bookMatch = rawOutput.match(/- 선정한 성경책:\s*(.*)/)
+      const passageMatch = rawOutput.match(/- 선정한 본문 범위:\s*(.*)/)
+      const reasonMatch = rawOutput.match(/- 선정 이유:\s*(.*)/)
+      const messageMatch = rawOutput.match(/- 핵심 메시지:\s*(.*)/)
+      
+      if (bookMatch) book = bookMatch[1].trim()
+      if (passageMatch) passage = passageMatch[1].trim()
+      if (reasonMatch) reason = reasonMatch[1].trim()
+      if (messageMatch) coreMessage = messageMatch[1].trim()
+      
+      setRecommendInfo({ book, passage, reason, coreMessage })
+      
+      // 메타데이터 제외한 실제 큐티 본문 추출
+      let finalContent = rawOutput
+      const bodyIndex = rawOutput.indexOf('## 기본 정보')
+      if (bodyIndex !== -1) {
+        finalContent = rawOutput.substring(bodyIndex)
+      }
+      
+      // 뷰어 및 역사 저장 데이터 형태로 셋업
+      setFinalManuscript(finalContent)
+      
+      // AI 추천 1일치용 단일 DayManuscripts 구성
+      const cleanBookName = book.replace(/요일/g, '').trim()
+      setDayManuscripts({
+        '오늘': {
+          dayName: '오늘',
+          passage,
+          title: coreMessage,
+          focus: coreMessage,
+          finalContent: finalContent
+        }
+      })
+      setActiveDay('오늘')
+      
+      // 바로 4단계 뷰어 결과 화면으로 이동
+      setStep(4)
+    } catch (e: any) {
+      setError(e.message || '요청 중 오류가 발생했습니다.')
+    } finally {
+      setSplitting(false)
+    }
+  }
+
+  // 직전 큐티 본문 이어서 추천 계산
+  const applyLastHistoryPassage = () => {
+    if (historyEntries.length === 0) {
+      setError('이전 저장된 히스토리 기록이 존재하지 않습니다.')
+      return
+    }
+    setError(null)
+    
+    // 가장 최근 항목
+    const lastEntry = historyEntries[0]
+    const book = lastEntry.bible_book
+    const endPass = lastEntry.end_passage || lastEntry.start_passage || ''
+    
+    if (!endPass) {
+      setError('이전 기록의 본문 정보를 분석할 수 없습니다.')
+      return
+    }
+    
+    // 예: "창세기 2:25" 또는 "창세기 2장 25" 등 장절 파싱
+    const match = endPass.match(/(\d+)[:장]\s*(\d+)?/)
+    if (!match) {
+      // 장만 있는 경우 (예: "창세기 2장" 또는 "창세기 2")
+      const chapMatch = endPass.match(/(\d+)/)
+      if (chapMatch) {
+        const nextChap = parseInt(chapMatch[1]) + 1
+        updateForm({ bibleBook: book })
+        setActiveStartChapter(nextChap)
+        setActiveEndChapter(null)
+        setStartVerse(1)
+        setEndVerse(null)
+        setStartPassage(`${book} ${nextChap}:1`)
+        setEndPassage('')
+      } else {
+        setError('마지막 구절의 형식을 분석할 수 없습니다.')
+      }
+      return
+    }
+    
+    const chap = parseInt(match[1])
+    const verse = match[2] ? parseInt(match[2]) : null
+    
+    updateForm({ bibleBook: book })
+    
+    if (verse !== null) {
+      // 절 다음 절로 이어서
+      const nextVerse = verse + 1
+      setActiveStartChapter(chap)
+      setActiveEndChapter(null)
+      setStartVerse(nextVerse)
+      setEndVerse(null)
+      setStartPassage(`${book} ${chap}:${nextVerse}`)
+      setEndPassage('')
+    } else {
+      // 장 다음 장으로 이어서
+      const nextChap = chap + 1
+      setActiveStartChapter(nextChap)
+      setActiveEndChapter(null)
+      setStartVerse(1)
+      setEndVerse(null)
+      setStartPassage(`${book} ${nextChap}:1`)
+      setEndPassage('')
     }
   }
 
@@ -704,7 +1137,7 @@ export default function QtGenerator() {
     // parseDays가 인식할 수 있는 구조화된 마크다운 생성
     // finalContent 내에 이미 섹션 헤더(## 제목, ## 오늘의 본문 등)가 포함되어 있으므로
     // Day 구분 마커만 감싸주면 됩니다
-    const synthetic = `### Day 1 — ${dm.title || dayName}요일\n\n${content}`
+    const synthetic = `### Day 1 — ${dm.title || formatDayLabel(dayName)}\n\n${content}`
     setSingleDayPdf(synthetic)
     await new Promise(r => setTimeout(r, 600))
     try {
@@ -956,12 +1389,73 @@ export default function QtGenerator() {
       {/* 새로 작성 모드: showHistory가 false일 때만 스텝 표시 */}
       {!showHistory && (
       <>
-      {/* STEP 1: 주간 본문 분할 */}
+      {/* STEP 1: 주간/월간/추천 본문 분할 */}
       {step === 1 && (
         <div className="space-y-5 animate-fadeIn">
-          {/* 입력 정보 설정 */}
-          <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">1단계: 성경권 선택 및 범위 설정</h3>
+          {/* 모드 선택 탭 */}
+          <div className="flex items-center gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-2xl">
+            {[
+              { id: 'weekly', name: '📅 주간 큐티', desc: '6일치 쪼개기 제작' },
+              { id: 'monthly', name: '📚 월간 큐티', desc: '24일 연속 큐티 제작' },
+              { id: 'recommend', name: '✨ AI 추천 일일 큐티', desc: '스스로 선정 및 즉시 생성' },
+            ].map(m => {
+              const active = qtMode === m.id
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    const nextMode = m.id as 'weekly' | 'monthly' | 'recommend'
+                    setQtMode(nextMode)
+                    setError(null)
+                    // 모드 전환 시 startDate를 모드 규칙에 맞게 재정규화
+                    if (nextMode === 'weekly') {
+                      updateForm({ startDate: getMondayOfWeek(form.startDate) })
+                    } else if (nextMode === 'monthly') {
+                      updateForm({ startDate: getNextMonthFirstDay() })
+                    }
+                  }}
+                  className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-300 ${
+                    active
+                      ? 'bg-indigo-600/10 border border-indigo-500/30 text-indigo-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                      : 'border border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.01]'
+                  }`}
+                >
+                  <span className="text-[10px] font-bold">{m.name}</span>
+                  <span className="text-[8px] opacity-60 mt-0.5">{m.desc}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* AI 추천 모드인 경우 */}
+          {qtMode === 'recommend' && (
+            <div className="glass-dark rounded-2xl border border-white/5 p-8 flex flex-col items-center text-center space-y-5 animate-fadeIn">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center text-indigo-400 text-xl font-bold">
+                ✨
+              </div>
+              <div className="space-y-1.5 max-w-sm">
+                <h4 className="text-[12px] font-bold text-slate-200">성경 66권 전체 대상 자동 묵상 생성</h4>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  오늘 묵상하기에 가장 은혜롭고 균형 있는 성경 본문을 AI 묵상 도우미가 직접 선별하고, 
+                  [장년용/청소년·새신자용] 이중화 묵상 원고를 1분 이내에 빌드합니다.
+                </p>
+              </div>
+              <button
+                onClick={handleGenerateRecommendDaily}
+                disabled={splitting}
+                className="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-3 text-[11px] font-bold transition-all shadow-[0_4px_12px_rgba(99,102,241,0.2)] disabled:opacity-50"
+              >
+                {splitting ? '⚡ 오늘의 말씀 선별 및 집필 중...' : '✨ 오늘의 추천 큐티 생성'}
+              </button>
+            </div>
+          )}
+
+          {/* 주간/월간 모드 설정 */}
+          {qtMode !== 'recommend' && (
+            <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+                1단계: {qtMode === 'weekly' ? '주간' : '월간'} 성경권 선택 및 범위 설정
+              </h3>
             
             {/* 성경권 격자 선택 */}
             <div className="space-y-1.5">
@@ -1051,49 +1545,131 @@ export default function QtGenerator() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500">주차 (Week)</label>
+                <div className="flex items-center h-5">
+                  <label className="text-[11px] font-bold text-slate-500">주차 (Week)</label>
+                </div>
                 <input
                   type="number" min={1} max={200}
                   value={form.weekNumber}
                   onChange={e => updateForm({ weekNumber: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
                 />
               </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[11px] font-bold text-slate-500">본문 전체 범위 (시작 - 종료)</label>
-                <div className="flex items-center gap-2">
+
+              {/* 시작 날짜/월 입력 - 주간/월간 모드별 */}
+              <div className="space-y-1.5">
+                <div className="flex items-center h-5">
+                  <label className="text-[11px] font-bold text-slate-500">
+                    {qtMode === 'monthly' ? '시작 월' : '시작 날짜'}
+                    <span className="text-[9px] text-indigo-400/80 font-medium ml-1">
+                      {qtMode === 'monthly' ? '(1일 자동 정규화, 일요일 제외)' : '(월요일 자동 정규화)'}
+                    </span>
+                  </label>
+                </div>
+                {qtMode === 'monthly' ? (
                   <input
-                    type="text"
-                    value={startPassage}
-                    onChange={e => setStartPassage(e.target.value)}
-                    placeholder="예: 창세기 1:1"
-                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                    type="month"
+                    value={form.startDate.slice(0, 7)}
+                    onChange={e => {
+                      const val = e.target.value
+                      if (val) updateForm({ startDate: normalizeMonthlyDate(`${val}-01`) })
+                    }}
+                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
                   />
-                  <span className="text-slate-600 text-xs">~</span>
+                ) : (
                   <input
-                    type="text"
-                    value={endPassage}
-                    onChange={e => setEndPassage(e.target.value)}
-                    placeholder="예: 창세기 2:3 (선택)"
-                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                    type="date"
+                    value={form.startDate}
+                    onChange={e => {
+                      const val = e.target.value
+                      if (val) updateForm({ startDate: getMondayOfWeek(val) })
+                    }}
+                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
                   />
+                )}
+                <div className="text-[9px] text-indigo-400 font-bold flex items-center gap-1">
+                  📅 {qtMode === 'monthly'
+                    ? (() => {
+                        const wdLabels = getWeekdayDateLabels(normalizedStartDate)
+                        return `${wdLabels[0]} ~ ${wdLabels[wdLabels.length - 1]} · 총 ${wdLabels.length}일 (일요일 제외)`
+                      })()
+                    : formatDateRangeLabel(normalizedStartDate, previewDaysCount)}
                 </div>
               </div>
+
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500">대상 독자</label>
+                <div className="flex items-center h-5">
+                  <label className="text-[11px] font-bold text-slate-500">대상 독자</label>
+                </div>
                 <select
                   value={form.audience}
                   onChange={e => updateForm({ audience: e.target.value })}
-                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 appearance-none"
+                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
                 >
                   {['초신자', '일반 성도', '청년', '장년', '온 가족'].map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            {/* 본문 전체 범위 - 별도 행 */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between h-5">
+                <label className="text-[11px] font-bold text-slate-500">본문 전체 범위 (시작 - 종료)</label>
+                {historyEntries.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={applyLastHistoryPassage}
+                    className="text-[9px] font-extrabold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-0.5"
+                  >
+                    🔗 직전 완료 본문 이어서 ({historyEntries[0].bible_book} {historyEntries[0].end_passage || historyEntries[0].start_passage})
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={startPassage}
+                  onChange={e => setStartPassage(e.target.value)}
+                  placeholder="예: 창세기 1:1"
+                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                />
+                <span className="text-slate-600 text-xs">~</span>
+                <input
+                  type="text"
+                  value={endPassage}
+                  onChange={e => setEndPassage(e.target.value)}
+                  placeholder="예: 창세기 2:3 (선택)"
+                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                />
+              </div>
+              {!endPassage?.trim() && (
+                <div className="text-[9px] text-indigo-400/80 font-medium flex items-center gap-1">
+                  💡 종료 본문을 비워두면 시작 본문부터 자동으로 이어서 분할합니다{qtMode === 'monthly' ? ' (10일 단위 청킹 생성)' : ''}.
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+              {/* 월간 청킹 진행 프로그레스 바 */}
+              {splitting && chunkProgress && (
+                <div className="flex-1 max-w-sm space-y-1.5 animate-fadeIn">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-indigo-300">
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      📚 월간 분할 ({chunkProgress.current}/{chunkProgress.total} 단계)
+                    </span>
+                    <span className="text-slate-500">{chunkProgress.dayRange}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#060a16] border border-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-500 ease-out"
+                      style={{ width: `${(chunkProgress.current / chunkProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               <button
                 onClick={handleGenerateSplit}
                 disabled={splitting}
@@ -1102,17 +1678,20 @@ export default function QtGenerator() {
                 {splitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    주간 의미 본문 분석/분할 중...
+                    {chunkProgress
+                      ? `월간 청킹 분할 중... (${chunkProgress.current}/${chunkProgress.total})`
+                      : `${qtMode === 'weekly' ? '주간' : '월간'} 본문 기획 분석/분할 중...`}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    주간 본문 분할안 생성하기
+                    {qtMode === 'weekly' ? '주간' : '월간'} 본문 분할안 생성하기
                   </>
                 )}
               </button>
             </div>
           </div>
+          )}
 
           {/* 분할안 결과 피드백 */}
           {splitMarkdown && (
@@ -1136,7 +1715,7 @@ export default function QtGenerator() {
                   <table className="w-full text-left border-collapse text-[12px]">
                     <thead>
                       <tr className="border-b border-white/10 text-slate-500 font-bold">
-                        <th className="py-2.5 px-3">요일</th>
+                        <th className="py-2.5 px-3 w-24 whitespace-nowrap">요일/일차</th>
                         <th className="py-2.5 px-3">분할 본문 범위</th>
                         <th className="py-2.5 px-3">큐티 소제목</th>
                         <th className="py-2.5 px-3">핵심 묵상 초점</th>
@@ -1146,8 +1725,8 @@ export default function QtGenerator() {
                     <tbody className="divide-y divide-white/5 text-slate-300">
                       {splitDays.map((d, i) => (
                         <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 px-3 font-bold text-slate-100 text-center w-14">
-                            <span className="px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-400/20 text-indigo-300">
+                          <td className="py-3 px-3 font-bold text-slate-100 text-center w-24 whitespace-nowrap">
+                            <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 whitespace-nowrap">
                               {d.day.replace(/요일/g, '')}
                             </span>
                           </td>
@@ -1173,13 +1752,60 @@ export default function QtGenerator() {
       {/* STEP 2: 요일별 QT 집필 */}
       {step === 2 && (
         <div className="space-y-6 animate-fadeIn">
-          {/* 요일 선택 탭 */}
-          <div className="flex flex-wrap gap-2 border-b border-white/5 pb-3">
+          {/* 일괄 연속 생성 제어 보드 */}
+          <div className="glass-dark rounded-2xl border border-indigo-500/10 p-5 space-y-4 shadow-[0_4px_24px_rgba(99,102,241,0.03)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <h4 className="text-[12px] font-bold text-indigo-300 flex items-center gap-1.5">
+                  ⚡ {qtMode === 'weekly' ? '주간' : '월간'} 큐티 원고 일괄 연속 자동 집필
+                </h4>
+                <p className="text-[9px] text-slate-500 leading-relaxed">
+                  각 날짜의 쪼개진 본문 계획에 따라 AI가 순차적으로 원고를 자동 집필합니다. (화면을 끄지 마세요)
+                </p>
+              </div>
+              <button
+                onClick={handleGenerateAllMonthly}
+                disabled={monthlyGenerating || Object.keys(dayManuscripts).length === 0}
+                className="shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold transition-all shadow-[0_4px_12px_rgba(99,102,241,0.2)] disabled:opacity-40"
+              >
+                {monthlyGenerating ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    연속 생성 중 ({monthlyProgress}%)
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    전체 일자 연속 생성 시작
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* 연속 생성 프로그레스 바 */}
+            {monthlyGenerating && (
+              <div className="space-y-1.5 animate-fadeIn">
+                <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
+                  <span>전체 진행 상황</span>
+                  <span>{monthlyProgress}% 완료</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#060a16] border border-white/5 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-500 ease-out" 
+                    style={{ width: `${monthlyProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 요일/날짜 선택 탭 */}
+          <div className="flex flex-wrap gap-1.5 border-b border-white/5 pb-3">
             {Object.keys(dayManuscripts).map((d) => {
               const item = dayManuscripts[d]
-              const hasDraft = !!item.draftContent
               const hasFinal = !!item.finalContent
               const active = activeDay === d
+              const label = formatDayLabel(d)
               
               return (
                 <button
@@ -1188,23 +1814,20 @@ export default function QtGenerator() {
                     setActiveDay(d)
                     setError(null)
                   }}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-[12px] font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all ${
                     active 
-                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_12px_rgba(99,102,241,0.2)]'
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_10px_rgba(99,102,241,0.2)]'
                       : hasFinal
                       ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-300 hover:bg-emerald-600/20'
-                      : 'bg-[#060a16] border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
+                      : 'bg-white/[0.01] border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
                   }`}
                 >
                   {item.isGenerating ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" />
                   ) : hasFinal ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <Check className="w-3 h-3 text-emerald-400" />
                   ) : null}
-                  {d}요일
-                  <span className="text-[9px] opacity-60">
-                    {hasFinal ? '완료' : item.isGenerating ? '집필 중' : '대기'}
-                  </span>
+                  {label}
                 </button>
               )
             })}
@@ -1216,7 +1839,7 @@ export default function QtGenerator() {
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <h4 className="text-[13px] font-bold text-slate-300 flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded-lg bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px]">
-                    {activeDay}요일
+                    {formatDayLabel(activeDay)}
                   </span>
                   본문 및 기획 세부 수정
                 </h4>
@@ -1311,7 +1934,7 @@ export default function QtGenerator() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      {activeDay}요일 QT 최종 생성하기 (2단 체인)
+                      {formatDayLabel(activeDay)} QT 최종 생성하기 (2단 체인)
                     </>
                   )}
                 </button>

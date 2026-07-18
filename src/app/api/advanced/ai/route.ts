@@ -22,7 +22,10 @@ import {
   SYSTEM_PROMPT_DRAFT,
   SYSTEM_PROMPT_REFINE,
   SYSTEM_PROMPT_ASSEMBLE,
+  SYSTEM_PROMPT_RECOMMEND_DAILY,
 } from '@/lib/ai/prompts/qt'
+import { THEOLOGICAL_DNA } from '@/lib/ai/prompts/theologicalDna'
+
 
 let _openai: OpenAI | null = null
 function getOpenai() {
@@ -488,6 +491,7 @@ Return ONLY a JSON object (no markdown, no explanation):
   'qt-draft': SYSTEM_PROMPT_DRAFT,
   'qt-refine': SYSTEM_PROMPT_REFINE,
   'qt-assemble': SYSTEM_PROMPT_ASSEMBLE,
+  'qt-recommend-daily': SYSTEM_PROMPT_RECOMMEND_DAILY,
 }
 
 export async function POST(request: NextRequest) {
@@ -516,6 +520,8 @@ export async function POST(request: NextRequest) {
     let userText: string
     let maxTokens = 2000
     let temperature = 0.3
+    let frequencyPenalty = 0
+    let presencePenalty = 0
     let model = 'gpt-4o-mini'
     let bibleActualVerses: Map<number, string> | null = null
 
@@ -725,9 +731,9 @@ ${audience || season ? `# 컨텍스트\n${audience ? `- 회중: ${audience}\n` :
 
       const versionLabel = ver === 'greek' ? '원어 (Greek NT or Hebrew OT)'
         : ver === 'translit' ? '음역 (Transliteration of the original)'
-        : ver === 'niv' ? 'NIV (New International Version, 2011)'
-        : ver === 'esv' ? 'ESV (English Standard Version, 2016)'
-        : ''
+          : ver === 'niv' ? 'NIV (New International Version, 2011)'
+            : ver === 'esv' ? 'ESV (English Standard Version, 2016)'
+              : ''
 
       if (!versionLabel) {
         return NextResponse.json({
@@ -901,8 +907,8 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
           if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
         }
       }
-      userText = `설교 서론을 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n\n## 전달 도입 방향 (PrepTab에서 작성)\n${deliveryIntro || '(설정되지 않음)'}\n\n## 이후 이어질 섹션들 (서론에서 자연스럽게 예고할 것)\n${nextSections || '본론 → 결론 → 적용'}\n\n## 준비 단계 데이터 (서론에서 이 내용을 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 서론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 주제와 흐름을 통합하여 하나의 설교로 엮어내는 서론을 작성하세요. 이후 이어질 섹션들을 자연스럽게 예고하고, 회중 프로필에 맞는 언어를 사용하십시오. 준비 단계의 핵심 원어와 통찰을 서론 문장 속에 자연스럽게 녹여내십시오.`
-      maxTokens = 2000
+      userText = `설교 서론을 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n\n## 전달 도입 방향 (PrepTab에서 작성)\n${deliveryIntro || '(설정되지 않음)'}\n\n## 이후 이어질 섹션들 (서론에서 자연스럽게 예고할 것)\n${nextSections || '본론 → 결론 → 적용'}\n\n## 준비 단계 데이터 (서론에서 이 내용을 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 서론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 주제와 흐름을 통합하여 하나의 설교로 엮어내는 서론을 작성하세요. 이후 이어질 섹션들을 자연스럽게 예고하고, 회중 프로필에 맞는 언어를 사용하십시오. 준비 단계의 핵심 원어와 통찰을 서론 문장 속에 자연스럽게 녹여내십시오.\n\n[🚨중요 지시: 내용을 절대 축약하거나 대충 건너뛰지 마십시오. 설교의 서두를 여는 도입인 만큼 충분한 설명과 상황적 배경, 회중의 집중을 돕는 자세한 서술을 담아 최소 1000자 이상으로 매우 풍성하고 완성도 높게 기술해 주세요.]`
+      maxTokens = 3500
       temperature = 0.7
     } else if (type === 'manuscript-conclusion') {
       const { coreMessage, outlines, applicationPoints, sermonPurpose, expectedResponse, deliveryConclusion, previousContent, greekWords, prepInsights, multiPassageData } = data
@@ -920,8 +926,8 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
           if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
         }
       }
-      userText = `설교 결론을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트 (결론 이후 적용 섹션에서 다룰 내용)\n${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 기대 반응\n${expectedResponse || ''}\n\n## 전달 마무리 방향 (PrepTab에서 작성)\n${deliveryConclusion || '(설정되지 않음)'}\n\n## 이전 섹션들에서 작성된 내용 (결론이 이 흐름을 자연스럽게 수렴할 것)\n${previousContent || '(아직 작성된 내용 없음)'}\n\n## 준비 단계 데이터 (결론에서 이 내용을 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 결론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 핵심 메시지를 종합하여 결론을 구성하세요. 이전 섹션들의 흐름을 중심명제로 자연스럽게 수렴하고, 적용 포인트로 이어지는 다리를 놓으십시오. 준비 단계의 핵심 원어와 통찰을 결론 문장 속에 녹여내십시오.`
-      maxTokens = 2000
+      userText = `설교 결론을 작성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 적용 포인트 (결론 이후 적용 섹션에서 다룰 내용)\n${(applicationPoints || []).map((a: any) => `- [${a.audienceTag}] ${a.point}`).join('\n')}\n\n## 설교 목적\n${sermonPurpose || ''}\n\n## 기대 반응\n${expectedResponse || ''}\n\n## 전달 마무리 방향 (PrepTab에서 작성)\n${deliveryConclusion || '(설정되지 않음)'}\n\n## 이전 섹션들에서 작성된 내용 (결론이 이 흐름을 자연스럽게 수렴할 것)\n${previousContent || '(아직 작성된 내용 없음)'}\n\n## 준비 단계 데이터 (결론에서 이 내용을 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 설교 결론을 작성해주세요. 다중 본문이 제공된 경우 각 본문의 핵심 메시지를 종합하여 결론을 구성하세요. 이전 섹션들의 흐름을 중심명제로 자연스럽게 수렴하고, 적용 포인트로 이어지는 다리를 놓으십시오. 준비 단계의 핵심 원어와 통찰을 결론 문장 속에 녹여내십시오.\n\n[🚨중요 지시: 결론부를 몇 문장으로 요약하여 끝내지 마십시오. 신학적 핵심 메시지를 회중의 신앙 양심에 선포하고, 그리스도 중심의 복음적 선언으로 마무리하는 긴 전개를 적용해 최소 1000자 이상으로 깊이 있게 저술해 주세요.]`
+      maxTokens = 3500
       temperature = 0.7
     } else if (type === 'manuscript-application') {
       const { coreMessage, outlines, applicationPoints, congregationProfile } = data
@@ -944,8 +950,8 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
           if (mp.commentaries?.length > 0) studySection += `\n**주석 통찰**:\n${mp.commentaries.join('\n')}`
         }
       }
-      userText = `설교 본론 한 대지를 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 해당 대지 (이 섹션이 다룰 내용)\n제목: ${outlinePoint?.title || ''}\n설명: ${outlinePoint?.content || ''}\n관련 구절: ${outlinePoint?.passage || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 연구 통찰\n${(researchInsights || []).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 본론 위치\n${sectionPosition || 1} / ${totalSections || 1} 번째 대지\n${sectionPosition === 1 ? '→ 첫 번째 대지: 본문의 기본적 의미와 맥락을 제시하는 토대 작업' : sectionPosition === 2 ? '→ 두 번째 대지: 첫 번째 대지의 진리를 심화하고 확장하는 신학적 전개' : sectionPosition === 3 ? '→ 세 번째 대지: 신학적 진리를 회중의 삶으로 연결하는 전환적 대지' : '→ 네 번째 대지: 그리스도 중심으로 모든 것을 수렴하는 복음의 완결성'}\n\n## 이전 섹션 내용 (이전 흐름을 이어갈 것)\n${previousContent || '(이전 섹션 내용 없음)'}\n\n## 이후 이어질 섹션들 (다음 섹션으로 자연스럽게 전환할 것)\n${nextSections || '결론 → 적용'}\n\n## 준비 단계 데이터 (본론 문장 속에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}${gw.note ? ` — ${gw.note}` : ''}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 해당 대지의 설교 원고를 작성해주세요. 다중 본문이 제공된 경우 현재 대지와 가장 관련 있는 본문의 연구 데이터를 우선 활용하세요. 반드시 구절 인용, 원어 통찰, 신학적 깊이, 회중 연결, 다음 섹션으로의 전환 문장을 포함해야 합니다. 제공된 핵심 원어(greekWords)와 통찰(prepInsights)을 원고에 자연스럽게 녹여 사용하십시오.`
-      maxTokens = 3000
+      userText = `설교 본론 한 대지를 작성해주세요:\n\n## 본문\n${passage || ''}\n\n## 중심명제\n${coreMessage || ''}\n\n## 설교 제목\n${sermonTitle || ''}\n\n## 해당 대지 (이 섹션이 다룰 내용)\n제목: ${outlinePoint?.title || ''}\n설명: ${outlinePoint?.content || ''}\n관련 구절: ${outlinePoint?.passage || ''}\n\n## 본문 구조\n${passageStructure || ''}\n\n## 연구 통찰\n${(researchInsights || []).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 본론 위치\n${sectionPosition || 1} / ${totalSections || 1} 번째 대지\n${sectionPosition === 1 ? '→ 첫 번째 대지: 본문의 기본적 의미와 맥락을 제시하는 토대 작업' : sectionPosition === 2 ? '→ 두 번째 대지: 첫 번째 대지의 진리를 심화하고 확장하는 신학적 전개' : sectionPosition === 3 ? '→ 세 번째 대지: 신학적 진리를 회중의 삶으로 연결하는 전환적 대지' : '→ 네 번째 대지: 그리스도 중심으로 모든 것을 수렴하는 복음의 완결성'}\n\n## 이전 섹션 내용 (이전 흐름을 이어갈 것)\n${previousContent || '(이전 섹션 내용 없음)'}\n\n## 이후 이어질 섹션들 (다음 섹션으로 자연스럽게 전환할 것)\n${nextSections || '결론 → 적용'}\n\n## 준비 단계 데이터 (본론 문장 속에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}${gw.note ? ` — ${gw.note}` : ''}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 정보를 바탕으로 해당 대지의 설교 원고를 작성해주세요. 다중 본문이 제공된 경우 현재 대지와 가장 관련 있는 본문의 연구 데이터를 우선 활용하세요. 반드시 구절 인용, 원어 통찰, 신학적 깊이, 회중 연결, 다음 섹션으로의 전환 문장을 포함해야 합니다. 제공된 핵심 원어(greekWords)와 통찰(prepInsights)을 원고에 자연스럽게 녹여 사용하십시오.\n\n[🚨중요 지시: 절대 한 대지를 대충 축약하여 끝내지 마십시오. 성경 구절에 대한 자세한 주해적 설명, 역사적/문맥적 의미, 그리고 신학적인 깊이 있는 전개를 각각 구체적인 단락으로 나누어 서술하십시오. 실제 설교단에서 길게 호흡하며 전파할 수 있도록 최소 2500자 이상의 매우 긴 분량으로 각 논지를 꼼꼼하고 완결성 있게 확장하여 작성해 주십시오.]`
+      maxTokens = 6000
       temperature = 0.7
     } else if (type === 'manuscript-application-reconstruct') {
       const { coreMessage, outlines, applicationPoints, congregationProfile, existingContent, previousContent, greekWords, prepInsights, multiPassageData } = data
@@ -959,8 +965,8 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
           if (mp.words?.length > 0) studySection += `\n**원어 연구**:\n${mp.words.map((w: any) => `- ${w.word}: ${w.meaning || ''}${w.note ? ` — ${w.note}` : ''}`).join('\n')}`
         }
       }
-      userText = `설교 적용 문장을 재구성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 준비 단계에서 정리한 적용 포인트 (반드시 모두 포함)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag || '전체'}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 결론에서 작성된 내용 (적용이 이 흐름에서 자연스럽게 이어질 것)\n${previousContent || '(아직 결론이 작성되지 않음)'}\n\n## 기존 적용 원고 (연속성 유지 참고)\n${existingContent || '(기존 내용 없음)'}\n\n## 준비 단계 데이터 (적용 문장에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 적용 포인트들을 하나의 완성된 설교 적용 문장으로 재구성해주세요. 설교자가 준비 단계에서 작성한 적용 포인트를 반드시 모두 포함하고, 새로운 적용을 추가하거나 기존 포인트를 삭제하지 마십시오. 다중 본문이 제공된 경우 각 본문의 주제가 적용에 반영되도록 하세요. 결론의 흐름에서 자연스럽게 이어지도록 하십시오. 준비 단계의 핵심 원어와 통찰을 적용 문장 속에 자연스럽게 녹여내십시오.`
-      maxTokens = 3000
+      userText = `설교 적용 문장을 재구성해주세요:\n\n## 중심명제\n${coreMessage || ''}\n\n## 대지 구조\n${(outlines || []).map((o: any, i: number) => `[대지 ${i + 1}] ${o.title}: ${o.description}`).join('\n')}\n\n## 준비 단계에서 정리한 적용 포인트 (반드시 모두 포함)\n${(applicationPoints || []).map((a: any, i: number) => `${i + 1}. [${a.audienceTag || '전체'}] ${a.point}${a.pastoralNote ? ` (목회적 메모: ${a.pastoralNote})` : ''}`).join('\n')}\n\n## 회중 프로필\n연령대: ${(congregationProfile?.dominantAgeGroups || []).join(', ')}\n신앙 성숙도: ${congregationProfile?.faithMaturity || ''}\n교회 상황: ${congregationProfile?.churchContext || ''}\n목회적 우선순위: ${congregationProfile?.pastoralPriorities || ''}\n시즌 특이사항: ${congregationProfile?.seasonNote || ''}\n\n## 결론에서 작성된 내용 (적용이 이 흐름에서 자연스럽게 이어질 것)\n${previousContent || '(아직 결론이 작성되지 않음)'}\n\n## 기존 적용 원고 (연속성 유지 참고)\n${existingContent || '(기존 내용 없음)'}\n\n## 준비 단계 데이터 (적용 문장에 자연스럽게 녹여 사용하십시오)\n### 핵심 원어\n${(greekWords || []).map((gw: any) => `- ${gw.greek} (${gw.word}): ${gw.meaning}`).join('\n') || '(분석된 원어 없음)'}\n### 통찰 요약\n${(prepInsights || []).join('\n') || '(통찰 없음)'}${studySection}\n\n위 적용 포인트들을 하나의 완성된 설교 적용 문장으로 재구성해주세요. 설교자가 준비 단계에서 작성한 적용 포인트를 반드시 모두 포함하고, 새로운 적용을 추가하거나 기존 포인트를 삭제하지 마십시오. 다중 본문이 제공된 경우 각 본문의 주제가 적용에 반영되도록 하세요. 결론의 흐름에서 자연스럽게 이어지도록 하십시오. 준비 단계의 핵심 원어와 통찰을 적용 문장 속에 자연스럽게 녹여내십시오.\n\n[🚨중요 지시: 적용 문장을 단순 몇 단어로 끝내지 말고, 회중의 현실적인 삶의 영역과 연결되는 도전적이고 자세한 적용 설명을 추가하여 길고 풍성하게 확장해 서술해 주세요.]`
+      maxTokens = 5000
       temperature = 0.7
     } else if (type === 'illustration') {
       const { sectionContent, sectionType, sectionLabel, coreMessage, passage, theme, multiPassageData } = data
@@ -1066,14 +1072,14 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       const isMulti = passageList.length > 1
       const passageSection = isMulti
         ? `## 본문 (${passageList.length}개)\n${passageList.map((p, i) => {
-            const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
-            return `${i + 1}. ${ref}\n   ${p.text || '(본문 구절 텍스트 없음)'}`
-          }).join('\n\n')}`
+          const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
+          return `${i + 1}. ${ref}\n   ${p.text || '(본문 구절 텍스트 없음)'}`
+        }).join('\n\n')}`
         : `## 본문\n${(() => {
-            const p = passageList[0] || { book: '', chapter: '', verseStart: '', verseEnd: null, text: '' }
-            const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
-            return `${ref}\n\n${p.text || '(본문 구절 텍스트 없음)'}`
-          })()}`
+          const p = passageList[0] || { book: '', chapter: '', verseStart: '', verseEnd: null, text: '' }
+          const ref = `${p.book} ${p.chapter}:${p.verseStart}${p.verseEnd && String(p.verseEnd) !== String(p.verseStart) ? `-${p.verseEnd}` : ''}`
+          return `${ref}\n\n${p.text || '(본문 구절 텍스트 없음)'}`
+        })()}`
 
       const contextLines = [
         `- 회중: ${audience || '일반'}`,
@@ -1121,16 +1127,70 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       maxTokens = 2500
       temperature = 0.5
     } else if (type === 'qt-split') {
-      const { bibleBook, weekNumber, startPassage, endPassage, audience, level } = data
+      const { bibleBook, weekNumber, startPassage, endPassage, audience, level, daysCount, dateList, chunkInfo } = data
+      const limit = daysCount || 6
+      const hasEndPassage = !!endPassage && endPassage.trim().length > 0
+
+      // 프롬프트 내의 {일수}를 동적으로 교체
+      systemPrompt = systemPrompt.replace(/{일수}/g, String(limit))
+
+      // 종료 본문이 비어있을 때 자동 이어가기 모드 지침
+      if (!hasEndPassage) {
+        systemPrompt += `\n\n## 자동 이어가기 모드 (종료 본문 미지정)
+- 시작 본문부터 ${limit}일치로 자연스럽게 분할하십시오.
+- 하루 분량은 15~25절 기준의 의미 단락으로 결정하십시오.
+- 한 성경책이 완료되면 7대 원칙에 따라 다음 성경책 1장 1절부터 이어가십시오.
+- 마지막 날의 끝 절을 정확히 명시하여 다음 분할에서 이어 사용할 수 있도록 하십시오.`
+      }
+
+      // 청크 정보가 있을 때 (월간 모드 청킹 분할)
+      if (chunkInfo) {
+        systemPrompt += `\n\n## 청크 분할 정보 (월간 큐티)
+- 현재 청크: ${chunkInfo.current}/${chunkInfo.total}
+- 이 청크가 담당하는 일수: ${limit}일
+- 이 청크는 전체 월간 큐티의 ${chunkInfo.offset + 1}~${chunkInfo.offset + limit}일차를 담당합니다.
+- 이전 청크에서 끝난 본문 다음부터 정확히 이어서 분할하십시오.
+- 생략이나 줄임표(...) 사용을 절대 금지합니다.
+- ⚠️ [필수] 이전 청크에서 이미 다룬 장/절(시작 본문보다 더 이전의 구절)을 절대 반복하지 마십시오. 이전 주의 내용을 다시 쓰지 말고, 반드시 이어서 진행하십시오.`
+      } else if (limit > 10) {
+        // 청크 정보 없이 10일 초과 요청이 온 경우 (안전장치)
+        systemPrompt += `\n\n## [경고] 반드시 ${limit}일치 데이터를 전부 작성하십시오. 중간에서 끊거나 반복하지 말고, 반드시 지정된 ${limit}일차까지의 모든 날짜의 본문 분할표 행을 누락 없이 출력해야 합니다.`
+      }
+
+      // 날짜 목록에 대한 AI 가이드 추가
+      if (dateList && Array.isArray(dateList) && dateList.length > 0) {
+        systemPrompt += `\n\n## 날짜 매핑 지침 (중요)
+본문 분할표의 첫 번째 열('날짜')에는 아래 제공된 실제 날짜 목록 순서대로 정확히 채우십시오. 날짜 포맷을 절대 변경하거나 임의로 단축하지 마십시오.
+
+## 적용할 실제 날짜 목록 (${limit}일치):
+${dateList.map((d: string, i: number) => `${i + 1}일차: ${d}`).join('\n')}`
+      }
+
       userText = `## 입력 정보
 - 성경권: ${bibleBook || ''}
 - 이번 주차: ${weekNumber || 1}
 - 시작 본문: ${startPassage || ''}
-- 종료 본문: ${endPassage || ''}
+${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 안 됨 - 자동 이어가기 모드)'}
 - 대상 독자: ${audience || '일반 성도'}
-- 난이도: ${level || '중'}`
-      maxTokens = 2000
+- 난이도: ${level || '중'}
+- 분할 일수: ${limit}일
+
+## 특별 요구사항
+- 반드시 표의 첫 번째 열에 전달된 날짜 목록(${limit}일치)을 순서대로 하나도 빠뜨리지 말고 출력해 주세요.
+- 분할 이유나 묵상 초점은 명료하고 컴팩트하게 작성하여 토큰 제한에 걸려 출력이 중간에 잘리지 않도록 하십시오.
+- 동일한 문구나 패턴을 반복하지 말고, 각 날짜의 본문과 제목, 초점을 서로 다르게 작성하십시오.
+- ⚠️ [매우 중요] 시작 본문("${startPassage || ''}")보다 이전 구절(더 작은 장 번호)을 절대 포함하지 마십시오. 반드시 "${startPassage || ''}"부터 정확히 시작해서 순차적으로 진행하세요. 이미 다룬 내용을 다시 쓰지 마십시오.
+- ⚠️ [필수] '분할 이유' 열을 절대 비워두지 마십시오. 각 날짜 본문을 선정한 신학적/문맥적 이유를 반드시 1문장씩 채우십시오.`
+      model = 'gpt-4o-mini'
+      maxTokens = limit > 10 ? Math.min(2500 + (limit - 10) * 100, 3500) : 2500
       temperature = 0.5
+      frequencyPenalty = 0.6
+      presencePenalty = 0.3
+    } else if (type === 'qt-recommend-daily') {
+      userText = '성경 66권 전체를 검토하여 오늘 묵상하기 좋은 최적의 본문을 선정하고 1일치 프리미엄 큐티 원고(장년용/청소년·새신자용 이중화 적용 포함)를 집필하십시오.'
+      model = 'gpt-4o-mini'
+      maxTokens = 4000
+      temperature = 0.7
     } else if (type === 'qt-draft') {
       const {
         bibleBook, weekNumber, dayName, dayPassage, dayTitle, dayFocus,
@@ -1197,6 +1257,8 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
         { role: 'user' as const, content: userText },
       ],
       temperature,
+      frequency_penalty: frequencyPenalty,
+      presence_penalty: presencePenalty,
       max_completion_tokens: maxTokens,
       response_format: (type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
     }
@@ -1205,9 +1267,9 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
       res = await getOpenai().chat.completions.create({ model, ...baseRequest })
     } catch (e: any) {
       // 모델 부재/접근 불가 시 fallback (다중 본문 분기에서만)
-      const isModelError = e?.code === 'model_not_found' || 
-                            e?.message?.includes('model') || 
-                            e?.status === 404
+      const isModelError = e?.code === 'model_not_found' ||
+        e?.message?.includes('model') ||
+        e?.status === 404
       if (isModelError && (primaryModel || fallbackModel) && fallbackModel && model !== fallbackModel) {
         console.warn(`[bible-study] Model ${model} unavailable, falling back to ${fallbackModel}:`, e?.message)
         isFallback = true
@@ -1226,7 +1288,7 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
         apiType: `ai:${type}`,
         model: model,
         usage: res.usage,
-      }).catch(() => {})
+      }).catch(() => { })
     }
 
     let output = res.choices[0]?.message?.content || ''

@@ -19,6 +19,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabaseRef = useRef<SupabaseClient | null>(null)
 
   useEffect(() => {
+    // 개발 환경이고 localStorage에 bypass_auth=true가 있거나 URL 파라미터에 ?bypass=true가 있으면 mock user로 인증 우회
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search)
+          if (params.get('bypass') === 'true') {
+            localStorage.setItem('bypass_auth', 'true')
+          }
+
+          if (localStorage.getItem('bypass_auth') === 'true') {
+            setUser({
+              id: 'mock-user-uuid-1234-5678',
+              email: 'test@example.com',
+              user_metadata: { name: '테스트 목회자' },
+              app_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString(),
+            } as any)
+            setLoading(false)
+            return
+          }
+        }
+      } catch (e) {
+        console.warn('Auth bypass check failed:', e)
+      }
+    }
+
     if (!supabaseRef.current) {
       try {
         supabaseRef.current = createClient()
