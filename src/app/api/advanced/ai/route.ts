@@ -4,6 +4,7 @@ import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { mapBookName } from '@/lib/bible/bookMap'
 import { loadKjvData } from '@/lib/bible/kjvData'
 import { formatSectionsForPrompt } from '@/lib/bible/sections'
+import { verifyPassagePool } from '@/lib/qtPassagePool'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
 import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
@@ -1266,6 +1267,26 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
       temperature = 0.5
       frequencyPenalty = 0.6
       presencePenalty = 0.3
+
+      // ★ 본문 범위 사전 검증 (Passage Pool)
+      const ignorePool = data.ignorePoolCheck === true
+      if (!ignorePool) {
+        const poolResult = verifyPassagePool(
+          bibleBook || '',
+          startPassage || '',
+          (hasEndPassage ? endPassage : null) as string | null,
+          limit,
+          10
+        )
+        if (!poolResult.isSufficient) {
+          return NextResponse.json({
+            success: false,
+            error: 'POOL_INSUFFICIENT',
+            poolInfo: poolResult,
+            message: `"${bibleBook}"의 선택한 범위는 ${poolResult.available}절로, ${limit}일 × 10절 = ${poolResult.required}절이 부족합니다. (${poolResult.deficit}절 부족, 약 ${poolResult.shortageDays}일분 부족)`,
+          })
+        }
+      }
     } else if (type === 'qt-recommend-daily') {
       userText = '성경 66권 전체를 검토하여 오늘 묵상하기 좋은 최적의 본문을 선정하고 1일치 프리미엄 큐티 원고(장년용/청소년·새신자용 이중화 적용 포함)를 집필하십시오.'
       model = 'gpt-4o-mini'

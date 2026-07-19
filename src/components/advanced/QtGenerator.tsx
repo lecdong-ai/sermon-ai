@@ -327,6 +327,9 @@ export default function QtGenerator() {
   const [error, setError] = useState<string | null>(null)
   // 월간 청킹 분할 진행 상태 (10일 단위 순차 호출)
   const [chunkProgress, setChunkProgress] = useState<{ current: number; total: number; dayRange: string } | null>(null)
+  // 본문 범위 부족 다이얼로그
+  const [poolError, setPoolError] = useState<any>(null)
+  const extendingPoolRef = useRef(false)
 
   // 성경권 선택 변경 시 처리
   const handleBookChange = (book: string) => {
@@ -619,28 +622,35 @@ export default function QtGenerator() {
     chunkInfo: { current: number; total: number; offset: number }
     forceFullRows?: boolean
   }): Promise<{ output: string; parsed: DaySplitData[] }> => {
+    const dataBody: any = {
+      bibleBook: form.bibleBook,
+      weekNumber: form.weekNumber,
+      startPassage: params.chunkStartPassage,
+      endPassage: params.chunkEndPassage,
+      audience: form.audience,
+      level: form.level,
+      daysCount: params.chunkDaysCount,
+      startDate: normalizedStartDate,
+      dateList: params.chunkDateList,
+      chunkInfo: params.chunkInfo,
+      forceFullRows: params.forceFullRows || false,
+    }
+    // 풀 부족 시 무시(자동 확장) 모드
+    if (params.forceFullRows || extendingPoolRef.current) {
+      dataBody.ignorePoolCheck = true
+    }
     const res = await fetch('/api/advanced/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'qt-split',
-        data: {
-          bibleBook: form.bibleBook,
-          weekNumber: form.weekNumber,
-          startPassage: params.chunkStartPassage,
-          endPassage: params.chunkEndPassage,
-          audience: form.audience,
-          level: form.level,
-          daysCount: params.chunkDaysCount,
-          startDate: normalizedStartDate,
-          dateList: params.chunkDateList,
-          chunkInfo: params.chunkInfo,
-          forceFullRows: params.forceFullRows || false,
-        },
-      }),
+      body: JSON.stringify({ type: 'qt-split', data: dataBody }),
     })
     const json = await res.json()
-    if (!json.success) throw new Error(json.error || '본문 분할안 생성에 실패했습니다.')
+    if (!json.success) {
+      if (json.error === 'POOL_INSUFFICIENT') {
+        throw { code: 'POOL_INSUFFICIENT', poolInfo: json.poolInfo, message: json.message }
+      }
+      throw new Error(json.error || '본문 분할안 생성에 실패했습니다.')
+    }
     const output = json.data.output as string
     const parsed = parseSplitTable(output)
     return { output, parsed }
@@ -1068,10 +1078,15 @@ export default function QtGenerator() {
         setActiveDay(firstDay)
       }
     } catch (e: any) {
-      setError(e.message || '요청 중 오류가 발생했습니다.')
+      if (e?.code === 'POOL_INSUFFICIENT') {
+        setPoolError(e)
+      } else {
+        setError(e.message || '요청 중 오류가 발생했습니다.')
+      }
     } finally {
       setSplitting(false)
       setChunkProgress(null)
+      extendingPoolRef.current = false
     }
   }
 
@@ -2614,6 +2629,93 @@ export default function QtGenerator() {
           >
             닫기
           </button>
+        </div>
+      )}
+
+      {/* 본문 범위 부족 다이얼로그 */}
+      {poolError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setPoolError(null)}>
+          <div className="w-full max-w-lg mx-4 bg-[#0d1121] border border-[#1e2a45] rounded-2xl shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">⚠️</div>
+              <div>
+                <h3 className="text-[15px] font-bold text-slate-100">본문 범위가 부족합니다</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">선택한 본문으로는 {previewDaysCount}일을 채울 수 없습니다</p>
+              </div>
+            </div>
+
+            <div className="bg-[#070b18] rounded-xl p-3.5 mb-5 flex items-center justify-around text-center text-[11px]">
+              <div>
+                <div className="text-[20px] font-bold text-slate-100">{poolError.poolInfo?.available || 0}</div>
+                <div className="text-slate-400 font-medium mt-0.5">가능 절</div>
+              </div>
+              <div className="text-slate-600 text-[20px] font-bold">&lt;</div>
+              <div>
+                <div className="text-[20px] font-bold text-rose-400">{poolError.poolInfo?.required || 0}</div>
+                <div className="text-slate-400 font-medium mt-0.5">필요 절</div>
+              </div>
+              <div className="text-slate-600 text-[20px] font-bold">→</div>
+              <div>
+                <div className="text-[20px] font-bold text-amber-400">-{poolError.poolInfo?.deficit || 0}</div>
+                <div className="text-slate-400 font-medium mt-0.5">부족</div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <button
+                onClick={() => {
+                  setPoolError(null)
+                  setError(null)
+                  extendingPoolRef.current = true
+                  handleGenerateSplit()
+                }}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/30 text-left transition-colors group"
+              >
+                <div>
+                  <div className="text-[13px] font-bold text-indigo-300 group-hover:text-indigo-200">다른 성경책으로 자동 확장</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">현재 범위 이후 다음 성경책으로 이어서 분할합니다</div>
+                </div>
+                <span className="text-indigo-400 text-lg shrink-0">→</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const reduced = Math.max(1, Math.floor(poolError.poolInfo?.available / 10) || 1)
+                  updateForm({ ...form })
+                  setPoolError(null)
+                  setError(`분할 일수를 ${previewDaysCount}일에서 ${reduced}일(으)로 줄여주세요.`)
+                }}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-emerald-600/20 border border-emerald-500/30 hover:bg-emerald-600/30 text-left transition-colors group"
+              >
+                <div>
+                  <div className="text-[13px] font-bold text-emerald-300 group-hover:text-emerald-200">분할 일수 줄이기</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">가능한 절 수에 맞게 일수를 조정합니다</div>
+                </div>
+                <span className="text-emerald-400 text-lg shrink-0">→</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setPoolError(null)
+                  setError('종료 본문을 입력해주세요. 예: 에베소서 6:24 (책의 마지막 절)')
+                }}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-slate-600/20 border border-slate-500/30 hover:bg-slate-600/30 text-left transition-colors group"
+              >
+                <div>
+                  <div className="text-[13px] font-bold text-slate-300 group-hover:text-slate-200">종료 본문 직접 입력</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">상단 설정에서 종료 본문을 직접 지정합니다</div>
+                </div>
+                <span className="text-slate-400 text-lg shrink-0">→</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setPoolError(null)}
+              className="mt-4 w-full text-[11px] font-bold text-slate-400 hover:text-slate-300 py-2 transition-colors"
+            >
+              취소
+            </button>
+          </div>
         </div>
       )}
 
