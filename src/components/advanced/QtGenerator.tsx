@@ -77,12 +77,6 @@ const BIBLE_CHAPTERS: Record<string, number> = {
   '유다서': 1, '요한계시록': 22
 }
 
-// 책별 장당 절 수 (getNextPassageRange에서 장 경계 넘침 방지용)
-// BIBLE_CHAPTERS는 책의 총 장 수이고, 이 DB는 각 장의 절 수 (자주 쓰는 책만 하드코딩, 나머지는 30으로 가정)
-const BIBLE_VERSES_PER_CHAPTER: Record<string, number[]> = {
-  '창세기': [31, 25, 24, 26, 32, 22, 24, 22, 29, 32, 32, 20, 18, 24, 21, 16, 27, 33, 38, 18, 34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 55, 32, 20, 31, 29, 43, 36, 30, 23, 23, 57, 38, 34, 34, 28, 34, 31, 22, 33, 26],
-}
-
 export interface QTFormData {
   bibleBook: string
   weekNumber: number
@@ -330,6 +324,7 @@ export default function QtGenerator() {
   // 본문 범위 부족 다이얼로그
   const [poolError, setPoolError] = useState<any>(null)
   const extendingPoolRef = useRef(false)
+  const [validationWarnings, setValidationWarnings] = useState(false)
 
   // 성경권 선택 변경 시 처리
   const handleBookChange = (book: string) => {
@@ -621,7 +616,7 @@ export default function QtGenerator() {
     chunkDateList: string[]
     chunkInfo: { current: number; total: number; offset: number }
     forceFullRows?: boolean
-  }): Promise<{ output: string; parsed: DaySplitData[] }> => {
+  }): Promise<{ output: string; parsed: DaySplitData[]; validationWarnings?: boolean }> => {
     const dataBody: any = {
       bibleBook: form.bibleBook,
       weekNumber: form.weekNumber,
@@ -653,142 +648,7 @@ export default function QtGenerator() {
     }
     const output = json.data.output as string
     const parsed = parseSplitTable(output)
-    return { output, parsed }
-  }
-
-  // passage 문자열에서 절 수 계산
-  // 예: "창세기 1:1-10" → 10절
-  // 예: "창 1:1-2:3" → 33절 (1장 31절 + 2장 3절 = 34... 30/장 가정 시 33)
-  // 예: "창 1장" → 31절 (해당 장의 절 수)
-  // 예: "창 1:1, 3-5" → 4절
-  function countPassageVerses(passage: string): number {
-    if (!passage) return 0
-    const s = passage.trim()
-    // 같은 장 내 범위: "1:1-10" → 10
-    let m = s.match(/(\d+)\s*[:장]\s*(\d+)\s*[-~]\s*(\d+)/)
-    if (m && !s.match(/\d+\s*:\s*\d+\s*[-~]\s*\d+\s*[:장]/)) {
-      return parseInt(m[3], 10) - parseInt(m[2], 10) + 1
-    }
-    // 다장 범위: "1:1-2:3" → 30(장당 평균) + 3 = 33
-    m = s.match(/(\d+)\s*[:장]\s*(\d+)\s*[-~]\s*(\d+)\s*[:장]\s*(\d+)/)
-    if (m) {
-      const startChap = parseInt(m[1], 10)
-      const endChap = parseInt(m[3], 10)
-      const endVerse = parseInt(m[4], 10)
-      return Math.max(0, (endChap - startChap) * 30 + endVerse)
-    }
-    // 단일 절: "1:5" → 1
-    m = s.match(/(\d+)\s*[:장]\s*(\d+)/)
-    if (m) return 1
-    // 장 단위: "1장" → 30 (평균)
-    m = s.match(/(\d+)\s*장/)
-    if (m) return 30
-    return 0
-  }
-
-  // 짧은 본문(<10절) 자동 합치기: 인접한 두 날을 합쳐 10절 이상으로 만듦
-  // 누적된 parsed 배열을 받아 마지막 항목이 10절 미만이면 그 전 항목과 합침
-  function enforceMinVerses(parsed: DaySplitData[], minVerses = 10): DaySplitData[] {
-    if (parsed.length <= 1) return parsed
-    const result = [...parsed]
-    // 뒤에서부터 합치기 (마지막 항목이 짧으면 앞과 합침)
-    for (let i = result.length - 1; i > 0; i--) {
-      const cur = result[i]
-      const prev = result[i - 1]
-      const curVerses = countPassageVerses(cur.passage)
-      const prevVerses = countPassageVerses(prev.passage)
-      // ★ 보강된 행(title="말씀 묵상")은 합치지 않음 (각 일자에 빈 행이라도 남기기)
-      const isPadded = cur.title === '말씀 묵상' && cur.reason === '연속 본문 이어가기'
-      if (isPadded) continue
-      if (curVerses > 0 && curVerses < minVerses && prevVerses < 60) {
-        // passage 범위 합치기
-        // prev.passage의 끝 절을 구해서 cur.passage의 시작과 연결
-        const mergedPassage = mergePassageRange(prev.passage, cur.passage)
-        result[i - 1] = {
-          ...prev,
-          passage: mergedPassage,
-          title: prev.title,
-          focus: prev.focus,
-          reason: prev.reason,
-        }
-        result.splice(i, 1)
-        console.log(`[QT] 절 수 부족 (${curVerses}절) 자동 합치기: "${prev.day}+${cur.day}" → "${prev.day}"`)
-      }
-    }
-    return result
-  }
-
-  // 두 passage 범위를 합쳐 단일 범위로 만듦
-  // 예: "창 1:1-5" + "창 1:6-10" → "창 1:1-10"
-  // 예: "창 1:14-25" + "창 2:1-7" → "창 1:14-2:7"
-  // 예: "창 1:26-31" + "창 2:1-3" → "창 1:26-2:3"
-  function mergePassageRange(p1: string, p2: string): string {
-    // 책이름 추출
-    const bookMatch = p1.match(/^([가-힣]+)/)
-    const book = bookMatch ? bookMatch[1] : form.bibleBook
-    const p1Start = parsePassageStart(p1)
-    const p1End = parsePassageEnd(p1)
-    const p2Start = parsePassageStart(p2)
-    const p2End = parsePassageEnd(p2)
-    if (p1Start && p1End && p2Start && p2End) {
-      const startChap = p1Start.chap
-      const startVerse = p1Start.verse
-      const endChap = p2End.chap
-      const endVerse = p2End.verse
-      // 같은 장 내 범위: "1:14-25"
-      if (startChap === endChap) {
-        return `${book} ${startChap}:${startVerse}-${endVerse}`
-      }
-      // 다장 범위: "1:14-2:7"
-      return `${book} ${startChap}:${startVerse}-${endChap}:${endVerse}`
-    }
-    // 파싱 실패 시 단순 결합
-    return `${p1}, ${p2}`
-  }
-
-  // passage의 시작 절 (chap, verse) 추출
-  function parsePassageStart(p: string): { chap: number; verse: number } | null {
-    const m = p.match(/(\d+)\s*[:장]\s*(\d+)/)
-    if (m) return { chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
-    return null
-  }
-  // passage의 끝 절 (chap, verse) 추출
-  function parsePassageEnd(p: string): { chap: number; verse: number } | null {
-    // "1:1-5" → (1, 5)
-    let m = p.match(/(\d+)\s*[:장]\s*\d+\s*[-~]\s*(\d+)(?!\s*[:장])/)
-    if (m) return { chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
-    // "1:1-2:3" → (2, 3)
-    m = p.match(/(\d+)\s*[:장]\s*\d+\s*[-~]\s*(\d+)\s*[:장]\s*(\d+)/)
-    if (m) return { chap: parseInt(m[2], 10), verse: parseInt(m[3], 10) }
-    return null
-  }
-
-  // 마지막 본문에서 다음 본문 범위를 N절 단위로 생성 (다음 책/장 자동 이동)
-  // 실제 책의 장별 절 수를 반영하여 정확한 범위 산출
-  // 예: "에베소서 2:11-22" + 12절 → "에베소서 2:23" (다음) → "에베소서 3:1-12" (12절, 에베소서 3장 21절 기준)
-  function getNextPassageRange(lastPassage: string, bookName: string, verses = 12): string {
-    const nextStart = getNextStartPassage(lastPassage, bookName)
-    const startInfo = parsePassageStart(nextStart)
-    if (!startInfo) return nextStart
-    // 현재 장의 최대 절 수: BIBLE_VERSES_PER_CHAPTER에서 해당 장의 절 수 조회, 없으면 30 가정
-    const chapVerses = BIBLE_VERSES_PER_CHAPTER[bookName]
-    const maxVerseInChap = (chapVerses && chapVerses[startInfo.chap - 1]) ? chapVerses[startInfo.chap - 1] : 30
-    const startChap = startInfo.chap
-    const startVerse = startInfo.verse
-    // 현재 장에 verses 절이 들어가는지 확인
-    if (startVerse + verses - 1 <= maxVerseInChap) {
-      return `${bookName} ${startChap}:${startVerse}-${startVerse + verses - 1}`
-    }
-    // 안 되면 현재 장 끝까지 + 다음 장 (1절부터)
-    const remainInChap = maxVerseInChap - startVerse + 1
-    const needFromNext = verses - remainInChap
-    // 다음 장의 절 수가 부족하면 다음 장 전체 + 그 다음 장으로 확장 (재귀 방지용 cap: 2장까지만)
-    const nextChapVerses = chapVerses && chapVerses[startChap] ? chapVerses[startChap] : 30
-    if (needFromNext > nextChapVerses) {
-      // 범위가 너무 크면 현재 장 끝까지로 제한
-      return `${bookName} ${startChap}:${startVerse}-${maxVerseInChap}`
-    }
-    return `${bookName} ${startChap}:${startVerse}-${startChap + 1}:${needFromNext}`
+    return { output, parsed, validationWarnings: json.data.validationWarnings === true }
   }
 
   // passage 범위에 매칭되는 성경 소제목 모두 찾기 (다중)
@@ -815,6 +675,7 @@ export default function QtGenerator() {
     setChunkProgress(null)
     setSplitMarkdown('')
     setSplitDays([])
+    setValidationWarnings(false)
 
     const daysCount = previewDaysCount
     const dateList = qtMode === 'monthly' ? getWeekdayDateLabels(normalizedStartDate) : getFormattedDateList(normalizedStartDate, daysCount)
@@ -858,6 +719,7 @@ export default function QtGenerator() {
         chunkEndPassages = computeChunkEndPassages(startPassage, endPassage, chunks)
       }
 
+      let chunkWarnings = false
       for (let ci = 0; ci < chunks.length; ci++) {
         const chunk = chunks[ci]
         const isFirst = ci === 0
@@ -903,6 +765,7 @@ export default function QtGenerator() {
           })
           output = result.output
           parsed = result.parsed
+          if (result.validationWarnings) chunkWarnings = true
 
           // 검증 1: 첫 번째 passage의 장/절이 expected보다 낮으면 반복으로 간주
           if (attempt < MAX_RETRIES && !isFirst && parsed.length > 0) {
@@ -970,6 +833,8 @@ export default function QtGenerator() {
         }
       }
 
+      setValidationWarnings(chunkWarnings)
+
       // ★ 진단 로그: AI 반환 후 상태
       console.log(`[QT][1단계] AI 분할 완료. AI 반환: ${accumulatedParsed.length}행 / dateList: ${dateList.length}행`)
       if (accumulatedParsed.length !== dateList.length) {
@@ -982,82 +847,13 @@ export default function QtGenerator() {
         accumulatedParsed.length = dateList.length
       }
 
-      // 누락된 날짜 보강: AI가 일부 행을 생략한 경우 dateList 기준으로 채움
-      // ★ enforceMinVerses로 합쳐지지 않도록 10절+ 범위로 채움
-      while (accumulatedParsed.length < dateList.length) {
-        const missingIdx = accumulatedParsed.length
-        const lastPassage = accumulatedParsed[missingIdx - 1]?.passage || startPassage
-        const paddedRange = getNextPassageRange(lastPassage, form.bibleBook, 12)
-        const paddedSections = findAllSectionTitles(paddedRange, form.bibleBook)
-        accumulatedParsed.push({
-          day: dateList[missingIdx],
-          passage: paddedRange,
-          title: '말씀 묵상',
-          focus: '본문 중심 묵상',
-          reason: '연속 본문 이어가기',
-          sectionTitles: paddedSections,
-        })
-        console.warn(`[QT] 누락된 날짜 보강: ${dateList[missingIdx]} → ${paddedRange}${paddedSections.length > 0 ? ` [소제목: ${paddedSections.join(' + ')}]` : ''}`)
-      }
+      const finalParsed = accumulatedParsed
 
-      // ★ 10절 미만 본문 자동 합치기 (촘촘한 분할 방지)
-      const beforeMerge = accumulatedParsed.length
-      let finalParsed = enforceMinVerses(accumulatedParsed, 10)
-      if (finalParsed.length !== beforeMerge) {
-        console.log(`[QT] 절 수 최소 규칙 적용: ${beforeMerge}일 → ${finalParsed.length}일`)
-      }
-
-      // ★★★ enforceMinVerses 합치기로 날짜가 누락/꼬임 방지: dateList 기준 재매핑 ★★★
-      // enforceMinVerses는 splice로 행을 제거하므로 day가 건너뛰어짐.
-      // 이를 보정하여 finalParsed의 day가 dateList 순서와 1:1로 대응되도록 재정렬.
-      if (finalParsed.length <= dateList.length && finalParsed.length > 0) {
-        const remapped = finalParsed.map((row, i) => ({
-          ...row,
-          day: dateList[i],  // dateList 순서대로 강제 재매핑
-        }))
-        finalParsed = remapped
-        if (beforeMerge !== finalParsed.length) {
-          console.log(`[QT] 날짜 재매핑: finalParsed day를 dateList[0..${finalParsed.length - 1}]로 정렬`)
-        }
-      }
-
-      // ★★★ 절대 강제: finalParsed가 dateList와 길이가 다르면 강제 보강 ★★★
-      if (finalParsed.length < dateList.length) {
-        const missing = dateList.length - finalParsed.length
-        console.warn(`[QT][강제 보강] finalParsed=${finalParsed.length}일, dateList=${dateList.length}일. ${missing}일 강제 추가`)
-        for (let i = finalParsed.length; i < dateList.length; i++) {
-          const lastPassage = finalParsed[i - 1]?.passage || startPassage
-          const paddedRange = getNextPassageRange(lastPassage, form.bibleBook, 12)
-          const paddedSections = findAllSectionTitles(paddedRange, form.bibleBook)
-          finalParsed.push({
-            day: dateList[i],  // ★ 절대 dateList 사용
-            passage: paddedRange,
-            title: '말씀 묵상 (자동 보강)',
-            focus: '본문 중심 묵상',
-            reason: `AI가 ${daysCount}일치 행을 모두 반환하지 않아 시스템이 자동 보강했습니다. 직접 편집이 필요합니다.`,
-            sectionTitles: paddedSections,
-          })
-        }
-        console.log(`[QT][강제 보강] 완료: 최종 ${finalParsed.length}일`)
-      }
-
-      // ★★★ 안전장치: 어떤 이유로든 dateList보다 적으면 최후 수단 ★★★
-      while (finalParsed.length < dateList.length) {
-        const i = finalParsed.length
-        finalParsed.push({
-          day: dateList[i],
-          passage: startPassage,
-          title: '말씀 묵상',
-          focus: '본문 중심 묵상',
-          reason: '자동 보강',
-          sectionTitles: [],
-        })
-      }
-
+      // 서버 검증 통과 데이터 직접 사용 (자동 보강/강제 병합 제거됨)
       setSplitMarkdown(accumulatedOutput)
       setSplitDays(finalParsed)
 
-      // 2단계 날짜별 기본 데이터 세팅 (finalParsed.day는 이미 dateList[i]로 강제 세팅됨)
+      // 2단계 날짜별 기본 데이터 세팅
       const updatedManuscripts: Record<string, DayManuscript> = {}
       finalParsed.forEach((p) => {
         updatedManuscripts[p.day] = {
@@ -2048,6 +1844,30 @@ export default function QtGenerator() {
           {/* 분할안 결과 피드백 */}
           {splitMarkdown && (
             <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-5 animate-slideUp">
+              {validationWarnings && !splitting && (
+                <div className="flex items-center justify-between bg-amber-500/10 border border-amber-400/30 rounded-xl px-4 py-3">
+                  <span className="flex items-center gap-2 text-[12px] text-amber-300 font-semibold">
+                    <AlertCircle className="w-4 h-4 text-amber-400" />
+                    AI 분할 결과에 일부 문제가 있습니다. 다시 생성하거나 직접 편집해 주세요.
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setValidationWarnings(false); handleGenerateSplit() }}
+                      disabled={splitting}
+                      className="flex items-center gap-1.5 text-[11px] font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-30"
+                    >
+                      <RotateCcw className={`w-3 h-3 ${splitting ? 'animate-spin' : ''}`} />
+                      AI 다시 생성
+                    </button>
+                    <button
+                      onClick={() => setValidationWarnings(false)}
+                      className="text-[11px] font-bold text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      직접 편집
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <h4 className="text-slate-200 font-bold text-[13px] flex items-center gap-1.5">
                   <Check className="w-4 h-4 text-emerald-400" />

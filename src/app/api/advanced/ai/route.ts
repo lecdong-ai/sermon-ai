@@ -4,7 +4,8 @@ import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { mapBookName } from '@/lib/bible/bookMap'
 import { loadKjvData } from '@/lib/bible/kjvData'
 import { formatSectionsForPrompt } from '@/lib/bible/sections'
-import { verifyPassagePool } from '@/lib/qtPassagePool'
+import { verifyPassagePool, detectDuplicatePassages } from '@/lib/qtPassagePool'
+import { countVersesInRange } from '@/lib/bible/verseCounts'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
 import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
@@ -533,6 +534,10 @@ export async function POST(request: NextRequest) {
     let presencePenalty = 0
     let model = 'gpt-4o-mini'
     let bibleActualVerses: Map<number, string> | null = null
+    let qtBibleBook = ''
+    let qtStartPassage = ''
+    let qtLimit = 0
+    let qtValidationErrors = 0
 
     if (type === 'bible-study') {
       // 1) 입력 정규화: passages 배열 (다중) 또는 단일 필드 (하위 호환)
@@ -1136,8 +1141,13 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       maxTokens = 2500
       temperature = 0.5
     } else if (type === 'qt-split') {
-      const { bibleBook, weekNumber, startPassage, endPassage, audience, level, daysCount, dateList, chunkInfo, forceFullRows } = data
-      const limit = daysCount || 6
+      const { bibleBook: _bibleBook, weekNumber, startPassage: _startPassage, endPassage, audience, level, daysCount, dateList, chunkInfo, forceFullRows } = data
+      qtBibleBook = _bibleBook || ''
+      qtStartPassage = _startPassage || ''
+      qtLimit = daysCount || 6
+      const bibleBook = _bibleBook
+      const startPassage = _startPassage
+      const limit = qtLimit
       const hasEndPassage = !!endPassage && endPassage.trim().length > 0
 
       // 프롬프트 내의 {일수}를 동적으로 교체
@@ -1547,13 +1557,115 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
       }
     }
 
+    // ★ Server-side validation + retry for qt-split
+    if (type === 'qt-split' && output && qtBibleBook && qtLimit > 0) {
+      const MAX_RETRIES = 3
+
+      function extractTableFromMarkdown(md: string): string {
+        return md.split('\n').filter(l => l.trim().startsWith('|')).join('\n')
+      }
+
+      function parseSplitTableForServer(md: string): any[] {
+        const HEADER_KEYWORDS = ['순서', '요일', '날짜', '본문 분할표']
+        const results: any[] = []
+        for (const line of md.split('\n')) {
+          const t = line.trim()
+          if (!t.startsWith('|') || !t.endsWith('|')) continue
+          if (t.includes('---|') || t.includes('===')) continue
+          const parts = t.split('|').map(p => p.trim()).filter((_, i, a) => i > 0 && i < a.length - 1)
+          if (parts.length < 4) continue
+          const dv = parts[0]
+          if (!dv || /^[-:\s]+$/.test(dv) || HEADER_KEYWORDS.includes(dv)) continue
+          results.push({ day: dv, passage: parts[1], title: parts[2], focus: parts[3], reason: parts[4] || '' })
+        }
+        return results
+      }
+
+      function validateSplitResult(rows: any[], book: string, expected: number, startPsg: string): string[] {
+        const errors: string[] = []
+        if (rows.length !== expected) {
+          errors.push(`행 개수: ${rows.length}행 반환, ${expected}행 필요`)
+          if (rows.length === 0) return errors
+        }
+        const sm = startPsg?.match(/\d+\s*[:장]\s*(\d+)/)
+        const sVs = sm ? parseInt(sm[1]) : 0
+        const sc = sm ? parseInt(startPsg.match(/\d+/)?.[0] || '0') : 0
+        const passages = rows.map(r => r.passage?.trim()).filter(Boolean)
+
+        for (let i = 0; i < rows.length; i++) {
+          const p = passages[i]
+          if (!p) { errors.push(`${i + 1}행: 본문 비어있음`); continue }
+          const pm = p.match(/(\d+)\s*[:장]\s*(\d+)(?:\s*[-~]\s*(\d+))?/)
+          if (!pm) { errors.push(`${i + 1}행: 형식 오류 "${p}"`); continue }
+          const ch = parseInt(pm[1]), vs = parseInt(pm[2]), ve = pm[3] ? parseInt(pm[3]) : vs
+          if (i === 0 && (ch < sc || (ch === sc && vs < sVs))) errors.push(`${i + 1}행: 시작보다 이전 "${p}"`)
+          const vc = countVersesInRange(book, ch, vs, ch, ve)
+          if (vc < 10) errors.push(`${i + 1}행: ${vc}절(10절 미만) "${p}"`)
+        }
+        const dup = detectDuplicatePassages(passages)
+        if (dup.hasDuplicate) errors.push(`중복: ${dup.duplicates.join(', ')}`)
+        return errors
+      }
+
+      let currentOutput = output
+      let parsed = parseSplitTableForServer(extractTableFromMarkdown(currentOutput))
+      let errors = validateSplitResult(parsed, qtBibleBook, qtLimit, qtStartPassage)
+      let bestOutput = currentOutput
+      qtValidationErrors = errors.length
+
+      for (let attempt = 1; attempt <= MAX_RETRIES && errors.length > 0; attempt++) {
+        console.warn(`[qt-split] 검증 실패 (${attempt}/${MAX_RETRIES}):`, errors)
+
+        if (attempt === MAX_RETRIES) {
+          console.warn('[qt-split] 재시도 소진. 최종 출력 사용.')
+          break
+        }
+
+        const ctx = errors.map((e, i) => `${i + 1}. ${e}`).join('\n')
+        const retryPrompt = systemPrompt + `\n\n## ★★★ 이전 시도 검증 오류 — 반드시 수정 ★★★\n${ctx}\n\n- 정확히 ${qtLimit}행, 각 행 10절 이상, 시작 본문 이후부터, 중복 금지`
+
+        const retryRes = await getOpenai().chat.completions.create({
+          model,
+          messages: [
+            { role: 'system', content: retryPrompt },
+            { role: 'user', content: userText },
+          ],
+          temperature,
+          frequency_penalty: frequencyPenalty,
+          presence_penalty: presencePenalty,
+          max_completion_tokens: maxTokens,
+        })
+
+        currentOutput = retryRes.choices[0]?.message?.content || ''
+        parsed = parseSplitTableForServer(extractTableFromMarkdown(currentOutput))
+        errors = validateSplitResult(parsed, qtBibleBook, qtLimit, qtStartPassage)
+
+        if (errors.length < qtValidationErrors) {
+          bestOutput = currentOutput
+          qtValidationErrors = errors.length
+        }
+        if (errors.length === 0) {
+          console.log(`[qt-split] 검증 통과 (재시도 ${attempt})`)
+          break
+        }
+      }
+
+      output = qtValidationErrors === 0 ? currentOutput : bestOutput
+    }
+
+    const respData: any = {
+      output,
+      modelUsed: model,
+      isFallback,
+    }
+    if (type === 'qt-split' && qtValidationErrors > 0) {
+      respData.validationWarnings = true
+      console.warn(`[qt-split] 최종 출력에 ${qtValidationErrors}개 오류 남음`)
+    }
+
     return NextResponse.json({
       success: true,
-      data: {
-        output,
-        modelUsed: model,
-        isFallback,
-      },
+      data: respData,
     })
   } catch (err: any) {
     console.error('POST /api/advanced/ai error:', err)
