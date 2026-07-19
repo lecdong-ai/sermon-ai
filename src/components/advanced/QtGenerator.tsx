@@ -309,7 +309,7 @@ export default function QtGenerator() {
   }, [form.startDate, qtMode])
 
   const previewDaysCount = useMemo(() => {
-    if (qtMode === 'weekly') return 7
+    if (qtMode === 'weekly') return 6
     if (qtMode === 'monthly') return getWeekdayCountInMonth(normalizedStartDate)
     return 1
   }, [qtMode, normalizedStartDate])
@@ -817,7 +817,7 @@ export default function QtGenerator() {
 
     try {
       // 월간 모드 (~26일, 일요일 제외): 10일 단위 청킹 분할
-      // 주간 모드 (7일치): 단일 호출
+      // 주간 모드 (6일치, 월~토): 단일 호출
       const isMonthly = qtMode === 'monthly'
       const CHUNK_SIZE = 10
 
@@ -1901,7 +1901,7 @@ export default function QtGenerator() {
                   <label className="text-[11px] font-bold text-slate-500">
                     {qtMode === 'monthly' ? '시작 월' : '시작 날짜'}
                     <span className="text-[9px] text-indigo-400/80 font-medium ml-1">
-                      {qtMode === 'monthly' ? '(1일 자동 정규화, 일요일 제외)' : '(월요일 자동 정규화)'}
+                      {qtMode === 'monthly' ? '(1일 자동 정규화, 일요일 제외)' : '(월요일 자동 정규화, 일요일 제외)'}
                     </span>
                   </label>
                 </div>
@@ -1932,7 +1932,7 @@ export default function QtGenerator() {
                         const wdLabels = getWeekdayDateLabels(normalizedStartDate)
                         return `${wdLabels[0]} ~ ${wdLabels[wdLabels.length - 1]} · 총 ${wdLabels.length}일 (일요일 제외)`
                       })()
-                    : formatDateRangeLabel(normalizedStartDate, previewDaysCount)}
+                    : `${formatDateRangeLabel(normalizedStartDate, previewDaysCount)} · 총 ${previewDaysCount}일 (일요일 제외)`}
                 </div>
               </div>
 
