@@ -37,6 +37,12 @@ export async function generateQtPdf(
   sizeOption: string,
   templateId: string = 'warm-modern',
   dayIndex?: number,
+  monthCalendarStrip?: {
+    month: string
+    daysInMonth: number
+    activeDays: number[]
+    dayHasContent: boolean[]
+  },
 ) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
@@ -81,8 +87,20 @@ export async function generateQtPdf(
   await document.fonts.ready
   let hasContent = false
 
+  // ★ day → page 매핑 (전체 PDF 기준, dayIndex 미지정 시)
+  // page 0 = cover, 그 후 1일 2페이지, 2일 2페이지, ...
+  const dayToPageMap: Record<number, number> = {}
+  if (monthCalendarStrip && dayIndex === undefined) {
+    monthCalendarStrip.activeDays.forEach((day, idx) => {
+      // jsPDF는 1-based page number
+      dayToPageMap[day] = 1 + idx * pagesPerDay + 1  // cover(1) + dayIdx 시작
+    })
+  }
+
   for (let i = 0; i < targetPages.length; i++) {
     const pageEl = targetPages[i]
+    // 실제 전체 PDF에서 이 페이지의 인덱스 (dayIndex 미지정 시)
+    const globalPageIdx = dayIndex !== undefined ? dayIndex * pagesPerDay + i : i
 
     try {
       const canvas = await toCanvas(pageEl, {
@@ -114,6 +132,12 @@ export async function generateQtPdf(
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
       hasContent = true
+
+      // ★ 디지털 PDF 캘린더 링크 추가
+      // 전체 PDF 생성 시 (dayIndex 미지정) + strip 정보가 있을 때만
+      if (monthCalendarStrip && dayIndex === undefined && Object.keys(dayToPageMap).length > 0) {
+        addCalendarLinks(pdf, monthCalendarStrip, dayToPageMap, widthMm, heightMm, globalPageIdx)
+      }
     } catch (e: any) {
       console.warn(`[QtPdfGen] page ${i} failed:`, e?.message || e)
     }
@@ -129,4 +153,49 @@ export async function generateQtPdf(
   console.log(`[QtPdfGen] Done: ${filename}`)
 
   pdf.save(filename)
+}
+
+/**
+ * PDF 캘린더 카드에 내부 점프 링크 추가
+ * - 각 카드가 가리키는 day의 페이지로 이동
+ * - 인쇄용 PDF에서는 무시됨 (디지털 PDF에서만 활성화)
+ */
+function addCalendarLinks(
+  pdf: jsPDF,
+  strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] },
+  dayToPageMap: Record<number, number>,
+  widthMm: number,
+  heightMm: number,
+  // eslint-disable-next-line no-unused-vars
+  _globalPageIdx: number,
+) {
+  // 화이트리스트 사이즈만
+  const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+  // (sizeOption은 generateQtPdf에 있으므로 여기선 직접 확인 불가 — strip 정보가 있다는 것은 caller가 검증한 것)
+  void allowedSizes
+
+  // 캘린더 카드 영역 계산 (QtPdfLayout과 동일)
+  const labelWidth = 22
+  const sidePadding = 10
+  const cardGap = 0.5
+  const cardH = 5
+  const stripHeight = 16
+  const availableW = widthMm - labelWidth - sidePadding * 2
+  const cardW = (availableW - cardGap * (strip.daysInMonth - 1)) / strip.daysInMonth
+
+  for (let d = 1; d <= strip.daysInMonth; d++) {
+    const targetPage = dayToPageMap[d]
+    if (!targetPage) continue  // 큐티 없는 day는 링크 없음
+
+    // 카드 좌표 계산
+    const cardX = sidePadding + labelWidth + (d - 1) * (cardW + cardGap)
+    const cardY = (stripHeight - cardH) / 2  // strip 상단 기준
+
+    // jsPDF 좌표계: 좌하단 원점 (PDF는 위에서 아래로)
+    // PDF Y: strip 상단 = stripHeight (mm), 카드 하단 = stripHeight - cardY - cardH
+    const pdfY = stripHeight - cardY - cardH
+
+    // pdf.link(x, y, w, h, options)
+    pdf.link(cardX, pdfY, cardW, cardH, { pageNumber: targetPage })
+  }
 }

@@ -26,7 +26,7 @@ export interface DayParseResult {
 const SECTION_HEADERS: [RegExp, keyof ParsedDay][] = [
   [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?제목\s*[:*]?/i, 'title'],
   [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?오늘의\s*본문\s*[:*]?/i, 'passage'],
-  [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?본문\s*한눈에\s*[:*]?/i, 'passageOverview'],
+  [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?본문\s*한눈에\s*보기\s*[:*]?/i, 'passageOverview'],
   [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?천천히\s*읽기\s*[:*]?/i, 'slowReading'],
   [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?본문\s*관찰하기\s*[:*]?/i, 'observation'],
   [/(?:#+|\*{1,2})\s*(?:\d+[\.\)]\s*)?원어\s*핵심단어\s*[:*]?/i, 'originalWords'],

@@ -27,7 +27,16 @@ interface QtPdfLayoutProps {
   audienceLevel?: 'adult' | 'youth'
   selectedInfo?: QtSelectedInfo | null
   daySectionTitles?: Record<number, string[]>
+  monthCalendarStrip?: {
+    month: string       // "2026년 3월"
+    daysInMonth: number // 28 | 29 | 30 | 31
+    activeDays: number[]                    // [2, 3, 4, 5, 6, 9] — 일일 페이지별 day
+    dayHasContent: boolean[]                // [true, true, ...] — 해당 day에 큐티 데이터가 있는지
+  }
 }
+
+// 캘린더 스트립을 표시할 sizeOption 화이트리스트
+const STRIP_SIZE_OPTIONS = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
 
 function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
   if (!rawText) return ''
@@ -91,7 +100,7 @@ function parseBibleVerses(passageText: string) {
   return { korVerse, engVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult', selectedInfo, daySectionTitles }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult', selectedInfo, daySectionTitles, monthCalendarStrip }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const cssW = `${size.widthMm}mm`
   const cssH = `${size.heightMm}mm`
@@ -132,6 +141,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   // 스케일: 짧은 변(210mm) 기준 1.0
   const scale = Math.min(size.widthMm, size.heightMm) / 210.0
 
+  // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
+  const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
+  const STRIP_HEIGHT_MM = 16 // 본문 padding 확보 + 라벨 + 카드
+
   // 페이지 스타일 — 좁은 여백, 풀 활용
   const pageStyle: React.CSSProperties = {
     width: cssW,
@@ -144,8 +157,89 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     padding: isLandscape
       ? `${9 * scale}mm ${10 * scale}mm`
       : `${10 * scale}mm ${12 * scale}mm`,
+    paddingTop: showStrip ? `${STRIP_HEIGHT_MM + 9 * scale}mm` : undefined,
     pageBreakAfter: 'always',
     overflow: 'hidden',
+  }
+
+  // 캘린더 스트립 렌더 함수 (A4 가로 / iPad / Tablet에서만 호출)
+  // activeDay: 현재 페이지의 day (1~31) — 동적 매칭
+  const renderCalendarStrip = (activeDay: number) => {
+    if (!showStrip || !monthCalendarStrip) return null
+    const { month, daysInMonth, dayHasContent } = monthCalendarStrip
+
+    // 카드 폭 계산: 페이지 가로(mm) - 좌우 padding(20mm) - 라벨 영역(20mm) - 카드 사이 gap
+    const pageW = size.widthMm
+    const labelWidth = 22 // "◆ 2026년 3월" 영역
+    const sidePadding = 10
+    const cardGap = 0.5
+    const availableW = pageW - labelWidth - sidePadding * 2
+    const cardW = (availableW - cardGap * (daysInMonth - 1)) / daysInMonth
+    const cardH = 5
+
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+
+    return (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: `${STRIP_HEIGHT_MM}mm`,
+        padding: `0 ${sidePadding}mm`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: `${6 * scale}px`,
+        borderBottom: `0.5px solid #00000020`,
+        background: '#ffffff',
+        zIndex: 5,
+      }}>
+        <span style={{
+          fontFamily: t.fontHeading,
+          fontSize: `${8 * scale}px`,
+          fontWeight: 700,
+          color: '#000000',
+          letterSpacing: `${1 * scale}px`,
+          whiteSpace: 'nowrap',
+        }}>
+          ◆ {month}
+        </span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: `${cardGap}mm`,
+          flex: 1,
+        }}>
+          {days.map(d => {
+            const isActive = d === activeDay
+            const hasContent = dayHasContent[d - 1] ?? false
+            // 3단계 색상: active(검정) / existing(흰+검정테두리) / empty(회색)
+            const isEmpty = !hasContent && !isActive
+            return (
+              <div
+                key={d}
+                style={{
+                  width: `${cardW}mm`,
+                  height: `${cardH}mm`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: `${7 * scale}px`,
+                  fontWeight: isActive ? 800 : 500,
+                  color: isActive ? '#ffffff' : (isEmpty ? '#00000040' : '#000000'),
+                  background: isActive ? '#000000' : 'transparent',
+                  border: `0.5px solid ${isActive ? '#000000' : (isEmpty ? '#00000010' : '#00000030')}`,
+                  borderRadius: `${1 * scale}px`,
+                  opacity: isEmpty ? 0.5 : 1,
+                }}
+              >
+                {d}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
   }
 
   // ============= 공통 컴포넌트 =============
@@ -313,6 +407,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div key={dayIdx}>
       {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
       <div className="qt-page" style={pageStyle}>
+        {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
         {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주`)}
 
         {/* ═══ 주간 펼침 (7일치 가로 네비게이션) ═══ */}
@@ -550,7 +645,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {sectionLabel('본문 한눈에 보기')}
             {bodyText(
               day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
-                l.replace(/^[-*·•\s]*\s*(단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
+                l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
               ).join('\n'),
               10
             )}
@@ -562,6 +657,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
       {/* ══════ Page 2 (뒷면): 관찰/이해/적용 ══════ */}
       <div className="qt-page" style={pageStyle}>
+        {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
         {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
 
         {/* 상단: 관찰 → 이해 → 복음 → 적용 (순차 풀폭) */}
@@ -708,6 +804,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div key={dayIdx}>
         {/* Page 1: 말씀 중심 */}
         <div className="qt-page" style={pageStyle}>
+          {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
           {/* 헤더 */}
           <div style={{
             marginBottom: `${5 * scale}px`,
@@ -867,7 +964,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               {sectionLabel('본문 한눈에 보기')}
               {bodyText(
                 day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
-                  l.replace(/^[-*·•\s]*\s*(단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
+                  l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
                 ).join('\n'),
                 10.5
               )}
@@ -879,6 +976,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
         {/* Page 2: 관찰/이해/적용 */}
         <div className="qt-page" style={pageStyle}>
+          {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
           <div style={{
             marginBottom: `${5 * scale}px`,
             paddingBottom: `${3 * scale}px`,

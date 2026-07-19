@@ -51,6 +51,48 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
 
+  // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
+  const monthCalendarStrip = useMemo(() => {
+    if (!form.startDate) return undefined
+    const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+    if (!allowedSizes.has(sizeOption)) return undefined
+    const parts = form.startDate.split('-')
+    if (parts.length !== 3) return undefined
+    const year = parseInt(parts[0], 10)
+    const monthNum = parseInt(parts[1], 10)
+    const day = parseInt(parts[2], 10)
+    if (isNaN(year) || isNaN(monthNum) || isNaN(day)) return undefined
+    const daysInMonth = new Date(year, monthNum, 0).getDate()
+
+    // ★ 주간 6일(일요일 제외)의 각 day 계산
+    const startDate = new Date(year, monthNum - 1, day)
+    const activeDays: number[] = []
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(startDate)
+      d.setDate(d.getDate() + i)
+      if (d.getDay() !== 0) activeDays.push(d.getDate())
+    }
+
+    // 각 day에 큐티 데이터가 있는지
+    const dayHasContent: boolean[] = Array.from({ length: daysInMonth }, (_, i) => {
+      const dayNum = i + 1
+      return activeDays.includes(dayNum)
+    })
+
+    return {
+      month: `${year}년 ${monthNum}월`,
+      daysInMonth,
+      activeDays,
+      dayHasContent,
+    }
+  }, [form.startDate, sizeOption])
+
+  // 현재 보고 있는 day 계산
+  const currentActiveDay = useMemo(() => {
+    if (!monthCalendarStrip) return null
+    return monthCalendarStrip.activeDays[dayIndex] ?? null
+  }, [monthCalendarStrip, dayIndex])
+
   const weekdays = useMemo(() => {
     const dayCount = Math.max(days.length, 1)
     // AI 추천 일일 큐티: 오늘 날짜 단일 표시
@@ -127,7 +169,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     try {
       if (pdfLayoutRef.current) {
         const result = { fullManuscript: accumulatedManuscript }
-        await generateQtPdf(pdfLayoutRef.current, form, result, sizeOption, activeTmpl.id)
+        await generateQtPdf(pdfLayoutRef.current, form, result, sizeOption, activeTmpl.id, undefined, monthCalendarStrip || undefined)
       } else {
         console.error('PDF layout ref is null')
       }
@@ -263,6 +305,45 @@ return (
           </button>
         </div>
       </div>
+
+      {/* 인터랙티브 캘린더 스트립 (웹 전용) */}
+      {monthCalendarStrip && (
+        <div className="sticky top-0 z-10 flex items-center gap-2 px-6 py-2.5 bg-[#0d1121]/95 backdrop-blur-sm border-b border-white/5">
+          <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap tracking-wide">
+            ◆ {monthCalendarStrip.month}
+          </span>
+          <div className="flex items-center gap-1 overflow-x-auto flex-1 scrollbar-thin">
+            {Array.from({ length: monthCalendarStrip.daysInMonth }, (_, i) => {
+              const d = i + 1
+              const isActive = d === currentActiveDay
+              const hasContent = monthCalendarStrip.dayHasContent[i] ?? false
+              const isEmpty = !hasContent
+              return (
+                <button
+                  key={d}
+                  onClick={() => {
+                    if (isEmpty) return
+                    const targetIdx = monthCalendarStrip.activeDays.indexOf(d)
+                    if (targetIdx >= 0) {
+                      setDayIndex(targetIdx)
+                    }
+                  }}
+                  disabled={isEmpty}
+                  className={`shrink-0 w-7 h-8 rounded-md text-[11px] font-bold border transition-all ${
+                    isActive
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_8px_rgba(99,102,241,0.3)]'
+                      : isEmpty
+                      ? 'bg-transparent border-white/5 text-slate-700 cursor-not-allowed'
+                      : 'bg-white/[0.02] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-300'
+                  }`}
+                >
+                  {d}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Day content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -433,6 +514,7 @@ return (
           audienceLevel={audienceLevel}
           selectedInfo={selectedInfo}
           daySectionTitles={daySectionTitles}
+          monthCalendarStrip={monthCalendarStrip}
         />
       </div>
     </div>

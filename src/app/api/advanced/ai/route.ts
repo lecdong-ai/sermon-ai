@@ -497,6 +497,7 @@ Return ONLY a JSON object (no markdown, no explanation):
   'qt-refine': SYSTEM_PROMPT_REFINE,
   'qt-assemble': SYSTEM_PROMPT_ASSEMBLE,
   'qt-recommend-daily': SYSTEM_PROMPT_RECOMMEND_DAILY,
+  'qt-reshape-day': `당신은 QT 본문 범위 수정 도우미입니다. 사용자의 지시에 따라 JSON 형식으로만 응답하십시오.`,
 }
 
 export async function POST(request: NextRequest) {
@@ -1229,30 +1230,33 @@ ${dateList.map((d: string, i: number) => `${i + 1}일차: ${d}`).join('\n')}`
       }
 
       if (sectionsText) {
-        systemPrompt += `\n\n## ★본문 영역의 성경 소제목 (자연 분할 지점)★
-아래는 성경공회 공식 개역개정 기준의 소제목(섹션 제목)입니다. **소제목 경계를 우선적으로 활용하여 분할하십시오.**
+        systemPrompt += `\n\n## ★본문 영역의 성경 소제목 (참고용)★
+아래는 성경공회 공식 개역개정 기준의 소제목(섹션 제목)입니다. **20-30절 분량 규칙이 소제목 경계보다 항상 우선합니다.**
 
 ${sectionsText}
 
 ### 소제목 기반 분할 규칙 (★우선순위 엄격 준수★)
 
-★[1순위, 절대 위반 금지] 각 날은 반드시 최소 10절 이상이어야 한다★
-- 10절 미만의 날이 하나라도 있으면 명백한 위반이다.
-- 어떤 소제목이든 2~3개 결합해서라도 10절을 채워라. 1일 = 1~3개 소제목 허용.
+★[1순위, 절대 위반 금지] 각 날은 1-2개 소제목, 20-30절이어야 한다★
+- 20절 미만이거나 30절 초과 시 명백한 위반이다.
+- 평균 25절 권장 (15-20절이면 인접 소제목과 결합, 35절+이면 2개 결합)
+- 1일 = 1-2개 소제목 (소제목 경계 = 분할점)
 
-[2순위] 소제목 경계 선호: 10절을 채우면서 가능한 한 소제목 경계를 분할점으로 사용.
+[2순위] 소제목 경계 선호: 20-30절 범위 안에서 가능한 한 소제목 경계를 분할점으로 사용.
 
-[3순위] 분량 균형: 한 날이 60절을 넘으면 의미 단위로 나누기 (시편 119장 등).
+[3순위] 분량 균형: 한 날이 35절을 넘으면 의미 단위로 나누기 (시편 119장 등).
 
-[4순위] DB에 없는 책/장: 본문 내용 분석으로 자연스러운 신학적 단락을 만들어 분할.
+[4순위] 1장 이하 책 (유다서, 오바댜, 요한2/3서, 빌레몬서): 자동으로 다음 권 1장부터 결합하여 6일 분량 채우기.
+
+[5순위] DB에 없는 책/장: 본문 내용 분석으로 자연스러운 신학적 단락을 만들어 분할.
 
 ### 결합 예시 (참고)
-- 1:1-2절(2절, 인사) + 1:3-14절(12절, 영적 축복) → 1:1-14절(14절, "인사 + 영적 축복") ✓
-- 1:15-23절(9절, 우월성) + 2:1-10절(10절, 구원) → 1:15-2:10절(19절, "우월성 + 구원") ✓
-- 1:27-30절(4절) + 2:1-11절(11절) → 1:27-2:11절(15절, "복음에 합당하게 + 겸손과 높임") ✓
-- 3개 결합 예: 1:1-2 + 1:3-14 + 1:15-23 → 1:1-23(23절, "인사 + 영적 축복 + 우월성")
+- 1:1-25절(25절, 천지 창조) → 1일 단독 (25절) ✓
+- 1:26-31절(6절) + 2:1-3절(3절) + 2:4-17절(14절) = 1:26-2:17 (23절) → 3개 소제목 결합 (20-30절 OK) ✓
+- 1:1-2절(2절) + 1:3-14절(12절) = 1:1-14절(14절) → 너무 짧음 → 1:1-14 + 1:15-23 = 1:1-23(23절) ✓
+- 1:1-25 + 1:26-31 = 1:1-31(31절) → 30절 초과 → 31절은 단독 또는 1:1-25만 1일로
 
-★중요★: 단일 소제목이 10절 미만이면 **반드시 인접 소제목과 결합**하여 10절을 채울 것. 절대 4~9절짜리 단독 행을 만들지 말 것.`
+★중요★: 단일 소제목이 20절 미만이면 **반드시 인접 소제목과 결합**하여 20-30절을 채울 것. 평균 25절을 목표로.`
       }
 
       userText = `## 입력 정보
@@ -1271,7 +1275,7 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
 - 분할 이유나 묵상 초점은 명료하고 컴팩트하게 작성하여 토큰 제한에 걸려 출력이 중간에 잘리지 않도록 하십시오.
 - 동일한 문구나 패턴을 반복하지 말고, 각 날짜의 본문과 제목, 초점을 서로 다르게 작성하십시오.
 - ⚠️ [매우 중요] 시작 본문("${startPassage || ''}")보다 이전 구절(더 작은 장 번호)을 절대 포함하지 마십시오. 반드시 "${startPassage || ''}"부터 정확히 시작해서 순차적으로 진행하세요. 이미 다룬 내용을 다시 쓰지 마십시오.
-- ⚠️ [필수] '분할 이유' 열을 절대 비워두지 마십시오. 각 날짜 본문을 선정한 신학적/문맥적 이유를 반드시 1문장씩 채우십시오.${sectionsText ? '\n- ★성경 소제목이 제공된 경우, 그 경계를 우선 분할 지점으로 사용하세요. 단, 최소 10절 규칙은 여전히 유효합니다.' : ''}`
+- ⚠️ [필수] '분할 이유' 열을 절대 비워두지 마십시오. 각 날짜 본문을 선정한 신학적/문맥적 이유를 반드시 1문장씩 채우십시오.${sectionsText ? '\n- ★성경 소제목이 제공된 경우, 그 경계를 우선 분할 지점으로 사용하세요. 단, 20-30절 분량 규칙(평균 25절)은 항상 우선합니다.' : ''}`
       model = 'gpt-4o-mini'
       maxTokens = limit > 10 ? Math.min(2500 + (limit - 10) * 100, 3500) : 2500
       temperature = 0.5
@@ -1286,17 +1290,50 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
           startPassage || '',
           (hasEndPassage ? endPassage : null) as string | null,
           limit,
-          10
+          20
         )
         if (!poolResult.isSufficient) {
           return NextResponse.json({
             success: false,
             error: 'POOL_INSUFFICIENT',
             poolInfo: poolResult,
-            message: `"${bibleBook}"의 선택한 범위는 ${poolResult.available}절로, ${limit}일 × 10절 = ${poolResult.required}절이 부족합니다. (${poolResult.deficit}절 부족, 약 ${poolResult.shortageDays}일분 부족)`,
+            message: `"${bibleBook}"의 선택한 범위는 ${poolResult.available}절로, ${limit}일 × 20절 = ${poolResult.required}절이 부족합니다. (${poolResult.deficit}절 부족, 약 ${poolResult.shortageDays}일분 부족)`,
           })
         }
       }
+    } else if (type === 'qt-reshape-day') {
+      const { bibleBook, dayDate, prevPassage, currentPassage, nextPassage, audience, level } = data
+      userText = `## 재분할 요청
+- 성경책: ${bibleBook || ''}
+- 대상 날짜: ${dayDate || ''}
+- 이전 날 본문: ${prevPassage || '없음'}
+- 현재(문제) 본문: ${currentPassage || ''}
+- 다음 날 본문: ${nextPassage || '없음'}
+- 대상 독자: ${audience || '일반 성도'}
+- 난이도: ${level || '중'}
+
+## 지침
+위 날짜의 본문 범위가 적절하지 않아 수정이 필요합니다.
+- 이전 날과 다음 날 사이에 들어갈 10절 이상의 의미 단위를 추천하십시오.
+- 이전/다음 날과 본문이 겹치지 않아야 합니다.
+- 가능한 한 성경 소제목 단위로 유지하되, 10절이 안 되면 소제목을 결합하십시오.
+
+## 출력 형식
+다음 JSON만 출력하십시오 (설명 없음):
+{"passage": "새 본문 범위", "title": "큐티 제목", "focus": "핵심 묵상 초점", "reason": "분할 이유"}
+
+## 예시
+입력: 이전=4:1-10, 현재=4:11-16, 다음=4:17-24
+출력: {"passage":"4:11-24","title":"교회의 성장과 연합","focus":"각 지체의 역할과 교회의 성장","reason":"4:11-16(6절)과 4:17-24(8절)를 합쳐 14절의 의미 단위로 재구성"}
+
+## 예시2
+입력: 이전=3:14-21, 현재=4:1-10, 다음=4:11-16
+출력: {"passage":"4:1-16","title":"부르심과 은사","focus":"부르심에 합당한 삶과 은사의 다양성","reason":"4:1-10(10절)과 4:11-16(6절)을 합쳐 16절 단위로 재분할"}`
+      model = 'gpt-4o-mini'
+      maxTokens = 1000
+      temperature = 0.5
+      frequencyPenalty = 0.3
+      presencePenalty = 0.2
     } else if (type === 'qt-recommend-daily') {
       userText = '성경 66권 전체를 검토하여 오늘 묵상하기 좋은 최적의 본문을 선정하고 1일치 프리미엄 큐티 원고(장년용/청소년·새신자용 이중화 적용 포함)를 집필하십시오.'
       model = 'gpt-4o-mini'
@@ -1458,7 +1495,7 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
       max_completion_tokens: maxTokens,
-      response_format: (type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea') ? { type: 'json_object' as const } : undefined,
+      response_format: (type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'commentary-to-section' || type === 'greek-words-analyze' || type === 'memo-insight' || type === 'memo-questions' || type === 'memo-application-idea' || type === 'qt-reshape-day') ? { type: 'json_object' as const } : undefined,
     }
 
     try {
@@ -1505,7 +1542,7 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
       output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
     }
 
-    if ((type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze') && output) {
+    if ((type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze' || type === 'qt-reshape-day') && output) {
       try {
         JSON.parse(output)
       } catch (e) {
@@ -1622,17 +1659,21 @@ ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\
         }
 
         const ctx = errors.map((e, i) => `${i + 1}. ${e}`).join('\n')
-        const retryPrompt = systemPrompt + `\n\n## ★★★ 이전 시도 검증 오류 — 반드시 수정 ★★★\n${ctx}\n\n- 정확히 ${qtLimit}행, 각 행 10절 이상, 시작 본문 이후부터, 중복 금지`
+        const retryPrompt = systemPrompt + `\n\n## ★★★ 이전 시도 검증 오류 — 반드시 수정 ★★★\n${ctx}\n\n## 수정 지침\n- **10절 미만 행은 인접 행과 합쳐서 10절 이상으로 만드십시오** (소제목 경계보다 10절 규칙이 우선)\n- 예: 4:11-16(6절) + 4:17-24(8절) → 4:11-24(14절)\n- 정확히 ${qtLimit}행 유지: 합친 만큼 다른 행의 범위를 확장하거나 새 행을 추가하십시오\n- 각 행 최소 10절, 시작 본문 이후부터, 중복 금지`
 
+        // 재시도 시 temperature/penalty 증가로 다양성 확보
+        const retryTemp = Math.min(temperature + 0.2 * attempt, 1.0)
+        const retryFreq = Math.min(frequencyPenalty + 0.1 * attempt, 1.0)
+        const retryPres = Math.min(presencePenalty + 0.1 * attempt, 1.0)
         const retryRes = await getOpenai().chat.completions.create({
           model,
           messages: [
             { role: 'system', content: retryPrompt },
             { role: 'user', content: userText },
           ],
-          temperature,
-          frequency_penalty: frequencyPenalty,
-          presence_penalty: presencePenalty,
+          temperature: retryTemp,
+          frequency_penalty: retryFreq,
+          presence_penalty: retryPres,
           max_completion_tokens: maxTokens,
         })
 
