@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { getUserFromRequest, checkOpenAIRateLimit } from '@/lib/auth'
 import { mapBookName } from '@/lib/bible/bookMap'
+import { loadKjvData } from '@/lib/bible/kjvData'
+import { formatSectionsForPrompt } from '@/lib/bible/sections'
 import { SYSTEM_PROMPT as OUTLINE_PROMPT } from '@/lib/ai/prompts/outline'
 import { SYSTEM_PROMPT as APP_PROMPT, DIRECTION_PROMPT, GENERATE_PROMPT } from '@/lib/ai/prompts/application'
 import { SYSTEM_PROMPT as CORE_MESSAGE_PROMPT } from '@/lib/ai/prompts/core-message'
@@ -1133,7 +1135,7 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       maxTokens = 2500
       temperature = 0.5
     } else if (type === 'qt-split') {
-      const { bibleBook, weekNumber, startPassage, endPassage, audience, level, daysCount, dateList, chunkInfo } = data
+      const { bibleBook, weekNumber, startPassage, endPassage, audience, level, daysCount, dateList, chunkInfo, forceFullRows } = data
       const limit = daysCount || 6
       const hasEndPassage = !!endPassage && endPassage.trim().length > 0
 
@@ -1165,11 +1167,81 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
 
       // 날짜 목록에 대한 AI 가이드 추가
       if (dateList && Array.isArray(dateList) && dateList.length > 0) {
-        systemPrompt += `\n\n## 날짜 매핑 지침 (중요)
-본문 분할표의 첫 번째 열('날짜')에는 아래 제공된 실제 날짜 목록 순서대로 정확히 채우십시오. 날짜 포맷을 절대 변경하거나 임의로 단축하지 마십시오.
+        systemPrompt += `\n\n## 날짜 매핑 지침 (★매우 중요★)
+본문 분할표의 첫 번째 열('날짜')에는 아래 제공된 실제 날짜 목록 순서대로 정확히 채우십시오.
+**절대로 임의로 날짜를 건너뛰거나 선택하지 마십시오. 1일차, 2일차, ..., ${limit}일차 순서대로 빠짐없이 채워야 합니다.**
 
 ## 적용할 실제 날짜 목록 (${limit}일치):
 ${dateList.map((d: string, i: number) => `${i + 1}일차: ${d}`).join('\n')}`
+      }
+
+      // ★ 재시도 모드: forceFullRows=true면 매우 강한 경고 추가
+      if (forceFullRows) {
+        systemPrompt += `\n\n## ★★★재시도 경고 (절대 위반 금지)★★★
+[이전 시도 실패] AI가 ${limit}일치 행을 빠뜨렸습니다. 이 시도가 마지막 재시도입니다.
+반드시 *정확히 ${limit}개의 행*을 생성하세요. 어떤 경우에도 행을 줄이지 마십시오.
+
+### 행 수 부족 원인 (절대 반복하지 말 것)
+- ❌ "본문이 짧다"는 이유로 행을 합치지 마라
+- ❌ "내용이 비슷하다"는 이유로 행을 생략하지 마라
+- ❌ 임의로 날짜를 건너뛰지 마라
+- ✅ 본문이 부족하면 **다음 성경책/장/절로 확장**해서 정확히 ${limit}행을 채워라
+- ✅ 한 성경책의 모든 장이 끝나면 **다음 성경책 1장 1절부터** 이어가라
+- ✅ 마지막 날은 "본문: 책명 X:Y" 형식으로 정확한 끝 절을 명시하라
+
+★★★반드시 ${limit}행을 빠짐없이 출력하면 응답이 정상으로 인정됩니다.★★★`
+      }
+
+      // ★ 성경 소제목 정보 주입 (DB에 있을 때만)
+      let sectionsText = ''
+      try {
+        if (bibleBook && startPassage) {
+          // startPassage / endPassage 파싱
+          const sMatch = String(startPassage).match(/^(.+?)\s+(\d+)\s*[:장]\s*(\d+)/)
+          const eMatch = hasEndPassage
+            ? String(endPassage).match(/^(.+?)\s+(\d+)\s*[:장]\s*(\d+)/)
+            : null
+          if (sMatch) {
+            const sChap = parseInt(sMatch[2], 10)
+            const sVs = parseInt(sMatch[3], 10)
+            let eChap = eMatch ? parseInt(eMatch[2], 10) : sChap
+            let eVs = eMatch ? parseInt(eMatch[3], 10) : sVs
+            if (eChap < sChap || (eChap === sChap && eVs < sVs)) {
+              eChap = sChap
+              eVs = sVs
+            }
+            sectionsText = formatSectionsForPrompt(bibleBook, sChap, sVs, eChap, eVs)
+          }
+        }
+      } catch (secErr) {
+        console.warn('[qt-split] sections lookup failed:', secErr)
+      }
+
+      if (sectionsText) {
+        systemPrompt += `\n\n## ★본문 영역의 성경 소제목 (자연 분할 지점)★
+아래는 성경공회 공식 개역개정 기준의 소제목(섹션 제목)입니다. **소제목 경계를 우선적으로 활용하여 분할하십시오.**
+
+${sectionsText}
+
+### 소제목 기반 분할 규칙 (★우선순위 엄격 준수★)
+
+★[1순위, 절대 위반 금지] 각 날은 반드시 최소 10절 이상이어야 한다★
+- 10절 미만의 날이 하나라도 있으면 명백한 위반이다.
+- 어떤 소제목이든 2~3개 결합해서라도 10절을 채워라. 1일 = 1~3개 소제목 허용.
+
+[2순위] 소제목 경계 선호: 10절을 채우면서 가능한 한 소제목 경계를 분할점으로 사용.
+
+[3순위] 분량 균형: 한 날이 60절을 넘으면 의미 단위로 나누기 (시편 119장 등).
+
+[4순위] DB에 없는 책/장: 본문 내용 분석으로 자연스러운 신학적 단락을 만들어 분할.
+
+### 결합 예시 (참고)
+- 1:1-2절(2절, 인사) + 1:3-14절(12절, 영적 축복) → 1:1-14절(14절, "인사 + 영적 축복") ✓
+- 1:15-23절(9절, 우월성) + 2:1-10절(10절, 구원) → 1:15-2:10절(19절, "우월성 + 구원") ✓
+- 1:27-30절(4절) + 2:1-11절(11절) → 1:27-2:11절(15절, "복음에 합당하게 + 겸손과 높임") ✓
+- 3개 결합 예: 1:1-2 + 1:3-14 + 1:15-23 → 1:1-23(23절, "인사 + 영적 축복 + 우월성")
+
+★중요★: 단일 소제목이 10절 미만이면 **반드시 인접 소제목과 결합**하여 10절을 채울 것. 절대 4~9절짜리 단독 행을 만들지 말 것.`
       }
 
       userText = `## 입력 정보
@@ -1180,13 +1252,15 @@ ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 �
 - 대상 독자: ${audience || '일반 성도'}
 - 난이도: ${level || '중'}
 - 분할 일수: ${limit}일
+${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬프트 참조` : ''}
 
 ## 특별 요구사항
-- 반드시 표의 첫 번째 열에 전달된 날짜 목록(${limit}일치)을 순서대로 하나도 빠뜨리지 말고 출력해 주세요.
+- ★[최우선] 표의 첫 번째 열에 전달된 날짜 목록(${limit}일치)을 1일차부터 ${limit}일차까지 **순서대로 하나도 빠뜨리지 말고** 출력해 주세요. 임의로 날짜를 건너뛰는 것은 명백한 위반입니다.
+- ★[행 개수] 정확히 ${limit}개의 행을 생성해야 합니다. 절대로 행을 줄이거나 합치지 마세요. 본문이 부족하면 다음 성경책/장/절로 이어가서 ${limit}행을 채우세요.
 - 분할 이유나 묵상 초점은 명료하고 컴팩트하게 작성하여 토큰 제한에 걸려 출력이 중간에 잘리지 않도록 하십시오.
 - 동일한 문구나 패턴을 반복하지 말고, 각 날짜의 본문과 제목, 초점을 서로 다르게 작성하십시오.
 - ⚠️ [매우 중요] 시작 본문("${startPassage || ''}")보다 이전 구절(더 작은 장 번호)을 절대 포함하지 마십시오. 반드시 "${startPassage || ''}"부터 정확히 시작해서 순차적으로 진행하세요. 이미 다룬 내용을 다시 쓰지 마십시오.
-- ⚠️ [필수] '분할 이유' 열을 절대 비워두지 마십시오. 각 날짜 본문을 선정한 신학적/문맥적 이유를 반드시 1문장씩 채우십시오.`
+- ⚠️ [필수] '분할 이유' 열을 절대 비워두지 마십시오. 각 날짜 본문을 선정한 신학적/문맥적 이유를 반드시 1문장씩 채우십시오.${sectionsText ? '\n- ★성경 소제목이 제공된 경우, 그 경계를 우선 분할 지점으로 사용하세요. 단, 최소 10절 규칙은 여전히 유효합니다.' : ''}`
       model = 'gpt-4o-mini'
       maxTokens = limit > 10 ? Math.min(2500 + (limit - 10) * 100, 3500) : 2500
       temperature = 0.5
@@ -1203,6 +1277,84 @@ ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 �
         audience, level, tone, bibleTextPolicy, verseQuoteLimit, seriesName,
         bookOverview, passageContext, originalWordsHint, englishWordsHint
       } = data
+
+      // dayPassage 파싱: "창세기 1:1-5" → {book:'창세기', chapter:1, vs:1, ve:5}
+      // 또는 "창세기 1:1" → vs=ve=1
+      // 또는 "창세기 1장" → vs=1, ve=null (장 전체)
+      let parsedBook = bibleBook || ''
+      let parsedChapter = 0
+      let parsedVs = 0
+      let parsedVe = 0
+      try {
+        // dayPassage에서 책이름+장+절 추출 시도
+        const passStr = String(dayPassage || '').trim()
+        // 패턴: "책이름 장:절" 또는 "책이름 장:절-절" 또는 "책이름 장장" 또는 "책이름 장장:절"
+        const m1 = passStr.match(/^(.+?)\s+(\d+)\s*[:장]\s*(\d+)(?:\s*[-~]\s*(\d+))?/)
+        if (m1) {
+          parsedBook = m1[1].trim()
+          parsedChapter = parseInt(m1[2], 10)
+          parsedVs = parseInt(m1[3], 10)
+          parsedVe = m1[4] ? parseInt(m1[4], 10) : parsedVs
+        } else {
+          const m2 = passStr.match(/^(.+?)\s+(\d+)\s*$/)
+          if (m2) {
+            parsedBook = m2[1].trim()
+            parsedChapter = parseInt(m2[2], 10)
+            parsedVs = 1
+            parsedVe = 0 // 장 전체 (DB에 있는 만큼)
+          }
+        }
+      } catch {
+        // 파싱 실패 시 빈 값 유지
+      }
+
+      // 본문 자동 주입 (개역개정 + KJV)
+      let korText = ''
+      let kjvText = ''
+      let verseCount = 0
+      try {
+        const shortName = parsedBook ? mapBookName(parsedBook) : null
+        if (shortName && parsedChapter) {
+          const allData = await loadBibleData()
+          const veEffective = parsedVe > 0 ? parsedVe : (parsedVs > 0 ? parsedVs : 50)
+          const matches = allData
+            .filter(
+              (v: any) =>
+                v.book === shortName &&
+                v.chapter === parsedChapter &&
+                v.verse >= (parsedVs || 1) &&
+                v.verse <= veEffective,
+            )
+            .sort((a: any, b: any) => a.verse - b.verse)
+          korText = matches.map((v: any) => `[${v.verse}절] ${v.content}`).join(' ')
+          verseCount = matches.length
+
+          // KJV 로드 (실패해도 진행)
+          try {
+            const kjvData = await loadKjvData()
+            const kjvMatches = kjvData
+              .filter(
+                (v) =>
+                  v.book === shortName &&
+                  v.chapter === parsedChapter &&
+                  v.verse >= (parsedVs || 1) &&
+                  v.verse <= veEffective,
+              )
+              .sort((a, b) => a.verse - b.verse)
+            kjvText = kjvMatches.map((v) => `[${v.verse}] ${v.content}`).join(' ')
+          } catch (kjvErr) {
+            console.warn('[qt-draft] KJV load failed, continuing with Korean only:', kjvErr)
+          }
+        }
+      } catch (e) {
+        console.error('[qt-draft] bible data load failed:', e)
+      }
+
+      // maxTokens 동적: 절 수에 비례 (기본 6000, 30절+ → 7000)
+      const dynamicMax = verseCount > 0
+        ? Math.min(6000 + Math.max(verseCount - 20, 0) * 50, 8000)
+        : 6000
+
       userText = `## 기본 정보
 - 성경권: ${bibleBook || ''}
 - 주차: ${weekNumber || 1}
@@ -1215,16 +1367,25 @@ ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 �
 - 대상 독자: ${audience || '일반 성도'}
 - 난이도: ${level || '중'}
 - 톤: ${tone || '정중하고 따뜻한'}
-- 성경 본문 정책: ${bibleTextPolicy || '본문 범위와 핵심절만 제시'}
-- 핵심절 인용 기준: ${verseQuoteLimit || '최대 2구절'}
+- 성경 본문 정책: ${bibleTextPolicy || '전체 본문 제시 — 개역개정과 KJV 모두 본문 범위의 모든 절을 빠짐없이 포함'}
+- 핵심절 인용 기준: ${verseQuoteLimit || '전체 본문 — 모든 절'}
 - 시리즈명: ${seriesName || '말씀과 함께하는 큐티'}
 
 ## 추가 참조 데이터
 - 성경권 개요: ${bookOverview || '없음'}
 - 문맥 요약: ${passageContext || '없음'}
 - 원어 후보: ${originalWordsHint || '없음'}
-- 영어단어 후보: ${englishWordsHint || '없음'}`
-      maxTokens = 3000
+- 영어단어 후보: ${englishWordsHint || '없음'}
+
+## ★실제 성경 본문 데이터 (아래 본문을 그대로 복사하여 출력에 사용하세요)★
+${korText ? `### 개역개정 (한국어) — ${verseCount}절:
+${korText}` : '(개역개정 본문 데이터 없음 — 본문 범위만 출력에 표기)'}
+${kjvText ? `
+### KJV (영문) — ${verseCount}절:
+${kjvText}` : ''}
+
+★중요: 위 본문 데이터는 이미 검증된 원문입니다. 출력 시 "## 오늘의 본문" 섹션의 "개역개정 전체 본문"과 "KJV 전체 본문"에 있는 그대로 복사·인용하세요. 절 번호 표기([1절], [1] 등)도 그대로 유지하세요. 절을 요약하거나 의역하지 마세요.★`
+      maxTokens = dynamicMax
       temperature = 0.7
     } else if (type === 'qt-refine') {
       const { draftContent } = data
@@ -1232,7 +1393,7 @@ ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 �
 
 [QT 초안]
 ${draftContent || ''}`
-      maxTokens = 3000
+      maxTokens = 6000
       temperature = 0.5
     } else if (type === 'qt-assemble') {
       const { bibleBook, weekNumber, seriesName, subtitle, audience, sizeOption, designMood, days } = data

@@ -77,6 +77,12 @@ const BIBLE_CHAPTERS: Record<string, number> = {
   '유다서': 1, '요한계시록': 22
 }
 
+// 책별 장당 절 수 (getNextPassageRange에서 장 경계 넘침 방지용)
+// BIBLE_CHAPTERS는 책의 총 장 수이고, 이 DB는 각 장의 절 수 (자주 쓰는 책만 하드코딩, 나머지는 30으로 가정)
+const BIBLE_VERSES_PER_CHAPTER: Record<string, number[]> = {
+  '창세기': [31, 25, 24, 26, 32, 22, 24, 22, 29, 32, 32, 20, 18, 24, 21, 16, 27, 33, 38, 18, 34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 55, 32, 20, 31, 29, 43, 36, 30, 23, 23, 57, 38, 34, 34, 28, 34, 31, 22, 33, 26],
+}
+
 export interface QTFormData {
   bibleBook: string
   weekNumber: number
@@ -95,6 +101,7 @@ export interface DaySplitData {
   title: string
   focus: string
   reason: string
+  sectionTitles?: string[]  // 성경 소제목 배열 (다중 결합 시 1개 이상)
 }
 
 export interface DayManuscript {
@@ -102,6 +109,7 @@ export interface DayManuscript {
   passage: string
   title: string
   focus: string
+  sectionTitles?: string[]  // 성경 소제목 배열 (다중 결합 시 1개 이상)
   draftContent?: string
   finalContent?: string
   isGenerating?: boolean
@@ -110,6 +118,7 @@ export interface DayManuscript {
 
 export interface QTResult {
   fullManuscript: string
+  daySectionTitles?: Record<number, string[]>  // PDF 표시용: day 인덱스 → 소제목 배열
 }
 
 export interface QtHistoryEntry {
@@ -380,6 +389,8 @@ export default function QtGenerator() {
   
   // 최종 결과 (QtReader 연동용)
   const [finalManuscript, setFinalManuscript] = useState('')
+  // 일자별 성경 소제목 (PDF 표시용)
+  const [daySectionTitles, setDaySectionTitles] = useState<Record<number, string[]>>({})
 
   // 히스토리 상태
   const [historyEntries, setHistoryEntries] = useState<QtHistoryEntry[]>([])
@@ -606,6 +617,7 @@ export default function QtGenerator() {
     chunkDaysCount: number
     chunkDateList: string[]
     chunkInfo: { current: number; total: number; offset: number }
+    forceFullRows?: boolean
   }): Promise<{ output: string; parsed: DaySplitData[] }> => {
     const res = await fetch('/api/advanced/ai', {
       method: 'POST',
@@ -623,6 +635,7 @@ export default function QtGenerator() {
           startDate: normalizedStartDate,
           dateList: params.chunkDateList,
           chunkInfo: params.chunkInfo,
+          forceFullRows: params.forceFullRows || false,
         },
       }),
     })
@@ -631,6 +644,154 @@ export default function QtGenerator() {
     const output = json.data.output as string
     const parsed = parseSplitTable(output)
     return { output, parsed }
+  }
+
+  // passage 문자열에서 절 수 계산
+  // 예: "창세기 1:1-10" → 10절
+  // 예: "창 1:1-2:3" → 33절 (1장 31절 + 2장 3절 = 34... 30/장 가정 시 33)
+  // 예: "창 1장" → 31절 (해당 장의 절 수)
+  // 예: "창 1:1, 3-5" → 4절
+  function countPassageVerses(passage: string): number {
+    if (!passage) return 0
+    const s = passage.trim()
+    // 같은 장 내 범위: "1:1-10" → 10
+    let m = s.match(/(\d+)\s*[:장]\s*(\d+)\s*[-~]\s*(\d+)/)
+    if (m && !s.match(/\d+\s*:\s*\d+\s*[-~]\s*\d+\s*[:장]/)) {
+      return parseInt(m[3], 10) - parseInt(m[2], 10) + 1
+    }
+    // 다장 범위: "1:1-2:3" → 30(장당 평균) + 3 = 33
+    m = s.match(/(\d+)\s*[:장]\s*(\d+)\s*[-~]\s*(\d+)\s*[:장]\s*(\d+)/)
+    if (m) {
+      const startChap = parseInt(m[1], 10)
+      const endChap = parseInt(m[3], 10)
+      const endVerse = parseInt(m[4], 10)
+      return Math.max(0, (endChap - startChap) * 30 + endVerse)
+    }
+    // 단일 절: "1:5" → 1
+    m = s.match(/(\d+)\s*[:장]\s*(\d+)/)
+    if (m) return 1
+    // 장 단위: "1장" → 30 (평균)
+    m = s.match(/(\d+)\s*장/)
+    if (m) return 30
+    return 0
+  }
+
+  // 짧은 본문(<10절) 자동 합치기: 인접한 두 날을 합쳐 10절 이상으로 만듦
+  // 누적된 parsed 배열을 받아 마지막 항목이 10절 미만이면 그 전 항목과 합침
+  function enforceMinVerses(parsed: DaySplitData[], minVerses = 10): DaySplitData[] {
+    if (parsed.length <= 1) return parsed
+    const result = [...parsed]
+    // 뒤에서부터 합치기 (마지막 항목이 짧으면 앞과 합침)
+    for (let i = result.length - 1; i > 0; i--) {
+      const cur = result[i]
+      const prev = result[i - 1]
+      const curVerses = countPassageVerses(cur.passage)
+      const prevVerses = countPassageVerses(prev.passage)
+      // ★ 보강된 행(title="말씀 묵상")은 합치지 않음 (각 일자에 빈 행이라도 남기기)
+      const isPadded = cur.title === '말씀 묵상' && cur.reason === '연속 본문 이어가기'
+      if (isPadded) continue
+      if (curVerses > 0 && curVerses < minVerses && prevVerses < 60) {
+        // passage 범위 합치기
+        // prev.passage의 끝 절을 구해서 cur.passage의 시작과 연결
+        const mergedPassage = mergePassageRange(prev.passage, cur.passage)
+        result[i - 1] = {
+          ...prev,
+          passage: mergedPassage,
+          title: prev.title,
+          focus: prev.focus,
+          reason: prev.reason,
+        }
+        result.splice(i, 1)
+        console.log(`[QT] 절 수 부족 (${curVerses}절) 자동 합치기: "${prev.day}+${cur.day}" → "${prev.day}"`)
+      }
+    }
+    return result
+  }
+
+  // 두 passage 범위를 합쳐 단일 범위로 만듦
+  // 예: "창 1:1-5" + "창 1:6-10" → "창 1:1-10"
+  // 예: "창 1:14-25" + "창 2:1-7" → "창 1:14-2:7"
+  // 예: "창 1:26-31" + "창 2:1-3" → "창 1:26-2:3"
+  function mergePassageRange(p1: string, p2: string): string {
+    // 책이름 추출
+    const bookMatch = p1.match(/^([가-힣]+)/)
+    const book = bookMatch ? bookMatch[1] : form.bibleBook
+    const p1Start = parsePassageStart(p1)
+    const p1End = parsePassageEnd(p1)
+    const p2Start = parsePassageStart(p2)
+    const p2End = parsePassageEnd(p2)
+    if (p1Start && p1End && p2Start && p2End) {
+      const startChap = p1Start.chap
+      const startVerse = p1Start.verse
+      const endChap = p2End.chap
+      const endVerse = p2End.verse
+      // 같은 장 내 범위: "1:14-25"
+      if (startChap === endChap) {
+        return `${book} ${startChap}:${startVerse}-${endVerse}`
+      }
+      // 다장 범위: "1:14-2:7"
+      return `${book} ${startChap}:${startVerse}-${endChap}:${endVerse}`
+    }
+    // 파싱 실패 시 단순 결합
+    return `${p1}, ${p2}`
+  }
+
+  // passage의 시작 절 (chap, verse) 추출
+  function parsePassageStart(p: string): { chap: number; verse: number } | null {
+    const m = p.match(/(\d+)\s*[:장]\s*(\d+)/)
+    if (m) return { chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
+    return null
+  }
+  // passage의 끝 절 (chap, verse) 추출
+  function parsePassageEnd(p: string): { chap: number; verse: number } | null {
+    // "1:1-5" → (1, 5)
+    let m = p.match(/(\d+)\s*[:장]\s*\d+\s*[-~]\s*(\d+)(?!\s*[:장])/)
+    if (m) return { chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
+    // "1:1-2:3" → (2, 3)
+    m = p.match(/(\d+)\s*[:장]\s*\d+\s*[-~]\s*(\d+)\s*[:장]\s*(\d+)/)
+    if (m) return { chap: parseInt(m[2], 10), verse: parseInt(m[3], 10) }
+    return null
+  }
+
+  // 마지막 본문에서 다음 본문 범위를 N절 단위로 생성 (다음 책/장 자동 이동)
+  // 실제 책의 장별 절 수를 반영하여 정확한 범위 산출
+  // 예: "에베소서 2:11-22" + 12절 → "에베소서 2:23" (다음) → "에베소서 3:1-12" (12절, 에베소서 3장 21절 기준)
+  function getNextPassageRange(lastPassage: string, bookName: string, verses = 12): string {
+    const nextStart = getNextStartPassage(lastPassage, bookName)
+    const startInfo = parsePassageStart(nextStart)
+    if (!startInfo) return nextStart
+    // 현재 장의 최대 절 수: BIBLE_VERSES_PER_CHAPTER에서 해당 장의 절 수 조회, 없으면 30 가정
+    const chapVerses = BIBLE_VERSES_PER_CHAPTER[bookName]
+    const maxVerseInChap = (chapVerses && chapVerses[startInfo.chap - 1]) ? chapVerses[startInfo.chap - 1] : 30
+    const startChap = startInfo.chap
+    const startVerse = startInfo.verse
+    // 현재 장에 verses 절이 들어가는지 확인
+    if (startVerse + verses - 1 <= maxVerseInChap) {
+      return `${bookName} ${startChap}:${startVerse}-${startVerse + verses - 1}`
+    }
+    // 안 되면 현재 장 끝까지 + 다음 장 (1절부터)
+    const remainInChap = maxVerseInChap - startVerse + 1
+    const needFromNext = verses - remainInChap
+    // 다음 장의 절 수가 부족하면 다음 장 전체 + 그 다음 장으로 확장 (재귀 방지용 cap: 2장까지만)
+    const nextChapVerses = chapVerses && chapVerses[startChap] ? chapVerses[startChap] : 30
+    if (needFromNext > nextChapVerses) {
+      // 범위가 너무 크면 현재 장 끝까지로 제한
+      return `${bookName} ${startChap}:${startVerse}-${maxVerseInChap}`
+    }
+    return `${bookName} ${startChap}:${startVerse}-${startChap + 1}:${needFromNext}`
+  }
+
+  // passage 범위에 매칭되는 성경 소제목 모두 찾기 (다중)
+  // 예: passage="에베소서 1:1-14" → ["인사", "그리스도 안의 영적 축복"]
+  // 예: passage="에베소서 1:15-2:10" → ["그리스도의 우월성과 교회의 본질", "은혜로 구원받음"]
+  function findAllSectionTitles(passage: string, bookName: string): string[] {
+    try {
+      // 섹션 DB 동적 임포트 (번들 크기 회피)
+      const { findAllSectionTitles: lookup } = require('@/lib/bible/sections')
+      return lookup(passage, bookName) || []
+    } catch {
+      return []
+    }
   }
 
   // 1단계: 주간/월간 본문 분할 생성 (월간은 10일 단위 청킹 순차 호출)
@@ -717,10 +878,10 @@ export default function QtGenerator() {
           })
         }
 
-        // 출력 검증 + 최대 2회 재시도
+        // 출력 검증 + 최대 3회 재시도 (행 수 부족 시 강제 재시도)
         let parsed: DaySplitData[] = []
         let output = ''
-        const MAX_RETRIES = 2
+        const MAX_RETRIES = 3
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           const result = await callSplitApi({
             chunkStartPassage,
@@ -728,11 +889,12 @@ export default function QtGenerator() {
             chunkDaysCount: chunk.size,
             chunkDateList: chunk.dateList,
             chunkInfo: { current: ci + 1, total: totalChunks, offset: chunk.offset },
+            forceFullRows: attempt > 0,  // 재시도 시 행 수 강제
           })
           output = result.output
           parsed = result.parsed
 
-          // 검증: 첫 번째 passage의 장/절이 expected보다 낮으면 반복으로 간주
+          // 검증 1: 첫 번째 passage의 장/절이 expected보다 낮으면 반복으로 간주
           if (attempt < MAX_RETRIES && !isFirst && parsed.length > 0) {
             const expected = getPassageStartVerse(chunkStartPassage)
             const actual = getPassageStartVerse(parsed[0].passage)
@@ -741,14 +903,31 @@ export default function QtGenerator() {
               continue
             }
           }
-          break // 검증 통과 또는 첫 청크 → 종료
+          // 검증 2: ★ 행 수가 부족하면 재시도 (강제)
+          if (attempt < MAX_RETRIES && parsed.length < chunk.size) {
+            console.warn(`[QT] 청크 ${ci + 1} 행 수 부족: AI ${parsed.length}행 반환, 필요 ${chunk.size}행. 재시도 ${attempt + 1}/${MAX_RETRIES}`)
+            continue
+          }
+          break // 검증 통과 → 종료
+        }
+
+        if (parsed.length < chunk.size) {
+          console.error(`[QT] 청크 ${ci + 1} 최종 행 수 부족: ${parsed.length}/${chunk.size}행. 강제 보강 예정`)
         }
 
         accumulatedOutput += (ci > 0 ? '\n\n---\n\n' : '') + output
         // dateList 강제 매핑 (AI 날짜 변형 방어) + 컬럼 오정렬 보정
+        // ★ AI가 chunk.size보다 적게 반환해도, accumulatedParsed.length 기반으로
+        //   dateList 순서에 1:1 대응하도록 매핑 (globalIdx = accumulatedParsed.length)
         parsed.forEach((p, i) => {
           const globalIdx = accumulatedParsed.length
-          const cleanDay = dateList[globalIdx] || p.day.trim()
+          // ★★★ 절대 강제 매핑: dateList[globalIdx]가 있으면 무조건 그것만 사용
+          // AI가 임의로 넣은 날짜(예: 7/23)는 무시하고 dateList 순서대로 매핑
+          if (!dateList[globalIdx]) {
+            console.error(`[QT] dateList[${globalIdx}] 없음! dateList.length=${dateList.length}`)
+            return // skip this row (defensive)
+          }
+          const cleanDay = dateList[globalIdx]  // ← fallback 제거, 무조건 dateList 사용
 
           // 컬럼 오정렬 보정: passage가 비었고 title에 성경 참조가 있으면 swap
           let passage = p.passage?.trim()
@@ -757,16 +936,21 @@ export default function QtGenerator() {
             passage = title
             title = ''
           }
+          const finalPassage = passage || getNextStartPassage(
+            accumulatedParsed[accumulatedParsed.length - 1]?.passage || startPassage,
+            form.bibleBook
+          )
+
+          // ★ 성경 소제목 다중 lookup
+          const sectionTitles = findAllSectionTitles(finalPassage, form.bibleBook)
 
           accumulatedParsed.push({
             day: cleanDay,
-            passage: passage || getNextStartPassage(
-              accumulatedParsed[accumulatedParsed.length - 1]?.passage || startPassage,
-              form.bibleBook
-            ),
+            passage: finalPassage,
             title: title || '말씀 묵상',
             focus: p.focus?.trim() || '본문 중심 묵상',
             reason: p.reason?.trim() || `${p.focus?.trim() || title || '본문'}의 신학적 의미를 묵상하기 위해`,
+            sectionTitles,
           })
         })
 
@@ -776,39 +960,111 @@ export default function QtGenerator() {
         }
       }
 
+      // ★ 진단 로그: AI 반환 후 상태
+      console.log(`[QT][1단계] AI 분할 완료. AI 반환: ${accumulatedParsed.length}행 / dateList: ${dateList.length}행`)
+      if (accumulatedParsed.length !== dateList.length) {
+        console.warn(`[QT][1단계] ⚠️ 행 수 불일치: AI가 ${accumulatedParsed.length < dateList.length ? '부족' : '초과'}하게 반환함`)
+      }
+
+      // ★ AI가 너무 많이 반환한 경우 자르기 (dateList 길이로 제한)
+      if (accumulatedParsed.length > dateList.length) {
+        console.warn(`[QT] AI가 ${accumulatedParsed.length}행 반환, dateList는 ${dateList.length}행. ${dateList.length}행으로 자름`)
+        accumulatedParsed.length = dateList.length
+      }
+
       // 누락된 날짜 보강: AI가 일부 행을 생략한 경우 dateList 기준으로 채움
+      // ★ enforceMinVerses로 합쳐지지 않도록 10절+ 범위로 채움
       while (accumulatedParsed.length < dateList.length) {
         const missingIdx = accumulatedParsed.length
         const lastPassage = accumulatedParsed[missingIdx - 1]?.passage || startPassage
+        const paddedRange = getNextPassageRange(lastPassage, form.bibleBook, 12)
+        const paddedSections = findAllSectionTitles(paddedRange, form.bibleBook)
         accumulatedParsed.push({
           day: dateList[missingIdx],
-          passage: getNextStartPassage(lastPassage, form.bibleBook),
+          passage: paddedRange,
           title: '말씀 묵상',
           focus: '본문 중심 묵상',
           reason: '연속 본문 이어가기',
+          sectionTitles: paddedSections,
         })
-        console.warn(`[QT] 누락된 날짜 보강: ${dateList[missingIdx]}`)
+        console.warn(`[QT] 누락된 날짜 보강: ${dateList[missingIdx]} → ${paddedRange}${paddedSections.length > 0 ? ` [소제목: ${paddedSections.join(' + ')}]` : ''}`)
+      }
+
+      // ★ 10절 미만 본문 자동 합치기 (촘촘한 분할 방지)
+      const beforeMerge = accumulatedParsed.length
+      let finalParsed = enforceMinVerses(accumulatedParsed, 10)
+      if (finalParsed.length !== beforeMerge) {
+        console.log(`[QT] 절 수 최소 규칙 적용: ${beforeMerge}일 → ${finalParsed.length}일`)
+      }
+
+      // ★★★ enforceMinVerses 합치기로 날짜가 누락/꼬임 방지: dateList 기준 재매핑 ★★★
+      // enforceMinVerses는 splice로 행을 제거하므로 day가 건너뛰어짐.
+      // 이를 보정하여 finalParsed의 day가 dateList 순서와 1:1로 대응되도록 재정렬.
+      if (finalParsed.length <= dateList.length && finalParsed.length > 0) {
+        const remapped = finalParsed.map((row, i) => ({
+          ...row,
+          day: dateList[i],  // dateList 순서대로 강제 재매핑
+        }))
+        finalParsed = remapped
+        if (beforeMerge !== finalParsed.length) {
+          console.log(`[QT] 날짜 재매핑: finalParsed day를 dateList[0..${finalParsed.length - 1}]로 정렬`)
+        }
+      }
+
+      // ★★★ 절대 강제: finalParsed가 dateList와 길이가 다르면 강제 보강 ★★★
+      if (finalParsed.length < dateList.length) {
+        const missing = dateList.length - finalParsed.length
+        console.warn(`[QT][강제 보강] finalParsed=${finalParsed.length}일, dateList=${dateList.length}일. ${missing}일 강제 추가`)
+        for (let i = finalParsed.length; i < dateList.length; i++) {
+          const lastPassage = finalParsed[i - 1]?.passage || startPassage
+          const paddedRange = getNextPassageRange(lastPassage, form.bibleBook, 12)
+          const paddedSections = findAllSectionTitles(paddedRange, form.bibleBook)
+          finalParsed.push({
+            day: dateList[i],  // ★ 절대 dateList 사용
+            passage: paddedRange,
+            title: '말씀 묵상 (자동 보강)',
+            focus: '본문 중심 묵상',
+            reason: `AI가 ${daysCount}일치 행을 모두 반환하지 않아 시스템이 자동 보강했습니다. 직접 편집이 필요합니다.`,
+            sectionTitles: paddedSections,
+          })
+        }
+        console.log(`[QT][강제 보강] 완료: 최종 ${finalParsed.length}일`)
+      }
+
+      // ★★★ 안전장치: 어떤 이유로든 dateList보다 적으면 최후 수단 ★★★
+      while (finalParsed.length < dateList.length) {
+        const i = finalParsed.length
+        finalParsed.push({
+          day: dateList[i],
+          passage: startPassage,
+          title: '말씀 묵상',
+          focus: '본문 중심 묵상',
+          reason: '자동 보강',
+          sectionTitles: [],
+        })
       }
 
       setSplitMarkdown(accumulatedOutput)
-      setSplitDays(accumulatedParsed)
+      setSplitDays(finalParsed)
 
-      // 2단계 날짜별 기본 데이터 세팅 (accumulatedParsed.day는 이미 dateList[i]로 강제 세팅됨)
+      // 2단계 날짜별 기본 데이터 세팅 (finalParsed.day는 이미 dateList[i]로 강제 세팅됨)
       const updatedManuscripts: Record<string, DayManuscript> = {}
-      accumulatedParsed.forEach((p) => {
+      finalParsed.forEach((p) => {
         updatedManuscripts[p.day] = {
           dayName: p.day,
           passage: p.passage,
           title: p.title,
           focus: p.focus,
+          sectionTitles: p.sectionTitles,
         }
       })
       setDayManuscripts(updatedManuscripts)
 
-      console.log(`[QT] 본문 분할안 생성 완료: ${accumulatedParsed.length}/${dateList.length}일`)
+      console.log(`[QT] 본문 분할안 생성 완료: ${finalParsed.length}/${dateList.length}일`)
+      console.log(`[QT] 최종 분할:`, finalParsed.map(p => `${p.day} (${p.sectionTitles?.join(' + ') || '소제목 없음'}): ${p.passage}`))
 
-      if (accumulatedParsed.length > 0) {
-        const firstDay = dateList[0] || accumulatedParsed[0].day.trim()
+      if (finalParsed.length > 0) {
+        const firstDay = dateList[0] || finalParsed[0].day.trim()
         setActiveDay(firstDay)
       }
     } catch (e: any) {
@@ -819,7 +1075,69 @@ export default function QtGenerator() {
     }
   }
 
-  // 2단계 & 3단계: 하루치 QT 생성 및 교열 정제 체이닝 API 호출
+  // 2단계: 하루치 QT 단일 호출 생성 + 섹션 검증 자동 재시도
+  // (qt-draft + 본문 자동 주입, maxTokens 6000+ 동적, refine 단계 제거로 잘림 증폭 차단)
+  const REQUIRED_SECTIONS = [
+    '## 기본 정보',
+    '## 오늘의 본문',
+    '## 본문 한눈에 보기',
+    '## 천천히 읽기',
+    '## 본문 관찰하기',
+    '## 원어 핵심단어',
+    '## 영어 핵심단어',
+    '## 말씀 이해하기',
+    '## 복음으로 보기',
+    '## 나를 비추어 보기 (장년용)',
+    '## 나를 비추어 보기 (청소년 및 새신자용)',
+    '## 오늘의 적용 (장년용)',
+    '## 오늘의 적용 (청소년 및 새신자용)',
+    '## 영어로 붙드는 말씀',
+    '## 공동체 연결',
+    '## 오늘의 기도',
+    '## 한 줄 기록',
+    '## 인도자 메모',
+  ]
+
+  function validateFinalContent(content: string): { valid: boolean; missing: string[] } {
+    const missing: string[] = []
+    for (const sec of REQUIRED_SECTIONS) {
+      if (!content.includes(sec)) missing.push(sec)
+    }
+    return { valid: missing.length === 0, missing }
+  }
+
+  async function callQtDraft(
+    dayName: string,
+    dayPassage: string,
+    dayTitle: string,
+    dayFocus: string,
+  ): Promise<string> {
+    const res = await fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'qt-draft',
+        data: {
+          bibleBook: form.bibleBook,
+          weekNumber: form.weekNumber,
+          dayName,
+          dayPassage,
+          dayTitle,
+          dayFocus,
+          audience: form.audience,
+          level: form.level,
+          tone: form.tone,
+          bibleTextPolicy: '전체 본문 제시 — 개역개정과 KJV 모두 본문 범위의 모든 절을 빠짐없이 포함',
+          verseQuoteLimit: '전체 본문 — 모든 절',
+          seriesName: form.seriesName,
+        },
+      }),
+    })
+    const json = await res.json()
+    if (!json.success) throw new Error(json.error || 'QT 생성 실패')
+    return json.data.output as string
+  }
+
   const handleGenerateDay = async (dayName: string) => {
     const target = dayManuscripts[dayName]
     if (!target.passage || !target.title) {
@@ -829,81 +1147,72 @@ export default function QtGenerator() {
     setError(null)
 
     // 로딩 상태 세팅
-    setDayManuscripts(prev => ({
+    setDayManuscripts((prev) => ({
       ...prev,
-      [dayName]: { 
-        ...prev[dayName], 
-        isGenerating: true, 
-        generatingStep: '1단계: 복음 중심 초안 원고 집필 중... ✍️' 
-      }
+      [dayName]: {
+        ...prev[dayName],
+        isGenerating: true,
+        generatingStep: '복음 중심 풍성한 원고 집필 중... ✍️ (실제 성경 본문 자동 주입)',
+      },
     }))
 
+    const MAX_ATTEMPTS = 2
     try {
-      // Step A: 2단계 초안(qt-draft) API 호출
-      const draftRes = await fetch('/api/advanced/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'qt-draft',
-          data: {
-            bibleBook: form.bibleBook,
-            weekNumber: form.weekNumber,
-            dayName,
-            dayPassage: target.passage,
-            dayTitle: target.title,
-            dayFocus: target.focus,
-            audience: form.audience,
-            level: form.level,
-            tone: form.tone,
-            bibleTextPolicy: '전체 본문 제시 — 개역개정과 NIV 모두 본문 범위의 모든 절을 빠짐없이 포함',
-            verseQuoteLimit: '전체 본문 — 모든 절',
-            seriesName: form.seriesName
-          }
-        })
-      })
-      const draftJson = await draftRes.json()
-      if (!draftJson.success) throw new Error(draftJson.error || '초안 생성 실패')
-      const draftContent = draftJson.data.output
+      let attempt = 0
+      let finalContent = ''
+      let lastMissing: string[] = []
 
-      // 진행 상태 변경
-      setDayManuscripts(prev => ({
-        ...prev,
-        [dayName]: { 
-          ...prev[dayName], 
-          draftContent,
-          generatingStep: '2단계: 신학 검토 및 웹/PDF 레이아웃 교열 중... 🔍' 
+      while (attempt < MAX_ATTEMPTS) {
+        attempt += 1
+        const stepMsg =
+          attempt === 1
+            ? '복음 중심 풍성한 원고 집필 중... ✍️ (실제 성경 본문 자동 주입)'
+            : `누락 섹션 보강 재생성 중... 🔁 (${attempt}/${MAX_ATTEMPTS}) — ${lastMissing.length}개 섹션 보강`
+        setDayManuscripts((prev) => ({
+          ...prev,
+          [dayName]: { ...prev[dayName], generatingStep: stepMsg },
+        }))
+
+        let output = await callQtDraft(dayName, target.passage, target.title, target.focus)
+
+        // validate: 필수 섹션 모두 포함 확인
+        const v = validateFinalContent(output)
+        if (v.valid) {
+          finalContent = output
+          break
         }
-      }))
+        lastMissing = v.missing
+        console.warn(`[qt] ${dayName} attempt ${attempt}: missing ${v.missing.length} sections:`, v.missing)
+        // 마지막 시도여도 일단 저장 (사용자가 직접 편집할 수 있도록)
+        finalContent = output
+        if (attempt < MAX_ATTEMPTS) {
+          // 다음 시도를 위해 보강 힌트와 함께 재생성
+          target.focus = `${target.focus}\n\n[보강 필요 섹션] ${v.missing.join(', ')} — 위 섹션들을 빠짐없이 풍성하게 작성해 주세요. 각 섹션의 최소 글자 수를 반드시 채우세요.`
+        }
+      }
 
-      // Step B: 3단계 정제(qt-refine) API 호출
-      const refineRes = await fetch('/api/advanced/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'qt-refine',
-          data: { draftContent }
-        })
-      })
-      const refineJson = await refineRes.json()
-      if (!refineJson.success) throw new Error(refineJson.error || '정제 생성 실패')
-      
-      const rawFinal = refineJson.data.output
-      const finalContent = extractFinalContent(rawFinal)
-
-      setDayManuscripts(prev => ({
+      setDayManuscripts((prev) => ({
         ...prev,
-        [dayName]: { 
-          ...prev[dayName], 
+        [dayName]: {
+          ...prev[dayName],
           finalContent,
+          draftContent: finalContent,
           isGenerating: false,
-          generatingStep: ''
-        }
+          generatingStep: '',
+        },
       }))
+
+      if (lastMissing.length > 0) {
+        console.warn(`[qt] ${dayName} 생성 완료 (${lastMissing.length}개 섹션 누락 가능):`, lastMissing)
+        setError(
+          `${formatDayLabel(dayName)} 원고가 생성되었으나 일부 섹션이 누락되었을 수 있습니다: ${lastMissing.join(', ')}. 우측 편집기에서 직접 보완해 주세요.`,
+        )
+      }
     } catch (e: any) {
       setError(`${formatDayLabel(dayName)} 생성 중 오류: ${e.message || '요청 실패'}`)
-      setDayManuscripts(prev => ({
+      setDayManuscripts((prev) => ({
         ...prev,
-        [dayName]: { ...prev[dayName], isGenerating: false, generatingStep: '' }
+        [dayName]: { ...prev[dayName], isGenerating: false, generatingStep: '' },
       }))
     }
   }
@@ -1118,12 +1427,18 @@ export default function QtGenerator() {
         // 최종 PDF/Reader용 조립 텍스트 구성 (인트로 + 일일 원고 + 아웃트로)
         // QtReader는 "===\n\n### Day X" 형태를 분할 기점으로 인식할 수 있도록 조립
         let fullDoc = `${output}\n\n`
+        const daySectionTitlesMap: Record<number, string[]> = {}
         Object.keys(dayManuscripts).forEach((d, idx) => {
           fullDoc += `\n\n===\n\n`
           fullDoc += `### Day ${idx + 1}\n\n`
           fullDoc += dayManuscripts[d].finalContent
+          // 일자별 소제목 저장 (PDF 표시용)
+          if (dayManuscripts[d].sectionTitles && dayManuscripts[d].sectionTitles.length > 0) {
+            daySectionTitlesMap[idx] = dayManuscripts[d].sectionTitles
+          }
         })
         setFinalManuscript(fullDoc)
+        setDaySectionTitles(daySectionTitlesMap)
         saveToHistory(fullDoc)
       } else {
         setError(json.error || '주간 소책자 조립에 실패했습니다.')
@@ -1197,8 +1512,10 @@ export default function QtGenerator() {
           startPassage={startPassage}
           endPassage={endPassage}
           selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : null}
+          daySectionTitles={daySectionTitles}
           onBack={() => {
             setFinalManuscript('')
+            setDaySectionTitles({})
             setRecommendInfo(null)
           }}
         />
@@ -1721,6 +2038,37 @@ export default function QtGenerator() {
                   <Check className="w-4 h-4 text-emerald-400" />
                   본문 분할 기획이 완료되었습니다.
                 </h4>
+                <div className="flex items-center gap-2">
+                  {/* ★ 행 수 표시 — 사용자가 일자 수 즉시 확인 */}
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {splitDays.length > 0 ? (
+                      <span>
+                        {splitDays.length}/{qtMode === 'monthly' ? getWeekdayCountInMonth(normalizedStartDate) : 7}일
+                        {qtMode !== 'monthly' && (
+                          <span className="text-slate-600 ml-1">(주간 7일)</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span>{qtMode === 'monthly' ? '월간 모드' : '주간 모드'}</span>
+                    )}
+                  </span>
+                </div>
+                {/* ★ 행 수 부족 경고 + 재시도 버튼 (오른쪽 컨테이너 내부) */}
+                {splitDays.length > 0 && splitDays.length < (qtMode === 'monthly' ? getWeekdayCountInMonth(normalizedStartDate) : 7) && (
+                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-2 py-1 rounded-md border border-amber-400/30">
+                    <AlertCircle className="w-3 h-3" />
+                    자동 보강됨
+                  </span>
+                )}
+                <button
+                  onClick={() => handleGenerateSplit()}
+                  disabled={splitting}
+                  className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-30"
+                  title="분할안 다시 생성"
+                >
+                  <RotateCcw className={`w-3 h-3 ${splitting ? 'animate-spin' : ''}`} />
+                  다시 생성
+                </button>
                 <button
                   onClick={goNextStep}
                   className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -1737,6 +2085,7 @@ export default function QtGenerator() {
                       <tr className="border-b border-white/10 text-slate-500 font-bold">
                         <th className="py-2.5 px-3 w-24 whitespace-nowrap">요일/일차</th>
                         <th className="py-2.5 px-3">분할 본문 범위</th>
+                        <th className="py-2.5 px-3 w-32">성경 소제목</th>
                         <th className="py-2.5 px-3">큐티 소제목</th>
                         <th className="py-2.5 px-3">핵심 묵상 초점</th>
                         <th className="py-2.5 px-3">본문 분할 신학적 이유</th>
@@ -1751,6 +2100,23 @@ export default function QtGenerator() {
                             </span>
                           </td>
                           <td className="py-3 px-3 font-semibold text-emerald-300">{d.passage}</td>
+                          <td className="py-3 px-3 text-[11px]">
+                            {d.sectionTitles && d.sectionTitles.length > 0 ? (
+                              <div className="flex flex-col gap-1 items-start">
+                                {d.sectionTitles.map((st, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-400/30 text-amber-300 font-semibold whitespace-nowrap"
+                                  >
+                                    {idx > 0 && <span className="text-amber-500 mr-1">+</span>}
+                                    {st}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-slate-600 text-[10px]">-</span>
+                            )}
+                          </td>
                           <td className="py-3 px-3 font-bold">{d.title}</td>
                           <td className="py-3 px-3 text-slate-400">{d.focus}</td>
                           <td className="py-3 px-3 text-slate-500 text-[11px] leading-relaxed max-w-xs">{d.reason}</td>
@@ -1949,12 +2315,12 @@ export default function QtGenerator() {
                   {dayManuscripts[activeDay].isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      원고 생성 및 자가 검토 교열 진행 중...
+                      {dayManuscripts[activeDay].generatingStep || '원고 생성 중...'}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      {formatDayLabel(activeDay)} QT 최종 생성하기 (2단 체인)
+                      {formatDayLabel(activeDay)} QT 최종 생성하기
                     </>
                   )}
                 </button>
@@ -2260,6 +2626,12 @@ export default function QtGenerator() {
             result={{ fullManuscript: singleDayPdf }}
             sizeOption={form.sizeOption || 'A4Landscape'}
             templateId={form.designTemplate || 'qtland-classic'}
+            daySectionTitles={(() => {
+              const day = dayManuscripts[activeDay]
+              return day?.sectionTitles && day.sectionTitles.length > 0
+                ? { 0: day.sectionTitles }
+                : undefined
+            })()}
           />
         </div>
       )}

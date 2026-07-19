@@ -60,18 +60,18 @@ function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): strin
 function splitPassageText(passageRaw: string) {
   if (!passageRaw) return { kr: '', en: '' }
   
-  // NIV 전체 본문 또는 영어 본문 헤더 탐지
-  const indexNiv = passageRaw.search(/(?:NIV\s*전체\s*본문|NIV\s*본문|영어\s*본문)/i)
-  if (indexNiv === -1) {
+  // KJV/NIV 전체 본문 또는 영어 본문 헤더 탐지
+  const indexEng = passageRaw.search(/(?:KJV\s*전체\s*본문|NIV\s*전체\s*본문|영어\s*본문)/i)
+  if (indexEng === -1) {
     return { kr: passageRaw.replace(/개역개정\s*전체\s*본문:?/g, '').trim(), en: '' }
   }
   
-  let krPart = passageRaw.substring(0, indexNiv)
-  let enPart = passageRaw.substring(indexNiv)
+  let krPart = passageRaw.substring(0, indexEng)
+  let enPart = passageRaw.substring(indexEng)
   
   // 헤더 정제
   krPart = krPart.replace(/(?:##\s*개역개정\s*전체\s*본문|개역개정\s*전체\s*본문|#\s*개역개정\s*본문):?/gi, '').trim()
-  enPart = enPart.replace(/(?:##\s*NIV\s*전체\s*본문|NIV\s*전체\s*본문|#\s*NIV\s*본문):?/gi, '').trim()
+  enPart = enPart.replace(/(?:##\s*KJV\s*전체\s*본문|##\s*NIV\s*전체\s*본문|KJV\s*전체\s*본문|NIV\s*전체\s*본문|#\s*KJV\s*본문|#\s*NIV\s*본문):?/gi, '').trim()
   
   return { kr: krPart, en: enPart }
 }
@@ -184,7 +184,7 @@ export default function QtDayCard({
               {kr.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2.5px' }}>{l}</div>)}
             </div>
             <div style={{ flex: 1, color: t!.bibleQuoteText, padding: '12px 14px', borderLeft: `3px solid ${t!.bibleQuoteBorder}`, background: t!.bibleQuoteBg, borderRadius: '0 6px 6px 0', fontSize: '9px', lineHeight: '1.4', fontStyle: 'italic' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '8.5px', color: t!.accent, marginBottom: '6px', fontStyle: 'normal' }}>NIV English</div>
+              <div style={{ fontWeight: 'bold', fontSize: '8.5px', color: t!.accent, marginBottom: '6px', fontStyle: 'normal' }}>KJV English</div>
               {en.split('\n').map((l, i) => <div key={i} style={{ marginBottom: '2.5px' }}>{l}</div>)}
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function QtDayCard({
               {kr.split('\n').map((l, i) => <div key={i} className="mb-0.5">{l}</div>)}
             </div>
             <div className="text-[11px] leading-relaxed text-slate-300 bg-white/[0.01] border-l-2 border-emerald-500/30 rounded-r-lg p-3.5 italic font-sans">
-              <div className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 mb-2 not-italic">NIV English</div>
+              <div className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 mb-2 not-italic">KJV English</div>
               {en.split('\n').map((l, i) => <div key={i} className="mb-0.5">{l}</div>)}
             </div>
           </div>

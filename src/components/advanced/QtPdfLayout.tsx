@@ -26,6 +26,7 @@ interface QtPdfLayoutProps {
   isBilingualSideBySide?: boolean
   audienceLevel?: 'adult' | 'youth'
   selectedInfo?: QtSelectedInfo | null
+  daySectionTitles?: Record<number, string[]>
 }
 
 function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
@@ -54,24 +55,24 @@ function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): strin
 function parseBibleVerses(passageText: string) {
   const lines = passageText.split('\n')
   let korVerse = ''
-  let nivVerse = ''
+  let engVerse = ''
   let passageRange = ''
   let readingGuide = ''
-  let currentSection: 'kor' | 'niv' | null = null
+  let currentSection: 'kor' | 'eng' | null = null
   for (const raw of lines) {
     const line = raw.trim()
     if (!line) { currentSection = null; continue }
-    const headerMatch = line.match(/^[-·•*]*\s*(개역개정|한글\s*핵심|핵심절|NIV|본문\s*범위|본문\s*읽기\s*안내)/i)
+    const headerMatch = line.match(/^[-·•*]*\s*(개역개정|한글\s*핵심|핵심절|KJV|영어|NIV|본문\s*범위|본문\s*읽기\s*안내)/i)
     if (headerMatch) {
       const h = headerMatch[1].toLowerCase()
-      if ((h === '개역개정' || h.includes('핵심') || h.includes('한글')) && !line.match(/NIV/i)) {
+      if ((h === '개역개정' || h.includes('핵심') || h.includes('한글')) && !line.match(/KJV|NIV/i)) {
         const rest = line.replace(/^[-·•*]*\s*개역개정\s*(전체\s*본문|핵심절)?\s*(또는\s*본문\s*범위\s*안내)?\s*[:：]?\s*/i, '').trim()
         if (rest) korVerse = rest
         else currentSection = 'kor'
-      } else if (h === 'niv' || line.match(/^[-·•*]*\s*NIV/i)) {
-        const rest = line.replace(/^[-·•*]*\s*NIV\s*(전체\s*본문|핵심절)?\s*(또는\s*본문\s*범위\s*안내)?\s*[:：]?\s*/i, '').trim()
-        if (rest) nivVerse = rest
-        else currentSection = 'niv'
+      } else if (h === 'kjv' || h === 'niv' || h === '영어' || line.match(/^[-·•*]*\s*(KJV|NIV)/i)) {
+        const rest = line.replace(/^[-·•*]*\s*(KJV|NIV)\s*(전체\s*본문|핵심절)?\s*(또는\s*본문\s*범위\s*안내)?\s*[:：]?\s*/i, '').trim()
+        if (rest) engVerse = rest
+        else currentSection = 'eng'
       } else if (h.includes('본문') && h.includes('범위')) {
         passageRange = line.replace(/^[-·•*]*\s*본문\s*범위\s*[:：]?\s*/i, '').trim()
         currentSection = null
@@ -83,14 +84,14 @@ function parseBibleVerses(passageText: string) {
       }
     } else if (currentSection === 'kor') {
       korVerse += (korVerse ? '\n' : '') + line
-    } else if (currentSection === 'niv') {
-      nivVerse += (nivVerse ? '\n' : '') + line
+    } else if (currentSection === 'eng') {
+      engVerse += (engVerse ? '\n' : '') + line
     }
   }
-  return { korVerse, nivVerse, passageRange, readingGuide }
+  return { korVerse, engVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult', selectedInfo }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, audienceLevel = 'adult', selectedInfo, daySectionTitles }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const cssW = `${size.widthMm}mm`
   const cssH = `${size.heightMm}mm`
@@ -264,6 +265,47 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
           )}
         </div>
+        {/* 성경 소제목 (다중 결합 가능) */}
+        {daySectionTitles && daySectionTitles[dayIdx] && daySectionTitles[dayIdx].length > 0 && (
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: `${3 * scale}px`,
+            marginBottom: `${3 * scale}px`,
+            padding: `${3 * scale}px ${6 * scale}px`,
+            background: `${t.accent}1A`,
+            border: `0.5px solid ${t.accent}40`,
+            borderRadius: `${2 * scale}px`,
+          }}>
+            <span style={{
+              fontFamily: t.fontHeading,
+              fontSize: `${8 * scale}px`,
+              fontWeight: 700,
+              color: t.accent,
+              letterSpacing: `${1.2 * scale}px`,
+              textTransform: 'uppercase',
+            }}>
+              성경 소제목
+            </span>
+            {daySectionTitles[dayIdx].map((st, i) => (
+              <span
+                key={i}
+                style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9 * scale}px`,
+                  fontWeight: 600,
+                  color: t.textColor,
+                  padding: `${1 * scale}px ${4 * scale}px`,
+                  background: `${t.accent}26`,
+                  borderRadius: `${1.5 * scale}px`,
+                }}
+              >
+                {i > 0 && <span style={{ color: t.accent, marginRight: `${2 * scale}px` }}>+</span>}
+                {st}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     )
 
@@ -396,7 +438,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* 한/영 성경 — 5:5 정확 분할, 절 동기화, 동일 폰트 */}
         {(() => {
           const korLines = verses.korVerse.split('\n').filter(l => l.trim())
-          const nivLines = verses.nivVerse.split('\n').filter(l => l.trim())
+          const nivLines = verses.engVerse.split('\n').filter(l => l.trim())
           const maxLen = Math.max(korLines.length, nivLines.length)
           return (
             <div style={{
@@ -448,7 +490,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   ))}
                 </div>
               </div>
-              {/* 우: English · NIV */}
+              {/* 우: English · KJV */}
               <div>
                 <div style={{
                   fontFamily: t.fontHeading,
@@ -462,7 +504,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   borderBottom: `0.5px solid ${t.border}`,
                   display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
                 }}>
-                  <span>English · NIV</span>
+                  <span>English · KJV</span>
                   {verses.passageRange && (
                     <span style={{
                       fontFamily: t.fontHeading,
@@ -797,7 +839,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 paddingBottom: `${1.5 * scale}px`,
                 borderBottom: `0.5px solid ${t.border}`,
               }}>
-                English · NIV
+                English · KJV
               </div>
               <div style={{
                 fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -807,7 +849,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 textAlign: 'justify',
                 fontStyle: 'italic',
               }}>
-                {verses.nivVerse.split('\n').map((l, i) => (
+                {verses.engVerse.split('\n').map((l, i) => (
                   <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
                 ))}
               </div>

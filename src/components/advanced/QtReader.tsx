@@ -26,10 +26,11 @@ interface QtReaderProps {
   startPassage?: string
   endPassage?: string
   selectedInfo?: QtSelectedInfo | null
+  daySectionTitles?: Record<number, string[]>
   onBack: () => void
 }
 
-export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, onBack }: QtReaderProps) {
+export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, onBack }: QtReaderProps) {
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
@@ -431,6 +432,7 @@ return (
           isBilingualSideBySide={isBilingualSideBySide}
           audienceLevel={audienceLevel}
           selectedInfo={selectedInfo}
+          daySectionTitles={daySectionTitles}
         />
       </div>
     </div>
