@@ -1605,7 +1605,7 @@ export default function QtGenerator() {
                       const val = e.target.value
                       if (val) updateForm({ startDate: getMondayOfWeek(val) })
                     }}
-                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 [color-scheme:dark]"
                   />
                 <div className="text-[9px] text-indigo-400 font-bold flex items-center gap-1">
                   📅 {`${formatDateRangeLabel(normalizedStartDate, previewDaysCount)} · 총 ${previewDaysCount}일 (일요일 제외)`}
