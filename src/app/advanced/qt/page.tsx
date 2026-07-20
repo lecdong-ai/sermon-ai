@@ -19,14 +19,8 @@ export default function QtPage() {
     }
     fetch('/api/admin/check-role')
       .then(r => r.json())
-      .then(d => {
-        if (!d.admin) {
-          router.push('/dashboard')
-          return
-        }
-        setIsAdminUser(true)
-      })
-      .catch(() => router.push('/dashboard'))
+      .then(d => setIsAdminUser(d.admin))
+      .catch(() => setIsAdminUser(false))
       .finally(() => setChecking(false))
   }, [user, loading, router])
 

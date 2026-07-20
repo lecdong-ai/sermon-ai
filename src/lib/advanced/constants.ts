@@ -10,7 +10,7 @@ export const ADVANCED_MENUS: MenuItem[] = [
   { key: 'notes', label: '노트/통찰', href: '/advanced/notes', icon: '◇', section: 'knowledge' },
   { key: 'series', label: '시리즈', href: '/advanced/series', icon: '◇', section: 'knowledge' },
   { key: 'youtube', label: '유튜브 연구소', href: '/advanced/youtube', icon: '🎬', section: 'ministry' },
-  { key: 'qt', label: '큐티 자료 생성', href: '/advanced/qt', icon: '◇', section: 'ministry' },
+  { key: 'qt', label: '큐티 자료 생성', href: '/advanced/qt', icon: '◇', section: 'ministry', adminOnly: true },
   { key: 'settings', label: '설정', href: '/advanced/settings', icon: '◇', section: 'system' },
 ]
 

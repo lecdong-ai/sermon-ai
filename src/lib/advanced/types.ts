@@ -211,6 +211,7 @@ export interface MenuItem {
   href: string
   icon: string
   section: 'main' | 'ministry' | 'knowledge' | 'system'
+  adminOnly?: boolean
 }
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {

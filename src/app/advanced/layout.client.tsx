@@ -13,6 +13,7 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
   const pathname = usePathname()
   const [checking, setChecking] = useState(true)
   const [isSupporter, setIsSupporter] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
 
   const isPreview = pathname?.startsWith('/advanced/preview')
 
@@ -36,11 +37,7 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
       fetch('/api/usage').then(r => r.json()),
     ])
       .then(([role, usage]) => {
-        if (role.admin) {
-          setIsSupporter(true)
-          return
-        }
-        // 일반회원도 입장 허용 — 한도는 개별 액션 레벨(LimitReachedModal)에서 처리
+        setIsAdminUser(role.admin)
         setIsSupporter(true)
       })
       .catch(() => {
@@ -71,7 +68,7 @@ export default function AdvancedLayoutClient({ children }: { children: React.Rea
       </div>
 
       <div className="relative z-10 flex w-full h-full">
-        <AdvancedSidebar />
+        <AdvancedSidebar isAdminUser={isAdminUser} />
         <div className="flex-1 flex flex-col min-w-0">
           <AdvancedHeader />
           <main className="flex-1 overflow-y-auto bg-[#080d22]/30 backdrop-blur-sm relative scrollbar-thin">

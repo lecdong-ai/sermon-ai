@@ -37,12 +37,13 @@ function getDailyVerse(): { ref: string; text: string } {
   return VERSES[dayOfYear % VERSES.length]
 }
 
-export default function AdvancedSidebar() {
+export default function AdvancedSidebar({ isAdminUser }: { isAdminUser?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const verse = getDailyVerse()
 
-  const sections = Array.from(new Set(ADVANCED_MENUS.map(m => m.section)))
+  const visibleMenus = ADVANCED_MENUS.filter(m => !m.adminOnly || isAdminUser)
+  const sections = Array.from(new Set(visibleMenus.map(m => m.section)))
 
   return (
     <aside className="w-56 bg-[#04060f] border-r border-white/5 text-slate-300 flex flex-col shrink-0 h-full relative z-20">
@@ -85,7 +86,7 @@ export default function AdvancedSidebar() {
                 {SECTION_LABELS[section]}
               </p>
             )}
-            {ADVANCED_MENUS.filter(m => m.section === section).map(menu => {
+            {visibleMenus.filter(m => m.section === section).map(menu => {
               const isActive =
                 pathname === menu.href ||
                 (menu.key === 'projects' && pathname.startsWith('/advanced/projects')) ||
