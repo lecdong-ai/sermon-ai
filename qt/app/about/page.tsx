@@ -53,18 +53,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="font-serif text-h2 text-foreground">연락</h2>
-          <p className="text-body text-foreground leading-relaxed">
-            문의나 제안이 있으시면 아래 메일로 연락해 주세요.
-          </p>
-          <a
-            href={`mailto:${siteConfig.contact}`}
-            className="text-body text-accent hover:underline"
-          >
-            {siteConfig.contact}
-          </a>
-        </section>
+
       </div>
     </Container>
   )

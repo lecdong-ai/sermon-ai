@@ -16,8 +16,8 @@ export function Footer() {
           </p>
         </div>
 
-        <nav className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-list mx-auto" aria-label="하단 네비게이션">
-          <div className="space-y-3">
+        <nav className="grid grid-cols-2 md:grid-cols-3 gap-8 justify-items-center max-w-list mx-auto" aria-label="하단 네비게이션">
+          <div className="space-y-3 text-center md:text-left">
             <p className="text-caption text-foreground-subtle font-medium tracking-wider uppercase">
               탐색
             </p>
@@ -34,7 +34,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 text-center md:text-left">
             <p className="text-caption text-foreground-subtle font-medium tracking-wider uppercase">
               후원
             </p>
@@ -48,7 +48,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 text-center md:text-left">
             <p className="text-caption text-foreground-subtle font-medium tracking-wider uppercase">
               소개
             </p>
@@ -56,20 +56,9 @@ export function Footer() {
               <Link href="/about" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
                 {siteConfig.name}
               </Link>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-caption text-foreground-subtle font-medium tracking-wider uppercase">
-              연락
-            </p>
-            <div className="space-y-2">
-              <a
-                href={`mailto:${siteConfig.contact}`}
-                className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200"
-              >
-                {siteConfig.contact}
-              </a>
+              <Link href="/advanced/qt" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                관리자
+              </Link>
             </div>
           </div>
         </nav>
