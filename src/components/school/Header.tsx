@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, BookOpen, LogOut, LogIn, User as UserIcon } from 'lucide-react';
+import { Menu, X, BookOpen, LogOut, User as UserIcon, LayoutDashboard, Music2, ScrollText, Crown, Heart, BookMarked } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
-import { redirectToMainLogin } from '@/lib/school/auth-redirect';
 
 const NAV_ITEMS = [
   { href: '/school', label: '홈' },
@@ -18,7 +17,13 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    await logout();
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-warm-100 shadow-nav">
@@ -47,35 +52,91 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            {isLoggedIn ? (
-              <>
-                <Link
-                  href="/school/mypage"
+            {isLoggedIn && (
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="btn-ghost text-sm flex items-center gap-2"
-                  title={user?.email}
                 >
                   <UserIcon className="w-4 h-4 text-navy-500" />
                   <div className="flex flex-col items-start leading-tight">
                     <span className="font-bold text-navy-900">{user?.name}님</span>
                     <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
                   </div>
-                </Link>
-                <button
-                  onClick={() => logout()}
-                  className="btn-outline btn-sm py-1.5 flex items-center gap-1"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  로그아웃
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => redirectToMainLogin('/school')}
-                className="btn-outline btn-sm py-1.5 flex items-center gap-1"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                로그인
-              </button>
+
+                {dropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-warm-100 py-2 z-50 animate-slide-up">
+                      <div className="px-4 py-2.5 border-b border-warm-100 mb-1.5">
+                        <p className="text-[12px] text-navy-400 font-medium">{user?.name}님</p>
+                        <p className="text-[13px] font-bold text-navy-900 truncate mt-0.5">{user?.email}</p>
+                      </div>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+                        설교 아카이브
+                      </Link>
+                      <Link
+                        href="/conti"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                      >
+                        <Music2 className="w-4 h-4 text-indigo-500" />
+                        예배 콘티
+                      </Link>
+                      <Link
+                        href="/qt"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                      >
+                        <BookMarked className="w-4 h-4 text-indigo-500" />
+                        QT 아카이브
+                      </Link>
+                      <Link
+                        href="/advanced/bible"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                      >
+                        <ScrollText className="w-4 h-4 text-indigo-500" />
+                        말씀 연구실
+                        <span className="ml-auto text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">
+                          👑 후원
+                        </span>
+                      </Link>
+                      <Link
+                        href="/support"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                      >
+                        <Heart className="w-4 h-4 text-rose-500" />
+                        후원 안내
+                      </Link>
+                      <div className="border-t border-warm-100 mt-1.5 pt-1.5">
+                        <Link
+                          href="/school/mypage"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
+                        >
+                          <UserIcon className="w-4 h-4 text-navy-500" />
+                          마이페이지
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-2.5 w-full px-4 py-2 text-[13px] font-bold text-red-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          로그아웃
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 
@@ -105,8 +166,42 @@ export default function Header() {
               </Link>
             ))}
             <hr className="my-2 border-warm-100" />
-            {isLoggedIn ? (
+            <p className="px-4 py-1 text-[11px] font-bold text-navy-400 uppercase tracking-wider">다른 서비스</p>
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+              설교 아카이브
+            </Link>
+            <Link
+              href="/conti"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-2"
+            >
+              <Music2 className="w-4 h-4 text-indigo-500" />
+              예배 콘티
+            </Link>
+            <Link
+              href="/qt"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-2"
+            >
+              <BookMarked className="w-4 h-4 text-indigo-500" />
+              QT 아카이브
+            </Link>
+            <Link
+              href="/support"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-2"
+            >
+              <Heart className="w-4 h-4 text-rose-500" />
+              후원 안내
+            </Link>
+            {isLoggedIn && (
               <>
+                <hr className="my-2 border-warm-100" />
                 <Link
                   href="/school/mypage"
                   onClick={() => setMobileOpen(false)}
@@ -128,17 +223,6 @@ export default function Header() {
                   로그아웃
                 </button>
               </>
-            ) : (
-              <button
-                onClick={() => {
-                  setMobileOpen(false);
-                  redirectToMainLogin('/school');
-                }}
-                className="w-full text-left px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-1"
-              >
-                <LogIn className="w-4 h-4" />
-                로그인
-              </button>
             )}
           </nav>
         </div>

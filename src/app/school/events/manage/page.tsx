@@ -17,7 +17,7 @@ export default function ManageEventsPage() {
   // 미로그인 시 메인 페이지 로그인으로 자동 이동
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
-      redirectToMainLogin('/events/manage')
+      redirectToMainLogin('/school/events/manage')
     }
   }, [authLoading, isLoggedIn])
 

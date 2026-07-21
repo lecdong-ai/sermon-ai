@@ -55,7 +55,7 @@ export default function NoticeWriterPage() {
     // Limits check for guest users (프리미엄 구독자는 무제한)
     const isRestricted = !isLoggedIn && freeCount <= 0;
     if (isRestricted) {
-      redirectToMainLogin('/notice-writer');
+      redirectToMainLogin('/school/notice-writer');
       return;
     }
 
@@ -108,7 +108,7 @@ export default function NoticeWriterPage() {
 
   const handleSave = async (text: string, versionIndex: 1 | 2 | 3 | 4) => {
     if (!isLoggedIn || !user) {
-      redirectToMainLogin('/notice-writer');
+      redirectToMainLogin('/school/notice-writer');
       return;
     }
 
@@ -170,7 +170,7 @@ export default function NoticeWriterPage() {
                   await supabase.auth.signOut();
                   window.location.reload();
                 } else {
-                  redirectToMainLogin('/notice-writer');
+                  redirectToMainLogin('/school/notice-writer');
                 }
               }}
               className={`text-xs font-bold px-3 py-2 rounded-xl border transition-all ${

@@ -8,5 +8,5 @@
 export function redirectToMainLogin(currentPath: string) {
   if (typeof window === 'undefined') return
   const next = encodeURIComponent(currentPath)
-  window.location.href = `https://bunker.ai.kr/login?next=${next}`
+  window.location.href = `/login?redirect=${next}`
 }

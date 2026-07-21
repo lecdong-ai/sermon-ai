@@ -291,13 +291,13 @@ function ProjectsContent() {
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
-      redirectToMainLogin('/projects')
+      redirectToMainLogin('/school/projects')
     }
   }, [authLoading, isLoggedIn])
 
   useEffect(() => {
     if (error === '로그인이 필요합니다.' && !isLoggedIn) {
-      redirectToMainLogin('/projects')
+      redirectToMainLogin('/school/projects')
     }
   }, [error, isLoggedIn])
 
@@ -415,7 +415,7 @@ function ProjectsContent() {
           )}
           {isAuthError ? (
             <button
-              onClick={() => redirectToMainLogin('/projects')}
+              onClick={() => redirectToMainLogin('/school/projects')}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[13px] font-bold transition-all shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/30"
             >
               <Lock className="w-4 h-4" />
