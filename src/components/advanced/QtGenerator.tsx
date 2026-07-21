@@ -503,7 +503,7 @@ export default function QtGenerator() {
       if (res.ok) {
         const json = await res.json()
         setPublishedId(json.id)
-        alert('✅ 큐티 아카이브(qt.bunker.ai.kr)에 공개되었습니다!')
+        alert('✅ 큐티 아카이브(bunker.ai.kr/qt)에 공개되었습니다!')
       } else {
         const text = await res.text().catch(() => '')
         console.error('아카이브 공개 실패:', res.status, text)
