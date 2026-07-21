@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "id": "cur-001",
+      "slug": "advent-waiting-journey",
+      "title": "대림: 기다림으로 걷는 4주",
+      "summary": "대림절, 기다림이 은혜가 되는 여정. 4주간의 묵상과 기록을 위한 자료 모음.",
+      "coverImage": {
+        "src": "https://picsum.photos/seed/대림절-큐레이션-커버---촛불-하나가-켜진-창가/1200/1600",
+        "alt": "대림절 큐레이션 커버 — 촛불 하나가 켜진 창가",
+        "width": 1200,
+        "height": 1600
+      },
+      "season": "대림",
+      "editorName": "큐티 아카이브 편집팀",
+      "publishedAt": "2026-11-28T00:00:00.000Z",
+      "counts": {
+        "qt": 6,
+        "templates": 1,
+        "shop": 1
+      }
+    },
+    {
+      "id": "cur-002",
+      "slug": "psalms-one-week",
+      "title": "시편으로 걷는 일주일",
+      "summary": "시편 1편부터 7편까지, 하루 한 편으로 걷는 일주일 묵상.",
+      "coverImage": {
+        "src": "https://picsum.photos/seed/시편-큐레이션-커버---강가에-심긴-나무/1200/1600",
+        "alt": "시편 큐레이션 커버 — 강가에 심긴 나무",
+        "width": 1200,
+        "height": 1600
+      },
+      "season": "연중",
+      "editorName": "큐티 아카이브 편집팀",
+      "publishedAt": "2026-07-01T00:00:00.000Z",
+      "counts": {
+        "qt": 7,
+        "templates": 1,
+        "shop": 0
+      }
+    },
+    {
+      "id": "cur-003",
+      "slug": "lenten-silence",
+      "title": "사순: 침묵의 40일",
+      "summary": "사순절, 침묵이 기도가 되는 시간. 말을 줄이고 말씀을 듣는 40일 묵상.",
+      "coverImage": {
+        "src": "https://picsum.photos/seed/사순절-큐레이션-커버---비-오는-창가의-열린-성경/1200/1600",
+        "alt": "사순절 큐레이션 커버 — 비 오는 창가의 열린 성경",
+        "width": 1200,
+        "height": 1600
+      },
+      "season": "사순",
+      "editorName": "큐티 아카이브 편집팀",
+      "publishedAt": "2026-02-14T00:00:00.000Z",
+      "counts": {
+        "qt": 8,
+        "templates": 2,
+        "shop": 1
+      }
+    }
+  ]
+}

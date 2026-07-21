@@ -193,18 +193,40 @@ const config: Config = {
             400: '#B8B0A0',
           },
        },
-       boxShadow: {
-         'button': '0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06)',
-         'card': '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.03)',
-         'card-hover': '0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04)',
-         'xs': '0 1px 2px 0 rgba(0,0,0,0.04)',
+        boxShadow: {
+          'button': '0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06)',
+          'card': '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.03)',
+          'card-hover': '0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04)',
+          'elevated': '0 8px 24px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
+          'xs': '0 1px 2px 0 rgba(0,0,0,0.04)',
+        },
+        fontSize: {
+          display: ['2.25rem', { lineHeight: '1.25', letterSpacing: '-0.025em' }],
+          h1: ['1.75rem', { lineHeight: '1.3', letterSpacing: '-0.02em' }],
+          h2: ['1.375rem', { lineHeight: '1.35', letterSpacing: '-0.015em' }],
+          h3: ['1.125rem', { lineHeight: '1.4' }],
+          'h3-plus': ['1.25rem', { lineHeight: '1.35' }],
+          body: ['1rem', { lineHeight: '1.75' }],
+          'body-lg': ['1.0625rem', { lineHeight: '1.8' }],
+          meta: ['0.8125rem', { lineHeight: '1.55' }],
+          caption: ['0.75rem', { lineHeight: '1.4' }],
+        },
+        fontFamily: {
+         sans: ['var(--font-noto-sans-kr)', 'sans-serif'],
+         outfit: ['var(--font-outfit)', 'sans-serif'],
+         serif: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
+         greek: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
        },
-       fontFamily: {
-        sans: ['var(--font-noto-sans-kr)', 'sans-serif'],
-        outfit: ['var(--font-outfit)', 'sans-serif'],
-        serif: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
-        greek: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
-      },
+       maxWidth: {
+         content: '680px',
+         list: '1080px',
+         wide: '1280px',
+         card: '360px',
+       },
+       spacing: {
+         'section-y': '72px',
+         'card-gap': '12px',
+       },
        animation: {
         'shimmer': 'shimmer 2s linear infinite',
         'pulse-dot': 'pulse-dot 1.5s ease-in-out infinite',
@@ -223,9 +245,14 @@ const config: Config = {
         'gradient-shift': 'gradientShift 8s ease infinite',
         'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
         'bounce-subtle': 'bounceSubtle 2s ease-in-out infinite',
+        'fade-in-up': 'fade-in-up 0.6s ease-out',
        },
-       keyframes: {
-        shimmer: {
+        keyframes: {
+         'fade-in-up': {
+           '0%': { opacity: '0', transform: 'translateY(16px)' },
+           '100%': { opacity: '1', transform: 'translateY(0)' },
+         },
+         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },

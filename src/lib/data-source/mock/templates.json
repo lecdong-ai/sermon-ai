@@ -1,0 +1,76 @@
+{
+  "items": [
+    {
+      "id": "tpl-001",
+      "slug": "daily-qt-journal",
+      "title": "매일 큐티 노트",
+      "description": "하루 한 페이지, 말씀과 묵상을 기록하는 가장 기본적인 양식. 본문, 관찰, 적용, 기도 4단계 구조.",
+      "previewImage": {
+        "src": "https://picsum.photos/seed/매일-큐티-노트-템플릿-미리보기/1280/800",
+        "alt": "매일 큐티 노트 템플릿 미리보기",
+        "width": 1280,
+        "height": 800
+      },
+      "category": "묵상기록",
+      "notionDuplicateUrl": "https://example.notion.site/daily-qt-journal",
+      "isFree": true,
+      "publishedAt": "2026-01-15T00:00:00.000Z",
+      "updatedAt": "2026-06-01T00:00:00.000Z",
+      "downloadCount": 1842
+    },
+    {
+      "id": "tpl-002",
+      "slug": "family-worship-template",
+      "title": "가정 예배 노트",
+      "description": "온 가족이 함께 묵상하는 시간을 위한 템플릿. 아이들의 질문과 대화를 기록할 수 있는 칸이 있습니다.",
+      "previewImage": {
+        "src": "https://picsum.photos/seed/가정-예배-노트-템플릿-미리보기/1280/800",
+        "alt": "가정 예배 노트 템플릿 미리보기",
+        "width": 1280,
+        "height": 800
+      },
+      "category": "가정묵상",
+      "notionDuplicateUrl": "https://example.notion.site/family-worship",
+      "isFree": true,
+      "publishedAt": "2026-02-20T00:00:00.000Z",
+      "updatedAt": "2026-05-10T00:00:00.000Z",
+      "downloadCount": 723
+    },
+    {
+      "id": "tpl-003",
+      "slug": "dawn-prayer-90days",
+      "title": "새벽 기도 90일 기록지",
+      "description": "90일 새벽 기도를 위한 추적 양식. 매일의 기도 제목, 묵상 말씀, 마음에 남은 말씀을 한눈에.",
+      "previewImage": {
+        "src": "https://picsum.photos/seed/새벽-기도-90일-기록지-미리보기/1280/800",
+        "alt": "새벽 기도 90일 기록지 미리보기",
+        "width": 1280,
+        "height": 800
+      },
+      "category": "새벽기도",
+      "notionDuplicateUrl": "https://example.notion.site/dawn-prayer-90",
+      "isFree": true,
+      "publishedAt": "2026-03-01T00:00:00.000Z",
+      "updatedAt": "2026-03-01T00:00:00.000Z",
+      "downloadCount": 1056
+    },
+    {
+      "id": "tpl-004",
+      "slug": "small-group-study",
+      "title": "소그룹 큐티 나눔지",
+      "description": "소그룹에서 큐티를 나눌 때 쓸 수 있는 양식. 각자의 묵상을 정리하고, 함께 나눈 기도를 기록합니다.",
+      "previewImage": {
+        "src": "https://picsum.photos/seed/소그룹-큐티-나눔지-미리보기/1280/800",
+        "alt": "소그룹 큐티 나눔지 미리보기",
+        "width": 1280,
+        "height": 800
+      },
+      "category": "소그룹",
+      "notionDuplicateUrl": "https://example.notion.site/small-group-study",
+      "isFree": true,
+      "publishedAt": "2026-04-12T00:00:00.000Z",
+      "updatedAt": "2026-04-12T00:00:00.000Z",
+      "downloadCount": 489
+    }
+  ]
+}

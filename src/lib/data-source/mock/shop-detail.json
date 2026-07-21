@@ -1,0 +1,218 @@
+{
+  "items": [
+    {
+      "slug": "advent-candle-set",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/대림-촛불-세트-전체/1000/1000",
+          "alt": "대림 촛불 세트 전체",
+          "width": 1000,
+          "height": 1000
+        },
+        {
+          "src": "https://picsum.photos/seed/대림-촛불-세트---켜진-모습/1000/1000",
+          "alt": "대림 촛불 세트 — 켜진 모습",
+          "width": 1000,
+          "height": 1000
+        },
+        {
+          "src": "https://picsum.photos/seed/대림-촛불-세트---포장/1000/1000",
+          "alt": "대림 촛불 세트 — 포장",
+          "width": 1000,
+          "height": 1000
+        }
+      ],
+      "story": "대림절은 빛이 더해가는 절기입니다. 매주 하나씩 촛불을 켜며, 그리스도의 오심이 가까워짐을 기억합니다.\n\n## 작은 불, 큰 기다림\n\n화려하지 않습니다. 작은 촛불 4개일 뿐입니다. 하지만 매주 하나씩 켤 때, 그 작은 빛이 모이는 것이 기다림의 형태가 됩니다.\n\n이 촛불을 만들며 생각한 것은 \"묵상이 감각에 닿으면 더 오래 남는다\"는 것이었습니다. 눈으로 읽는 말씀과 손으로 켜는 촛불이 함께할 때, 기다림이 삶에 더 깊이 밴다는 것을 믿습니다.\n\n## 후원으로 만들어집니다\n\n이 상품의 수익은 무료 묵상 자료의 제작과 사이트 운영에 사용됩니다. 사지 않아도 모든 자료는 무료로 열려 있습니다. 다만 마음이 향할 때, 이 촛불을 통해 후원에 참여할 수 있습니다.",
+      "specs": [
+        {
+          "label": "구성",
+          "value": "아이보리 촛불 4개 + 홀더"
+        },
+        {
+          "label": "크기",
+          "value": "촛불 지름 5cm × 높이 10cm"
+        },
+        {
+          "label": "재질",
+          "value": "천연 파라핀 (연기 최소화)"
+        },
+        {
+          "label": "연소 시간",
+          "value": "개당 약 8시간"
+        },
+        {
+          "label": "포장",
+          "value": "크라프트 박스 + 시편 구절 카드"
+        }
+      ],
+      "purchaseUrl": "https://store.example.com/advent-candle",
+      "supportMessage": {
+        "slogan": "쇼핑이 후원입니다",
+        "description": "이 구매는 무료 묵상 자료의 운영과 제작에 사용됩니다. 사지 않아도 모든 자료는 무료입니다.",
+        "detailLink": "/shop/about"
+      },
+      "relatedProducts": [
+        "scripture-card-set-01",
+        "qt-journal-notebook"
+      ],
+      "relatedQt": [
+        "waiting-in-advent-day-1",
+        "psalm-1-two-ways"
+      ]
+    },
+    {
+      "slug": "scripture-card-set-01",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/말씀-카드-세트-전체/1000/1000",
+          "alt": "말씀 카드 세트 전체",
+          "width": 1000,
+          "height": 1000
+        },
+        {
+          "src": "https://picsum.photos/seed/말씀-카드---펼친-모습/1000/1000",
+          "alt": "말씀 카드 — 펼친 모습",
+          "width": 1000,
+          "height": 1000
+        }
+      ],
+      "story": "시편의 구절을 손에 들고 다닐 수 있다면.\n\n## 말씀을 가까이\n\n스마트폰 속 말씀은 쉽게 묻힙니다. 알림에 밀리고, 스크롤에 사라집니다. 그러나 손에 쥔 카드는 다릅니다. 책상에 꽂아두고, 가방에 넣고 다니며, 하루 한 장씩 꺼내 읽습니다.\n\n시편 30장의 구절을 엄선해 담았습니다. 각 카드에는 구절과 함께 짧은 묵상 포인트가 적혀 있습니다.\n\n## 이 구매가 후원이 됩니다\n\n이 카드의 수익은 새로운 큐티 자료를 제작하는 데 사용됩니다. 말씀 카드를 사는 일이, 더 많은 묵상 자료를 만드는 일이 됩니다.",
+      "specs": [
+        {
+          "label": "구성",
+          "value": "카드 30장 + 아크릴 케이스"
+        },
+        {
+          "label": "크기",
+          "value": "70 × 100mm (손바닥)"
+        },
+        {
+          "label": "재질",
+          "value": "아트지 200g, 양면 코팅"
+        },
+        {
+          "label": "포장",
+          "value": "크라프트 봉투"
+        }
+      ],
+      "purchaseUrl": "https://store.example.com/scripture-cards",
+      "supportMessage": {
+        "slogan": "쇼핑이 후원입니다",
+        "description": "이 카드의 수익은 새 큐티 자료 제작에 사용됩니다. 모든 묵상은 무료로 남습니다.",
+        "detailLink": "/shop/about"
+      },
+      "relatedProducts": [
+        "qt-journal-notebook",
+        "reading-bookmark-brass"
+      ],
+      "relatedQt": [
+        "psalm-1-two-ways",
+        "romans-8-all-things"
+      ]
+    },
+    {
+      "slug": "reading-bookmark-brass",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/황동-책갈피/1000/1000",
+          "alt": "황동 책갈피",
+          "width": 1000,
+          "height": 1000
+        },
+        {
+          "src": "https://picsum.photos/seed/황동-책갈피---성경에-꽂힌-모습/1000/1000",
+          "alt": "황동 책갈피 — 성경에 꽂힌 모습",
+          "width": 1000,
+          "height": 1000
+        }
+      ],
+      "story": "단단한 책갈피 하나가 묵상의 자리를 지킵니다.\n\n## 오래 쓰는 물건\n\n플라스틱 책갈피는 쉽게 망가집니다. 하지만 황동은 시간이 지날수록 빛이 납니다. 사용한 만큼 묵은 맛이 배는 책갈피입니다.\n\n묵상용 성경에 끼워두고, 매일 그 자리를 펼칩니다. 지난날의 묵상이 시작된 지점을 기억하게 하는 작은 표지판입니다.\n\n## 단순함이 주는 의미\n\n이 책갈피는 단순합니다. 문장도, 장식도 없습니다. 오직 단단한 금속판 하나. 그 단순함이 오히려 오래 쓰게 합니다. 그렇게 오래 쓰는 물건이 되길 바랐습니다.",
+      "specs": [
+        {
+          "label": "재질",
+          "value": "황동 (무광)"
+        },
+        {
+          "label": "크기",
+          "value": "30 × 130mm"
+        },
+        {
+          "label": "두께",
+          "value": "0.8mm"
+        },
+        {
+          "label": "각인",
+          "value": "없음 (미니멀)"
+        }
+      ],
+      "purchaseUrl": "https://store.example.com/brass-bookmark",
+      "supportMessage": {
+        "slogan": "쇼핑이 후원입니다",
+        "description": "이 책갈피의 수익은 무료 자료의 서버와 제작비로 사용됩니다.",
+        "detailLink": "/shop/about"
+      },
+      "relatedProducts": [
+        "scripture-card-set-01",
+        "qt-journal-notebook"
+      ],
+      "relatedQt": [
+        "john-316-love",
+        "psalm-1-two-ways"
+      ]
+    },
+    {
+      "slug": "qt-journal-notebook",
+      "galleryImages": [
+        {
+          "src": "https://picsum.photos/seed/큐티-저널-노트---표지/1000/1000",
+          "alt": "큐티 저널 노트 — 표지",
+          "width": 1000,
+          "height": 1000
+        },
+        {
+          "src": "https://picsum.photos/seed/큐티-저널-노트---내지/1000/1000",
+          "alt": "큐티 저널 노트 — 내지",
+          "width": 1000,
+          "height": 1000
+        }
+      ],
+      "story": "화면이 아닌 종이에 쓰는 묵상이 남깁니다.\n\n## 손으로 쓰는 묵상\n\n타이핑은 빠릅니다. 하지만 손으로 쓰는 것은 다릅니다. 한 글자 한 글자, 말씀이 손끝을 통해 마음으로 스며듭니다.\n\n이 노트는 큐티 묵상을 위해 디자인되었습니다. 각 페이지에는 본문, 관찰, 적용, 기도를 기록할 수 있는 가이드 칸이 있습니다. 압박하지 않는 선으로, 기록을 돕는 구조입니다.\n\n## A5, 120페이지\n\n들고 다니기 좋은 크기입니다. 가방에 넣고, 교회에 가져가고, 카페에서 펼칩니다. 120페이지면 약 3개월간의 묵상을 기록할 수 있습니다.",
+      "specs": [
+        {
+          "label": "크기",
+          "value": "A5 (148 × 210mm)"
+        },
+        {
+          "label": "페이지",
+          "value": "120p (60매)"
+        },
+        {
+          "label": "제본",
+          "value": "와이어링 (360도 펼쳐짐)"
+        },
+        {
+          "label": "종이",
+          "value": "크림색 100g"
+        },
+        {
+          "label": "구성",
+          "value": "묵상 기록 칸 + 자유 노트 페이지"
+        }
+      ],
+      "purchaseUrl": "https://store.example.com/qt-journal",
+      "supportMessage": {
+        "slogan": "쇼핑이 후원입니다",
+        "description": "이 노트의 수익은 무료 큐티 자료와 템플릿 제작에 사용됩니다.",
+        "detailLink": "/shop/about"
+      },
+      "relatedProducts": [
+        "scripture-card-set-01",
+        "reading-bookmark-brass"
+      ],
+      "relatedQt": [
+        "john-316-love",
+        "romans-8-all-things"
+      ]
+    }
+  ]
+}

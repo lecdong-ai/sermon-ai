@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Phone, Calendar, User, Heart, Shield, CheckCircle2, Clock, FileText } from 'lucide-react'
-import { ApplicationRecord, ApplicationStatus, STATUS_LABELS, STATUS_COLORS, PaymentStatus } from '@/types/school/event'
+import { ApplicationRecord, ApplicationStatus, STATUS_LABELS, STATUS_COLORS, PaymentStatus } from '@/types/event'
 
 export default function ApplicationDetailPage() {
   const params = useParams()
@@ -16,19 +16,19 @@ export default function ApplicationDetailPage() {
   const [event, setEvent] = useState<{ title: string; custom_fields: { id: string; label: string }[] } | null>(null)
 
   useEffect(() => {
-    fetch(`/school/api/manage/events/${eventId}/applications/${aid}`)
+    fetch(`/api/manage/events/${eventId}/applications/${aid}`)
       .then(r => r.json())
       .then(data => {
         if (data.application) setApp(data.application)
         setLoading(false)
       })
-    fetch(`/school/api/manage/events/${eventId}`)
+    fetch(`/api/manage/events/${eventId}`)
       .then(r => r.json())
       .then(data => { if (data.event) setEvent({ title: data.event.title, custom_fields: data.event.custom_fields }) })
   }, [eventId, aid])
 
   const handleStatusChange = async (field: 'status' | 'payment_status', value: ApplicationStatus | PaymentStatus) => {
-    const res = await fetch(`/school/api/manage/events/${eventId}/applications/${aid}`, {
+    const res = await fetch(`/api/manage/events/${eventId}/applications/${aid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: value }),
@@ -39,7 +39,7 @@ export default function ApplicationDetailPage() {
 
   const handleCheckinToggle = async () => {
     const newVal = app?.check_in_status === 'checked_in' ? 'not_checked_in' : 'checked_in'
-    const res = await fetch(`/school/api/manage/events/${eventId}/applications/${aid}`, {
+    const res = await fetch(`/api/manage/events/${eventId}/applications/${aid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ check_in_status: newVal }),

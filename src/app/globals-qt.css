@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .qt-archive {
+    --background: 38 25% 94%;
+    --surface: 42 36% 97%;
+    --surface-2: 40 20% 91%;
+    --surface-muted: 38 14% 84%;
+    --foreground: 26 25% 14%;
+    --foreground-muted: 28 12% 35%;
+    --foreground-subtle: 30 6% 55%;
+    --border: 36 16% 82%;
+    --border-strong: 34 20% 72%;
+    --accent: 36 65% 44%;
+    --accent-foreground: 42 40% 98%;
+    --accent-soft: 38 50% 92%;
+    --accent-muted: 36 40% 82%;
+    --free: 148 20% 38%;
+    --free-soft: 145 25% 92%;
+    --shop: 18 40% 48%;
+    --shop-soft: 20 35% 93%;
+    --ring: 36 60% 44%;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+    --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03);
+    --shadow-elevated: 0 8px 24px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-noto-sans-kr), sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .qt-archive ::selection {
+    background-color: hsl(var(--accent-soft));
+    color: hsl(var(--accent));
+  }
+
+  .qt-archive h1, .qt-archive h2, .qt-archive h3, .qt-archive h4 {
+    font-family: var(--font-noto-serif-kr), serif;
+  }
+
+  .qt-archive .text-foreground { color: hsl(var(--foreground)); }
+  .qt-archive .text-foreground-muted { color: hsl(var(--foreground-muted)); }
+  .qt-archive .text-foreground-subtle { color: hsl(var(--foreground-subtle)); }
+  .qt-archive .bg-background { background-color: hsl(var(--background)); }
+  .qt-archive .bg-surface { background-color: hsl(var(--surface)); }
+  .qt-archive .bg-surface-2 { background-color: hsl(var(--surface-2)); }
+  .qt-archive .bg-surface-muted { background-color: hsl(var(--surface-muted)); }
+  .qt-archive .text-accent { color: hsl(var(--accent)); }
+  .qt-archive .bg-accent { background-color: hsl(var(--accent)); }
+  .qt-archive .bg-accent-soft { background-color: hsl(var(--accent-soft)); }
+  .qt-archive .bg-accent-muted { background-color: hsl(var(--accent-muted)); }
+  .qt-archive .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+  .qt-archive .border-border { border-color: hsl(var(--border)); }
+  .qt-archive .border-border-strong { border-color: hsl(var(--border-strong)); }
+  .qt-archive .bg-free-soft { background-color: hsl(var(--free-soft)); }
+  .qt-archive .text-free { color: hsl(var(--free)); }
+  .qt-archive .bg-shop-soft { background-color: hsl(var(--shop-soft)); }
+  .qt-archive .text-shop { color: hsl(var(--shop)); }
+  .qt-archive .ring-ring { --tw-ring-color: hsl(var(--ring)); }
+
+  .qt-archive .shadow-card { box-shadow: var(--shadow-card); }
+  .qt-archive .shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+  .qt-archive .shadow-elevated { box-shadow: var(--shadow-elevated); }
+
+  .qt-archive .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .qt-archive .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
