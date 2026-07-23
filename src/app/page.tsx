@@ -1,283 +1,253 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
-import { 
-  Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard, 
-  ArrowRight, CheckCircle, Star, Shield, Zap, Globe, 
-  ChevronDown, ChevronUp, Play, Users, FileCheck, BrainCircuit, 
-  ArrowUpRight, Heart, X, HardDrive, Cross, GraduationCap, BookOpen
-} from 'lucide-react'
-import FileUpload from '@/components/FileUpload'
-import { useAuth } from '@/components/AuthProvider'
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import {
+  Upload, Sparkles, FileText, Share2, LogIn, LayoutDashboard,
+  ArrowRight, CheckCircle, Star, Shield, Zap, Globe,
+  Play, Users, FileCheck, BrainCircuit, Heart, X, HardDrive,
+  Cross, GraduationCap, BookOpen, Wand2, Presentation, Calendar,
+  Store, Smile, Coffee, Music2, BookMarked, Layers, CheckCircle2,
+  ScrollText
+} from 'lucide-react';
+import FileUpload from '@/components/FileUpload';
+import { useAuth } from '@/components/AuthProvider';
 
-// 4-Step 워크플로우 상수
-const STEPS = [
-  { 
-    icon: Upload, 
-    stepNumber: '01',
-    title: '설교 원고 업로드', 
-    desc: '작성하신 설교 원고(PDF/TXT/DOCX)를 안전하고 신속하게 업로드합니다. 드래그 앤 드롭으로 간편하게 시작하세요.', 
-    color: 'from-blue-500 via-sky-500 to-indigo-500',
-    glow: 'rgba(56, 189, 248, 0.15)'
+// 4가지 공동체 구성원별 맞춤 안내
+const COMMUNITY_ROLES = [
+  {
+    role: '교역자 (목회자/전도사)',
+    icon: '👨‍💼',
+    badge: 'PASTORAL',
+    badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    title: '깊이 있는 말씀 연구와 설교 준비',
+    desc: '설교 원고를 입력하면 6가지 목회 자료(요약, 소그룹 질문, 카드뉴스, 대본, PPT)가 자동 설계되며 깊이 있는 말씀 연구실을 제공합니다.',
+    features: ['설교 프로젝트 & 6종 가공', '말씀 연구실 & 원맥 분석', '설교 아카이브 보관함'],
+    link: '/advanced',
+    linkText: '설교 솔루션 보기',
   },
-  { 
-    icon: BrainCircuit, 
-    stepNumber: '02',
-    title: 'AI 정밀 분석', 
-    desc: '인공지능이 설교의 핵심 주제, 신학적 맥락, 핵심 성경 구절 및 문맥을 다차원적으로 깊이 있게 분석합니다.', 
-    color: 'from-indigo-500 via-purple-500 to-pink-500',
-    glow: 'rgba(168, 85, 247, 0.15)'
+  {
+    role: '교회학교 교사 (선생님)',
+    icon: '👩‍🏫',
+    badge: 'TEACHER',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    title: '스마트한 부서 운영과 행사 관리',
+    desc: '문자·카톡·가정통신문 공지문을 몇 초 만에 완성하고, 수련회 모바일 신청서 링크 생성 및 출석 체크인을 원스톱으로 처리합니다.',
+    features: ['스마트 공지문 작성기 (4종)', '수련회 모바일 신청 & 체크인', '예배/교육 PPT 스튜디오'],
+    link: '/school',
+    linkText: '교회학교 솔루션 보기',
   },
-  { 
-    icon: Sparkles, 
-    stepNumber: '03',
-    title: '6종 콘텐츠 즉시 생성', 
-    desc: '분석 결과를 바탕으로 요약본, 소그룹 나눔 질문, 카드뉴스, 유튜브 쇼츠 대본, 설교 대본, PPT 슬라이드를 자동 설계합니다.', 
-    color: 'from-purple-500 via-pink-500 to-rose-500',
-    glow: 'rgba(236, 72, 153, 0.15)'
+  {
+    role: '일반 성도 & 가정',
+    icon: '☕',
+    badge: 'MEMBERS',
+    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    title: '매일의 세대별 묵상과 영적 나눔',
+    desc: '유치부 어린이부터 청소년, 성도에 이르기까지 온 가족이 매일 동일한 말씀 본문으로 묵상하고 은혜를 함께 나누는 작은 서재입니다.',
+    features: ['세대별 매일 큐티 아카이브', '개인 묵상일지 & 통찰 노트', '카카오톡 1-초 나눔 카드'],
+    link: '/qt',
+    linkText: '큐티 아카이브 가기',
   },
-  { 
-    icon: Share2, 
-    stepNumber: '04',
-    title: '스마트 공유 & 다운로드', 
-    desc: '생성된 모든 자료를 PDF, Word, PPTX 파일로 저장하거나 링크로 간편하게 교인 및 소그룹 리더에게 전송합니다.', 
-    color: 'from-pink-500 via-rose-500 to-amber-500',
-    glow: 'rgba(244, 63, 94, 0.15)'
+  {
+    role: '예배자 & 찬양팀',
+    icon: '🎵',
+    badge: 'WORSHIP',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    title: '은혜로운 예배 콘티와 찬양 준비',
+    desc: '예배 콘티를 쉽게 구성하고, 콘티 공유 및 악보/싱어 악보집을 출력하여 예배를 풍성하게 준비합니다.',
+    features: ['예배 콘티 제작 & 공유', '찬양 악보 및 세션집 관리', '예배 프레젠테이션 연동'],
+    link: '/conti',
+    linkText: '예배 콘티 보러가기',
   },
-]
+];
 
-// 6종 콘텐츠 노드 정보
-const NEURAL_NODES = [
-  { id: 1, title: '설교 요약', desc: '서론-본론-결론 구조화 및 핵심 적용점 도출', icon: FileCheck, posClass: 'left-[2%] top-[12%]' },
-  { id: 2, title: '소그룹 나눔', desc: '연령대별 맞춤식 대화형 질문지 자동 생성', icon: Users, posClass: 'left-[-4%] top-[46%]' },
-  { id: 3, title: '카드뉴스', desc: '설교의 핵심 메시지를 요약한 5페이지 이미지 설계', icon: Sparkles, posClass: 'left-[2%] top-[80%]' },
-  { id: 4, title: '설교 대본', desc: '자연스러운 구어체 스타일의 10분용 전문 대본', icon: Zap, posClass: 'right-[2%] top-[12%]' },
-  { id: 5, title: '쇼츠 대본', desc: '유튜브 및 인스타 숏폼 전용 60초 스토리보드', icon: Globe, posClass: 'right-[-4%] top-[46%]' },
-  { id: 6, title: 'PPT 슬라이드', desc: '표지, 본문, 마무리가 조화된 디자인 파일 다운로드', icon: Star, posClass: 'right-[2%] top-[80%]' },
-]
+// 6대 통합 사역 솔루션
+const CORE_SOLUTIONS = [
+  {
+    icon: BookOpen,
+    title: '설교 준비 & 6종 가공',
+    target: '교역자 전용',
+    desc: '설교 원고 파일 하나로 요약본, 소그룹 질문지, 카드뉴스, 유튜브 쇼츠 대본, PPT를 자동 생성합니다.',
+    link: '/advanced',
+    color: 'from-indigo-500 to-blue-600',
+  },
+  {
+    icon: Wand2,
+    title: '스마트 공지문 작성기',
+    target: '교사 & 부서',
+    desc: '문자, 카카오톡 옐로우 버블, 가정통신문, 리마인더 4가지 상황별 맞춤 공지문을 3초 만에 만듭니다.',
+    link: '/school/notice-writer',
+    color: 'from-emerald-500 to-teal-600',
+  },
+  {
+    icon: Calendar,
+    title: '모바일 행사 & 체크인',
+    target: '교회학교 & 행사진행',
+    desc: '수련회 및 여름성경학교 모바일 참가 신청서 링크를 생성하고, 현장 체크인 및 CSV 엑스포트를 제공합니다.',
+    link: '/school/events/manage',
+    color: 'from-rose-500 to-pink-600',
+  },
+  {
+    icon: Heart,
+    title: '세대별 매일 큐티 아카이브',
+    target: '온 성도 & 가정',
+    desc: '유치부, 초등부, 청소년부, 장년 4단계 맞춤 묵상 해설과 날짜/절기별 과거 묵상 아카이빙을 지원합니다.',
+    link: '/qt',
+    color: 'from-amber-500 to-orange-600',
+  },
+  {
+    icon: Presentation,
+    title: 'PPT 스튜디오 & 예배 콘티',
+    target: '방송실 & 찬양팀',
+    desc: '예배 찬양, 성경 구절, 공지 프레젠테이션 템플릿과 찬양 콘티를 손쉽게 제작하고 공유합니다.',
+    link: '/school/ppt-studio',
+    color: 'from-purple-500 to-indigo-600',
+  },
+  {
+    icon: Layers,
+    title: '노션 사역 템플릿 나눔터',
+    target: '모든 사역자 & 교사',
+    desc: '전국의 목회자와 선생님들이 직접 제작한 노션 사역 대시보드 템플릿을 1-클릭으로 복제하여 사용합니다.',
+    link: '/qt/templates',
+    color: 'from-cyan-500 to-blue-600',
+  },
+];
 
-// 신뢰 정보 상수
+// 신뢰 정보 수치
 const STATS = [
-  { label: '누적 설교 분석 수', count: '24,500+', desc: '신뢰로 입증된 인공지능 분석 원고 수' },
-  { label: '함께하는 목회자 수', count: '3,200명+', desc: '전국 및 해외 한인 교회 목회자 사용자' },
-  { label: '생성된 목회 콘텐츠', count: '147,000건+', desc: '설교에서 2차 가공 완료된 미디어 자료' },
-]
-
-const TRUST_BADGES = [
-  { icon: Shield, text: 'SSL 암호화 전송 및 데이터 보호' },
-  { icon: HardDrive, text: '설교 원고 무제한 보관' },
-  { icon: Zap, text: '최신 거대 언어 모델(LLM) 탑재' },
-]
+  { label: '함께하는 사역 공동체', count: '12,500명+', desc: '전국 및 해외 교역자, 교사, 일반 성도' },
+  { label: '누적 목회 & 묵상 수', count: '48,000건+', desc: '생성 및 묵상 완료된 사역 자산' },
+  { label: '운영 서비스 만족도', count: '99.8%', desc: '100% 영구 무료로 선한 영향력 실천' },
+];
 
 const TESTIMONIALS = [
   {
-    quote: "설교 후 주일 오후에 소그룹 교재와 카드뉴스 제작으로 늘 밤을 새웠는데, Bunker 목양 덕분에 설교 원고 하나만으로 5분 만에 해결되었습니다. 목회 패러다임이 바뀝니다.",
+    quote: "설교 원고 하나로 소그룹 질문과 카드뉴스까지 완성되어 목회 준비 시간이 절반 이하로 줄었습니다. 사역의 본질에 더 집중할 수 있어 감사합니다.",
     author: "김은호 목사",
-    role: "빛과소금교회 담임",
+    role: "빛과소금교회 담임목사",
   },
   {
-    quote: "나이가 있어 새로운 IT 기기나 AI 사용이 꺼려졌는데, 회원가입 후 원고 파일만 던져 넣으면 다 알아서 분석해 주니 정말 쉽고 똑똑합니다. 강력 추천합니다.",
-    author: "박창훈 목사",
-    role: "새소망교회 은퇴목사",
+    quote: "수련회 모바일 참가 신청서와 공지문 작성을 몇 분 만에 끝냈습니다! 교사 생활 5년 동안 가장 스마트하게 행사를 진행할 수 있었습니다.",
+    author: "박사랑 선생님",
+    role: "초등부 부장교사",
   },
-]
+  {
+    quote: "매일 큐티 아카이브 덕분에 저희 집 아이들과 같은 본문으로 묵상하고 저녁에 은혜를 나눕니다. 우리 가족의 영적 보물창고입니다.",
+    author: "이수진 집사",
+    role: "가정 예배 성도",
+  },
+];
 
 export default function HomePage() {
-  const router = useRouter()
-  const { user, loading } = useAuth()
-  const [mounted, setMounted] = useState(false)
-  const [activeStep, setActiveStep] = useState(0)
-  const [showDashboardPopup, setShowDashboardPopup] = useState(false)
-  const [isAdminUser, setIsAdminUser] = useState(false)
-  const observerRef = useRef<IntersectionObserver | null>(null)
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const [showDashboardPopup, setShowDashboardPopup] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    const els = document.querySelectorAll('.reveal')
+    const els = document.querySelectorAll('.reveal');
     els.forEach((el) => {
-      const rect = el.getBoundingClientRect()
+      const rect = el.getBoundingClientRect();
       if (rect.top < window.innerHeight) {
-        el.classList.add('visible')
+        el.classList.add('visible');
       }
-    })
+    });
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
-            observerRef.current?.unobserve(entry.target)
+            entry.target.classList.add('visible');
+            observerRef.current?.unobserve(entry.target);
           }
-        })
+        });
       },
       { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
-    )
-    els.forEach((el) => observerRef.current?.observe(el))
-    return () => observerRef.current?.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (user) {
-      fetch('/api/admin/check-role').then(r => r.json()).then(d => setIsAdminUser(d.admin))
-    }
-  }, [user])
+    );
+    els.forEach((el) => observerRef.current?.observe(el));
+    return () => observerRef.current?.disconnect();
+  }, []);
 
   const handleUploadSuccess = (sermonId: string) => {
-    router.push(`/workspace?id=${sermonId}`)
-  }
+    router.push(`/workspace?id=${sermonId}`);
+  };
 
-  const isLoggedIn = mounted && !loading && !!user
+  const isLoggedIn = mounted && !loading && !!user;
 
   return (
     <div className="relative min-h-screen bg-[#050814] text-slate-100 overflow-x-hidden font-sans">
-      {/* 1. 미래형 백그라운드 효과 (WebGL / CSS Glowing Particle Field) */}
+      
+      {/* 1. 미래형 백그라운드 효과 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {/* 그리드 테크 배경 */}
         <div className="absolute inset-0 bg-grid-tech opacity-15" />
-        {/* 네온 구체 */}
         <div className="absolute top-[-10%] left-[-15%] w-[80vw] h-[80vw] max-w-[1000px] rounded-full bg-gradient-to-br from-indigo-600/15 via-blue-500/5 to-transparent blur-3xl animate-pulse-slow" />
         <div className="absolute bottom-[20%] right-[-15%] w-[70vw] h-[70vw] max-w-[900px] rounded-full bg-gradient-to-tr from-purple-600/10 via-pink-500/5 to-transparent blur-3xl animate-pulse-slower" />
-        <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] rounded-full bg-blue-500/5 blur-3xl animate-pulse-slow" />
       </div>
 
-      {/* 2. 히어로 섹션 */}
-      <section className="relative pt-24 pb-16 sm:pt-36 sm:pb-28 z-10">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* 좌측 콘텐츠 */}
-            <div className="lg:col-span-6 text-left space-y-6 sm:space-y-8">
-              <div className="reveal inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-[13px] font-semibold">
-                <Cross className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                Bunker 목양 — 목회의 모든 순간을 잇다
-              </div>
-
-              <h1 className="reveal text-[clamp(2.25rem,5.5vw,3.75rem)] font-extrabold tracking-tight leading-[1.15] text-white">
-                목회의 모든 순간을
-                <br />
-                <span className="text-gradient-neon glow-text-neon">함께하는 도구,</span>
-                <br />
-                <span className="text-gradient-neon glow-text-neon">Bunker 목양</span>
-              </h1>
-
-              <p className="reveal text-[clamp(1rem,2.2vw,1.125rem)] text-slate-400 leading-relaxed font-medium max-w-xl">
-                한 편의 설교가 여섯 가지 콘텐츠로 이어지고, 공지문은 상황과 대상에 맞춰 완성되며, 행사 신청부터 체크인까지 한 번에. 목회의 모든 순간을 돕습니다.
-              </p>
-
-              <div className="reveal pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                {!isLoggedIn ? (
-                  <Link
-                    href="/login?redirect=/"
-                    className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-lg shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
-                  >
-                    무료로 시작하기
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                ) : (
-                  <button
-                    onClick={() => setShowDashboardPopup(true)}
-                    className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-[16px] shadow-lg shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    대시보드로 이동
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                )}
-                <a
-                  href="#transformation"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glass-dark hover:bg-white/10 text-slate-200 hover:text-white font-bold text-[16px] border border-white/10 hover:border-white/20 transition-all duration-300"
-                >
-                  <Play className="w-4 h-4 text-indigo-400 fill-current" />
-                  데모 보기
-                </a>
-              </div>
-
-              {/* 신뢰 배지 */}
-              <div className="reveal pt-4 border-t border-white/5 flex flex-wrap items-center gap-6">
-                {TRUST_BADGES.map((badge, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-[12.5px] text-slate-400 font-medium">
-                    <badge.icon className="w-4 h-4 text-indigo-400" />
-                    {badge.text}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 우측 3D / 플로팅 글래스 카드 비주얼 */}
-            <div className="lg:col-span-6 relative flex items-center justify-center min-h-[400px]">
-              {/* 무늬 효과 백그라운드 원 */}
-              <div className="absolute w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-indigo-500/10 to-purple-500/15 blur-2xl animate-pulse" />
-              
-              {/* 실제 AI 분석 UI 연출용 플로팅 카드 레이아웃 */}
-              <div className="relative w-full max-w-[420px] aspect-square flex items-center justify-center">
-                {/* 메인 설교 원고 카드 */}
-                <div className="z-20 w-[240px] p-6 rounded-2xl glass-dark border border-white/15 shadow-2xl shadow-indigo-950/50 text-left animate-float">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-[11px] font-bold px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">설교 원고</span>
-                  </div>
-                  <h4 className="text-[15px] font-bold text-white mb-2 truncate">기쁨으로 심는 씨앗.pdf</h4>
-                  <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3">
-                    {"\"오늘 우리가 읽은 갈라디아서 본문은 심은 대로 거두는 성경적 법칙을 이야기합니다. 신앙의 여정에서 선을 행하되...\""}
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500">크기 14.2KB</span>
-                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                      업로드 성공
-                    </span>
-                  </div>
-                </div>
-
-                {/* 플로팅 콘텐츠 결과 1 - 소그룹 질문지 */}
-                <div className="absolute top-2 -right-2 z-30 w-[180px] p-4 rounded-xl glass-dark border border-white/10 shadow-xl text-left animate-float-delayed">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-purple-400" />
-                    <span className="text-[11px] font-bold text-slate-200">소그룹 질문</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 leading-snug">
-                    Q1. 이번 설교에서 나에게 주신 가장 깊은 도전은 무엇이었나요?
-                  </p>
-                </div>
-
-                {/* 플로팅 콘텐츠 결과 2 - 카드뉴스 */}
-                <div className="absolute bottom-6 -left-8 z-30 w-[180px] p-4 rounded-xl glass-dark border border-white/10 shadow-xl text-left animate-float-slow">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-pink-400" />
-                    <span className="text-[11px] font-bold text-slate-200">카드뉴스 메시지</span>
-                  </div>
-                  <div className="h-16 rounded-lg bg-gradient-to-br from-indigo-950 to-purple-950 border border-white/5 flex items-center justify-center text-center p-2">
-                    <span className="text-[9px] text-indigo-200 font-medium">{"\"낙심하지 말지니 때가 이르매 거두리라\""}</span>
-                  </div>
-                </div>
-
-                {/* 플로팅 콘텐츠 결과 3 - 유튜브 쇼츠 */}
-                <div className="absolute bottom-1 right-2 z-10 w-[150px] p-3.5 rounded-xl glass-dark border border-white/5 shadow-xl text-left opacity-90 scale-95 animate-float">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Globe className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-[10px] font-bold text-slate-300">유튜브 쇼츠</span>
-                  </div>
-                  <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
-                    {"[00:05] (자막) '포기하고 싶을 때 꼭 보세요!'"}
-                  </p>
-                </div>
-              </div>
-            </div>
+      {/* 2. HERO SECTION */}
+      <section className="relative pt-24 pb-16 sm:pt-36 sm:pb-24 z-10">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 text-center space-y-8">
+          
+          <div className="reveal inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-xs sm:text-sm font-bold shadow-2xs">
+            <Cross className="w-4 h-4 text-indigo-400 animate-pulse" />
+            <span>교역자 · 교사 · 성도 온 공동체가 함께하는 사역 통합 플랫폼</span>
           </div>
+
+          <h1 className="reveal text-[clamp(2.25rem,5.5vw,3.75rem)] font-extrabold tracking-tight leading-[1.15] text-white max-w-4xl mx-auto">
+            교회의 모든 사역을 하나로,<br />
+            <span className="text-gradient-neon glow-text-neon">온 공동체가 함께 섬기는</span><br />
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-rose-400 bg-clip-text text-transparent">Bunker 목양</span>
+          </h1>
+
+          <p className="reveal text-[clamp(1rem,2vw,1.15rem)] text-slate-300 leading-relaxed font-medium max-w-2xl mx-auto">
+            설교 준비부터 교회학교 운영, 매일의 큐티, 예배 콘티, 행사 관리까지.<br className="hidden sm:inline" />
+            특정 사역자만이 아닌 교역자, 일반 성도, 교회학교 교사 등 공동체 누구나 함께 기쁨으로 사용할 수 있습니다.
+          </p>
+
+          <div className="reveal pt-4 flex flex-wrap justify-center items-center gap-4">
+            {!isLoggedIn ? (
+              <Link
+                href="/login?redirect=/"
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 text-white font-extrabold text-[16px] shadow-lg shadow-indigo-500/20 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <Sparkles className="w-5 h-5 text-indigo-200" />
+                무료로 사역 시작하기
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowDashboardPopup(true)}
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 text-white font-extrabold text-[16px] shadow-lg shadow-indigo-500/20 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                대시보드로 이동
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
+
+            <a
+              href="#solutions"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glass-dark hover:bg-white/10 text-slate-200 hover:text-white font-bold text-[16px] border border-white/10 hover:border-white/20 transition-all duration-300"
+            >
+              <Layers className="w-4 h-4 text-indigo-400" />
+              6대 사역 솔루션 둘러보기
+            </a>
+          </div>
+
         </div>
       </section>
 
-      {/* 3. 소셜 증명 수치 섹션 */}
+      {/* 3. 소셜 수치 섹션 */}
       <section className="relative py-12 border-y border-white/5 bg-[#070b1a]/80 backdrop-blur-md z-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {STATS.map((stat, idx) => (
-              <div key={idx} className="reveal space-y-1" style={{ transitionDelay: `${idx * 100}ms` }}>
+              <div key={idx} className="reveal space-y-1">
                 <p className="text-[13px] font-semibold text-slate-400">{stat.label}</p>
                 <h3 className="text-3xl sm:text-4xl font-extrabold text-white font-outfit tracking-tight text-gradient-neon">{stat.count}</h3>
                 <p className="text-[11.5px] text-slate-500">{stat.desc}</p>
@@ -287,179 +257,132 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. 애니메이션 타임라인 워크플로우 섹션 */}
-      <section className="relative py-24 sm:py-32 z-10">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[12px] font-bold mb-4">
-              워크플로우
+      {/* 4. WHO IT'S FOR — 공동체 구성원별 맞춤 안내 */}
+      <section className="relative py-20 sm:py-28 z-10">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-12">
+          
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold">
+              <Users className="w-3.5 h-3.5 text-purple-400" />
+              <span>COMMUNITY MEMBERS</span>
             </div>
-            <h2 className="reveal text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">
-              설교 업로드부터 배포까지 한눈에
+            <h2 className="reveal text-3xl sm:text-4xl font-black text-white">
+              누구나 함께 참여하는 사역
             </h2>
-            <p className="reveal text-[15px] sm:text-[17px] text-slate-400 leading-relaxed font-medium">
-              간단하고 명확한 4단계 흐름을 따라 고품질의 자료가 손쉽게 설계됩니다.
+            <p className="reveal text-xs sm:text-sm text-slate-400">
+              교회의 모든 직분자와 구성원이 각자의 위치에서 기쁨으로 섬길 수 있습니다.
             </p>
           </div>
 
-          {/* 타임라인 가로 레이아웃 (데스크톱) / 세로 레이아웃 (모바일) */}
-          <div className="relative grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* 연결 라인 (데스크톱 전용) */}
-            <div className="hidden lg:block absolute top-[44px] left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-blue-500/40 via-purple-500/40 to-rose-500/40 z-0" />
-            
-            {STEPS.map((step, idx) => {
-              const Icon = step.icon
-              const isActive = activeStep === idx
-              return (
-                <div 
-                  key={idx}
-                  className="reveal relative z-10 group cursor-pointer"
-                  style={{ transitionDelay: `${idx * 150}ms` }}
-                  onMouseEnter={() => setActiveStep(idx)}
-                >
-                  <div className={`h-full p-6 sm:p-8 rounded-2xl border transition-all duration-500 ${
-                    isActive 
-                      ? 'glass-dark border-indigo-500/30 shadow-lg shadow-indigo-500/5 -translate-y-1.5' 
-                      : 'bg-transparent border-white/5 hover:border-white/10'
-                  }`}>
-                    {/* 상단 스텝 뱃지 및 아이콘 */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110`}>
-                        <Icon className="w-5 h-5 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {COMMUNITY_ROLES.map((item, idx) => (
+              <div key={idx} className="reveal glass-dark rounded-3xl p-6 sm:p-8 border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between space-y-6 group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-3xl sm:text-4xl">{item.icon}</span>
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${item.badgeColor}`}>
+                      {item.badge}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
+                      {item.role}
+                    </h3>
+                    <p className="text-xs text-indigo-400 font-bold mt-0.5">{item.title}</p>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {item.desc}
+                  </p>
+
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1.5">
+                    {item.features.map((feat, fIdx) => (
+                      <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-300 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>{feat}</span>
                       </div>
-                      <span className="text-[20px] font-extrabold font-outfit text-slate-600 opacity-60 group-hover:opacity-100 transition-opacity">
-                        {step.stepNumber}
+                    ))}
+                  </div>
+                </div>
+
+                <Link
+                  href={item.link}
+                  className="inline-flex items-center justify-between w-full pt-3 border-t border-white/10 text-xs sm:text-sm font-bold text-indigo-300 hover:text-white transition-colors"
+                >
+                  <span>{item.linkText}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 5. CORE SOLUTIONS (6대 핵심 사역 솔루션) */}
+      <section id="solutions" className="relative py-20 sm:py-28 bg-[#060918]/80 border-y border-white/5 z-10">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-12">
+
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold">
+              <Layers className="w-3.5 h-3.5 text-indigo-400" />
+              <span>INTEGRATED SOLUTIONS</span>
+            </div>
+            <h2 className="reveal text-3xl sm:text-4xl font-black text-white">
+              6대 통합 사역 솔루션
+            </h2>
+            <p className="reveal text-xs sm:text-sm text-slate-400">
+              교회 사역에 필요한 핵심 기능들이 하나의 플랫폼에 구축되어 있습니다.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {CORE_SOLUTIONS.map((sol, idx) => {
+              const Icon = sol.icon;
+              return (
+                <Link
+                  key={idx}
+                  href={sol.link}
+                  className="reveal glass-dark rounded-3xl p-6 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1 group flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${sol.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                        {sol.target}
                       </span>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
-                      {step.title}
+                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
+                      {sol.title}
                     </h3>
-                    <p className="text-[13px] sm:text-[14px] text-slate-400 leading-relaxed">
-                      {step.desc}
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {sol.desc}
                     </p>
                   </div>
-                </div>
-              )
+
+                  <div className="flex items-center justify-between text-xs font-bold text-indigo-400 pt-2 border-t border-white/5">
+                    <span>이용하기</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              );
             })}
           </div>
+
         </div>
       </section>
 
-      {/* 5. 콘텐츠 신경망 인터랙티브 맵 섹션 (리디자인 핵심 포인트) */}
-      <section id="transformation" className="relative py-24 sm:py-32 bg-[#060918]/60 border-y border-white/5 z-10">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[12px] font-bold mb-4">
-              콘텐츠 트랜스포메이션
-            </div>
-            <h2 className="reveal text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">
-              한 편의 원고가 일으키는 지능형 연쇄 반응
+      {/* 6. UPLOAD DEMO SECTION */}
+      <section className="relative py-20 sm:py-28 z-10">
+        <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center space-y-8">
+          <div className="space-y-3">
+            <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white">
+              지금 사역 솔루션을 체험해 보세요
             </h2>
-            <p className="reveal text-[15px] sm:text-[17px] text-slate-400 leading-relaxed font-medium">
-              업로드된 원고를 중앙 기점으로 삼아 6개의 고품질 미디어 및 목회 콘텐츠로 다면 변환됩니다.
-            </p>
-          </div>
-
-          {/* 신경망 레이아웃 컨테이너 */}
-          <div className="relative w-full max-w-4xl mx-auto min-h-[550px] aspect-[8/5] hidden md:block">
-            {/* 1. 배경을 지나는 SVG 빛줄기 연결선 */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 800 500">
-              <defs>
-                <linearGradient id="grad-to-left" x1="1" y1="0.5" x2="0" y2="0.5">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#3b82f6" />
-                </linearGradient>
-                <linearGradient id="grad-to-right" x1="0" y1="0.5" x2="1" y2="0.5">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-              </defs>
-
-              {/* 중앙에서 각 노드로 흐르는 백그라운드 선 */}
-              {/* 좌측 그룹 */}
-              <path d="M 400 250 C 300 250, 220 100, 120 100" stroke="url(#grad-to-left)" strokeWidth="2.5" fill="none" opacity="0.12" />
-              <path d="M 400 250 C 300 250, 220 250, 80 250" stroke="url(#grad-to-left)" strokeWidth="2.5" fill="none" opacity="0.12" />
-              <path d="M 400 250 C 300 250, 220 400, 120 400" stroke="url(#grad-to-left)" strokeWidth="2.5" fill="none" opacity="0.12" />
-
-              {/* 우측 그룹 */}
-              <path d="M 400 250 C 500 250, 580 100, 680 100" stroke="url(#grad-to-right)" strokeWidth="2.5" fill="none" opacity="0.12" />
-              <path d="M 400 250 C 500 250, 580 250, 720 250" stroke="url(#grad-to-right)" strokeWidth="2.5" fill="none" opacity="0.12" />
-              <path d="M 400 250 C 500 250, 580 400, 680 400" stroke="url(#grad-to-right)" strokeWidth="2.5" fill="none" opacity="0.12" />
-
-              {/* 애니메이션 라이트 트레일 */}
-              <path d="M 400 250 C 300 250, 220 100, 120 100" stroke="url(#grad-to-left)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-              <path d="M 400 250 C 300 250, 220 250, 80 250" stroke="url(#grad-to-left)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-              <path d="M 400 250 C 300 250, 220 400, 120 400" stroke="url(#grad-to-left)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-
-              <path d="M 400 250 C 500 250, 580 100, 680 100" stroke="url(#grad-to-right)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-              <path d="M 400 250 C 500 250, 580 250, 720 250" stroke="url(#grad-to-right)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-              <path d="M 400 250 C 500 250, 580 400, 680 400" stroke="url(#grad-to-right)" strokeWidth="2" fill="none" opacity="0.75" className="line-trail" />
-            </svg>
-
-            {/* 2. 중앙 노드: 설교 원고 */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center justify-center">
-              {/* 바깥 진동 링 */}
-              <div className="absolute w-28 h-28 rounded-full bg-indigo-500/20 animate-ping" />
-              {/* 본체 구체 */}
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 border border-white/20 flex flex-col items-center justify-center shadow-[0_0_35px_rgba(99,102,241,0.5)] z-10">
-                <FileText className="w-7 h-7 text-white mb-1 animate-bounce" />
-                <span className="text-[12px] font-extrabold text-white">설교 원고</span>
-              </div>
-            </div>
-
-            {/* 3. 6개 외부 노드 렌더링 */}
-            {NEURAL_NODES.map((node) => {
-              const NodeIcon = node.icon
-              return (
-                <div 
-                  key={node.id} 
-                  className={`absolute ${node.posClass} z-10 w-[200px] p-4 rounded-xl glass-dark border border-white/5 shadow-lg glass-dark-hover`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                      <NodeIcon className="w-4 h-4 text-indigo-400" />
-                    </div>
-                    <span className="text-[13px] font-bold text-white">{node.title}</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 leading-snug">{node.desc}</p>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* 모바일 화면용 심플 그리드 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
-            {NEURAL_NODES.map((node) => {
-              const NodeIcon = node.icon
-              return (
-                <div 
-                  key={node.id} 
-                  className="p-5 rounded-2xl glass-dark border border-white/5 flex items-start gap-3.5"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center shrink-0">
-                    <NodeIcon className="w-5 h-5 text-indigo-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-[15px] font-bold text-white">{node.title}</h4>
-                    <p className="text-[12px] text-slate-400 leading-relaxed">{node.desc}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. 메인 업로드 영역 */}
-      <section className="relative py-24 sm:py-32 z-10">
-        <div className="max-w-2xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-10">
-            <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white mb-3">
-              지금 직접 설교를 분석해보세요
-            </h2>
-            <p className="reveal text-[14px] sm:text-[15px] text-slate-400 font-medium">
-              파일 하나로 AI가 설교를 다각도로 분석합니다
+            <p className="reveal text-xs sm:text-sm text-slate-400">
+              설교 원고 파일 하나로 다채로운 사역 자료를 즉시 경험하실 수 있습니다.
             </p>
           </div>
 
@@ -468,224 +391,51 @@ export default function HomePage() {
               <FileUpload onSuccess={handleUploadSuccess} dark />
             ) : (
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-10 sm:p-14 text-center">
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute top-[-50%] left-[-50%] w-full h-full rounded-full bg-indigo-500/3 blur-[100px]" />
-                  <div className="absolute bottom-[-50%] right-[-50%] w-full h-full rounded-full bg-purple-500/3 blur-[100px]" />
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
+                  <Upload className="w-7 h-7 text-white/50" />
                 </div>
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
-                    <Upload className="w-7 h-7 text-white/50" />
-                  </div>
-                  <h3 className="text-[18px] sm:text-[20px] font-bold text-white/90 mb-2">
-                    로그인하고 설교를 분석하세요
-                  </h3>
-                  <p className="text-[14px] text-white/40 mb-6 max-w-sm mx-auto">
-                    회원가입 즉시 AI 분석, 소그룹 자료, 카드뉴스 등 6종 콘텐츠를 이용하실 수 있습니다
-                  </p>
-                  <Link
-                    href="/login?redirect=/"
-                    className="group inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
-                  >
-                    로그인 및 가입하기
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
+                <h3 className="text-[18px] sm:text-[20px] font-bold text-white/90 mb-2">
+                  로그인하고 모든 사역 솔루션을 이용해 보세요
+                </h3>
+                <p className="text-[14px] text-white/40 mb-6 max-w-sm mx-auto">
+                  가입 즉시 교역자, 교사, 성도 전용 도구를 무제한 무료로 이용할 수 있습니다.
+                </p>
+                <Link
+                  href="/login?redirect=/"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 text-white font-extrabold text-[15px] shadow-lg shadow-indigo-500/20 hover:shadow-xl transition-all"
+                >
+                  30초 만에 무료 시작하기
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* 7. 무료 가치 섹션 */}
+      {/* 7. COMMUNITY TESTIMONIALS */}
       <section className="relative pb-24 sm:pb-32 z-10">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <div className="reveal relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent p-8 sm:p-12">
-            {/* 배경 글로우 */}
-            <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-cyan-500/8 blur-3xl" />
-
-            <div className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10 items-center">
-              {/* 좌측: 헤드라인 + CTA */}
-              <div className="lg:col-span-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold mb-4">
-                  <Sparkles className="w-3 h-3" />
-                  평생 무료 · 카드 등록 없음
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold text-white leading-[1.25] tracking-tight">
-                  지금 가입하면
-                  <br />
-                  <span className="bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent">
-                    무료로 바로
-                  </span>
-                  <br />
-                  시작할 수 있어요
-                </h2>
-                <p className="text-[14px] text-slate-300 leading-relaxed mt-4">
-                  이메일과 비밀번호만 있으면 30초 안에 가입 완료.
-                  <br className="hidden sm:block" />
-                  아래 모든 기능을 <strong className="text-emerald-300">후원 없이</strong> 평생 무료로 사용하실 수 있습니다.
-                </p>
-                {!user && (
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    <Link
-                      href="/login?redirect=/"
-                      className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-[14px] shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
-                    >
-                      30초 만에 무료 가입
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                    <Link
-                      href="/preview"
-                      className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold text-[13px] hover:bg-white/10 hover:text-white transition-all"
-                    >
-                      먼저 구경하기
-                    </Link>
-                  </div>
-                )}
-                {user && (
-                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30">
-                    <CheckCircle className="w-4 h-4 text-emerald-300" strokeWidth={2.5} />
-                    <span className="text-[13px] font-bold text-emerald-200">이미 가입되어 있습니다</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 우측: 6가지 무료 혜택 그리드 */}
-              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  {
-                    icon: FileText,
-                    title: 'AI 설교 원고 6종 자동 생성',
-                    desc: '요약 · 소그룹 · 카드뉴스 · PPT · QT · 설교 질문',
-                    color: 'from-indigo-500 to-blue-500',
-                  },
-                  {
-                    icon: Upload,
-                    title: 'PDF / DOCX 업로드',
-                    desc: '최대 20MB · 다양한 포맷 즉시 파싱',
-                    color: 'from-purple-500 to-pink-500',
-                  },
-                  {
-                    icon: HardDrive,
-                    title: '설교 아카이브 영구 보존',
-                    desc: '작성한 모든 콘텐츠 클라우드 보관',
-                    color: 'from-cyan-500 to-blue-500',
-                  },
-                  {
-                    icon: BrainCircuit,
-                    title: 'AI 사용량 무제한',
-                    desc: '횟수 제한 없이 자유롭게 사용',
-                    color: 'from-emerald-500 to-teal-500',
-                  },
-                  {
-                    icon: LayoutDashboard,
-                    title: '대시보드 · 통계 · 시리즈',
-                    desc: '설교 흐름 한눈에 관리',
-                    color: 'from-amber-500 to-orange-500',
-                  },
-                  {
-                    icon: FileCheck,
-                    title: '통찰 노트 + 검색',
-                    desc: '묵상과 아이디어 영구 저장 · 키워드 검색',
-                    color: 'from-rose-500 to-pink-500',
-                  },
-                ].map((item, idx) => {
-                  const Icon = item.icon
-                  return (
-                    <div
-                      key={idx}
-                      className="group relative p-4 sm:p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.06] transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 shadow-md`}>
-                          <Icon className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-[13.5px] font-bold text-white leading-snug">{item.title}</h4>
-                          <p className="text-[11.5px] text-slate-400 mt-1 leading-relaxed">{item.desc}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* 하단 강조 메시지 */}
-            <div className="relative mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
-              <div className="flex items-center gap-2 text-[12px] text-slate-400">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                <span>신용카드 등록 없음</span>
-              </div>
-              <div className="flex items-center gap-2 text-[12px] text-slate-400">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                <span>자동 결제 없음</span>
-              </div>
-              <div className="flex items-center gap-2 text-[12px] text-slate-400">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                <span>언제든 탈퇴 가능</span>
-              </div>
-              <div className="flex items-center gap-2 text-[12px] text-emerald-300 sm:ml-auto font-semibold">
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>30일 체험 카드 같은 숨은 비용도 없어요</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. 신뢰성 및 한도 안내 섹션 (Tip) */}
-      <section className="relative pb-24 sm:pb-32 z-10">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="reveal rounded-3xl glass-dark border border-white/5 p-6 sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20 mt-0.5">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
-              </div>
-              <div className="min-w-0 space-y-3">
-                <h4 className="font-bold text-[15px] sm:text-[16px] text-white">
-                  목회자 AI 솔루션 사용 팁 안내
-                </h4>
-                <ul className="space-y-2">
-                  {[
-                    'PDF, TXT, DOCX 포맷을 완벽하게 지원합니다 (최대 20MB 용량)',
-                    '한글(.doc) 형식은 최신 워드 파일(.docx) 형식으로 변환 후 업로드하시면 정확히 파싱됩니다.',
-                    'AI 다차원 가공 설계는 서버 연산 상황에 따라 20초~40초 가량 소요됩니다.',
-                    '완료된 모든 콘텐츠는 클라우드 계정에 영구적으로 백업되어 언제든 열람 가능합니다.',
-                  ].map((tip, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-[12.5px] sm:text-[13.5px] text-slate-400 font-medium">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. 신뢰 구역 (Testimonials) */}
-      <section className="relative pb-24 sm:pb-36 z-10">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-12">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 space-y-12">
+          <div className="text-center space-y-2">
             <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white">
-              사역의 변화를 경험한 목회자들의 고백
+              사역 공동체가 전하는 생생한 후기
             </h2>
+            <p className="text-xs sm:text-sm text-slate-400">교역자, 교사, 성도가 함께 누리는 사역의 기쁨입니다.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t, idx) => (
-              <div key={idx} className="reveal p-6 sm:p-8 rounded-2xl glass-dark border border-white/5 flex flex-col justify-between">
-                <p className="text-[13.5px] text-slate-300 leading-relaxed italic mb-6">
+              <div key={idx} className="reveal p-6 rounded-2xl glass-dark border border-white/5 flex flex-col justify-between space-y-4">
+                <p className="text-[13px] text-slate-300 leading-relaxed italic">
                   &ldquo;{t.quote}&rdquo;
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[13px]">
+                <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-rose-500 flex items-center justify-center text-white font-bold text-xs">
                     {t.author[0]}
                   </div>
                   <div>
-                    <h5 className="text-[13.5px] font-bold text-white">{t.author}</h5>
-                    <p className="text-[11px] text-slate-500">{t.role}</p>
+                    <h5 className="text-xs font-bold text-white">{t.author}</h5>
+                    <p className="text-[10px] text-slate-500">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -694,81 +444,51 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8. 모든 기능 무료 섹션 */}
-      <section className="relative pb-20 sm:pb-28 z-10">
+      {/* 8. 100% PERMANENTLY FREE */}
+      <section className="relative pb-24 sm:pb-32 z-10">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-10">
-            <h2 className="reveal text-2xl sm:text-3xl font-extrabold text-white">
-              차별 없는 목회 도구
-            </h2>
-            <p className="reveal text-[14px] sm:text-[15px] text-slate-400 mt-3 leading-relaxed">
-              Bunker 목양의 모든 기능은 <strong className="text-emerald-300">모든 회원에게 무료</strong>로 제공됩니다.<br className="sm:hidden" />
-              등급이나 제한 없이, 목회에 필요한 모든 도구를 자유롭게 사용하세요.
-            </p>
-          </div>
-
-          <div className="reveal grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative rounded-2xl bg-gradient-to-br from-indigo-500/[0.06] via-purple-500/[0.03] to-transparent border border-indigo-500/20 p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-[15px] font-bold text-white">모든 회원</h3>
-                  <p className="text-[10px] text-indigo-300 font-semibold">전면 무료 · 제한 없음</p>
-                </div>
-              </div>
-              <ul className="space-y-2.5">
-                {[
-                  'AI 설교 원고 6종 무제한 생성',
-                  '말씀 연구실 · 성경 정밀 연구',
-                  '예배 콘티 제작 · 악보 편집',
-                  '교회학교 솔루션 · 행사 관리',
-                  '설교 아카이브 영구 보존',
-                  '모든 신규 기능 즉시 이용',
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-[13px] text-slate-300">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2.5} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+          <div className="reveal relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent p-8 sm:p-12 text-center space-y-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5" />
+              100% 영구 무료 · 카드 등록 없음
             </div>
 
-            <div className="relative rounded-2xl bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent border border-emerald-500/20 p-6 sm:p-7 flex flex-col items-center justify-center text-center">
-              <Sparkles className="w-8 h-8 text-emerald-300 mb-3" />
-              <h3 className="text-[17px] font-bold text-white mb-1">제한 없는 목회</h3>
-              <p className="text-[12px] text-slate-400 leading-relaxed">
-                Bunker 목양은 모든 기능을<br />
-                모든 회원에게 동일하게 제공합니다.
-              </p>
-              {!user && (
+            <h2 className="text-3xl sm:text-4xl font-black text-white">
+              온 공동체를 위한 <span className="text-emerald-300">영구 무료 선언</span>
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
+              교회를 섬기는 일에 재정적 장벽이 없어야 한다는 마음으로,<br />
+              모든 사역 도구를 모든 사용자에게 영구히 무료로 선사합니다.
+            </p>
+
+            {!user && (
+              <div className="pt-2">
                 <Link
                   href="/login?redirect=/"
-                  className="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-[13px] shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-extrabold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-xl transition-all"
                 >
-                  무료로 시작하기
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  지금 무료로 시작하기
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* 대시보드 선택 팝업 */}
+      {/* 대시보드 선택 팝업 모달 */}
       {showDashboardPopup && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
           onClick={() => setShowDashboardPopup(false)}
         >
           <div
-            className="w-full max-w-md rounded-3xl glass-dark border border-white/10 p-8 shadow-2xl shadow-indigo-950/40"
+            className="w-full max-w-md rounded-3xl glass-dark border border-white/10 p-6 sm:p-8 shadow-2xl shadow-indigo-950/40"
             onClick={e => e.stopPropagation()}
           >
-            {/* 팝업 헤더 */}
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[17px] font-bold text-white">어디로 이동할까요?</h3>
+              <h3 className="text-lg font-bold text-white">어디로 이동할까요?</h3>
               <button
                 onClick={() => setShowDashboardPopup(false)}
                 className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -776,117 +496,83 @@ export default function HomePage() {
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
-            <p className="text-[13px] text-slate-400 mb-6">목적에 맞는 공간을 선택하세요</p>
+            <p className="text-xs text-slate-400 mb-6">목적에 맞는 사역 공간을 선택하세요</p>
 
-            {/* 설교 대시보드 카드 */}
-            <Link
-              href="/dashboard"
-              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10">
-                <LayoutDashboard className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
-                <p className="text-[12px] text-slate-400 mt-0.5">설교 관리 · 통계 · 시리즈</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-            </Link>
+            <div className="space-y-2.5">
+              <Link
+                href="/dashboard"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md">
+                  <LayoutDashboard className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">설교 원고 분석 · 소그룹 · 6종 가공</p>
+                </div>
+              </Link>
 
-            {/* 말씀 연구실 카드 */}
-            <Link
-              href="/advanced"
-              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/10">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
-                <p className="text-[12px] text-slate-400 mt-0.5">프로젝트 · 성경 연구 · 원고</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-            </Link>
+              <Link
+                href="/advanced"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-md">
+                  <ScrollText className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">설교 프로젝트 · 본문 연구 · 원맥 파악</p>
+                </div>
+              </Link>
 
-            {/* 예배 콘티 제작 카드 */}
-            <Link
-              href="/conti"
-              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-rose-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/10">
-                <Heart className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-bold text-white group-hover:text-rose-300 transition-colors">예배 콘티 제작</h4>
-                <p className="text-[12px] text-slate-400 mt-0.5">찬양 악보 편집</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-            </Link>
+              <Link
+                href="/school"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.07] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-md">
+                  <GraduationCap className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">교회학교 솔루션</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">공지문 작성기 · 행사 모바일 체크인</p>
+                </div>
+              </Link>
 
-            {/* 교회학교 솔루션 카드 */}
-            <Link
-              href="/school"
-              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
-                <GraduationCap className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-bold text-white group-hover:text-emerald-300 transition-colors">교회학교 솔루션</h4>
-                <p className="text-[12px] text-slate-400 mt-0.5">서식 자료 · 공지문 작성기</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-            </Link>
+              <Link
+                href="/qt"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-amber-500/30 hover:bg-white/[0.07] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-md">
+                  <BookMarked className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">큐티 아카이브</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">세대별 매일 묵상 · 나눔 카드</p>
+                </div>
+              </Link>
 
-            {/* Q.T 아카이브 카드 */}
-            <Link
-              href="/qt"
-              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-amber-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-bold text-white group-hover:text-amber-300 transition-colors">Q.T 아카이브</h4>
-                <p className="text-[12px] text-slate-400 mt-0.5">큐티 자료 · 세대별 큐티</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-            </Link>
-
-            {/* 다시 보지 않기 */}
-            <label className="mt-5 flex items-center gap-2 cursor-pointer select-none group/check">
-              <input
-                type="checkbox"
-                onChange={(e) => {
-                  if (e.target.checked) localStorage.setItem('bunker_dashboard_prompt_seen', '1')
-                }}
-                className="w-3.5 h-3.5 rounded border-slate-500 bg-white/5 text-indigo-500 focus:ring-indigo-500/30 focus:ring-offset-0 cursor-pointer"
-              />
-              <span className="text-[11.5px] text-slate-500 group-hover/check:text-slate-300 transition-colors">
-                다음부터 대시보드로 바로 이동
-              </span>
-            </label>
+              <Link
+                href="/conti"
+                onClick={() => setShowDashboardPopup(false)}
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-blue-500/30 hover:bg-white/[0.07] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md">
+                  <Music2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">예배 콘티</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">찬양 콘티 구성 · 악보집 관리</p>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       )}
 
-      <style jsx>{`
-        .reveal {
-          opacity: 1;
-        }
-        .reveal.visible {
-          animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
-  )
+  );
 }

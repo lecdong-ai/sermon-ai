@@ -14,7 +14,7 @@ import ContiLeftPanel from '@/components/conti/ContiLeftPanel'
 import MiniCalendar from '@/components/conti/MiniCalendar'
 import { useAuth } from '@/components/AuthProvider'
 import {
-  Plus, Music2, Search, Star, Trash2, ArrowLeft,
+  Plus, Music2, Search, Star, Trash2, ArrowLeft, Home
 } from 'lucide-react'
 import Link from 'next/link'
 

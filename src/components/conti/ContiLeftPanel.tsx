@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Music2, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Music2, ChevronRight, Home } from 'lucide-react'
 import type { ContiSet, WorshipType } from '@/types/conti'
 import { WORSHIP_TYPE_META } from '@/types/conti'
 
@@ -229,6 +230,18 @@ export default function ContiLeftPanel({
             )
           })}
         </div>
+      </div>
+
+      {/* 하단 메인페이지 이동 버튼 */}
+      <div className="p-3 border-t border-white/5 mt-auto">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 border border-white/10 hover:border-indigo-500/30 text-xs font-bold transition-all shadow-sm group"
+          title="메인 페이지로 이동"
+        >
+          <Home className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+          <span>메인페이지로</span>
+        </Link>
       </div>
     </div>
   )
