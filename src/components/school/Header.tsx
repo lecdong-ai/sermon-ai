@@ -76,7 +76,7 @@ export default function Header() {
                         className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
                       >
                         <LayoutDashboard className="w-4 h-4 text-indigo-500" />
-                        설교 아카이브
+                        설교 대시보드
                       </Link>
                       <Link
                         href="/conti"
@@ -167,7 +167,7 @@ export default function Header() {
               className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 flex items-center gap-2"
             >
               <LayoutDashboard className="w-4 h-4 text-indigo-500" />
-              설교 아카이브
+              설교 대시보드
             </Link>
             <Link
               href="/conti"

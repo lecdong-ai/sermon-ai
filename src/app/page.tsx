@@ -778,23 +778,21 @@ export default function HomePage() {
             </div>
             <p className="text-[13px] text-slate-400 mb-6">목적에 맞는 공간을 선택하세요</p>
 
-            {/* 설교 대시보드 카드 (관리자 전용) */}
-            {isAdminUser && (
-              <Link
-                href="/dashboard"
-                onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
-                className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10">
-                  <LayoutDashboard className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[15px] font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
-                  <p className="text-[12px] text-slate-400 mt-0.5">설교 관리 · 통계 · 시리즈</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
-              </Link>
-            )}
+            {/* 설교 대시보드 카드 */}
+            <Link
+              href="/dashboard"
+              onClick={() => { setShowDashboardPopup(false); localStorage.setItem('bunker_dashboard_prompt_seen', '1') }}
+              className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all duration-200 mb-3"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10">
+                <LayoutDashboard className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
+                <p className="text-[12px] text-slate-400 mt-0.5">설교 관리 · 통계 · 시리즈</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all mt-2 shrink-0" />
+            </Link>
 
             {/* 말씀 연구실 카드 */}
             <Link

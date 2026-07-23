@@ -134,7 +134,7 @@ export default memo(function Header() {
                         className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-white/5 transition-all"
                       >
                         <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                        설교 아카이브
+                        설교 대시보드
                       </Link>
                       <Link
                         href="/conti"
