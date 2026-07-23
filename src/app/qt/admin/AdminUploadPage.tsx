@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Loader2, ArrowLeft, FileText, ExternalLink, AlertCircle, BookOpen } from 'lucide-react'
+import { Plus, Trash2, Loader2, ArrowLeft, FileText, ExternalLink, AlertCircle, BookOpen, FileJson } from 'lucide-react'
 import { FileDropzone } from '@/components/qt/FileDropzone'
 import { getGenerations, getGenerationLabel, formatDate, formatFileSize, type Generation, type GenerationalQtItem, type GenerationalQtFile } from '@/lib/data/generational-qt'
 import { cn } from '@/lib/utils/cn'
 import AdminQtArchive from '@/components/admin/AdminQtArchive'
+import AdminQtJsonArchive from '@/components/admin/AdminQtJsonArchive'
 
 export default function AdminUploadPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<'generational' | 'archive'>('generational')
+  const [tab, setTab] = useState<'generational' | 'archive' | 'json'>('generational')
   const [mode, setMode] = useState<'list' | 'upload'>('list')
   const [items, setItems] = useState<GenerationalQtItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -106,9 +107,9 @@ export default function AdminUploadPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="font-serif text-h1 text-foreground">관리자 페이지</h1>
-        <div className="flex gap-1 p-1 bg-surface-2 rounded-xl border border-border">
+        <div className="flex flex-wrap gap-1 p-1 bg-surface-2 rounded-xl border border-border">
           <button onClick={() => { setTab('generational'); setMode('list') }}
             className={cn(
               'px-4 py-2 rounded-lg text-meta font-medium transition-all',
@@ -127,10 +128,21 @@ export default function AdminUploadPage() {
             <BookOpen className="w-3.5 h-3.5 inline mr-1.5" />
             큐티 목록
           </button>
+          <button onClick={() => setTab('json')}
+            className={cn(
+              'px-4 py-2 rounded-lg text-meta font-medium transition-all',
+              tab === 'json' ? 'bg-surface text-foreground shadow-sm' : 'text-foreground-muted hover:text-foreground'
+            )}
+          >
+            <FileJson className="w-3.5 h-3.5 inline mr-1.5" />
+            큐티 자료
+          </button>
         </div>
       </div>
 
-      {tab === 'archive' ? (
+      {tab === 'json' ? (
+        <AdminQtJsonArchive />
+      ) : tab === 'archive' ? (
         <AdminQtArchive />
       ) : (
         <>
