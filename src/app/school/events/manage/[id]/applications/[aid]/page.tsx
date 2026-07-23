@@ -16,19 +16,19 @@ export default function ApplicationDetailPage() {
   const [event, setEvent] = useState<{ title: string; custom_fields: { id: string; label: string }[] } | null>(null)
 
   useEffect(() => {
-    fetch(`/api/manage/events/${eventId}/applications/${aid}`)
+    fetch(`/school/api/manage/events/${eventId}/applications/${aid}`)
       .then(r => r.json())
       .then(data => {
         if (data.application) setApp(data.application)
         setLoading(false)
       })
-    fetch(`/api/manage/events/${eventId}`)
+    fetch(`/school/api/manage/events/${eventId}`)
       .then(r => r.json())
       .then(data => { if (data.event) setEvent({ title: data.event.title, custom_fields: data.event.custom_fields }) })
   }, [eventId, aid])
 
   const handleStatusChange = async (field: 'status' | 'payment_status', value: ApplicationStatus | PaymentStatus) => {
-    const res = await fetch(`/api/manage/events/${eventId}/applications/${aid}`, {
+    const res = await fetch(`/school/api/manage/events/${eventId}/applications/${aid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: value }),
@@ -39,7 +39,7 @@ export default function ApplicationDetailPage() {
 
   const handleCheckinToggle = async () => {
     const newVal = app?.check_in_status === 'checked_in' ? 'not_checked_in' : 'checked_in'
-    const res = await fetch(`/api/manage/events/${eventId}/applications/${aid}`, {
+    const res = await fetch(`/school/api/manage/events/${eventId}/applications/${aid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ check_in_status: newVal }),
@@ -60,7 +60,7 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="container-custom py-8 max-w-2xl">
-      <Link href={`/events/manage/${eventId}/applications`}
+      <Link href={`/school/events/manage/${eventId}/applications`}
         className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 mb-6 text-sm">
         <ArrowLeft className="w-4 h-4" /> 신청자 목록으로
       </Link>

@@ -1,18 +1,18 @@
 export const mainNav = [
-  { label: '홈', href: '/' },
+  { label: '홈', href: '/qt' },
   { label: '큐티', href: '/qt' },
   { label: 'QT 모음', href: '/qt/published' },
-  { label: '템플릿', href: '/templates' },
-  { label: '큐레이션', href: '/curation' },
-  { label: '후원샵', href: '/shop' },
-  { label: '소개', href: '/about' },
+  { label: '템플릿', href: '/qt/templates' },
+  { label: '후원 스토어', href: '/qt/shop' },
+  { label: '소개', href: '/qt/about' },
 ]
 
 export const mobileTabNav = [
-  { label: '홈', href: '/', icon: 'Home' },
+  { label: '홈', href: '/qt', icon: 'Home' },
   { label: '큐티', href: '/qt', icon: 'BookOpen' },
+  { label: '템플릿', href: '/qt/templates', icon: 'Layout' },
   { label: '검색', href: '/search', icon: 'Search' },
-  { label: '후원샵', href: '/shop', icon: 'Heart' },
+  { label: '후원 스토어', href: '/qt/shop', icon: 'Heart' },
 ]
 
 export const seasons = [

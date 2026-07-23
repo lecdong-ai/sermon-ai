@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const includeTemplates = searchParams.get('templates') === 'true'
 
   let query = supabaseAdmin
-    .from('events')
+    .from('church_events')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }))
 
   const { data, error } = await supabaseAdmin
-    .from('events')
+    .from('church_events')
     .insert({
       user_id: user.id,
       title: body.title.trim(),

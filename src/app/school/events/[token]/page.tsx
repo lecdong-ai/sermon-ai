@@ -75,8 +75,9 @@ export default function EventApplyPage() {
         body: JSON.stringify(form),
       })
       const data = await res.json()
-      if (data.error) { setError(data.error); setSubmitting(false); return }
-      router.push(`/events/${token}/complete?aid=${data.application.id}`)
+      if (!res.ok || data.error) { setError(data.error || '신청 중 오류가 발생했습니다.'); setSubmitting(false); return }
+      if (!data.application?.id) { setError('신청 응답이 올바르지 않습니다.'); setSubmitting(false); return }
+      router.push(`/school/events/${token}/complete?aid=${data.application.id}`)
     } catch {
       setError('신청 중 오류가 발생했습니다. 다시 시도해주세요.')
       setSubmitting(false)

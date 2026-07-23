@@ -38,7 +38,7 @@ export default function CompletePage() {
       .catch(() => {})
   }, [aid, token])
 
-  const checkinUrl = typeof window !== 'undefined' ? `${window.location.origin}/events/${token}/checkin?aid=${aid}` : ''
+  const checkinUrl = typeof window !== 'undefined' ? `${window.location.origin}/school/events/${token}/checkin?aid=${aid}` : ''
 
   const handleShare = async () => {
     if (navigator.share) {

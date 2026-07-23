@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '필수 정보가 누락되었습니다.' }, { status: 400 })
   }
 
-  let eventQuery = supabaseAdmin.from('events').select('id, user_id')
+  let eventQuery = supabaseAdmin.from('church_events').select('id, user_id')
   if (event_token) {
     eventQuery = eventQuery.eq('link_token', event_token)
   } else {

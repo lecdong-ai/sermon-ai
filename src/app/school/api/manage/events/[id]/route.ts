@@ -9,13 +9,22 @@ export const maxDuration = 30
 interface Params { params: { id: string } }
 
 async function getOwnedEvent(id: string, userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('events')
+  let { data } = await supabaseAdmin
+    .from('church_events')
     .select('*')
     .eq('id', id)
-    .single()
-  if (error || !data) return null
-  if (data.user_id !== userId) return null
+    .maybeSingle()
+
+  if (!data) {
+    const { data: byToken } = await supabaseAdmin
+      .from('church_events')
+      .select('*')
+      .eq('link_token', id)
+      .maybeSingle()
+    data = byToken
+  }
+
+  if (!data || data.user_id !== userId) return null
   return data
 }
 
@@ -74,9 +83,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from('events')
+    .from('church_events')
     .update(updateData)
-    .eq('id', params.id)
+    .eq('id', event.id)
     .select()
     .single()
 
@@ -93,9 +102,9 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!event) return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })
 
   const { error } = await supabaseAdmin
-    .from('events')
+    .from('church_events')
     .delete()
-    .eq('id', params.id)
+    .eq('id', event.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

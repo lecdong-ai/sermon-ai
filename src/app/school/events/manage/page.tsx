@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Calendar, Plus, Users, Copy, Trash2, MoreVertical, Clock, MapPin, Settings } from 'lucide-react'
+import { Calendar, Plus, Users, Copy, Trash2, MoreVertical, Clock, MapPin, Settings, CheckCircle2 } from 'lucide-react'
 import { EventRecord, EVENT_STATUS_LABELS } from '@/types/school/event'
 import { useAuth } from '@/components/AuthProvider'
 import { redirectToMainLogin } from '@/lib/school/auth-redirect'
@@ -13,6 +13,7 @@ export default function ManageEventsPage() {
   const [loading, setLoading] = useState(true)
   const [showTemplates, setShowTemplates] = useState(false)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // 미로그인 시 메인 페이지 로그인으로 자동 이동
   useEffect(() => {
@@ -46,11 +47,16 @@ export default function ManageEventsPage() {
     if (res.ok) { fetchEvents(); setMenuOpen(null) }
   }
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/events/${token}`
-    navigator.clipboard.writeText(url)
+  const copyLink = async (token: string, id: string) => {
+    const url = `${window.location.origin}/school/events/${token}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      alert('링크 복사에 실패했습니다.\n' + url)
+    }
     setMenuOpen(null)
-    alert('신청 링크가 복사되었습니다!\n\n' + url)
   }
 
   if (authLoading || !isLoggedIn) {
@@ -124,16 +130,17 @@ export default function ManageEventsPage() {
                   {menuOpen === event.id && (
                     <div className="absolute right-0 top-8 z-10 bg-white rounded-xl shadow-lg border border-warm-200 py-1 min-w-[160px]">
                       {!event.is_template && (
-                        <button onClick={() => copyLink(event.link_token)}
+                        <button onClick={() => copyLink(event.link_token, event.id)}
                           className="w-full px-4 py-2 text-left text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2">
-                          <Copy className="w-4 h-4" /> 링크 복사
+                          {copiedId === event.id ? <CheckCircle2 className="w-4 h-4 text-mint-600" /> : <Copy className="w-4 h-4" />}
+                          {copiedId === event.id ? '복사됨' : '링크 복사'}
                         </button>
                       )}
                       <button onClick={() => handleClone(event.id)}
                         className="w-full px-4 py-2 text-left text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2">
                         <Copy className="w-4 h-4" /> 복제
                         </button>
-                      <Link href={`/events/manage/${event.id}`}
+                      <Link href={`/school/events/manage/${event.id}`}
                         className="w-full px-4 py-2 text-left text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2">
                         <Settings className="w-4 h-4" /> 수정
                       </Link>
@@ -172,7 +179,7 @@ export default function ManageEventsPage() {
               </div>
 
               {!event.is_template && (
-                <Link href={`/events/manage/${event.id}/applications`}
+                <Link href={`/school/events/manage/${event.id}/applications`}
                   className="flex items-center justify-between p-3 bg-navy-50 rounded-xl hover:bg-navy-100 transition-colors">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-navy-500" />
@@ -185,12 +192,12 @@ export default function ManageEventsPage() {
               )}
 
               <div className="mt-3 flex gap-2">
-                <Link href={`/events/manage/${event.id}`}
+                <Link href={`/school/events/manage/${event.id}`}
                   className="flex-1 py-2 text-center text-sm font-medium text-navy-700 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 transition-colors">
                   관리
                 </Link>
                 {!event.is_template && (
-                  <Link href={`/events/manage/${event.id}/applications`}
+                  <Link href={`/school/events/manage/${event.id}/applications`}
                     className="flex-1 py-2 text-center text-sm font-medium text-white bg-navy-900 rounded-lg hover:bg-navy-800 transition-colors">
                     신청자
                   </Link>

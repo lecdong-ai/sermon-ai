@@ -1,5 +1,5 @@
 import PptxGenJS from 'pptxgenjs'
-import type { PptSlide, PptTextStyle, PptSlideTextPosition } from '@/types/school/workspace'
+import type { PptSlide, PptTextStyle, PptSlideTextPosition, ContentItem } from '@/types/school/workspace'
 
 interface ThemeColors {
   primary: string
@@ -182,6 +182,40 @@ function defaultBodyStyle(layout: string, textColor: string): PptTextStyle {
   }
 }
 
+function normalizeTitles(slide: PptSlide): ContentItem[] {
+  if (slide.titles && Array.isArray(slide.titles) && slide.titles.length > 0) {
+    return slide.titles.map((t: any) => typeof t === 'string' ? { text: t, style: t.style } : t)
+  }
+  if (!slide.title) return [{ text: '' }]
+  const parts = slide.title.split(/\s*\|\s*/).filter(Boolean)
+  if (parts.length <= 1) return [{ text: slide.title }]
+  return parts.map((text: string, i: number) => ({
+    text,
+    style: { fontSize: Math.max(18, 36 - i * 8), bold: i === 0, color: i === 0 ? '111111' : '666666' }
+  }))
+}
+
+function normalizeContent(items: any[]): ContentItem[] {
+  if (!items || items.length === 0) return []
+  if (typeof items[0] === 'string') return items.map((c) => ({ text: c }))
+  return items as ContentItem[]
+}
+
+function perItemStyle(item: ContentItem | undefined, fallback: PptTextStyle): PptTextStyle {
+  if (!item?.style) return fallback
+  return {
+    fontFace: item.style.fontFace || fallback.fontFace,
+    fontSize: item.style.fontSize ?? fallback.fontSize,
+    bold: item.style.bold ?? fallback.bold,
+    italic: item.style.italic ?? fallback.italic,
+    underline: item.style.underline ?? fallback.underline,
+    color: item.style.color || fallback.color,
+    align: item.style.align || fallback.align,
+    valign: item.style.valign || fallback.valign,
+    lineSpacing: item.style.lineSpacing ?? fallback.lineSpacing,
+  }
+}
+
 function mergeStyle(user: PptTextStyle | undefined, fallback: PptTextStyle): PptTextStyle {
   if (!user) return fallback
   return {
@@ -250,7 +284,11 @@ function addTitleSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, idx
   })
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('title', 'FFFFFF'))
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 1.4, w: 9, h: 2.0 }))
+  const tTitles = normalizeTitles(slide)
+  tTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.5, y: 1.4 + tii * 0.65, w: 9, h: 0.65 }))
+  })
 
   if (slide.content.length > 0) {
     const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('title', 'FFFFFF'))
@@ -275,7 +313,11 @@ function addBulletsSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, i
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('bullets', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.8, y: 0.4, w: 8.4, h: 0.8 }))
+  const bTitles = normalizeTitles(slide)
+  bTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.8, y: 0.4 + tii * 0.45, w: 8.4, h: 0.45 }))
+  })
 
   // 장식 구분선
   s.addShape(pres.ShapeType.rect, {
@@ -288,7 +330,8 @@ function addBulletsSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, i
   // 리스트 아이템 개별 디자인 배치 (불릿 형태 데코레이션 극대화)
   const yStart = 1.55
   const yGap = 0.76
-  slide.content.forEach((item, itemIdx) => {
+  const bltItems = normalizeContent(slide.content)
+  bltItems.forEach((item, itemIdx) => {
     const yPos = yStart + itemIdx * yGap
     if (yPos > 4.9) return // 네비게이션 가이드 침범 방지
 
@@ -304,9 +347,10 @@ function addBulletsSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, i
       align: 'center',
       valign: 'middle'
     })
-    // 본문 내용
-    s.addText(item, {
-      ...textOptions(bStyle, undefined, { x: 1.35, y: yPos - 0.05, w: 7.8, h: 0.48 }),
+    // 본문 내용 (per-item style 병합)
+    const iStyle = perItemStyle(item, bStyle)
+    s.addText(item.text, {
+      ...textOptions(iStyle, undefined, { x: 1.35, y: yPos - 0.05, w: 7.8, h: 0.48 }),
       align: 'left',
       valign: 'middle'
     })
@@ -334,11 +378,16 @@ function addSectionHeaderSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeCol
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('section-header', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.65, y: 1.5, w: 8.5, h: 1.4 }))
+  const shTitles = normalizeTitles(slide)
+  shTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.65, y: 1.5 + tii * 0.7, w: 8.5, h: 0.7 }))
+  })
 
   if (slide.content.length > 0) {
     const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('section-header', colors.isDark ? 'E2E8F0' : theme.text))
-    s.addText(slide.content.join('\n'), textOptions(bStyle, slide.bodyPosition, { x: 0.65, y: 3.0, w: 8.5, h: 1.6 }))
+    const items = normalizeContent(slide.content)
+    s.addText(items.map(c => c.text).join('\n'), textOptions(bStyle, slide.bodyPosition, { x: 0.65, y: 3.0, w: 8.5, h: 1.6 }))
   }
 
   addPageDecoration(pres, s, colors, idx, total, colors.isDark)
@@ -378,11 +427,16 @@ function addQuoteSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, idx
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('quote', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 1.3, y: 1.0, w: 7.6, h: 0.9 }))
+  const qTitles = normalizeTitles(slide)
+  qTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 1.3, y: 1.0 + tii * 0.55, w: 7.6, h: 0.55 }))
+  })
 
   const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('quote', colors.isDark ? 'E2E8F0' : theme.text))
   bStyle.italic = true
-  const quoteText = slide.content.join('\n\n')
+  const qItems = normalizeContent(slide.content)
+  const quoteText = qItems.map(c => c.text).join('\n\n')
   s.addText(quoteText, textOptions(bStyle, slide.bodyPosition, { x: 1.3, y: 2.0, w: 7.6, h: 2.3 }))
 
   addPageDecoration(pres, s, colors, idx, total, colors.isDark)
@@ -418,11 +472,17 @@ function addClosingSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors, i
   })
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('closing', 'FFFFFF'))
-  s.addText(slide.title || '은혜가 함께 하시길', textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 2.0, w: 9, h: 1.3 }))
+  const clTitles = normalizeTitles(slide)
+  const clTitleText = clTitles.length > 0 ? clTitles : [{ text: slide.title || '은혜가 함께 하시길', style: undefined }]
+  clTitleText.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text || '은혜가 함께 하시길', textOptions(tiStyle, slide.titlePosition, { x: 0.5, y: 2.0 + tii * 0.55, w: 9, h: 0.55 }))
+  })
 
   if (slide.content.length > 0) {
     const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('closing', 'FFFFFF'))
-    s.addText(slide.content.join('\n'), {
+    const clItems = normalizeContent(slide.content)
+    s.addText(clItems.map(c => c.text).join('\n'), {
       ...textOptions(bStyle, slide.bodyPosition, { x: 1.0, y: 3.4, w: 8.0, h: 1.4 }),
       align: 'center',
       transparency: 20
@@ -437,7 +497,11 @@ function addTwoColumnSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors,
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('two-column', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.8, y: 0.4, w: 8.4, h: 0.8 }))
+  const tcTitles = normalizeTitles(slide)
+  tcTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.8, y: 0.4 + tii * 0.45, w: 8.4, h: 0.45 }))
+  })
 
   // 장식선
   s.addShape(pres.ShapeType.rect, {
@@ -446,26 +510,29 @@ function addTwoColumnSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors,
   })
 
   // 반으로 데이터 분할
-  const half = Math.ceil(slide.content.length / 2)
-  const leftContent = slide.content.slice(0, half)
-  const rightContent = slide.content.slice(half)
+  const tcItems = normalizeContent(slide.content)
+  const half = Math.ceil(tcItems.length / 2)
+  const leftContent = tcItems.slice(0, half)
+  const rightContent = tcItems.slice(half)
 
   const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('two-column', colors.isDark ? 'E2E8F0' : theme.text))
 
   // 좌측 열 이중 섀도 박스
   const leftPos = { x: 0.8, y: 1.4, w: 4.0, h: 3.5 }
   drawShadowedCard(s, pres.ShapeType.roundRect, leftPos, colors.accent, colors.accent, colors.isDark ? 85 : 92)
-  leftContent.forEach((text, textIdx) => {
+  leftContent.forEach((item, textIdx) => {
+    const iStyle = perItemStyle(item, bStyle)
     s.addText('✦', { x: 1.0, y: 1.6 + textIdx * 0.6, w: 0.25, h: 0.3, color: colors.isDark ? 'FFFFFF' : colors.accent, fontSize: 10, bold: true })
-    s.addText(text, { ...textOptions(bStyle, undefined, { x: 1.25, y: 1.58 + textIdx * 0.6, w: 3.3, h: 0.5 }), valign: 'middle' })
+    s.addText(item.text, { ...textOptions(iStyle, undefined, { x: 1.25, y: 1.58 + textIdx * 0.6, w: 3.3, h: 0.5 }), valign: 'middle' })
   })
 
   // 우측 열 이중 섀도 박스
   const rightPos = { x: 5.2, y: 1.4, w: 4.0, h: 3.5 }
   drawShadowedCard(s, pres.ShapeType.roundRect, rightPos, colors.primary, colors.primary, colors.isDark ? 80 : 94)
-  rightContent.forEach((text, textIdx) => {
+  rightContent.forEach((item, textIdx) => {
+    const iStyle = perItemStyle(item, bStyle)
     s.addText('✦', { x: 5.4, y: 1.6 + textIdx * 0.6, w: 0.25, h: 0.3, color: colors.isDark ? 'FFFFFF' : colors.primary, fontSize: 10, bold: true })
-    s.addText(text, { ...textOptions(bStyle, undefined, { x: 5.65, y: 1.58 + textIdx * 0.6, w: 3.3, h: 0.5 }), valign: 'middle' })
+    s.addText(item.text, { ...textOptions(iStyle, undefined, { x: 5.65, y: 1.58 + textIdx * 0.6, w: 3.3, h: 0.5 }), valign: 'middle' })
   })
 
   addPageDecoration(pres, s, colors, idx, total, colors.isDark)
@@ -477,7 +544,11 @@ function addVsContrastSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors
   s.background = { color: colors.background }
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('vs-contrast', colors.isDark ? 'FFFFFF' : colors.primary))
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 0.4, w: 9.0, h: 0.8 }))
+  const vsTitles = normalizeTitles(slide)
+  vsTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.5, y: 0.4 + tii * 0.45, w: 9.0, h: 0.45 }))
+  })
 
   const parseSide = (raw: string) => {
     const colonIdx = raw.indexOf(':')
@@ -488,11 +559,12 @@ function addVsContrastSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors
     }
   }
 
-  const leftRaw = slide.content[0] || ''
-  const rightRaw = slide.content[1] || ''
+  const vsItems = normalizeContent(slide.content)
+  const leftRaw = vsItems[0]?.text || ''
+  const rightRaw = vsItems[1]?.text || ''
   const left = parseSide(leftRaw)
   const right = parseSide(rightRaw)
-  const extra = slide.content.slice(2)
+  const extra = vsItems.slice(2).map(x => x.text)
 
   // 좌측 대조군 입체 박스
   const leftPos = { x: 0.8, y: 1.4, w: 3.8, h: 3.3 }
@@ -579,7 +651,11 @@ function addTimelineFlowSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColo
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('timeline-flow', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.8, y: 0.4, w: 8.4, h: 0.8 }))
+  const tlTitles = normalizeTitles(slide)
+  tlTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.8, y: 0.4 + tii * 0.45, w: 8.4, h: 0.45 }))
+  })
 
   // 세로축 타임라인 베이스 라인
   s.addShape(pres.ShapeType.rect, {
@@ -591,13 +667,14 @@ function addTimelineFlowSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColo
   const yGap = 0.85
   const bStyle = mergeStyle(slide.bodyStyle, defaultBodyStyle('timeline-flow', colors.isDark ? 'E2E8F0' : theme.text))
 
-  slide.content.forEach((step, stepIdx) => {
+  const tlItems = normalizeContent(slide.content)
+  tlItems.forEach((step, stepIdx) => {
     const yPos = yStart + stepIdx * yGap
     if (yPos > 4.8) return
 
-    const colonIdx = step.indexOf(':')
-    const stepLabel = colonIdx !== -1 ? step.slice(0, colonIdx).trim() : `단계 ${stepIdx + 1}`
-    const stepContent = colonIdx !== -1 ? step.slice(colonIdx + 1).trim() : step
+    const colonIdx = step.text.indexOf(':')
+    const stepLabel = colonIdx !== -1 ? step.text.slice(0, colonIdx).trim() : `단계 ${stepIdx + 1}`
+    const stepContent = colonIdx !== -1 ? step.text.slice(colonIdx + 1).trim() : step.text
 
     // 타임라인 서클 노드 (섀도우 효과 탑재)
     s.addShape(pres.ShapeType.ellipse, {
@@ -651,10 +728,15 @@ function addCentralFocusSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColo
   s.addShape(pres.ShapeType.line, { x: 5.5, y: 3.5, w: 1.0, h: 0.8, line: { color: colors.accent, width: 1.5 } })
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('central-focus', colors.isDark ? 'FFFFFF' : colors.primary))
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.5, y: 0.3, w: 9.0, h: 0.6 }))
+  const cfTitles = normalizeTitles(slide)
+  cfTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.5, y: 0.3 + tii * 0.35, w: 9.0, h: 0.35 }))
+  })
 
-  const keyword = slide.content[0] || slide.title
-  const supporting = slide.content.slice(1)
+  const cfItems = normalizeContent(slide.content)
+  const keyword = cfItems[0]?.text || slide.title
+  const supporting = cfItems.slice(1).map(x => x.text)
 
   // 중심 서클 구체 (입체 입혀주기)
   drawShadowedCard(s, pres.ShapeType.ellipse, { x: 4.2, y: 2.0, w: 1.6, h: 1.6 }, colors.primary, 'FFFFFF', 0)
@@ -698,11 +780,16 @@ function addGridMatrixSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors
 
   const tStyle = mergeStyle(slide.titleStyle, defaultTitleStyle('grid-matrix', colors.isDark ? 'FFFFFF' : colors.primary))
   tStyle.align = 'left'
-  s.addText(slide.title, textOptions(tStyle, slide.titlePosition, { x: 0.8, y: 0.4, w: 8.4, h: 0.8 }))
+  const gmTitles = normalizeTitles(slide)
+  gmTitles.forEach((ti, tii) => {
+    const tiStyle = perItemStyle(ti, tStyle)
+    s.addText(ti.text, textOptions(tiStyle, slide.titlePosition, { x: 0.8, y: 0.4 + tii * 0.45, w: 8.4, h: 0.45 }))
+  })
 
   // 열 개수 수동 오버라이드 지원 (columnCount)
-  const cols = slide.columnCount || (slide.content.length <= 4 ? 2 : 3)
-  const count = slide.content.length
+  const gmItems = normalizeContent(slide.content)
+  const cols = slide.columnCount || (gmItems.length <= 4 ? 2 : 3)
+  const count = gmItems.length
 
   // 행렬 배치용 좌표
   let cellPositions: { x: number; y: number; w: number; h: number }[] = []
@@ -729,13 +816,13 @@ function addGridMatrixSlide(pres: PptxGenJS, slide: PptSlide, theme: ThemeColors
     ]
   }
 
-  slide.content.slice(0, 6).forEach((item, cellIdx) => {
+  gmItems.slice(0, 6).forEach((item, cellIdx) => {
     const pos = cellPositions[cellIdx]
     if (!pos) return
 
-    const colonIdx = item.indexOf(':')
-    const label = colonIdx !== -1 ? item.slice(0, colonIdx).trim() : item
-    const desc = colonIdx !== -1 ? item.slice(colonIdx + 1).trim() : ''
+    const colonIdx = item.text.indexOf(':')
+    const label = colonIdx !== -1 ? item.text.slice(0, colonIdx).trim() : item.text
+    const desc = colonIdx !== -1 ? item.text.slice(colonIdx + 1).trim() : ''
 
     const isEven = cellIdx % 2 === 0
     let cellBg = isEven ? colors.accent : colors.primary

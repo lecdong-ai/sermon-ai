@@ -29,21 +29,34 @@
 - **Vercel rewrites 제거**: 더 이상 분산 배포하지 않으므로 rewrites 불필요
 - **API Vercel 토큰**: 환경에 없어 git push로 자동 배포 트리거
 
+## Phase 3 — Bug Fixes & Shop
+- **Middleware**: `/school` → `publicPrefixes` 제거, 세분화된 public 패턴/경로로 교체
+- **AuthProvider.tsx**: `refreshUser` + `isPremium` stub 추가 (mypage destructure 오류 수정)
+- **DB JOIN 수정**: `applications/[aid]/route.ts`에서 `.select('*, events(title)')` → `church_events(title)` (events → church_events 테이블명 변경 반영)
+- **Header**: "요금제" → "스토어", 이메일 표시 제거, user.name → user.user_metadata?.name, "말씀 연구실" 후원 배지 제거, `/school/mypage` → `/mypage` 링크 변경
+- **mypage**: `user.name` → `user.user_metadata?.name` (TypeError 방지), `/school/mypage` → `/mypage` 리다이렉트
+- **Applications page**: 401/403 auth 에러 시 로그인 안내 버튼
+- **Form submit**: `res.ok` 체크 + `data.application?.id` null 방어
+- **Shop page**: `src/app/shop/page.tsx` 신규 — 6개 섹션 (Hero, Categories, Featured Products, How It Works, Why Shop Here, CTA)
+- **build**: 성공 ✅ | 커밋: `2c41676`
+- **Tailwind 동적 클래스 수정**: `${color}` 템플릿 리터럴 → 정적 className 객체로 변경 (JIT 인식 문제 해결)
+
 ## Active / Blocked
 - **Active**: Vercel auto-deploy (GitHub push → `bunker.ai.kr` 배포 중)
 - **Blocked**: 없음
 
 ## Next Steps (After Deploy Verify)
-1. `bunker.ai.kr/qt` → QT 아카이브 정상 작동 확인
-2. `bunker.ai.kr/school` → 교회학교 정상 작동 확인
-3. church-school + qt-archive Vercel 프로젝트 삭제
-4. `qt.bunker.ai.kr` 도메인 DNS 정리 (카페24)
+1. `bunker.ai.kr/shop` → 쇼핑 페이지 정상 작동 확인
+2. `bunker.ai.kr/qt` → QT 아카이브 정상 작동 확인
+3. `bunker.ai.kr/school` → 교회학교 정상 작동 확인
+4. church-school + qt-archive Vercel 프로젝트 삭제
+5. `qt.bunker.ai.kr` 도메인 DNS 정리 (카페24)
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
 - **Vercel 프로젝트**: `sermon-dashboard` (prj_PDAy19aQvpFcRZXYULDyiovljsE2) — `bunker.ai.kr`
 - **GitHub**: `lecdong-ai/sermon-ai` (monorepo, main 브랜치)
-- **현재 HEAD**: `443d569`
+- **현재 HEAD**: `2c41676`
 - **구 Vercel 프로젝트** (삭제 예정):
   - `church-school` (prj_bpDO10wPvg1V9G3oDoe8vkZ6Ro6f)
   - `qt-archive` (prj_ZBOh0L7lMGM5LzYs7QGF5CLfvN5l)

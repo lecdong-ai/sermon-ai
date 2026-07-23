@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Search, Download, CheckSquare, Square, Users, CheckCircle2, Phone } from 'lucide-react'
+import { ArrowLeft, Search, Download, CheckSquare, Square, Users, CheckCircle2, Phone, AlertCircle, LogIn } from 'lucide-react'
 import { ApplicationRecord, ApplicationStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/school/event'
 
 export default function ApplicationsPage() {
@@ -12,6 +12,7 @@ export default function ApplicationsPage() {
 
   const [applications, setApplications] = useState<ApplicationRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [checkinFilter, setCheckinFilter] = useState<string>('all')
@@ -19,22 +20,33 @@ export default function ApplicationsPage() {
   const [batchStatus, setBatchStatus] = useState<ApplicationStatus>('confirmed')
   const [event, setEvent] = useState<{ title: string; capacity: number | null } | null>(null)
 
-  const fetchApps = async () => {
+  const fetchApps = useCallback(async () => {
     setLoading(true)
+    setApiError(null)
     const queryParams = new URLSearchParams()
     if (statusFilter !== 'all') queryParams.set('status', statusFilter)
     if (checkinFilter !== 'all') queryParams.set('checkin', checkinFilter)
     if (search) queryParams.set('q', search)
     const res = await fetch(`/school/api/manage/events/${eventId}/applications?${queryParams}`)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setApiError(data.error || (res.status === 401 ? '로그인이 필요합니다.' : '데이터를 불러올 수 없습니다.'))
+      setApplications([])
+      setLoading(false)
+      return
+    }
     const data = await res.json()
     setApplications(data.applications || [])
     setLoading(false)
-  }
+  }, [eventId, statusFilter, checkinFilter, search])
 
   useEffect(() => {
     fetch(`/school/api/manage/events/${eventId}`)
-      .then(r => r.json())
-      .then(data => { if (data.event) setEvent({ title: data.event.title, capacity: data.event.capacity }) })
+      .then(async r => {
+        const data = await r.json()
+        if (data.event) setEvent({ title: data.event.title, capacity: data.event.capacity })
+      })
+      .catch(() => {})
   }, [eventId])
 
   useEffect(() => { fetchApps() }, [statusFilter, checkinFilter])
@@ -89,13 +101,13 @@ export default function ApplicationsPage() {
 
   return (
     <div className="container-custom py-8">
-      <Link href={`/events/manage/${eventId}`} className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 mb-4 text-sm">
+      <Link href={`/school/events/manage/${eventId}`} className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 mb-4 text-sm">
         <ArrowLeft className="w-4 h-4" /> {event?.title || '행사'} 관리로
       </Link>
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-navy-900">신청자 목록</h1>
-        <a href={`/api/manage/events/${eventId}/applications/export?format=csv`}
+        <a href={`/school/api/manage/events/${eventId}/applications/export?format=csv`}
           className="btn-outline btn-sm">
           <Download className="w-4 h-4" /> CSV 다운로드
         </a>
@@ -164,6 +176,18 @@ export default function ApplicationsPage() {
 
       {loading ? (
         <div className="text-center py-12 text-navy-400">불러오는 중...</div>
+      ) : apiError ? (
+        <div className="text-center py-12 px-4">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+          </div>
+          <p className="text-navy-700 font-medium mb-2">{apiError}</p>
+          <p className="text-sm text-navy-400 mb-6">행사 관리 페이지는 로그인이 필요합니다.</p>
+          <a href="/login?redirect=/school/events/manage"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-navy-900 text-white font-semibold rounded-xl hover:bg-navy-800 transition-colors">
+            <LogIn className="w-4 h-4" /> 로그인하기
+          </a>
+        </div>
       ) : applications.length === 0 ? (
         <div className="text-center py-12">
           <Users className="w-12 h-12 text-warm-300 mx-auto mb-3" />
@@ -191,7 +215,7 @@ export default function ApplicationsPage() {
                   </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <Link href={`/events/manage/${eventId}/applications/${app.id}`}
+                      <Link href={`/school/events/manage/${eventId}/applications/${app.id}`}
                         className="font-bold text-navy-900 hover:underline">{app.student_name}</Link>
                       <span className="text-sm text-navy-400">{app.grade}</span>
                       {app.department && <span className="text-xs text-navy-400">{app.department}</span>}

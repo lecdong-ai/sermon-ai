@@ -45,14 +45,14 @@ export default function NewEventPage() {
     setSubmitting(true)
     setError('')
 
-    const res = await fetch('/api/manage/events', {
+    const res = await fetch('/school/api/manage/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, status: publish ? 'open' : 'draft' }),
     })
     const data = await res.json()
     if (data.error) { setError(data.error); setSubmitting(false); return }
-    router.push('/events/manage')
+    router.push('/school/events/manage')
   }
 
   const inputClass = "w-full px-4 py-3 rounded-xl border border-warm-200 bg-white text-navy-900 focus:outline-none focus:ring-2 focus:ring-mint-400 focus:border-mint-400 transition-all"
@@ -60,7 +60,7 @@ export default function NewEventPage() {
 
   return (
     <div className="container-custom py-8 max-w-2xl">
-      <Link href="/events/manage" className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 mb-6 text-sm">
+      <Link href="/school/events/manage" className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 mb-6 text-sm">
         <ArrowLeft className="w-4 h-4" /> 행사 목록으로
       </Link>
 

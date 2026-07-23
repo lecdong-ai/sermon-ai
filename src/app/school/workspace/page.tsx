@@ -166,7 +166,7 @@ function WorkspacePage() {
   }
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/workspace?id=${sermonId}`
+    const url = `${window.location.origin}/school/workspace?id=${sermonId}`
     try {
       if (navigator.share) {
         await navigator.share({
@@ -195,7 +195,7 @@ function WorkspacePage() {
 
   const handleUploadSuccess = (newSermonId: string) => {
     setShowUploadModal(false)
-    router.push(`/workspace?id=${newSermonId}`)
+    router.push(`/school/workspace?id=${newSermonId}`)
   }
 
   // 대시보드 모드: sermonId가 없을 때 목록 + 통계 페이지 표시
@@ -375,7 +375,7 @@ function WorkspacePage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <Link
-                    href={`/ppt-studio${sermonId ? `?id=${sermonId}` : ''}`}
+                    href={`/school/ppt-studio${sermonId ? `?id=${sermonId}` : ''}`}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-navy-700 to-navy-500 text-white text-[13px] font-bold hover:from-navy-800 hover:to-navy-600 active:scale-[0.98] transition-all duration-200 shadow-button"
                     title="GPT-5.5 + gpt-image-1로 전문가급 PPT 제작"
                   >

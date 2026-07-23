@@ -45,31 +45,28 @@ export default function EventDetailPage() {
 
   const buildShareText = () => {
     if (!event) return ''
-    const url = `${window.location.origin}/events/${event.link_token}`
-    const lines = [`📢 [${event.title}] 신청 안내`, '']
+    const url = `${window.location.origin}/school/events/${event.link_token}`
+    const parts: string[] = [`📢 [${event.title}] 신청 안내`]
     if (event.start_date) {
       const start = new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
-      if (event.end_date) {
-        const end = new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
-        lines.push(`📅 일시: ${start} ~ ${end}`)
-      } else {
-        lines.push(`📅 일시: ${start}`)
-      }
+      const end = event.end_date ? new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : null
+      parts.push(`📅 ${end ? `${start} ~ ${end}` : start}`)
     }
-    if (event.location) lines.push(`📍 장소: ${event.location}`)
-    if (event.deadline) lines.push(`⏰ 신청마감: ${new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} ${new Date(event.deadline).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`)
-    if (event.capacity) lines.push(`👥 정원: ${event.capacity}명`)
-    if (event.description) { lines.push(''); lines.push(event.description) }
-    lines.push('')
-    lines.push('아래 링크를 눌러 신청해주세요! 👇')
-    lines.push(url)
-    return lines.join('\n')
+    if (event.location) parts.push(`📍 ${event.location}`)
+    if (event.deadline) {
+      const d = new Date(event.deadline)
+      parts.push(`⏰ 마감: ${d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} ${d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`)
+    }
+    if (event.capacity) parts.push(`👥 정원: ${event.capacity}명`)
+    parts.push('')
+    parts.push(`👉 신청하기: ${url}`)
+    return parts.join('\n')
   }
 
   const handleShare = async () => {
     if (!event) return
     const text = buildShareText()
-    const url = `${window.location.origin}/events/${event.link_token}`
+    const url = `${window.location.origin}/school/events/${event.link_token}`
     if (navigator.share) {
       try { await navigator.share({ title: event.title, text, url }) } catch {}
     } else {
@@ -150,18 +147,64 @@ export default function EventDetailPage() {
       {/* Share Card */}
       {!event.is_template && (
         <div className="bg-gradient-to-br from-navy-800 to-navy-600 rounded-2xl p-6 mb-6 text-white">
-          <h2 className="text-sm font-medium opacity-80 mb-3">학부모에게 공유하기</h2>
-          <p className="text-sm opacity-70 mb-4">버튼을 눌러 복사한 뒤, 카카오톡 대화방에 붙여넣으세요.</p>
-
-          {/* Preview */}
-          <div className="bg-white/10 rounded-xl p-4 mb-4 border border-white/20">
-            <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">{buildShareText()}</pre>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold opacity-80">학부모에게 공유하기</h2>
+            <span className="text-[10px] opacity-50">카카오톡에 바로 붙여넣으세요</span>
           </div>
 
+          {/* Message Preview */}
+          <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg">
+            {/* Card Header */}
+            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-sm">
+                <MessageCircle className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-gray-900 truncate">교회학교</p>
+                <p className="text-[10px] text-gray-400">카카오톡 공유</p>
+              </div>
+            </div>
+
+            {/* Card Body */}
+            <div className="space-y-1.5 mb-3">
+              <p className="text-[13px] font-bold text-gray-900 leading-tight">
+                📢 [{event.title}] 신청 안내
+              </p>
+              {event.start_date && (
+                <p className="text-[11px] text-gray-600 flex items-center gap-1.5">
+                  <span>📅</span>
+                  {new Date(event.start_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                  {event.end_date && ` ~ ${new Date(event.end_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}`}
+                </p>
+              )}
+              {event.location && (
+                <p className="text-[11px] text-gray-600 flex items-center gap-1.5">
+                  <span>📍</span> {event.location}
+                </p>
+              )}
+              {event.deadline && (
+                <p className="text-[11px] text-gray-600 flex items-center gap-1.5">
+                  <span>⏰</span> 마감: {new Date(event.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                </p>
+              )}
+            </div>
+
+            {/* Apply Button */}
+            <a
+              href={`${window.location.origin}/school/events/${event.link_token}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-2.5 bg-gradient-to-r from-navy-700 to-navy-600 text-white text-[13px] font-bold text-center rounded-xl hover:brightness-110 transition-all shadow-sm"
+            >
+              📝 신청하러 가기
+            </a>
+          </div>
+
+          {/* Share Buttons */}
           <div className="flex gap-2">
             <button onClick={copyLink} className="flex-1 py-3 bg-[#FEE500] text-[#3C1E1E] font-bold rounded-xl hover:brightness-95 transition-all flex items-center justify-center gap-2">
               <MessageCircle className="w-5 h-5" />
-              {copied ? '복사됨! 카톡에 붙여넣으세요' : '카카오톡으로 복사'}
+              {copied ? '✓ 카카오톡에 붙여넣으세요' : '카카오톡으로 복사'}
             </button>
             <button onClick={handleShare} className="px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors flex items-center justify-center gap-2 border border-white/30">
               <Share2 className="w-5 h-5" />
@@ -346,12 +389,12 @@ export default function EventDetailPage() {
       {/* Action Links */}
       {!event.is_template && (
         <div className="flex gap-3 mt-6">
-          <Link href={`/events/manage/${event.id}/applications`}
+          <Link href={`/school/events/manage/${event.id}/applications`}
             className="flex-1 btn-primary">
             <Users className="w-5 h-5" />
             신청자 관리 ({event.application_count})
           </Link>
-          <a href={`/api/manage/events/${event.id}/applications/export?format=csv`}
+          <a href={`/school/api/manage/events/${event.id}/applications/export?format=csv`}
             className="btn-outline">
             <Download className="w-4 h-4" />
             CSV

@@ -7,11 +7,20 @@ export const maxDuration = 10
 interface Params { params: { token: string; aid: string } }
 
 export async function GET(request: NextRequest, { params }: Params) {
-  const { data: event } = await supabaseAdmin
-    .from('events')
+  let { data: event } = await supabaseAdmin
+    .from('church_events')
     .select('id, title')
     .eq('link_token', params.token)
-    .single()
+    .maybeSingle()
+
+  if (!event) {
+    const { data: eventById } = await supabaseAdmin
+      .from('church_events')
+      .select('id, title')
+      .eq('id', params.token)
+      .maybeSingle()
+    event = eventById
+  }
 
   if (!event) {
     return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })

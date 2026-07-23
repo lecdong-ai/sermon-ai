@@ -10,8 +10,9 @@ export default function SiteHeader() {
   const isAdvanced = pathname.startsWith('/advanced')
   const isIntro = pathname === '/intro'
   const isConti = pathname.startsWith('/conti')
-  const isSchool = pathname.startsWith('/school')
-  const showHeader = !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
+  const isShopOrPricing = pathname.startsWith('/shop') || pathname.startsWith('/support') || pathname.endsWith('/pricing')
+  const isSchool = pathname.startsWith('/school') && !pathname.endsWith('/pricing')
+  const showHeader = isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
 
   if (!showHeader) return null
 
@@ -25,6 +26,7 @@ export function useShowSiteHeader(): boolean {
   const isAdvanced = pathname.startsWith('/advanced')
   const isIntro = pathname === '/intro'
   const isConti = pathname.startsWith('/conti')
-  const isSchool = pathname.startsWith('/school')
-  return !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
+  const isShopOrPricing = pathname.startsWith('/shop') || pathname.startsWith('/support') || pathname.endsWith('/pricing')
+  const isSchool = pathname.startsWith('/school') && !pathname.endsWith('/pricing')
+  return isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
 }

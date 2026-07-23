@@ -7,16 +7,30 @@ export const maxDuration = 30
 
 interface Params { params: { token: string } }
 
+async function findEventByTokenOrId(token: string) {
+  const { data: byLink } = await supabaseAdmin
+    .from('church_events')
+    .select('*')
+    .eq('link_token', token)
+    .maybeSingle()
+
+  if (byLink) return byLink
+
+  const { data: byId } = await supabaseAdmin
+    .from('church_events')
+    .select('*')
+    .eq('id', token)
+    .maybeSingle()
+
+  return byId || null
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   const { token } = params
 
-  const { data: event, error } = await supabaseAdmin
-    .from('events')
-    .select('*')
-    .eq('link_token', token)
-    .single()
+  const event = await findEventByTokenOrId(token)
 
-  if (error || !event) {
+  if (!event) {
     return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })
   }
 
@@ -52,13 +66,9 @@ export async function GET(request: NextRequest, { params }: Params) {
 export async function POST(request: NextRequest, { params }: Params) {
   const { token } = params
 
-  const { data: event, error: eventError } = await supabaseAdmin
-    .from('events')
-    .select('*')
-    .eq('link_token', token)
-    .single()
+  const event = await findEventByTokenOrId(token)
 
-  if (eventError || !event) {
+  if (!event) {
     return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })
   }
 

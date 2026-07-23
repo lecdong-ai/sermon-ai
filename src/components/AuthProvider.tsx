@@ -8,10 +8,15 @@ import type { User, SupabaseClient } from '@supabase/supabase-js'
 interface AuthValue {
   user: User | null
   loading: boolean
+  isLoggedIn: boolean
   signOut: () => Promise<void>
+  logout: () => Promise<void>
+  refreshUser?: () => Promise<void>
+  isPremium?: boolean
 }
 
-const AuthCtx = createContext<AuthValue>({ user: null, loading: true, signOut: async () => {} })
+const defaultSignOut = async () => {}
+const AuthCtx = createContext<AuthValue>({ user: null, loading: true, isLoggedIn: false, signOut: defaultSignOut, logout: defaultSignOut })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -78,8 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    if (supabaseRef.current) {
+      const { data: { user: refreshed } } = await supabaseRef.current.auth.getUser()
+      if (refreshed) setUser(refreshed)
+    }
+  }, [])
+
   return (
-    <AuthCtx.Provider value={{ user, loading, signOut }}>
+    <AuthCtx.Provider value={{ user, loading, isLoggedIn: !!user, signOut, logout: signOut, refreshUser, isPremium: false }}>
       {children}
     </AuthCtx.Provider>
   )

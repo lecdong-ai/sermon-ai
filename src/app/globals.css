@@ -510,6 +510,10 @@
            hover:bg-navy-50 transition-colors duration-200;
   }
 
+  .btn-xs {
+    @apply text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-all duration-150;
+  }
+
   .btn-sm {
     @apply text-sm px-4 py-2;
   }

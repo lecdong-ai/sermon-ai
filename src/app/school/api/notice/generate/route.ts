@@ -8,6 +8,12 @@ const SITUATION_MAP: Record<string, string> = {
   remind: '행사 전날 리마인드',
   thanks: '감사 메시지',
   teacher: '교사 모임 공지',
+  baptism: '세례/입교 안내',
+  special: '특별 새벽기도회/부흥회',
+  outing: '소풍/야외예배/수련회',
+  volunteer: '교회 대청소/봉사',
+  christmas: '성탄절/송년행사',
+  parent_meeting: '학부모 간담회/설명회',
 };
 
 const TARGET_MAP: Record<string, string> = {
@@ -26,7 +32,7 @@ const TONE_MAP: Record<string, string> = {
 };
 
 // 룰 베이스 및 플레이스홀더 치환 폴백 생성기
-function generateFallbackNotices(situation: string, target: string, tone: string, extra: string) {
+function generateFallbackNotices(situation: string, target: string, tone: string, childName?: string, teacherName?: string, date?: string, place?: string, notes?: string) {
   // 1. 상황, 대상, 톤이 매치되는 템플릿 탐색
   let matched = noticeTemplates.find(
     t => t.situation === situation && t.target === target && t.tone === tone && t.isActive
@@ -52,15 +58,18 @@ function generateFallbackNotices(situation: string, target: string, tone: string
   // 치환 엔진
   const replacePlaceholders = (text: string) => {
     let result = text;
-    // extra가 빈칸이 아니면 첫 어절을 이름으로 치환
-    const nameMatch = extra ? extra.trim().split(' ')[0] : '하준이';
-    result = result.replace(/\[자녀이름\]/g, nameMatch);
+    const child = childName?.trim() || '하준이';
+    const teacher = teacherName?.trim() || '김교사';
+    result = result.replace(/\[자녀이름\]/g, child);
     result = result.replace(/\[학부모님 성함\]/g, '학부모님');
-    result = result.replace(/\[선생님 이름\]/g, '김교사');
+    result = result.replace(/\[선생님 이름\]/g, teacher);
 
-    // 만약 추가 정보가 있고 템플릿에 직접 녹아있지 않다면 하단 가이드로 병합
-    if (extra && !text.includes(extra)) {
-      result += `\n\n📌 추가 안내사항: ${extra}`;
+    const extras: string[] = [];
+    if (date?.trim()) extras.push(`📅 일시: ${date}`);
+    if (place?.trim()) extras.push(`📍 장소: ${place}`);
+    if (notes?.trim()) extras.push(`📌 추가 안내: ${notes}`);
+    if (extras.length > 0) {
+      result += '\n\n' + extras.join('\n');
     }
     return result;
   };
@@ -75,13 +84,15 @@ function generateFallbackNotices(situation: string, target: string, tone: string
 
 export async function POST(req: Request) {
   try {
-    const { situation, target, tone, extra } = await req.json();
+    const { situation, target, tone, childName, teacherName, date, place, notes } = await req.json();
+    // Build a combined extra string from structured fields for AI prompts
+    const extra = [childName, teacherName, date, place, notes].filter(Boolean).join(', ') || '';
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
     
     // API 키 미작동 시 룰 베이스 고품질 폴백 작동
     if (!apiKey) {
-      const fallback = generateFallbackNotices(situation, target, tone, extra);
+      const fallback = generateFallbackNotices(situation, target, tone, childName, teacherName, date, place, notes);
       return NextResponse.json({ success: true, ...fallback, isMock: true });
     }
 
@@ -109,6 +120,11 @@ export async function POST(req: Request) {
 - 대상: ${tgtKorean}
 - 말투/톤: ${toneKorean}
 - 추가 기입 정보: ${extra || '(없음)'}
+- 자녀 이름: ${childName || '(미기입)'}
+- 사역자/교사 이름: ${teacherName || '(미기입)'}
+- 일시: ${date || '(미기입)'}
+- 장소: ${place || '(미기입)'}
+- 특이사항: ${notes || '(없음)'}
 
 [주의사항]
 - 지나치게 기계적인 번역투나 상투적인 어조를 피하고, 교회학교 현장 정서에 맞는 다정하고 따뜻한 표현을 활용하세요.
@@ -177,7 +193,12 @@ export async function POST(req: Request) {
               },
               {
                 role: 'user',
-                content: `상황: ${sitKorean}, 대상: ${tgtKorean}, 톤: ${toneKorean}, 추가정보: ${extra}`
+                content: `상황: ${sitKorean}, 대상: ${tgtKorean}, 톤: ${toneKorean}
+자녀 이름: ${childName || '(미기입)'}
+사역자/교사 이름: ${teacherName || '(미기입)'}
+일시: ${date || '(미기입)'}
+장소: ${place || '(미기입)'}
+특이사항: ${notes || '(없음)'}`
               }
             ]
           })
@@ -197,7 +218,7 @@ export async function POST(req: Request) {
     }
 
     // 폴백
-    const fallback = generateFallbackNotices(situation, target, tone, extra);
+    const fallback = generateFallbackNotices(situation, target, tone, childName, teacherName, date, place, notes);
     return NextResponse.json({ success: true, ...fallback, isMock: true });
 
   } catch (err: any) {

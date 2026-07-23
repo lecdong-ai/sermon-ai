@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const parentPhone = searchParams.get('phone')?.trim()
 
   const { data: event, error } = await supabaseAdmin
-    .from('events')
+    .from('church_events')
     .select('id')
     .eq('link_token', token)
     .single()

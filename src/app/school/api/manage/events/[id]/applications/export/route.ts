@@ -21,19 +21,28 @@ export async function GET(request: NextRequest, { params }: Params) {
   const user = await getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
 
-  const { data: event, error: eventError } = await supabaseAdmin
-    .from('events')
-    .select('user_id, title, custom_fields')
+  let { data: event } = await supabaseAdmin
+    .from('church_events')
+    .select('id, user_id, title, custom_fields')
     .eq('id', params.id)
-    .single()
+    .maybeSingle()
 
-  if (eventError || !event) return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })
+  if (!event) {
+    const { data: eventByToken } = await supabaseAdmin
+      .from('church_events')
+      .select('id, user_id, title, custom_fields')
+      .eq('link_token', params.id)
+      .maybeSingle()
+    event = eventByToken
+  }
+
+  if (!event) return NextResponse.json({ error: '행사를 찾을 수 없습니다.' }, { status: 404 })
   if (event.user_id !== user.id) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const { data: apps, error: appError } = await supabaseAdmin
     .from('applications')
     .select('*')
-    .eq('event_id', params.id)
+    .eq('event_id', event.id)
     .order('created_at', { ascending: false })
 
   if (appError) return NextResponse.json({ error: appError.message }, { status: 500 })

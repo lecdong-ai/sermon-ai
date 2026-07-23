@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import PptSlideCard from './PptSlideCard'
 import TextStyleEditor from './TextStyleEditor'
 import Toast from '@/components/school/workspace/Toast'
-import type { PptSlide, PptTextStyle } from '@/types/school/workspace'
+import type { PptSlide, PptTextStyle, ContentItem } from '@/types/school/workspace'
 import { getTemplates, applyTemplate, type TemplateRecord } from '@/lib/school/templateRegistry'
 import { recommendTemplate } from '@/lib/school/workspace/openai'
 
@@ -736,14 +736,71 @@ export default function PptStudio({ sermon, sermons, onSelectSermon }: Props) {
                   {sidebarTab === 'content' && (
                     <div className="space-y-4">
                       <div className="text-left">
-                        <label className="text-[10.5px] font-bold text-[#6b6764] block mb-1">슬라이드 제목</label>
-                        <input
-                          ref={titleInputRef}
-                          type="text"
-                          value={currentSlide.title}
-                          onChange={(e) => updateSlide(activeIndex, { ...currentSlide, title: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl border border-[#e4e2dd] text-[12.5px] text-[#2c2a29] bg-white/80 focus:outline-none focus:border-[#8d7a5b] focus:bg-white transition-all"
-                        />
+                        <label className="text-[10.5px] font-bold text-[#6b6764] block mb-1">슬라이드 제목 (| 로 구분하여 여러 줄 입력, 예: 큰제목 | 소제목)</label>
+                        {(() => {
+                          const titles = normalizeTitles(currentSlide)
+                          const setTitles = (next: ContentItem[]) => {
+                            updateSlide(activeIndex, {
+                              ...currentSlide,
+                              title: next.map(t => t.text).filter(Boolean).join(' | '),
+                              titles: next,
+                            })
+                          }
+                          return (
+                            <div className="space-y-1.5">
+                              {titles.map((t, ti) => {
+                                const weight = styleToWeight(t.style)
+                                return (
+                                  <div key={ti} className="flex items-center gap-1">
+                                    <input
+                                      type="text"
+                                      value={t.text}
+                                      onChange={(e) => {
+                                        const next = [...titles]
+                                        next[ti] = { ...next[ti], text: e.target.value }
+                                        setTitles(next)
+                                      }}
+                                      className="flex-1 px-2 py-1.5 rounded-lg border border-[#e4e2dd] text-[11px] text-[#2c2a29] bg-white/80 focus:outline-none focus:border-[#8d7a5b]"
+                                      placeholder={ti === 0 ? '큰제목' : ti === 1 ? '소제목' : `제목 ${ti + 1}`}
+                                    />
+                                    <div className="flex items-center gap-0.5 shrink-0" title="시각적 중요도 (1:작게~10:크게)">
+                                      <span className="text-[8px] text-[#8a8580] font-medium mr-0.5">W</span>
+                                      <input
+                                        type="range"
+                                        min="1" max="10"
+                                        value={weight}
+                                        onChange={(e) => {
+                                          const next = [...titles]
+                                          next[ti] = { ...next[ti], style: { ...next[ti].style, ...weightToStyle(Number(e.target.value)) } }
+                                          setTitles(next)
+                                        }}
+                                        className="w-14 h-3 accent-[#8d7a5b] cursor-pointer"
+                                      />
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        const next = titles.filter((_, i) => i !== ti)
+                                        setTitles(next.length > 0 ? next : [{ text: '' }])
+                                      }}
+                                      className="p-1 rounded text-[#a09b96] hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                              <button
+                                onClick={() => {
+                                  const next = [...titles, { text: '', style: { fontSize: 18, bold: false, color: '666666' } }]
+                                  setTitles(next)
+                                }}
+                                className="flex items-center gap-1 text-[10px] text-[#8d7a5b] font-bold hover:text-[#7a694e] mt-0.5"
+                              >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg> 제목 추가
+                              </button>
+                            </div>
+                          )
+                        })()}
                       </div>
                       <div className="text-left">
                         <label className="text-[10.5px] font-bold text-[#6b6764] block mb-1">레이아웃 종류</label>
@@ -1131,8 +1188,81 @@ function isDarkColor(hex: string): boolean {
   return lum < 0.5
 }
 
+function normalizeSlideContent(slide: any): { content: ContentItem[] } & any {
+  return {
+    ...slide,
+    content: !slide.content || slide.content.length === 0 ? [] :
+      typeof slide.content[0] === 'string' ? slide.content.map((c: string) => ({ text: c })) :
+      slide.content
+  }
+}
+
+/** weight(1~10) → 스타일 매핑 */
+const TITLE_WEIGHT_MAP: Partial<PptTextStyle>[] = [
+  { fontSize: 14, bold: false, color: '999999' },
+  { fontSize: 16, bold: false, color: '888888' },
+  { fontSize: 18, bold: false, color: '777777' },
+  { fontSize: 20, bold: false, color: '555555' },
+  { fontSize: 22, bold: true, color: '444444' },
+  { fontSize: 24, bold: true, color: '333333' },
+  { fontSize: 28, bold: true, color: '222222' },
+  { fontSize: 32, bold: true, color: '111111' },
+  { fontSize: 36, bold: true, color: '000000' },
+  { fontSize: 42, bold: true, color: '000000' },
+]
+
+function weightToStyle(weight: number): Partial<PptTextStyle> {
+  return { ...TITLE_WEIGHT_MAP[Math.max(0, Math.min(9, weight - 1))] }
+}
+
+function styleToWeight(style: Partial<PptTextStyle> | undefined): number {
+  if (!style?.fontSize) return 6
+  const sizes = TITLE_WEIGHT_MAP.map(s => s.fontSize!)
+  let closest = 5
+  let minDiff = Infinity
+  sizes.forEach((s, i) => {
+    const diff = Math.abs(s - style.fontSize!)
+    if (diff < minDiff) { minDiff = diff; closest = i + 1 }
+  })
+  return closest
+}
+
+/** slide.title 또는 slide.titles를 ContentItem[]로 정규화 (|로 구분) */
+function normalizeTitles(slide: any): ContentItem[] {
+  if (slide.titles && Array.isArray(slide.titles) && slide.titles.length > 0) {
+    return slide.titles.map((t: any) => typeof t === 'string' ? { text: t } : t)
+  }
+  if (!slide.title) return [{ text: '' }]
+  // GPT가 title에 포함시킨 | 분할
+  const parts = slide.title.split(/\s*\|\s*/).filter(Boolean)
+  if (parts.length <= 1) return [{ text: slide.title }]
+  return parts.map((text: string, i: number) => ({
+    text,
+    style: {
+      fontSize: Math.max(18, 36 - i * 8),
+      bold: i === 0,
+      color: i === 0 ? '111111' : '666666',
+    }
+  }))
+}
+
+function titlesToTitle(titles: ContentItem[]): string {
+  return titles.map(t => t.text).join(' | ')
+}
+
+/** per-item 스타일을 bodyCss 위에 병합 */
+function itemStyle(item: ContentItem, defaultStyle: React.CSSProperties): React.CSSProperties {
+  if (!item.style) return defaultStyle
+  const s: React.CSSProperties = { ...defaultStyle }
+  if (item.style.fontSize !== undefined) s.fontSize = `${item.style.fontSize * 0.5}px`
+  if (item.style.bold !== undefined) s.fontWeight = item.style.bold ? 'bold' : 'normal'
+  if (item.style.italic !== undefined) s.fontStyle = item.style.italic ? 'italic' : 'normal'
+  if (item.style.color) s.color = `#${item.style.color}`
+  return s
+}
+
 function PptSlidePreview({ 
-  slide, 
+  slide: rawSlide, 
   templates = [],
   onElementClick,
 }: { 
@@ -1140,6 +1270,8 @@ function PptSlidePreview({
   templates?: any[];
   onElementClick?: (target: 'title' | 'content' | 'background') => void;
 }) {
+  const slide = normalizeSlideContent(rawSlide)
+  const titleItems = normalizeTitles(slide)
   // 스타일 → CSS 변환 유틸
   const toCss = (style: PptTextStyle | undefined, fallback: Partial<PptTextStyle>): React.CSSProperties => {
     const s = { ...fallback, ...style }
@@ -1217,31 +1349,27 @@ function PptSlidePreview({
           <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
           <div className="relative z-10 flex flex-col items-center max-w-2xl px-4">
             <div className="w-10 h-1 rounded-full mb-6" style={{ backgroundColor: '#FFFFFF', opacity: 0.8 }} />
-            <p 
+            <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
               className={`leading-tight tracking-tight drop-shadow-md select-none ${clickTargetClass('title')}`}
-              style={{ 
-                ...titleCss, 
-                color: slide.titleStyle?.color ? titleCss.color : '#FFFFFF', 
-                fontSize: slide.titleStyle?.fontSize ? titleCss.fontSize : '28px' 
-              }}
             >
-              {slide.title}
-            </p>
+              {titleItems.map((ti, tii) => (
+                <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}, color: slide.titleStyle?.color ? titleCss.color : '#FFFFFF'}} className="text-center">{ti.text}</p>
+              ))}
+            </div>
             <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
               className={`mt-2 flex flex-col items-center w-full ${clickTargetClass('content')}`}
             >
-              {slide.content.map((c, i) => (
+              {slide.content.map((item, i) => (
                 <p 
                   key={i} 
                   className="font-light opacity-90 leading-relaxed text-center" 
                   style={{ 
-                    ...bodyCss, 
-                    color: slide.bodyStyle?.color ? bodyCss.color : '#FFFFFF', 
-                    fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '13px' 
+                    ...itemStyle(item, bodyCss), 
+                    color: slide.bodyStyle?.color || !item.style?.color ? (item.style?.color ? `#${item.style.color}` : bodyCss.color || '#FFFFFF') : bodyCss.color,
                   }}
-                >{c}</p>
+                >{item.text}</p>
               ))}
             </div>
             <div className="w-10 h-1 rounded-full mt-6" style={{ backgroundColor: '#FFFFFF', opacity: 0.3 }} />
@@ -1257,25 +1385,26 @@ function PptSlidePreview({
           style={{ backgroundColor: bg }}
         >
           <div className="relative">
-            <p 
+            <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
               className={clickTargetClass('title')}
-              style={titleCss}
             >
-              {slide.title}
-            </p>
+              {titleItems.map((ti, tii) => (
+                <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}}>{ti.text}</p>
+              ))}
+            </div>
             <div className="h-1 w-10 rounded-full mt-2" style={{ backgroundColor: accent }} />
           </div>
           <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
             className={`space-y-3 flex-1 flex flex-col justify-center ${clickTargetClass('content')}`}
           >
-            {slide.content.map((c, i) => (
+            {slide.content.map((item, i) => (
               <div key={i} className="flex gap-3.5 items-start">
                 <span className="w-5 h-5 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm border border-black/5" style={{ backgroundColor: `${accent}15` }}>
                   <span className="text-[10px] font-black" style={{ color: accent }}>{i + 1}</span>
                 </span>
-                <p className="leading-relaxed text-[12.5px] flex-1" style={bodyCss}>{c}</p>
+                <p className="leading-relaxed text-[12.5px] flex-1" style={itemStyle(item, bodyCss)}>{item.text}</p>
               </div>
             ))}
           </div>
@@ -1291,29 +1420,24 @@ function PptSlidePreview({
           <div className="absolute left-0 top-0 h-full w-2" style={{ backgroundColor: accent }} />
           <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full blur-3xl opacity-30" style={{ backgroundColor: accent }} />
           <div className="relative z-10 max-w-xl text-center">
-            <p 
+            <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
               className={`leading-tight tracking-tight drop-shadow-sm mb-2 ${clickTargetClass('title')}`}
-              style={{ 
-                ...titleCss, 
-                fontSize: slide.titleStyle?.fontSize ? titleCss.fontSize : (titleCss.fontSize ? `${parseInt(titleCss.fontSize as string) * 1.3}px` : '36px') 
-              }}
             >
-              {slide.title}
-            </p>
+              {titleItems.map((ti, tii) => (
+                <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}} className="text-center">{ti.text}</p>
+              ))}
+            </div>
             <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
               className={clickTargetClass('content')}
             >
-              {slide.content.map((c, i) => (
+              {slide.content.map((item, i) => (
                 <p 
                   key={i} 
                   className="opacity-80 leading-relaxed text-[14px]" 
-                  style={{ 
-                    ...bodyCss, 
-                    fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '14px' 
-                  }}
-                >{c}</p>
+                  style={itemStyle(item, bodyCss)}
+                >{item.text}</p>
               ))}
             </div>
           </div>
@@ -1347,7 +1471,7 @@ function PptSlidePreview({
                 onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
                 className={clickTargetClass('content')}
               >
-                {slide.content.map((c, i) => (
+                {slide.content.map((item, i) => (
                   <p 
                     key={i} 
                     className="italic mb-1 leading-relaxed opacity-90 text-[13.5px]" 
@@ -1372,13 +1496,14 @@ function PptSlidePreview({
           style={{ backgroundColor: bg }}
         >
           <div className="shrink-0 mb-2">
-            <p 
+            <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
               className={clickTargetClass('title')}
-              style={titleCss}
             >
-              {slide.title}
-            </p>
+              {titleItems.map((ti, tii) => (
+                <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}}>{ti.text}</p>
+              ))}
+            </div>
             <div className="h-0.5 w-8 mt-2" style={{ backgroundColor: accent }} />
           </div>
           <div 
@@ -1387,32 +1512,26 @@ function PptSlidePreview({
           >
             <div className="flex-1 rounded-2xl p-4.5 border border-[#e4e2dd]/40 shadow-sm flex flex-col justify-center bg-white/40" style={{ backgroundColor: `${accent}09` }}>
               <div className="space-y-3">
-                {slide.content.slice(0, Math.ceil(slide.content.length / 2)).map((c, i) => (
+                {slide.content.slice(0, Math.ceil(slide.content.length / 2)).map((item, i) => (
                   <div key={i} className="flex gap-2 items-start">
                     <span className="text-[10px] mt-1" style={{ color: accent }}>✦</span>
                     <p 
                       className="leading-relaxed text-[12px]" 
-                      style={{ 
-                        ...bodyCss, 
-                        fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '12px' 
-                      }}
-                    >{c}</p>
+                      style={itemStyle(item, bodyCss)}
+                    >{item.text}</p>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex-1 rounded-2xl p-4.5 border border-[#e4e2dd]/40 shadow-sm flex flex-col justify-center bg-white/40" style={{ backgroundColor: `${primary}06` }}>
               <div className="space-y-3">
-                {slide.content.slice(Math.ceil(slide.content.length / 2)).map((c, i) => (
+                {slide.content.slice(Math.ceil(slide.content.length / 2)).map((item, i) => (
                   <div key={i} className="flex gap-2 items-start">
                     <span className="text-[10px] mt-1" style={{ color: primary }}>✦</span>
                     <p 
                       className="leading-relaxed text-[12px]" 
-                      style={{ 
-                        ...bodyCss, 
-                        fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '12px' 
-                      }}
-                    >{c}</p>
+                      style={itemStyle(item, bodyCss)}
+                    >{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -1431,32 +1550,24 @@ function PptSlidePreview({
           <div className="absolute inset-0 blur-3xl opacity-35" style={{ background: `radial-gradient(circle at 50% 50%, ${accent}, transparent 65%)` }} />
           <div className="relative z-10 text-center flex flex-col items-center max-w-xl">
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[22px] mb-4.5 border border-white/10 backdrop-blur-md shadow-inner animate-bounce">🙏</div>
-            <p 
+            <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
               className={`mb-2 leading-tight tracking-tight drop-shadow-md ${clickTargetClass('title')}`}
-              style={{ 
-                ...titleCss, 
-                color: slide.titleStyle?.color ? titleCss.color : '#FFFFFF', 
-                fontSize: slide.titleStyle?.fontSize ? titleCss.fontSize : '24px' 
-              }}
             >
-              {slide.title}
-            </p>
+              {titleItems.map((ti, tii) => (
+                <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}, color: '#FFFFFF'}} className="text-center">{ti.text}</p>
+              ))}
+            </div>
             <div 
               onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
               className={clickTargetClass('content')}
             >
-              {slide.content.map((c, i) => (
+              {slide.content.map((item, i) => (
                 <p 
                   key={i} 
                   className="mt-2 text-[13px] leading-relaxed opacity-80" 
-                  style={{ 
-                    ...bodyCss, 
-                    color: slide.bodyStyle?.color ? bodyCss.color : '#FFFFFF', 
-                    textAlign: 'center',
-                    fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '13px'
-                  }}
-                >{c}</p>
+                  style={itemStyle(item, bodyCss)}
+                >{item.text}</p>
               ))}
             </div>
           </div>
@@ -1469,11 +1580,11 @@ function PptSlidePreview({
         if (colonIdx === -1) return { label: raw, items: [] }
         return { label: raw.slice(0, colonIdx).trim(), items: raw.slice(colonIdx + 1).split('|').map(s => s.trim()).filter(Boolean) }
       }
-      const leftRaw = slide.content[0] || ''
-      const rightRaw = slide.content[1] || ''
+      const leftRaw = slide.content[0]?.text || ''
+      const rightRaw = slide.content[1]?.text || ''
       const left = parseSide(leftRaw)
       const right = parseSide(rightRaw)
-      const extra = slide.content.slice(2)
+      const extra = vcItems.slice(2).map((x: any) => typeof x === 'string' ? x : (x?.text || '')).map((x: any) => typeof x === 'string' ? x : (x.text || ''))
       return (
         <div 
           onClick={handleBgClick}
@@ -1556,7 +1667,7 @@ function PptSlidePreview({
                   style={{
                     ...bodyCss,
                     fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '11px'
-                  }}>{e}</p>
+                  }}>{typeof e === 'string' ? e : e.text || ''}</p>
               ))}
             </div>
           )}
@@ -1571,13 +1682,14 @@ function PptSlidePreview({
           className="w-full h-full p-6 flex flex-col justify-between select-none" 
           style={{ backgroundColor: bg }}
         >
-          <p 
+          <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
             className={clickTargetClass('title')}
-            style={titleCss}
           >
-            {slide.title}
-          </p>
+            {titleItems.map((ti, tii) => (
+              <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}}>{ti.text}</p>
+            ))}
+          </div>
           <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
             className={`flex-1 flex flex-col justify-center ${clickTargetClass('content')}`}
@@ -1586,10 +1698,11 @@ function PptSlidePreview({
               <div className="absolute left-2.5 top-2 bottom-2 w-1 rounded-full" 
                 style={{ background: `linear-gradient(180deg, ${accent}, ${primary})` }} />
               <div className="space-y-3.5">
-                {slide.content.map((step, i) => {
-                  const colonIdx = step.indexOf(':')
-                  const stepLabel = colonIdx !== -1 ? step.slice(0, colonIdx).trim() : `Step ${i + 1}`
-                  const stepContent = colonIdx !== -1 ? step.slice(colonIdx + 1).trim() : step
+                {slide.content.map((item, i) => {
+                  const text = item.text || ''
+                  const colonIdx = text.indexOf(':')
+                  const stepLabel = colonIdx !== -1 ? text.slice(0, colonIdx).trim() : `Step ${i + 1}`
+                  const stepContent = colonIdx !== -1 ? text.slice(colonIdx + 1).trim() : text
                   return (
                     <div key={i} className="flex gap-4 items-center relative">
                       <div className="absolute left-[-26px] w-4.5 h-4.5 rounded-full text-white flex items-center justify-center text-[9px] font-extrabold shadow-sm border-2 border-white" style={{ backgroundColor: primary }}>
@@ -1625,23 +1738,21 @@ function PptSlidePreview({
       )
 
     case 'central-focus': {
-      const keyword = slide.content[0] || slide.title
-      const supporting = slide.content.slice(1)
+      const keyword = slide.content[0]?.text || slide.title
+      const supporting = slide.content.slice(1).map((x: any) => typeof x === 'string' ? x : (x.text || ''))
       return (
         <div 
           onClick={handleBgClick}
           className="w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden select-none" 
           style={{ background: `linear-gradient(135deg, ${primary}05, ${accent}05)`, backgroundColor: bg }}>
-          <p 
+          <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
             className={`mb-2 text-center opacity-85 text-[11px] font-bold uppercase tracking-wider ${clickTargetClass('title')}`}
-            style={{
-              ...titleCss,
-              fontSize: slide.titleStyle?.fontSize ? titleCss.fontSize : '11px'
-            }}
           >
-            {slide.title}
-          </p>
+            {titleItems.map((ti, tii) => (
+              <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}} className="text-center">{ti.text}</p>
+            ))}
+          </div>
           <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
             className={`w-full flex flex-col items-center ${clickTargetClass('content')}`}
@@ -1679,10 +1790,7 @@ function PptSlidePreview({
                   <div key={i} className="rounded-xl p-2.5 shadow-sm text-center border bg-white/90 backdrop-blur-sm" style={{ borderColor: `${accent}20` }}>
                     <p 
                       className="text-[10.5px] leading-relaxed font-medium" 
-                      style={{
-                        ...bodyCss,
-                        fontSize: slide.bodyStyle?.fontSize ? bodyCss.fontSize : '10.5px'
-                      }}
+                      style={itemStyle({ text: s, style: undefined }, bodyCss)}
                     >{s}</p>
                   </div>
                 ))}
@@ -1719,22 +1827,24 @@ function PptSlidePreview({
           className="w-full h-full p-6 flex flex-col justify-between animate-fadeIn select-none" 
           style={{ backgroundColor: bg }}
         >
-          <p 
+          <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('title') }}
             className={clickTargetClass('title')}
-            style={titleCss}
           >
-            {slide.title}
-          </p>
+            {titleItems.map((ti, tii) => (
+              <p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}}>{ti.text}</p>
+            ))}
+          </div>
           <div 
             onClick={(e) => { e.stopPropagation(); onElementClick?.('content') }}
             className={`flex-1 grid gap-2.5 ${clickTargetClass('content')}`}
             style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
           >
             {slide.content.map((item, i) => {
-              const colonIdx = item.indexOf(':')
-              const label = colonIdx !== -1 ? item.slice(0, colonIdx).trim() : item
-              const desc = colonIdx !== -1 ? item.slice(colonIdx + 1).trim() : ''
+              const txt = item.text
+              const colonIdx = txt.indexOf(':')
+              const label = colonIdx !== -1 ? txt.slice(0, colonIdx).trim() : txt
+              const desc = colonIdx !== -1 ? txt.slice(colonIdx + 1).trim() : ''
               const v = cardVariants[i % cardVariants.length]
               return (
                 <div key={i} className="rounded-xl p-3 flex flex-col justify-center border shadow-sm transition-all duration-200 hover:-translate-y-0.5" 
@@ -1771,10 +1881,19 @@ function PptSlidePreview({
           className="w-full h-full flex flex-col items-center justify-center p-8 select-none" 
           style={{ backgroundColor: bg }}
         >
-          <p style={titleCss}>{slide.title}</p>
+          <div>{titleItems.map((ti, tii) => (<p key={tii} style={{...titleCss, ...ti.style ? toCss(ti.style, {}) : {}}}>{ti.text}</p>))}</div>
         </div>
       )
   }
+}
+
+/** content가 string[]이면 ContentItem[]로 자동 변환 */
+function normalizeContent(content: any[]): ContentItem[] {
+  if (!content || content.length === 0) return []
+  if (typeof content[0] === 'string') {
+    return (content as string[]).map((c) => ({ text: c }))
+  }
+  return content as ContentItem[]
 }
 
 // ── 스마트 레이아웃 에디터 (Smart Content Editor Helper) ──
@@ -1789,10 +1908,9 @@ function SmartContentEditor({
 
   // 대조/비교 (vs-contrast) 파서 & 핸들러
   const handleVsContrastChange = (side: 'left' | 'right', field: 'label' | 'items', val: string) => {
-    const content = [...slide.content]
-    const leftRaw = content[0] || ''
-    const rightRaw = content[1] || ''
-    const extra = content.slice(2)
+    const raw = normalizeContent(slide.content)
+    const leftRaw = raw[0]?.text || ''
+    const rightRaw = raw[1]?.text || ''
 
     const parseSide = (raw: string) => {
       const colonIdx = raw.indexOf(':')
@@ -1814,15 +1932,16 @@ function SmartContentEditor({
       else right.items = val.split('\n').filter(Boolean)
     }
 
-    content[0] = `${left.label} : ${left.items.join(' | ')}`
-    content[1] = `${right.label} : ${right.items.join(' | ')}`
-    onChange({ ...slide, content })
+    const next = [...raw]
+    next[0] = { ...next[0], text: `${left.label} : ${left.items.join(' | ')}` }
+    next[1] = { ...next[1], text: `${right.label} : ${right.items.join(' | ')}` }
+    onChange({ ...slide, content: next })
   }
 
   // 타임라인 (timeline-flow) 파서 & 핸들러
   const handleTimelineChange = (idx: number, field: 'label' | 'desc', val: string) => {
-    const content = [...slide.content]
-    const step = content[idx] || ''
+    const raw = normalizeContent(slide.content)
+    const step = raw[idx]?.text || ''
     const colonIdx = step.indexOf(':')
     let label = colonIdx !== -1 ? step.slice(0, colonIdx).trim() : step
     let desc = colonIdx !== -1 ? step.slice(colonIdx + 1).trim() : ''
@@ -1830,14 +1949,15 @@ function SmartContentEditor({
     if (field === 'label') label = val
     else desc = val
 
-    content[idx] = `${label} : ${desc}`
-    onChange({ ...slide, content })
+    const next = [...raw]
+    next[idx] = { ...next[idx], text: `${label} : ${desc}` }
+    onChange({ ...slide, content: next })
   }
 
   // 그리드 매트릭스 (grid-matrix) 파서 & 핸들러
   const handleGridChange = (idx: number, field: 'label' | 'desc', val: string) => {
-    const content = [...slide.content]
-    const item = content[idx] || ''
+    const raw = normalizeContent(slide.content)
+    const item = raw[idx]?.text || ''
     const colonIdx = item.indexOf(':')
     let label = colonIdx !== -1 ? item.slice(0, colonIdx).trim() : item
     let desc = colonIdx !== -1 ? item.slice(colonIdx + 1).trim() : ''
@@ -1845,14 +1965,16 @@ function SmartContentEditor({
     if (field === 'label') label = val
     else desc = val
 
-    content[idx] = `${label} : ${desc}`
-    onChange({ ...slide, content })
+    const next = [...raw]
+    next[idx] = { ...next[idx], text: `${label} : ${desc}` }
+    onChange({ ...slide, content: next })
   }
 
   switch (layout) {
     case 'vs-contrast': {
-      const leftRaw = slide.content[0] || ''
-      const rightRaw = slide.content[1] || ''
+      const vcItems = normalizeContent(slide.content)
+      const leftRaw = vcItems[0]?.text || ''
+      const rightRaw = vcItems[1]?.text || ''
       
       const parseSide = (raw: string) => {
         const colonIdx = raw.indexOf(':')
@@ -1865,7 +1987,7 @@ function SmartContentEditor({
       
       const left = parseSide(leftRaw)
       const right = parseSide(rightRaw)
-      const extra = slide.content.slice(2)
+      const extra = vcItems.slice(2).map((x: any) => typeof x === 'string' ? x : (x?.text || ''))
 
       return (
         <div className="space-y-4 text-left">
@@ -1921,9 +2043,10 @@ function SmartContentEditor({
               type="text"
               value={extra[0] || ''}
               onChange={(e) => {
-                const content = [...slide.content]
-                content[2] = e.target.value
-                onChange({ ...slide, content })
+                const c = normalizeContent(slide.content)
+                const next = [...c]
+                next[2] = { ...next[2], text: e.target.value }
+                onChange({ ...slide, content: next })
               }}
               className="w-full px-3 py-2 rounded-lg border border-[#e4e2dd] text-[12px] bg-white focus:outline-none focus:border-[#8d7a5b]"
               placeholder="예: 하나님과의 관계성 비교"
@@ -1933,13 +2056,14 @@ function SmartContentEditor({
       )
     }
     case 'timeline-flow': {
+      const tlItems = normalizeContent(slide.content)
       return (
         <div className="space-y-3.5 text-left">
           <p className="text-[10.5px] text-[#8a8580] leading-relaxed">흐름에 맞게 단계별 제목과 상세 설명을 채워주세요.</p>
-          {slide.content.map((step, idx) => {
-            const colonIdx = step.indexOf(':')
-            const stepLabel = colonIdx !== -1 ? step.slice(0, colonIdx).trim() : step
-            const stepContent = colonIdx !== -1 ? step.slice(colonIdx + 1).trim() : ''
+          {tlItems.map((step, idx) => {
+            const colonIdx = step.text.indexOf(':')
+            const stepLabel = colonIdx !== -1 ? step.text.slice(0, colonIdx).trim() : step.text
+            const stepContent = colonIdx !== -1 ? step.text.slice(colonIdx + 1).trim() : ''
 
             return (
               <div key={idx} className="p-3 bg-[#f5f4f0] rounded-xl border border-[#e4e2dd] space-y-2 relative shadow-sm">
@@ -1980,7 +2104,7 @@ function SmartContentEditor({
             onClick={() => {
               onChange({
                 ...slide,
-                content: [...slide.content, '새 단계 : 새로운 흐름 설명'],
+                content: [...normalizeContent(slide.content), { text: '새 단계 : 새로운 흐름 설명' }],
               })
             }}
             className="flex items-center gap-1.5 text-[11.5px] text-[#8d7a5b] font-bold hover:text-[#7a694e] mt-1.5"
@@ -1991,13 +2115,14 @@ function SmartContentEditor({
       )
     }
     case 'grid-matrix': {
+      const gmItems = normalizeContent(slide.content)
       return (
         <div className="space-y-3.5 text-left">
           <p className="text-[10.5px] text-[#8a8580] leading-relaxed">각 카드에 표시할 제목과 보조 설명을 입력하세요 (최대 6개).</p>
-          {slide.content.map((item, idx) => {
-            const colonIdx = item.indexOf(':')
-            const label = colonIdx !== -1 ? item.slice(0, colonIdx).trim() : item
-            const desc = colonIdx !== -1 ? item.slice(colonIdx + 1).trim() : ''
+          {gmItems.map((item, idx) => {
+            const colonIdx = item.text.indexOf(':')
+            const label = colonIdx !== -1 ? item.text.slice(0, colonIdx).trim() : item.text
+            const desc = colonIdx !== -1 ? item.text.slice(colonIdx + 1).trim() : ''
 
             return (
               <div key={idx} className="p-3 bg-[#f5f4f0] rounded-xl border border-[#e4e2dd] space-y-2 relative shadow-sm">
@@ -2039,7 +2164,7 @@ function SmartContentEditor({
               onClick={() => {
                 onChange({
                   ...slide,
-                  content: [...slide.content, '그리드 제목 : 설명 추가'],
+                  content: [...normalizeContent(slide.content), { text: '그리드 제목 : 설명 추가' }],
                 })
               }}
               className="flex items-center gap-1.5 text-[11.5px] text-[#8d7a5b] font-bold hover:text-[#7a694e] mt-1.5"
@@ -2051,8 +2176,9 @@ function SmartContentEditor({
       )
     }
     case 'central-focus': {
-      const keyword = slide.content[0] || ''
-      const supporting = slide.content.slice(1)
+      const cfItems = normalizeContent(slide.content)
+      const keyword = cfItems[0]?.text || ''
+      const supporting = cfItems.slice(1).map((x: any) => typeof x === 'string' ? x : (x?.text || ''))
       return (
         <div className="space-y-4 text-left">
           <div className="p-3 bg-[#e8f0fe] rounded-xl border border-[#cce0ff] space-y-2 shadow-sm">
@@ -2061,9 +2187,10 @@ function SmartContentEditor({
               type="text"
               value={keyword}
               onChange={(e) => {
-                const content = [...slide.content]
-                content[0] = e.target.value
-                onChange({ ...slide, content })
+                const c = normalizeContent(slide.content)
+                const next = [...c]
+                next[0] = { ...next[0], text: e.target.value }
+                onChange({ ...slide, content: next })
               }}
               className="w-full px-3 py-2 rounded-lg border border-[#cbd5e1] text-[12.5px] bg-white font-bold focus:outline-none focus:border-[#1B3A5C]"
             />
@@ -2078,16 +2205,18 @@ function SmartContentEditor({
                   type="text"
                   value={text}
                   onChange={(e) => {
-                    const content = [...slide.content]
-                    content[idx + 1] = e.target.value
-                    onChange({ ...slide, content })
+                    const c = normalizeContent(slide.content)
+                    const next = [...c]
+                    next[idx + 1] = { ...next[idx + 1], text: e.target.value }
+                    onChange({ ...slide, content: next })
                   }}
                   className="flex-1 px-3 py-2 rounded-lg border border-[#e4e2dd] text-[12px] bg-white focus:outline-none focus:border-[#8d7a5b]"
                 />
                 <button
                   onClick={() => {
-                    const content = slide.content.filter((_, i) => i !== idx + 1)
-                    onChange({ ...slide, content })
+                    const c = normalizeContent(slide.content)
+                    const next = c.filter((_, i) => i !== idx + 1)
+                    onChange({ ...slide, content: next })
                   }}
                   className="p-2 text-[#a09b96] hover:text-red-500 transition-all"
                 >
@@ -2100,7 +2229,7 @@ function SmartContentEditor({
                 onClick={() => {
                   onChange({
                     ...slide,
-                    content: [...slide.content, '지지하는 상세 메시지'],
+                    content: [...normalizeContent(slide.content), { text: '지지하는 상세 메시지' }],
                   })
                 }}
                 className="flex items-center gap-1.5 text-[11.5px] text-[#8d7a5b] font-bold hover:text-[#7a694e] pl-6 mt-1.5"
@@ -2113,8 +2242,9 @@ function SmartContentEditor({
       )
     }
     case 'quote': {
+      const qItems = normalizeContent(slide.content)
       const source = slide.title
-      const text = slide.content.join('\n\n')
+      const text = qItems.map(q => q.text).join('\n\n')
       return (
         <div className="space-y-3.5 text-left">
           <div>
@@ -2134,7 +2264,7 @@ function SmartContentEditor({
               rows={5}
               value={text}
               onChange={(e) => {
-                onChange({ ...slide, content: e.target.value.split('\n\n') })
+                onChange({ ...slide, content: e.target.value.split('\n\n').map((t: string) => ({ text: t })) })
               }}
               className="w-full px-3 py-2 rounded-xl border border-[#e4e2dd] text-[12px] text-[#2c2a29] bg-white focus:outline-none focus:border-[#8d7a5b] transition-all resize-none leading-relaxed"
               placeholder="인용할 텍스트를 적어보세요."
@@ -2144,38 +2274,74 @@ function SmartContentEditor({
       )
     }
     default: {
+      const items = normalizeContent(slide.content)
+      const setContentItem = (idx: number, updates: Partial<ContentItem>) => {
+        const next = [...slide.content]
+        const raw = typeof next[idx] === 'string' ? { text: next[idx] } : next[idx]
+        next[idx] = { ...raw, ...updates }
+        onChange({ ...slide, content: next })
+      }
+      const removeItem = (idx: number) => {
+        const next = items.filter((_, i) => i !== idx)
+        onChange({ ...slide, content: next })
+      }
+      const addItem = () => {
+        onChange({ ...slide, content: [...slide.content, { text: '' }] })
+      }
       return (
         <div className="space-y-2.5 text-left">
-          {slide.content.map((item, idx) => (
-            <div key={idx} className="flex gap-1.5 items-center">
-              <input
-                type="text"
-                value={item}
-                onChange={(e) => {
-                  const next = [...slide.content]
-                  next[idx] = e.target.value
-                  onChange({ ...slide, content: next })
-                }}
-                className="flex-1 px-3 py-2 rounded-xl border border-[#e4e2dd] text-[12px] text-[#2c2a29] bg-white focus:outline-none focus:border-[#8d7a5b] transition-all"
-              />
-              <button
-                onClick={() => {
-                  const next = slide.content.filter((_, i) => i !== idx)
-                  onChange({ ...slide, content: next })
-                }}
-                className="p-2 rounded-xl text-[#a09b96] hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+          {items.map((item, idx) => (
+            <div key={idx} className="flex flex-col gap-1">
+              <div className="flex gap-1.5 items-center">
+                <input
+                  type="text"
+                  value={item.text}
+                  onChange={(e) => setContentItem(idx, { text: e.target.value })}
+                  className="flex-1 px-3 py-2 rounded-xl border border-[#e4e2dd] text-[12px] text-[#2c2a29] bg-white focus:outline-none focus:border-[#8d7a5b] transition-all"
+                />
+                <button
+                  onClick={() => removeItem(idx)}
+                  className="p-2 rounded-xl text-[#a09b96] hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 pl-1">
+                <span className="text-[10px] text-[#8a8580] font-medium mr-0.5">스타일:</span>
+                <button
+                  onClick={() => setContentItem(idx, { style: { ...item.style, bold: !item.style?.bold } })}
+                  className={`w-7 h-7 rounded-md text-[11px] font-bold transition-all ${
+                    item.style?.bold ? 'bg-[#8d7a5b] text-white shadow-sm' : 'bg-[#f5f4f0] text-[#4a4744] hover:bg-[#eae7e0]'
+                  }`}
+                >B</button>
+                <button
+                  onClick={() => setContentItem(idx, { style: { ...item.style, italic: !item.style?.italic } })}
+                  className={`w-7 h-7 rounded-md text-[11px] italic font-bold transition-all ${
+                    item.style?.italic ? 'bg-[#8d7a5b] text-white shadow-sm' : 'bg-[#f5f4f0] text-[#4a4744] hover:bg-[#eae7e0]'
+                  }`}
+                >I</button>
+                <select
+                  value={item.style?.fontSize || ''}
+                  onChange={(e) => setContentItem(idx, { style: { ...item.style, fontSize: e.target.value ? Number(e.target.value) : undefined } })}
+                  className="w-[60px] h-7 rounded-md border border-[#e4e2dd] text-[10px] text-[#4a4744] bg-white px-1 focus:outline-none focus:border-[#8d7a5b]"
+                >
+                  <option value="">크기</option>
+                  {[10,12,14,16,18,20,22,24,28,32,36,42,48,60,72].map(s => (
+                    <option key={s} value={s}>{s}pt</option>
+                  ))}
+                </select>
+                <input
+                  type="color"
+                  value={item.style?.color ? `#${item.style.color}` : '#333333'}
+                  onChange={(e) => setContentItem(idx, { style: { ...item.style, color: e.target.value.replace('#', '') } })}
+                  className="w-7 h-7 rounded-md border border-[#e4e2dd] p-0.5 cursor-pointer"
+                  title="글자색"
+                />
+              </div>
             </div>
           ))}
           <button
-            onClick={() => {
-              onChange({
-                ...slide,
-                content: [...slide.content, ''],
-              })
-            }}
+            onClick={addItem}
             className="flex items-center gap-1.5 text-[11.5px] text-[#8d7a5b] font-bold hover:text-[#7a694e] mt-1.5"
           >
             <Plus className="w-3.5 h-3.5" /> 항목 추가

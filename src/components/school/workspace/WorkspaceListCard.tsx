@@ -87,7 +87,7 @@ export default function WorkspaceListCard({ sermon, index }: { sermon: Workspace
 
   return (
     <button
-      onClick={() => router.push(`/workspace?id=${sermon.id}`)}
+      onClick={() => router.push(`/school/workspace?id=${sermon.id}`)}
       className="group w-full text-left bg-white rounded-2xl border border-[#e4e2dd] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-lg hover:-translate-y-0.5 hover:border-[#d4d1c9] transition-all duration-300 animate-in"
       style={{ animationDelay: `${index * 70}ms` }}
     >

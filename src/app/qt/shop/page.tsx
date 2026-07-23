@@ -10,8 +10,8 @@ import {
 
 const FAQS = [
   {
-    q: '쇼핑만 해도 정말 후원이 되나요?',
-    a: '네, 그렇습니다! 파트너 스토어(거창한벙커, 프레시 네이쳐)에서 상품을 구매하시면 판매 수익금의 일부가 교회학교 서버 인프라 유지비 및 AI 엔진 연동비로 자동 환원됩니다. 별도의 기부 절차 없이 일상적인 쇼핑만으로도 사역에 동참하실 수 있습니다.',
+    q: '큐티 아카이브 이용 중 쇼핑만 해도 후원이 되나요?',
+    a: '네, 그렇습니다! 파트너 스토어(거창한벙커, 프레시 네이쳐)에서 상품을 구매하시면 판매 수익금의 일부가 큐티 아카이브 및 사역 솔루션 서버 인프라 유지비로 자동 환원됩니다. 별도의 기부 절차 없이 일상적인 쇼핑만으로도 묵상 사역에 동참하실 수 있습니다.',
   },
   {
     q: '교회 행사에 필요한 상품이 여기 없으면 어떡하나요?',
@@ -19,7 +19,7 @@ const FAQS = [
   },
   {
     q: '직접 계좌 후원도 가능한가요?',
-    a: '네! 마음이 닿으시는 대로 1,000원부터 자유롭게 자발적 후원이 가능합니다. 보내주신 소중한 후원금은 서버 운용, AI API 비용, 신규 사역 콘텐츠 개발에 투명하게 사용됩니다.',
+    a: '네! 마음이 닿으시는 대로 1,000원부터 자유롭게 자발적 후원이 가능합니다. 보내주신 소중한 후원금은 서버 운용, 묵상 콘텐츠 개발, AI 솔루션에 투명하게 사용됩니다.',
   },
   {
     q: '상품 구매 시 배송은 어떻게 되나요?',
@@ -27,7 +27,7 @@ const FAQS = [
   },
 ];
 
-export default function ShopPage() {
+export default function QtShopPage() {
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -47,23 +47,23 @@ export default function ShopPage() {
       {/* ════════════════════════════════════════════
           1. HERO
          ════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden pt-16 pb-16 md:pt-24 md:pb-20 border-b border-warm-200/60 bg-gradient-to-b from-white via-warm-50/50 to-[#fbfaf7]">
+      <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-20 border-b border-warm-200/60 bg-gradient-to-b from-white via-warm-50/50 to-[#fbfaf7]">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-mint-100/40 blur-3xl -z-10 opacity-70 pointer-events-none" />
 
         <div className="container-custom max-w-5xl text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200/70 text-amber-700 text-xs md:text-sm font-bold shadow-2xs animate-fade-in">
             <ShoppingBag className="w-4 h-4 text-amber-600" />
-            <span>일상의 쇼핑이 사역이 되는 곳</span>
+            <span>큐티 아카이브와 함께하는 선한 영향력 쇼핑</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-navy-950 leading-[1.15] tracking-tight">
             쇼핑이 <span className="text-mint-600 underline decoration-mint-300 decoration-wavy decoration-2">선한 영향력</span>으로,<br />
-            당신의 소비가 <span className="bg-gradient-to-r from-amber-600 via-rose-600 to-amber-500 bg-clip-text text-transparent">따뜻한 후원</span>
+            당신의 소비가 <span className="bg-gradient-to-r from-amber-600 via-rose-600 to-amber-500 bg-clip-text text-transparent">따뜻한 묵상 후원</span>
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-navy-600 max-w-2xl mx-auto leading-relaxed font-medium">
-            특별한 기부 없이, 평소처럼 쇼핑하고 자연스럽게 교회학교 사역을 후원하세요.<br className="hidden sm:inline" />
-            당신의 선택이 다음 세대 신앙교육의 기반이 됩니다.
+            특별한 기부 없이, 평소처럼 쇼핑하고 자연스럽게 큐티 아카이브 사역을 후원하세요.<br className="hidden sm:inline" />
+            당신의 선택이 다음 세대 신앙교육과 매일의 묵상을 지키는 힘이 됩니다.
           </p>
 
           <div className="pt-4 flex flex-wrap justify-center items-center gap-3">
@@ -97,10 +97,10 @@ export default function ShopPage() {
               SHOP & DONATE
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-950">
-              두 가지 방법으로 함께할 수 있습니다
+              두 가지 방법으로 묵상 사역과 함께할 수 있습니다
             </h2>
             <p className="text-xs sm:text-sm text-navy-500">
-              당신의 선택이 다음 세대를 살리는 선순환이 됩니다.
+              당신의 따뜻한 선택이 다음 세대를 살리는 선순환이 됩니다.
             </p>
           </div>
 
@@ -117,7 +117,7 @@ export default function ShopPage() {
                 <h3 className="text-xl font-bold text-navy-950">파트너 스토어 이용</h3>
                 <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
                   교회 행사, 수련회, 선생님 감사 선물, 다과를 파트너 스토어에서 구매하세요.<br />
-                  구매금액의 일부가 서비스 운영비로 자동 환원됩니다.
+                  구매금액의 일부가 큐티 아카이브 서비스 운영비로 자동 환원됩니다.
                 </p>
                 <div className="bg-amber-50/70 rounded-2xl p-4 border border-amber-100 text-left">
                   <p className="text-xs font-bold text-amber-800 mb-1 flex items-center gap-1">
@@ -125,7 +125,7 @@ export default function ShopPage() {
                     추가 비용 없음
                   </p>
                   <p className="text-[11px] text-amber-700 leading-relaxed">
-                    파트너 스토어 상품 가격은 일반 소비자가와 동일합니다. 별도의 기부금이 추가되지 않아요.
+                    파트너 스토어 상품 가격은 일반 소비자가와 동일하며, 별도의 기부금이 추가되지 않습니다.
                   </p>
                 </div>
               </div>
@@ -143,7 +143,7 @@ export default function ShopPage() {
                 <h3 className="text-xl font-bold text-navy-950">자발적 계좌 후원</h3>
                 <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
                   마음이 감동하시는 대로 1,000원부터 자유롭게 후원하실 수 있습니다.<br />
-                  정해진 금액이나 부담스러운 정기 결제는 없어요.
+                  정해진 금액이나 부담스러운 정기 결제는 없습니다.
                 </p>
                 <div className="bg-rose-50/70 rounded-2xl p-4 border border-rose-100 text-left">
                   <p className="text-xs font-bold text-rose-800 mb-1 flex items-center gap-1">
@@ -151,7 +151,7 @@ export default function ShopPage() {
                     100% 투명 사용
                   </p>
                   <p className="text-[11px] text-rose-700 leading-relaxed">
-                    서버 인프라, AI API 연동비, 신규 콘텐츠 개발에만 사용됩니다.
+                    서버 인프라, 매일 묵상 아카이브 콘텐츠 개발에만 투명하게 사용됩니다.
                   </p>
                 </div>
               </div>
@@ -173,10 +173,10 @@ export default function ShopPage() {
               <span>PARTNER STORE</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-navy-950">
-              쇼핑이 곧 <span className="text-amber-600">후원</span>입니다
+              쇼핑이 곧 <span className="text-amber-600">사역 후원</span>입니다
             </h2>
             <p className="text-xs sm:text-sm text-navy-600 leading-relaxed max-w-xl mx-auto">
-              파트너 스토어에서의 구매가 서비스 운영비로 환원됩니다.<br className="hidden sm:inline" />
+              파트너 스토어에서의 구매가 큐티 아카이브 운영비로 환원됩니다.<br className="hidden sm:inline" />
               특별한 기부 없이, 일상적인 소비가 자연스럽게 후원이 됩니다.
             </p>
           </div>
@@ -328,7 +328,7 @@ export default function ShopPage() {
             )}
 
             <div className="mt-8 pt-6 border-t border-rose-200/60 text-xs text-navy-500 leading-relaxed max-w-md mx-auto">
-              소중한 후원금은 <strong>서버 유지 인프라 비용</strong>, <strong>AI 공지문 생성 API 연동비</strong>, <strong>신규 사역 콘텐츠 제작</strong>을 위해 100% 투명하게 사용됩니다.
+              소중한 후원금은 <strong>서버 유지 인프라 비용</strong>, <strong>AI 연동비</strong>, <strong>신규 묵상 콘텐츠 제작</strong>을 위해 100% 투명하게 사용됩니다.
             </div>
           </div>
 
@@ -342,13 +342,13 @@ export default function ShopPage() {
               <p className="text-xs text-navy-500 leading-relaxed">1,000원부터 자유롭게 마음을 전하실 수 있습니다.</p>
             </div>
             <div className="bg-warm-50 rounded-2xl p-5 border border-warm-200 text-left space-y-1">
-              <p className="text-sm font-bold text-navy-950 flex items-center gap-1.5"><span>🤝</span> 함께하는 사역</p>
-              <p className="text-xs text-navy-500 leading-relaxed">당신의 선택이 다음 세대 신앙교육을 지킵니다.</p>
+              <p className="text-sm font-bold text-navy-950 flex items-center gap-1.5"><span>📖</span> 지속적인 묵상</p>
+              <p className="text-xs text-navy-500 leading-relaxed">당신의 선택이 매일의 무료 묵상 사역을 지킵니다.</p>
             </div>
           </div>
 
           <p className="text-xs text-navy-400 font-medium">
-            정기 후원 및 기업 제휴 문의: <a href="mailto:support@churchschool.kr" className="underline hover:text-navy-700">support@churchschool.kr</a>
+            정기 후원 및 제휴 문의: <a href="mailto:support@churchschool.kr" className="underline hover:text-navy-700">support@churchschool.kr</a>
           </p>
 
         </div>
@@ -366,7 +366,7 @@ export default function ShopPage() {
               자주 묻는 질문 (FAQ)
             </h2>
             <p className="text-xs sm:text-sm text-navy-500">
-              쇼핑과 후원에 관한 궁금증을 빠르게 해결해 드립니다.
+              쇼핑과 후원에 관한 궁금증을 해결해 드립니다.
             </p>
           </div>
 
@@ -407,17 +407,17 @@ export default function ShopPage() {
         <div className="container-custom max-w-3xl relative z-10 text-center space-y-6">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
             <ShoppingBag className="w-3.5 h-3.5" />
-            오늘 시작하세요
+            함께하는 묵상 사역
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
-            당신의 오늘 쇼핑이<br />
-            <span className="text-amber-400">다음 세대를 살립니다</span>
+            당신의 관심과 응원이<br />
+            <span className="text-amber-400">매일의 묵상을 이룹니다</span>
           </h2>
 
           <p className="text-xs sm:text-sm md:text-base text-navy-300 max-w-lg mx-auto leading-relaxed">
-            지금 바로 파트너 스토어를 방문하거나, 마음을 전해 주세요.<br />
-            모든 교회학교 사역자는 계속 무료로 서비스를 이용할 수 있습니다.
+            지금 바로 큐티 아카이브와 파트너 스토어를 둘러보세요.<br />
+            모든 묵상 자료는 계속 무료로 제공됩니다.
           </p>
 
           <div className="pt-4 flex flex-wrap justify-center gap-3">
@@ -430,10 +430,10 @@ export default function ShopPage() {
               <ArrowRight className="w-4 h-4" />
             </a>
             <Link
-              href="/school/"
+              href="/qt"
               className="inline-flex items-center gap-2 bg-navy-800 hover:bg-navy-700 text-white font-bold px-6 py-3.5 rounded-2xl text-sm border border-navy-700 transition-all"
             >
-              교회학교 서비스 이용하기
+              큐티 아카이브로 돌아가기
             </Link>
           </div>
         </div>

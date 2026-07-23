@@ -7,12 +7,12 @@ import { useAuth } from '@/components/AuthProvider';
 
 const NAV_ITEMS = [
   { href: '/school', label: '홈' },
-  { href: '/school/projects', label: '설교 프로젝트' },
+
   { href: '/school/workspace', label: '워크스페이스' },
   { href: '/school/ppt-studio', label: 'PPT 스튜디오' },
   { href: '/school/notice-writer', label: '공지문 작성기' },
   { href: '/school/events/manage', label: '행사 관리' },
-  { href: '/school/pricing', label: '요금제' },
+  { href: '/school/pricing', label: '스토어' },
 ];
 
 export default function Header() {
@@ -59,10 +59,7 @@ export default function Header() {
                   className="btn-ghost text-sm flex items-center gap-2"
                 >
                   <UserIcon className="w-4 h-4 text-navy-500" />
-                  <div className="flex flex-col items-start leading-tight">
-                    <span className="font-bold text-navy-900">{user?.name}님</span>
-                    <span className="text-[10px] text-navy-400 font-normal">{user?.email}</span>
-                  </div>
+                  <span className="font-bold text-navy-900">{user?.user_metadata?.name || user?.email?.split('@')[0] || ''}님</span>
                 </button>
 
                 {dropdownOpen && (
@@ -70,7 +67,7 @@ export default function Header() {
                     <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
                     <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-warm-100 py-2 z-50 animate-slide-up">
                       <div className="px-4 py-2.5 border-b border-warm-100 mb-1.5">
-                        <p className="text-[12px] text-navy-400 font-medium">{user?.name}님</p>
+                        <p className="text-[12px] text-navy-400 font-medium">{user?.user_metadata?.name || user?.email?.split('@')[0] || ''}님</p>
                         <p className="text-[13px] font-bold text-navy-900 truncate mt-0.5">{user?.email}</p>
                       </div>
                       <Link
@@ -104,9 +101,6 @@ export default function Header() {
                       >
                         <ScrollText className="w-4 h-4 text-indigo-500" />
                         말씀 연구실
-                        <span className="ml-auto text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">
-                          👑 후원
-                        </span>
                       </Link>
                       <Link
                         href="/support"
@@ -118,7 +112,7 @@ export default function Header() {
                       </Link>
                       <div className="border-t border-warm-100 mt-1.5 pt-1.5">
                         <Link
-                          href="/school/mypage"
+                          href="/mypage"
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-[13px] font-bold text-navy-700 hover:text-navy-900 hover:bg-navy-50 transition-all"
                         >
@@ -203,12 +197,12 @@ export default function Header() {
               <>
                 <hr className="my-2 border-warm-100" />
                 <Link
-                  href="/school/mypage"
+                  href="/mypage"
                   onClick={() => setMobileOpen(false)}
                   className="px-4 py-3 text-base font-medium text-navy-700 rounded-xl hover:bg-navy-50 block"
                 >
                   <div className="flex flex-col leading-tight">
-                    <span>마이페이지 ({user?.name}님)</span>
+                    <span>마이페이지 ({user?.user_metadata?.name || user?.email?.split('@')[0] || ''}님)</span>
                     <span className="text-xs text-navy-400 font-normal mt-0.5">{user?.email}</span>
                   </div>
                 </Link>

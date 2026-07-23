@@ -12,15 +12,15 @@ function makeLazyClient(init: () => SupabaseClient): SupabaseClient {
 }
 
 export const projectSupabase = makeLazyClient(() => {
-  const url = process.env.NEXT_PUBLIC_PROJECT_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_PROJECT_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) throw new Error('Project Supabase environment variables are not set')
   return createClient(url, key)
 })
 
 export const projectSupabaseAdmin = makeLazyClient(() => {
-  const url = process.env.NEXT_PUBLIC_PROJECT_SUPABASE_URL
-  const key = process.env.PROJECT_SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('Project Supabase admin environment variables are not set')
   return createClient(url, key)
 })

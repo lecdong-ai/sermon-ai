@@ -299,6 +299,13 @@ export interface PptTextStyle {
   lineSpacing?: number
 }
 
+/** 개별 콘텐츠 항목 (text + 선택적 스타일 오버라이드) */
+export interface ContentItem {
+  text: string
+  /** 개별 스타일. 미설정 시 PptSlide.bodyStyle 상속 */
+  style?: Partial<PptTextStyle>
+}
+
 /** 텍스트 박스 위치 (inches, pptxgenJS 좌표계) */
 export interface PptSlideTextPosition {
   x: number
@@ -309,7 +316,9 @@ export interface PptSlideTextPosition {
 
 export interface PptSlide {
   title: string
-  content: string[]
+  /** 멀티레벨 제목 배열. 미설정 시 [{text:title}] 자동 변환 */
+  titles?: ContentItem[]
+  content: ContentItem[]
   layout: PptSlideLayout
   /** 핵심 메시지 요약 (1~2문장) — 발표자 참고용, 이미지에 포함되지 않음 */
   coreMessage?: string

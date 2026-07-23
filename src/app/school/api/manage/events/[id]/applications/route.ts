@@ -8,22 +8,32 @@ export const maxDuration = 15
 
 interface Params { params: { id: string } }
 
-async function verifyOwnership(eventId: string, userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('events')
-    .select('user_id')
-    .eq('id', eventId)
-    .single()
-  if (error || !data || data.user_id !== userId) return false
-  return true
+async function findEventAndVerifyOwnership(identifier: string, userId: string) {
+  let { data: event } = await supabaseAdmin
+    .from('church_events')
+    .select('id, user_id')
+    .eq('id', identifier)
+    .maybeSingle()
+
+  if (!event) {
+    const { data: eventByToken } = await supabaseAdmin
+      .from('church_events')
+      .select('id, user_id')
+      .eq('link_token', identifier)
+      .maybeSingle()
+    event = eventByToken
+  }
+
+  if (!event || event.user_id !== userId) return null
+  return event
 }
 
 export async function GET(request: NextRequest, { params }: Params) {
   const user = await getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
 
-  const owned = await verifyOwnership(params.id, user.id)
-  if (!owned) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+  const event = await findEventAndVerifyOwnership(params.id, user.id)
+  if (!event) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status') as ApplicationStatus | null
@@ -33,7 +43,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   let query = supabaseAdmin
     .from('applications')
     .select('*')
-    .eq('event_id', params.id)
+    .eq('event_id', event.id)
     .order('created_at', { ascending: false })
 
   if (status && status !== 'all') {

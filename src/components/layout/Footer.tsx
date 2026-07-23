@@ -25,11 +25,11 @@ export function Footer() {
               <Link href="/qt" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
                 큐티 자료
               </Link>
-              <Link href="/templates" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+              <Link href="/qt/templates" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
                 노션 템플릿
               </Link>
-              <Link href="/curation" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
-                큐레이션
+              <Link href="/qt/published" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                QT 모음집
               </Link>
             </div>
           </div>
@@ -39,25 +39,25 @@ export function Footer() {
               후원
             </p>
             <div className="space-y-2">
-              <Link href="/shop" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
-                후원샵
+              <Link href="/qt/shop" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                후원 스토어
               </Link>
-              <Link href="/shop/about" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
-                후원 안내
+              <Link href="/qt/shop#donate" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                자발적 후원
               </Link>
             </div>
           </div>
 
           <div className="space-y-3 text-center md:text-left">
             <p className="text-caption text-foreground-subtle font-medium tracking-wider uppercase">
-              소개
+              소개 & 관리
             </p>
             <div className="space-y-2">
-              <Link href="/about" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
-                {siteConfig.name}
+              <Link href="/qt/about" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                큐티 아카이브 소개
               </Link>
-              <Link href="/advanced/qt" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
-                관리자
+              <Link href="/qt/admin" className="block text-sm text-foreground-muted hover:text-foreground transition-colors duration-200">
+                큐티 관리자
               </Link>
             </div>
           </div>
