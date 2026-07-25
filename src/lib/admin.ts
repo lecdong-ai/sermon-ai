@@ -182,31 +182,29 @@ export async function getAllUsers(params: GetUsersParams = {}): Promise<GetUsers
 }
 
 export async function getUserStats() {
-  const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
-  const totalUsers = authUsers?.users.length || 0
+  const users = await supabaseAdmin.auth.admin.listUsers().then(r => r.data?.users || []).catch(() => [] as any[])
 
-  const adminCount = authUsers?.users.filter(u => isAdminFromMeta(u)).length || 0
-
-  const now = new Date().toISOString()
+  const totalUsers = users.length
+  const adminCount = users.filter(u => isAdminFromMeta(u)).length
+  const now = new Date()
   const monthStart = new Date()
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
   const monthStartStr = monthStart.toISOString()
 
   const activeSupporters = Math.max(
-    authUsers?.users.filter(u => {
+    users.filter(u => {
       const until = (u.app_metadata as any)?.supporter_until
-      return until && new Date(until) > new Date()
-    }).length || 0,
-    // user_usage 테이블에서 추가 supporter 확인
+      return until && new Date(until) > now
+    }).length,
     (await supabaseAdmin
       .from('user_usage')
       .select('supporter_until')
-      .gt('supporter_until', new Date().toISOString())
+      .gt('supporter_until', now.toISOString())
     ).data?.length || 0,
   )
 
-  const newUsersThisMonth = authUsers?.users.filter(u => u.created_at >= monthStartStr).length || 0
+  const newUsersThisMonth = users.filter(u => u.created_at >= monthStartStr).length
 
   const { count: totalSermons } = await supabaseAdmin
     .from('sermons')
