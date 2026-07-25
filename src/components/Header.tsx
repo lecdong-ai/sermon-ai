@@ -30,7 +30,7 @@ export default memo(function Header() {
   }
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-300 ${
       isHome
         ? 'bg-[#0B1020]/80 backdrop-blur-md border-b border-white/10 text-white shadow-lg shadow-black/10'
         : 'bg-[#050814]/85 backdrop-blur-md border-b border-white/5 text-white shadow-lg shadow-black/20'
