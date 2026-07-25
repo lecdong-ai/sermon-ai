@@ -1,6 +1,24 @@
 {
   "items": [
     {
+      "id": "qt-json-ms0fmncb",
+      "slug": "하나님을-기다리는-믿음의-여정-ms0fmncb",
+      "title": "하나님을 기다리는 믿음의 여정",
+      "excerpt": "시편 27:14은 하나님을 기다리는 믿음의 여정을 강조합니다. 우리의 연약함 속에서 하나님의 때를 기다리는 것은 결코 쉬운 일이 아니며, 이는 우리의 무능함을 드러냅니다. 그러나 이러한 기다림은 복음의 필요성을 더욱 절실하게 인식하게 하며, 하나님께서 주시는 은혜를 통해만 우리는 소망을 찾을 수 있습니다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/하나님을-기다리는-믿음의-여정-ms0fmncb/800/1000",
+        "alt": "하나님을 기다리는 믿음의 여정",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "연중",
+      "bibleRange": "시편 27:14",
+      "tags": [],
+      "publishedAt": "2026-07-25T13:56:06.443Z",
+      "isFree": true,
+      "viewCount": 0
+    },
+    {
       "id": "qt-json-ms0bgzha",
       "slug": "회복의-은혜-돌아오는-길-ms0bgzha",
       "title": "회복의 은혜, 돌아오는 길",

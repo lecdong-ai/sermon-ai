@@ -54,9 +54,23 @@ export default function AdminQtJsonArchive() {
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/qt-json')
+      const res = await fetch('/api/qt-archive')
       const data = await res.json()
-      setItems(data.items || [])
+      const mapped: QtJsonItem[] = (data.items || []).map((item: any) => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        excerpt: item.excerpt,
+        season: item.season,
+        bibleRange: item.bible_passage || '',
+        tags: (item.tags || []).map((t: string, i: number) => ({
+          id: `tag-${i}`,
+          slug: t.toLowerCase().replace(/\s+/g, '-'),
+          name: t,
+        })),
+        publishedAt: item.published_at,
+      }))
+      setItems(mapped)
     } catch {
       setItems([])
     } finally {
@@ -129,19 +143,18 @@ export default function AdminQtJsonArchive() {
     setUploadError(null)
 
     try {
-      const res = await fetch('/api/qt-json', {
+      const res = await fetch('/api/qt-archive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formTitle,
           excerpt: formExcerpt,
           content: formContent,
-          biblePassage: formBiblePassage,
-          bibleText: formBibleText,
-          keyVerse: formKeyVerse,
+          bible_passage: formBiblePassage,
+          bible_text: formBibleText,
+          key_verse: formKeyVerse,
           season: formSeason,
-          thumbnailSrc: formThumbnailSrc,
-          thumbnailAlt: formThumbnailAlt,
+          thumbnail_url: formThumbnailSrc,
           tags: formTags,
         }),
       })
@@ -175,7 +188,7 @@ export default function AdminQtJsonArchive() {
     if (!confirm('정말 삭제하시겠습니까?')) return
     setDeleting(id)
     try {
-      await fetch(`/api/qt-json/${id}`, { method: 'DELETE' })
+      await fetch(`/api/qt-archive/${id}`, { method: 'DELETE' })
       fetchItems()
     } catch {
       alert('삭제에 실패했습니다')
@@ -405,7 +418,7 @@ export default function AdminQtJsonArchive() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="font-serif text-h2 text-foreground">큐티 자료</h2>
-          <p className="text-meta text-foreground-muted mt-0.5">파일 기반 저장 — 메인 /qt 페이지에 자동 반영됩니다</p>
+          <p className="text-meta text-foreground-muted mt-0.5">Supabase 기반 저장 — 메인 /qt 페이지에 자동 반영됩니다</p>
         </div>
         <button onClick={() => setMode('upload')}
           className="px-5 py-2.5 rounded-xl bg-accent text-white font-medium text-body hover:bg-accent/90 transition-colors flex items-center gap-2 shrink-0"

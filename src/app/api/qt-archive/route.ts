@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { title, excerpt, content, bible_passage, thumbnail_url, season, tags } = body
+  const { title, excerpt, content, bible_passage, bible_text, key_verse, thumbnail_url, season, tags } = body
 
   if (!title) {
     return NextResponse.json({ error: '제목은 필수입니다' }, { status: 400 })
@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
       excerpt: excerpt || '',
       content: content || '',
       bible_passage: bible_passage || '',
+      bible_text: bible_text || '',
+      key_verse: key_verse || '',
       thumbnail_url: thumbnail_url || '',
       season: season || '연중',
       tags: tags || [],
