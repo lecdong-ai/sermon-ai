@@ -194,10 +194,71 @@ export default function SermonDetailPage({
           </div>
         )}
 
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-muted mb-3">설교문 원고</h3>
-          <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
-            {sermon.manuscript}
+        <div className="bg-surface border border-border rounded-lg p-6">
+          <h3 className="text-base font-bold text-foreground mb-4">설교문 원고</h3>
+          <div className="leading-relaxed text-foreground">
+            {(() => {
+              if (!sermon.manuscript) return <p className="text-muted italic">원고가 아직 없습니다.</p>
+
+              // JSON 구조 파싱 시도
+              try {
+                const parsed = typeof sermon.manuscript === 'string'
+                  ? JSON.parse(sermon.manuscript)
+                  : sermon.manuscript
+
+                if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                  const sectionLabel: Record<string, string> = {
+                    '본문해설': '📖 본문해설',
+                    '예화': '💡 예화',
+                    '적용': '✅ 적용',
+                  }
+
+                  return (
+                    <div className="space-y-6">
+                      {Object.entries(parsed).map(([key, value]) => {
+                        // 서론, 결론 등 단순 문자열 섹션
+                        if (typeof value === 'string') {
+                          return (
+                            <div key={key}>
+                              <h4 className="text-base font-bold text-primary mb-2">{key}</h4>
+                              <p className="whitespace-pre-wrap text-foreground text-[15px] leading-7">{value}</p>
+                            </div>
+                          )
+                        }
+
+                        // 대지 1, 2, 3 등 하위 구조가 있는 섹션
+                        if (typeof value === 'object' && value !== null) {
+                          return (
+                            <div key={key} className="border-l-2 border-primary/40 pl-4">
+                              <h4 className="text-base font-bold text-primary mb-3">{key}</h4>
+                              <div className="space-y-4">
+                                {Object.entries(value as Record<string, string>).map(([subKey, subValue]) => (
+                                  <div key={subKey}>
+                                    <p className="text-sm font-semibold text-blue-300 mb-1">
+                                      {sectionLabel[subKey] || subKey}
+                                    </p>
+                                    <p className="whitespace-pre-wrap text-foreground text-[15px] leading-7">
+                                      {String(subValue)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        return null
+                      })}
+                    </div>
+                  )
+                }
+              } catch {
+                // JSON 파싱 실패 → 일반 텍스트로 표시
+              }
+
+              // fallback: 일반 텍스트
+              return <div className="whitespace-pre-wrap text-[15px] leading-7">{sermon.manuscript}</div>
+            })()}
           </div>
         </div>
       </div>
