@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/support', '/pricing', '/school/pricing', '/school/mypage', '/shop']
-const publicPrefixes = ['/api/auth', '/school/api/events']
-const publicPatterns = [/^\/school\/events\/[^/]+$/, /^\/school\/events\/[^/]+\/complete$/, /^\/school\/events\/[^/]+\/checkin$/]
+const publicPrefixes = ['/api/auth', '/school/api/events', '/api/qt-suggest']
+const publicPatterns = [/^\/school\/events\/[^/]+$/, /^\/school\/events\/[^/]+\/complete$/, /^\/school\/events\/[^/]+\/checkin$/, /^\/qt(?:\/(?!admin).*)?$/]
 
 const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

@@ -103,7 +103,8 @@ export default function AdminQtJsonArchive() {
       } else {
         setSuggestError(json.error || '추천 실패')
       }
-    } catch {
+    } catch (e) {
+      console.error('[AdminQtJsonArchive] suggest error:', e)
       setSuggestError('네트워크 오류')
     } finally {
       setSuggesting(null)
@@ -236,6 +237,14 @@ export default function AdminQtJsonArchive() {
         </div>
 
         <div className="space-y-5 bg-surface rounded-2xl border border-border p-6 shadow-elevated">
+          {/* 상단 에러 */}
+          {(uploadError || suggestError) && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-[13px] text-red-600">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {uploadError || suggestError}
+            </div>
+          )}
+
           {/* 제목 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

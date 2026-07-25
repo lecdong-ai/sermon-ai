@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { QT_SYSTEM_PROMPT } from '@/lib/prompts/qt-theological-dna'
 
 let _openai: any = null
@@ -26,16 +27,16 @@ function buildPrompt(
   switch (field) {
     case 'title':
       return {
-        system: `${QT_SYSTEM_PROMPT}\n\n주어진 성경 본문에 맞는 큐티 제목 5가지를 추천하라. 각 제목은 하나님 중심적이어야 하며, 복음을 향해 열려 있어야 한다. 도덕주의적, 성공주의적 제목을 피하라.`,
-        user: `성경 본문: ${passage}\n\n[{"value": "제목1", "reason": "추천 이유1"}, {"value": "제목2", "reason": "추천 이유2"}, {"value": "제목3", "reason": "추천 이유3"}, {"value": "제목4", "reason": "추천 이유4"}, {"value": "제목5", "reason": "추천 이유5"}] 형식으로 5가지를 추천해주세요.`,
+        system: `${QT_SYSTEM_PROMPT}\n\n주어진 성경 본문에 맞는 큐티 제목 5가지를 추천하라. 각 제목은 하나님 중심적이어야 하며, 복음을 향해 열려 있어야 한다. 도덕주의적, 성공주의적 제목을 피하라.\n\n반드시 JSON 형식으로 응답하고, 한국어를 사용하라.`,
+        user: `성경 본문: ${passage}\n\n{"suggestions": [{"value": "제목1", "reason": "추천 이유1"}, {"value": "제목2", "reason": "추천 이유2"}, {"value": "제목3", "reason": "추천 이유3"}, {"value": "제목4", "reason": "추천 이유4"}, {"value": "제목5", "reason": "추천 이유5"}]} 형식으로 5가지를 추천해주세요.`,
         maxTokens: 800,
         returnArray: true,
       }
 
     case 'passage':
       return {
-        system: `${QT_SYSTEM_PROMPT}\n\n주어진 큐티 제목에 가장 적합한 성경 본문 5가지를 추천하라. 각 본문은 문맥 안에서 해석 가능해야 하며, 복음과 연결될 수 있어야 한다.`,
-        user: `큐티 제목: ${title}\n\n[{"value": "본문1", "reason": "추천 이유1"}, {"value": "본문2", "reason": "추천 이유2"}, {"value": "본문3", "reason": "추천 이유3"}, {"value": "본문4", "reason": "추천 이유4"}, {"value": "본문5", "reason": "추천 이유5"}] 형식으로 5가지를 추천해주세요.`,
+        system: `${QT_SYSTEM_PROMPT}\n\n주어진 큐티 제목에 가장 적합한 성경 본문 5가지를 추천하라. 각 본문은 문맥 안에서 해석 가능해야 하며, 복음과 연결될 수 있어야 한다.\n\n반드시 JSON 형식으로 응답하고, 한국어를 사용하라.`,
+        user: `큐티 제목: ${title}\n\n{"suggestions": [{"value": "본문1", "reason": "추천 이유1"}, {"value": "본문2", "reason": "추천 이유2"}, {"value": "본문3", "reason": "추천 이유3"}, {"value": "본문4", "reason": "추천 이유4"}, {"value": "본문5", "reason": "추천 이유5"}]} 형식으로 5가지를 추천해주세요.`,
         maxTokens: 800,
         returnArray: true,
       }
@@ -97,8 +98,8 @@ ${keyVerse ? `핵심 구절: ${keyVerse}` : ''}
   }
 }
 
-function safeParse(raw: string): any {
-  let cleaned = raw.replace(/^```json\s*|```\s*$/g, '').trim()
+function safeParse(raw: string, returnArray: boolean): any {
+  let cleaned = raw.replace(/^```(?:json)?\s*|```\s*$/g, '').trim()
 
   const firstBracket = Math.min(
     cleaned.indexOf('[') !== -1 ? cleaned.indexOf('[') : Infinity,
@@ -117,11 +118,30 @@ function safeParse(raw: string): any {
     try { return require('json5').parse(bracketMatch[1]) } catch {}
   }
 
+  if (!returnArray) {
+    return { value: raw.trim() }
+  }
+
   throw new Error('Failed to parse AI response: ' + cleaned.slice(0, 300))
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll() },
+          setAll() {},
+        },
+      },
+    )
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
+      return NextResponse.json({ success: false, error: '인증이 필요합니다' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { field, title, passage, bibleText, keyVerse, excerpt } = body
 
@@ -152,7 +172,7 @@ export async function POST(request: NextRequest) {
     const raw = res.choices[0]?.message?.content || ''
     let parsed
     try {
-      parsed = safeParse(raw)
+      parsed = safeParse(raw, returnArray)
     } catch (e: any) {
       console.error('[qt-suggest] parse error:', e.message)
       return NextResponse.json({ success: false, error: e.message }, { status: 500 })

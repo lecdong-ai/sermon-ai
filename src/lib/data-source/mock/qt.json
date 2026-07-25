@@ -1,6 +1,24 @@
 {
   "items": [
     {
+      "id": "qt-json-ms0bgzha",
+      "slug": "회복의-은혜-돌아오는-길-ms0bgzha",
+      "title": "회복의 은혜, 돌아오는 길",
+      "excerpt": "이 비유는 잃어버린 아들이 아버지께 돌아오는 과정을 통해 인간의 전적 무능과 하나님의 회복의 은혜를 드러냅니다. 우리는 스스로를 구원할 수 없는 존재임을 깨닫고, 오직 아버지의 은혜로 돌아갈 수 있음을 기억해야 합니다.",
+      "thumbnail": {
+        "src": "https://picsum.photos/seed/회복의-은혜-돌아오는-길-ms0bgzha/800/1000",
+        "alt": "회복의 은혜, 돌아오는 길",
+        "width": 800,
+        "height": 1000
+      },
+      "season": "연중",
+      "bibleRange": "누가복음 15:11-32",
+      "tags": [],
+      "publishedAt": "2026-07-25T11:59:43.774Z",
+      "isFree": true,
+      "viewCount": 0
+    },
+    {
       "id": "qt-001",
       "slug": "waiting-in-advent-day-1",
       "title": "기다림의 시간이 낭비가 아닐 때",
