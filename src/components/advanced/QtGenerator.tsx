@@ -213,11 +213,14 @@ export default function QtGenerator() {
     coreMessage: string
   } | null>(null)
 
+  // 세대 옵션
+  const GENERATION_OPTIONS = ['초등부', '중고등부', '청년부', '장년부'] as const
+
   // 기본 설정 폼
   const [form, setForm] = useState<QTFormData>({
     bibleBook: '창세기',
     weekNumber: 1,
-    audience: '일반 성도',
+    audience: '장년부',
     level: '중',
     tone: '정중하고 따뜻한',
     seriesName: '말씀과 함께하는 큐티',
@@ -225,6 +228,30 @@ export default function QtGenerator() {
     designTemplate: 'qtland-classic',
     startDate: getMondayOfWeek(getTodayDateString()),
   })
+
+  const [selectedGenerations, setSelectedGenerations] = useState<string[]>([...GENERATION_OPTIONS])
+  const [activeGeneration, setActiveGeneration] = useState<string>('장년부')
+  const generationResultsRef = useRef<Record<string, {
+    dayManuscripts: Record<string, DayManuscript>
+    finalManuscript: string
+    assembleOutput: string
+    assembledMetadata: any
+    subtitle: string
+  }>>({})
+  const [generationResults, setGenerationResults] = useState<Record<string, {
+    dayManuscripts: Record<string, DayManuscript>
+    finalManuscript: string
+    assembleOutput: string
+    assembledMetadata: any
+    subtitle: string
+  }>>({})
+  const syncGenerationResults = (updater: (prev: typeof generationResultsRef.current) => typeof generationResultsRef.current) => {
+    const next = updater(generationResultsRef.current)
+    generationResultsRef.current = next
+    setGenerationResults(next)
+  }
+  const [batchGenerating, setBatchGenerating] = useState(false)
+  const [batchAssembling, setBatchAssembling] = useState(false)
 
   const updateForm = (patch: Partial<QTFormData>) => setForm(prev => ({ ...prev, ...patch }))
 
@@ -464,6 +491,284 @@ export default function QtGenerator() {
       console.error('히스토리 저장 오류:', e)
     }
     setSavingHistory(false)
+  }
+
+  // 현재 세대 결과를 ref에 저장 (synchronous)
+  const saveCurrentGenerationResult = () => {
+    syncGenerationResults(prev => ({
+      ...prev,
+      [activeGeneration]: {
+        dayManuscripts: { ...dayManuscripts },
+        finalManuscript,
+        assembleOutput,
+        assembledMetadata,
+        subtitle,
+      }
+    }))
+  }
+
+  // 세대 전환: 현재 결과 저장 후 대상 세대 로드
+  const switchGeneration = (gen: string) => {
+    if (gen === activeGeneration) return
+    saveCurrentGenerationResult()
+    const saved = generationResultsRef.current[gen]
+    if (saved) {
+      setDayManuscripts(saved.dayManuscripts)
+      setFinalManuscript(saved.finalManuscript)
+      setAssembleOutput(saved.assembleOutput)
+      setAssembledMetadata(saved.assembledMetadata)
+      setSubtitle(saved.subtitle)
+    }
+    setActiveGeneration(gen)
+    updateForm({ audience: gen })
+  }
+
+  // 세대 탭 UI 컴포넌트
+  const GenerationTabs = ({ className = '' }: { className?: string }) => {
+    const ref = generationResultsRef.current
+    return (
+    <div className={`flex items-center gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-xl overflow-x-auto ${className}`}>
+      {selectedGenerations.filter(g => {
+        const hasResult = ref[g]?.dayManuscripts && Object.keys(ref[g].dayManuscripts).length > 0
+        return hasResult || g === activeGeneration
+      }).map(gen => {
+        const isActive = activeGeneration === gen
+        const hasResult = ref[gen]?.finalManuscript
+        return (
+          <button
+            key={gen}
+            onClick={() => switchGeneration(gen)}
+            className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+              isActive
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                : hasResult
+                ? 'bg-emerald-600/10 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-600/20'
+                : 'bg-white/[0.01] border border-white/5 text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {gen}
+            {hasResult && <Check className="w-3 h-3 inline ml-1 text-emerald-400" />}
+          </button>
+        )
+      })}
+    </div>
+    )
+  }
+
+  // 세대별 AI 초안 호출
+  async function callQtDraftForGeneration(
+    gen: string,
+    dayName: string,
+    dayPassage: string,
+    dayTitle: string,
+    dayFocus: string,
+  ): Promise<string> {
+    const res = await fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'qt-draft',
+        data: {
+          bibleBook: form.bibleBook,
+          weekNumber: form.weekNumber,
+          dayName,
+          dayPassage,
+          dayTitle,
+          dayFocus,
+          audience: gen,
+          level: form.level,
+          tone: form.tone,
+          bibleTextPolicy: '전체 본문 제시 — 개역개정과 KJV 모두 본문 범위의 모든 절을 빠짐없이 포함',
+          verseQuoteLimit: '전체 본문 — 모든 절',
+          seriesName: form.seriesName,
+        },
+      }),
+    })
+    const json = await res.json()
+    if (!json.success) throw new Error(json.error || 'QT 생성 실패')
+    return json.data.output as string
+  }
+
+  // 단일 day 단일 세대 생성 (재시도 로직 포함)
+  const draftDayForGeneration = async (
+    gen: string,
+    day: string,
+    passage: string,
+    title: string,
+    focus: string,
+  ): Promise<string> => {
+    const MAX_ATTEMPTS = 2
+    let lastMissing: string[] = []
+    let output = ''
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      output = await callQtDraftForGeneration(gen, day, passage, title, focus)
+      const v = validateFinalContent(output)
+      if (v.valid) return output
+      lastMissing = v.missing
+      if (attempt < MAX_ATTEMPTS) {
+        focus = `${focus}\n\n[보강 필요 섹션] ${v.missing.join(', ')}`
+      }
+    }
+    return output
+  }
+
+  // 4세대 일괄 생성
+  const handleBatchDraft = async () => {
+    if (!splitDays.length) return
+    setBatchGenerating(true)
+    saveCurrentGenerationResult()
+    try {
+      const newResults = { ...generationResultsRef.current }
+      for (const gen of selectedGenerations) {
+        const existing = newResults[gen]
+        const allDone = existing?.dayManuscripts &&
+          Object.keys(existing.dayManuscripts).length >= splitDays.length &&
+          Object.values(existing.dayManuscripts).every((m: any) => m.finalContent)
+        if (allDone) continue
+
+        const genManuscripts: Record<string, DayManuscript> = {}
+        for (const day of splitDays.map(d => d.day)) {
+          const sd = splitDays.find(s => s.day === day)
+          if (!sd) continue
+          const finalContent = await draftDayForGeneration(gen, day, sd.passage, sd.title, sd.focus)
+          genManuscripts[day] = {
+            dayName: day,
+            passage: sd.passage,
+            title: sd.title,
+            focus: sd.focus,
+            finalContent,
+            sectionTitles: sd.sectionTitles,
+          }
+        }
+        newResults[gen] = {
+          dayManuscripts: genManuscripts,
+          finalManuscript: '',
+          assembleOutput: '',
+          assembledMetadata: null,
+          subtitle: '',
+        }
+      }
+      syncGenerationResults(() => newResults)
+
+      const firstGen = selectedGenerations[0]
+      if (newResults[firstGen]) {
+        setDayManuscripts(newResults[firstGen].dayManuscripts)
+        setActiveGeneration(firstGen)
+        updateForm({ audience: firstGen })
+      }
+    } catch (e: any) {
+      setError(e.message || '일괄 생성 중 오류 발생')
+    } finally {
+      setBatchGenerating(false)
+    }
+  }
+
+  // 세대용 조립 호출
+  const assembleGeneration = async (gen: string): Promise<{ output: string; metadata: any } | null> => {
+    const genData = generationResultsRef.current[gen]
+    if (!genData) return null
+    const dm = genData.dayManuscripts
+    const days = Object.keys(dm).filter(d => dm[d].finalContent)
+    if (days.length === 0) return null
+
+    const payloadDays = days.map(d => ({ dayName: d, content: dm[d].finalContent! }))
+    const res = await fetch('/api/advanced/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'qt-assemble',
+        data: {
+          bibleBook: form.bibleBook,
+          weekNumber: form.weekNumber,
+          seriesName: form.seriesName,
+          subtitle: genData.subtitle,
+          audience: gen,
+          sizeOption: form.sizeOption,
+          designMood: form.designTemplate,
+          days: payloadDays,
+        },
+      }),
+    })
+    const json = await res.json()
+    if (!json.success) return null
+    const output = json.data.output
+    const metadata = extractMetadataJson(output)
+    return { output, metadata }
+  }
+
+  // 4세대 일괄 조립
+  const handleBatchAssemble = async () => {
+    setBatchAssembling(true)
+    saveCurrentGenerationResult()
+    try {
+      const newResults = { ...generationResultsRef.current }
+      for (const gen of selectedGenerations) {
+        const existing = newResults[gen]
+        if (!existing?.dayManuscripts || Object.keys(existing.dayManuscripts).length === 0) continue
+        if (existing.finalManuscript) continue
+
+        const result = await assembleGeneration(gen)
+        if (!result) continue
+
+        const dm = existing.dayManuscripts
+        let fullDoc = `${result.output}\n\n`
+        Object.keys(dm).forEach((d, idx) => {
+          fullDoc += `\n\n===\n\n### Day ${idx + 1}\n\n${dm[d].finalContent || ''}`
+        })
+
+        newResults[gen] = {
+          ...existing,
+          assembleOutput: result.output,
+          assembledMetadata: result.metadata,
+          finalManuscript: fullDoc,
+        }
+        saveToHistoryForGeneration(gen, fullDoc)
+      }
+      syncGenerationResults(() => newResults)
+
+      const firstGen = selectedGenerations[0]
+      if (newResults[firstGen]) {
+        setDayManuscripts(newResults[firstGen].dayManuscripts)
+        setFinalManuscript(newResults[firstGen].finalManuscript)
+        setAssembleOutput(newResults[firstGen].assembleOutput)
+        setAssembledMetadata(newResults[firstGen].assembledMetadata)
+        setSubtitle(newResults[firstGen].subtitle)
+        setActiveGeneration(firstGen)
+        updateForm({ audience: firstGen })
+      }
+    } catch (e: any) {
+      setError(e.message || '일괄 조립 중 오류 발생')
+    } finally {
+      setBatchAssembling(false)
+    }
+  }
+
+  // 특정 세대 히스토리 저장
+  const saveToHistoryForGeneration = async (gen: string, manuscript: string) => {
+    const genData = generationResultsRef.current[gen]
+    if (!genData || !manuscript) return
+    const dayData = Object.entries(genData.dayManuscripts).map(([day, m]) => ({
+      dayName: day, passage: m.passage, title: m.title, focus: m.focus, finalContent: m.finalContent,
+    }))
+    try {
+      await fetch('/api/advanced/qt/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bible_book: form.bibleBook,
+          week_number: form.weekNumber,
+          audience: gen,
+          level: form.level, tone: form.tone,
+          series_name: form.seriesName,
+          size_option: form.sizeOption, design_template: form.designTemplate,
+          full_manuscript: manuscript,
+          day_data: dayData,
+          start_passage: startPassage,
+          end_passage: endPassage || null,
+          subtitle: genData.subtitle || null,
+        }),
+      })
+    } catch {}
   }
 
   // QT 아카이브에 공개
@@ -1614,15 +1919,34 @@ export default function QtGenerator() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center h-5">
-                  <label className="text-[11px] font-bold text-slate-500">대상 독자</label>
+                  <label className="text-[11px] font-bold text-slate-500">생성할 세대</label>
                 </div>
-                <select
-                  value={form.audience}
-                  onChange={e => updateForm({ audience: e.target.value })}
-                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
-                >
-                  {['초신자', '일반 성도', '청년', '장년', '온 가족'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {GENERATION_OPTIONS.map(gen => {
+                    const selected = selectedGenerations.includes(gen)
+                    return (
+                      <button
+                        key={gen}
+                        type="button"
+                        onClick={() => {
+                          setSelectedGenerations(prev =>
+                            prev.includes(gen)
+                              ? prev.filter(g => g !== gen)
+                              : [...prev, gen]
+                          )
+                          if (!selected) setActiveGeneration(gen)
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${
+                          selected
+                            ? 'bg-indigo-600/20 border-indigo-400/50 text-indigo-300'
+                            : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {gen}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 
@@ -1869,7 +2193,8 @@ export default function QtGenerator() {
       {/* STEP 2: 요일별 QT 집필 */}
       {step === 2 && (
         <div className="space-y-6 animate-fadeIn">
-          {/* 일괄 생성 제거됨 (월간 큐티 삭제) */}
+          {/* 세대 탭 */}
+          {selectedGenerations.length > 1 && <GenerationTabs />}
 
           {/* 요일/날짜 선택 탭 */}
           <div className="flex flex-wrap gap-1.5 border-b border-white/5 pb-3">
@@ -2073,7 +2398,7 @@ export default function QtGenerator() {
           </div>
 
           {/* 하단 네비게이션 제어 */}
-          <div className="flex justify-between items-center pt-4 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-white/5">
             <button
               onClick={goPrevStep}
               className="px-4 py-2.5 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/[0.02] text-slate-400 hover:text-white text-[12px] font-bold transition-all"
@@ -2081,15 +2406,31 @@ export default function QtGenerator() {
               1단계로 돌아가기
             </button>
 
-            <button
-              onClick={goNextStep}
-              disabled={!isAllDaysCompleted}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-bold transition-all shadow-lg shadow-indigo-600/10 disabled:opacity-40 disabled:cursor-not-allowed"
-              title={!isAllDaysCompleted ? '월~토 6일치 원고가 모두 생성되어야 합니다.' : ''}
-            >
-              3단계 조립실로 이동하기
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedGenerations.length > 1 && (
+                <button
+                  onClick={handleBatchDraft}
+                  disabled={batchGenerating || !splitDays.length}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition-all shadow-lg disabled:opacity-40"
+                >
+                  {batchGenerating ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  {batchGenerating ? '일괄 생성 중...' : `${selectedGenerations.length}세대 일괄 생성`}
+                </button>
+              )}
+              <button
+                onClick={goNextStep}
+                disabled={!isAllDaysCompleted}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-bold transition-all shadow-lg shadow-indigo-600/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                title={!isAllDaysCompleted ? '월~토 6일치 원고가 모두 생성되어야 합니다.' : ''}
+              >
+                3단계 조립실로 이동하기
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2097,6 +2438,7 @@ export default function QtGenerator() {
       {/* STEP 3: 주간 소책자 조립 */}
       {step === 3 && (
         <div className="space-y-6 animate-fadeIn">
+          {selectedGenerations.length > 1 && <GenerationTabs />}
           <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-5">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">3단계: 주간 큐티책 최종 조립</h3>
             
@@ -2163,7 +2505,21 @@ export default function QtGenerator() {
               })}
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end gap-2 pt-2">
+              {selectedGenerations.length > 1 && (
+                <button
+                  onClick={handleBatchAssemble}
+                  disabled={batchAssembling}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition-all shadow-lg disabled:opacity-40"
+                >
+                  {batchAssembling ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  {batchAssembling ? '일괄 조립 중...' : `${selectedGenerations.length}세대 일괄 조립`}
+                </button>
+              )}
               <button
                 onClick={handleAssembleWeekly}
                 disabled={assembling}
@@ -2241,7 +2597,9 @@ export default function QtGenerator() {
 
       {/* STEP 4: 완료 및 미리보기 */}
       {step === 4 && (
-        <div className="glass-dark rounded-2xl border border-white/5 p-12 text-center space-y-6 animate-fadeIn">
+        <div className="space-y-6 animate-fadeIn">
+          {selectedGenerations.length > 1 && <GenerationTabs />}
+          <div className="glass-dark rounded-2xl border border-white/5 p-12 text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/5">
             <Check className="w-8 h-8 text-emerald-400" />
           </div>
@@ -2282,6 +2640,7 @@ export default function QtGenerator() {
               <Eye className="w-4 h-4" />
               최종 큐티 뷰어 & PDF 인쇄 페이지 열기
             </button>
+          </div>
           </div>
         </div>
       )}

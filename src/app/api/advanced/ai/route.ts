@@ -1264,7 +1264,7 @@ ${sectionsText}
 - 이번 주차: ${weekNumber || 1}
 - 시작 본문: ${startPassage || ''}
 ${hasEndPassage ? `- 종료 본문: ${endPassage}` : '- 종료 본문: (지정 안 됨 - 자동 이어가기 모드)'}
-- 대상 독자: ${audience || '일반 성도'}
+- 세대: ${audience || '장년부'}
 - 난이도: ${level || '중'}
 - 분할 일수: ${limit}일
 ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬프트 참조` : ''}
@@ -1309,7 +1309,7 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
 - 이전 날 본문: ${prevPassage || '없음'}
 - 현재(문제) 본문: ${currentPassage || ''}
 - 다음 날 본문: ${nextPassage || '없음'}
-- 대상 독자: ${audience || '일반 성도'}
+- 세대: ${audience || '장년부'}
 - 난이도: ${level || '중'}
 
 ## 지침
@@ -1432,7 +1432,7 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
 - 오늘 핵심 초점: ${dayFocus || ''}
 
 ## 묵상 및 출력 설정
-- 대상 독자: ${audience || '일반 성도'}
+- 세대: ${audience || '장년부'}
 - 난이도: ${level || '중'}
 - 톤: ${tone || '정중하고 따뜻한'}
 - 성경 본문 정책: ${bibleTextPolicy || '전체 본문 제시 — 개역개정과 KJV 모두 본문 범위의 모든 절을 빠짐없이 포함'}
@@ -1470,7 +1470,7 @@ ${draftContent || ''}`
 - 주차: ${weekNumber || 1}
 - 시리즈명: ${seriesName || ''}
 - 부제: ${subtitle || ''}
-- 대상 독자: ${audience || ''}
+- 세대: ${audience || ''}
 - 판형: ${sizeOption || 'A5'}
 - 디자인 분위기: ${designMood || 'warm-modern'}
 
