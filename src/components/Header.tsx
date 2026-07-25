@@ -104,7 +104,7 @@ export default memo(function Header() {
                 {menuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-52 bg-[#0c1020] rounded-2xl shadow-2xl shadow-black/40 border border-white/10 py-2 z-[60]">
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-[#0c1020] rounded-2xl shadow-2xl shadow-black/40 border border-white/10 py-2 z-50">
                       <div className="px-4 py-2.5 border-b border-white/5 mb-1.5">
                         <p className="text-[12px] text-slate-500 font-medium">로그인 정보</p>
                         <p className="text-[13px] font-bold text-white truncate mt-0.5">{user.email}</p>
