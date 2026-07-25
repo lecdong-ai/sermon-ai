@@ -59,7 +59,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#8a7e62',
     coverTitleSize: '28px',
     coverSubtitleColor: '#a08543',
-    bodyLineHeight: '1.75',
+    bodyLineHeight: '1.6',
     bodySize: '10.5px',
   },
   {
@@ -90,7 +90,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#94a3b8',
     coverTitleSize: '28px',
     coverSubtitleColor: '#2563eb',
-    bodyLineHeight: '1.85',
+    bodyLineHeight: '1.7',
     bodySize: '11px',
   },
   {
@@ -121,7 +121,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#94a3b8',
     coverTitleSize: '28px',
     coverSubtitleColor: '#4F46E5',
-    bodyLineHeight: '2',
+    bodyLineHeight: '1.85',
     bodySize: '12px',
   },
   {
@@ -152,7 +152,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#475569',
     coverTitleSize: '28px',
     coverSubtitleColor: '#818cf8',
-    bodyLineHeight: '2',
+    bodyLineHeight: '1.85',
     bodySize: '12px',
   },
   {
@@ -183,7 +183,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#c4a0b8',
     coverTitleSize: '26px',
     coverSubtitleColor: '#d946ef',
-    bodyLineHeight: '2',
+    bodyLineHeight: '1.85',
     bodySize: '12px',
   },
   {
@@ -214,7 +214,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#bbb',
     coverTitleSize: '26px',
     coverSubtitleColor: '#8b6914',
-    bodyLineHeight: '2',
+    bodyLineHeight: '1.85',
     bodySize: '12px',
   },
   {
@@ -245,7 +245,7 @@ export const QT_TEMPLATES: QtTemplate[] = [
     pageNumberColor: '#9ca3af',
     coverTitleSize: '32px',
     coverSubtitleColor: '#111827',
-    bodyLineHeight: '1.9',
+    bodyLineHeight: '1.75',
     bodySize: '11.5px',
   },
 ]

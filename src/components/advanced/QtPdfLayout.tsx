@@ -246,7 +246,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const sectionLabel = (text: string) => (
     <div style={{
       display: 'flex', alignItems: 'baseline', gap: `${5 * scale}px`,
-      marginTop: `${4 * scale}px`, marginBottom: `${2 * scale}px`,
+      marginTop: `${3 * scale}px`, marginBottom: `${1.5 * scale}px`,
       borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
       paddingBottom: `${1.5 * scale}px`,
     }}>
@@ -759,10 +759,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             fontSize: `${8.5 * scale}px`,
             fontWeight: 700,
             color: t.textMuted,
-            letterSpacing: `${1.8 * scale}px`,
-            textTransform: 'uppercase',
-            marginBottom: `${3 * scale}px`,
-            marginTop: `${2 * scale}px`,
+    letterSpacing: `${1.5 * scale}px`,
+    textTransform: 'uppercase',
+    marginBottom: `${2 * scale}px`,
+    marginTop: `${1 * scale}px`,
           }}>
             오늘 내 마음에 남은 한 문장
           </div>
@@ -1077,22 +1077,22 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 fontStyle: 'italic',
               }}>
                 {day.prayer.split('\n').filter(l => l.trim()).map((l, i) => (
-                  <div key={i} style={{ marginBottom: `${1.5 * scale}px` }}>{l}</div>
+        <div key={i} style={{ marginBottom: `${1 * scale}px` }}>{l}</div>
                 ))}
               </div>
             </div>
           )}
 
           {/* 한 줄 기록 */}
-          <div style={{ marginTop: `${5 * scale}px` }}>
+          <div style={{ marginTop: `${2 * scale}px` }}>
             <div style={{
               fontFamily: t.fontHeading,
               fontSize: `${8.5 * scale}px`,
               fontWeight: 700,
               color: t.textMuted,
-              letterSpacing: `${1.8 * scale}px`,
+              letterSpacing: `${1.5 * scale}px`,
               textTransform: 'uppercase',
-              marginBottom: `${3 * scale}px`,
+              marginBottom: `${2 * scale}px`,
             }}>
               오늘 내 마음에 남은 한 문장
             </div>
