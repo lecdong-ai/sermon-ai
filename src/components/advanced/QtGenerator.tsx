@@ -758,6 +758,7 @@ export default function QtGenerator() {
           bible_book: form.bibleBook,
           week_number: form.weekNumber,
           audience: gen,
+          generation: gen,
           level: form.level, tone: form.tone,
           series_name: form.seriesName,
           size_option: form.sizeOption, design_template: form.designTemplate,
@@ -1496,14 +1497,56 @@ export default function QtGenerator() {
     return Object.values(dayManuscripts).every(m => !!m.finalContent)
   }, [dayManuscripts])
 
+  // 뷰어에서 세대 전환 (finalManuscript가 있는 세대로만 전환)
+  const switchViewerGeneration = (gen: string) => {
+    if (gen === activeGeneration) return
+    saveCurrentGenerationResult()
+    const saved = generationResultsRef.current[gen]
+    if (saved?.finalManuscript) {
+      setFinalManuscript(saved.finalManuscript)
+      setDayManuscripts(saved.dayManuscripts)
+      setAssembleOutput(saved.assembleOutput)
+      setAssembledMetadata(saved.assembledMetadata)
+      setSubtitle(saved.subtitle)
+      setActiveGeneration(gen)
+      updateForm({ audience: gen })
+    }
+  }
+
   // 최종 뷰어 모드 실행
   if (finalManuscript) {
+    const viewerGenerations = selectedGenerations.filter(g => {
+      const r = generationResultsRef.current[g]
+      return r?.finalManuscript
+    })
     return (
       <>
         {savingHistory && (
           <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold shadow-lg animate-slideDown">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             기록 저장 중...
+          </div>
+        )}
+        {viewerGenerations.length > 1 && (
+          <div className="max-w-5xl mx-auto px-4 pt-4">
+            <div className="flex items-center gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-xl overflow-x-auto">
+              {viewerGenerations.map(gen => {
+                const isActive = activeGeneration === gen
+                return (
+                  <button
+                    key={gen}
+                    onClick={() => switchViewerGeneration(gen)}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                        : 'bg-white/[0.01] border border-white/5 text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {gen}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
         <QtReader

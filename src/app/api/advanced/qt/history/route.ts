@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error, count } = await supabaseAdmin
     .from('qt_history')
-    .select('id, bible_book, week_number, series_name, audience, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle', { count: 'exact' })
+    .select('id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle', { count: 'exact' })
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { bible_book, week_number, audience, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle } = body
+  const { bible_book, week_number, audience, generation, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle } = body
 
   if (!bible_book || !week_number || !full_manuscript) {
     return NextResponse.json({ error: 'bible_book, week_number, full_manuscript are required' }, { status: 400 })
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       bible_book,
       week_number,
       audience: audience || '일반 성도',
+      generation: generation || null,
       level: level || '중',
       tone: tone || '정중하고 따뜻한',
       series_name: series_name || '말씀과 함께하는 큐티',
