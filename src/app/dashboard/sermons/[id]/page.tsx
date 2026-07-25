@@ -100,7 +100,7 @@ export default function SermonDetailPage({
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 px-2 py-1 rounded transition-colors print:hidden"
+            className="inline-flex items-center gap-1 text-xs bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 px-2 py-1 rounded transition-colors print:hidden"
           >
             <Sparkles className="w-3 h-3" />
             {generating ? '생성중...' : 'AI 생성'}
@@ -116,7 +116,7 @@ export default function SermonDetailPage({
                 }
               }
             }}
-            className="text-xs border border-red-200 text-red-500 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors print:hidden"
+            className="text-xs border border-red-800 text-red-400 px-3 py-1.5 rounded-md hover:bg-red-950 transition-colors print:hidden"
           >
             삭제
           </button>
@@ -228,7 +228,7 @@ export default function SermonDetailPage({
             <h3 className="text-xs font-semibold text-muted mb-2">대주제 태그</h3>
             <div className="flex flex-wrap gap-1.5">
               {themes.major.map((t) => (
-                <span key={t!.id} className="text-[11px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">
+                <span key={t!.id} className="text-[11px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">
                   {t!.name}
                 </span>
               ))}
@@ -241,7 +241,7 @@ export default function SermonDetailPage({
             <h3 className="text-xs font-semibold text-muted mb-2">상황 태그</h3>
             <div className="flex flex-wrap gap-1.5">
               {themes.situation.map((t) => (
-                <span key={t!.id} className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                <span key={t!.id} className="text-[11px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
                   {t!.name}
                 </span>
               ))}
@@ -254,7 +254,7 @@ export default function SermonDetailPage({
             <h3 className="text-xs font-semibold text-muted mb-2">정서 태그</h3>
             <div className="flex flex-wrap gap-1.5">
               {themes.emotion.map((t) => (
-                <span key={t!.id} className="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                <span key={t!.id} className="text-[11px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
                   {t!.name}
                 </span>
               ))}

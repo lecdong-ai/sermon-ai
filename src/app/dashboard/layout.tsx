@@ -1,3 +1,4 @@
+import './../globals-dashboard.css'
 import Sidebar from '@/components/dashboard/Sidebar'
 import DashboardHeader from '@/components/dashboard/DashboardHeader'
 import WelcomeModal from '@/components/dashboard/WelcomeModal'
@@ -6,7 +7,7 @@ import { AppProvider } from '@/lib/dashboard/store'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppProvider>
-      <div className="flex h-screen bg-[#050814]">
+      <div className="dashboard-scope flex h-screen bg-[#050814]">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <DashboardHeader />

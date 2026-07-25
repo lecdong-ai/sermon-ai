@@ -1,0 +1,21 @@
+.dashboard-scope .bg-surface {
+  background-color: #1e293b;
+}
+.dashboard-scope .text-foreground {
+  color: #f1f5f9;
+}
+.dashboard-scope .text-muted {
+  color: #94a3b8;
+}
+.dashboard-scope .border-border {
+  border-color: #334155;
+}
+.dashboard-scope .bg-background {
+  background-color: #0f172a;
+}
+.dashboard-scope .text-primary {
+  color: #60a5fa;
+}
+.dashboard-scope .text-foreground\/90 {
+  color: rgba(241, 245, 249, 0.9);
+}
