@@ -54,7 +54,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
   const monthCalendarStrip = useMemo(() => {
     if (!form.startDate) return undefined
-    const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+    const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
     if (!allowedSizes.has(sizeOption)) return undefined
     const parts = form.startDate.split('-')
     if (parts.length !== 3) return undefined
