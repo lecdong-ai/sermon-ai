@@ -114,12 +114,13 @@ export async function generateQtPdf(
       console.log(`[QtPdfGen] page ${i}: ${canvas.width}x${canvas.height}, dataUrl=${(imgData.length / 1024).toFixed(0)}KB`)
 
       // html-to-image 가 CSS padding 을 캡처하지 못하므로,
-      // PDF addImage 좌표로 14mm 균일 여백 구현 (종횡비 4.5% 왜곡, 텍스트에서 미미)
-      const marginMm = 14
-      const drawW = widthMm - marginMm * 2
-      const drawH = heightMm - marginMm * 2
-      const drawX = marginMm
-      const drawY = marginMm
+      // PDF addImage 좌표로 여백 구현 (상단 5mm, 좌/우/아래 14mm)
+      const marginSide = 14
+      const marginTop = 5
+      const drawW = widthMm - marginSide * 2
+      const drawH = heightMm - marginTop - marginSide
+      const drawX = marginSide
+      const drawY = marginTop
 
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')

@@ -158,7 +158,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }
 
   const pageContentStyle: React.CSSProperties = {
-    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + 9)}px` : undefined,
+    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + 2)}px` : undefined,
     width: '100%',
     height: '100%',
     boxSizing: 'border-box',
