@@ -1120,6 +1120,99 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             )}
           </div>
 
+          {/* 주간 펼침 (portrait compact) */}
+          <div style={{
+            marginBottom: `${3 * scale}px`,
+            padding: `${2 * scale}px ${3 * scale}px`,
+            background: t.accentLight,
+            borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+            borderTop: `0.5px solid ${t.borderLight}`,
+            borderRight: `0.5px solid ${t.borderLight}`,
+            borderBottom: `0.5px solid ${t.borderLight}`,
+          }}>
+            <div style={{
+              textAlign: 'center',
+              marginBottom: `${1 * scale}px`,
+              paddingBottom: `${1 * scale}px`,
+              borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
+            }}>
+              <span style={{
+                fontFamily: t.fontHeading,
+                fontSize: `${8.5 * scale}px`,
+                fontWeight: 800,
+                color: t.accent,
+                letterSpacing: `${1.5 * scale}px`,
+                textTransform: 'uppercase',
+              }}>
+                ◆ 주간 펼침 · {form.bibleBook} · 제{form.weekNumber}주
+              </span>
+              <span style={{
+                fontFamily: t.fontHeading,
+                fontSize: `${7.5 * scale}px`,
+                fontWeight: 500,
+                color: t.textMuted,
+                marginLeft: `${4 * scale}px`,
+              }}>
+                {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
+              </span>
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: `${0.5 * scale}px`,
+            }}>
+              {parsedDays.slice(0, 6).map((d, i) => {
+                const dv = parseBibleVerses(d.passage || '')
+                const isCurrent = i === dayIdx
+                const passageShort = (dv.passageRange || '').split(' ').pop() || ''
+                return (
+                  <div key={i} style={{
+                    display: 'flex', flexDirection: 'column',
+                    padding: `${1.5 * scale}px ${1 * scale}px`,
+                    background: isCurrent ? `${t.accent}1A` : 'transparent',
+                    color: t.textColor,
+                    borderTop: `0.5px solid ${t.borderLight}`,
+                    minHeight: `${65 * scale}px`,
+                    gap: `${0.5 * scale}px`,
+                  }}>
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${8.5 * scale}px`,
+                      fontWeight: 800,
+                      color: isCurrent ? t.accent : t.accent,
+                      letterSpacing: `${0.3 * scale}px`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                      <span>{weekdays[i]?.label?.split('(')[0] || `Day ${i + 1}`}</span>
+                      {isCurrent && <span style={{ fontSize: `${8 * scale}px`, color: t.accent }}>★</span>}
+                    </div>
+                    {passageShort && (
+                      <div style={{
+                        fontFamily: t.fontHeading,
+                        fontSize: `${8 * scale}px`,
+                        fontWeight: 700,
+                        color: t.textColor,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {passageShort}
+                      </div>
+                    )}
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${8 * scale}px`,
+                      fontWeight: 600,
+                      color: t.textMuted,
+                      lineHeight: '1.1',
+                      overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                    }}>
+                      {d.title || `Day ${i + 1}`}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
           {/* 핵심 구절 */}
           {firstSentence && (
             <div style={{
