@@ -293,6 +293,20 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   const parsedTitleSize = parseFloat(t.coverTitleSize || '28')
 
+  // 글자수 기반 overflow 감지 (landscape / portrait 공유)
+  const maxChars: Record<string, number> = {
+    passageOverview: 250, slowReading: 350,
+    observation: 700, understanding: 500, gospel: 250,
+    application: 300, reflection: 250, community: 150,
+    originalWords: 200, englishWords: 200,
+    englishVerse: 180, leaderGuide: 200, prayer: 350,
+  }
+  const trunc = (text: string, key: string): string => {
+    if (!text) return ''
+    const limit = maxChars[key] || 500
+    return text.length > limit ? text.slice(0, limit).replace(/\s+\S*$/, '') + ' …' : text
+  }
+
   // ============= A안: 가로 2페이지 (1일 2페이지, 2-A 디자인) =============
   const renderDailyLandscape = (day: any, dayIdx: number) => {
     const verses = parseBibleVerses(day.passage || '')
@@ -301,18 +315,6 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     pageCounter = 2 + dayIdx * 3
 
     // Overflow detection — 글자수 기반
-    const maxChars: Record<string, number> = {
-      passageOverview: 250, slowReading: 350,
-      observation: 700, understanding: 500, gospel: 250,
-      application: 300, reflection: 250, community: 150,
-      originalWords: 200, englishWords: 200,
-      englishVerse: 180, leaderGuide: 200, prayer: 350,
-    }
-    const trunc = (text: string, key: string): string => {
-      if (!text) return ''
-      const limit = maxChars[key] || 500
-      return text.length > limit ? text.slice(0, limit).replace(/\s+\S*$/, '') + ' …' : text
-    }
     const reflect = (key: string): string => trunc((day as any)[key] || '', key)
     const hasOverflow = (['observation','understanding','application','reflection','prayer']).some(k => {
       const t = (day as any)[k] || ''
@@ -1059,7 +1061,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     pageCounter = 1 + dayIdx * 3 + 1
 
     // Overflow detection (shared with landscape)
-    const refP = (key: string): string => trunc((day as any)[key] || '', key)
+    const reflectP = (key: string): string => trunc((day as any)[key] || '', key)
     const hasOverflowP = (['observation','understanding','application','reflection','prayer']).some(k => {
       const t = (day as any)[k] || ''
       return t.length > (maxChars[k] || 500) * 0.85
@@ -1254,7 +1256,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 maxHeight: `${50 * scale}px`,
                 overflow: 'hidden',
               }}>
-                {refP('englishVerse').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
+                {reflectP('englishVerse').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
               </div>
             </div>
           )}
@@ -1277,7 +1279,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             <div>
               {sectionLabel('천천히 읽기')}
               {bodyText(
-                refP('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
+                reflectP('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
                 10.5
               )}
             </div>
@@ -1340,13 +1342,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {day.observation && (
               <div style={{ maxHeight: `${80 * scale}px`, overflow: 'hidden' }}>
                 {sectionLabel('본문 관찰하기')}
-                {bodyText(refP('observation'), 10)}
+                {bodyText(reflectP('observation'), 10)}
               </div>
             )}
             {day.understanding && (
               <div style={{ maxHeight: `${70 * scale}px`, overflow: 'hidden' }}>
                 {sectionLabel('말씀 이해하기')}
-                {bodyText(refP('understanding'), 10)}
+                {bodyText(reflectP('understanding'), 10)}
               </div>
             )}
           </div>
@@ -1371,7 +1373,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 ✦ 복음으로 보기
               </div>
-              {bodyText(refP('gospel'), 9.5)}
+              {bodyText(reflectP('gospel'), 9.5)}
             </div>
           )}
 
@@ -1385,13 +1387,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {day.application && (
               <div>
                 {sectionLabel('오늘의 적용')}
-                {bodyText(filterAudienceContent(refP('application'), audienceLevel), 10)}
+                {bodyText(filterAudienceContent(reflectP('application'), audienceLevel), 10)}
               </div>
             )}
             {day.reflection && (
               <div>
                 {sectionLabel('나를 비추어 보기')}
-                {bodyText(refP('reflection'), 10)}
+                {bodyText(reflectP('reflection'), 10)}
               </div>
             )}
           </div>
@@ -1422,7 +1424,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 lineHeight: '1.4',
                 color: t.textColor,
               }}>
-                {refP('community').split('\n').filter(l => l.trim()).slice(0, 2).join(' · ')}
+                {reflectP('community').split('\n').filter(l => l.trim()).slice(0, 2).join(' · ')}
               </span>
             </div>
           )}
@@ -1451,7 +1453,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       }}>
                         원어
                       </div>
-                      {bodyText(refP('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 9)}
+                      {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 9)}
                     </div>
                   )}
                   {day.englishWords && (
@@ -1467,7 +1469,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       }}>
                         영어
                       </div>
-                      {bodyText(refP('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 9)}
+                      {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 9)}
                     </div>
                   )}
                 </div>
@@ -1488,7 +1490,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   maxHeight: `${70 * scale}px`,
                   overflow: 'hidden',
                 }}>
-                  {refP('prayer').split('\n').filter(l => l.trim()).slice(0, 4).join('\n')}
+                  {reflectP('prayer').split('\n').filter(l => l.trim()).slice(0, 4).join('\n')}
                 </div>
               </div>
             )}
@@ -1554,7 +1556,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   maxHeight: `${40 * scale}px`,
                   overflow: 'hidden',
                 }}>
-                  {refP('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
+                  {reflectP('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
                 </div>
               </div>
             )}
