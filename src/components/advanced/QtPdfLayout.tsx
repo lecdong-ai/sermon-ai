@@ -36,7 +36,7 @@ interface QtPdfLayoutProps {
 }
 
 // 캘린더 스트립을 표시할 sizeOption 화이트리스트
-const STRIP_SIZE_OPTIONS = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+const STRIP_SIZE_OPTIONS = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
 
 function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
   if (!rawText) return ''
