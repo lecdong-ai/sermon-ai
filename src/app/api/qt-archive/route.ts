@@ -60,8 +60,6 @@ export async function POST(request: NextRequest) {
       excerpt: excerpt || '',
       content: content || '',
       bible_passage: bible_passage || '',
-      bible_text: bible_text || '',
-      key_verse: key_verse || '',
       thumbnail_url: thumbnail_url || '',
       season: season || '연중',
       tags: tags || [],
