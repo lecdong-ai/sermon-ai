@@ -431,50 +431,48 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
         {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주`)}
 
-        {/* ═══ 주간 펼침 (7일치 가로 네비게이션) ═══ */}
+        {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
         <div style={{
-          marginBottom: `${3 * scale}px`,
-          padding: `${4 * scale}px ${5 * scale}px`,
+          marginBottom: `${2 * scale}px`,
+          padding: `${3 * scale}px ${4 * scale}px`,
           background: t.accentLight,
           borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
           borderTop: `0.5px solid ${t.borderLight}`,
           borderRight: `0.5px solid ${t.borderLight}`,
           borderBottom: `0.5px solid ${t.borderLight}`,
         }}>
-          {/* 주간 펼침 헤더 */}
           <div style={{
             textAlign: 'center',
-            marginBottom: `${2 * scale}px`,
+            marginBottom: `${1.5 * scale}px`,
             paddingBottom: `${1 * scale}px`,
             borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
           }}>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${12 * scale}px`,
+              fontSize: `${10.5 * scale}px`,
               fontWeight: 800,
               color: t.accent,
-              letterSpacing: `${2.5 * scale}px`,
+              letterSpacing: `${2 * scale}px`,
               textTransform: 'uppercase',
             }}>
               ◆ 주간 펼침 · {form.bibleBook} · 제{form.weekNumber}주
             </div>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${10 * scale}px`,
+              fontSize: `${9 * scale}px`,
               fontWeight: 500,
               color: t.textMuted,
               letterSpacing: `${0.5 * scale}px`,
-              marginTop: `${2 * scale}px`,
+              marginTop: `${1.5 * scale}px`,
             }}>
               {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
             </div>
           </div>
 
-          {/* 6일 그리드 */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(6, 1fr)',
-            gap: `${1 * scale}px`,
+            gap: `${0.5 * scale}px`,
           }}>
             {parsedDays.slice(0, 6).map((d, i) => {
               const dv = parseBibleVerses(d.passage || '')
@@ -483,22 +481,20 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               return (
                 <div key={i} style={{
                   display: 'flex', flexDirection: 'column',
-                  padding: `${3 * scale}px ${2 * scale}px`,
+                  padding: `${2 * scale}px ${1.5 * scale}px`,
                   background: isCurrent ? `${t.accent}1A` : 'transparent',
                   color: t.textColor,
                   borderTop: `0.5px solid ${t.borderLight}`,
-                  minHeight: `${130 * scale}px`,
+                  minHeight: `${90 * scale}px`,
                 }}>
-                  {/* 세로 가운데 영역 */}
                   <div style={{
                     flex: 1,
                     display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                    gap: `${1 * scale}px`,
+                    gap: `${0.5 * scale}px`,
                   }}>
-                    {/* 요일 + ★ */}
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${10.5 * scale}px`,
+                      fontSize: `${9.5 * scale}px`,
                       fontWeight: 800,
                       color: isCurrent ? t.accent : t.accent,
                       letterSpacing: `${0.5 * scale}px`,
@@ -506,13 +502,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
                       <span>{weekdays[i]?.label || `Day ${i + 1}`}</span>
-                      {isCurrent && <span style={{ fontSize: `${11 * scale}px`, color: t.accent }}>★</span>}
+                      {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
                     </div>
-                    {/* 본문 (짧게) */}
                     {passageShort && (
                       <div style={{
                         fontFamily: t.fontHeading,
-                        fontSize: `${10.5 * scale}px`,
+                        fontSize: `${9.5 * scale}px`,
                         fontWeight: 700,
                         color: t.textColor,
                         whiteSpace: 'nowrap',
@@ -522,10 +517,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         {passageShort}
                       </div>
                     )}
-                    {/* 제목 */}
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${10.5 * scale}px`,
+                      fontSize: `${9.5 * scale}px`,
                       fontWeight: 700,
                       color: t.textColor,
                       lineHeight: '1.2',
@@ -536,17 +530,16 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       {d.title || `Day ${i + 1}`}
                     </div>
                   </div>
-                  {/* 메모란 (3줄) */}
                   <div style={{
-                    display: 'flex', flexDirection: 'column', gap: `${5 * scale}px`,
-                    paddingTop: `${3 * scale}px`,
-                    marginTop: `${2 * scale}px`,
+                    display: 'flex', flexDirection: 'column', gap: `${3 * scale}px`,
+                    paddingTop: `${2 * scale}px`,
+                    marginTop: `${1.5 * scale}px`,
                     borderTop: `0.5px solid ${t.borderLight}`,
                   }}>
-                    {[1, 2, 3].map(line => (
+                    {[1].map(line => (
                       <div key={line} style={{
                         borderBottom: `0.5px solid ${t.borderLight}`,
-                        height: `${15 * scale}px`,
+                        height: `${10 * scale}px`,
                       }} />
                     ))}
                   </div>
