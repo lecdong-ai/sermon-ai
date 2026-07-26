@@ -113,21 +113,16 @@ export async function generateQtPdf(
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
       console.log(`[QtPdfGen] page ${i}: ${canvas.width}x${canvas.height}, dataUrl=${(imgData.length / 1024).toFixed(0)}KB`)
 
-      const aspect = canvas.width / canvas.height
-      const pageAspect = widthMm / heightMm
-
-      let drawW: number, drawH: number, drawX: number, drawY: number
-      if (aspect > pageAspect) {
-        drawW = widthMm
-        drawH = widthMm / aspect
-        drawX = 0
-        drawY = (heightMm - drawH) / 2
-      } else {
-        drawH = heightMm
-        drawW = heightMm * aspect
-        drawX = (widthMm - drawW) / 2
-        drawY = 0
-      }
+      // html-to-image 가 CSS padding 을 캡처하지 못하므로,
+      // PDF addImage 좌표로 여백을 구현 (종횡비 유지)
+      const marginMm = 14
+      const maxW = widthMm - marginMm * 2
+      const maxH = heightMm - marginMm * 2
+      const scale = Math.min(maxW / widthMm, maxH / heightMm)
+      const drawW = widthMm * scale
+      const drawH = heightMm * scale
+      const drawX = (widthMm - drawW) / 2
+      const drawY = (heightMm - drawH) / 2
 
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
