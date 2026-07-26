@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const { password } = await request.json()
-  const adminPassword = process.env.QT_ADMIN_PASSWORD || '#Neo2531942'
+  const adminPassword = process.env.QT_ADMIN_PASSWORD
+  if (!adminPassword) {
+    return NextResponse.json({ error: '관리자 비밀번호가 설정되지 않았습니다' }, { status: 500 })
+  }
 
-  if (password !== adminPassword && password !== '#Neo2531942') {
+  const { password } = await request.json()
+  if (password !== adminPassword) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
