@@ -1426,26 +1426,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
           )}
 
-          {/* 2열: 이해하기 | 나를 비추어 보기 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: `${10 * scale}px`,
-            marginBottom: `${2 * scale}px`,
-          }}>
-            {day.understanding && (
-              <div>
-                {sectionLabel('말씀 이해하기')}
-                {bodyText(reflectP('understanding'), 11)}
-              </div>
-            )}
-            {day.reflection && (
-              <div>
-                {sectionLabel('나를 비추어 보기')}
-                {bodyText(reflectP('reflection'), 11)}
-              </div>
-            )}
-          </div>
+          {/* 말씀 이해하기 */}
+          {day.understanding && (
+            <div style={{ marginBottom: `${2 * scale}px` }}>
+              {sectionLabel('말씀 이해하기')}
+              {bodyText(reflectP('understanding'), 11)}
+            </div>
+          )}
 
           {/* 복음으로 보기 (full) */}
           {day.gospel && (
@@ -1468,6 +1455,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 ✦ 복음으로 보기
               </div>
               {bodyText(reflectP('gospel'), 11)}
+            </div>
+          )}
+
+          {/* 나를 비추어 보기 */}
+          {day.reflection && (
+            <div style={{ marginBottom: `${2 * scale}px` }}>
+              {sectionLabel('나를 비추어 보기')}
+              {bodyText(reflectP('reflection'), 11)}
             </div>
           )}
 
