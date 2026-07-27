@@ -314,7 +314,15 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   // ============= A안: 가로 2페이지 (1일 2페이지, 2-A 디자인) =============
   const renderDailyLandscape = (day: any, dayIdx: number) => {
     const verses = parseBibleVerses(day.passage || '')
-    const firstSentence = (verses.korVerse || '').split(/[.!?。!?]/)[0]?.trim() || ''
+    const firstSentence = (() => {
+      if (day.passageOverview) {
+        const line = day.passageOverview.split('\n').filter(l => l.trim())[0]?.trim() || ''
+        return line.length > 120 ? line.slice(0, 120).replace(/\s+\S*$/, '') + '…' : line
+      }
+      if (selectedInfo?.coreMessage) return selectedInfo.coreMessage
+      const first = (verses.korVerse || '').split(/[.!?。!?]/)[0]?.trim() || ''
+      return first.length > 100 ? first.slice(0, 100).replace(/\s+\S*$/, '') + '…' : first
+    })()
     // Page 1 = cover (1) + dayIdx*3 + 1, Page 2 = +2, Page 3 = +3 (optional)
     pageCounter = 2 + dayIdx * 3
 
@@ -1041,7 +1049,15 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   // ============= A안: 세로 2면 (1일 2페이지, 2-A 디자인 유지) =============
   const renderDailyPortrait = (day: any, dayIdx: number) => {
     const verses = parseBibleVerses(day.passage || '')
-    const firstSentence = (verses.korVerse || '').split(/[.!?。!?]/)[0]?.trim() || ''
+    const firstSentence = (() => {
+      if (day.passageOverview) {
+        const line = day.passageOverview.split('\n').filter(l => l.trim())[0]?.trim() || ''
+        return line.length > 120 ? line.slice(0, 120).replace(/\s+\S*$/, '') + '…' : line
+      }
+      if (selectedInfo?.coreMessage) return selectedInfo.coreMessage
+      const first = (verses.korVerse || '').split(/[.!?。!?]/)[0]?.trim() || ''
+      return first.length > 100 ? first.slice(0, 100).replace(/\s+\S*$/, '') + '…' : first
+    })()
     pageCounter = 1 + dayIdx * 3 + 1
 
     // Overflow detection (shared with landscape)
