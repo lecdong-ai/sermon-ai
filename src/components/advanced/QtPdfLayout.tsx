@@ -284,7 +284,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const pageNumber = (num: number, total: number) => (
     <div style={{
       position: 'absolute',
-      bottom: `${mmToPx(4)}px`,
+      bottom: `${mmToPx(2)}px`,
       right: `${mmToPx(10)}px`,
       fontSize: `${8 * scale}px`,
       color: t.pageNumberColor,
@@ -1604,7 +1604,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {day.leaderGuide && (
             <div style={{
               position: 'absolute',
-              bottom: `${mmToPx(24)}px`,
+              bottom: `${mmToPx(14)}px`,
               left: 0,
               right: 0,
             }}>
