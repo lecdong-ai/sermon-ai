@@ -1420,7 +1420,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 관찰하기 (full) */}
           {day.observation && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('본문 관찰하기')}
               {bodyText(reflectP('observation'), 11.5)}
             </div>
@@ -1428,7 +1428,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 말씀 이해하기 */}
           {day.understanding && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('말씀 이해하기')}
               {bodyText(reflectP('understanding'), 11)}
             </div>
@@ -1437,7 +1437,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 복음으로 보기 (full) */}
           {day.gospel && (
             <div style={{
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${5 * scale}px`,
               padding: `${3 * scale}px ${6 * scale}px`,
               background: `${t.accent}0D`,
               borderTop: `0.5px solid ${t.borderLight}`,
@@ -1460,7 +1460,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 나를 비추어 보기 */}
           {day.reflection && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('나를 비추어 보기')}
               {bodyText(reflectP('reflection'), 11)}
             </div>
@@ -1468,7 +1468,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 적용 (full) */}
           {day.application && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('오늘의 적용')}
               {bodyText(filterAudienceContent(reflectP('application'), audienceLevel), 11.5)}
             </div>
@@ -1477,7 +1477,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 공동체 연결 (compact line) */}
           {day.community && (
             <div style={{
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${5 * scale}px`,
               display: 'flex', alignItems: 'baseline', gap: `${4 * scale}px`,
               padding: `${2 * scale}px ${5 * scale}px`,
               background: t.accentLight,
@@ -1507,7 +1507,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 단어 묵상 */}
           {(day.originalWords || day.englishWords) && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('단어 묵상')}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${5 * scale}px` }}>
                 {day.originalWords && (
@@ -1548,7 +1548,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 오늘의 기도 */}
           {day.prayer && (
-            <div style={{ marginBottom: `${2 * scale}px` }}>
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('오늘의 기도')}
               <div style={{
                 padding: `${4 * scale}px ${5 * scale}px`,
@@ -1566,7 +1566,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           )}
 
           {/* 오늘 내 마음에 남은 한 문장 */}
-          <div style={{ marginBottom: `${2 * scale}px` }}>
+          <div style={{ marginBottom: `${5 * scale}px` }}>
             <div style={{
               fontFamily: t.fontHeading,
               fontSize: `${8.5 * scale}px`,
@@ -1602,10 +1602,15 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 인도자 해설 */}
           {day.leaderGuide && (
-            <div>
+            <div style={{
+              position: 'absolute',
+              bottom: `${mmToPx(24)}px`,
+              left: 0,
+              right: 0,
+            }}>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${8 * scale}px`,
+                fontSize: `${10 * scale}px`,
                 fontWeight: 700,
                 color: t.textMuted,
                 letterSpacing: `${1.5 * scale}px`,
@@ -1616,7 +1621,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
               <div style={{
                 fontFamily: t.font,
-                fontSize: `${9.5 * scale}px`,
+                fontSize: `${11.5 * scale}px`,
                 lineHeight: '1.5',
                 color: t.textMuted,
               }}>
