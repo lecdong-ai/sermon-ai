@@ -303,7 +303,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     observation: 700, understanding: 500, gospel: 250,
     application: 300, reflection: 250, community: 150,
     originalWords: 200, englishWords: 200,
-    englishVerse: 180, leaderGuide: 200, prayer: 350,
+    englishVerse: 600, leaderGuide: 200, prayer: 350,
   }
   const trunc = (text: string, key: string): string => {
     if (!text) return ''
@@ -515,9 +515,6 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         fontSize: `${9.5 * scale}px`,
                         fontWeight: 700,
                         color: t.textColor,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                       }}>
                         {passageShort}
                       </div>
@@ -528,9 +525,6 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       fontWeight: 700,
                       color: t.textColor,
                       lineHeight: '1.2',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
                     }}>
                       {d.title || `Day ${i + 1}`}
                     </div>
@@ -675,7 +669,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               textTransform: 'uppercase',
               marginBottom: `${1 * scale}px`,
             }}>
-              영어로 붇는 말씀
+              영어로 붙드는 말씀
             </div>
             <div style={{
               fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -683,10 +677,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               lineHeight: '1.45',
               color: t.bibleQuoteText,
               fontStyle: 'italic',
-              maxHeight: `${45 * scale}px`,
-              overflow: 'hidden',
             }}>
-              {reflect('englishVerse').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
+              {reflect('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
             </div>
           </div>
         )}
@@ -1182,38 +1174,36 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     background: isCurrent ? `${t.accent}1A` : 'transparent',
                     color: t.textColor,
                     borderTop: `0.5px solid ${t.borderLight}`,
-                    minHeight: `${75 * scale}px`,
-                    gap: `${0.5 * scale}px`,
+                    minHeight: `${85 * scale}px`,
+                    gap: `${1 * scale}px`,
                   }}>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${8.5 * scale}px`,
+                      fontSize: `${11 * scale}px`,
                       fontWeight: 800,
                       color: isCurrent ? t.accent : t.accent,
                       letterSpacing: `${0.3 * scale}px`,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
                       <span>{weekdays[i]?.label?.split('(')[0] || `Day ${i + 1}`}</span>
-                      {isCurrent && <span style={{ fontSize: `${8 * scale}px`, color: t.accent }}>★</span>}
+                      {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
                       <div style={{
                         fontFamily: t.fontHeading,
-                        fontSize: `${8 * scale}px`,
+                        fontSize: `${10 * scale}px`,
                         fontWeight: 700,
                         color: t.textColor,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}>
                         {passageShort}
                       </div>
                     )}
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${8 * scale}px`,
+                      fontSize: `${10 * scale}px`,
                       fontWeight: 600,
                       color: t.textMuted,
                       lineHeight: '1.1',
-                      overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                     }}>
                       {d.title || `Day ${i + 1}`}
                     </div>
@@ -1341,7 +1331,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 textTransform: 'uppercase',
                 marginBottom: `${1 * scale}px`,
               }}>
-                영어로 붇는 말씀
+                영어로 붙드는 말씀
               </div>
               <div style={{
                 fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -1349,10 +1339,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 lineHeight: '1.5',
                 color: t.bibleQuoteText,
                 fontStyle: 'italic',
-                maxHeight: `${50 * scale}px`,
-                overflow: 'hidden',
               }}>
-                {reflectP('englishVerse').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
+                {reflectP('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
               </div>
             </div>
           )}
