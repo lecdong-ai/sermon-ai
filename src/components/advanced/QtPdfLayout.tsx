@@ -1314,7 +1314,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
           {day.englishVerse && (
             <div style={{
-              marginBottom: `${4 * scale}px`,
+              marginBottom: `${7 * scale}px`,
               padding: `${4 * scale}px ${7 * scale}px`,
               background: t.bibleQuoteBg,
               borderLeft: `${2 * scale}px solid ${t.bibleQuoteBorder}`,
@@ -1347,7 +1347,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
           {/* 본문 한눈에 */}
           {day.passageOverview && (
-            <div>
+            <div style={{ marginBottom: `${4 * scale}px` }}>
               {sectionLabel('본문 한눈에 보기')}
               {bodyText(
                 day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
