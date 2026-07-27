@@ -302,7 +302,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     passageOverview: 250, slowReading: 350,
     observation: 700, understanding: 500, gospel: 1000,
     application: 300, reflection: 250, community: 150,
-    originalWords: 200, englishWords: 200,
+    originalWords: 800, englishWords: 800,
     englishVerse: 600, leaderGuide: 200, prayer: 350,
   }
   const trunc = (text: string, key: string): string => {
