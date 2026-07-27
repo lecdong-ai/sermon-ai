@@ -447,14 +447,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           borderBottom: `0.5px solid ${t.borderLight}`,
         }}>
           <div style={{
-            textAlign: 'center',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
             marginBottom: `${1.5 * scale}px`,
             paddingBottom: `${1 * scale}px`,
             borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
           }}>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${10.5 * scale}px`,
+              fontSize: `${14 * scale}px`,
               fontWeight: 800,
               color: t.accent,
               letterSpacing: `${2 * scale}px`,
@@ -464,11 +464,11 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${9 * scale}px`,
+              fontSize: `${11 * scale}px`,
               fontWeight: 500,
               color: t.textMuted,
               letterSpacing: `${0.5 * scale}px`,
-              marginTop: `${1.5 * scale}px`,
+              marginTop: `${1 * scale}px`,
             }}>
               {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
             </div>
@@ -494,53 +494,42 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 }}>
                   <div style={{
                     flex: 1,
-                    display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                    gap: `${0.5 * scale}px`,
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                    gap: `${1 * scale}px`,
                   }}>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${9.5 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 800,
                       color: isCurrent ? t.accent : t.accent,
                       letterSpacing: `${0.5 * scale}px`,
                       textTransform: 'uppercase',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${1 * scale}px`,
                     }}>
                       <span>{weekdays[i]?.label || `Day ${i + 1}`}</span>
-                      {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
+                      {isCurrent && <span style={{ fontSize: `${12 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
                       <div style={{
                         fontFamily: t.fontHeading,
-                        fontSize: `${9.5 * scale}px`,
+                        fontSize: `${12 * scale}px`,
                         fontWeight: 700,
                         color: t.textColor,
+                        textAlign: 'center',
                       }}>
                         {passageShort}
                       </div>
                     )}
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${9.5 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 700,
                       color: t.textColor,
                       lineHeight: '1.2',
+                      textAlign: 'center',
                     }}>
                       {d.title || `Day ${i + 1}`}
                     </div>
-                  </div>
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', gap: `${3 * scale}px`,
-                    paddingTop: `${2 * scale}px`,
-                    marginTop: `${1.5 * scale}px`,
-                    borderTop: `0.5px solid ${t.borderLight}`,
-                  }}>
-                    {[1].map(line => (
-                      <div key={line} style={{
-                        borderBottom: `0.5px solid ${t.borderLight}`,
-                        height: `${10 * scale}px`,
-                      }} />
-                    ))}
                   </div>
                 </div>
               )
