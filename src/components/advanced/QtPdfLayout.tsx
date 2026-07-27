@@ -439,7 +439,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
         <div style={{
           marginBottom: `${2 * scale}px`,
-          padding: `${3 * scale}px ${4 * scale}px`,
+          padding: `${2 * scale}px ${4 * scale}px`,
           background: t.accentLight,
           borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
           borderTop: `0.5px solid ${t.borderLight}`,
@@ -448,7 +448,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         }}>
           <div style={{
             display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-            marginBottom: `${1.5 * scale}px`,
+            marginBottom: `${1 * scale}px`,
             paddingBottom: `${1 * scale}px`,
             borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
           }}>
@@ -486,11 +486,11 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               return (
                 <div key={i} style={{
                   display: 'flex', flexDirection: 'column',
-                  padding: `${2 * scale}px ${1.5 * scale}px`,
+                  padding: `${1.5 * scale}px ${1.5 * scale}px`,
                   background: isCurrent ? `${t.accent}1A` : 'transparent',
                   color: t.textColor,
                   borderTop: `0.5px solid ${t.borderLight}`,
-                  minHeight: `${90 * scale}px`,
+                  minHeight: `${70 * scale}px`,
                 }}>
                   <div style={{
                     flex: 1,
