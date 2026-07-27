@@ -300,7 +300,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   // 글자수 기반 overflow 감지 (landscape / portrait 공유)
   const maxChars: Record<string, number> = {
     passageOverview: 250, slowReading: 350,
-    observation: 700, understanding: 500, gospel: 250,
+    observation: 700, understanding: 500, gospel: 1000,
     application: 300, reflection: 250, community: 150,
     originalWords: 200, englishWords: 200,
     englishVerse: 600, leaderGuide: 200, prayer: 350,
