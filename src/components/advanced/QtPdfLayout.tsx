@@ -1141,14 +1141,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             borderBottom: `0.5px solid ${t.borderLight}`,
           }}>
             <div style={{
-              textAlign: 'center',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               marginBottom: `${1 * scale}px`,
               paddingBottom: `${1 * scale}px`,
               borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
             }}>
               <span style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${10.5 * scale}px`,
+                fontSize: `${14 * scale}px`,
                 fontWeight: 800,
                 color: t.accent,
                 letterSpacing: `${1.5 * scale}px`,
@@ -1158,10 +1158,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </span>
               <span style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${7.5 * scale}px`,
+                fontSize: `${9 * scale}px`,
                 fontWeight: 500,
                 color: t.textMuted,
-                marginLeft: `${4 * scale}px`,
+                marginTop: `${1 * scale}px`,
               }}>
                 {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
               </span>
