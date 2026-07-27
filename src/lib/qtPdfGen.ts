@@ -116,7 +116,7 @@ export async function generateQtPdf(
       // html-to-image 가 CSS padding 을 캡처하지 못하므로,
       // PDF addImage 좌표로 여백 구현 (상단 5mm, 좌/우/아래 14mm)
       const marginSide = 14
-      const marginTop = 5
+      const marginTop = 0
       const drawW = widthMm - marginSide * 2
       const drawH = heightMm - marginTop - marginSide
       const drawX = marginSide
