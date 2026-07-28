@@ -10,6 +10,7 @@ import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
+import { saveWeeklyToMonthly, getMonthlyWeeks, clearMonthlyWeeks, getMonthlyWeekCount, combineMonthlyManuscript, combineMonthlyUserMemos, combineMonthlyCalendarStrip, totalDaysInWeeks } from '@/lib/monthlyQtStorage'
 
 export interface QtSelectedInfo {
   book: string
@@ -31,6 +32,7 @@ interface QtReaderProps {
 }
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, onBack }: QtReaderProps) {
+  const generationKey = form.audience || 'default'
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
@@ -39,7 +41,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const [audienceLevel, setAudienceLevel] = useState<'adult' | 'youth'>('adult')
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
-      const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}`)
+      const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
       return saved ? JSON.parse(saved) : {}
     } catch {
       return {}
@@ -47,14 +49,22 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   })
   const [pdfLoading, setPdfLoading] = useState(false)
   const [dayPdfLoading, setDayPdfLoading] = useState<number | null>(null)
+  const [monthlyLoading, setMonthlyLoading] = useState(false)
+  const [monthlyCount, setMonthlyCount] = useState(getMonthlyWeekCount(generationKey))
+  const [monthlyData, setMonthlyData] = useState<{
+    manuscript: string
+    memos: Record<number, string>
+    strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] } | undefined
+  } | null>(null)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
+  const monthlyPdfLayoutRef = useRef<HTMLDivElement>(null)
 
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
 
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
   const monthCalendarStrip = useMemo(() => {
     if (!form.startDate) return undefined
-    const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+    const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
     if (!allowedSizes.has(sizeOption)) return undefined
     const parts = form.startDate.split('-')
     if (parts.length !== 3) return undefined
@@ -156,7 +166,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     const next = { ...userMemos, [dayIndex]: val }
     setUserMemos(next)
     try {
-      localStorage.setItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}`, JSON.stringify(next))
+      localStorage.setItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`, JSON.stringify(next))
     } catch (e) {
       console.error(e)
     }
@@ -193,6 +203,46 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       alert(`PDF 생성 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`)
     }
     setDayPdfLoading(null)
+  }
+
+  const handleMonthlyAdd = () => {
+    saveWeeklyToMonthly({
+      accumulatedManuscript,
+      form,
+      userMemos,
+      startPassage,
+      endPassage,
+      daySectionTitles,
+    }, generationKey)
+    setMonthlyCount(getMonthlyWeekCount(generationKey))
+  }
+
+  const handleMonthlyComplete = async () => {
+    const weeks = getMonthlyWeeks(generationKey)
+    if (weeks.length < 2) {
+      alert('최소 2주 이상의 데이터가 필요합니다.')
+      return
+    }
+    setMonthlyLoading(true)
+    const combinedManuscript = combineMonthlyManuscript(weeks)
+    const combinedMemos = combineMonthlyUserMemos(weeks)
+    const combinedStrip = combineMonthlyCalendarStrip(weeks)
+    setMonthlyData({ manuscript: combinedManuscript, memos: combinedMemos, strip: combinedStrip })
+    await new Promise(r => setTimeout(r, 800))
+    try {
+      if (monthlyPdfLayoutRef.current) {
+        const combinedForm = { ...weeks[0].form }
+        const result = { fullManuscript: combinedManuscript, daySectionTitles: undefined }
+        await generateQtPdf(monthlyPdfLayoutRef.current, combinedForm, result, sizeOption, activeTmpl.id, undefined, combinedStrip || undefined)
+      }
+      clearMonthlyWeeks(generationKey)
+      setMonthlyCount(0)
+      setMonthlyData(null)
+    } catch (e: any) {
+      console.error('Monthly PDF generation error:', e)
+      alert(`월간 PDF 생성 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`)
+    }
+    setMonthlyLoading(false)
   }
 
 return (
@@ -295,6 +345,40 @@ return (
           <span className="text-[11px] text-slate-500 font-medium">
             {selectedInfo?.isRecommended ? '✨ AI 추천 일일 큐티' : `${form.bibleBook} · ${form.weekNumber}주차`}
           </span>
+          {/* 월간 PDF */}
+          <div className="flex items-center gap-1.5">
+            {monthlyCount > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                {monthlyCount}주
+              </span>
+            )}
+            <button
+              onClick={handleMonthlyAdd}
+              disabled={days.length === 0}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30"
+              title="이번 주 QT를 월간 PDF에 추가합니다"
+            >
+              📅 월간 추가
+            </button>
+            {monthlyCount >= 2 && (
+              <button
+                onClick={handleMonthlyComplete}
+                disabled={monthlyLoading}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold transition-all disabled:opacity-40"
+              >
+                {monthlyLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '📖 월간 PDF 완성'}
+              </button>
+            )}
+            {monthlyCount > 0 && (
+              <button
+                onClick={() => { clearMonthlyWeeks(generationKey); setMonthlyCount(0) }}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-500 hover:text-red-400 transition-all"
+                title="초기화"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <button
             onClick={handlePdfDownload}
             disabled={pdfLoading || days.length === 0}
@@ -517,6 +601,26 @@ return (
           monthCalendarStrip={monthCalendarStrip}
         />
       </div>
+
+      {/* Hidden monthly PDF layout — 누적된 주간 데이터로 월간 PDF 생성 */}
+      {monthlyData && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1, opacity: 1 }}>
+          <QtPdfLayout
+            ref={monthlyPdfLayoutRef}
+            form={form}
+            result={{ fullManuscript: monthlyData.manuscript }}
+            sizeOption={sizeOption}
+            templateId={activeTmpl.id}
+            startPassage={startPassage}
+            endPassage={endPassage}
+            userMemos={monthlyData.memos}
+            isBilingualSideBySide={isBilingualSideBySide}
+            audienceLevel={audienceLevel}
+            selectedInfo={selectedInfo}
+            monthCalendarStrip={monthlyData.strip}
+          />
+        </div>
+      )}
     </div>
   )
 }

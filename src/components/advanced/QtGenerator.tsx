@@ -269,7 +269,7 @@ export default function QtGenerator() {
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet 일일 페이지에서 표시)
   const monthCalendarStrip = useMemo(() => {
     if (!normalizedStartDate) return undefined
-    const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+    const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
     if (!allowedSizes.has(form.sizeOption || 'A4Landscape')) return undefined
 
     const parts = normalizedStartDate.split('-')
@@ -1550,6 +1550,7 @@ export default function QtGenerator() {
           </div>
         )}
         <QtReader
+          key={activeGeneration}
           form={form}
           accumulatedManuscript={finalManuscript}
           templateId={form.designTemplate}

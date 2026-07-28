@@ -163,7 +163,7 @@ function addCalendarLinks(
   _globalPageIdx: number,
 ) {
   // 화이트리스트 사이즈만
-  const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'Tablet (iPad 4:3)'])
+  const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
   // (sizeOption은 generateQtPdf에 있으므로 여기선 직접 확인 불가 — strip 정보가 있다는 것은 caller가 검증한 것)
   void allowedSizes
 
