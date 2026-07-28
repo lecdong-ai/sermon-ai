@@ -656,6 +656,23 @@ export default function QtGenerator() {
         setActiveGeneration(firstGen)
         updateForm({ audience: firstGen })
       }
+
+      // ★ 성경 66권 순서: 초안 작성 완료 후 다음 권 자동 진행
+      if (form.bibleBook) {
+        const lastDay = splitDays[splitDays.length - 1]
+        if (lastDay?.passage && !isLastBookInOrder(form.bibleBook)) {
+          const nextBook = getNextBookInOrder(form.bibleBook)
+          if (nextBook) {
+            const nextStartPassage = getNextStartPassage(lastDay.passage, nextBook)
+            updateForm({
+              bibleBook: nextBook,
+              bible_book: nextBook,
+              startPassage: nextStartPassage,
+            })
+            console.log(`[QT] 66권 순서: ${form.bibleBook} 완료 → ${nextBook} (${nextStartPassage}) 자동 진행`)
+          }
+        }
+      }
     } catch (e: any) {
       setError(e.message || '일괄 생성 중 오류 발생')
     } finally {
@@ -1068,26 +1085,7 @@ export default function QtGenerator() {
         setActiveDay(firstDay)
       }
 
-      // ★ 성경 66권 순서: 분할 완료 후 다음 권 자동 진행
-      // 단, 사용자가 "다른 성경책으로 자동 확장"을 눌러서 강제 진행한 경우는
-      // 이미 extendingPoolRef로 풀 체크 무시 + 다음 책 진행한 결과이므로
-      // 추가 자동 진행은 하지 않음
-      if (!extendingPoolRef.current && form.bibleBook) {
-        const lastDay = finalParsed[finalParsed.length - 1]
-        if (lastDay?.passage && !isLastBookInOrder(form.bibleBook)) {
-          const nextBook = getNextBookInOrder(form.bibleBook)
-          if (nextBook) {
-            // 다음 권으로 form 업데이트
-            const nextStartPassage = getNextStartPassage(lastDay.passage, nextBook)
-            updateForm({
-              bibleBook: nextBook,
-              bible_book: nextBook,
-              startPassage: nextStartPassage,
-            })
-            console.log(`[QT] 66권 순서: ${form.bibleBook} 완료 → ${nextBook} (${nextStartPassage}) 자동 진행`)
-          }
-        }
-      }
+      // (자동 진행은 분할 직후가 아닌, 초안 작성 완료 후 handleBatchDraft에서 처리)
     } catch (e: any) {
       if (e?.code === 'POOL_INSUFFICIENT') {
         setPoolError(e)
@@ -1112,10 +1110,8 @@ export default function QtGenerator() {
     '## 영어 핵심단어',
     '## 말씀 이해하기',
     '## 복음으로 보기',
-    '## 나를 비추어 보기 (장년용)',
-    '## 나를 비추어 보기 (청소년 및 새신자용)',
-    '## 오늘의 적용 (장년용)',
-    '## 오늘의 적용 (청소년 및 새신자용)',
+    '## 나를 비추어 보기',
+    '## 오늘의 적용',
     '## 영어로 붙드는 말씀',
     '## 공동체 연결',
     '## 오늘의 기도',

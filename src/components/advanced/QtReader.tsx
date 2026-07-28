@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Download, Edit3, Loader2, Sparkles, X } from 'lucide-react'
 import QtDayCard from './QtDayCard'
-import QtPdfLayout from './QtPdfLayout'
+import QtPdfLayout, { type LayoutSettings } from './QtPdfLayout'
 import { parseDays } from '@/lib/qtDayParser'
 import { getTemplate, QT_TEMPLATES } from '@/lib/qtTemplates'
 import { generateQtPdf } from '@/lib/qtPdfGen'
@@ -38,7 +38,6 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
-  const [audienceLevel, setAudienceLevel] = useState<string>(form.audience || '장년부')
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
       const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
@@ -56,8 +55,42 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     memos: Record<number, string>
     strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] } | undefined
   } | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(() => {
+    try {
+      const saved = localStorage.getItem(`qt_layout_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return { lineSpacing: '1.5', fontSize: 'medium', fontFamily: 'gothic', margin: 'normal', hiddenSections: [] }
+  })
+  const [editedContent, setEditedContent] = useState<Record<number, Record<string, string>>>(() => {
+    try {
+      const saved = localStorage.getItem(`qt_edits_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {}
+  })
+  const [showLayoutSettings, setShowLayoutSettings] = useState(false)
   const pdfLayoutRef = useRef<HTMLDivElement>(null)
   const monthlyPdfLayoutRef = useRef<HTMLDivElement>(null)
+
+  const updateLayoutSettings = (updates: Partial<LayoutSettings>) => {
+    setLayoutSettings(prev => {
+      const next = { ...prev, ...updates }
+      try { localStorage.setItem(`qt_layout_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  const handleSectionEdit = (dayIdx: number, sectionKey: string, value: string) => {
+    setEditedContent(prev => {
+      const next = { ...prev }
+      if (!next[dayIdx]) next[dayIdx] = {}
+      next[dayIdx] = { ...next[dayIdx], [sectionKey]: value }
+      try { localStorage.setItem(`qt_edits_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
 
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
 
@@ -307,22 +340,7 @@ return (
           >
             🌐 한영대조
           </button>
-          {/* 세대별 보기 토글 */}
-          <div className="flex items-center border border-white/10 rounded-lg overflow-hidden">
-            {['초등부', '중고등부', '청년부', '장년부'].map(gen => (
-              <button
-                key={gen}
-                onClick={() => setAudienceLevel(gen)}
-                className={`px-2 py-1.5 text-[10px] font-bold transition-all ${
-                  audienceLevel === gen
-                    ? 'bg-indigo-600/20 text-indigo-300'
-                    : 'bg-white/5 text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                {gen}
-              </button>
-            ))}
-          </div>
+
           {/* 에코 모드 스위치 */}
           <button
             onClick={() => setIsEcoPrint(!isEcoPrint)}
@@ -334,6 +352,30 @@ return (
             title="잉크 절약을 위해 배경색을 화이트로 출력합니다."
           >
             🌱 에코
+          </button>
+          {/* 편집 모드 토글 */}
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+              isEditing
+                ? 'bg-amber-600/20 border-amber-500/50 text-amber-300'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="각 섹션의 내용을 직접 수정합니다. PDF에도 수정된 내용이 반영됩니다."
+          >
+            ✏️ 편집
+          </button>
+          {/* 레이아웃 설정 */}
+          <button
+            onClick={() => setShowLayoutSettings(!showLayoutSettings)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+              showLayoutSettings
+                ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="글자 크기, 줄간격, 폰트, 여백, 섹션 표시 설정"
+          >
+            ⚙️ 레이아웃
           </button>
           <span className="text-[11px] text-slate-500 font-medium">
             {selectedInfo?.isRecommended ? '✨ AI 추천 일일 큐티' : `${form.bibleBook} · ${form.weekNumber}주차`}
@@ -382,6 +424,87 @@ return (
           </button>
         </div>
       </div>
+
+      {/* 레이아웃 설정 드로어 */}
+      {showLayoutSettings && (
+        <div className="border-b border-white/5 bg-[#0a0e1a] px-6 py-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[11px]">
+            {/* 줄간격 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 font-medium">줄간격</span>
+              {['1.3', '1.5', '1.8', '2.0'].map(v => (
+                <button key={v} onClick={() => updateLayoutSettings({ lineSpacing: v })}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+                    layoutSettings.lineSpacing === v
+                      ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}>{v}</button>
+              ))}
+            </div>
+            {/* 글자크기 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 font-medium">글자크기</span>
+              {[{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
+                <button key={v} onClick={() => updateLayoutSettings({ fontSize: v })}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+                    layoutSettings.fontSize === v
+                      ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}>{k}</button>
+              ))}
+            </div>
+            {/* 폰트 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 font-medium">폰트</span>
+              {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'영문',v:'english'}].map(({k,v}) => (
+                <button key={v} onClick={() => updateLayoutSettings({ fontFamily: v })}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+                    layoutSettings.fontFamily === v
+                      ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}>{k}</button>
+              ))}
+            </div>
+            {/* 여백 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500 font-medium">여백</span>
+              {[{k:'좁게',v:'narrow'},{k:'보통',v:'normal'},{k:'넓게',v:'wide'}].map(({k,v}) => (
+                <button key={v} onClick={() => updateLayoutSettings({ margin: v })}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+                    layoutSettings.margin === v
+                      ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}>{k}</button>
+              ))}
+            </div>
+            {/* 섹션 표시 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500 font-medium">섹션</span>
+              {[
+                {k:'한눈에',v:'passageOverview'},{k:'천천히',v:'slowReading'},{k:'관찰',v:'observation'},
+                {k:'원어',v:'originalWords'},{k:'영단어',v:'englishWords'},{k:'이해',v:'understanding'},
+                {k:'복음',v:'gospel'},{k:'비추기',v:'reflection'},{k:'적용',v:'application'},
+                {k:'영어말씀',v:'englishVerse'},{k:'공동체',v:'community'},{k:'기도',v:'prayer'},
+              ].map(({k,v}) => {
+                const isHidden = layoutSettings.hiddenSections.includes(v)
+                return (
+                  <button key={v} onClick={() => {
+                    const next = isHidden
+                      ? layoutSettings.hiddenSections.filter(x => x !== v)
+                      : [...layoutSettings.hiddenSections, v]
+                    updateLayoutSettings({ hiddenSections: next })
+                  }}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
+                      isHidden
+                        ? 'bg-white/5 border-white/10 text-slate-600 line-through'
+                        : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-300'
+                    }`}>{k}</button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 인터랙티브 캘린더 스트립 (웹 전용) */}
       {monthCalendarStrip && (
@@ -534,7 +657,10 @@ return (
                   variant="pdf"
                   template={activeTmpl}
                   isBilingualSideBySide={isBilingualSideBySide}
-                  audienceLevel={audienceLevel}
+                  editMode={isEditing}
+                  edits={editedContent[dayIndex] || {}}
+                  onSectionEdit={(sectionKey, value) => handleSectionEdit(dayIndex, sectionKey, value)}
+                  hiddenSections={layoutSettings.hiddenSections}
                 />
               </div>
             </div>
@@ -588,10 +714,11 @@ return (
           endPassage={endPassage}
           userMemos={userMemos}
           isBilingualSideBySide={isBilingualSideBySide}
-          audienceLevel={audienceLevel}
           selectedInfo={selectedInfo}
           daySectionTitles={daySectionTitles}
           monthCalendarStrip={monthCalendarStrip}
+          layoutSettings={layoutSettings}
+          editedContent={editedContent}
         />
       </div>
 
@@ -608,9 +735,9 @@ return (
             endPassage={endPassage}
             userMemos={monthlyData.memos}
             isBilingualSideBySide={isBilingualSideBySide}
-            audienceLevel={audienceLevel}
             selectedInfo={selectedInfo}
             monthCalendarStrip={monthlyData.strip}
+            layoutSettings={layoutSettings}
           />
         </div>
       )}

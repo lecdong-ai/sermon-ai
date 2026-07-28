@@ -18,25 +18,10 @@ interface QtDayCardProps {
   template?: QtTemplate
   studyRef?: StudyRef
   isBilingualSideBySide?: boolean
-  audienceLevel?: string
-}
-
-// 회중별 묵상 필터링 헬퍼
-function filterAudienceContent(rawText: string, level: string): string {
-  if (!rawText) return ''
-  const markers = ['초등부용', '중고등부용', '청년부용', '장년부용']
-  if (!markers.some(m => rawText.includes(m))) return rawText
-  const lines = rawText.split('\n')
-  let currentGen = ''
-  const genContent: Record<string, string[]> = { '초등부용': [], '중고등부용': [], '청년부용': [], '장년부용': [] }
-  for (const line of lines) {
-    const trimmed = line.trim()
-    const found = markers.find(m => trimmed.includes(m))
-    if (found) { currentGen = found; continue }
-    if (currentGen && genContent[currentGen]) genContent[currentGen].push(line)
-  }
-  const target = markers.find(m => level.includes(m.replace('용', ''))) || '장년부용'
-  return (genContent[target] || []).join('\n').trim()
+  editMode?: boolean
+  edits?: Record<string, string>
+  onSectionEdit?: (sectionKey: string, value: string) => void
+  hiddenSections?: string[]
 }
 
 // 한영 본문 분리 헬퍼
@@ -67,13 +52,19 @@ export default function QtDayCard({
   template, 
   studyRef,
   isBilingualSideBySide = false,
-  audienceLevel = 'adult'
+  editMode = false,
+  edits = {},
+  onSectionEdit,
+  hiddenSections = [],
 }: QtDayCardProps) {
   const isPdf = variant === 'pdf'
   const t = template
+  const hiddenSet = new Set(hiddenSections)
 
-  const section = (label: string, content: string, style: 'default' | 'box' | 'prayer' | 'accent' | 'question' = 'default') => {
-    if (!content) return null
+  const section = (label: string, content: string, style: 'default' | 'box' | 'prayer' | 'accent' | 'question' = 'default', sectionKey?: string) => {
+    if (sectionKey && hiddenSet.has(sectionKey)) return null
+    const displayContent = (sectionKey && edits[sectionKey] !== undefined) ? edits[sectionKey] : content
+    if (!editMode && !displayContent) return null
 
     const labelEl = isPdf ? (
       <div style={{ fontFamily: t!.fontHeading, fontSize: '10.5px', fontWeight: 600, color: t!.accent, letterSpacing: '2.5px', marginTop: '18px', marginBottom: '8px', paddingBottom: '4px', borderBottom: `1px solid ${t!.sectionLabelBorder}`, textTransform: 'uppercase' as const }}>
@@ -84,6 +75,20 @@ export default function QtDayCard({
         {label}
       </div>
     )
+
+    if (editMode && sectionKey) {
+      return (
+        <div>
+          {labelEl}
+          <textarea
+            value={displayContent}
+            onChange={e => onSectionEdit?.(sectionKey, e.target.value)}
+            rows={Math.max(3, displayContent.split('\n').length)}
+            className="w-full bg-slate-950/80 border border-white/10 rounded-xl p-3 text-[12px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all resize-none font-sans"
+          />
+        </div>
+      )
+    }
 
     const contentEl = (() => {
       if (style === 'box') {
@@ -215,10 +220,6 @@ export default function QtDayCard({
     )
   }
 
-  // 회중 필터 적용
-  const filteredReflection = filterAudienceContent(day.reflection, audienceLevel)
-  const filteredApplication = filterAudienceContent(day.application, audienceLevel)
-
   const mainContent = (
     <>
       <div className={isPdf ? '' : 'flex items-center gap-2 mb-3 font-sans'}>
@@ -244,21 +245,21 @@ export default function QtDayCard({
       )}
 
       {renderPassage()}
-      {section('본문 한눈에 보기', day.passageOverview)}
-      {section('천천히 읽기', day.slowReading)}
-      {section('본문 관찰하기', day.observation, 'question')}
-      {section('원어 핵심단어', day.originalWords, 'box')}
-      {section('영어 핵심단어', day.englishWords, 'box')}
-      {section('말씀 이해하기', day.understanding)}
-      {section('복음으로 보기', day.gospel, 'accent')}
-      {section('나를 비추어 보기', filteredReflection, 'question')}
-      {section('오늘의 적용', filteredApplication, 'accent')}
-      {section('영어로 붙드는 말씀', day.englishVerse, 'box')}
-      {section('공동체 연결', day.community)}
-      {section('오늘의 기도', day.prayer, 'prayer')}
-      {section('한 줄 기록', day.oneLine)}
-      {section('인도자용 해설', day.leaderGuide, 'prayer')}
-      {section('', day.extras)}
+      {section('본문 한눈에 보기', day.passageOverview, 'default', 'passageOverview')}
+      {section('천천히 읽기', day.slowReading, 'default', 'slowReading')}
+      {section('본문 관찰하기', day.observation, 'question', 'observation')}
+      {section('원어 핵심단어', day.originalWords, 'box', 'originalWords')}
+      {section('영어 핵심단어', day.englishWords, 'box', 'englishWords')}
+      {section('말씀 이해하기', day.understanding, 'default', 'understanding')}
+      {section('복음으로 보기', day.gospel, 'accent', 'gospel')}
+      {section('나를 비추어 보기', day.reflection, 'question', 'reflection')}
+      {section('오늘의 적용', day.application, 'accent', 'application')}
+      {section('영어로 붙드는 말씀', day.englishVerse, 'box', 'englishVerse')}
+      {section('공동체 연결', day.community, 'default', 'community')}
+      {section('오늘의 기도', day.prayer, 'prayer', 'prayer')}
+      {section('한 줄 기록', day.oneLine, 'default', 'oneLine')}
+      {section('인도자용 해설', day.leaderGuide, 'prayer', 'leaderGuide')}
+      {section('', day.extras, 'default', 'extras')}
 
       {refSection()}
     </>
