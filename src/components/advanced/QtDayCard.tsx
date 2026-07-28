@@ -18,42 +18,25 @@ interface QtDayCardProps {
   template?: QtTemplate
   studyRef?: StudyRef
   isBilingualSideBySide?: boolean
-  audienceLevel?: 'adult' | 'youth'
+  audienceLevel?: string
 }
 
 // 회중별 묵상 필터링 헬퍼
-function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
+function filterAudienceContent(rawText: string, level: string): string {
   if (!rawText) return ''
+  const markers = ['초등부용', '중고등부용', '청년부용', '장년부용']
+  if (!markers.some(m => rawText.includes(m))) return rawText
   const lines = rawText.split('\n')
-  
-  // 텍스트 전체에 분할 키워드가 없으면 그냥 다 리턴
-  const lower = rawText.toLowerCase()
-  if (!lower.includes('장년') && !lower.includes('청소년') && !lower.includes('새신자')) {
-    return rawText
-  }
-  
-  let isAdultSection = true
-  let resultLines: string[] = []
-  
-  for (let line of lines) {
+  let currentGen = ''
+  const genContent: Record<string, string[]> = { '초등부용': [], '중고등부용': [], '청년부용': [], '장년부용': [] }
+  for (const line of lines) {
     const trimmed = line.trim()
-    if (trimmed.includes('장년용') || trimmed.includes('[장년용]') || trimmed.includes('장년') || (trimmed.startsWith('#') && trimmed.includes('장년'))) {
-      isAdultSection = true
-      continue
-    }
-    if (trimmed.includes('청소년') || trimmed.includes('새신자') || trimmed.includes('[청소년') || (trimmed.startsWith('#') && (trimmed.includes('청소년') || trimmed.includes('새신자')))) {
-      isAdultSection = false
-      continue
-    }
-    
-    if (level === 'adult' && isAdultSection) {
-      resultLines.push(line)
-    } else if (level === 'youth' && !isAdultSection) {
-      resultLines.push(line)
-    }
+    const found = markers.find(m => trimmed.includes(m))
+    if (found) { currentGen = found; continue }
+    if (currentGen && genContent[currentGen]) genContent[currentGen].push(line)
   }
-  
-  return resultLines.join('\n').trim()
+  const target = markers.find(m => level.includes(m.replace('용', ''))) || '장년부용'
+  return (genContent[target] || []).join('\n').trim()
 }
 
 // 한영 본문 분리 헬퍼

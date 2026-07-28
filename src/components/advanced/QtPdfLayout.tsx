@@ -24,7 +24,7 @@ interface QtPdfLayoutProps {
   endPassage?: string
   userMemos?: Record<number, string>
   isBilingualSideBySide?: boolean
-  audienceLevel?: 'adult' | 'youth'
+  audienceLevel?: string
   selectedInfo?: QtSelectedInfo | null
   daySectionTitles?: Record<number, string[]>
   monthCalendarStrip?: {
@@ -38,27 +38,21 @@ interface QtPdfLayoutProps {
 // 캘린더 스트립을 표시할 sizeOption 화이트리스트
 const STRIP_SIZE_OPTIONS = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
 
-function filterAudienceContent(rawText: string, level: 'adult' | 'youth'): string {
+function filterAudienceContent(rawText: string, level: string): string {
   if (!rawText) return ''
-  const lower = rawText.toLowerCase()
-  if (!lower.includes('장년') && !lower.includes('청소년') && !lower.includes('새신자')) return rawText
+  const markers = ['초등부용', '중고등부용', '청년부용', '장년부용']
+  if (!markers.some(m => rawText.includes(m))) return rawText
   const lines = rawText.split('\n')
-  let isAdultSection = true
-  const resultLines: string[] = []
+  let currentGen = ''
+  const genContent: Record<string, string[]> = { '초등부용': [], '중고등부용': [], '청년부용': [], '장년부용': [] }
   for (const line of lines) {
     const trimmed = line.trim()
-    if (trimmed.includes('장년용') || trimmed.includes('장년') || (trimmed.startsWith('#') && trimmed.includes('장년'))) {
-      isAdultSection = true
-      continue
-    }
-    if (trimmed.includes('청소년') || trimmed.includes('새신자') || (trimmed.startsWith('#') && (trimmed.includes('청소년') || trimmed.includes('새신자')))) {
-      isAdultSection = false
-      continue
-    }
-    if (level === 'adult' && isAdultSection) resultLines.push(line)
-    else if (level === 'youth' && !isAdultSection) resultLines.push(line)
+    const found = markers.find(m => trimmed.includes(m))
+    if (found) { currentGen = found; continue }
+    if (currentGen && genContent[currentGen]) genContent[currentGen].push(line)
   }
-  return resultLines.join('\n').trim()
+  const target = markers.find(m => level.includes(m.replace('용', ''))) || '장년부용'
+  return (genContent[target] || []).join('\n').trim()
 }
 
 function parseBibleVerses(passageText: string) {
@@ -792,7 +786,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {day.reflection && (
               <div>
                 {sectionLabel('나를 비추어 보기')}
-                {bodyText(reflect('reflection'), 12)}
+                {bodyText(filterAudienceContent(reflect('reflection'), audienceLevel), 12)}
               </div>
             )}
           </div>
@@ -1010,7 +1004,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
             <div>
               {sectionLabel('나를 비추어 보기 (이어서)')}
-              {bodyText((day as any).reflection!, 11)}
+              {bodyText(filterAudienceContent((day as any).reflection!, audienceLevel), 11)}
             </div>
           )}
 
@@ -1450,7 +1444,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {day.reflection && (
             <div style={{ marginBottom: `${5 * scale}px` }}>
               {sectionLabel('나를 비추어 보기')}
-              {bodyText(reflectP('reflection'), 12)}
+              {bodyText(filterAudienceContent(reflectP('reflection'), audienceLevel), 12)}
             </div>
           )}
 
@@ -1669,7 +1663,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
               <div>
                 {sectionLabel('나를 비추어 보기 (이어서)')}
-                {bodyText((day as any).reflection!, 11)}
+                {bodyText(filterAudienceContent((day as any).reflection!, audienceLevel), 11)}
               </div>
             )}
             {day.application && (day as any).application!.length > (maxChars.application || 300) * 0.85 && (

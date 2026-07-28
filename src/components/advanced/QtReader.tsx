@@ -38,7 +38,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
-  const [audienceLevel, setAudienceLevel] = useState<'adult' | 'youth'>('adult')
+  const [audienceLevel, setAudienceLevel] = useState<string>(form.audience || '장년부')
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
       const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
@@ -307,28 +307,21 @@ return (
           >
             🌐 한영대조
           </button>
-          {/* 회중 레벨 토글 */}
+          {/* 세대별 보기 토글 */}
           <div className="flex items-center border border-white/10 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setAudienceLevel('adult')}
-              className={`px-2.5 py-1.5 text-[10px] font-bold transition-all ${
-                audienceLevel === 'adult'
-                  ? 'bg-amber-600/20 text-amber-300'
-                  : 'bg-white/5 text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              👨‍🦳 장년
-            </button>
-            <button
-              onClick={() => setAudienceLevel('youth')}
-              className={`px-2.5 py-1.5 text-[10px] font-bold transition-all ${
-                audienceLevel === 'youth'
-                  ? 'bg-cyan-600/20 text-cyan-300'
-                  : 'bg-white/5 text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              👦 청소년
-            </button>
+            {['초등부', '중고등부', '청년부', '장년부'].map(gen => (
+              <button
+                key={gen}
+                onClick={() => setAudienceLevel(gen)}
+                className={`px-2 py-1.5 text-[10px] font-bold transition-all ${
+                  audienceLevel === gen
+                    ? 'bg-indigo-600/20 text-indigo-300'
+                    : 'bg-white/5 text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {gen}
+              </button>
+            ))}
           </div>
           {/* 에코 모드 스위치 */}
           <button

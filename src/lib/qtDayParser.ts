@@ -123,11 +123,15 @@ function parseSingleDay(lines: string[]): ParsedDay | null {
   for (const line of lines) {
     const section = detectSection(line)
     if (section) {
-      flush()
-      currentSection = section
-      sectionBuffer.length = 0
-      const afterHeader = line.replace(SECTION_HEADERS.find(s => s[1] === section)![0], '').trim()
-      if (afterHeader) sectionBuffer.push(afterHeader)
+      if (section === currentSection) {
+        sectionBuffer.push(line)
+      } else {
+        flush()
+        currentSection = section
+        sectionBuffer.length = 0
+        const afterHeader = line.replace(SECTION_HEADERS.find(s => s[1] === section)![0], '').trim()
+        if (afterHeader) sectionBuffer.push(afterHeader)
+      }
     } else if (currentSection) {
       sectionBuffer.push(line)
     } else {
