@@ -233,13 +233,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             return (
               <div
                 key={d}
+                data-day={d}
                 style={{
                   width: `${cardW}mm`,
                   height: `${cardH}mm`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: `${7 * scale}px`,
+                  fontSize: `${9 * scale}px`,
                   fontWeight: isActive ? 800 : 500,
                   color: isActive ? '#ffffff' : (isEmpty ? '#00000040' : '#000000'),
                   background: isActive ? '#000000' : 'transparent',

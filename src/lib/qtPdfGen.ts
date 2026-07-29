@@ -129,7 +129,7 @@ export async function generateQtPdf(
       // ★ 디지털 PDF 캘린더 링크 추가
       // 전체 PDF 생성 시 (dayIndex 미지정) + strip 정보가 있을 때만
       if (monthCalendarStrip && dayIndex === undefined && Object.keys(dayToPageMap).length > 0) {
-        addCalendarLinks(pdf, monthCalendarStrip, dayToPageMap, widthMm, heightMm, globalPageIdx)
+        addCalendarLinks(pdf, monthCalendarStrip, dayToPageMap, pageEl, drawX, drawY, drawW, drawH)
       }
     } catch (e: any) {
       console.warn(`[QtPdfGen] page ${i} failed:`, e?.message || e)
@@ -157,38 +157,35 @@ function addCalendarLinks(
   pdf: jsPDF,
   strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] },
   dayToPageMap: Record<number, number>,
-  widthMm: number,
-  heightMm: number,
-  // eslint-disable-next-line no-unused-vars
-  _globalPageIdx: number,
+  pageEl: HTMLElement,
+  drawX: number,
+  drawY: number,
+  drawW: number,
+  drawH: number,
 ) {
-  // 화이트리스트 사이즈만
-  const allowedSizes = new Set(['A4Landscape', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
-  // (sizeOption은 generateQtPdf에 있으므로 여기선 직접 확인 불가 — strip 정보가 있다는 것은 caller가 검증한 것)
-  void allowedSizes
+  const pageRect = pageEl.getBoundingClientRect()
+  const cards = pageEl.querySelectorAll<HTMLElement>('[data-day]')
 
-  // 캘린더 카드 영역 계산 (QtPdfLayout과 동일)
-  const labelWidth = 22
-  const sidePadding = 10
-  const cardGap = 0.5
-  const cardH = 5
-  const stripHeight = 16
-  const availableW = widthMm - labelWidth - sidePadding * 2
-  const cardW = (availableW - cardGap * (strip.daysInMonth - 1)) / strip.daysInMonth
+  for (const card of cards) {
+    const dayNum = parseInt(card.getAttribute('data-day') || '0', 10)
+    if (!dayNum) continue
+    const targetPage = dayToPageMap[dayNum]
+    if (!targetPage) continue
 
-  for (let d = 1; d <= strip.daysInMonth; d++) {
-    const targetPage = dayToPageMap[d]
-    if (!targetPage) continue  // 큐티 없는 day는 링크 없음
+    const rect = card.getBoundingClientRect()
+    const relX = rect.left - pageRect.left
+    const relY = rect.top - pageRect.top
+    const relW = rect.width
+    const relH = rect.height
 
-    // 카드 좌표 계산
-    const cardX = sidePadding + labelWidth + (d - 1) * (cardW + cardGap)
-    const cardY = (stripHeight - cardH) / 2  // strip 상단 기준
+    const scaleX = drawW / pageEl.offsetWidth
+    const scaleY = drawH / pageEl.offsetHeight
 
-    // jsPDF 좌표계: 좌하단 원점 (PDF는 위에서 아래로)
-    // PDF Y: strip 상단 = stripHeight (mm), 카드 하단 = stripHeight - cardY - cardH
-    const pdfY = stripHeight - cardY - cardH
+    const pdfX = drawX + relX * scaleX
+    const pdfY = drawY + relY * scaleY
+    const pdfW = relW * scaleX
+    const pdfH = relH * scaleY
 
-    // pdf.link(x, y, w, h, options)
-    pdf.link(cardX, pdfY, cardW, cardH, { pageNumber: targetPage })
+    pdf.link(pdfX, pdfY, pdfW, pdfH, { pageNumber: targetPage })
   }
 }
