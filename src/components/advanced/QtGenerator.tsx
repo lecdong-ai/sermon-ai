@@ -1671,10 +1671,7 @@ export default function QtGenerator() {
                   >
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-slate-100">{entry.bible_book}</span>
-                        {entry.start_passage && (
-                          <span className="text-[11px] text-slate-300 font-medium">{entry.start_passage}{entry.end_passage ? ` - ${entry.end_passage}` : ''}</span>
-                        )}
+                        <span className="text-[13px] font-bold text-slate-100">{entry.start_passage} ~ {entry.end_passage}</span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold">{entry.week_number}주차</span>
                       </div>
                       {(entry.series_name || entry.subtitle) && (
