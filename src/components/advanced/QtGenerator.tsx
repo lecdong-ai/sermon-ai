@@ -1667,20 +1667,32 @@ export default function QtGenerator() {
                 {historyEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
+                    className="flex items-start justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-slate-200">{entry.bible_book}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold">{entry.week_number}주차</span>
-                        {entry.series_name && (
-                          <span className="text-[10px] text-slate-500 truncate">{entry.series_name}</span>
+                        <span className="text-[13px] font-bold text-slate-100">{entry.bible_book}</span>
+                        {entry.start_passage && (
+                          <span className="text-[11px] text-slate-300 font-medium">{entry.start_passage}{entry.end_passage ? ` - ${entry.end_passage}` : ''}</span>
                         )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold">{entry.week_number}주차</span>
                       </div>
-                      <div className="text-[10px] text-slate-600 mt-0.5">
-                        {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        {entry.audience && ` · ${entry.audience}`}
-                        {entry.level && ` · Lv.${entry.level}`}
+                      {(entry.series_name || entry.subtitle) && (
+                        <div className="text-[10px] text-slate-400">
+                          {entry.series_name && <span>시리즈: {entry.series_name}</span>}
+                          {entry.series_name && entry.subtitle && <span> · </span>}
+                          {entry.subtitle && <span>부제: {entry.subtitle}</span>}
+                        </div>
+                      )}
+                      <div className="text-[10px] text-slate-400">
+                        📅 {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {entry.audience && ` · 👥 ${entry.audience}`}
+                        {entry.level && ` · 🎯 Lv.${entry.level}`}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {entry.size_option && <span>📐 {PAGE_SIZES[entry.size_option]?.label?.split(' (')[0] || entry.size_option}</span>}
+                        {entry.design_template && <span> · 🎨 {QT_TEMPLATES.find(t => t.id === entry.design_template)?.name || entry.design_template}</span>}
+                        {entry.tone && <span> · 🎵 {entry.tone}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 ml-3">
