@@ -64,7 +64,7 @@ export default function AdminUploadPage() {
         const normalizedName = file.name.normalize('NFC')
         let fileUrl = ''
 
-        // 1단계: Signed Upload URL 토큰 요청 (Service Role 기반 서명 토큰)
+        // 1단계: Signed Upload URL 토큰 요청
         try {
           const signRes = await fetch('/api/generational-qt/upload-url', {
             method: 'POST',
@@ -79,15 +79,12 @@ export default function AdminUploadPage() {
           if (signRes.ok) {
             const { token, path, publicUrl } = await signRes.json()
             if (token && path) {
-              // 2단계: Supabase SDK 공식 uploadToSignedUrl 로 직통 업로드! (Vercel 4.5MB Payload limit 100% 회피)
               const { data: signedResult, error: signedError } = await supabase.storage
                 .from('qt-files')
                 .uploadToSignedUrl(path, token, file)
 
               if (!signedError && signedResult) {
                 fileUrl = publicUrl
-              } else {
-                console.warn('uploadToSignedUrl failed, falling back:', signedError)
               }
             }
           }
@@ -95,30 +92,34 @@ export default function AdminUploadPage() {
           console.warn('Signed Upload URL pipeline failed:', e)
         }
 
-        // 3단계 Fallback: Direct Storage Upload 시도
+        // 2단계: 다중 스토리지 버킷 직통 탐색 업로드 (qt-files, public, sermons, files 등)
         if (!fileUrl) {
-          try {
-            const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
-            const timeStamp = Date.now()
-            const filePath = `generational-qt/${encodeURIComponent(formGen)}/${timeStamp}_${safeBaseName}`
+          const possibleBuckets = ['qt-files', 'public', 'sermons', 'files', 'documents']
+          const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
+          const timeStamp = Date.now()
+          const filePath = `generational-qt/${encodeURIComponent(formGen)}/${timeStamp}_${safeBaseName}`
 
-            const { data: uploadData, error: storageError } = await supabase.storage
-              .from('qt-files')
-              .upload(filePath, file, {
-                contentType: file.type || 'application/pdf',
-                upsert: true,
-              })
+          for (const bName of possibleBuckets) {
+            if (fileUrl) break
+            try {
+              const { data: uploadData, error: storageError } = await supabase.storage
+                .from(bName)
+                .upload(filePath, file, {
+                  contentType: file.type || 'application/pdf',
+                  upsert: true,
+                })
 
-            if (!storageError && uploadData) {
-              const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
-              fileUrl = urlData.publicUrl
+              if (!storageError && uploadData) {
+                const { data: urlData } = supabase.storage.from(bName).getPublicUrl(uploadData.path)
+                fileUrl = urlData.publicUrl
+              }
+            } catch (e) {
+              // try next bucket
             }
-          } catch (e) {
-            console.warn('Direct Storage upload exception:', e)
           }
         }
 
-        // 4단계 최후 Fallback: Base64 Data URL (소형 파일 보장용)
+        // 3단계 Fallback: Base64 Data URL (최후 소형 보장용)
         if (!fileUrl) {
           fileUrl = await fileToDataUrl(file)
         }
@@ -131,29 +132,61 @@ export default function AdminUploadPage() {
         })
       }
 
-      // 5단계: DB Record 생성 (Server API via supabaseAdmin)
-      const res = await fetch('/api/generational-qt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          generation: formGen,
-          title: formTitle,
-          description: formDesc,
-          bible_passage: formPassage,
-          week_label: formWeek,
-          files: uploadedFiles,
-        }),
-      })
+      // 4단계: DB Record 생성 (Vercel 4.5MB Payload limit 우회를 위해 Supabase Direct Insert 1순위 실행)
+      let saved = false
+      let dbErrorMsg = ''
+      try {
+        const { data: dbData, error: directDbError } = await supabase
+          .from('generational_qt')
+          .insert({
+            generation: formGen,
+            title: formTitle,
+            description: formDesc || '',
+            bible_passage: formPassage || '',
+            week_label: formWeek || '',
+            files: uploadedFiles,
+          })
+          .select()
 
-      if (!res.ok) {
-        let errorMsg = ''
-        try {
-          const errData = await res.json()
-          errorMsg = typeof errData === 'string' ? errData : (errData?.error || errData?.message || JSON.stringify(errData))
-        } catch {
-          errorMsg = await res.text().catch(() => '')
+        if (!directDbError && dbData && dbData.length > 0) {
+          saved = true
+        } else if (directDbError) {
+          dbErrorMsg = directDbError.message
+          console.warn('Direct DB insert failed:', directDbError)
         }
-        throw new Error(errorMsg || `서버 오류 (${res.status})로 저장이 완료되지 않았습니다.`)
+      } catch (e: any) {
+        console.warn('Direct DB insert exception:', e)
+        dbErrorMsg = e.message
+      }
+
+      // 5단계 2차 Fallback: Server API route
+      if (!saved) {
+        const res = await fetch('/api/generational-qt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            generation: formGen,
+            title: formTitle,
+            description: formDesc,
+            bible_passage: formPassage,
+            week_label: formWeek,
+            files: uploadedFiles,
+          }),
+        })
+
+        if (!res.ok) {
+          let errorMsg = ''
+          try {
+            const errData = await res.json()
+            errorMsg = typeof errData === 'string' ? errData : (errData?.error || errData?.message || JSON.stringify(errData))
+          } catch {
+            errorMsg = await res.text().catch(() => '')
+          }
+          if (res.status === 413) {
+            throw new Error(`파일 용량이 커서 저장소 업로드가 필요합니다. (Supabase Direct DB: ${dbErrorMsg || '권한 제한'})`)
+          }
+          throw new Error(errorMsg || `서버 오류 (${res.status})로 저장이 완료되지 않았습니다.`)
+        }
       }
 
       // Reset form
