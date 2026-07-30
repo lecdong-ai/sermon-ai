@@ -78,7 +78,10 @@ export default function AdminUploadPage() {
         }),
       })
 
-      if (!res.ok) throw new Error('저장 실패')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || '저장에 실패했습니다')
+      }
 
       // Reset form
       setFormTitle('')
