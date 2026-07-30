@@ -1,4 +1,5 @@
 import type { QTFormData } from '@/components/advanced/QtGenerator'
+import { parseDays } from '@/lib/qtDayParser'
 
 const BASE_KEY = 'monthly_qt_data'
 
@@ -48,22 +49,136 @@ export function removeLastMonthlyWeek(generationKey = 'default'): void {
   localStorage.setItem(key, JSON.stringify(weeks))
 }
 
-export function combineMonthlyManuscript(weeks: MonthlyWeekEntry[]): string {
-  if (weeks.length === 0) return ''
-  const parts: string[] = []
-  let dayOffset = 0
-  for (let w = 0; w < weeks.length; w++) {
-    let manuscript = weeks[w].accumulatedManuscript.trim()
-    if (w > 0) {
-      manuscript = manuscript.replace(/^#\s+QT:.*$/m, '').trim()
+interface DayDateEntry {
+  date: Date
+  weekIdx: number
+  dayIdx: number
+  rawContent: string
+}
+
+function getWeekDays(startDateStr: string): Date[] {
+  const sp = startDateStr.split('-')
+  if (sp.length !== 3) return []
+  const wy = parseInt(sp[0], 10)
+  const wm = parseInt(sp[1], 10)
+  const wd = parseInt(sp[2], 10)
+  if (isNaN(wy) || isNaN(wm) || isNaN(wd)) return []
+
+  const weekStart = new Date(wy, wm - 1, wd)
+  const days: Date[] = []
+  let currDate = new Date(weekStart)
+
+  for (let i = 0; i < 14; i++) {
+    if (currDate.getDay() !== 0) {
+      days.push(new Date(currDate))
+      if (days.length >= 6) break
     }
-    let localDay = 1
-    manuscript = manuscript.replace(/^##\s*Day\s*\d+/gim, () => `## Day ${dayOffset + localDay++}`)
-    parts.push(manuscript)
-    const dayCount = localDay - 1
-    dayOffset += dayCount
+    currDate.setDate(currDate.getDate() + 1)
   }
-  return parts.join('\n\n')
+  return days
+}
+
+export function getAvailableMonthsInWeeks(weeks: MonthlyWeekEntry[]): { key: string; label: string; count: number }[] {
+  const monthCounts: Record<string, number> = {}
+
+  for (const week of weeks) {
+    if (!week.form.startDate) continue
+    const days = getWeekDays(week.form.startDate)
+    for (const d of days) {
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`
+      monthCounts[key] = (monthCounts[key] || 0) + 1
+    }
+  }
+
+  return Object.entries(monthCounts)
+    .sort((a, b) => b[1] - a[1]) // 날짜 수가 가장 많은 달이 최우선(첫 번째) 오도록 정렬
+    .map(([key, count]) => {
+      const [y, m] = key.split('-')
+      return { key, label: `${y}년 ${m}월`, count }
+    })
+}
+
+function getTargetMonthEntries(weeks: MonthlyWeekEntry[], targetYearMonth?: string): {
+  targetYear: number
+  targetMonth: number
+  collected: DayDateEntry[]
+} | null {
+  const monthCounts: Record<string, number> = {}
+  const allEntries: DayDateEntry[] = []
+
+  for (let w = 0; w < weeks.length; w++) {
+    const week = weeks[w]
+    if (!week.form.startDate) continue
+    const dates = getWeekDays(week.form.startDate)
+    if (dates.length === 0) continue
+
+    const { days, rawSections } = parseDays(week.accumulatedManuscript || '')
+    const sections = rawSections.length > 0 ? rawSections : days.map(d => d.title || '')
+
+    for (let dayIdx = 0; dayIdx < dates.length; dayIdx++) {
+      const d = dates[dayIdx]
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`
+      monthCounts[key] = (monthCounts[key] || 0) + 1
+
+      const rawContent = sections[dayIdx] || ''
+      allEntries.push({
+        date: d,
+        weekIdx: w,
+        dayIdx,
+        rawContent,
+      })
+    }
+  }
+
+  let selectedKey = targetYearMonth
+  if (!selectedKey) {
+    // 지정된 targetYearMonth가 없으면 날짜 수가 가장 많은 메인 달 사용 (자투리 달 배제)
+    const sorted = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])
+    if (sorted.length === 0) return null
+    selectedKey = sorted[0][0]
+  }
+
+  const [targetYearStr, targetMonthStr] = selectedKey.split('-')
+  const targetYear = parseInt(targetYearStr, 10)
+  const targetMonth = parseInt(targetMonthStr, 10)
+
+  // Target Month에 속하는 날짜만 남기고 이전 달(7월)이나 다음 달(9월) 날짜는 완전히 버림
+  const collected = allEntries.filter(
+    d => d.date.getFullYear() === targetYear && d.date.getMonth() + 1 === targetMonth
+  )
+
+  // 날짜 오름차순 정렬 (8월 1일, 8월 3일 ... 8월 31일)
+  collected.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+  // 동일한 날짜(YYYY-MM-DD) 중복 제거 (첫 번째 항목 유지)
+  const uniqueCollected: DayDateEntry[] = []
+  const seenDates = new Set<string>()
+  for (const item of collected) {
+    const dateKey = `${item.date.getFullYear()}-${item.date.getMonth() + 1}-${item.date.getDate()}`
+    if (!seenDates.has(dateKey)) {
+      seenDates.add(dateKey)
+      uniqueCollected.push(item)
+    }
+  }
+
+  return { targetYear, targetMonth, collected: uniqueCollected }
+}
+
+export function combineMonthlyManuscript(weeks: MonthlyWeekEntry[], targetYearMonth?: string): string {
+  if (weeks.length === 0) return ''
+  const targetData = getTargetMonthEntries(weeks, targetYearMonth)
+  if (!targetData || targetData.collected.length === 0) return ''
+
+  const result: string[] = []
+  for (let n = 0; n < targetData.collected.length; n++) {
+    const item = targetData.collected[n]
+    let dayContent = item.rawContent.trim()
+    // 기존 헤더("### Day 1", "## Day 1", "Day 1" 등) 정제 후 새로운 "### Day n" 지정
+    dayContent = dayContent.replace(/^(?:#+|\*{1,2})?\s*Day\s*\d+[^\n]*/i, '').trim()
+    result.push(`### Day ${n + 1}\n${dayContent}`)
+  }
+
+  return result.join("\n\n")
 }
 
 export function combineMonthlyUserMemos(weeks: MonthlyWeekEntry[]): Record<number, string> {
@@ -73,48 +188,35 @@ export function combineMonthlyUserMemos(weeks: MonthlyWeekEntry[]): Record<numbe
     for (const [key, val] of Object.entries(week.userMemos)) {
       if (val) combined[parseInt(key) + dayOffset] = val
     }
-    const dayCount = (week.accumulatedManuscript.match(/^##\s*Day\s*\d+/gim) || []).length
-    dayOffset += dayCount
+    const { days } = parseDays(week.accumulatedManuscript || '')
+    dayOffset += days.length
   }
   return combined
 }
 
 export function combineMonthlyCalendarStrip(
   weeks: MonthlyWeekEntry[],
+  targetYearMonth?: string,
 ): { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] } | undefined {
-  const first = weeks[0]
-  if (!first?.form?.startDate) return undefined
-  const parts = first.form.startDate.split('-')
-  if (parts.length !== 3) return undefined
-  const year = parseInt(parts[0], 10)
-  const monthNum = parseInt(parts[1], 10)
-  if (isNaN(year) || isNaN(monthNum)) return undefined
-  const daysInMonth = new Date(year, monthNum, 0).getDate()
+  if (weeks.length === 0) return undefined
+  const targetData = getTargetMonthEntries(weeks, targetYearMonth)
+  if (!targetData || targetData.collected.length === 0) return undefined
 
-  const activeDays: number[] = []
-  for (const week of weeks) {
-    if (!week.form.startDate) continue
-    const wParts = week.form.startDate.split('-')
-    if (wParts.length !== 3) continue
-    const startDay = parseInt(wParts[2], 10)
-    if (isNaN(startDay)) continue
-    const weekStart = new Date(year, monthNum - 1, startDay)
-    for (let i = 0; i < 6; i++) {
-      const d = new Date(weekStart)
-      d.setDate(d.getDate() + i)
-      if (d.getDay() !== 0) activeDays.push(d.getDate())
-    }
-  }
+  const { targetYear, targetMonth, collected } = targetData
+  const daysInMonth = new Date(targetYear, targetMonth, 0).getDate()
 
-  const dayHasContent: boolean[] = Array.from({ length: daysInMonth }, (_, i) => activeDays.includes(i + 1))
+  const activeDays = collected.map(item => item.date.getDate())
+  const uniqueDays = Array.from(new Set(activeDays)).sort((a, b) => a - b)
+  const dayHasContent: boolean[] = Array.from({ length: daysInMonth }, (_, i) => uniqueDays.includes(i + 1))
 
-  return { month: `${year}년 ${monthNum}월`, daysInMonth, activeDays, dayHasContent }
+  return { month: `${targetYear}년 ${targetMonth}월`, daysInMonth, activeDays: uniqueDays, dayHasContent }
 }
 
 export function totalDaysInWeeks(weeks: MonthlyWeekEntry[]): number {
   let count = 0
   for (const week of weeks) {
-    count += (week.accumulatedManuscript.match(/^##\s*Day\s*\d+/gim) || []).length
+    const { days } = parseDays(week.accumulatedManuscript || '')
+    count += days.length
   }
   return count
 }

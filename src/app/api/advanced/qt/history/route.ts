@@ -20,12 +20,26 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
   const offset = (page - 1) * limit
 
-  const { data, error, count } = await supabaseAdmin
+  const selectFields = 'id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle, start_date'
+
+  let { data, error, count } = await supabaseAdmin
     .from('qt_history')
-    .select('id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle', { count: 'exact' })
+    .select(selectFields, { count: 'exact' })
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
+
+  if (error && error.message?.includes('start_date')) {
+    const fallback = await supabaseAdmin
+      .from('qt_history')
+      .select('id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    data = fallback.data
+    count = fallback.count
+    error = fallback.error
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -44,15 +58,13 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { bible_book, week_number, audience, generation, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle } = body
+  const { bible_book, week_number, audience, generation, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle, start_date } = body
 
   if (!bible_book || !week_number || !full_manuscript) {
     return NextResponse.json({ error: 'bible_book, week_number, full_manuscript are required' }, { status: 400 })
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('qt_history')
-    .insert({
+  let insertData: Record<string, any> = {
       user_id: user.id,
       bible_book,
       week_number,
@@ -68,11 +80,27 @@ export async function POST(request: NextRequest) {
       start_passage: start_passage || null,
       end_passage: end_passage || null,
       subtitle: subtitle || null,
-    })
+    }
+  if (start_date) insertData.start_date = start_date
+
+  let { data, error } = await supabaseAdmin
+    .from('qt_history')
+    .insert(insertData)
     .select()
     .single()
 
-  if (error) {
+  if (error && error.message?.includes('start_date') && start_date) {
+    delete insertData.start_date
+    const retry = await supabaseAdmin
+      .from('qt_history')
+      .insert(insertData)
+      .select()
+      .single()
+    data = retry.data
+    if (retry.error) {
+      return NextResponse.json({ error: retry.error.message }, { status: 500 })
+    }
+  } else if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

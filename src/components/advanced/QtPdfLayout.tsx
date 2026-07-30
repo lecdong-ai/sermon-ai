@@ -4,7 +4,7 @@ import { forwardRef, useMemo } from 'react'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getTemplate } from '@/lib/qtTemplates'
 import { parseDays } from '@/lib/qtDayParser'
-import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
+import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData, QTResult } from './QtGenerator'
 
 interface QtSelectedInfo {
@@ -95,7 +95,7 @@ function parseBibleVerses(passageText: string) {
 function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const ls = layoutSettings || {}
   const fontScale = ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
-  const marginScale = ls.margin === 'narrow' ? 0.85 : ls.margin === 'wide' ? 1.15 : 1.0
+  const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
   const activeLineHeight = ls.lineSpacing || '1.3'
   const activeFontFamily = FONT_FAMILIES[ls.fontFamily || 'gothic'] || FONT_FAMILIES.gothic
   const hiddenSet = new Set(ls.hiddenSections || [])
@@ -134,6 +134,18 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   const weekdays = useMemo(() => {
     const dayCount = Math.max(parsedDays.length, 1)
+    if (monthCalendarStrip) {
+      const m = monthCalendarStrip.month.match(/(\d+)년\s*(\d+)월/)
+      if (m) {
+        const year = parseInt(m[1], 10), month = parseInt(m[2], 10)
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+        return monthCalendarStrip.activeDays.map(d => {
+          const date = new Date(year, month - 1, d)
+          const label = `${month}/${d} (${dayNames[date.getDay()]})`
+          return { date, label }
+        })
+      }
+    }
     if (!form.startDate) {
       const today = new Date()
       const dayNames = ['일', '월', '화', '수', '목', '금', '토']
@@ -147,10 +159,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       const labels = getWeekdayDateLabels(form.startDate)
       return labels.map(label => ({ date: new Date(), label }))
     }
-    const list = getFormattedDateList(form.startDate, dayCount)
+    const list = getFormattedDateListWeekdays(form.startDate, dayCount)
     if (list.length > 0) return list.map(label => ({ date: new Date(), label }))
     return []
-  }, [form.startDate, parsedDays.length])
+  }, [form.startDate, parsedDays.length, monthCalendarStrip])
 
   // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
   const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
@@ -168,8 +180,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     pageBreakAfter: 'always',
   }
 
+  const pageMarginMm = 5 * marginScale
   const pageContentStyle: React.CSSProperties = {
-    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + 2)}px` : undefined,
+    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + 2)}px` : `${mmToPx(pageMarginMm)}px`,
+    paddingBottom: `${mmToPx(pageMarginMm)}px`,
     width: '100%',
     height: '100%',
     boxSizing: 'border-box',
@@ -261,7 +275,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   // ============= 공통 컴포넌트 =============
   const sectionLabel = (text: string) => (
     <div style={{
-      display: 'flex', alignItems: 'baseline', gap: `${5 * scale * marginScale}px`,
+      display: 'flex', alignItems: 'baseline', gap: `${4 * scale * marginScale}px`,
       marginTop: `${3 * scale * marginScale}px`, marginBottom: `${1.5 * scale * marginScale}px`,
       borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
       paddingBottom: `${1.5 * scale * marginScale}px`,
@@ -343,8 +357,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: t.accent,
           color: '#ffffff',
-          padding: `${2 * scale}px ${9 * scale}px`,
-          marginBottom: `${2 * scale}px`,
+          padding: `${1.5 * scale * marginScale}px ${9 * scale}px`,
+          marginBottom: `${1.5 * scale * marginScale}px`,
         }}>
           <div style={{
             fontFamily: t.fontHeading,
@@ -447,7 +461,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
         {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
         <div style={{
-          marginBottom: `${4 * scale}px`,
+          marginBottom: `${3 * scale * marginScale}px`,
           padding: `${2 * scale}px ${4 * scale}px`,
           background: t.accentLight,
           borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
@@ -687,7 +701,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
         {day.englishVerse && (
           <div style={{
-            marginBottom: `${2 * scale}px`,
+            marginBottom: `${1.5 * scale * marginScale}px`,
             padding: `${4 * scale}px ${7 * scale}px`,
             background: t.bibleQuoteBg,
             borderLeft: `${1.5 * scale}px solid ${t.bibleQuoteBorder}`,
@@ -767,7 +781,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* 복음으로 보기 (full, compact) */}
         {day.gospel && (
           <div style={{
-            marginBottom: `${7 * scale}px`,
+            marginBottom: `${5 * scale * marginScale}px`,
             padding: `${3 * scale}px ${6 * scale}px`,
             background: `${t.accent}0D`,
             borderTop: `0.5px solid ${t.borderLight}`,
@@ -909,7 +923,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             color: t.textMuted,
             letterSpacing: `${1.5 * scale}px`,
             textTransform: 'uppercase',
-            marginBottom: `${2 * scale}px`,
+            marginBottom: `${1.5 * scale * marginScale}px`,
           }}>
             오늘 내 마음에 남은 한 문장
           </div>
@@ -952,7 +966,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               color: t.textMuted,
               letterSpacing: `${1.5 * scale}px`,
               textTransform: 'uppercase',
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${1.5 * scale * marginScale}px`,
             }}>
               인도자 해설
             </div>
@@ -1089,7 +1103,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: t.accent,
               color: '#ffffff',
-              padding: `${3 * scale}px ${7 * scale}px`,
+              padding: `${2 * scale * marginScale}px ${7 * scale}px`,
               marginBottom: `${4 * scale}px`,
             }}>
               <div style={{
@@ -1117,7 +1131,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               color: t.textColor,
               lineHeight: '1.25',
               letterSpacing: `${0.5 * scale}px`,
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${1.5 * scale * marginScale}px`,
             }}>
               {day.title || `Day ${dayIdx + 1}`}
             </div>
@@ -1228,7 +1242,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 본문 한눈에 보기 */}
           {day.passageOverview && (
             <div style={{
-              marginBottom: `${7 * scale}px`,
+              marginBottom: `${5 * scale * marginScale}px`,
               padding: `${5 * scale}px ${8 * scale}px`,
               background: t.accentLight,
               borderLeft: `${2 * scale}px solid ${t.accent}`,
@@ -1243,7 +1257,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.accent,
                 letterSpacing: `${2.5 * scale}px`,
                 textTransform: 'uppercase',
-    marginBottom: `${2 * scale}px`,
+    marginBottom: `${1.5 * scale * marginScale}px`,
             }}>
               본문 한눈에 보기
             </div>
@@ -1277,7 +1291,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.accent,
                 letterSpacing: `${2.2 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${2 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
                 paddingBottom: `${1.5 * scale}px`,
                 borderBottom: `0.5px solid ${t.border}`,
               }}>
@@ -1304,7 +1318,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.accent,
                 letterSpacing: `${2.2 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${2 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
                 paddingBottom: `${1.5 * scale}px`,
                 borderBottom: `0.5px solid ${t.border}`,
               }}>
@@ -1328,7 +1342,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
           {day.englishVerse && (
             <div style={{
-              marginBottom: `${7 * scale}px`,
+              marginBottom: `${5 * scale * marginScale}px`,
               padding: `${5 * scale}px ${8 * scale}px`,
               background: t.bibleQuoteBg,
               borderLeft: `${2 * scale}px solid ${t.bibleQuoteBorder}`,
@@ -1343,7 +1357,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.accent,
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${2 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
               }}>
                 영어로 붙드는 말씀
               </div>
@@ -1387,7 +1401,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: t.accent,
               color: '#ffffff',
-              padding: `${3 * scale}px ${7 * scale}px`,
+              padding: `${2 * scale * marginScale}px ${7 * scale}px`,
               marginBottom: `${3 * scale}px`,
             }}>
               <div style={{
@@ -1451,7 +1465,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.accent,
                 letterSpacing: `${2 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${2 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
               }}>
                 ✦ 복음으로 보기
               </div>
@@ -1575,7 +1589,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               color: t.textMuted,
               letterSpacing: `${1.5 * scale}px`,
               textTransform: 'uppercase',
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${1.5 * scale * marginScale}px`,
             }}>
               오늘 내 마음에 남은 한 문장
             </div>
@@ -1616,7 +1630,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.textMuted,
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${2 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
               }}>
                 인도자 해설
               </div>
@@ -1660,7 +1674,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               color: t.textMuted,
               letterSpacing: `${1.8 * scale}px`,
               textTransform: 'uppercase',
-              marginBottom: `${2 * scale}px`,
+              marginBottom: `${1.5 * scale * marginScale}px`,
               paddingBottom: `${1.5 * scale}px`,
               borderBottom: `0.5px solid ${t.borderLight}`,
             }}>

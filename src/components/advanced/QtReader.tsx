@@ -28,10 +28,11 @@ interface QtReaderProps {
   endPassage?: string
   selectedInfo?: QtSelectedInfo | null
   daySectionTitles?: Record<number, string[]>
+  monthCalendarStrip?: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] }
   onBack: () => void
 }
 
-export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, onBack }: QtReaderProps) {
+export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
@@ -95,6 +96,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
   const monthCalendarStrip = useMemo(() => {
+    if (externalStrip) return externalStrip
     if (!form.startDate) return undefined
     const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
     if (!allowedSizes.has(sizeOption)) return undefined
@@ -137,6 +139,17 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
   const weekdays = useMemo(() => {
     const dayCount = Math.max(days.length, 1)
+    if (externalStrip) {
+      const m = externalStrip.month.match(/(\d+)년\s*(\d+)월/)
+      if (m) {
+        const year = parseInt(m[1]), month = parseInt(m[2])
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+        return externalStrip.activeDays.map(d => {
+          const date = new Date(year, month - 1, d)
+          return month + '/' + d + '(' + dayNames[date.getDay()] + ')'
+        })
+      }
+    }
     // AI 추천 일일 큐티: 오늘 날짜 단일 표시
     if (selectedInfo?.isRecommended) {
       const today = new Date()
@@ -383,9 +396,6 @@ return (
                   borderColor: activeTmpl.border,
                   width: '100%',
                   maxWidth: sizeOption === 'A4Portrait' ? '540px' : sizeOption === 'A4Landscape' ? '760px' : sizeOption === 'B5' ? '460px' : sizeOption === 'A5' ? '380px' : sizeOption === 'Tablet (iPad 4:3)' ? '500px' : '520px',
-                  aspectRatio: `${PAGE_SIZES[sizeOption].widthMm} / ${PAGE_SIZES[sizeOption].heightMm}`,
-                  height: 'auto',
-                  minHeight: '600px',
                 }}
               >
                 <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
@@ -405,7 +415,7 @@ return (
               </div>
             ) : (
               <div
-                className="rounded-2xl p-8 border max-h-[75vh] overflow-y-auto scrollbar-thin"
+                className="rounded-2xl p-8 border overflow-y-auto scrollbar-thin"
                 style={{
                   background: activeTmpl.pageBg,
                   color: activeTmpl.textColor,

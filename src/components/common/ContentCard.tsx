@@ -52,6 +52,7 @@ export function ContentCard({
             alt={image.alt}
             width={image.width ?? 600}
             height={image.height ?? 600}
+            unoptimized
             className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
           />
         </Link>

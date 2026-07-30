@@ -61,6 +61,7 @@ export function RelatedContent({
                     alt={cur.title}
                     width={80}
                     height={112}
+                    unoptimized
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -101,6 +102,7 @@ export function RelatedContent({
                     alt={relatedShop.name}
                     width={64}
                     height={64}
+                    unoptimized
                     className="w-full h-full object-cover"
                   />
                 </div>

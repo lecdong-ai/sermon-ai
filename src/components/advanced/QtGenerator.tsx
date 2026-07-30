@@ -21,7 +21,11 @@ import {
   getNextStartPassage,
 } from '@/lib/qtDates'
 import { findAllSectionTitles as lookupSectionTitles } from '@/lib/bible/sections'
-import { getNextBookInOrder, isLastBookInOrder } from '@/lib/bible/readingOrder'
+import { getNextBookInOrder, isLastBookInOrder, getFirstBookInOrder } from '@/lib/bible/readingOrder'
+import { getVersesInChapter } from '@/lib/bible/verseCounts'
+import { mapBookName } from '@/lib/bible/bookMap'
+import { combineMonthlyManuscript, combineMonthlyCalendarStrip, getAvailableMonthsInWeeks } from '@/lib/monthlyQtStorage'
+import type { MonthlyWeekEntry } from '@/lib/monthlyQtStorage'
 
 const BOOK_CATEGORIES = [
   { name: '모세오경', testament: '구약', color: 'amber', books: ['창세기', '출애굽기', '레위기', '민수기', '신명기'] },
@@ -214,7 +218,7 @@ export default function QtGenerator() {
   } | null>(null)
 
   // 세대 옵션
-  const GENERATION_OPTIONS = ['초등부', '중고등부', '청년부', '장년부'] as const
+  const GENERATION_OPTIONS = ['중고등부', '청년부', '장년부'] as const
 
   // 기본 설정 폼
   const [form, setForm] = useState<QTFormData>({
@@ -229,8 +233,7 @@ export default function QtGenerator() {
     startDate: getMondayOfWeek(getTodayDateString()),
   })
 
-  const [selectedGenerations, setSelectedGenerations] = useState<string[]>([...GENERATION_OPTIONS])
-  const [activeGeneration, setActiveGeneration] = useState<string>('장년부')
+  const [selectedGeneration, setSelectedGeneration] = useState<string>('장년부')
   const generationResultsRef = useRef<Record<string, {
     dayManuscripts: Record<string, DayManuscript>
     finalManuscript: string
@@ -312,6 +315,7 @@ export default function QtGenerator() {
   const [activeEndChapter, setActiveEndChapter] = useState<number | null>(2)
   const [startVerse, setStartVerse] = useState<number | null>(1)
   const [endVerse, setEndVerse] = useState<number | null>(null)
+  const [chapterMode, setChapterMode] = useState<'start' | 'end'>('start')
   const [splitting, setSplitting] = useState(false)
   const [splitMarkdown, setSplitMarkdown] = useState('')
   const [splitDays, setSplitDays] = useState<DaySplitData[]>([])
@@ -319,7 +323,40 @@ export default function QtGenerator() {
   // 본문 범위 부족 다이얼로그
   const [poolError, setPoolError] = useState<any>(null)
   const extendingPoolRef = useRef(false)
-  const endPassageInputRef = useRef<HTMLInputElement>(null)
+  const nextBookTriggerRef = useRef(false)
+
+  const getMaxVerseForChapter = (chapter: number): number => {
+    const bookShort = mapBookName(form.bibleBook) || form.bibleBook
+    const maxV = getVersesInChapter(bookShort, chapter)
+    return maxV || 150
+  }
+
+  const adjustStartVerse = (delta: number) => {
+    const chapter = activeStartChapter || 1
+    const maxV = getMaxVerseForChapter(chapter)
+    const current = startVerse || 1
+    const next = Math.max(1, Math.min(maxV, current + delta))
+    setStartVerse(next)
+    setStartPassage(`${form.bibleBook} ${chapter}:${next}`)
+  }
+
+  const adjustEndVerse = (delta: number) => {
+    const chapter = activeEndChapter || activeStartChapter || 1
+    const maxV = getMaxVerseForChapter(chapter)
+    const current = endVerse || maxV
+    const next = Math.max(1, Math.min(maxV, current + delta))
+    setEndVerse(next)
+    setEndPassage(endPassage.trim() ? `${form.bibleBook} ${chapter}:${next}` : '')
+  }
+
+  const resetChapterRange = () => {
+    setActiveStartChapter(null)
+    setActiveEndChapter(null)
+    setStartVerse(null)
+    setEndVerse(null)
+    setStartPassage('')
+    setEndPassage('')
+  }
 
   // 성경권 선택 변경 시 처리
   const handleBookChange = (book: string) => {
@@ -334,38 +371,26 @@ export default function QtGenerator() {
 
   // 장 클릭 핸들러
   const handleChapterClick = (chap: number) => {
-    if (activeStartChapter === null || (activeStartChapter !== null && activeEndChapter !== null)) {
+    if (chapterMode === 'start') {
       setActiveStartChapter(chap)
-      setActiveEndChapter(null)
       setStartVerse(1)
-      setEndVerse(null)
       setStartPassage(`${form.bibleBook} ${chap}:1`)
-      setEndPassage('')
+      if (activeEndChapter !== null && chap > activeEndChapter) {
+        setActiveEndChapter(null)
+        setEndPassage('')
+        setEndVerse(null)
+      }
+      setChapterMode('end')
     } else {
-      if (chap < activeStartChapter) {
+      if (activeStartChapter === null) {
         setActiveStartChapter(chap)
         setStartVerse(1)
         setStartPassage(`${form.bibleBook} ${chap}:1`)
-      } else {
+      } else if (chap > activeStartChapter) {
         setActiveEndChapter(chap)
         setEndVerse(null)
-        setEndPassage(`${form.bibleBook} ${chap}`)
+        setEndPassage(`${form.bibleBook} ${chap}:${getMaxVerseForChapter(chap)}`)
       }
-    }
-  }
-
-  // 절 변경 핸들러
-  const handleStartVerseChange = (v: number | null) => {
-    setStartVerse(v)
-    if (activeStartChapter !== null) {
-      setStartPassage(v ? `${form.bibleBook} ${activeStartChapter}:${v}` : `${form.bibleBook} ${activeStartChapter}장`)
-    }
-  }
-
-  const handleEndVerseChange = (v: number | null) => {
-    setEndVerse(v)
-    if (activeEndChapter !== null) {
-      setEndPassage(v ? `${form.bibleBook} ${activeEndChapter}:${v}` : `${form.bibleBook} ${activeEndChapter}장`)
     }
   }
 
@@ -423,6 +448,10 @@ export default function QtGenerator() {
   const [editingEntry, setEditingEntry] = useState<QtHistoryEntry | null>(null)
   const [editContent, setEditContent] = useState('')
   const [historyError, setHistoryError] = useState('')
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set())
+  const [monthlyStrip, setMonthlyStrip] = useState<{
+    month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[]
+  } | undefined>(undefined)
 
   // 단일 day PDF 상태
   const [singleDayPdf, setSingleDayPdf] = useState<string | null>(null)
@@ -449,6 +478,15 @@ export default function QtGenerator() {
   }
 
   useEffect(() => { loadHistory() }, [])
+
+  // 다음 성경책 자동 전환 (pool 부족 → 다른 책으로 확장)
+  useEffect(() => {
+    if (nextBookTriggerRef.current) {
+      nextBookTriggerRef.current = false
+      extendingPoolRef.current = true
+      handleGenerateSplit()
+    }
+  }, [form.bibleBook, startPassage])
 
   // 히스토리 저장
   const saveToHistory = async (manuscript: string) => {
@@ -477,7 +515,7 @@ export default function QtGenerator() {
           full_manuscript: manuscript,
           day_data: dayData,
           start_passage: startPassage,
-          end_passage: endPassage || null,
+          end_passage: endPassage || startPassage || null,
           subtitle: subtitle || null,
         }),
       })
@@ -497,7 +535,7 @@ export default function QtGenerator() {
   const saveCurrentGenerationResult = () => {
     syncGenerationResults(prev => ({
       ...prev,
-      [activeGeneration]: {
+      [selectedGeneration]: {
         dayManuscripts: { ...dayManuscripts },
         finalManuscript,
         assembleOutput,
@@ -509,7 +547,7 @@ export default function QtGenerator() {
 
   // 세대 전환: 현재 결과 저장 후 대상 세대 로드
   const switchGeneration = (gen: string) => {
-    if (gen === activeGeneration) return
+    if (gen === selectedGeneration) return
     saveCurrentGenerationResult()
     const saved = generationResultsRef.current[gen]
     if (saved) {
@@ -519,7 +557,7 @@ export default function QtGenerator() {
       setAssembledMetadata(saved.assembledMetadata)
       setSubtitle(saved.subtitle)
     }
-    setActiveGeneration(gen)
+    setSelectedGeneration(gen)
     updateForm({ audience: gen })
   }
 
@@ -528,11 +566,11 @@ export default function QtGenerator() {
     const ref = generationResultsRef.current
     return (
     <div className={`flex items-center gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-xl overflow-x-auto ${className}`}>
-      {selectedGenerations.filter(g => {
+      {[selectedGeneration].filter(g => {
         const hasResult = ref[g]?.dayManuscripts && Object.keys(ref[g].dayManuscripts).length > 0
-        return hasResult || g === activeGeneration
+        return hasResult || g === selectedGeneration
       }).map(gen => {
-        const isActive = activeGeneration === gen
+        const isActive = selectedGeneration === gen
         const hasResult = ref[gen]?.finalManuscript
         return (
           <button
@@ -619,13 +657,12 @@ export default function QtGenerator() {
     saveCurrentGenerationResult()
     try {
       const newResults = { ...generationResultsRef.current }
-      for (const gen of selectedGenerations) {
-        const existing = newResults[gen]
-        const allDone = existing?.dayManuscripts &&
-          Object.keys(existing.dayManuscripts).length >= splitDays.length &&
-          Object.values(existing.dayManuscripts).every((m: any) => m.finalContent)
-        if (allDone) continue
-
+      const gen = selectedGeneration
+      const existing = newResults[gen]
+      const allDone = existing?.dayManuscripts &&
+        Object.keys(existing.dayManuscripts).length >= splitDays.length &&
+        Object.values(existing.dayManuscripts).every((m: any) => m.finalContent)
+      if (!allDone) {
         const genManuscripts: Record<string, DayManuscript> = {}
         for (const day of splitDays.map(d => d.day)) {
           const sd = splitDays.find(s => s.day === day)
@@ -650,10 +687,10 @@ export default function QtGenerator() {
       }
       syncGenerationResults(() => newResults)
 
-      const firstGen = selectedGenerations[0]
+      const firstGen = selectedGeneration
       if (newResults[firstGen]) {
         setDayManuscripts(newResults[firstGen].dayManuscripts)
-        setActiveGeneration(firstGen)
+        setSelectedGeneration(firstGen)
         updateForm({ audience: firstGen })
       }
 
@@ -719,38 +756,35 @@ export default function QtGenerator() {
     saveCurrentGenerationResult()
     try {
       const newResults = { ...generationResultsRef.current }
-      for (const gen of selectedGenerations) {
-        const existing = newResults[gen]
-        if (!existing?.dayManuscripts || Object.keys(existing.dayManuscripts).length === 0) continue
-        if (existing.finalManuscript) continue
-
+      const gen = selectedGeneration
+      const existing = newResults[gen]
+      if (existing?.dayManuscripts && Object.keys(existing.dayManuscripts).length > 0 && !existing.finalManuscript) {
         const result = await assembleGeneration(gen)
-        if (!result) continue
-
-        const dm = existing.dayManuscripts
-        let fullDoc = `${result.output}\n\n`
-        Object.keys(dm).forEach((d, idx) => {
-          fullDoc += `\n\n===\n\n### Day ${idx + 1}\n\n${dm[d].finalContent || ''}`
-        })
-
-        newResults[gen] = {
-          ...existing,
-          assembleOutput: result.output,
-          assembledMetadata: result.metadata,
-          finalManuscript: fullDoc,
+        if (result) {
+          const dm = existing.dayManuscripts
+          let fullDoc = `${result.output}\n\n`
+          Object.keys(dm).forEach((d, idx) => {
+            fullDoc += `\n\n===\n\n### Day ${idx + 1}\n\n${dm[d].finalContent || ''}`
+          })
+          newResults[gen] = {
+            ...existing,
+            assembleOutput: result.output,
+            assembledMetadata: result.metadata,
+            finalManuscript: fullDoc,
+          }
+          saveToHistoryForGeneration(gen, fullDoc)
         }
-        saveToHistoryForGeneration(gen, fullDoc)
       }
       syncGenerationResults(() => newResults)
 
-      const firstGen = selectedGenerations[0]
+      const firstGen = selectedGeneration
       if (newResults[firstGen]) {
         setDayManuscripts(newResults[firstGen].dayManuscripts)
         setFinalManuscript(newResults[firstGen].finalManuscript)
         setAssembleOutput(newResults[firstGen].assembleOutput)
         setAssembledMetadata(newResults[firstGen].assembledMetadata)
         setSubtitle(newResults[firstGen].subtitle)
-        setActiveGeneration(firstGen)
+        setSelectedGeneration(firstGen)
         updateForm({ audience: firstGen })
       }
     } catch (e: any) {
@@ -781,12 +815,121 @@ export default function QtGenerator() {
           size_option: form.sizeOption, design_template: form.designTemplate,
           full_manuscript: manuscript,
           day_data: dayData,
+          start_date: form.startDate,
           start_passage: startPassage,
-          end_passage: endPassage || null,
+          end_passage: endPassage || startPassage || null,
           subtitle: genData.subtitle || null,
         }),
       })
     } catch {}
+  }
+
+  // 월간 PDF: 선택한 history entries를 주차별로 fetch → combine
+  const [monthlyLoading, setMonthlyLoading] = useState(false)
+  const handleMonthlyPdf = async () => {
+    const entries = historyEntries
+      .filter(e => selectedHistoryIds.has(e.id))
+      .sort((a, b) => (a.start_date || a.created_at).localeCompare(b.start_date || b.created_at))
+
+    if (entries.length < 2) {
+      setError('월간 PDF는 최소 2주 이상의 기록이 필요합니다.')
+      return
+    }
+
+    setMonthlyLoading(true)
+    setError('')
+    try {
+      const weeks: MonthlyWeekEntry[] = []
+      for (const entry of entries) {
+        let fullScript = (entry as any).full_manuscript || ''
+        if (!fullScript) {
+          const res = await fetch(`/api/advanced/qt/history/${entry.id}`)
+          if (res.ok) {
+            const data = await res.json()
+            fullScript = data.entry?.full_manuscript || ''
+          }
+        }
+
+        const createdDate = entry.created_at ? entry.created_at.split('T')[0] : getTodayDateString()
+        const weekStartDate = entry.start_date || getMondayOfWeek(createdDate)
+
+        weeks.push({
+          accumulatedManuscript: fullScript,
+          form: {
+            bibleBook: entry.bible_book,
+            weekNumber: entry.week_number,
+            startDate: weekStartDate,
+            audience: entry.audience,
+            level: entry.level,
+            tone: entry.tone,
+            seriesName: entry.series_name,
+            sizeOption: entry.size_option,
+            designTemplate: entry.design_template,
+          },
+          userMemos: {},
+          startPassage: entry.start_passage,
+          endPassage: entry.end_passage,
+        } as MonthlyWeekEntry)
+      }
+
+      if (weeks.length < 2) {
+        setError('월간 PDF에 필요한 주차 데이터를 불러오지 못했습니다.')
+        setMonthlyLoading(false)
+        return
+      }
+
+      // ── 핵심 수정: start_date가 없거나 중복이면 7일 간격으로 자동 재배치 ──
+      // DB에 start_date가 저장 안 되어있으면 모든 주차가 "이번 주 월요일"로 잡혀서
+      // 7월 5일 vs 8월 1일 → 7월이 메인 달로 잘못 선택되는 버그 방지
+      const startDateSet = new Set(weeks.map(w => w.form.startDate))
+      if (startDateSet.size < weeks.length) {
+        // 중복 발견 → 첫 주차를 기준으로 7일 간격 재배치
+        const baseDate = new Date(weeks[0].form.startDate)
+        for (let i = 0; i < weeks.length; i++) {
+          const d = new Date(baseDate)
+          d.setDate(baseDate.getDate() + i * 7)
+          const y = d.getFullYear()
+          const m = String(d.getMonth() + 1).padStart(2, '0')
+          const dd = String(d.getDate()).padStart(2, '0')
+          weeks[i].form.startDate = `${y}-${m}-${dd}`
+        }
+      }
+
+      // 주차들의 날짜 중 가장 비중이 높은 메인 달(예: 8월 - 26일치)을 자동으로 잡음 (7월 5일치는 자동 버림)
+      const available = getAvailableMonthsInWeeks(weeks)
+      const targetMonthKey = available.length > 0 ? available[0].key : undefined
+
+      const combinedManuscript = combineMonthlyManuscript(weeks, targetMonthKey)
+      const combinedStrip = combineMonthlyCalendarStrip(weeks, targetMonthKey)
+
+      if (!combinedManuscript || combinedManuscript.trim().length === 0) {
+        setError('월간 큐티 조합에 실패했습니다. 선택된 주차 원고를 확인해 주세요.')
+        setMonthlyLoading(false)
+        return
+      }
+
+      setFinalManuscript(combinedManuscript)
+      setMonthlyStrip(combinedStrip || undefined)
+
+      const firstEntry = entries[0]
+      if (firstEntry) {
+        const createdDate = firstEntry.created_at ? firstEntry.created_at.split('T')[0] : getTodayDateString()
+        let sd = firstEntry.start_date || getMondayOfWeek(createdDate)
+        if (targetMonthKey) {
+          const [ty, tm] = targetMonthKey.split('-')
+          sd = `${ty}-${String(tm).padStart(2, '0')}-01`
+        }
+        updateForm({
+          startDate: sd,
+          bibleBook: firstEntry.bible_book,
+          seriesName: firstEntry.series_name || form.seriesName,
+        })
+      }
+    } catch (e: any) {
+      console.error('월간 PDF 생성 예외:', e)
+      setError(e.message || '월간 PDF 생성 중 오류가 발생했습니다.')
+    }
+    setMonthlyLoading(false)
   }
 
   // QT 아카이브에 공개
@@ -820,7 +963,7 @@ export default function QtGenerator() {
           full_manuscript: manuscript,
           day_data: dayData,
           start_passage: startPassage,
-          end_passage: endPassage || null,
+          end_passage: endPassage || startPassage || null,
         }),
       })
       if (res.ok) {
@@ -1083,6 +1226,12 @@ export default function QtGenerator() {
       if (finalParsed.length > 0) {
         const firstDay = dateList[0] || finalParsed[0].day.trim()
         setActiveDay(firstDay)
+      }
+
+      // AI 분할 결과의 마지막 구절을 endPassage로 저장 (사용자가 종료 장을 직접 선택하지 않은 경우)
+      if (!endPassage && finalParsed.length > 0) {
+        const lastPassage = finalParsed[finalParsed.length - 1]?.passage
+        if (lastPassage) setEndPassage(lastPassage)
       }
 
       // (자동 진행은 분할 직후가 아닌, 초안 작성 완료 후 handleBatchDraft에서 처리)
@@ -1493,28 +1642,15 @@ export default function QtGenerator() {
     return Object.values(dayManuscripts).every(m => !!m.finalContent)
   }, [dayManuscripts])
 
+  const completedBooks = useMemo(
+    () => new Set(historyEntries.map(e => e.bible_book)),
+    [historyEntries]
+  )
+
   // 뷰어에서 세대 전환 (finalManuscript가 있는 세대로만 전환)
-  const switchViewerGeneration = (gen: string) => {
-    if (gen === activeGeneration) return
-    saveCurrentGenerationResult()
-    const saved = generationResultsRef.current[gen]
-    if (saved?.finalManuscript) {
-      setFinalManuscript(saved.finalManuscript)
-      setDayManuscripts(saved.dayManuscripts)
-      setAssembleOutput(saved.assembleOutput)
-      setAssembledMetadata(saved.assembledMetadata)
-      setSubtitle(saved.subtitle)
-      setActiveGeneration(gen)
-      updateForm({ audience: gen })
-    }
-  }
 
   // 최종 뷰어 모드 실행
   if (finalManuscript) {
-    const viewerGenerations = selectedGenerations.filter(g => {
-      const r = generationResultsRef.current[g]
-      return r?.finalManuscript
-    })
     return (
       <>
         {savingHistory && (
@@ -1523,30 +1659,8 @@ export default function QtGenerator() {
             기록 저장 중...
           </div>
         )}
-        {viewerGenerations.length > 1 && (
-          <div className="max-w-5xl mx-auto px-4 pt-4">
-            <div className="flex items-center gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-xl overflow-x-auto">
-              {viewerGenerations.map(gen => {
-                const isActive = activeGeneration === gen
-                return (
-                  <button
-                    key={gen}
-                    onClick={() => switchViewerGeneration(gen)}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                        : 'bg-white/[0.01] border border-white/5 text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {gen}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
         <QtReader
-          key={activeGeneration}
+          key={selectedGeneration}
           form={form}
           accumulatedManuscript={finalManuscript}
           templateId={form.designTemplate}
@@ -1554,6 +1668,7 @@ export default function QtGenerator() {
           endPassage={endPassage}
           selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : null}
           daySectionTitles={daySectionTitles}
+          monthCalendarStrip={monthlyStrip}
           onBack={() => {
             setFinalManuscript('')
             setDaySectionTitles({})
@@ -1645,6 +1760,24 @@ export default function QtGenerator() {
               <span className="text-[10px] text-slate-500">{historyEntries.length}개</span>
             </div>
 
+            {/* 선택한 기록 → 월간 PDF 생성 */}
+            {selectedHistoryIds.size >= 2 && (
+              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                <button
+                  onClick={handleMonthlyPdf}
+                  disabled={monthlyLoading}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all disabled:opacity-40"
+                >
+                  {monthlyLoading ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <FileText className="w-3 h-3" />
+                  )}
+                  {monthlyLoading ? '생성 중...' : `📄 선택한 ${selectedHistoryIds.size}개 주간 PDF 생성`}
+                </button>
+              </div>
+            )}
+
             {historyLoading ? (
               <div className="flex items-center justify-center py-12 text-slate-500">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -1663,16 +1796,61 @@ export default function QtGenerator() {
                 <p className="text-[10px] text-slate-600">QT를 생성하면 자동으로 여기에 저장됩니다.</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin">
                 {historyEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className="flex items-start justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
+                    className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
                   >
+                    <div className="flex items-center pt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedHistoryIds.has(entry.id)}
+                        onChange={() => {
+                          const next = new Set(selectedHistoryIds)
+                          if (next.has(entry.id)) next.delete(entry.id)
+                          else next.add(entry.id)
+                          setSelectedHistoryIds(next)
+                        }}
+                        className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 accent-indigo-500 cursor-pointer"
+                      />
+                    </div>
                     <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-slate-100">{entry.start_passage} ~ {entry.end_passage}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold">{entry.week_number}주차</span>
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleViewHistory(entry)}
+                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors"
+                            title="보기"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleRegenerateHistory(entry)}
+                            className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors"
+                            title="재생성"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleEditHistory(entry)}
+                            className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors"
+                            title="편집"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteHistory(entry.id)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors"
+                            title="삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       {(entry.series_name || entry.subtitle) && (
                         <div className="text-[10px] text-slate-400">
@@ -1691,36 +1869,6 @@ export default function QtGenerator() {
                         {entry.design_template && <span> · 🎨 {QT_TEMPLATES.find(t => t.id === entry.design_template)?.name || entry.design_template}</span>}
                         {entry.tone && <span> · 🎵 {entry.tone}</span>}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                      <button
-                        onClick={() => handleViewHistory(entry)}
-                        className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors"
-                        title="보기"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleRegenerateHistory(entry)}
-                        className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors"
-                        title="재생성"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleEditHistory(entry)}
-                        className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors"
-                        title="편집"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHistory(entry.id)}
-                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors"
-                        title="삭제"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -1843,7 +1991,25 @@ export default function QtGenerator() {
             
             {/* 성경권 격자 선택 */}
             <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
               <label className="text-[11px] font-bold text-slate-500">성경권 선택</label>
+              <button
+                onClick={() => {
+                  const firstBook = getFirstBookInOrder()
+                  updateForm({ bibleBook: firstBook, bible_book: firstBook })
+                  setStartPassage(`${firstBook} 1:1`)
+                  setActiveStartChapter(1)
+                  setStartVerse(1)
+                  setEndPassage('')
+                  setActiveEndChapter(null)
+                  setEndVerse(null)
+                  setHistoryEntries([])
+                }}
+                className="text-[10px] text-slate-500 hover:text-slate-300 font-medium transition-colors"
+              >
+                초기화
+              </button>
+            </div>
               <div className="bg-[#060a16] border border-white/5 rounded-xl p-4 space-y-4 max-h-[220px] overflow-y-auto scrollbar-thin">
                 {(['구약', '신약'] as const).map(testament => (
                   <div key={testament}>
@@ -1858,15 +2024,20 @@ export default function QtGenerator() {
                           <span className="text-[10px] font-bold text-slate-500 mr-2">{cat.name}:</span>
                           {cat.books.map(book => {
                             const selected = form.bibleBook === book
+                            const isCompleted = completedBooks.has(book)
                             return (
                               <button
                                 key={book}
                                 onClick={() => handleBookChange(book)}
                                 className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-                                  selected ? SELECTED_CLASSES[cat.color] : 'bg-white/[0.02] border-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                                  selected 
+                                    ? SELECTED_CLASSES[cat.color] 
+                                    : isCompleted 
+                                    ? 'bg-emerald-500/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                                    : 'bg-white/[0.02] border-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
                                 }`}
                               >
-                                {book}
+                                {isCompleted && !selected && <span className="mr-0.5">✓</span>}{book}
                               </button>
                             )
                           })}
@@ -1878,27 +2049,44 @@ export default function QtGenerator() {
               </div>
             </div>
 
-            {/* 마우스 장 선택 그리드 */}
+            {/* 장 선택 그리드 (모드 전환) */}
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-slate-500">
-                  {form.bibleBook} 장 선택 <span className="text-[10px] text-indigo-400/80 font-medium">(마우스 클릭으로 시작 장과 종료 장 범위를 지정하세요)</span>
+                  {form.bibleBook} 장 선택
                 </label>
-                {(activeStartChapter !== null || activeEndChapter !== null) && (
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => {
-                      setActiveStartChapter(null)
-                      setActiveEndChapter(null)
-                      setStartVerse(null)
-                      setEndVerse(null)
-                      setStartPassage('')
-                      setEndPassage('')
-                    }}
-                    className="text-[9px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
+                    type="button"
+                    onClick={() => setChapterMode('start')}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all ${
+                      chapterMode === 'start'
+                        ? 'bg-indigo-600/20 border-indigo-400/50 text-indigo-300'
+                        : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300'
+                    }`}
                   >
-                    범위 초기화
+                    🔵 시작
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setChapterMode('end')}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all ${
+                      chapterMode === 'end'
+                        ? 'bg-emerald-600/20 border-emerald-400/50 text-emerald-300'
+                        : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    🟢 종료
+                  </button>
+                  {(activeStartChapter !== null || activeEndChapter !== null) && (
+                    <button
+                      onClick={resetChapterRange}
+                      className="text-[9px] font-bold text-slate-500 hover:text-slate-300 transition-colors ml-1"
+                    >
+                      초기화
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="bg-[#060a16] border border-white/5 rounded-xl p-3 flex flex-wrap gap-1 max-h-[120px] overflow-y-auto scrollbar-thin">
                 {Array.from({ length: BIBLE_CHAPTERS[form.bibleBook] || 1 }, (_, i) => {
@@ -1927,6 +2115,29 @@ export default function QtGenerator() {
                   )
                 })}
               </div>
+              {/* 현재 선택 범위 표시 */}
+              {(activeStartChapter !== null || activeEndChapter !== null) && (
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  {activeStartChapter !== null && (
+                    <span className="text-indigo-300 font-bold">
+                      🔵 {activeStartChapter}장
+                    </span>
+                  )}
+                  {activeEndChapter !== null && (
+                    <>
+                      <span className="text-slate-600">~</span>
+                      <span className="text-emerald-300 font-bold">
+                        🟢 {activeEndChapter}장
+                      </span>
+                    </>
+                  )}
+                  {activeStartChapter !== null && activeEndChapter === null && (
+                    <span className="text-slate-500 text-[10px]">
+                      → 종료 장을 선택하세요
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1972,18 +2183,14 @@ export default function QtGenerator() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {GENERATION_OPTIONS.map(gen => {
-                    const selected = selectedGenerations.includes(gen)
+                    const selected = selectedGeneration === gen
                     return (
                       <button
                         key={gen}
                         type="button"
                         onClick={() => {
-                          setSelectedGenerations(prev =>
-                            prev.includes(gen)
-                              ? prev.filter(g => g !== gen)
-                              : [...prev, gen]
-                          )
-                          if (!selected) setActiveGeneration(gen)
+                          setSelectedGeneration(gen)
+                          updateForm({ audience: gen })
                         }}
                         className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${
                           selected
@@ -1999,8 +2206,8 @@ export default function QtGenerator() {
               </div>
             </div>
 
-            {/* 본문 전체 범위 - 별도 행 */}
-            <div className="space-y-1.5">
+            {/* 본문 전체 범위 - 읽기 전용 표시 + 절 조절 */}
+            <div id="qt-range-section" className="space-y-1.5">
               <div className="flex items-center justify-between h-5">
                 <label className="text-[11px] font-bold text-slate-500">본문 전체 범위 (시작 - 종료)</label>
                 {historyEntries.length > 0 && (
@@ -2013,29 +2220,73 @@ export default function QtGenerator() {
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={startPassage}
-                  onChange={e => setStartPassage(e.target.value)}
-                  placeholder="예: 창세기 1:1"
-                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
-                />
-                <span className="text-slate-600 text-xs">~</span>
-                <input
-                  ref={endPassageInputRef}
-                  type="text"
-                  value={endPassage}
-                  onChange={e => setEndPassage(e.target.value)}
-                  placeholder="예: 창세기 2:3 (선택)"
-                  className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
-                />
-              </div>
-              {!endPassage?.trim() && (
-                <div className="text-[9px] text-indigo-400/80 font-medium flex items-center gap-1">
-                  💡 종료 본문을 비워두면 시작 본문부터 자동으로 이어서 분할합니다.
+              <div className="bg-[#060a16] border border-white/5 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="flex-1 text-center">
+                    <div className="text-[10px] text-slate-500 mb-1">시작 장</div>
+                    <div className="text-[15px] font-bold text-indigo-300">
+                      {activeStartChapter || '-'}
+                    </div>
+                    {activeStartChapter !== null && (
+                      <div className="flex items-center justify-center gap-1 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => adjustStartVerse(-1)}
+                          className="w-5 h-5 rounded bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 text-[13px] font-bold"
+                        >
+                          −
+                        </button>
+                        <span className="text-[12px] text-slate-200 min-w-[2.5ch] text-center font-bold">
+                          {startVerse || 1}절
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => adjustStartVerse(1)}
+                          className="w-5 h-5 rounded bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 text-[13px] font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-slate-600 text-lg font-bold">~</div>
+                  <div className="flex-1 text-center">
+                    <div className="text-[10px] text-slate-500 mb-1">종료 장</div>
+                    <div className="text-[15px] font-bold text-emerald-300">
+                      {activeEndChapter || (activeStartChapter || '-')}
+                    </div>
+                    {(activeEndChapter || activeStartChapter) !== null && (
+                      <div className="flex items-center justify-center gap-1 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => adjustEndVerse(-1)}
+                          className="w-5 h-5 rounded bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 text-[13px] font-bold"
+                        >
+                          −
+                        </button>
+                        <span className="text-[12px] text-slate-200 min-w-[2.5ch] text-center font-bold">
+                          {endVerse || (activeEndChapter ? getMaxVerseForChapter(activeEndChapter) : startVerse || 1)}절
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => adjustEndVerse(1)}
+                          className="w-5 h-5 rounded bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 text-[13px] font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
+                <div className="text-center text-[13px] font-bold text-slate-200">
+                  📖 {form.bibleBook} {activeStartChapter || '?'}:{startVerse || 1} ~ {form.bibleBook} {activeEndChapter || (activeStartChapter || '?')}:{endVerse || (activeEndChapter ? getMaxVerseForChapter(activeEndChapter) : startVerse || 1)}
+                </div>
+                {!endPassage?.trim() && activeStartChapter !== null && (
+                  <div className="text-[9px] text-indigo-400/80 font-medium text-center">
+                    💡 종료 장을 선택하지 않으면 시작 장부터 자동으로 이어서 분할합니다.
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
@@ -2243,7 +2494,6 @@ export default function QtGenerator() {
       {step === 2 && (
         <div className="space-y-6 animate-fadeIn">
           {/* 세대 탭 */}
-          {selectedGenerations.length > 1 && <GenerationTabs />}
 
           {/* 요일/날짜 선택 탭 */}
           <div className="flex flex-wrap gap-1.5 border-b border-white/5 pb-3">
@@ -2456,20 +2706,6 @@ export default function QtGenerator() {
             </button>
 
             <div className="flex items-center gap-2">
-              {selectedGenerations.length > 1 && (
-                <button
-                  onClick={handleBatchDraft}
-                  disabled={batchGenerating || !splitDays.length}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition-all shadow-lg disabled:opacity-40"
-                >
-                  {batchGenerating ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5" />
-                  )}
-                  {batchGenerating ? '일괄 생성 중...' : `${selectedGenerations.length}세대 일괄 생성`}
-                </button>
-              )}
               <button
                 onClick={goNextStep}
                 disabled={!isAllDaysCompleted}
@@ -2487,7 +2723,6 @@ export default function QtGenerator() {
       {/* STEP 3: 주간 소책자 조립 */}
       {step === 3 && (
         <div className="space-y-6 animate-fadeIn">
-          {selectedGenerations.length > 1 && <GenerationTabs />}
           <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-5">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">3단계: 주간 큐티책 최종 조립</h3>
             
@@ -2555,20 +2790,6 @@ export default function QtGenerator() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              {selectedGenerations.length > 1 && (
-                <button
-                  onClick={handleBatchAssemble}
-                  disabled={batchAssembling}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition-all shadow-lg disabled:opacity-40"
-                >
-                  {batchAssembling ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  {batchAssembling ? '일괄 조립 중...' : `${selectedGenerations.length}세대 일괄 조립`}
-                </button>
-              )}
               <button
                 onClick={handleAssembleWeekly}
                 disabled={assembling}
@@ -2647,7 +2868,6 @@ export default function QtGenerator() {
       {/* STEP 4: 완료 및 미리보기 */}
       {step === 4 && (
         <div className="space-y-6 animate-fadeIn">
-          {selectedGenerations.length > 1 && <GenerationTabs />}
           <div className="glass-dark rounded-2xl border border-white/5 p-12 text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/5">
             <Check className="w-8 h-8 text-emerald-400" />
@@ -2745,8 +2965,20 @@ export default function QtGenerator() {
                 onClick={() => {
                   setPoolError(null)
                   setError(null)
-                  extendingPoolRef.current = true
-                  handleGenerateSplit()
+                  const nextBook = getNextBookInOrder(form.bibleBook)
+                  if (nextBook) {
+                    updateForm({ bibleBook: nextBook, bible_book: nextBook })
+                    setStartPassage(`${nextBook} 1:1`)
+                    setActiveStartChapter(1)
+                    setStartVerse(1)
+                    setEndPassage('')
+                    setActiveEndChapter(null)
+                    setEndVerse(null)
+                    nextBookTriggerRef.current = true
+                  } else {
+                    extendingPoolRef.current = true
+                    handleGenerateSplit()
+                  }
                 }}
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/30 text-left transition-colors group"
               >
@@ -2778,12 +3010,7 @@ export default function QtGenerator() {
                   setPoolError(null)
                   setError(null)
                   setTimeout(() => {
-                    endPassageInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                    endPassageInputRef.current?.focus()
-                    endPassageInputRef.current?.classList.add('ring-2', 'ring-indigo-400', 'ring-offset-2', 'ring-offset-[#0d1121]')
-                    setTimeout(() => {
-                      endPassageInputRef.current?.classList.remove('ring-2', 'ring-indigo-400', 'ring-offset-2', 'ring-offset-[#0d1121]')
-                    }, 3000)
+                    document.getElementById('qt-range-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                   }, 300)
                 }}
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-slate-600/20 border border-slate-500/30 hover:bg-slate-600/30 text-left transition-colors group"

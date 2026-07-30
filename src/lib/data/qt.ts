@@ -53,8 +53,8 @@ async function fetchArchivePosts(): Promise<QtPost[]> {
         title: item.title,
         excerpt: item.excerpt || '',
         thumbnail: item.thumbnail_url
-          ? { src: item.thumbnail_url, alt: item.title }
-          : { src: '/images/qt/default-cover.jpg', alt: item.title },
+          ? { src: item.thumbnail_url, alt: item.title, width: 800, height: 1000 }
+          : { src: '/images/qt/default-cover.jpg', alt: item.title, width: 800, height: 1000 },
         season: item.season || '연중' as Season,
         tags: [],
         publishedAt: item.published_at,
@@ -103,7 +103,35 @@ function filterAndSort(
 }
 
 function mergedPosts(): Promise<QtPost[]> {
-  return fetchArchivePosts().then(archive => [...archive, ...allPosts])
+  return fetchArchivePosts().then(archive => {
+    const map = new Map<string, QtPost>()
+    const seenTitles = new Set<string>()
+    const result: QtPost[] = []
+
+    // 1. Supabase DB 데이터 우선 등록 (중복 제거)
+    for (const p of archive) {
+      const key = (p.slug?.normalize('NFC') || p.id).trim()
+      const titleKey = p.title.trim()
+      if (!map.has(key) && !seenTitles.has(titleKey)) {
+        map.set(key, p)
+        seenTitles.add(titleKey)
+        result.push(p)
+      }
+    }
+
+    // 2. Mock 데이터는 DB에 중복 항목이 없는 경우에만 추가
+    for (const p of allPosts) {
+      const key = (p.slug?.normalize('NFC') || p.id).trim()
+      const titleKey = p.title.trim()
+      if (!map.has(key) && !seenTitles.has(titleKey)) {
+        map.set(key, p)
+        seenTitles.add(titleKey)
+        result.push(p)
+      }
+    }
+
+    return result
+  })
 }
 
 export async function getQtPosts(params?: QtQueryParams): Promise<{
@@ -154,8 +182,8 @@ export async function getQtPostDetail(
           title: data.title,
           excerpt: data.excerpt || '',
           thumbnail: data.thumbnail_url
-            ? { src: data.thumbnail_url, alt: data.title }
-            : { src: '/images/qt/default-cover.jpg', alt: data.title },
+            ? { src: data.thumbnail_url, alt: data.title, width: 800, height: 1000 }
+            : { src: '/images/qt/default-cover.jpg', alt: data.title, width: 800, height: 1000 },
           season: data.season || '연중' as Season,
           tags: [],
           publishedAt: data.published_at,

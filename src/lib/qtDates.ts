@@ -50,6 +50,29 @@ export function getDaysInMonth(dateStr: string): number {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
 }
 
+// 시작일부터 daysCount 개의 평일(월~토, 일요일 제외) 라벨 배열을 생성
+// 예: getFormattedDateListWeekdays("2026-07-06", 3) → ["7/6 (월)", "7/7 (화)", "7/8 (수)"]
+export function getFormattedDateListWeekdays(startDateStr: string, daysCount: number): string[] {
+  const list: string[] = []
+  const start = new Date(startDateStr)
+  if (isNaN(start.getTime())) return []
+
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+  let i = 0
+  while (list.length < daysCount) {
+    const next = new Date(start)
+    next.setDate(start.getDate() + i)
+    if (next.getDay() !== 0) {
+      const month = next.getMonth() + 1
+      const date = next.getDate()
+      const dayName = dayNames[next.getDay()]
+      list.push(`${month}/${date} (${dayName})`)
+    }
+    i++
+  }
+  return list
+}
+
 // 시작일부터 daysCount 일 만큼 "M/D (요일)" 형식의 라벨 배열을 생성
 // 예: getFormattedDateList("2026-07-15", 7) → ["7/15 (화)", "7/16 (수)", ...]
 export function getFormattedDateList(startDateStr: string, daysCount: number): string[] {

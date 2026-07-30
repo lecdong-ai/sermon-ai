@@ -22,8 +22,9 @@ export function QtCard({ post, variant = 'default' }: QtCardProps) {
             <Image
               src={post.thumbnail.src}
               alt={post.thumbnail.alt}
-              width={post.thumbnail.width}
-              height={post.thumbnail.height}
+              width={post.thumbnail.width ?? 800}
+              height={post.thumbnail.height ?? 1000}
+              unoptimized
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
             />
           </div>
@@ -66,8 +67,9 @@ export function QtCard({ post, variant = 'default' }: QtCardProps) {
           <Image
             src={post.thumbnail.src}
             alt={post.thumbnail.alt}
-            width={post.thumbnail.width}
-            height={post.thumbnail.height}
+            width={post.thumbnail.width ?? 800}
+            height={post.thumbnail.height ?? 1000}
+            unoptimized
             className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
           />
         </div>
