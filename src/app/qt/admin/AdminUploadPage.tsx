@@ -8,6 +8,7 @@ import { getGenerations, getGenerationLabel, formatDate, formatFileSize, type Ge
 import { cn } from '@/lib/utils/cn'
 import AdminQtArchive from '@/components/admin/AdminQtArchive'
 import AdminQtJsonArchive from '@/components/admin/AdminQtJsonArchive'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminUploadPage() {
   const router = useRouter()
@@ -48,23 +49,53 @@ export default function AdminUploadPage() {
     setUploadError(null)
 
     try {
-      // Upload files first
+      // 1. Client Direct Storage Upload (Vercel 4.5MB Serverless Body Limit 우회)
       const uploadedFiles: GenerationalQtFile[] = []
       for (const { file } of formFiles) {
-        const fd = new FormData()
-        fd.append('file', file)
-        fd.append('generation', formGen)
+        const normalizedName = file.name.normalize('NFC')
+        const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
+        const timeStamp = Date.now()
+        const filePath = `generational-qt/${encodeURIComponent(formGen)}/${timeStamp}_${safeBaseName}`
 
-        const res = await fetch('/api/generational-qt/upload', { method: 'POST', body: fd })
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}))
-          throw new Error(errData.error || `"${file.name}" 업로드 실패`)
+        let fileUrl = ''
+
+        // 브라우저에서 Supabase Storage 버킷 'qt-files'로 직통 업로드
+        const { data: uploadData, error: storageError } = await supabase.storage
+          .from('qt-files')
+          .upload(filePath, file, {
+            contentType: file.type || 'application/pdf',
+            upsert: true,
+          })
+
+        if (!storageError && uploadData) {
+          const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
+          fileUrl = urlData.publicUrl
+        } else {
+          console.warn('Direct client storage upload failed, retrying via server API:', storageError)
+
+          // 서버 API 업로드 fallback (소형 파일 또는 서버 백업 용도)
+          const fd = new FormData()
+          fd.append('file', file)
+          fd.append('generation', formGen)
+
+          const res = await fetch('/api/generational-qt/upload', { method: 'POST', body: fd })
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}))
+            throw new Error(errData.error || storageError?.message || `"${file.name}" 업로드에 실패했습니다.`)
+          }
+          const serverResult = await res.json()
+          fileUrl = serverResult.url
         }
-        const data = await res.json()
-        uploadedFiles.push(data)
+
+        uploadedFiles.push({
+          name: normalizedName,
+          url: fileUrl,
+          type: file.type || 'application/pdf',
+          size: file.size,
+        })
       }
 
-      // Create generational QT record
+      // 2. Create generational QT record (DB 저장)
       const res = await fetch('/api/generational-qt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
