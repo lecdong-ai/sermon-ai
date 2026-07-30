@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export type Generation = '초등' | '중고등' | '청년' | '장년'
+export type Generation = '중고등' | '청년' | '장년'
 
 export interface GenerationalQtFile {
   name: string
@@ -22,7 +22,7 @@ export interface GenerationalQtItem {
   updated_at: string
 }
 
-const GENERATIONS: Generation[] = ['초등', '중고등', '청년', '장년']
+const GENERATIONS: Generation[] = ['중고등', '청년', '장년']
 
 export function getGenerations() {
   return GENERATIONS
@@ -30,12 +30,11 @@ export function getGenerations() {
 
 export function getGenerationLabel(gen: Generation) {
   const labels: Record<Generation, string> = {
-    '초등': '초등부',
     '중고등': '중고등부',
     '청년': '청년부',
     '장년': '장년부',
   }
-  return labels[gen]
+  return labels[gen] || gen
 }
 
 export async function getGenerationalQts(generation?: Generation): Promise<GenerationalQtItem[]> {

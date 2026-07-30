@@ -18,7 +18,7 @@ export default function AdminUploadPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
 
   // Upload form state
-  const [formGen, setFormGen] = useState<Generation>('초등')
+  const [formGen, setFormGen] = useState<Generation>('중고등')
   const [formTitle, setFormTitle] = useState('')
   const [formDesc, setFormDesc] = useState('')
   const [formPassage, setFormPassage] = useState('')

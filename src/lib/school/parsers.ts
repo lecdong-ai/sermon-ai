@@ -1,4 +1,4 @@
-const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 export interface ParseResult {
   text: string
@@ -13,7 +13,7 @@ export interface ParseError {
 
 export function validateFile(file: File): ParseError | null {
   if (file.size > MAX_FILE_SIZE) {
-    return { error: `파일 크기가 20MB를 초과합니다. (${(file.size / 1024 / 1024).toFixed(1)}MB)` }
+    return { error: `파일 크기가 100MB를 초과합니다. (${(file.size / 1024 / 1024).toFixed(1)}MB)` }
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase()

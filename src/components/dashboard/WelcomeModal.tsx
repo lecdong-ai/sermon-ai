@@ -8,7 +8,7 @@ import { useAuth } from '@/components/AuthProvider'
 const WELCOME_KEY = 'bunker_welcome_seen'
 
 const QUICK_START = [
-  { icon: Upload, title: '설교 파일 업로드', desc: 'PDF, DOCX, TXT (최대 20MB)', color: 'from-indigo-500 to-blue-500' },
+  { icon: Upload, title: '설교 파일 업로드', desc: 'PDF, DOCX, TXT (최대 100MB)', color: 'from-indigo-500 to-blue-500' },
   { icon: BrainCircuit, title: 'AI 6종 콘텐츠 생성', desc: '요약 · 소그룹 · 카드뉴스 · PPT · QT · 설교 질문', color: 'from-purple-500 to-pink-500' },
   { icon: HardDrive, title: '아카이브 영구 저장', desc: '작성한 모든 콘텐츠 클라우드 보관', color: 'from-cyan-500 to-teal-500' },
   { icon: FileCheck, title: '통찰 노트 + 검색', desc: '묵상과 아이디어 키워드로 빠르게 검색', color: 'from-amber-500 to-orange-500' },

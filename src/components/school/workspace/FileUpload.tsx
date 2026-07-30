@@ -66,8 +66,8 @@ export default memo(function FileUpload({ onSuccess, dark }: Props) {
       return
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      setErrorMsg(`파일 크기가 20MB를 초과합니다. (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
+    if (file.size > 100 * 1024 * 1024) {
+      setErrorMsg(`파일 크기가 100MB를 초과합니다. (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
       return
     }
 
@@ -182,7 +182,7 @@ export default memo(function FileUpload({ onSuccess, dark }: Props) {
                 {isDragging ? '파일을 놓으세요' : '설교 원고를 업로드하세요'}
               </p>
               <p className={`text-[14px] sm:text-[15px] ${theme === 'dark' ? 'text-white/40' : 'text-[#8b95a1]'}`}>
-                PDF · TXT · DOCX 지원 (최대 20MB)
+                PDF · TXT · DOCX 지원 (최대 100MB)
               </p>
             </div>
 

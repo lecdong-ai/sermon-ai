@@ -20,7 +20,7 @@ interface FileDropzoneProps {
   onFilesChange: (files: { file: File; url?: string }[]) => void
 }
 
-export function FileDropzone({ maxFiles = 10, maxSizeMB = 20, accept = '.pdf,.png,.jpg,.jpeg,.gif,.webp', onFilesChange }: FileDropzoneProps) {
+export function FileDropzone({ maxFiles = 10, maxSizeMB = 100, accept = '.pdf,.png,.jpg,.jpeg,.gif,.webp', onFilesChange }: FileDropzoneProps) {
   const [entries, setEntries] = useState<FileEntry[]>([])
   const [dragOver, setDragOver] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)

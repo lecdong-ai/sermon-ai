@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils/cn'
 import { getGenerations, getGenerationLabel, type Generation } from '@/lib/data/generational-qt'
 
 const GEN_COLORS: Record<Generation, { active: string; hover: string; dot: string }> = {
-  '초등': { active: 'bg-emerald-50 text-emerald-700 border-emerald-200', hover: 'hover:text-emerald-600', dot: 'bg-emerald-500' },
   '중고등': { active: 'bg-sky-50 text-sky-700 border-sky-200', hover: 'hover:text-sky-600', dot: 'bg-sky-500' },
   '청년': { active: 'bg-violet-50 text-violet-700 border-violet-200', hover: 'hover:text-violet-600', dot: 'bg-violet-500' },
   '장년': { active: 'bg-amber-50 text-amber-700 border-amber-200', hover: 'hover:text-amber-600', dot: 'bg-amber-500' },
