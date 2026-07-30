@@ -117,22 +117,47 @@ export default function AdminUploadPage() {
       }
 
       // 4. Create generational QT record (DB 저장)
-      const res = await fetch('/api/generational-qt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          generation: formGen,
-          title: formTitle,
-          description: formDesc,
-          bible_passage: formPassage,
-          week_label: formWeek,
-          files: uploadedFiles,
-        }),
-      })
+      let saved = false
+      try {
+        const { error: directDbError } = await supabase
+          .from('generational_qt')
+          .insert({
+            generation: formGen,
+            title: formTitle,
+            description: formDesc || '',
+            bible_passage: formPassage || '',
+            week_label: formWeek || '',
+            files: uploadedFiles,
+          })
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || '저장에 실패했습니다')
+        if (!directDbError) {
+          saved = true
+        } else {
+          console.warn('Direct DB insert failed, falling back to server API route:', directDbError)
+        }
+      } catch (e) {
+        console.warn('Direct DB insert exception:', e)
+      }
+
+      // 2차 Fallback: Server API route
+      if (!saved) {
+        const res = await fetch('/api/generational-qt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            generation: formGen,
+            title: formTitle,
+            description: formDesc,
+            bible_passage: formPassage,
+            week_label: formWeek,
+            files: uploadedFiles,
+          }),
+        })
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || '저장에 실패했습니다. 입력 내용을 확인해 주세요.')
+        }
       }
 
       // Reset form
