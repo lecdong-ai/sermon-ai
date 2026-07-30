@@ -150,8 +150,14 @@ export default function AdminUploadPage() {
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || '저장에 실패했습니다. 입력 내용을 확인해 주세요.')
+        let errorMsg = ''
+        try {
+          const errData = await res.json()
+          errorMsg = typeof errData === 'string' ? errData : (errData?.error || errData?.message || JSON.stringify(errData))
+        } catch {
+          errorMsg = await res.text().catch(() => '')
+        }
+        throw new Error(errorMsg || `서버 오류 (${res.status})로 저장이 완료되지 않았습니다.`)
       }
 
       // Reset form

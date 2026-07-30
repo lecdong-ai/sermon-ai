@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
 
   if (error) {
-    return NextResponse.json({ error: '조회에 실패했습니다' }, { status: 500 })
+    return NextResponse.json({ error: `조회 실패: ${error.message}` }, { status: 500 })
   }
 
   return NextResponse.json(data || [])
@@ -26,14 +26,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sb = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll() { return request.cookies.getAll() }, setAll() {} } },
-    )
-    const { data: { user } } = await sb.auth.getUser()
-    
-    // 개발 및 관리자 유효성: user 세션이 있거나, 없어도 관리자 수동 추가 허용 (supabaseAdmin 사용)
     const body = await request.json()
     const { generation, title, description, bible_passage, week_label, files } = body
 
@@ -41,27 +33,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '세대와 제목은 필수 입력 항목입니다.' }, { status: 400 })
     }
 
+    const insertPayload = {
+      generation: String(generation),
+      title: String(title),
+      description: description ? String(description) : '',
+      bible_passage: bible_passage ? String(bible_passage) : '',
+      week_label: week_label ? String(week_label) : '',
+      files: Array.isArray(files) ? files : [],
+    }
+
     const { data, error } = await supabaseAdmin
       .from('generational_qt')
-      .insert({
-        generation,
-        title,
-        description: description || '',
-        bible_passage: bible_passage || '',
-        week_label: week_label || '',
-        files: files || [],
-      })
+      .insert(insertPayload)
       .select()
       .single()
 
     if (error) {
       console.error('Failed to create generational QT:', error)
-      return NextResponse.json({ error: `DB 저장 실패: ${error.message}` }, { status: 500 })
+      return NextResponse.json(
+        { error: `DB 저장 실패 [${error.code || 'ERR'}]: ${error.message || error.details || '알 수 없는 오류'}` },
+        { status: 400 }
+      )
     }
 
     return NextResponse.json(data, { status: 201 })
   } catch (err: any) {
     console.error('Generational QT POST error:', err)
-    return NextResponse.json({ error: err.message || '저장 중 오류가 발생했습니다.' }, { status: 500 })
+    return NextResponse.json(
+      { error: `서버 예외 발생: ${err.message || '저장 중 오류가 발생했습니다.'}` },
+      { status: 500 }
+    )
   }
 }
