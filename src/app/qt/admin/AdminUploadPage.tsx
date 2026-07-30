@@ -55,8 +55,11 @@ export default function AdminUploadPage() {
         fd.append('file', file)
         fd.append('generation', formGen)
 
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        if (!res.ok) throw new Error(`"${file.name}" 업로드 실패`)
+        const res = await fetch('/api/generational-qt/upload', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || `"${file.name}" 업로드 실패`)
+        }
         const data = await res.json()
         uploadedFiles.push(data)
       }

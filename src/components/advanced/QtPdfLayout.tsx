@@ -451,13 +451,24 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       </div>
     )
 
+    // 주차 및 날짜 범위 계산 (월간 큐티 호환)
+    const baseWeekNum = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
+    const weekOffset = Math.floor(dayIdx / 6)
+    const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
+    const weekStartIndex = weekOffset * 6
+    const currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+    const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
+    const weekStartLabel = currentWeekDatesData[0]?.label || ''
+    const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
+    const dayInWeekIdx = dayIdx % 6
+
     return (
       <div key={dayIdx}>
       {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
       <div className="qt-page" style={pageStyle}>
         <div style={pageContentStyle}>
           {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주`)}
+          {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
 
         {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
         <div style={{
@@ -483,7 +494,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               letterSpacing: `${2 * scale}px`,
               textTransform: 'uppercase',
             }}>
-              ◆ 주간 펼침 · {form.bibleBook} · 제{form.weekNumber}주
+              ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
             </div>
             <div style={{
               fontFamily: t.fontHeading,
@@ -493,7 +504,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               letterSpacing: `${0.5 * scale}px`,
               marginTop: `${1 * scale}px`,
             }}>
-              {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
+              {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
             </div>
           </div>
 
@@ -502,9 +513,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             gridTemplateColumns: 'repeat(6, 1fr)',
             gap: `${0.5 * scale}px`,
           }}>
-            {parsedDays.slice(0, 6).map((d, i) => {
+            {currentWeekDaysData.map((d, i) => {
               const dv = parseBibleVerses(d.passage || '')
-              const isCurrent = i === dayIdx
+              const isCurrent = i === dayInWeekIdx
               const passageShort = (dv.passageRange || '').split(' ').pop() || ''
               return (
                 <div key={i} style={{
@@ -529,7 +540,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       textTransform: 'uppercase',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${1 * scale}px`,
                     }}>
-                      <span>{weekdays[i]?.label || `Day ${i + 1}`}</span>
+                      <span>{currentWeekDatesData[i]?.label || `Day ${weekStartIndex + i + 1}`}</span>
                       {isCurrent && <span style={{ fontSize: `${12 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
@@ -551,7 +562,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       lineHeight: '1.2',
                       textAlign: 'center',
                     }}>
-                      {d.title || `Day ${i + 1}`}
+                      {d.title || `Day ${weekStartIndex + i + 1}`}
                     </div>
                   </div>
                 </div>
@@ -1081,6 +1092,17 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     const verses = parseBibleVerses(day.passage || '')
     pageCounter = 1 + dayIdx * 3 + 1
 
+    // 주차 및 날짜 범위 계산 (월간 큐티 호환)
+    const baseWeekNum = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
+    const weekOffset = Math.floor(dayIdx / 6)
+    const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
+    const weekStartIndex = weekOffset * 6
+    const currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+    const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
+    const weekStartLabel = currentWeekDatesData[0]?.label || ''
+    const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
+    const dayInWeekIdx = dayIdx % 6
+
     // Overflow detection (shared with landscape)
     const reflectP = (key: string): string => trunc((day as any)[key] || '', key)
     const hasOverflowP = (['observation','understanding','application','reflection','prayer']).some(k => {
@@ -1121,7 +1143,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 letterSpacing: `${1.5 * scale}px`,
                 opacity: 0.85,
               }}>
-                QT · {form.bibleBook} · {form.weekNumber}주
+                QT · {form.bibleBook} · {currentWeekNum}주
               </div>
             </div>
             <div style={{
@@ -1172,7 +1194,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
               }}>
-                ◆ 주간 펼침 · {form.bibleBook} · 제{form.weekNumber}주
+                ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
               </span>
               <span style={{
                 fontFamily: t.fontHeading,
@@ -1181,7 +1203,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 color: t.textMuted,
                 marginTop: `${1 * scale}px`,
               }}>
-                {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} · 6일
+                {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
               </span>
             </div>
             <div style={{
@@ -1189,9 +1211,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               gridTemplateColumns: 'repeat(6, 1fr)',
               gap: `${0.5 * scale}px`,
             }}>
-              {parsedDays.slice(0, 6).map((d, i) => {
+              {currentWeekDaysData.map((d, i) => {
                 const dv = parseBibleVerses(d.passage || '')
-                const isCurrent = i === dayIdx
+                const isCurrent = i === dayInWeekIdx
                 const passageShort = (dv.passageRange || '').split(' ').pop() || ''
                 return (
                   <div key={i} style={{
@@ -1211,7 +1233,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       letterSpacing: `${0.3 * scale}px`,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>{weekdays[i]?.label?.split('(')[0] || `Day ${i + 1}`}</span>
+                      <span>{currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${weekStartIndex + i + 1}`}</span>
                       {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
@@ -1231,7 +1253,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       color: t.textMuted,
                       lineHeight: '1.1',
                     }}>
-                      {d.title || `Day ${i + 1}`}
+                      {d.title || `Day ${weekStartIndex + i + 1}`}
                     </div>
                   </div>
                 )
