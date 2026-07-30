@@ -133,10 +133,14 @@ export default function AdminUploadPage() {
     if (!confirm('정말 삭제하시겠습니까?')) return
     setDeleting(id)
     try {
-      await fetch(`/api/generational-qt/${id}`, { method: 'DELETE' })
-      fetchItems()
-    } catch {
-      alert('삭제에 실패했습니다')
+      const res = await fetch(`/api/generational-qt/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || '삭제에 실패했습니다')
+      }
+      await fetchItems()
+    } catch (err: any) {
+      alert(err.message || '삭제에 실패했습니다')
     } finally {
       setDeleting(null)
     }
