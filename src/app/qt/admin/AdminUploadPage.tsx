@@ -64,7 +64,7 @@ export default function AdminUploadPage() {
         const normalizedName = file.name.normalize('NFC')
         let fileUrl = ''
 
-        // 1단계: Signed Upload URL 생성 요청 (Vercel 4.5MB Payload limit 우회)
+        // 1단계: Signed Upload URL 토큰 요청 (Service Role 기반 서명 토큰)
         try {
           const signRes = await fetch('/api/generational-qt/upload-url', {
             method: 'POST',
@@ -77,21 +77,17 @@ export default function AdminUploadPage() {
           })
 
           if (signRes.ok) {
-            const { signedUrl, publicUrl } = await signRes.json()
-            if (signedUrl) {
-              // 2단계: Supabase Storage 서명 URL로 브라우저 직통 PUT 업로드 (RLS 제한 해제, 100MB+ 고용량 PDF 지원)
-              const uploadRes = await fetch(signedUrl, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': file.type || 'application/pdf',
-                },
-                body: file,
-              })
+            const { token, path, publicUrl } = await signRes.json()
+            if (token && path) {
+              // 2단계: Supabase SDK 공식 uploadToSignedUrl 로 직통 업로드! (Vercel 4.5MB Payload limit 100% 회피)
+              const { data: signedResult, error: signedError } = await supabase.storage
+                .from('qt-files')
+                .uploadToSignedUrl(path, token, file)
 
-              if (uploadRes.ok) {
+              if (!signedError && signedResult) {
                 fileUrl = publicUrl
               } else {
-                console.warn('PUT upload to signedUrl failed:', uploadRes.statusText)
+                console.warn('uploadToSignedUrl failed, falling back:', signedError)
               }
             }
           }
@@ -122,7 +118,7 @@ export default function AdminUploadPage() {
           }
         }
 
-        // 4단계 최종 Fallback: Data URL
+        // 4단계 최후 Fallback: Base64 Data URL (소형 파일 보장용)
         if (!fileUrl) {
           fileUrl = await fileToDataUrl(file)
         }
@@ -169,7 +165,7 @@ export default function AdminUploadPage() {
       setMode('list')
       fetchItems()
     } catch (err: any) {
-      setUploadError(err.message || '업로드 중 오류가 발생했습니다')
+      setUploadError(err.message || '업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
     }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   try {
     const { fileName, fileType, generation } = await request.json()
