@@ -49,7 +49,7 @@ export default function AdminUploadPage() {
     setUploadError(null)
 
     try {
-      // 1. Client Direct Storage Upload (Vercel 4.5MB Serverless Body Limit 우회)
+      // 1. Client Direct Storage Upload (버킷 존재 시 직통 업로드)
       const uploadedFiles: GenerationalQtFile[] = []
       for (const { file } of formFiles) {
         const normalizedName = file.name.normalize('NFC')
@@ -59,21 +59,24 @@ export default function AdminUploadPage() {
 
         let fileUrl = ''
 
-        // 브라우저에서 Supabase Storage 버킷 'qt-files'로 직통 업로드
-        const { data: uploadData, error: storageError } = await supabase.storage
-          .from('qt-files')
-          .upload(filePath, file, {
-            contentType: file.type || 'application/pdf',
-            upsert: true,
-          })
+        try {
+          const { data: uploadData, error: storageError } = await supabase.storage
+            .from('qt-files')
+            .upload(filePath, file, {
+              contentType: file.type || 'application/pdf',
+              upsert: true,
+            })
 
-        if (!storageError && uploadData) {
-          const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
-          fileUrl = urlData.publicUrl
-        } else {
-          console.warn('Direct client storage upload failed, retrying via server API:', storageError)
+          if (!storageError && uploadData) {
+            const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
+            fileUrl = urlData.publicUrl
+          }
+        } catch (e) {
+          console.warn('Direct client storage upload exception:', e)
+        }
 
-          // 서버 API 업로드 fallback (소형 파일 또는 서버 백업 용도)
+        // Direct Upload 실패 시 (Bucket not found 등) 무적 서버 API(Data URL Fallback)로 안전 전환
+        if (!fileUrl) {
           const fd = new FormData()
           fd.append('file', file)
           fd.append('generation', formGen)
@@ -81,7 +84,7 @@ export default function AdminUploadPage() {
           const res = await fetch('/api/generational-qt/upload', { method: 'POST', body: fd })
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}))
-            throw new Error(errData.error || storageError?.message || `"${file.name}" 업로드에 실패했습니다.`)
+            throw new Error(errData.error || `"${file.name}" 업로드에 실패했습니다.`)
           }
           const serverResult = await res.json()
           fileUrl = serverResult.url
