@@ -302,7 +302,6 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       }
       clearMonthlyWeeks(generationKey)
       setMonthlyCount(0)
-      setMonthlyData(null)
     } catch (e: any) {
       console.error('Monthly PDF generation error:', e)
       alert(`월간 PDF 생성 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`)
@@ -320,84 +319,89 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   return (
     <div className="flex flex-col min-h-0 flex-1 h-full bg-[#050814] text-slate-100">
       {/* ===== Top Bar ===== */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0f24]/90 backdrop-blur-md shrink-0 shadow-lg z-10">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0f24]/90 backdrop-blur-md shrink-0 shadow-lg z-10 w-full gap-4">
+        {/* Left: Back Button */}
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10 whitespace-nowrap shrink-0"
           >
             <Edit3 className="w-3.5 h-3.5" />
             양식 수정
           </button>
 
-          <div className="w-px h-5 bg-white/15 mx-1" />
+          <div className="w-px h-5 bg-white/15 hidden sm:block" />
+        </div>
 
-          {/* ✦ 뷰어 탭 네비게이션: 표지 COVER + 일자별 버튼 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none">
-            <button
-              onClick={() => setViewMode('cover')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === 'cover'
-                  ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              표지 미리보기
-            </button>
+        {/* Center: Cover Tab + Calendar Date Tabs (Sunday Excluded) */}
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none max-w-full justify-center flex-1">
+          <button
+            onClick={() => setViewMode('cover')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+              viewMode === 'cover'
+                ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
+                : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            표지 미리보기
+          </button>
 
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
+          <div className="w-px h-4 bg-white/10 mx-0.5 shrink-0" />
 
-            <button
-              onClick={() => {
-                setViewMode('day')
-                setDayIndex(Math.max(0, dayIndex - 1))
-              }}
-              disabled={viewMode === 'day' && dayIndex === 0}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          <button
+            onClick={() => {
+              setViewMode('day')
+              setDayIndex(Math.max(0, dayIndex - 1))
+            }}
+            disabled={viewMode === 'day' && dayIndex === 0}
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-            <div className="flex items-center gap-1">
-              {days.map((_, idx) => (
+          {/* 일요일 제외한 실제 날짜/요일 달력 탭 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+            {days.map((_, idx) => {
+              const dateLabel = weekdays[idx] || `${idx + 1}일`
+              return (
                 <button
                   key={idx}
                   onClick={() => {
                     setViewMode('day')
                     setDayIndex(idx)
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
                     viewMode === 'day' && dayIndex === idx
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/5'
                   }`}
                 >
-                  {idx + 1}일
+                  {dateLabel}
                 </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => {
-                setViewMode('day')
-                setDayIndex(Math.min(days.length - 1, dayIndex + 1))
-              }}
-              disabled={viewMode === 'day' && dayIndex >= days.length - 1}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              )
+            })}
           </div>
+
+          <button
+            onClick={() => {
+              setViewMode('day')
+              setDayIndex(Math.min(days.length - 1, dayIndex + 1))
+            }}
+            disabled={viewMode === 'day' && dayIndex >= days.length - 1}
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* 오른쪽 PDF 다운로드 버튼그룹 */}
-        <div className="flex items-center gap-2.5">
+        {/* Right: PDF Download Buttons */}
+        <div className="flex items-center gap-2.5 shrink-0">
           {viewMode === 'day' && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
               disabled={dayPdfLoading === dayIndex || days.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-white/10 disabled:opacity-30"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-white/10 disabled:opacity-30 whitespace-nowrap shrink-0"
               title="현재 일자만 단일 PDF 다운로드"
             >
               {dayPdfLoading === dayIndex
@@ -410,10 +414,9 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           <button
             onClick={handlePdfDownload}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30 disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30 disabled:opacity-40 whitespace-nowrap shrink-0"
           >
             {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {pdfLoading ? 'PDF 생성 중...' : '전체 PDF 저장'}
           </button>
         </div>
       </header>
