@@ -20,7 +20,10 @@ import {
   Check,
   RotateCcw,
   Plus,
-  LayoutGrid
+  LayoutGrid,
+  Maximize2,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react'
 import QtDayCard from './QtDayCard'
 import QtPdfLayout, { type LayoutSettings } from './QtPdfLayout'
@@ -43,10 +46,10 @@ export interface QtSelectedInfo {
 interface QtReaderProps {
   form: QTFormData
   accumulatedManuscript: string
-  templateId: string
+  templateId?: string
   startPassage?: string
   endPassage?: string
-  selectedInfo?: QtSelectedInfo | null
+  selectedInfo?: QtSelectedInfo
   daySectionTitles?: Record<number, string[]>
   monthCalendarStrip?: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] }
   onBack: () => void
@@ -55,6 +58,8 @@ interface QtReaderProps {
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
   const [previewType, setPreviewType] = useState<'pdf-live' | 'smart'>('pdf-live') // 기본값: PDF 실물 미리보기!
+  const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false) // 풀스크린 팝업 모달!
+  const [zoomScale, setZoomScale] = useState(1.0) // 0.5 ~ 2.0 줌
   const [viewMode, setViewMode] = useState<'cover' | 'day'>('cover')
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
@@ -334,8 +339,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           <div className="w-px h-5 bg-white/15 hidden sm:block" />
 
-          {/* 📄 PDF 실물 뷰어 vs 📱 카드 스위치 */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-950/80 border border-white/10 shrink-0">
+          {/* 📄 PDF 실물 뷰어 vs 📱 카드 스위치 + 🔍 전체화면 버튼 */}
+          <div className="flex items-center p-1 rounded-xl bg-slate-950/80 border border-white/10 shrink-0 gap-1">
             <button
               onClick={() => setPreviewType('pdf-live')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
@@ -357,6 +362,15 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             >
               <BookOpen className="w-3.5 h-3.5" />
               스마트 카드 뷰어
+            </button>
+
+            <button
+              onClick={() => setIsPdfFullscreenModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 transition-all shadow-md whitespace-nowrap"
+              title="가림 상자 0개! 전체화면 모달 팝업으로 탁 트이게 미리보기"
+            >
+              <Maximize2 className="w-3.5 h-3.5 animate-pulse" />
+              🔍 전체화면 팝업 뷰어
             </button>
           </div>
         </div>
@@ -968,6 +982,106 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             monthCalendarStrip={monthlyData.strip}
             layoutSettings={layoutSettings}
           />
+        </div>
+      )}
+
+      {/* ★ ===== [전체화면 풀스크린 PDF 실물 미리보기 팝업 모달] ===== */}
+      {isPdfFullscreenModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-[#030612]/98 backdrop-blur-2xl flex flex-col min-h-screen min-w-full animate-in fade-in duration-200">
+          {/* Top Inspector Bar */}
+          <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#090e24]/95 backdrop-blur-md shrink-0 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" />
+                <span>전체화면 PDF 실물 뷰어</span>
+              </div>
+              <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">
+                · 용지: <strong className="text-slate-200">{sizeOption}</strong> | 테마: <strong className="text-slate-200">{tmpl.name}</strong>
+              </span>
+            </div>
+
+            {/* Center: Zoom Controls */}
+            <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-white/10 shadow-inner">
+              <button
+                onClick={() => setZoomScale(s => Math.max(0.4, Number((s - 0.1).toFixed(1))))}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-all"
+                title="축소"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <span className="text-xs font-mono font-bold px-3 text-indigo-200 min-w-[54px] text-center">
+                {Math.round(zoomScale * 100)}%
+              </span>
+
+              <button
+                onClick={() => setZoomScale(s => Math.min(2.0, Number((s + 0.1).toFixed(1))))}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-all"
+                title="확대"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="w-px h-4 bg-white/15 mx-1" />
+
+              <button
+                onClick={() => setZoomScale(1.0)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10 text-[11px] font-bold text-slate-300 hover:text-white transition-all"
+                title="100% 원본 크기 리셋"
+              >
+                <RotateCcw className="w-3 h-3" />
+                100%
+              </button>
+            </div>
+
+            {/* Right: PDF Save & Close */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePdfDownload}
+                disabled={pdfLoading || days.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-500/20 border border-amber-300/30"
+              >
+                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {pdfLoading ? 'PDF 생성 중...' : 'PDF 저장하기'}
+              </button>
+
+              <button
+                onClick={() => setIsPdfFullscreenModalOpen(false)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-red-500/20 text-slate-300 hover:text-red-200 text-xs font-bold transition-all border border-white/10"
+              >
+                <X className="w-4 h-4" />
+                닫기
+              </button>
+            </div>
+          </header>
+
+          {/* Canvas Scroll Area: Zero Box Occlusion */}
+          <div className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]">
+            <div
+              className="transition-all duration-200 origin-top shadow-[0_32px_120px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden bg-white border border-white/20 my-4"
+              style={{
+                transform: `scale(${zoomScale})`,
+                transformOrigin: 'top center',
+              }}
+            >
+              <QtPdfLayout
+                form={form}
+                result={{ fullManuscript: accumulatedManuscript }}
+                sizeOption={sizeOption}
+                templateId={activeTmpl.id}
+                onlyCover={false}
+                startPassage={startPassage}
+                endPassage={endPassage}
+                userMemos={userMemos}
+                isBilingualSideBySide={isBilingualSideBySide}
+                selectedInfo={selectedInfo}
+                daySectionTitles={daySectionTitles}
+                monthCalendarStrip={monthCalendarStrip}
+                layoutSettings={layoutSettings}
+                editedContent={editedContent}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
