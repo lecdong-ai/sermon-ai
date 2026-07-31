@@ -110,27 +110,38 @@ export function parseBookName(text?: string): string | null {
   return null
 }
 
-// ===== 원고 전체 텍스트에서 성경권 및 1일 차 시작 ~ 말일 차 끝 구절을 100% 정밀 도출하는 멀티 스테이지 스캐너 =====
-export function extractAllBibleVersesFromText(text: string): { book: string | null; startPassage: string; endPassage: string } {
-  if (!text) return { book: null, startPassage: '', endPassage: '' }
+// ===== 원고 전체 텍스트에서 성경권 및 1일 차 시작 ~ 말일 차 끝 구절을 100% 영문 제거 및 한글 표준화하여 정밀 도출하는 스캐너 =====
+export function extractAllBibleVersesFromText(text: string): { book: string | null; startPassage: string; endPassage: string; passageRangeText: string } {
+  if (!text) return { book: null, startPassage: '', endPassage: '', passageRangeText: '' }
 
   const regex = /([가-힣1-3A-Za-z]+(?:\s*[가-힣]+)?)\s*(\d+)\s*[:장]\s*(\d+)(?:\s*[~-]\s*(\d+)\s*절?)?/g
-  const matches: { book: string; full: string }[] = []
+  const matches: { book: string; chapter: number; verseStart: number; verseEnd?: number; cleanFull: string; verseOnly: string }[] = []
 
   let m: RegExpExecArray | null
   while ((m = regex.exec(text)) !== null) {
     const rawBook = m[1].trim()
     const parsedBook = parseBookName(rawBook)
     if (parsedBook) {
+      const chapter = parseInt(m[2], 10)
+      const verseStart = parseInt(m[3], 10)
+      const verseEnd = m[4] ? parseInt(m[4], 10) : undefined
+      
+      const verseOnly = verseEnd ? `${chapter}:${verseStart}-${verseEnd}` : `${chapter}:${verseStart}`
+      const cleanFull = `${parsedBook} ${verseOnly}`
+
       matches.push({
         book: parsedBook,
-        full: m[0].trim(),
+        chapter,
+        verseStart,
+        verseEnd,
+        cleanFull,
+        verseOnly,
       })
     }
   }
 
   if (matches.length === 0) {
-    return { book: null, startPassage: '', endPassage: '' }
+    return { book: null, startPassage: '', endPassage: '', passageRangeText: '' }
   }
 
   // 가장 빈도수가 높은 성경권 선택
@@ -152,10 +163,26 @@ export function extractAllBibleVersesFromText(text: string): { book: string | nu
   const first = bookMatches[0]
   const last = bookMatches[bookMatches.length - 1]
 
+  const startPassage = first.cleanFull
+  const endPassage = last.cleanFull
+
+  // 시작 구절과 끝 구절 연결 범위 텍스트 생성 (예: 3:1 ~ 4:20 또는 요한복음 3:1-15 ~ 4:1-20)
+  let passageRangeText = ''
+  if (first === last) {
+    passageRangeText = first.cleanFull
+  } else if (first.chapter === last.chapter) {
+    const endV = last.verseEnd || last.verseStart
+    passageRangeText = `${dominantBook} ${first.chapter}:${first.verseStart}~${endV}`
+  } else {
+    const endV = last.verseEnd ? `-${last.verseEnd}` : ''
+    passageRangeText = `${dominantBook} ${first.chapter}:${first.verseStart} ~ ${last.chapter}:${last.verseStart}${endV}`
+  }
+
   return {
     book: dominantBook,
-    startPassage: first.full,
-    endPassage: last.full,
+    startPassage,
+    endPassage,
+    passageRangeText,
   }
 }
 
@@ -373,6 +400,16 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     if (endPassage && !endPassage.includes('창세기')) return endPassage
     return ''
   }, [endPassage, textScanned.endPassage, parsedDays])
+
+  // 표지 본문 구절 범위 최종 표준화 텍스트 (John 등 영문 100% 제거 및 한글 정제)
+  const coverPassageText = useMemo(() => {
+    if (textScanned.passageRangeText) return textScanned.passageRangeText
+    if (displayStartPassage && displayEndPassage) {
+      if (displayStartPassage === displayEndPassage) return displayStartPassage
+      return `${displayStartPassage} ~ ${displayEndPassage}`
+    }
+    return displayStartPassage || displayEndPassage || ''
+  }, [textScanned.passageRangeText, displayStartPassage, displayEndPassage])
 
   // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
   const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
@@ -2108,7 +2145,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             }}>
               {isMonthly ? '월간 통합 큐티' : `제${form.weekNumber}주`}
             </div>
-            {(displayStartPassage || displayEndPassage) && (
+            {coverPassageText && (
               <div style={{
                 fontSize: `${11 * scale}px`,
                 color: t.textMuted,
@@ -2117,7 +2154,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 fontWeight: 600,
                 letterSpacing: `${0.5 * scale}px`,
               }}>
-                {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
+                {coverPassageText}
               </div>
             )}
             <div style={{
