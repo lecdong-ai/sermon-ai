@@ -456,7 +456,18 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     const weekOffset = Math.floor(dayIdx / 6)
     const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
     const weekStartIndex = weekOffset * 6
-    const currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+
+    // 해당 주차의 6일 데이터 및 날짜 라벨 구하기
+    let currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+    if (currentWeekDaysData.length < 6) {
+      const needed = 6 - currentWeekDaysData.length
+      const extra = Array.from({ length: needed }, (_, idx) => {
+        const actualIdx = weekStartIndex + currentWeekDaysData.length + idx
+        return parsedDays[actualIdx] || { title: `Day ${actualIdx + 1}`, passage: '' }
+      })
+      currentWeekDaysData = [...currentWeekDaysData, ...extra]
+    }
+
     const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
     const weekStartLabel = currentWeekDatesData[0]?.label || ''
     const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
@@ -514,9 +525,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             gap: `${0.5 * scale}px`,
           }}>
             {currentWeekDaysData.map((d, i) => {
-              const dv = parseBibleVerses(d.passage || '')
+              const actualDayNum = weekStartIndex + i + 1
+              const dv = parseBibleVerses(d?.passage || '')
               const isCurrent = i === dayInWeekIdx
-              const passageShort = (dv.passageRange || '').split(' ').pop() || ''
+              const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
+              const dayLabel = currentWeekDatesData[i]?.label || `Day ${actualDayNum}`
+              const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+
               return (
                 <div key={i} style={{
                   display: 'flex', flexDirection: 'column',
@@ -540,7 +555,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       textTransform: 'uppercase',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${1 * scale}px`,
                     }}>
-                      <span>{currentWeekDatesData[i]?.label || `Day ${weekStartIndex + i + 1}`}</span>
+                      <span>{dayLabel}</span>
                       {isCurrent && <span style={{ fontSize: `${12 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
@@ -562,7 +577,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       lineHeight: '1.2',
                       textAlign: 'center',
                     }}>
-                      {d.title || `Day ${weekStartIndex + i + 1}`}
+                      {displayTitle}
                     </div>
                   </div>
                 </div>
@@ -1097,7 +1112,18 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     const weekOffset = Math.floor(dayIdx / 6)
     const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
     const weekStartIndex = weekOffset * 6
-    const currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+
+    // 해당 주차의 6일 데이터 및 날짜 라벨 구하기
+    let currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
+    if (currentWeekDaysData.length < 6) {
+      const needed = 6 - currentWeekDaysData.length
+      const extra = Array.from({ length: needed }, (_, idx) => {
+        const actualIdx = weekStartIndex + currentWeekDaysData.length + idx
+        return parsedDays[actualIdx] || { title: `Day ${actualIdx + 1}`, passage: '' }
+      })
+      currentWeekDaysData = [...currentWeekDaysData, ...extra]
+    }
+
     const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
     const weekStartLabel = currentWeekDatesData[0]?.label || ''
     const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
@@ -1212,9 +1238,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               gap: `${0.5 * scale}px`,
             }}>
               {currentWeekDaysData.map((d, i) => {
-                const dv = parseBibleVerses(d.passage || '')
+                const actualDayNum = weekStartIndex + i + 1
+                const dv = parseBibleVerses(d?.passage || '')
                 const isCurrent = i === dayInWeekIdx
-                const passageShort = (dv.passageRange || '').split(' ').pop() || ''
+                const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
+                const dayLabel = (currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${actualDayNum}`)
+                const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+
                 return (
                   <div key={i} style={{
                     display: 'flex', flexDirection: 'column',
@@ -1233,7 +1263,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       letterSpacing: `${0.3 * scale}px`,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>{currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${weekStartIndex + i + 1}`}</span>
+                      <span>{dayLabel}</span>
                       {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
                     </div>
                     {passageShort && (
@@ -1253,7 +1283,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       color: t.textMuted,
                       lineHeight: '1.1',
                     }}>
-                      {d.title || `Day ${weekStartIndex + i + 1}`}
+                      {displayTitle}
                     </div>
                   </div>
                 )
