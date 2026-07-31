@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Loader2, ArrowLeft, FileText, ExternalLink, AlertCircle, BookOpen, FileJson } from 'lucide-react'
+import { Plus, Trash2, Loader2, ArrowLeft, FileText, ExternalLink, AlertCircle, BookOpen, FileJson, Pencil, X } from 'lucide-react'
 import { FileDropzone } from '@/components/qt/FileDropzone'
 import { getGenerations, getGenerationLabel, getGenerationPathKey, toAsciiSafeName, formatDate, formatFileSize, type Generation, type GenerationalQtItem, type GenerationalQtFile } from '@/lib/data/generational-qt'
 import { cn } from '@/lib/utils/cn'
@@ -37,6 +37,10 @@ export default function AdminUploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
+  // Edit state
+  const [editingItem, setEditingItem] = useState<GenerationalQtItem | null>(null)
+  const [removedFileUrls, setRemovedFileUrls] = useState<string[]>([])
+
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
@@ -52,164 +56,222 @@ export default function AdminUploadPage() {
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
-  const handleUpload = async () => {
+  // 단일 파일 Storage 업로드 파이프라인 (생성/수정 공용)
+  const uploadFileToStorage = async (file: File): Promise<GenerationalQtFile> => {
+    const normalizedName = file.name.normalize('NFC')
+    let fileUrl = ''
+
+    // 1단계: Signed Upload URL 토큰 기반 직통 업로드 (최우선 — 서버/대역폭 안 탐, 대용량 가능)
+    try {
+      const signRes = await fetch('/api/generational-qt/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: normalizedName,
+          fileType: file.type || 'application/pdf',
+          generation: formGen,
+        }),
+      })
+
+      if (signRes.ok) {
+        const { token, path, publicUrl } = await signRes.json()
+        if (token && path) {
+          const { data: signedResult, error: signedError } = await supabase.storage
+            .from('qt-files')
+            .uploadToSignedUrl(path, token, file)
+
+          if (!signedError && signedResult) {
+            fileUrl = publicUrl
+          } else {
+            console.warn('Signed URL upload failed:', signedError)
+          }
+        }
+      } else {
+        const errText = await signRes.text().catch(() => 'unknown error')
+        console.warn('Signed URL API returned non-ok:', signRes.status, errText)
+      }
+    } catch (e) {
+      console.warn('Signed Upload URL pipeline failed:', e)
+    }
+
+    // 2단계: 서버사이드 API route 업로드 (supabaseAdmin, service role 우회)
+    // ※ 3MB 초과 파일은 서버 메모리/DB 부하 우려로 제외 (Data URL fallback 금지)
+    if (!fileUrl && file.size <= 3 * 1024 * 1024) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('generation', formGen)
+
+        const apiRes = await fetch('/api/generational-qt/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (apiRes.ok) {
+          const result = await apiRes.json()
+          if (result.url) {
+            fileUrl = result.url
+          }
+        } else {
+          const errText = await apiRes.text().catch(() => '')
+          console.warn('Server-side upload API failed:', apiRes.status, errText)
+        }
+      } catch (e) {
+        console.warn('Server-side upload API exception:', e)
+      }
+    }
+
+    // 3단계: Supabase Storage Direct Upload (qt-files 버킷 — RLS가 허용할 경우만)
+    if (!fileUrl) {
+      try {
+        const safeBaseName = toAsciiSafeName(normalizedName)
+        const timeStamp = Date.now()
+        const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
+
+        const { data: uploadData, error: storageError } = await supabase.storage
+          .from('qt-files')
+          .upload(filePath, file, {
+            contentType: file.type || 'application/pdf',
+            upsert: true,
+          })
+
+        if (!storageError && uploadData) {
+          const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
+          fileUrl = urlData.publicUrl
+        } else if (storageError) {
+          console.warn('Direct qt-files upload warning:', storageError)
+        }
+      } catch (e) {
+        console.warn('Direct storage upload exception:', e)
+      }
+    }
+
+    // 4단계: 기타 공개 버킷 탐색 (public, sermons, files 등)
+    if (!fileUrl) {
+      const fallbackBuckets = ['public', 'sermons', 'files', 'documents']
+      const safeBaseName = toAsciiSafeName(normalizedName)
+      const timeStamp = Date.now()
+      const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
+
+      for (const bName of fallbackBuckets) {
+        if (fileUrl) break
+        try {
+          const { data: uploadData, error: storageError } = await supabase.storage
+            .from(bName)
+            .upload(filePath, file, {
+              contentType: file.type || 'application/pdf',
+              upsert: true,
+            })
+
+          if (!storageError && uploadData) {
+            const { data: urlData } = supabase.storage.from(bName).getPublicUrl(uploadData.path)
+            fileUrl = urlData.publicUrl
+          }
+        } catch (e) {
+          // try next
+        }
+      }
+    }
+
+    // 5단계: 20MB 이하 파일은 Data URL로 인라인 fallback
+    if (!fileUrl && file.size <= 20 * 1024 * 1024) {
+      fileUrl = await fileToDataUrl(file)
+    }
+
+    // 6단계: 모든 업로드 수단 실패
+    if (!fileUrl) {
+      throw new Error(
+        `파일("${file.name}", ${(file.size / 1024 / 1024).toFixed(1)}MB) 업로드에 실패했습니다. ` +
+        `Supabase Storage(qt-files 버킷)에 접근할 수 없습니다. 관리자에게 문의하거나 잠시 후 다시 시도해 주세요.`
+      )
+    }
+
+    return {
+      name: normalizedName,
+      url: fileUrl,
+      type: file.type || 'application/pdf',
+      size: file.size,
+    }
+  }
+
+  // 편집 시작: 기존 값으로 폼 채우기
+  const startEdit = (item: GenerationalQtItem) => {
+    setEditingItem(item)
+    setRemovedFileUrls([])
+    setFormGen(item.generation)
+    setFormTitle(item.title)
+    setFormDesc(item.description || '')
+    setFormPassage(item.bible_passage || '')
+    setFormWeek(item.week_label || '')
+    setFormFiles([])
+    setUploadError(null)
+    setMode('upload')
+  }
+
+  // 편집 취소
+  const cancelEdit = () => {
+    setEditingItem(null)
+    setRemovedFileUrls([])
+    setFormTitle('')
+    setFormDesc('')
+    setFormPassage('')
+    setFormWeek('')
+    setFormFiles([])
+    setUploadError(null)
+    setMode('list')
+  }
+
+  // 기존 파일 제거 토글
+  const removeExistingFile = (url: string) => {
+    setRemovedFileUrls(prev => (prev.includes(url) ? prev : [...prev, url]))
+  }
+  const restoreExistingFile = (url: string) => {
+    setRemovedFileUrls(prev => prev.filter(u => u !== url))
+  }
+
+  const handleSubmit = async () => {
     if (!formTitle.trim()) return
     setUploading(true)
     setUploadError(null)
 
     try {
+      // 새 파일 업로드
       const uploadedFiles: GenerationalQtFile[] = []
-
       for (const { file } of formFiles) {
-        const normalizedName = file.name.normalize('NFC')
-        let fileUrl = ''
-
-        // 1단계: Signed Upload URL 토큰 기반 직통 업로드 (최우선 — 서버/대역폭 안 탐, 대용량 가능)
-        try {
-          const signRes = await fetch('/api/generational-qt/upload-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fileName: normalizedName,
-              fileType: file.type || 'application/pdf',
-              generation: formGen,
-            }),
-          })
-
-          if (signRes.ok) {
-            const { token, path, publicUrl } = await signRes.json()
-            if (token && path) {
-              const { data: signedResult, error: signedError } = await supabase.storage
-                .from('qt-files')
-                .uploadToSignedUrl(path, token, file)
-
-              if (!signedError && signedResult) {
-                fileUrl = publicUrl
-              } else {
-                console.warn('Signed URL upload failed:', signedError)
-              }
-            }
-          } else {
-            const errText = await signRes.text().catch(() => 'unknown error')
-            console.warn('Signed URL API returned non-ok:', signRes.status, errText)
-          }
-        } catch (e) {
-          console.warn('Signed Upload URL pipeline failed:', e)
-        }
-
-        // 2단계: 서버사이드 API route 업로드 (supabaseAdmin, service role 우회)
-        // ※ 3MB 초과 파일은 서버 메모리/DB 부하 우려로 제외 (Data URL fallback 금지)
-        if (!fileUrl && file.size <= 3 * 1024 * 1024) {
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('generation', formGen)
-
-            const apiRes = await fetch('/api/generational-qt/upload', {
-              method: 'POST',
-              body: formData,
-            })
-
-            if (apiRes.ok) {
-              const result = await apiRes.json()
-              if (result.url) {
-                fileUrl = result.url
-              }
-            } else {
-              const errText = await apiRes.text().catch(() => '')
-              console.warn('Server-side upload API failed:', apiRes.status, errText)
-            }
-          } catch (e) {
-            console.warn('Server-side upload API exception:', e)
-          }
-        }
-
-        // 3단계: Supabase Storage Direct Upload (qt-files 버킷 — RLS가 허용할 경우만)
-        if (!fileUrl) {
-          try {
-            const safeBaseName = toAsciiSafeName(normalizedName)
-            const timeStamp = Date.now()
-            const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
-
-            const { data: uploadData, error: storageError } = await supabase.storage
-              .from('qt-files')
-              .upload(filePath, file, {
-                contentType: file.type || 'application/pdf',
-                upsert: true,
-              })
-
-            if (!storageError && uploadData) {
-              const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
-              fileUrl = urlData.publicUrl
-            } else if (storageError) {
-              console.warn('Direct qt-files upload warning:', storageError)
-            }
-          } catch (e) {
-            console.warn('Direct storage upload exception:', e)
-          }
-        }
-
-        // 4단계: 기타 공개 버킷 탐색 (public, sermons, files 등)
-        if (!fileUrl) {
-          const fallbackBuckets = ['public', 'sermons', 'files', 'documents']
-          const safeBaseName = toAsciiSafeName(normalizedName)
-          const timeStamp = Date.now()
-          const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
-
-          for (const bName of fallbackBuckets) {
-            if (fileUrl) break
-            try {
-              const { data: uploadData, error: storageError } = await supabase.storage
-                .from(bName)
-                .upload(filePath, file, {
-                  contentType: file.type || 'application/pdf',
-                  upsert: true,
-                })
-
-              if (!storageError && uploadData) {
-                const { data: urlData } = supabase.storage.from(bName).getPublicUrl(uploadData.path)
-                fileUrl = urlData.publicUrl
-              }
-            } catch (e) {
-              // try next
-            }
-          }
-        }
-
-        // 5단계: 20MB 이하 파일은 Data URL로 인라인 fallback
-        if (!fileUrl && file.size <= 20 * 1024 * 1024) {
-          fileUrl = await fileToDataUrl(file)
-        }
-
-        // 6단계: 모든 업로드 수단 실패
-        if (!fileUrl) {
-          throw new Error(
-            `파일("${file.name}", ${(file.size / 1024 / 1024).toFixed(1)}MB) 업로드에 실패했습니다. ` +
-            `Supabase Storage(qt-files 버킷)에 접근할 수 없습니다. 관리자에게 문의하거나 잠시 후 다시 시도해 주세요.`
-          )
-        }
-
-        uploadedFiles.push({
-          name: normalizedName,
-          url: fileUrl,
-          type: file.type || 'application/pdf',
-          size: file.size,
-        })
+        uploadedFiles.push(await uploadFileToStorage(file))
       }
 
-      // 7단계: DB Record 생성 (Server API via supabaseAdmin)
-      const res = await fetch('/api/generational-qt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          generation: formGen,
-          title: formTitle,
-          description: formDesc,
-          bible_passage: formPassage,
-          week_label: formWeek,
-          files: uploadedFiles,
-        }),
-      })
+      let finalFiles: GenerationalQtFile[]
+      let removedFiles: string[] = []
+
+      if (editingItem) {
+        // 유지할 기존 파일 (제거 목록 제외) + 새 파일
+        const keptExisting = editingItem.files.filter(f => !removedFileUrls.includes(f.url))
+        finalFiles = [...keptExisting, ...uploadedFiles]
+        removedFiles = removedFileUrls
+      } else {
+        finalFiles = uploadedFiles
+      }
+
+      const payload = {
+        generation: formGen,
+        title: formTitle,
+        description: formDesc,
+        bible_passage: formPassage,
+        week_label: formWeek,
+        files: finalFiles,
+        removedFiles,
+      }
+
+      // DB 저장 (생성: POST / 수정: PATCH)
+      const res = await fetch(
+        editingItem ? `/api/generational-qt/${editingItem.id}` : '/api/generational-qt',
+        {
+          method: editingItem ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      )
 
       if (!res.ok) {
         let errorMsg = ''
@@ -223,6 +285,8 @@ export default function AdminUploadPage() {
       }
 
       // Reset form
+      setEditingItem(null)
+      setRemovedFileUrls([])
       setFormTitle('')
       setFormDesc('')
       setFormPassage('')
@@ -231,7 +295,7 @@ export default function AdminUploadPage() {
       setMode('list')
       fetchItems()
     } catch (err: any) {
-      setUploadError(err.message || '업로드 중 오류가 발생했습니다.')
+      setUploadError(err.message || '저장 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
     }
@@ -296,16 +360,23 @@ export default function AdminUploadPage() {
       ) : (
         <>
           {mode === 'upload' ? (
-            /* Upload form - unchanged */
+            /* Upload form - create + edit */
             <div className="space-y-8 max-w-2xl mx-auto">
               <div className="flex items-center gap-3">
-                <button onClick={() => setMode('list')}
+                <button onClick={cancelEdit}
                   className="p-2 rounded-lg hover:bg-surface-2 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 text-foreground-muted" />
                 </button>
-                <h2 className="font-serif text-h2 text-foreground">새 자료 업로드</h2>
+                <h2 className="font-serif text-h2 text-foreground">{editingItem ? '자료 수정' : '새 자료 업로드'}</h2>
               </div>
+
+              {editingItem && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-sky-50 border border-sky-200 text-[13px] text-sky-700">
+                  <Pencil className="w-4 h-4 shrink-0" />
+                  &quot;{editingItem.title}&quot; 수정 중 — 저장하면 변경사항이 반영됩니다.
+                </div>
+              )}
 
               <div className="space-y-6 bg-surface rounded-2xl border border-border p-6 shadow-elevated">
                 <div className="space-y-2">
@@ -353,8 +424,45 @@ export default function AdminUploadPage() {
                   </div>
                 </div>
 
+                {editingItem && editingItem.files.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-meta font-medium text-foreground-muted">기존 파일 ({editingItem.files.length - removedFileUrls.length} / {editingItem.files.length})</label>
+                    <div className="space-y-2">
+                      {editingItem.files.map((f) => {
+                        const isRemoved = removedFileUrls.includes(f.url)
+                        return (
+                          <div key={f.url}
+                            className={cn(
+                              'flex items-center gap-3 p-2.5 rounded-xl border',
+                              isRemoved ? 'bg-red-50 border-red-200 opacity-60' : 'bg-surface-2 border-border'
+                            )}
+                          >
+                            <FileText className="w-4 h-4 shrink-0 text-foreground-subtle" />
+                            <div className="flex-1 min-w-0">
+                              <p className={cn('text-body text-foreground truncate', isRemoved && 'line-through text-foreground-muted')}>
+                                {f.name}
+                              </p>
+                              <p className="text-[11px] text-foreground-subtle">{formatFileSize(f.size)}</p>
+                            </div>
+                            {isRemoved ? (
+                              <button onClick={() => restoreExistingFile(f.url)}
+                                className="p-1.5 rounded-lg text-meta font-medium text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              >복원</button>
+                            ) : (
+                              <button onClick={() => removeExistingFile(f.url)}
+                                className="p-1.5 rounded-lg text-foreground-subtle hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title="파일 제거"
+                              ><X className="w-4 h-4" /></button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <label className="text-meta font-medium text-foreground-muted">파일 첨부</label>
+                  <label className="text-meta font-medium text-foreground-muted">파일 첨부{editingItem ? ' (추가)' : ''}</label>
                   <FileDropzone onFilesChange={setFormFiles} />
                 </div>
 
@@ -365,11 +473,13 @@ export default function AdminUploadPage() {
                   </div>
                 )}
 
-                <button onClick={handleUpload} disabled={uploading || !formTitle.trim()}
+                <button onClick={handleSubmit} disabled={uploading || !formTitle.trim()}
                   className="w-full py-3 rounded-xl bg-accent text-white font-medium text-body hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {uploading ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> 업로드 중...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> 저장 중...</>
+                  ) : editingItem ? (
+                    <><Pencil className="w-4 h-4" /> 변경사항 저장</>
                   ) : (
                     <><Plus className="w-4 h-4" /> 자료 업로드</>
                   )}
@@ -433,6 +543,10 @@ export default function AdminUploadPage() {
                         <a href={`/qt/published/${item.id}`} target="_blank"
                           className="p-2 rounded-lg hover:bg-surface-2 text-foreground-subtle hover:text-accent transition-colors"
                         ><ExternalLink className="w-4 h-4" /></a>
+                        <button onClick={() => startEdit(item)}
+                          className="p-2 rounded-lg hover:bg-surface-2 text-foreground-subtle hover:text-accent transition-colors"
+                          title="수정"
+                        ><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id}
                           className="p-2 rounded-lg hover:bg-red-50 text-foreground-subtle hover:text-red-500 transition-colors disabled:opacity-50"
                         >
