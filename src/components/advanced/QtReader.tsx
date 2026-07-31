@@ -57,9 +57,8 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
-  const [previewType, setPreviewType] = useState<'pdf-live' | 'smart'>('pdf-live') // 기본값: PDF 실물 미리보기!
-  const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false) // 풀스크린 팝업 모달!
-  const [zoomScale, setZoomScale] = useState(1.0) // 0.5 ~ 2.0 줌
+  const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false) // 전체화면 팝업 모달!
+  const [zoomScale, setZoomScale] = useState(1.0)
   const [viewMode, setViewMode] = useState<'cover' | 'day'>('cover')
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
@@ -327,121 +326,92 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     <div className="flex flex-col min-h-0 flex-1 h-full bg-[#050814] text-slate-100">
       {/* ===== Top Bar ===== */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0f24]/90 backdrop-blur-md shrink-0 shadow-lg z-10 w-full gap-4">
-        {/* Left: Back Button & Mode Switcher */}
+        {/* Left: Back Button */}
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10 whitespace-nowrap shrink-0"
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
             양식 수정
           </button>
-
-          <div className="w-px h-5 bg-white/15 hidden sm:block" />
-
-          {/* 📄 PDF 실물 뷰어 vs 📱 카드 스위치 + 🔍 전체화면 버튼 */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-950/80 border border-white/10 shrink-0 gap-1">
-            <button
-              onClick={() => setPreviewType('pdf-live')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                previewType === 'pdf-live'
-                  ? 'bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              📄 PDF 실물 미리보기
-            </button>
-            <button
-              onClick={() => setPreviewType('smart')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                previewType === 'smart'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              스마트 카드 뷰어
-            </button>
-
-            <button
-              onClick={() => setIsPdfFullscreenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 transition-all shadow-md whitespace-nowrap"
-              title="가림 상자 0개! 전체화면 모달 팝업으로 탁 트이게 미리보기"
-            >
-              <Maximize2 className="w-3.5 h-3.5 animate-pulse" />
-              🔍 전체화면 팝업 뷰어
-            </button>
-          </div>
         </div>
 
-        {/* Center: Navigation Tabs */}
-        {previewType === 'smart' && (
-          <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none max-w-full justify-center flex-1">
-            <button
-              onClick={() => setViewMode('cover')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                viewMode === 'cover'
-                  ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              표지 미리보기
-            </button>
+        {/* Center: Cover Tab + Sunday-Excluded Calendar Date Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none max-w-full justify-center flex-1">
+          <button
+            onClick={() => setViewMode('cover')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+              viewMode === 'cover'
+                ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
+                : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            표지 미리보기
+          </button>
 
-            <div className="w-px h-4 bg-white/10 mx-0.5 shrink-0" />
+          <div className="w-px h-4 bg-white/10 mx-0.5 shrink-0" />
 
-            <button
-              onClick={() => {
-                setViewMode('day')
-                setDayIndex(Math.max(0, dayIndex - 1))
-              }}
-              disabled={viewMode === 'day' && dayIndex === 0}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          <button
+            onClick={() => {
+              setViewMode('day')
+              setDayIndex(Math.max(0, dayIndex - 1))
+            }}
+            disabled={viewMode === 'day' && dayIndex === 0}
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-            {/* 일요일 제외한 실제 날짜/요일 달력 탭 */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-              {days.map((_, idx) => {
-                const dateLabel = weekdays[idx] || `${idx + 1}일`
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setViewMode('day')
-                      setDayIndex(idx)
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                      viewMode === 'day' && dayIndex === idx
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/5'
-                    }`}
-                  >
-                    {dateLabel}
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              onClick={() => {
-                setViewMode('day')
-                setDayIndex(Math.min(days.length - 1, dayIndex + 1))
-              }}
-              disabled={viewMode === 'day' && dayIndex >= days.length - 1}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+          {/* 일요일 제외한 실제 날짜/요일 달력 탭 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+            {days.map((_, idx) => {
+              const dateLabel = weekdays[idx] || `${idx + 1}일`
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setViewMode('day')
+                    setDayIndex(idx)
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                    viewMode === 'day' && dayIndex === idx
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/5'
+                  }`}
+                >
+                  {dateLabel}
+                </button>
+              )
+            })}
           </div>
-        )}
 
-        {/* Right: PDF Download Buttons */}
-        <div className="flex items-center gap-2.5 shrink-0 ml-auto">
-          {previewType === 'smart' && viewMode === 'day' && (
+          <button
+            onClick={() => {
+              setViewMode('day')
+              setDayIndex(Math.min(days.length - 1, dayIndex + 1))
+            }}
+            disabled={viewMode === 'day' && dayIndex >= days.length - 1}
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Right: Fullscreen PDF Inspector & Download Buttons */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* 전체화면 PDF 미리보기 팝업 버튼 */}
+          <button
+            onClick={() => setIsPdfFullscreenModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/30 transition-all shadow-md whitespace-nowrap shrink-0"
+            title="모니터 전체 화면 팝업으로 PDF 종이 실물 미리보기"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+            🔍 전체화면 PDF 미리보기
+          </button>
+
+          {viewMode === 'day' && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
               disabled={dayPdfLoading === dayIndex || days.length === 0}
@@ -466,44 +436,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
         </div>
       </header>
 
-      {/* ===== Main Body: Live PDF Paper Viewer or Smart Card Preview ===== */}
+      {/* ===== Main Body: Smart Canvas Preview ===== */}
       <div className="flex flex-1 min-h-0">
-        {/* Left: Preview Canvas Area */}
+        {/* Left: QT Canvas Preview Area */}
         <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start bg-gradient-to-b from-[#050814] via-[#090e24] to-[#050814]">
-          {previewType === 'pdf-live' ? (
-            /* ★ [100% PDF 실물 문서 뷰어] 실제 인쇄/저장될 PDF 종이 문서 렌더링 */
-            <div className="w-full flex flex-col items-center justify-center py-2">
-              <div className="flex items-center gap-3 mb-3 bg-slate-900/90 px-4 py-1.5 rounded-xl border border-white/10 shadow-md">
-                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                  실제 저장/인쇄될 PDF 종이 실물 문서 (Live PDF Viewer)
-                </span>
-                <span className="text-[11px] text-slate-400 font-medium">· 규격: {sizeOption}</span>
-              </div>
-
-              <div className="w-full flex justify-center overflow-auto max-h-[78vh] p-2 scrollbar-thin rounded-2xl">
-                <div className="rounded-2xl border border-white/20 shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden bg-white scale-[0.88] sm:scale-[0.96] lg:scale-100 origin-top">
-                  <QtPdfLayout
-                    form={form}
-                    result={{ fullManuscript: accumulatedManuscript }}
-                    sizeOption={sizeOption}
-                    templateId={activeTmpl.id}
-                    onlyCover={false}
-                    startPassage={startPassage}
-                    endPassage={endPassage}
-                    userMemos={userMemos}
-                    isBilingualSideBySide={isBilingualSideBySide}
-                    selectedInfo={selectedInfo}
-                    daySectionTitles={daySectionTitles}
-                    monthCalendarStrip={monthCalendarStrip}
-                    layoutSettings={layoutSettings}
-                    editedContent={editedContent}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : viewMode === 'cover' ? (
-            /* ★ 표지 COVER 단일 미리보기 */
+          {viewMode === 'cover' ? (
+            /* ★ 표지 COVER 전용 단일 실물 미리보기 (창 크기에 100% Fit) */
             <div className="w-full flex flex-col items-center justify-center py-2 min-h-[72vh]">
               <div
                 className="rounded-2xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 bg-slate-950/60 p-1 flex items-center justify-center max-h-[75vh]"
