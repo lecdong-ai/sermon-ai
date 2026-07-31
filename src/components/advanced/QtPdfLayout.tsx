@@ -1783,9 +1783,15 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     )
   }
 
-  // ============= 표지 (가로/세로 자동 적응) =============
+  // ============= 표지 (가로/세로 자동 적응 + public/bg.jpg 커스텀 배경) =============
   const renderCover = () => (
-    <div className="qt-page" style={pageStyle}>
+    <div className="qt-page" style={{
+      ...pageStyle,
+      backgroundImage: "url('/bg.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }}>
       <div style={{
         ...pageContentStyle,
         display: 'flex',
@@ -1793,13 +1799,20 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
+        padding: `${mmToPx(15)}px`,
       }}>
       <div style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: isLandscape ? 'flex-start' : 'center',
         textAlign: isLandscape ? 'left' : 'center',
-        flex: 1,
+        padding: `${22 * scale}px ${32 * scale}px`,
+        background: 'rgba(255, 255, 255, 0.88)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: `${14 * scale}px`,
+        border: '1px solid rgba(255, 255, 255, 0.7)',
+        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
+        maxWidth: isLandscape ? '65%' : '85%',
       }}>
         {t.coverOrnament && (
           <div style={{
@@ -1807,7 +1820,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             fontSize: `${14 * scale}px`,
             letterSpacing: `${8 * scale}px`,
             marginBottom: `${14 * scale}px`,
-            opacity: 0.6,
+            opacity: 0.8,
           }}>
             {t.coverOrnament}
           </div>
@@ -1895,10 +1908,11 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div style={{
         position: 'absolute',
         bottom: `${mmToPx(14)}px`,
-        fontSize: `${8 * scale}px`,
-        color: t.pageNumberColor,
+        fontSize: `${8.5 * scale}px`,
+        color: '#ffffff',
+        textShadow: '0 1px 4px rgba(0,0,0,0.7)',
         letterSpacing: `${2 * scale}px`,
-        opacity: 0.7,
+        fontWeight: 600,
       }}>
         bunker.ai.kr · 목회의 모든 순간을 잇다
       </div>
