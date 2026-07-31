@@ -23,6 +23,93 @@ export interface LayoutSettings {
   hiddenSections: string[]
 }
 
+// ===== 표준 성경 66권 약자 및 한국어 정식 명칭 파싱 매핑 테이블 =====
+const BIBLE_BOOK_MAP: Record<string, string> = {
+  // 구약 39권
+  '창': '창세기', '창세기': '창세기', 'Gen': '창세기', 'Genesis': '창세기',
+  '출': '출애굽기', '출애굽기': '출애굽기', 'Exo': '출애굽기',
+  '레': '레위기', '레위기': '레위기', 'Lev': '레위기',
+  '민': '민수기', '민수기': '민수기', 'Num': '민수기',
+  '신': '신명기', '신명기': '신명기', 'Deu': '신명기',
+  '수': '여호수아', '여호수아': '여호수아', 'Jos': '여호수아',
+  '삿': '사사기', '사사기': '사사기', 'Jdg': '사사기',
+  '룻': '룻기', '룻기': '룻기', 'Rut': '룻기',
+  '삼상': '사무엘상', '사무엘상': '사무엘상', '1Sa': '사무엘상',
+  '삼하': '사무엘하', '사무엘하': '사무엘하', '2Sa': '사무엘하',
+  '왕상': '열왕기상', '열왕기상': '열왕기상', '1Ki': '열왕기상',
+  '왕하': '열왕기하', '열왕기하': '열왕기하', '2Ki': '열왕기하',
+  '대상': '역대상', '역대상': '역대상', '1Ch': '역대상',
+  '대하': '역대하', '역대하': '역대하', '2Ch': '역대하',
+  '스': '에스라', '에스라': '에스라', 'Ezr': '에스라',
+  '느': '느헤미야', '느헤미야': '느헤미야', 'Neh': '느헤미야',
+  '에': '에스더', '에스더': '에스더', 'Est': '에스더',
+  '욥': '욥기', '욥기': '욥기', 'Job': '욥기',
+  '시': '시편', '시편': '시편', 'Psa': '시편', 'Psalms': '시편',
+  '잠': '잠언', '잠언': '잠언', 'Pro': '잠언', 'Proverbs': '잠언',
+  '전': '전도서', '전도서': '전도서', 'Ecc': '전도서',
+  '아': '아가', '아가': '아가', 'Sng': '아가',
+  '사': '이사야', '이사야': '이사야', 'Isa': '이사야',
+  '렘': '예레미야', '예레미야': '예레미야', 'Jer': '예레미야',
+  '애': '예레미야애가', '예레미야애가': '예레미야애가', 'Lam': '예레미야애가',
+  '겔': '에스겔', '에스겔': '에스겔', 'Ezk': '에스겔',
+  '단': '다니엘', '다니엘': '다니엘', 'Dan': '다니엘',
+  '호': '호세아', '호세아': '호세아', 'Hos': '호세아',
+  '욜': '요엘', '요엘': '요엘', 'Jol': '요엘',
+  '암': '아모스', '아모스': '아모스', 'Amo': '아모스',
+  '오': '오바디야', '오바디야': '오바디야', 'Oba': '오바디야',
+  '요나': '요나', 'Jnh': '요나',
+  '미': '미가', '미가': '미가', 'Mic': '미가',
+  '나': '나훔', '나훔': '나훔', 'Nam': '나훔',
+  '하': '하박국', '하박국': '하박국', 'Hab': '하박국',
+  '습': '스바냐', '스바냐': '스바냐', 'Zep': '스바냐',
+  '학': '학개', '학개': '학개', 'Hag': '학개',
+  '슥': '스가랴', '스가랴': '스가랴', 'Zec': '스가랴',
+  '말': '말라기', '말라기': '말라기', 'Mal': '말라기',
+
+  // 신약 27권
+  '마': '마태복음', '마태': '마태복음', '마태복음': '마태복음', 'Mat': '마태복음', 'Matthew': '마태복음',
+  '막': '마가복음', '마가': '마가복음', '마가복음': '마가복음', 'Mar': '마가복음', 'Mark': '마가복음',
+  '눅': '누가복음', '누가': '누가복음', '누가복음': '누가복음', 'Luk': '누가복음', 'Luke': '누가복음',
+  '요': '요한복음', '요한': '요한복음', '요한복음': '요한복음', 'John': '요한복음', 'Jn': '요한복음',
+  '행': '사도행전', '사도행전': '사도행전', 'Act': '사도행전', 'Acts': '사도행전',
+  '롬': '로마서', '로마서': '로마서', 'Rom': '로마서', 'Romans': '로마서',
+  '고전': '고린도전서', '고린도전서': '고린도전서', '1Co': '고린도전서',
+  '고후': '고린도후서', '고린도후서': '고린도후서', '2Co': '고린도후서',
+  '갈': '갈라디아서', '갈라디아서': '갈라디아서', 'Gal': '갈라디아서',
+  '엡': '에베소서', '에베소서': '에베소서', 'Eph': '에베소서',
+  '빌': '빌립보서', '빌립보서': '빌립보서', 'Php': '빌립보서',
+  '골': '골로새서', '골로새서': '골로새서', 'Col': '골로새서',
+  '살전': '데살로니가전서', '데살로니가전서': '데살로니가전서', '1Th': '데살로니가전서',
+  '살후': '데살로니가후서', '데살로니가후서': '데살로니가후서', '2Th': '데살로니가후서',
+  '딤전': '디모데전서', '디모데전서': '디모데전서', '1Ti': '디모데전서',
+  '딤후': '디모데후서', '디모데후서': '디모데후서', '2Ti': '디모데후서',
+  '딛': '디도서', '디도서': '디도서', 'Tit': '디도서',
+  '몬': '빌레몬서', '빌레몬서': '빌레몬서', 'Phm': '빌레몬서',
+  '히': '히브리서', '히브리서': '히브리서', 'Heb': '히브리서',
+  '야': '야고보서', '야고보서': '야고보서', 'Jas': '야고보서',
+  '벧전': '베드로전서', '베드로전서': '베드로전서', '1Pe': '베드로전서',
+  '벧후': '베드로후서', '베드로후서': '베드로후서', '2Pe': '베드로후서',
+  '요일': '요한일서', '요한1서': '요한일서', '요한일서': '요한일서', '1Jn': '요한일서',
+  '요이': '요한이서', '요한2서': '요한이서', '요한이서': '요한이서', '2Jn': '요한이서',
+  '요삼': '요한삼서', '요한3서': '요한삼서', '요한삼서': '요한삼서', '3Jn': '요한삼서',
+  '유': '유다서', '유다서': '유다서', 'Jud': '유다서',
+  '계': '요한계시록', '요한계시록': '요한계시록', 'Rev': '요한계시록',
+}
+
+export function parseBookName(text?: string): string | null {
+  if (!text) return null
+  const cleaned = text.trim()
+  const match = cleaned.match(/^([가-힣1-3A-Za-z]+(?:\s*[가-힣]+)?)\s*\d+/)
+  if (match) {
+    const rawBook = match[1].trim()
+    if (BIBLE_BOOK_MAP[rawBook]) return BIBLE_BOOK_MAP[rawBook]
+  }
+  for (const [key, val] of Object.entries(BIBLE_BOOK_MAP)) {
+    if (cleaned.startsWith(key)) return val
+  }
+  return null
+}
+
 interface QtPdfLayoutProps {
   form: QTFormData
   result: QTResult
@@ -180,15 +267,32 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return `${new Date().getMonth() + 1}월`
   }, [monthCalendarStrip, form.startDate])
 
+  // 성경 권명 정밀 감지 로직 (요한복음, 마태복음 등 표준 66권 한글 정식 명칭 변환)
   const detectedBook = useMemo(() => {
+    // 1. 큐티 내지 각 일차의 passage 구절에서 직접 성경권 파싱
     for (const day of parsedDays) {
       if (day.passage) {
-        const match = day.passage.match(/^([가-힣1-3]+(?:\s*[가-힣]+)?)\s*\d+/)
-        if (match) return match[1].trim()
+        const book = parseBookName(day.passage)
+        if (book) return book
       }
     }
-    return form.bibleBook || '성경'
-  }, [parsedDays, form.bibleBook])
+    // 2. AI 추천 성경 정보에서 파싱
+    if (selectedInfo?.book) {
+      const book = parseBookName(selectedInfo.book)
+      if (book) return book
+    }
+    // 3. 시작/끝 구절 텍스트에서 파싱
+    if (startPassage) {
+      const book = parseBookName(startPassage)
+      if (book) return book
+    }
+    // 4. form.bibleBook 약자/풀네임 파싱
+    if (form.bibleBook) {
+      const book = parseBookName(form.bibleBook)
+      if (book) return book
+    }
+    return '성경'
+  }, [parsedDays, selectedInfo, startPassage, form.bibleBook])
 
   const coverMainTitle = useMemo(() => {
     if (selectedInfo?.isRecommended) return '오늘의 큐티'
@@ -199,8 +303,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const displayStartPassage = useMemo(() => {
     if (startPassage) return startPassage
     if (parsedDays[0]?.passage) {
-      const verses = parseBibleVerses(parsedDays[0].passage)
-      return verses.passageRange || parsedDays[0].passage
+      return parsedDays[0].passage.trim()
     }
     return ''
   }, [startPassage, parsedDays])
@@ -209,8 +312,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     if (endPassage) return endPassage
     const lastDay = parsedDays[parsedDays.length - 1]
     if (lastDay?.passage) {
-      const verses = parseBibleVerses(lastDay.passage)
-      return verses.passageRange || lastDay.passage
+      return lastDay.passage.trim()
     }
     return ''
   }, [endPassage, parsedDays])
@@ -1951,10 +2053,11 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
             {(displayStartPassage || displayEndPassage) && (
               <div style={{
-                fontSize: `${10 * scale}px`,
+                fontSize: `${11 * scale}px`,
                 color: t.textMuted,
-                marginTop: `${4 * scale}px`,
+                marginTop: `${6 * scale}px`,
                 fontFamily: t.font,
+                fontWeight: 600,
                 letterSpacing: `${0.5 * scale}px`,
               }}>
                 {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
