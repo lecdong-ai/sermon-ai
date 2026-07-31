@@ -28,6 +28,7 @@ interface QtPdfLayoutProps {
   result: QTResult
   sizeOption: string
   templateId?: string
+  onlyCover?: boolean
   startPassage?: string
   endPassage?: string
   userMemos?: Record<number, string>
@@ -92,7 +93,7 @@ function parseBibleVerses(passageText: string) {
   return { korVerse, engVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const ls = layoutSettings || {}
   const fontScale = ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
   const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
@@ -1985,6 +1986,16 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   const totalPages = 1 + parsedDays.length * 3  // 1표지 + 1일=3페이지(overflow 대비)
   let pageCounter = 0
+
+  if (onlyCover) {
+    return (
+      <div>
+        <div ref={ref}>
+          {renderCover()}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

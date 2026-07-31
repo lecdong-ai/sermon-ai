@@ -396,26 +396,29 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
         {/* Left: QT Content (Cover or Day Card) */}
         <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
           {viewMode === 'cover' ? (
-            /* ★ 표지 (COVER) 실물 뷰어 렌더링 */
-            <div className="w-full flex justify-center py-2">
+            /* ★ 표지 (COVER) 단일 실물 뷰어 렌더링 (창 크기 100% 맞춤) */
+            <div className="w-full flex flex-col items-center justify-center py-2 min-h-[70vh]">
               <div
-                className="rounded-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-300"
+                className="rounded-2xl border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.45)] overflow-hidden transition-all duration-300 bg-slate-950/40 p-1 flex items-center justify-center max-h-[72vh]"
                 style={{
                   width: '100%',
-                  maxWidth: sizeOption.includes('Landscape') ? '920px' : '680px',
+                  maxWidth: sizeOption.includes('Landscape') ? '860px' : '560px',
                 }}
               >
-                <QtPdfLayout
-                  form={form}
-                  result={{ fullManuscript: accumulatedManuscript }}
-                  sizeOption={sizeOption}
-                  templateId={activeTmpl.id}
-                  startPassage={startPassage}
-                  endPassage={endPassage}
-                  selectedInfo={selectedInfo}
-                  monthCalendarStrip={monthCalendarStrip}
-                  layoutSettings={layoutSettings}
-                />
+                <div className="w-full h-full flex items-center justify-center overflow-hidden scale-[0.82] sm:scale-[0.92] lg:scale-100 origin-center">
+                  <QtPdfLayout
+                    form={form}
+                    result={{ fullManuscript: accumulatedManuscript }}
+                    sizeOption={sizeOption}
+                    templateId={activeTmpl.id}
+                    onlyCover={true}
+                    startPassage={startPassage}
+                    endPassage={endPassage}
+                    selectedInfo={selectedInfo}
+                    monthCalendarStrip={monthCalendarStrip}
+                    layoutSettings={layoutSettings}
+                  />
+                </div>
               </div>
             </div>
           ) : (
