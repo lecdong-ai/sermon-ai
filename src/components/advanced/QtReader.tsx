@@ -1,7 +1,27 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Download, Edit3, Loader2, Sparkles, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Edit3,
+  Loader2,
+  Sparkles,
+  X,
+  Globe,
+  Leaf,
+  Calendar as CalendarIcon,
+  Package,
+  BookOpen,
+  Sliders,
+  Type,
+  FileText,
+  Check,
+  RotateCcw,
+  Plus,
+  LayoutGrid
+} from 'lucide-react'
 import QtDayCard from './QtDayCard'
 import QtPdfLayout, { type LayoutSettings } from './QtPdfLayout'
 import { parseDays } from '@/lib/qtDayParser'
@@ -10,7 +30,7 @@ import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
-import { saveWeeklyToMonthly, getMonthlyWeeks, clearMonthlyWeeks, getMonthlyWeekCount, combineMonthlyManuscript, combineMonthlyUserMemos, combineMonthlyCalendarStrip, totalDaysInWeeks } from '@/lib/monthlyQtStorage'
+import { saveWeeklyToMonthly, getMonthlyWeeks, clearMonthlyWeeks, getMonthlyWeekCount, combineMonthlyManuscript, combineMonthlyUserMemos, combineMonthlyCalendarStrip } from '@/lib/monthlyQtStorage'
 
 export interface QtSelectedInfo {
   book: string
@@ -109,7 +129,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     if (isNaN(year) || isNaN(monthNum) || isNaN(day)) return undefined
     const daysInMonth = new Date(year, monthNum, 0).getDate()
 
-    // ★ 주간 6일(일요일 제외)의 각 day 계산
+    // 주간 6일(일요일 제외)의 각 day 계산
     const startDate = new Date(year, monthNum - 1, day)
     const activeDays: number[] = []
     for (let i = 0; i < 6; i++) {
@@ -220,7 +240,6 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
   const handlePdfDownload = async () => {
     setPdfLoading(true)
-    // DOM이 완전히 렌더링될 시간 확보
     await new Promise(r => setTimeout(r, 500))
     try {
       if (pdfLayoutRef.current) {
@@ -299,42 +318,47 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   ]
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 h-full">
-      {/* ===== Minimal Header ===== */}
-      <header className="flex items-center justify-between px-5 py-2.5 border-b border-white/5 bg-[#060a17] shrink-0">
+    <div className="flex flex-col min-h-0 flex-1 h-full bg-[#050814] text-slate-100">
+      {/* ===== Top Bar ===== */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0f24]/90 backdrop-blur-md shrink-0 shadow-lg z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-[11px] font-bold transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10"
           >
             <Edit3 className="w-3.5 h-3.5" />
-            양식 편집
+            양식 수정
           </button>
-          <div className="w-px h-4 bg-white/10" />
 
-          {/* ✦ 뷰어 네비게이션: 표지(COVER) + DAY 탭들 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+          <div className="w-px h-5 bg-white/15 mx-1" />
+
+          {/* ✦ 뷰어 탭 네비게이션: 표지 COVER + 일자별 버튼 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none">
             <button
               onClick={() => setViewMode('cover')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 viewMode === 'cover'
-                  ? 'bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow-md shadow-amber-500/20'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
               }`}
             >
-              <span>✦ 표지 COVER</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              표지 미리보기
             </button>
-            <div className="w-px h-3 bg-white/10" />
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
+
             <button
               onClick={() => {
                 setViewMode('day')
                 setDayIndex(Math.max(0, dayIndex - 1))
               }}
               disabled={viewMode === 'day' && dayIndex === 0}
-              className="p-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
+
             <div className="flex items-center gap-1">
               {days.map((_, idx) => (
                 <button
@@ -343,69 +367,72 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     setViewMode('day')
                     setDayIndex(idx)
                   }}
-                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                     viewMode === 'day' && dayIndex === idx
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
                   }`}
                 >
-                  DAY {idx + 1}
+                  {idx + 1}일
                 </button>
               ))}
             </div>
+
             <button
               onClick={() => {
                 setViewMode('day')
                 setDayIndex(Math.min(days.length - 1, dayIndex + 1))
               }}
               disabled={viewMode === 'day' && dayIndex >= days.length - 1}
-              className="p-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* 오른쪽 PDF 다운로드 버튼그룹 */}
+        <div className="flex items-center gap-2.5">
           {viewMode === 'day' && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
               disabled={dayPdfLoading === dayIndex || days.length === 0}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 text-[10px] font-bold transition-all disabled:opacity-30"
-              title="이 Day만 PDF 저장"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-white/10 disabled:opacity-30"
+              title="현재 일자만 단일 PDF 다운로드"
             >
               {dayPdfLoading === dayIndex
-                ? <Loader2 className="w-3 h-3 animate-spin" />
-                : <Download className="w-3 h-3" />}
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Download className="w-3.5 h-3.5" />}
               일일 PDF
             </button>
           )}
+
           <button
             onClick={handlePdfDownload}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all disabled:opacity-40 shadow-lg shadow-indigo-600/20"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30 disabled:opacity-40"
           >
-            {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            {pdfLoading ? '전체 PDF 생성 중...' : '전체 PDF 다운로드'}
+            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {pdfLoading ? 'PDF 생성 중...' : '전체 PDF 저장'}
           </button>
         </div>
       </header>
 
-      {/* ===== Main: Content + Sidebar ===== */}
+      {/* ===== Main Body: Preview Canvas + Control Sidebar ===== */}
       <div className="flex flex-1 min-h-0">
-        {/* Left: QT Content (Cover or Day Card) */}
-        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
+        {/* Left: QT Canvas Preview */}
+        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start bg-gradient-to-b from-[#050814] via-[#090e24] to-[#050814]">
           {viewMode === 'cover' ? (
-            /* ★ 표지 (COVER) 단일 실물 뷰어 렌더링 (창 크기 100% 맞춤) */
-            <div className="w-full flex flex-col items-center justify-center py-2 min-h-[70vh]">
+            /* ★ 표지 COVER 전용 단일 실물 미리보기 (창 크기에 100% Fit) */
+            <div className="w-full flex flex-col items-center justify-center py-2 min-h-[72vh]">
               <div
-                className="rounded-2xl border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.45)] overflow-hidden transition-all duration-300 bg-slate-950/40 p-1 flex items-center justify-center max-h-[72vh]"
+                className="rounded-2xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 bg-slate-950/60 p-1 flex items-center justify-center max-h-[75vh]"
                 style={{
                   width: '100%',
-                  maxWidth: sizeOption.includes('Landscape') ? '860px' : '560px',
+                  maxWidth: sizeOption.includes('Landscape') ? '880px' : '580px',
                 }}
               >
-                <div className="w-full h-full flex items-center justify-center overflow-hidden scale-[0.82] sm:scale-[0.92] lg:scale-100 origin-center">
+                <div className="w-full h-full flex items-center justify-center overflow-hidden scale-[0.85] sm:scale-[0.95] lg:scale-100 origin-center">
                   <QtPdfLayout
                     form={form}
                     result={{ fullManuscript: accumulatedManuscript }}
@@ -420,12 +447,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-slate-400 mt-3 font-medium">✦ 완벽한 비율로 맞춤 조정된 표지 미리보기입니다.</p>
             </div>
           ) : (
-            /* ★ 일자별 큐티 카드 (DAY CARD) 렌더링 */
-            <div className="w-full max-w-4xl mx-auto space-y-6">
+            /* ★ 일자별 큐티 카드 (DAY CARD) */
+            <div className="w-full max-w-5xl mx-auto space-y-6">
               {selectedInfo?.isRecommended && (
-                <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
+                <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-lg">
                   <div className="flex items-start gap-3">
                     <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                       <Sparkles className="w-4.5 h-4.5 text-white" />
@@ -435,17 +463,11 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">AI 추천</span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">오늘의 큐티</span>
                       </div>
-                      <div className="text-[14px] font-bold text-slate-100 leading-snug">
+                      <div className="text-sm font-bold text-slate-100 leading-snug">
                         {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
                       </div>
                       {selectedInfo.coreMessage && (
-                        <div className="text-[12px] text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
-                      )}
-                      {selectedInfo.reason && (
-                        <details className="mt-2">
-                          <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 select-none">선정 이유 보기</summary>
-                          <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">{selectedInfo.reason}</p>
-                        </details>
+                        <div className="text-xs text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
                       )}
                     </div>
                   </div>
@@ -454,7 +476,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
               {currentDay ? (
                 <div
-                  className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_8px_32px_rgba(0,0,0,0.15)] transition-all duration-300 flex flex-col"
+                  className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_12px_40px_rgba(0,0,0,0.2)] transition-all duration-300 flex flex-col"
                   style={{
                     background: activeTmpl.pageBg,
                     color: activeTmpl.textColor,
@@ -487,7 +509,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     borderColor: activeTmpl.border,
                   }}
                 >
-                  <div className="text-[12px] leading-relaxed whitespace-pre-wrap font-mono opacity-80">
+                  <div className="text-xs leading-relaxed whitespace-pre-wrap font-mono opacity-80">
                     {accumulatedManuscript || '생성된 내용이 없습니다.'}
                   </div>
                 </div>
@@ -496,44 +518,54 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           )}
         </div>
 
-        {/* Right: Sidebar */}
-        <aside className="w-[280px] shrink-0 border-l border-white/5 bg-[#0a0e1a] overflow-y-auto p-4 flex flex-col gap-4">
+        {/* Right: Modern Sidebar Controls */}
+        <aside className="w-[300px] shrink-0 border-l border-white/10 bg-[#080d1e]/95 overflow-y-auto p-4 flex flex-col gap-5 shadow-2xl backdrop-blur-md">
+          {/* 1. 디자인 템플릿 */}
           <div>
-            <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">템플릿</h4>
-            <div className="flex gap-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+              템플릿 테마
+            </div>
+            <div className="grid grid-cols-4 gap-2">
               {QT_TEMPLATES.map(t => (
                 <button
                   key={t.id}
                   onClick={() => setTemplateId(t.id)}
-                  className={`w-7 h-7 rounded-lg border transition-all ${
+                  className={`h-9 rounded-xl border transition-all relative overflow-hidden flex items-center justify-center ${
                     templateId === t.id
-                      ? 'border-indigo-400/60 ring-1 ring-indigo-400/30 scale-110'
-                      : 'border-white/10 hover:border-white/30'
+                      ? 'border-indigo-400 ring-2 ring-indigo-400/40 scale-105 shadow-md'
+                      : 'border-white/10 hover:border-white/30 opacity-80 hover:opacity-100'
                   }`}
                   style={{ background: t.pageBg }}
                   title={t.name}
                 >
-                  <span className="flex items-center justify-center text-[8px] font-bold" style={{ color: t.textColor }}>
-                    {templateId === t.id ? '\u2713' : ''}
-                  </span>
+                  {templateId === t.id && (
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] shadow">
+                      ✓
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 2. 용지 규격 */}
           <div>
-            <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">용지</h4>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+              <FileText className="w-3.5 h-3.5 text-indigo-400" />
+              용지 규격
+            </div>
+            <div className="flex flex-wrap gap-1.5">
               {Object.keys(PAGE_SIZES).map(sz => (
                 <button
                   key={sz}
                   onClick={() => setSizeOption(sz)}
-                  className={`px-2 py-1 rounded-md text-[9px] font-bold border transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
                     sizeOption === sz
-                      ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                      ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold shadow-sm'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                   }`}
                 >
                   {PAGE_SIZES[sz]?.label?.split(' (')[0] || sz}
@@ -542,92 +574,109 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
           </div>
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 3. 옵션 도구 */}
           <div>
-            <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">도구</h4>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+              출력 옵션
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setIsBilingualSideBySide(!isBilingualSideBySide)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                   isBilingualSideBySide
-                    ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                    ? 'bg-blue-600/20 border-blue-400 text-blue-200 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
-              >\U0001f310 한영대조</button>
+              >
+                <Globe className="w-3.5 h-3.5 text-blue-400" />
+                한영대조
+              </button>
+
               <button
                 onClick={() => setIsEcoPrint(!isEcoPrint)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                   isEcoPrint
-                    ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                    ? 'bg-emerald-600/20 border-emerald-400 text-emerald-200 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
-              >\U0001f331 에코</button>
+              >
+                <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+                에코 절약
+              </button>
+
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                   isEditing
-                    ? 'bg-amber-600/20 border-amber-500/50 text-amber-300'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                    ? 'bg-amber-600/20 border-amber-400 text-amber-200 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
-              >\u270f\ufe0f 편집</button>
+              >
+                <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                실시간 편집
+              </button>
             </div>
           </div>
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 4. 레이아웃 세부 설정 */}
           <details className="group">
-            <summary className="text-[9px] font-bold text-slate-500 uppercase tracking-widest cursor-pointer select-none list-none flex items-center justify-between">
-              레이아웃
-              <span className="text-slate-600 group-open:rotate-180 transition-transform">\u25bc</span>
+            <summary className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer select-none flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Type className="w-3.5 h-3.5 text-indigo-400" />
+                폰트 및 디스플레이
+              </span>
+              <span className="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
             </summary>
-            <div className="mt-3 space-y-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-500 w-10 shrink-0">줄간격</span>
-                {['1.3', '1.5', '1.8', '2.0'].map(v => (
-                  <button key={v} onClick={() => updateLayoutSettings({ lineSpacing: v })}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
-                      layoutSettings.lineSpacing === v
-                        ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                    }`}>{v}</button>
-                ))}
+            <div className="mt-3 space-y-3.5 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-12 shrink-0">줄간격</span>
+                <div className="flex gap-1">
+                  {['1.3', '1.5', '1.8', '2.0'].map(v => (
+                    <button key={v} onClick={() => updateLayoutSettings({ lineSpacing: v })}
+                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                        layoutSettings.lineSpacing === v
+                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                      }`}>{v}</button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-500 w-10 shrink-0">글자</span>
-                {[{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
-                  <button key={v} onClick={() => updateLayoutSettings({ fontSize: v })}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
-                      layoutSettings.fontSize === v
-                        ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                    }`}>{k}</button>
-                ))}
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-12 shrink-0">글자크기</span>
+                <div className="flex gap-1">
+                  {[{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
+                    <button key={v} onClick={() => updateLayoutSettings({ fontSize: v })}
+                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                        layoutSettings.fontSize === v
+                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                      }`}>{k}</button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-500 w-10 shrink-0">폰트</span>
-                {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'영문',v:'english'}].map(({k,v}) => (
-                  <button key={v} onClick={() => updateLayoutSettings({ fontFamily: v })}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
-                      layoutSettings.fontFamily === v
-                        ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                    }`}>{k}</button>
-                ))}
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-12 shrink-0">서체</span>
+                <div className="flex gap-1">
+                  {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'영문',v:'english'}].map(({k,v}) => (
+                    <button key={v} onClick={() => updateLayoutSettings({ fontFamily: v })}
+                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                        layoutSettings.fontFamily === v
+                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                      }`}>{k}</button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-500 w-10 shrink-0">여백</span>
-                {[{k:'좁게',v:'narrow'},{k:'보통',v:'normal'},{k:'넓게',v:'wide'}].map(({k,v}) => (
-                  <button key={v} onClick={() => updateLayoutSettings({ margin: v })}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
-                      layoutSettings.margin === v
-                        ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                    }`}>{k}</button>
-                ))}
-              </div>
+
               <div>
-                <span className="text-[9px] text-slate-500 block mb-1.5">섹션</span>
+                <span className="text-xs text-slate-400 block mb-1.5">표시 섹션 숨기기/보이기</span>
                 <div className="flex flex-wrap gap-1">
                   {layoutSections.map(({k,v}) => {
                     const isHidden = layoutSettings.hiddenSections.includes(v)
@@ -638,10 +687,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                           : [...layoutSettings.hiddenSections, v]
                         updateLayoutSettings({ hiddenSections: next })
                       }}
-                        className={`px-1.5 py-0.5 rounded text-[8px] font-bold border transition-all ${
+                        className={`px-1.5 py-0.5 rounded text-[10px] border transition-all ${
                           isHidden
                             ? 'bg-white/5 border-white/10 text-slate-600 line-through'
-                            : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-300'
+                            : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-300 font-semibold'
                         }`}>{k}</button>
                     )
                   })}
@@ -650,14 +699,18 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
           </details>
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 5. 캘린더 스트립 (달력) */}
           {monthCalendarStrip && (
             <div>
-              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">\U0001f4c5 {monthCalendarStrip.month}</h4>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
+                {monthCalendarStrip.month}
+              </div>
               <div className="grid grid-cols-7 gap-1">
                 {['일','월','화','수','목','금','토'].map(dayName => (
-                  <div key={dayName} className="text-[8px] text-slate-600 font-bold text-center">{dayName}</div>
+                  <div key={dayName} className="text-[10px] text-slate-500 font-bold text-center">{dayName}</div>
                 ))}
                 {Array.from({ length: new Date(
                   parseInt(form.startDate!.split('-')[0]),
@@ -680,12 +733,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         if (targetIdx >= 0) setDayIndex(targetIdx)
                       }}
                       disabled={isEmpty}
-                      className={`w-full aspect-square rounded text-[9px] font-bold border transition-all ${
+                      className={`w-full aspect-square rounded-md text-[10px] font-bold border transition-all ${
                         isActive
-                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_6px_rgba(99,102,241,0.3)]'
+                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-md'
                           : isEmpty
                           ? 'bg-transparent border-white/5 text-slate-700 cursor-not-allowed'
-                          : 'bg-white/[0.02] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-300'
+                          : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-200'
                       }`}
                     >
                       {d}
@@ -696,59 +749,74 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
           )}
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 6. 월간 QT 자동 통합 패널 */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">\U0001f4e6 월간 QT</h4>
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <Package className="w-3.5 h-3.5 text-indigo-400" />
+                월간 QT 통합
+              </div>
               {monthlyCount > 0 && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  {monthlyCount}주
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {monthlyCount}주 모임
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleMonthlyAdd}
                 disabled={days.length === 0}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-bold transition-all bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30"
-              >\U0001f4c5 추가</button>
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                주차 추가
+              </button>
               {monthlyCount >= 2 && (
                 <button
                   onClick={handleMonthlyComplete}
                   disabled={monthlyLoading}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[9px] font-bold transition-all disabled:opacity-40"
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 disabled:opacity-40"
                 >
-                  {monthlyLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : '\U0001f4d6 완성'}
+                  {monthlyLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
+                  월간 완간
                 </button>
               )}
               {monthlyCount > 0 && (
                 <button
                   onClick={() => { clearMonthlyWeeks(generationKey); setMonthlyCount(0) }}
-                  className="px-1.5 py-1 rounded-lg text-[9px] font-bold text-slate-500 hover:text-red-400 transition-all"
-                  title="초기화"
+                  className="p-1.5 rounded-xl text-slate-500 hover:text-red-400 hover:bg-white/5 transition-all"
+                  title="월간 데이터 초기화"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="border-t border-white/5" />
+          <div className="border-t border-white/10" />
 
+          {/* 7. 목회자 개인 묵상 노트 */}
           <div>
-            <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-              \u270d\ufe0f 묵상 노트
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                묵상 메모
+              </div>
               {userMemos[dayIndex] && (
-                <span className="ml-1.5 text-[8px] text-emerald-400 font-medium animate-pulse">저장됨</span>
+                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  저장됨
+                </span>
               )}
-            </h4>
+            </div>
             <textarea
               value={userMemos[dayIndex] || ''}
               onChange={(e) => handleMemoChange(e.target.value)}
-              placeholder="묵상 노트..."
+              placeholder="개인 묵상 메시지와 메모를 남겨보세요..."
               rows={4}
-              className="w-full bg-slate-950/80 border border-white/10 rounded-lg p-2.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all resize-none"
+              className="w-full bg-slate-950/90 border border-white/10 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition-all resize-none shadow-inner"
             />
           </div>
         </aside>
@@ -795,3 +863,4 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     </div>
   )
 }
+
