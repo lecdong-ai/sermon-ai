@@ -370,10 +370,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     originalWords: 800, englishWords: 800,
     englishVerse: 600, leaderGuide: 200, prayer: 350,
   }
-  const trunc = (text: string, key: string): string => {
+  const trunc = (text: string, _key: string): string => {
     if (!text) return ''
-    const limit = maxChars[key] || 500
-    return text.length > limit ? text.slice(0, limit).replace(/\s+\S*$/, '') + ' …' : text
+    return text
   }
 
   // ============= A안: 가로 2페이지 (1일 2페이지, 2-A 디자인) =============
@@ -666,7 +665,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: '0.01em',
                   fontWeight: 500,
                 }}>
-                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
+                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 6).map(l =>
                     l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
                   ).join('\n')}
                 </div>
@@ -985,7 +984,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   color: t.prayerBoxText,
                   fontStyle: 'italic',
                 }}>
-                  {reflect('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
+                  {reflect('prayer').split('\n').filter(l => l.trim()).join('\n')}
                 </div>
               </div>
             )}
@@ -1052,7 +1051,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   lineHeight: activeLineHeight,
                   color: t.textMuted,
                 }}>
-                  {reflect('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
+                  {reflect('leaderGuide').split('\n').filter(l => l.trim()).join('\n')}
                 </div>
               </div>
             )}
@@ -1677,7 +1676,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   color: t.prayerBoxText,
                   fontStyle: 'italic',
                 }}>
-                  {reflectP('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
+                  {reflectP('prayer').split('\n').filter(l => l.trim()).join('\n')}
                 </div>
               </div>
             )}
@@ -1742,7 +1741,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   lineHeight: activeLineHeight,
                   color: t.textMuted,
                 }}>
-                  {reflectP('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 4).join('\n')}
+                  {reflectP('leaderGuide').split('\n').filter(l => l.trim()).join('\n')}
                 </div>
               </div>
             )}
