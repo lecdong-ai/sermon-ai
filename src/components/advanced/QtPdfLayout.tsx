@@ -110,6 +110,55 @@ export function parseBookName(text?: string): string | null {
   return null
 }
 
+// ===== 원고 전체 텍스트에서 성경권 및 1일 차 시작 ~ 말일 차 끝 구절을 100% 정밀 도출하는 멀티 스테이지 스캐너 =====
+export function extractAllBibleVersesFromText(text: string): { book: string | null; startPassage: string; endPassage: string } {
+  if (!text) return { book: null, startPassage: '', endPassage: '' }
+
+  const regex = /([가-힣1-3A-Za-z]+(?:\s*[가-힣]+)?)\s*(\d+)\s*[:장]\s*(\d+)(?:\s*[~-]\s*(\d+)\s*절?)?/g
+  const matches: { book: string; full: string }[] = []
+
+  let m: RegExpExecArray | null
+  while ((m = regex.exec(text)) !== null) {
+    const rawBook = m[1].trim()
+    const parsedBook = parseBookName(rawBook)
+    if (parsedBook) {
+      matches.push({
+        book: parsedBook,
+        full: m[0].trim(),
+      })
+    }
+  }
+
+  if (matches.length === 0) {
+    return { book: null, startPassage: '', endPassage: '' }
+  }
+
+  // 가장 빈도수가 높은 성경권 선택
+  const bookCounts: Record<string, number> = {}
+  for (const item of matches) {
+    bookCounts[item.book] = (bookCounts[item.book] || 0) + 1
+  }
+  let dominantBook = matches[0].book
+  let maxCount = 0
+  for (const [b, c] of Object.entries(bookCounts)) {
+    if (c > maxCount) {
+      maxCount = c
+      dominantBook = b
+    }
+  }
+
+  // 해당 성경권에 속하는 구절들만 추출하여 1일차 시작 & 말일차 끝 지정
+  const bookMatches = matches.filter(item => item.book === dominantBook)
+  const first = bookMatches[0]
+  const last = bookMatches[bookMatches.length - 1]
+
+  return {
+    book: dominantBook,
+    startPassage: first.full,
+    endPassage: last.full,
+  }
+}
+
 interface QtPdfLayoutProps {
   form: QTFormData
   result: QTResult
@@ -267,32 +316,40 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return `${new Date().getMonth() + 1}월`
   }, [monthCalendarStrip, form.startDate])
 
+  // 원고 전체 텍스트 기반 멀티 스테이지 성경구절 스캔
+  const textScanned = useMemo(() => {
+    return extractAllBibleVersesFromText(fullManuscript)
+  }, [fullManuscript])
+
   // 성경 권명 정밀 감지 로직 (요한복음, 마태복음 등 표준 66권 한글 정식 명칭 변환)
   const detectedBook = useMemo(() => {
-    // 1. 큐티 내지 각 일차의 passage 구절에서 직접 성경권 파싱
+    // 1. 전체 원고 스캔 결과 최우선 적용
+    if (textScanned.book) return textScanned.book
+
+    // 2. 큐티 내지 각 일차의 passage 구절에서 파싱
     for (const day of parsedDays) {
       if (day.passage) {
         const book = parseBookName(day.passage)
         if (book) return book
       }
     }
-    // 2. AI 추천 성경 정보에서 파싱
+    // 3. AI 추천 성경 정보에서 파싱
     if (selectedInfo?.book) {
       const book = parseBookName(selectedInfo.book)
       if (book) return book
     }
-    // 3. 시작/끝 구절 텍스트에서 파싱
+    // 4. 시작/끝 구절 텍스트에서 파싱
     if (startPassage) {
       const book = parseBookName(startPassage)
       if (book) return book
     }
-    // 4. form.bibleBook 약자/풀네임 파싱
-    if (form.bibleBook) {
+    // 5. form.bibleBook 약자/풀네임 파싱
+    if (form.bibleBook && form.bibleBook !== '창세기') {
       const book = parseBookName(form.bibleBook)
       if (book) return book
     }
     return '성경'
-  }, [parsedDays, selectedInfo, startPassage, form.bibleBook])
+  }, [textScanned.book, parsedDays, selectedInfo, startPassage, form.bibleBook])
 
   const coverMainTitle = useMemo(() => {
     if (selectedInfo?.isRecommended) return '오늘의 큐티'
@@ -300,22 +357,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return 'Bunker 목양 주간 Q.T'
   }, [selectedInfo, isMonthly, monthName])
 
+  // 1일 차 본문 시작 구절
   const displayStartPassage = useMemo(() => {
     if (startPassage) return startPassage
+    if (textScanned.startPassage) return textScanned.startPassage
     if (parsedDays[0]?.passage) {
       return parsedDays[0].passage.trim()
     }
     return ''
-  }, [startPassage, parsedDays])
+  }, [startPassage, textScanned.startPassage, parsedDays])
 
+  // 말일 차 본문 끝 구절
   const displayEndPassage = useMemo(() => {
     if (endPassage) return endPassage
+    if (textScanned.endPassage) return textScanned.endPassage
     const lastDay = parsedDays[parsedDays.length - 1]
     if (lastDay?.passage) {
       return lastDay.passage.trim()
     }
     return ''
-  }, [endPassage, parsedDays])
+  }, [endPassage, textScanned.endPassage, parsedDays])
 
   // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
   const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
