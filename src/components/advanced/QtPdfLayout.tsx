@@ -393,7 +393,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
     // Overflow detection — 글자수 기반
     const reflect = (key: string): string => trunc((day as any)[key] || '', key)
-    const hasOverflow = (['observation','understanding','application','reflection','prayer']).some(k => {
+    const hasOverflow = (['observation', 'understanding', 'application', 'reflection', 'prayer']).some(k => {
       const t = (day as any)[k] || ''
       return t.length > (maxChars[k] || 500) * 0.85
     })
@@ -525,629 +525,629 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
     return (
       <div key={dayIdx}>
-      {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
-      <div className="qt-page" style={pageStyle}>
-        <div style={pageContentStyle}>
-          {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          {landscapeHeader(`QT · ${detectedBook} · ${currentWeekNum}주`)}
+        {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
+        <div className="qt-page" style={pageStyle}>
+          <div style={pageContentStyle}>
+            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
 
-        {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
-        <div style={{
-          marginBottom: `${3 * scale * marginScale}px`,
-          padding: `${2 * scale}px ${4 * scale}px`,
-          background: t.accentLight,
-          borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
-          borderTop: `0.5px solid ${t.borderLight}`,
-          borderRight: `0.5px solid ${t.borderLight}`,
-          borderBottom: `0.5px solid ${t.borderLight}`,
-        }}>
-          <div style={{
-            display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-            marginBottom: `${1 * scale}px`,
-            paddingBottom: `${1 * scale}px`,
-            borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
-          }}>
+            {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
             <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${14 * scale}px`,
-              fontWeight: 800,
-              color: t.accent,
-              letterSpacing: `${2 * scale}px`,
-              textTransform: 'uppercase',
+              marginBottom: `${3 * scale * marginScale}px`,
+              padding: `${2 * scale}px ${4 * scale}px`,
+              background: t.accentLight,
+              borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+              borderTop: `0.5px solid ${t.borderLight}`,
+              borderRight: `0.5px solid ${t.borderLight}`,
+              borderBottom: `0.5px solid ${t.borderLight}`,
             }}>
-              ◆ 주간 펼침 · {detectedBook} · 제{currentWeekNum}주
-            </div>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${11 * scale}px`,
-              fontWeight: 500,
-              color: t.textMuted,
-              letterSpacing: `${0.5 * scale}px`,
-              marginTop: `${1 * scale}px`,
-            }}>
-              {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
-            </div>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, 1fr)',
-            gap: `${0.5 * scale}px`,
-          }}>
-            {currentWeekDaysData.map((d, i) => {
-              const actualDayNum = weekStartIndex + i + 1
-              const dv = parseBibleVerses(d?.passage || '')
-              const isCurrent = i === dayInWeekIdx
-              const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
-              const dayLabel = currentWeekDatesData[i]?.label || `Day ${actualDayNum}`
-              const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
-
-              return (
-                <div key={i} style={{
-                  display: 'flex', flexDirection: 'column',
-                  padding: `${1.5 * scale}px ${1.5 * scale}px`,
-                  background: isCurrent ? `${t.accent}1A` : 'transparent',
-                  color: t.textColor,
-                  borderTop: `0.5px solid ${t.borderLight}`,
-                  minHeight: `${70 * scale}px`,
-                }}>
-                  <div style={{
-                    flex: 1,
-                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-                    gap: `${1 * scale}px`,
-                  }}>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${12 * scale}px`,
-                      fontWeight: 800,
-                      color: isCurrent ? t.accent : t.accent,
-                      letterSpacing: `${0.5 * scale}px`,
-                      textTransform: 'uppercase',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${1 * scale}px`,
-                    }}>
-                      <span>{dayLabel}</span>
-                      {isCurrent && <span style={{ fontSize: `${12 * scale}px`, color: t.accent }}>★</span>}
-                    </div>
-                    {passageShort && (
-                      <div style={{
-                        fontFamily: t.fontHeading,
-                        fontSize: `${12 * scale}px`,
-                        fontWeight: 700,
-                        color: t.textColor,
-                        textAlign: 'center',
-                      }}>
-                        {passageShort}
-                      </div>
-                    )}
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${12 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textColor,
-                      lineHeight: '1.2',
-                      textAlign: 'center',
-                    }}>
-                      {displayTitle}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* 본문 한눈에 — 2줄 풀폭 */}
-        {day.passageOverview && (
-          <div style={{
-            padding: `${2 * scale}px ${4 * scale}px`,
-            marginBottom: `${4 * scale}px`,
-            background: t.accentLight,
-            borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
-            borderTop: `0.5px solid ${t.borderLight}`,
-            borderRight: `0.5px solid ${t.borderLight}`,
-            borderBottom: `0.5px solid ${t.borderLight}`,
-          }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${11 * scale}px`,
-              fontWeight: 800,
-              color: t.accent,
-              letterSpacing: `${2.5 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale}px`,
-            }}>
-              본문 한눈에 보기
-            </div>
-            <div style={{
-              fontSize: `${13 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.textColor,
-              textAlign: 'justify',
-              letterSpacing: '0.01em',
-              fontWeight: 500,
-            }}>
-              {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
-                l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
-              ).join('\n')}
-            </div>
-          </div>
-        )}
-
-        {/* 한/영 성경 — 5:5 정확 분할, 절 동기화, 동일 폰트 */}
-        {(() => {
-          const korLines = verses.korVerse.split('\n').filter(l => l.trim())
-          const nivLines = verses.engVerse.split('\n').filter(l => l.trim())
-          const maxLen = Math.max(korLines.length, nivLines.length)
-          return (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: `${14 * scale}px`,
-              marginBottom: `${4 * scale}px`,
-            }}>
-              {/* 좌: 한글 · 개역개정 */}
-              <div>
+              <div style={{
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                marginBottom: `${1 * scale}px`,
+                paddingBottom: `${1 * scale}px`,
+                borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
+              }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${14 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
-                  letterSpacing: `${1.5 * scale}px`,
+                  letterSpacing: `${2 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale}px`,
-                  paddingBottom: `${1 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
-                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
                 }}>
-                  <span>한글 · 개역개정</span>
-                  {verses.passageRange && (
-                    <span style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${9 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textColor,
-                      letterSpacing: `${0.3 * scale}px`,
-                      textTransform: 'none',
-                    }}>
-                      {verses.passageRange}
-                    </span>
-                  )}
+                  ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
                 </div>
                 <div style={{
-                  fontFamily: t.font,
+                  fontFamily: t.fontHeading,
+                  fontSize: `${11 * scale}px`,
+                  fontWeight: 500,
+                  color: t.textMuted,
+                  letterSpacing: `${0.5 * scale}px`,
+                  marginTop: `${1 * scale}px`,
+                }}>
+                  {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
+                </div>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 1fr)',
+                gap: `${0.5 * scale}px`,
+              }}>
+                {currentWeekDaysData.map((d, i) => {
+                  const actualDayNum = weekStartIndex + i + 1
+                  const dv = parseBibleVerses(d?.passage || '')
+                  const isCurrent = i === dayInWeekIdx
+                  const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
+                  const dayLabel = currentWeekDatesData[i]?.label || `Day ${actualDayNum}`
+                  const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', flexDirection: 'column',
+                      padding: `${1.5 * scale}px ${1.5 * scale}px`,
+                      background: isCurrent ? `${t.accent}1A` : 'transparent',
+                      color: t.textColor,
+                      borderTop: `0.5px solid ${t.borderLight}`,
+                      minHeight: `${70 * scale}px`,
+                    }}>
+                      <div style={{
+                        flex: 1,
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                        gap: `${1 * scale}px`,
+                      }}>
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${12 * scale}px`,
+                          fontWeight: 800,
+                          color: isCurrent ? t.accent : t.accent,
+                          letterSpacing: `${0.5 * scale}px`,
+                          textTransform: 'uppercase',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${1 * scale}px`,
+                        }}>
+                          <span>{dayLabel}</span>
+                          {isCurrent && <span style={{ fontSize: `${12 * scale}px`, color: t.accent }}>★</span>}
+                        </div>
+                        {passageShort && (
+                          <div style={{
+                            fontFamily: t.fontHeading,
+                            fontSize: `${12 * scale}px`,
+                            fontWeight: 700,
+                            color: t.textColor,
+                            textAlign: 'center',
+                          }}>
+                            {passageShort}
+                          </div>
+                        )}
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${12 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textColor,
+                          lineHeight: '1.2',
+                          textAlign: 'center',
+                        }}>
+                          {displayTitle}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 본문 한눈에 — 2줄 풀폭 */}
+            {day.passageOverview && (
+              <div style={{
+                padding: `${2 * scale}px ${4 * scale}px`,
+                marginBottom: `${4 * scale}px`,
+                background: t.accentLight,
+                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${11 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${2.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale}px`,
+                }}>
+                  본문 한눈에 보기
+                </div>
+                <div style={{
                   fontSize: `${13 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                   textAlign: 'justify',
-                  wordBreak: 'keep-all',
+                  letterSpacing: '0.01em',
+                  fontWeight: 500,
                 }}>
-                  {Array.from({ length: maxLen }).map((_, i) => (
-                    <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
-                      {korLines[i] || ''}
-                    </div>
-                  ))}
+                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
+                    l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
+                  ).join('\n')}
                 </div>
               </div>
-              {/* 우: English · KJV */}
-              <div>
+            )}
+
+            {/* 한/영 성경 — 5:5 정확 분할, 절 동기화, 동일 폰트 */}
+            {(() => {
+              const korLines = verses.korVerse.split('\n').filter(l => l.trim())
+              const nivLines = verses.engVerse.split('\n').filter(l => l.trim())
+              const maxLen = Math.max(korLines.length, nivLines.length)
+              return (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: `${14 * scale}px`,
+                  marginBottom: `${4 * scale}px`,
+                }}>
+                  {/* 좌: 한글 · 개역개정 */}
+                  <div>
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${10 * scale}px`,
+                      fontWeight: 800,
+                      color: t.accent,
+                      letterSpacing: `${1.5 * scale}px`,
+                      textTransform: 'uppercase',
+                      marginBottom: `${1.5 * scale}px`,
+                      paddingBottom: `${1 * scale}px`,
+                      borderBottom: `0.5px solid ${t.border}`,
+                      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                    }}>
+                      <span>한글 · 개역개정</span>
+                      {verses.passageRange && (
+                        <span style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${9 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textColor,
+                          letterSpacing: `${0.3 * scale}px`,
+                          textTransform: 'none',
+                        }}>
+                          {verses.passageRange}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{
+                      fontFamily: t.font,
+                      fontSize: `${13 * scale}px`,
+                      lineHeight: activeLineHeight,
+                      color: t.textColor,
+                      textAlign: 'justify',
+                      wordBreak: 'keep-all',
+                    }}>
+                      {Array.from({ length: maxLen }).map((_, i) => (
+                        <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                          {korLines[i] || ''}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* 우: English · KJV */}
+                  <div>
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${10 * scale}px`,
+                      fontWeight: 800,
+                      color: t.accent,
+                      letterSpacing: `${1.5 * scale}px`,
+                      textTransform: 'uppercase',
+                      marginBottom: `${1.5 * scale}px`,
+                      paddingBottom: `${1 * scale}px`,
+                      borderBottom: `0.5px solid ${t.border}`,
+                      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                    }}>
+                      <span>English · KJV</span>
+                      {verses.passageRange && (
+                        <span style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${9 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textColor,
+                          letterSpacing: `${0.3 * scale}px`,
+                          textTransform: 'none',
+                        }}>
+                          {verses.passageRange}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{
+                      fontFamily: t.font,
+                      fontSize: `${12 * scale}px`,
+                      lineHeight: activeLineHeight,
+                      color: t.textColor,
+                      textAlign: 'justify',
+                    }}>
+                      {Array.from({ length: maxLen }).map((_, i) => (
+                        <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                          {nivLines[i] || ''}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
+            {day.englishVerse && (
+              <div style={{
+                marginBottom: `${1.5 * scale * marginScale}px`,
+                padding: `${4 * scale}px ${7 * scale}px`,
+                background: t.bibleQuoteBg,
+                borderLeft: `${1.5 * scale}px solid ${t.bibleQuoteBorder}`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
                 <div style={{
                   fontFamily: t.fontHeading,
                   fontSize: `${10 * scale}px`,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
                   marginBottom: `${1.5 * scale}px`,
-                  paddingBottom: `${1 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
-                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
                 }}>
-                  <span>English · KJV</span>
-                  {verses.passageRange && (
-                    <span style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${9 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textColor,
-                      letterSpacing: `${0.3 * scale}px`,
-                      textTransform: 'none',
-                    }}>
-                      {verses.passageRange}
-                    </span>
-                  )}
+                  영어로 붙드는 말씀
                 </div>
+                <div style={{
+                  fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.bibleQuoteText,
+                  fontStyle: 'italic',
+                }}>
+                  {reflect('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
+                </div>
+              </div>
+            )}
+
+            {/* 천천히 읽기 — NEW */}
+            {day.slowReading && (
+              <div style={{
+                paddingTop: `${2 * scale}px`,
+                borderTop: `0.5px solid ${t.border}`,
+                marginTop: `${2 * scale}px`,
+              }}>
+                {sectionLabel('천천히 읽기')}
+                {bodyText(
+                  reflect('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
+                  12
+                )}
+              </div>
+            )}
+
+            {pageNumber(pageCounter, totalPages)}
+          </div>
+        </div>
+
+        {/* ══════ Page 2 (뒷면): 관찰/묵상/적용 — 2열 레이아웃 ══════ */}
+        <div className="qt-page" style={pageStyle}>
+          <div style={pageContentStyle}>
+            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
+
+            {/* 2열: 관찰 | 이해 */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: `${10 * scale}px`,
+              marginBottom: `${8 * scale}px`,
+            }}>
+              {day.observation && (
+                <div style={{ maxHeight: `${130 * scale}px`, overflow: 'hidden' }}>
+                  {sectionLabel('본문 관찰하기')}
+                  {bodyText(reflect('observation'), 12)}
+                </div>
+              )}
+              {day.understanding && (
+                <div style={{ maxHeight: `${120 * scale}px`, overflow: 'hidden' }}>
+                  {sectionLabel('말씀 이해하기')}
+                  {bodyText(reflect('understanding'), 12)}
+                </div>
+              )}
+            </div>
+
+            {/* 복음으로 보기 (full, compact) */}
+            {day.gospel && (
+              <div style={{
+                marginBottom: `${5 * scale * marginScale}px`,
+                padding: `${3 * scale}px ${6 * scale}px`,
+                background: `${t.accent}0D`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  color: t.accent,
+                  letterSpacing: `${2 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale}px`,
+                }}>
+                  ✦ 복음으로 보기
+                </div>
+                {bodyText(reflect('gospel'), 12)}
+              </div>
+            )}
+
+            {/* 2열: 적용+나를 비추어 보기 | 단어 묵상 */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: `${15 * scale}px`,
+              marginBottom: `${6 * scale}px`,
+            }}>
+              <div>
+                {day.application && (
+                  <div style={{ marginBottom: `${4 * scale}px` }}>
+                    {sectionLabel('오늘의 적용')}
+                    {bodyText(reflect('application'), 12)}
+                  </div>
+                )}
+                {day.reflection && (
+                  <div>
+                    {sectionLabel('나를 비추어 보기')}
+                    {bodyText(reflect('reflection'), 12)}
+                  </div>
+                )}
+              </div>
+              {(day.originalWords || day.englishWords) && (
+                <div>
+                  {sectionLabel('단어 묵상')}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
+                    {day.originalWords && (
+                      <div>
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${10 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textMuted,
+                          letterSpacing: `${1.5 * scale}px`,
+                          textTransform: 'uppercase',
+                          marginBottom: `${1.5 * scale}px`,
+                        }}>
+                          원어
+                        </div>
+                        {bodyText(reflect('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
+                      </div>
+                    )}
+                    {day.englishWords && (
+                      <div>
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${10 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textMuted,
+                          letterSpacing: `${1.5 * scale}px`,
+                          textTransform: 'uppercase',
+                          marginBottom: `${1.5 * scale}px`,
+                        }}>
+                          영어
+                        </div>
+                        {bodyText(reflect('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 공동체 연결 — NEW (compact) */}
+            {day.community && (
+              <div style={{
+                marginBottom: `${5 * scale}px`,
+                display: 'flex', alignItems: 'baseline', gap: `${5 * scale}px`,
+                padding: `${2 * scale}px ${5 * scale}px`,
+                background: t.accentLight,
+                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+              }}>
+                <span style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  color: t.accent,
+                  letterSpacing: `${1.8 * scale}px`,
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}>
+                  공동체 연결
+                </span>
+                <span style={{
+                  fontFamily: t.font,
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textColor,
+                }}>
+                  {reflect('community').split('\n').filter(l => l.trim()).slice(0, 2).join(' · ')}
+                </span>
+              </div>
+            )}
+
+            {/* 오늘의 기도 — 전체폭 */}
+            {day.prayer && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('오늘의 기도')}
+                <div style={{
+                  padding: `${5 * scale}px ${7 * scale}px`,
+                  background: t.prayerBoxBg,
+                  borderLeft: `${1.5 * scale}px solid ${t.accent}`,
+                  fontFamily: t.font,
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.prayerBoxText,
+                  fontStyle: 'italic',
+                }}>
+                  {reflect('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
+                </div>
+              </div>
+            )}
+
+            {/* 한 줄 기록 */}
+            <div style={{ marginBottom: `${4 * scale}px` }}>
+              <div style={{
+                fontFamily: t.fontHeading,
+                fontSize: `${10 * scale}px`,
+                fontWeight: 700,
+                color: t.textMuted,
+                letterSpacing: `${1.5 * scale}px`,
+                textTransform: 'uppercase',
+                marginBottom: `${1.5 * scale * marginScale}px`,
+              }}>
+                오늘 내 마음에 남은 한 문장
+              </div>
+              {userMemos[dayIdx] ? (
                 <div style={{
                   fontFamily: t.font,
                   fontSize: `${12 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
-                  textAlign: 'justify',
+                  fontStyle: 'italic',
+                  minHeight: `${12 * scale}px`,
+                  paddingBottom: `${2 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                  wordBreak: 'break-all',
                 }}>
-                  {Array.from({ length: maxLen }).map((_, i) => (
-                    <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
-                      {nivLines[i] || ''}
-                    </div>
-                  ))}
+                  {userMemos[dayIdx]}
+                </div>
+              ) : (
+                <div style={{
+                  height: `${12 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                }} />
+              )}
+            </div>
+
+            {/* 인도자 해설 — 미주 */}
+            {day.leaderGuide && (
+              <div style={{
+                position: 'absolute',
+                bottom: `${mmToPx(10)}px`,
+                left: 0,
+                right: 0,
+                padding: `${2 * scale}px ${8 * scale}px`,
+                borderTop: `0.5px solid ${t.border}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${11 * scale}px`,
+                  fontWeight: 700,
+                  color: t.textMuted,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                }}>
+                  인도자 해설
+                </div>
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${11 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textMuted,
+                }}>
+                  {reflect('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
                 </div>
               </div>
-            </div>
-          )
-        })()}
-
-        {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
-        {day.englishVerse && (
-          <div style={{
-            marginBottom: `${1.5 * scale * marginScale}px`,
-            padding: `${4 * scale}px ${7 * scale}px`,
-            background: t.bibleQuoteBg,
-            borderLeft: `${1.5 * scale}px solid ${t.bibleQuoteBorder}`,
-            borderTop: `0.5px solid ${t.borderLight}`,
-            borderRight: `0.5px solid ${t.borderLight}`,
-            borderBottom: `0.5px solid ${t.borderLight}`,
-          }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${10 * scale}px`,
-              fontWeight: 700,
-              color: t.accent,
-              letterSpacing: `${1.5 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale}px`,
-            }}>
-              영어로 붙드는 말씀
-            </div>
-            <div style={{
-              fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
-              fontSize: `${12 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.bibleQuoteText,
-              fontStyle: 'italic',
-            }}>
-              {reflect('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
-            </div>
-          </div>
-        )}
-
-        {/* 천천히 읽기 — NEW */}
-        {day.slowReading && (
-          <div style={{
-            paddingTop: `${2 * scale}px`,
-            borderTop: `0.5px solid ${t.border}`,
-            marginTop: `${2 * scale}px`,
-          }}>
-            {sectionLabel('천천히 읽기')}
-            {bodyText(
-              reflect('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
-              12
             )}
-          </div>
-        )}
 
-        {pageNumber(pageCounter, totalPages)}
-        </div>
-      </div>
-
-      {/* ══════ Page 2 (뒷면): 관찰/묵상/적용 — 2열 레이아웃 ══════ */}
-      <div className="qt-page" style={pageStyle}>
-        <div style={pageContentStyle}>
-          {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          {landscapeHeader(`QT · ${detectedBook} · ${form.weekNumber}주 · 묵상`)}
-
-        {/* 2열: 관찰 | 이해 */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: `${10 * scale}px`,
-          marginBottom: `${8 * scale}px`,
-        }}>
-          {day.observation && (
-            <div style={{ maxHeight: `${130 * scale}px`, overflow: 'hidden' }}>
-              {sectionLabel('본문 관찰하기')}
-              {bodyText(reflect('observation'), 12)}
-            </div>
-          )}
-          {day.understanding && (
-            <div style={{ maxHeight: `${120 * scale}px`, overflow: 'hidden' }}>
-              {sectionLabel('말씀 이해하기')}
-              {bodyText(reflect('understanding'), 12)}
-            </div>
-          )}
-        </div>
-
-        {/* 복음으로 보기 (full, compact) */}
-        {day.gospel && (
-          <div style={{
-            marginBottom: `${5 * scale * marginScale}px`,
-            padding: `${3 * scale}px ${6 * scale}px`,
-            background: `${t.accent}0D`,
-            borderTop: `0.5px solid ${t.borderLight}`,
-            borderBottom: `0.5px solid ${t.borderLight}`,
-          }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${10 * scale}px`,
-              fontWeight: 700,
-              color: t.accent,
-              letterSpacing: `${2 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale}px`,
-            }}>
-              ✦ 복음으로 보기
-            </div>
-            {bodyText(reflect('gospel'), 12)}
-          </div>
-        )}
-
-        {/* 2열: 적용+나를 비추어 보기 | 단어 묵상 */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: `${15 * scale}px`,
-          marginBottom: `${6 * scale}px`,
-        }}>
-          <div>
-            {day.application && (
-              <div style={{ marginBottom: `${4 * scale}px` }}>
-                {sectionLabel('오늘의 적용')}
-                {bodyText(reflect('application'), 12)}
-              </div>
-            )}
-            {day.reflection && (
-              <div>
-                {sectionLabel('나를 비추어 보기')}
-                {bodyText(reflect('reflection'), 12)}
-              </div>
-            )}
-          </div>
-          {(day.originalWords || day.englishWords) && (
-            <div>
-              {sectionLabel('단어 묵상')}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
-                {day.originalWords && (
-                  <div>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textMuted,
-                      letterSpacing: `${1.5 * scale}px`,
-                      textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                    }}>
-                      원어
-                    </div>
-                    {bodyText(reflect('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
-                  </div>
-                )}
-                {day.englishWords && (
-                  <div>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textMuted,
-                      letterSpacing: `${1.5 * scale}px`,
-                      textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                    }}>
-                      영어
-                    </div>
-                    {bodyText(reflect('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 공동체 연결 — NEW (compact) */}
-        {day.community && (
-          <div style={{
-            marginBottom: `${5 * scale}px`,
-            display: 'flex', alignItems: 'baseline', gap: `${5 * scale}px`,
-            padding: `${2 * scale}px ${5 * scale}px`,
-            background: t.accentLight,
-            borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
-          }}>
-            <span style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${10 * scale}px`,
-              fontWeight: 700,
-              color: t.accent,
-              letterSpacing: `${1.8 * scale}px`,
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}>
-              공동체 연결
-            </span>
-              <span style={{
-                fontFamily: t.font,
-                fontSize: `${12 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.textColor,
-              }}>
-                {reflect('community').split('\n').filter(l => l.trim()).slice(0, 2).join(' · ')}
-            </span>
-          </div>
-        )}
-
-        {/* 오늘의 기도 — 전체폭 */}
-        {day.prayer && (
-          <div style={{ marginBottom: `${5 * scale}px` }}>
-            {sectionLabel('오늘의 기도')}
-            <div style={{
-              padding: `${5 * scale}px ${7 * scale}px`,
-              background: t.prayerBoxBg,
-              borderLeft: `${1.5 * scale}px solid ${t.accent}`,
-              fontFamily: t.font,
-              fontSize: `${12 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.prayerBoxText,
-              fontStyle: 'italic',
-            }}>
-              {reflect('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
-            </div>
-          </div>
-        )}
-
-        {/* 한 줄 기록 */}
-        <div style={{ marginBottom: `${4 * scale}px` }}>
-          <div style={{
-            fontFamily: t.fontHeading,
-            fontSize: `${10 * scale}px`,
-            fontWeight: 700,
-            color: t.textMuted,
-            letterSpacing: `${1.5 * scale}px`,
-            textTransform: 'uppercase',
-            marginBottom: `${1.5 * scale * marginScale}px`,
-          }}>
-            오늘 내 마음에 남은 한 문장
-          </div>
-          {userMemos[dayIdx] ? (
-            <div style={{
-              fontFamily: t.font,
-              fontSize: `${12 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.textColor,
-              fontStyle: 'italic',
-              minHeight: `${12 * scale}px`,
-              paddingBottom: `${2 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
-              wordBreak: 'break-all',
-            }}>
-              {userMemos[dayIdx]}
-            </div>
-          ) : (
-            <div style={{
-              height: `${12 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
-            }} />
-          )}
-        </div>
-
-        {/* 인도자 해설 — 미주 */}
-        {day.leaderGuide && (
-          <div style={{
-            position: 'absolute',
-            bottom: `${mmToPx(10)}px`,
-            left: 0,
-            right: 0,
-            padding: `${2 * scale}px ${8 * scale}px`,
-            borderTop: `0.5px solid ${t.border}`,
-          }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${11 * scale}px`,
-              fontWeight: 700,
-              color: t.textMuted,
-              letterSpacing: `${1.5 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale * marginScale}px`,
-            }}>
-              인도자 해설
-            </div>
-            <div style={{
-              fontFamily: t.font,
-              fontSize: `${11 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.textMuted,
-            }}>
-              {reflect('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 3).join('\n')}
-            </div>
-          </div>
-        )}
-
-        {pageNumber(pageCounter + 1, totalPages)}
-        {hasOverflow && (
-          <div style={{
-            position: 'absolute',
-            bottom: `${mmToPx(3)}px`,
-            right: `${mmToPx(30)}px`,
-            fontSize: `${7 * scale}px`,
-            color: t.pageNumberColor,
-            fontStyle: 'italic',
-            opacity: 0.5,
-          }}>
-            (이어짐)
-          </div>
-        )}
-        </div>
-      </div>
-
-      {/* ══════ Page 3 (조건부): 이어짐 ══════ */}
-      {hasOverflow && (
-        <div className="qt-page" style={pageStyle}>
-          <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          <div style={{
-            fontFamily: t.fontHeading,
-            fontSize: `${9 * scale}px`,
-            fontWeight: 600,
-            color: t.textMuted,
-            letterSpacing: `${2 * scale}px`,
-            textTransform: 'uppercase',
-            marginBottom: `${3 * scale}px`,
-            paddingBottom: `${2 * scale}px`,
-            borderBottom: `0.5px solid ${t.borderLight}`,
-          }}>
-            DAY {dayIdx + 1} · 이어짐
-          </div>
-
-          {/* 본문 관찰하기 (전체) */}
-          {day.observation && (day as any).observation!.length > (maxChars.observation || 700) * 0.85 && (
-            <div>
-              {sectionLabel('본문 관찰하기 (이어서)')}
-              {bodyText((day as any).observation!, 11)}
-            </div>
-          )}
-
-          {/* 말씀 이해하기 (전체) */}
-          {day.understanding && (day as any).understanding!.length > (maxChars.understanding || 500) * 0.85 && (
-            <div>
-              {sectionLabel('말씀 이해하기 (이어서)')}
-              {bodyText((day as any).understanding!, 11)}
-            </div>
-          )}
-
-          {/* 나를 비추어 보기 (전체) */}
-          {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
-            <div>
-              {sectionLabel('나를 비추어 보기 (이어서)')}
-              {bodyText((day as any).reflection!, 11)}
-            </div>
-          )}
-
-          {/* 오늘의 적용 (전체) */}
-          {day.application && (day as any).application!.length > (maxChars.application || 300) * 0.85 && (
-            <div>
-              {sectionLabel('오늘의 적용 (이어서)')}
-              {bodyText((day as any).application!, 11)}
-            </div>
-          )}
-
-          {/* 오늘의 기도 (전체) */}
-          {day.prayer && (day as any).prayer!.length > (maxChars.prayer || 350) * 0.85 && (
-            <div>
-              {sectionLabel('오늘의 기도 (이어서)')}
+            {pageNumber(pageCounter + 1, totalPages)}
+            {hasOverflow && (
               <div style={{
-                padding: `${4 * scale}px ${7 * scale}px`,
-                background: t.prayerBoxBg,
-                borderLeft: `${1.5 * scale}px solid ${t.accent}`,
-                fontFamily: t.font,
-                fontSize: `${11 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.prayerBoxText,
+                position: 'absolute',
+                bottom: `${mmToPx(3)}px`,
+                right: `${mmToPx(30)}px`,
+                fontSize: `${7 * scale}px`,
+                color: t.pageNumberColor,
                 fontStyle: 'italic',
+                opacity: 0.5,
               }}>
-                {(day as any).prayer!.split('\n').filter(l => l.trim()).join('\n')}
+                (이어짐)
               </div>
-            </div>
-          )}
-
-          {pageNumber(pageCounter + 2, totalPages)}
+            )}
           </div>
         </div>
-      )}
+
+        {/* ══════ Page 3 (조건부): 이어짐 ══════ */}
+        {hasOverflow && (
+          <div className="qt-page" style={pageStyle}>
+            <div style={pageContentStyle}>
+              {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+              <div style={{
+                fontFamily: t.fontHeading,
+                fontSize: `${9 * scale}px`,
+                fontWeight: 600,
+                color: t.textMuted,
+                letterSpacing: `${2 * scale}px`,
+                textTransform: 'uppercase',
+                marginBottom: `${3 * scale}px`,
+                paddingBottom: `${2 * scale}px`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
+                DAY {dayIdx + 1} · 이어짐
+              </div>
+
+              {/* 본문 관찰하기 (전체) */}
+              {day.observation && (day as any).observation!.length > (maxChars.observation || 700) * 0.85 && (
+                <div>
+                  {sectionLabel('본문 관찰하기 (이어서)')}
+                  {bodyText((day as any).observation!, 11)}
+                </div>
+              )}
+
+              {/* 말씀 이해하기 (전체) */}
+              {day.understanding && (day as any).understanding!.length > (maxChars.understanding || 500) * 0.85 && (
+                <div>
+                  {sectionLabel('말씀 이해하기 (이어서)')}
+                  {bodyText((day as any).understanding!, 11)}
+                </div>
+              )}
+
+              {/* 나를 비추어 보기 (전체) */}
+              {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
+                <div>
+                  {sectionLabel('나를 비추어 보기 (이어서)')}
+                  {bodyText((day as any).reflection!, 11)}
+                </div>
+              )}
+
+              {/* 오늘의 적용 (전체) */}
+              {day.application && (day as any).application!.length > (maxChars.application || 300) * 0.85 && (
+                <div>
+                  {sectionLabel('오늘의 적용 (이어서)')}
+                  {bodyText((day as any).application!, 11)}
+                </div>
+              )}
+
+              {/* 오늘의 기도 (전체) */}
+              {day.prayer && (day as any).prayer!.length > (maxChars.prayer || 350) * 0.85 && (
+                <div>
+                  {sectionLabel('오늘의 기도 (이어서)')}
+                  <div style={{
+                    padding: `${4 * scale}px ${7 * scale}px`,
+                    background: t.prayerBoxBg,
+                    borderLeft: `${1.5 * scale}px solid ${t.accent}`,
+                    fontFamily: t.font,
+                    fontSize: `${11 * scale}px`,
+                    lineHeight: activeLineHeight,
+                    color: t.prayerBoxText,
+                    fontStyle: 'italic',
+                  }}>
+                    {(day as any).prayer!.split('\n').filter(l => l.trim()).join('\n')}
+                  </div>
+                </div>
+              )}
+
+              {pageNumber(pageCounter + 2, totalPages)}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1181,7 +1181,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
     // Overflow detection (shared with landscape)
     const reflectP = (key: string): string => trunc((day as any)[key] || '', key)
-    const hasOverflowP = (['observation','understanding','application','reflection','prayer']).some(k => {
+    const hasOverflowP = (['observation', 'understanding', 'application', 'reflection', 'prayer']).some(k => {
       const t = (day as any)[k] || ''
       return t.length > (maxChars[k] || 500) * 0.85
     })
@@ -1192,301 +1192,301 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         <div className="qt-page" style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          <div style={{
-            marginBottom: `${5 * scale}px`,
-            paddingBottom: `${3 * scale}px`,
-            borderBottom: `${0.75 * scale}px solid ${t.accent}`,
-          }}>
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: t.accent,
-              color: '#ffffff',
-              padding: `${2 * scale * marginScale}px ${7 * scale}px`,
-              marginBottom: `${4 * scale}px`,
+              marginBottom: `${5 * scale}px`,
+              paddingBottom: `${3 * scale}px`,
+              borderBottom: `${0.75 * scale}px solid ${t.accent}`,
             }}>
               <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                letterSpacing: `${2.5 * scale}px`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: t.accent,
+                color: '#ffffff',
+                padding: `${2 * scale * marginScale}px ${7 * scale}px`,
+                marginBottom: `${4 * scale}px`,
               }}>
-                DAY {dayIdx + 1} · {weekdays[dayIdx]?.label || ''}
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  letterSpacing: `${2.5 * scale}px`,
+                }}>
+                  DAY {dayIdx + 1} · {weekdays[dayIdx]?.label || ''}
+                </div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9 * scale}px`,
+                  fontWeight: 600,
+                  letterSpacing: `${1.5 * scale}px`,
+                  opacity: 0.85,
+                }}>
+                  QT · {form.bibleBook} · {currentWeekNum}주
+                </div>
               </div>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${9 * scale}px`,
-                fontWeight: 600,
-                letterSpacing: `${1.5 * scale}px`,
-                opacity: 0.85,
-              }}>
-                QT · {detectedBook} · {currentWeekNum}주
-              </div>
-            </div>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${17 * scale}px`,
-              fontWeight: 800,
-              color: t.textColor,
-              lineHeight: '1.25',
-              letterSpacing: `${0.5 * scale}px`,
-              marginBottom: `${1.5 * scale * marginScale}px`,
-            }}>
-              {day.title || `Day ${dayIdx + 1}`}
-            </div>
-            {verses.passageRange && (
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10.5 * scale}px`,
-                fontWeight: 500,
-                color: t.textMuted,
-                letterSpacing: `${0.5 * scale}px`,
-              }}>
-                오늘의 본문 · {verses.passageRange}
-              </div>
-            )}
-          </div>
-
-          {/* 주간 펼침 (portrait compact) */}
-          <div style={{
-            marginBottom: `${5 * scale}px`,
-            padding: `${2 * scale}px ${3 * scale}px`,
-            background: t.accentLight,
-            borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
-            borderTop: `0.5px solid ${t.borderLight}`,
-            borderRight: `0.5px solid ${t.borderLight}`,
-            borderBottom: `0.5px solid ${t.borderLight}`,
-          }}>
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              marginBottom: `${1 * scale}px`,
-              paddingBottom: `${1 * scale}px`,
-              borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
-            }}>
-              <span style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${14 * scale}px`,
+                fontSize: `${17 * scale}px`,
                 fontWeight: 800,
-                color: t.accent,
-                letterSpacing: `${1.5 * scale}px`,
-                textTransform: 'uppercase',
+                color: t.textColor,
+                lineHeight: '1.25',
+                letterSpacing: `${0.5 * scale}px`,
+                marginBottom: `${1.5 * scale * marginScale}px`,
               }}>
-                ◆ 주간 펼침 · {detectedBook} · 제{currentWeekNum}주
-              </span>
-              <span style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${9 * scale}px`,
-                fontWeight: 500,
-                color: t.textMuted,
-                marginTop: `${1 * scale}px`,
-              }}>
-                {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
-              </span>
+                {day.title || `Day ${dayIdx + 1}`}
+              </div>
+              {verses.passageRange && (
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10.5 * scale}px`,
+                  fontWeight: 500,
+                  color: t.textMuted,
+                  letterSpacing: `${0.5 * scale}px`,
+                }}>
+                  오늘의 본문 · {verses.passageRange}
+                </div>
+              )}
             </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: `${0.5 * scale}px`,
-            }}>
-              {currentWeekDaysData.map((d, i) => {
-                const actualDayNum = weekStartIndex + i + 1
-                const dv = parseBibleVerses(d?.passage || '')
-                const isCurrent = i === dayInWeekIdx
-                const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
-                const dayLabel = (currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${actualDayNum}`)
-                const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
 
-                return (
-                  <div key={i} style={{
-                    display: 'flex', flexDirection: 'column',
-                    padding: `${1.5 * scale}px ${1 * scale}px`,
-                    background: isCurrent ? `${t.accent}1A` : 'transparent',
-                    color: t.textColor,
-                    borderTop: `0.5px solid ${t.borderLight}`,
-                    minHeight: `${85 * scale}px`,
-                    gap: `${1 * scale}px`,
-                  }}>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${11 * scale}px`,
-                      fontWeight: 800,
-                      color: isCurrent ? t.accent : t.accent,
-                      letterSpacing: `${0.3 * scale}px`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            {/* 주간 펼침 (portrait compact) */}
+            <div style={{
+              marginBottom: `${5 * scale}px`,
+              padding: `${2 * scale}px ${3 * scale}px`,
+              background: t.accentLight,
+              borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+              borderTop: `0.5px solid ${t.borderLight}`,
+              borderRight: `0.5px solid ${t.borderLight}`,
+              borderBottom: `0.5px solid ${t.borderLight}`,
+            }}>
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                marginBottom: `${1 * scale}px`,
+                paddingBottom: `${1 * scale}px`,
+                borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
+              }}>
+                <span style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${14 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                }}>
+                  ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
+                </span>
+                <span style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9 * scale}px`,
+                  fontWeight: 500,
+                  color: t.textMuted,
+                  marginTop: `${1 * scale}px`,
+                }}>
+                  {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
+                </span>
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 1fr)',
+                gap: `${0.5 * scale}px`,
+              }}>
+                {currentWeekDaysData.map((d, i) => {
+                  const actualDayNum = weekStartIndex + i + 1
+                  const dv = parseBibleVerses(d?.passage || '')
+                  const isCurrent = i === dayInWeekIdx
+                  const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
+                  const dayLabel = (currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${actualDayNum}`)
+                  const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', flexDirection: 'column',
+                      padding: `${1.5 * scale}px ${1 * scale}px`,
+                      background: isCurrent ? `${t.accent}1A` : 'transparent',
+                      color: t.textColor,
+                      borderTop: `0.5px solid ${t.borderLight}`,
+                      minHeight: `${85 * scale}px`,
+                      gap: `${1 * scale}px`,
                     }}>
-                      <span>{dayLabel}</span>
-                      {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
-                    </div>
-                    {passageShort && (
+                      <div style={{
+                        fontFamily: t.fontHeading,
+                        fontSize: `${11 * scale}px`,
+                        fontWeight: 800,
+                        color: isCurrent ? t.accent : t.accent,
+                        letterSpacing: `${0.3 * scale}px`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      }}>
+                        <span>{dayLabel}</span>
+                        {isCurrent && <span style={{ fontSize: `${10 * scale}px`, color: t.accent }}>★</span>}
+                      </div>
+                      {passageShort && (
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${10 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textColor,
+                        }}>
+                          {passageShort}
+                        </div>
+                      )}
                       <div style={{
                         fontFamily: t.fontHeading,
                         fontSize: `${10 * scale}px`,
-                        fontWeight: 700,
-                        color: t.textColor,
+                        fontWeight: 600,
+                        color: t.textMuted,
+                        lineHeight: '1.1',
                       }}>
-                        {passageShort}
+                        {displayTitle}
                       </div>
-                    )}
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
-                      fontWeight: 600,
-                      color: t.textMuted,
-                      lineHeight: '1.1',
-                    }}>
-                      {displayTitle}
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* 본문 한눈에 보기 */}
-          {day.passageOverview && (
+            {/* 본문 한눈에 보기 */}
+            {day.passageOverview && (
+              <div style={{
+                marginBottom: `${5 * scale * marginScale}px`,
+                padding: `${5 * scale}px ${8 * scale}px`,
+                background: t.accentLight,
+                borderLeft: `${2 * scale}px solid ${t.accent}`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${11 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${2.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                }}>
+                  본문 한눈에 보기
+                </div>
+                <div style={{
+                  fontSize: `${13 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textColor,
+                  textAlign: 'justify',
+                  letterSpacing: '0.01em',
+                  fontWeight: 500,
+                }}>
+                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
+                    l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
+                  ).join('\n')}
+                </div>
+              </div>
+            )}
+
+            {/* 한/영 병렬 */}
             <div style={{
-              marginBottom: `${5 * scale * marginScale}px`,
-              padding: `${5 * scale}px ${8 * scale}px`,
-              background: t.accentLight,
-              borderLeft: `${2 * scale}px solid ${t.accent}`,
-              borderTop: `0.5px solid ${t.borderLight}`,
-              borderRight: `0.5px solid ${t.borderLight}`,
-              borderBottom: `0.5px solid ${t.borderLight}`,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: `${14 * scale}px`,
+              marginBottom: `${6 * scale}px`,
             }}>
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${11 * scale}px`,
-                fontWeight: 800,
-                color: t.accent,
-                letterSpacing: `${2.5 * scale}px`,
-                textTransform: 'uppercase',
-    marginBottom: `${1.5 * scale * marginScale}px`,
-            }}>
-              본문 한눈에 보기
+              <div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10.5 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${2.2 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                  paddingBottom: `${1.5 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                }}>
+                  한글 · 개역개정
+                </div>
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${13 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textColor,
+                  textAlign: 'justify',
+                  wordBreak: 'keep-all',
+                }}>
+                  {verses.korVerse.split('\n').map((l, i) => (
+                    <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10.5 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${2.2 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                  paddingBottom: `${1.5 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                }}>
+                  English · KJV
+                </div>
+                <div style={{
+                  fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textColor,
+                  textAlign: 'justify',
+                  fontStyle: 'italic',
+                }}>
+                  {verses.engVerse.split('\n').map((l, i) => (
+                    <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div style={{
-              fontSize: `${13 * scale}px`,
-              lineHeight: activeLineHeight,
-              color: t.textColor,
-              textAlign: 'justify',
-              letterSpacing: '0.01em',
-              fontWeight: 500,
-            }}>
-              {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
-                l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
-              ).join('\n')}
-            </div>
-          </div>
-        )}
 
-        {/* 한/영 병렬 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: `${14 * scale}px`,
-            marginBottom: `${6 * scale}px`,
-          }}>
-            <div>
+            {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
+            {day.englishVerse && (
               <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10.5 * scale}px`,
-                fontWeight: 800,
-                color: t.accent,
-                letterSpacing: `${2.2 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
-                paddingBottom: `${1.5 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
+                marginBottom: `${5 * scale * marginScale}px`,
+                padding: `${5 * scale}px ${8 * scale}px`,
+                background: t.bibleQuoteBg,
+                borderLeft: `${2 * scale}px solid ${t.bibleQuoteBorder}`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
               }}>
-                한글 · 개역개정
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                }}>
+                  영어로 붙드는 말씀
+                </div>
+                <div style={{
+                  fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.bibleQuoteText,
+                  fontStyle: 'italic',
+                }}>
+                  {reflectP('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
+                </div>
               </div>
-              <div style={{
-                fontFamily: t.font,
-                fontSize: `${13 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.textColor,
-                textAlign: 'justify',
-                wordBreak: 'keep-all',
-              }}>
-                {verses.korVerse.split('\n').map((l, i) => (
-                  <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10.5 * scale}px`,
-                fontWeight: 800,
-                color: t.accent,
-                letterSpacing: `${2.2 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
-                paddingBottom: `${1.5 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
-              }}>
-                English · KJV
-              </div>
-              <div style={{
-                fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
-                fontSize: `${12 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.textColor,
-                textAlign: 'justify',
-                fontStyle: 'italic',
-              }}>
-                {verses.engVerse.split('\n').map((l, i) => (
-                  <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
-                ))}
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
-          {day.englishVerse && (
-            <div style={{
-              marginBottom: `${5 * scale * marginScale}px`,
-              padding: `${5 * scale}px ${8 * scale}px`,
-              background: t.bibleQuoteBg,
-              borderLeft: `${2 * scale}px solid ${t.bibleQuoteBorder}`,
-              borderTop: `0.5px solid ${t.borderLight}`,
-              borderRight: `0.5px solid ${t.borderLight}`,
-              borderBottom: `0.5px solid ${t.borderLight}`,
-            }}>
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                color: t.accent,
-                letterSpacing: `${1.5 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
-              }}>
-                영어로 붙드는 말씀
+            {/* 천천히 읽기 — NEW */}
+            {day.slowReading && (
+              <div>
+                {sectionLabel('천천히 읽기')}
+                {bodyText(
+                  reflectP('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
+                  12
+                )}
               </div>
-              <div style={{
-                fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
-                fontSize: `${12 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.bibleQuoteText,
-                fontStyle: 'italic',
-              }}>
-                {reflectP('englishVerse').split('\n').filter(l => l.trim()).join('\n')}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* 천천히 읽기 — NEW */}
-          {day.slowReading && (
-            <div>
-              {sectionLabel('천천히 읽기')}
-              {bodyText(
-                reflectP('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
-                12
-              )}
-            </div>
-          )}
-
-          {pageNumber(pageCounter, totalPages)}
+            {pageNumber(pageCounter, totalPages)}
           </div>
         </div>
 
@@ -1494,123 +1494,123 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         <div className="qt-page" style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          <div style={{
-            marginBottom: `${4 * scale}px`,
-            paddingBottom: `${2 * scale}px`,
-            borderBottom: `${0.75 * scale}px solid ${t.accent}`,
-          }}>
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: t.accent,
-              color: '#ffffff',
-              padding: `${2 * scale * marginScale}px ${7 * scale}px`,
-              marginBottom: `${3 * scale}px`,
+              marginBottom: `${4 * scale}px`,
+              paddingBottom: `${2 * scale}px`,
+              borderBottom: `${0.75 * scale}px solid ${t.accent}`,
             }}>
               <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                letterSpacing: `${2.5 * scale}px`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: t.accent,
+                color: '#ffffff',
+                padding: `${2 * scale * marginScale}px ${7 * scale}px`,
+                marginBottom: `${3 * scale}px`,
               }}>
-                DAY {dayIdx + 1} · 묵상
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  letterSpacing: `${2.5 * scale}px`,
+                }}>
+                  DAY {dayIdx + 1} · 묵상
+                </div>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9 * scale}px`,
+                  fontWeight: 600,
+                  letterSpacing: `${1.5 * scale}px`,
+                  opacity: 0.85,
+                }}>
+                  QT · {form.bibleBook} · {form.weekNumber}주
+                </div>
               </div>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${9 * scale}px`,
-                fontWeight: 600,
-                letterSpacing: `${1.5 * scale}px`,
-                opacity: 0.85,
+                fontSize: `${14 * scale}px`,
+                fontWeight: 800,
+                color: t.textColor,
+                lineHeight: '1.25',
               }}>
-                QT · {detectedBook} · {form.weekNumber}주
+                {day.title || `Day ${dayIdx + 1}`} · {verses.passageRange}
               </div>
             </div>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${14 * scale}px`,
-              fontWeight: 800,
-              color: t.textColor,
-              lineHeight: '1.25',
-            }}>
-              {day.title || `Day ${dayIdx + 1}`} · {verses.passageRange}
-            </div>
-          </div>
 
-          {/* 관찰하기 (full) */}
-          {day.observation && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('본문 관찰하기')}
-              {bodyText(reflectP('observation'), 13)}
-            </div>
-          )}
+            {/* 관찰하기 (full) */}
+            {day.observation && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('본문 관찰하기')}
+                {bodyText(reflectP('observation'), 13)}
+              </div>
+            )}
 
-          {/* 말씀 이해하기 */}
-          {day.understanding && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('말씀 이해하기')}
-              {bodyText(reflectP('understanding'), 12.5)}
-            </div>
-          )}
+            {/* 말씀 이해하기 */}
+            {day.understanding && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('말씀 이해하기')}
+                {bodyText(reflectP('understanding'), 12.5)}
+              </div>
+            )}
 
-          {/* 복음으로 보기 (full) */}
-          {day.gospel && (
-            <div style={{
-              marginBottom: `${5 * scale}px`,
-              padding: `${4 * scale}px ${7 * scale}px`,
-              background: `${t.accent}0D`,
-              borderTop: `0.5px solid ${t.borderLight}`,
-              borderBottom: `0.5px solid ${t.borderLight}`,
-            }}>
+            {/* 복음으로 보기 (full) */}
+            {day.gospel && (
               <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                color: t.accent,
-                letterSpacing: `${2 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
+                marginBottom: `${5 * scale}px`,
+                padding: `${4 * scale}px ${7 * scale}px`,
+                background: `${t.accent}0D`,
+                borderTop: `0.5px solid ${t.borderLight}`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
               }}>
-                ✦ 복음으로 보기
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  color: t.accent,
+                  letterSpacing: `${2 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                }}>
+                  ✦ 복음으로 보기
+                </div>
+                {bodyText(reflectP('gospel'), 12)}
               </div>
-              {bodyText(reflectP('gospel'), 12)}
-            </div>
-          )}
+            )}
 
-          {/* 나를 비추어 보기 */}
-          {day.reflection && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('나를 비추어 보기')}
-              {bodyText(reflectP('reflection'), 12)}
-            </div>
-          )}
+            {/* 나를 비추어 보기 */}
+            {day.reflection && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('나를 비추어 보기')}
+                {bodyText(reflectP('reflection'), 12)}
+              </div>
+            )}
 
-          {/* 적용 (full) */}
-          {day.application && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('오늘의 적용')}
-              {bodyText(reflectP('application'), 13)}
-            </div>
-          )}
+            {/* 적용 (full) */}
+            {day.application && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('오늘의 적용')}
+                {bodyText(reflectP('application'), 13)}
+              </div>
+            )}
 
-          {/* 공동체 연결 (compact line) */}
-          {day.community && (
-            <div style={{
-              marginBottom: `${5 * scale}px`,
-              display: 'flex', alignItems: 'baseline', gap: `${4 * scale}px`,
-              padding: `${2 * scale}px ${5 * scale}px`,
-              background: t.accentLight,
-              borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
-            }}>
-              <span style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                color: t.accent,
-                letterSpacing: `${1.5 * scale}px`,
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
+            {/* 공동체 연결 (compact line) */}
+            {day.community && (
+              <div style={{
+                marginBottom: `${5 * scale}px`,
+                display: 'flex', alignItems: 'baseline', gap: `${4 * scale}px`,
+                padding: `${2 * scale}px ${5 * scale}px`,
+                background: t.accentLight,
+                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
               }}>
-                공동체 연결
-              </span>
+                <span style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 700,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}>
+                  공동체 연결
+                </span>
                 <span style={{
                   fontFamily: t.font,
                   fontSize: `${12 * scale}px`,
@@ -1618,56 +1618,56 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   color: t.textColor,
                 }}>
                   {reflectP('community').split('\n').filter(l => l.trim()).slice(0, 2).join(' · ')}
-              </span>
-            </div>
-          )}
-
-          {/* 단어 묵상 */}
-          {(day.originalWords || day.englishWords) && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('단어 묵상')}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
-                {day.originalWords && (
-                  <div>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textMuted,
-                      letterSpacing: `${1.5 * scale}px`,
-                      textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                    }}>
-                      원어
-                    </div>
-                    {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
-                  </div>
-                )}
-                {day.englishWords && (
-                  <div>
-                    <div style={{
-                      fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
-                      fontWeight: 700,
-                      color: t.textMuted,
-                      letterSpacing: `${1.5 * scale}px`,
-                      textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                    }}>
-                      영어
-                    </div>
-                    {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
-                  </div>
-                )}
+                </span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 오늘의 기도 */}
-          {day.prayer && (
-            <div style={{ marginBottom: `${5 * scale}px` }}>
-              {sectionLabel('오늘의 기도')}
-              <div style={{
+            {/* 단어 묵상 */}
+            {(day.originalWords || day.englishWords) && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('단어 묵상')}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
+                  {day.originalWords && (
+                    <div>
+                      <div style={{
+                        fontFamily: t.fontHeading,
+                        fontSize: `${10 * scale}px`,
+                        fontWeight: 700,
+                        color: t.textMuted,
+                        letterSpacing: `${1.5 * scale}px`,
+                        textTransform: 'uppercase',
+                        marginBottom: `${1.5 * scale}px`,
+                      }}>
+                        원어
+                      </div>
+                      {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
+                    </div>
+                  )}
+                  {day.englishWords && (
+                    <div>
+                      <div style={{
+                        fontFamily: t.fontHeading,
+                        fontSize: `${10 * scale}px`,
+                        fontWeight: 700,
+                        color: t.textMuted,
+                        letterSpacing: `${1.5 * scale}px`,
+                        textTransform: 'uppercase',
+                        marginBottom: `${1.5 * scale}px`,
+                      }}>
+                        영어
+                      </div>
+                      {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 오늘의 기도 */}
+            {day.prayer && (
+              <div style={{ marginBottom: `${5 * scale}px` }}>
+                {sectionLabel('오늘의 기도')}
+                <div style={{
                   padding: `${5 * scale}px ${6 * scale}px`,
                   background: t.prayerBoxBg,
                   borderLeft: `${1.5 * scale}px solid ${t.accent}`,
@@ -1676,164 +1676,164 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   lineHeight: activeLineHeight,
                   color: t.prayerBoxText,
                   fontStyle: 'italic',
-              }}>
-                {reflectP('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
+                }}>
+                  {reflectP('prayer').split('\n').filter(l => l.trim()).slice(0, 5).join('\n')}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* 오늘 내 마음에 남은 한 문장 */}
-          <div style={{ marginBottom: `${5 * scale}px` }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${10 * scale}px`,
-              fontWeight: 700,
-              color: t.textMuted,
-              letterSpacing: `${1.5 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale * marginScale}px`,
-            }}>
-              오늘 내 마음에 남은 한 문장
-            </div>
-            {userMemos[dayIdx] ? (
-              <div style={{
-                fontFamily: t.font,
-                fontSize: `${12 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.textColor,
-                fontStyle: 'italic',
-                minHeight: `${14 * scale}px`,
-                paddingBottom: `${2 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
-                wordBreak: 'break-all',
-              }}>
-                {userMemos[dayIdx]}
-              </div>
-            ) : (
-              <div style={{
-                height: `${14 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
-              }} />
             )}
-          </div>
 
-          {/* 인도자 해설 */}
-          {day.leaderGuide && (
-            <div style={{
-              position: 'absolute',
-              bottom: `${mmToPx(6)}px`,
-              left: 0,
-              right: 0,
-            }}>
+            {/* 오늘 내 마음에 남은 한 문장 */}
+            <div style={{ marginBottom: `${5 * scale}px` }}>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${11 * scale}px`,
+                fontSize: `${10 * scale}px`,
                 fontWeight: 700,
                 color: t.textMuted,
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
                 marginBottom: `${1.5 * scale * marginScale}px`,
               }}>
-                인도자 해설
+                오늘 내 마음에 남은 한 문장
               </div>
-              <div style={{
-                fontFamily: t.font,
-                fontSize: `${12 * scale}px`,
-                lineHeight: activeLineHeight,
-                color: t.textMuted,
-              }}>
-                {reflectP('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 4).join('\n')}
-              </div>
+              {userMemos[dayIdx] ? (
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textColor,
+                  fontStyle: 'italic',
+                  minHeight: `${14 * scale}px`,
+                  paddingBottom: `${2 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                  wordBreak: 'break-all',
+                }}>
+                  {userMemos[dayIdx]}
+                </div>
+              ) : (
+                <div style={{
+                  height: `${14 * scale}px`,
+                  borderBottom: `0.5px solid ${t.border}`,
+                }} />
+              )}
             </div>
-          )}
 
-          {pageNumber(pageCounter + 1, totalPages)}
-          {hasOverflowP && (
-            <div style={{
-              position: 'absolute',
-              bottom: `${mmToPx(3)}px`,
-              right: `${mmToPx(30)}px`,
-              fontSize: `${7 * scale}px`,
-              color: t.pageNumberColor,
-              fontStyle: 'italic',
-              opacity: 0.5,
-            }}>
-              (이어짐)
-            </div>
-          )}
+            {/* 인도자 해설 */}
+            {day.leaderGuide && (
+              <div style={{
+                position: 'absolute',
+                bottom: `${mmToPx(6)}px`,
+                left: 0,
+                right: 0,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${11 * scale}px`,
+                  fontWeight: 700,
+                  color: t.textMuted,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${1.5 * scale * marginScale}px`,
+                }}>
+                  인도자 해설
+                </div>
+                <div style={{
+                  fontFamily: t.font,
+                  fontSize: `${12 * scale}px`,
+                  lineHeight: activeLineHeight,
+                  color: t.textMuted,
+                }}>
+                  {reflectP('leaderGuide').split('\n').filter(l => l.trim()).slice(0, 4).join('\n')}
+                </div>
+              </div>
+            )}
+
+            {pageNumber(pageCounter + 1, totalPages)}
+            {hasOverflowP && (
+              <div style={{
+                position: 'absolute',
+                bottom: `${mmToPx(3)}px`,
+                right: `${mmToPx(30)}px`,
+                fontSize: `${7 * scale}px`,
+                color: t.pageNumberColor,
+                fontStyle: 'italic',
+                opacity: 0.5,
+              }}>
+                (이어짐)
+              </div>
+            )}
           </div>
         </div>
 
         {/* ══════ Portrait Page 3 (조건부): 이어짐 ══════ */}
         {hasOverflowP && (
-        <div className="qt-page" style={pageStyle}>
-          <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${8 * scale}px`,
-              fontWeight: 600,
-              color: t.textMuted,
-              letterSpacing: `${1.8 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${1.5 * scale * marginScale}px`,
-              paddingBottom: `${1.5 * scale}px`,
-              borderBottom: `0.5px solid ${t.borderLight}`,
-            }}>
-              DAY {dayIdx + 1} · 이어짐
-            </div>
+          <div className="qt-page" style={pageStyle}>
+            <div style={pageContentStyle}>
+              {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+              <div style={{
+                fontFamily: t.fontHeading,
+                fontSize: `${8 * scale}px`,
+                fontWeight: 600,
+                color: t.textMuted,
+                letterSpacing: `${1.8 * scale}px`,
+                textTransform: 'uppercase',
+                marginBottom: `${1.5 * scale * marginScale}px`,
+                paddingBottom: `${1.5 * scale}px`,
+                borderBottom: `0.5px solid ${t.borderLight}`,
+              }}>
+                DAY {dayIdx + 1} · 이어짐
+              </div>
 
-            {day.observation && (day as any).observation!.length > (maxChars.observation || 700) * 0.85 && (
-              <div>
-                {sectionLabel('본문 관찰하기 (이어서)')}
-                {bodyText((day as any).observation!, 11)}
-              </div>
-            )}
-            {day.understanding && (day as any).understanding!.length > (maxChars.understanding || 500) * 0.85 && (
-              <div>
-                {sectionLabel('말씀 이해하기 (이어서)')}
-                {bodyText((day as any).understanding!, 11)}
-              </div>
-            )}
-            {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
-              <div>
-                {sectionLabel('나를 비추어 보기 (이어서)')}
-                {bodyText((day as any).reflection!, 11)}
-              </div>
-            )}
-            {day.application && (day as any).application!.length > (maxChars.application || 300) * 0.85 && (
-              <div>
-                {sectionLabel('오늘의 적용 (이어서)')}
-                {bodyText((day as any).application!, 11)}
-              </div>
-            )}
-            {day.prayer && (day as any).prayer!.length > (maxChars.prayer || 350) * 0.85 && (
-              <div>
-                {sectionLabel('오늘의 기도 (이어서)')}
-                <div style={{
-                  padding: `${3 * scale}px ${6 * scale}px`,
-                  background: t.prayerBoxBg,
-                  borderLeft: `${1.5 * scale}px solid ${t.accent}`,
-                  fontFamily: t.font,
-                  fontSize: `${10 * scale}px`,
-                  lineHeight: activeLineHeight,
-                  color: t.prayerBoxText,
-                  fontStyle: 'italic',
-                }}>
-                  {(day as any).prayer!.split('\n').filter(l => l.trim()).join('\n')}
+              {day.observation && (day as any).observation!.length > (maxChars.observation || 700) * 0.85 && (
+                <div>
+                  {sectionLabel('본문 관찰하기 (이어서)')}
+                  {bodyText((day as any).observation!, 11)}
                 </div>
-              </div>
-            )}
+              )}
+              {day.understanding && (day as any).understanding!.length > (maxChars.understanding || 500) * 0.85 && (
+                <div>
+                  {sectionLabel('말씀 이해하기 (이어서)')}
+                  {bodyText((day as any).understanding!, 11)}
+                </div>
+              )}
+              {day.reflection && (day as any).reflection!.length > (maxChars.reflection || 250) * 0.85 && (
+                <div>
+                  {sectionLabel('나를 비추어 보기 (이어서)')}
+                  {bodyText((day as any).reflection!, 11)}
+                </div>
+              )}
+              {day.application && (day as any).application!.length > (maxChars.application || 300) * 0.85 && (
+                <div>
+                  {sectionLabel('오늘의 적용 (이어서)')}
+                  {bodyText((day as any).application!, 11)}
+                </div>
+              )}
+              {day.prayer && (day as any).prayer!.length > (maxChars.prayer || 350) * 0.85 && (
+                <div>
+                  {sectionLabel('오늘의 기도 (이어서)')}
+                  <div style={{
+                    padding: `${3 * scale}px ${6 * scale}px`,
+                    background: t.prayerBoxBg,
+                    borderLeft: `${1.5 * scale}px solid ${t.accent}`,
+                    fontFamily: t.font,
+                    fontSize: `${10 * scale}px`,
+                    lineHeight: activeLineHeight,
+                    color: t.prayerBoxText,
+                    fontStyle: 'italic',
+                  }}>
+                    {(day as any).prayer!.split('\n').filter(l => l.trim()).join('\n')}
+                  </div>
+                </div>
+              )}
 
-            {pageNumber(pageCounter + 2, totalPages)}
+              {pageNumber(pageCounter + 2, totalPages)}
+            </div>
           </div>
-        </div>
         )}
       </div>
     )
   }
 
-  // ============= 표지 (가로/세로 자동 적응 + public/bg.jpg 커스텀 배경) =============
+  // ============= 표지 (여백 없는 100% Edge-to-Edge bg.jpg 풀배경 + 큰 글씨 + 가운데 정렬) =============
   const renderCover = () => (
     <div className="qt-page" style={{
       ...pageStyle,
@@ -1841,132 +1841,142 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      padding: 0,
+      margin: 0,
+      overflow: 'hidden',
     }}>
       <div style={{
-        ...pageContentStyle,
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
         display: 'flex',
-        flexDirection: isLandscape ? 'row' : 'column',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: `${mmToPx(15)}px`,
+        position: 'relative',
+        padding: `${mmToPx(16)}px`,
       }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: isLandscape ? 'flex-start' : 'center',
-        textAlign: isLandscape ? 'left' : 'center',
-        padding: `${24 * scale}px ${34 * scale}px`,
-        background: 'rgba(255, 255, 255, 0.88)',
-        backdropFilter: 'blur(8px)',
-        borderRadius: `${14 * scale}px`,
-        border: '1px solid rgba(255, 255, 255, 0.7)',
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
-        maxWidth: isLandscape ? '70%' : '88%',
-      }}>
-        {t.coverOrnament && (
-          <div style={{
-            color: t.accent,
-            fontSize: `${14 * scale}px`,
-            letterSpacing: `${8 * scale}px`,
-            marginBottom: `${14 * scale}px`,
-            opacity: 0.8,
-          }}>
-            {t.coverOrnament}
-          </div>
-        )}
-        {selectedInfo?.isRecommended && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: `${4 * scale}px`,
-            padding: `${3 * scale}px ${9 * scale}px`, marginBottom: `${12 * scale}px`,
-            background: t.accentLight,
-            border: `0.5px solid ${t.sectionLabelBorder}`,
-            fontFamily: t.fontHeading, fontSize: `${8 * scale}px`, fontWeight: 700,
-            color: t.accent, letterSpacing: `${2 * scale}px`, textTransform: 'uppercase',
-          }}>
-            <span style={{ fontSize: `${9 * scale}px` }}>✦</span>
-            AI 추천 본문
-          </div>
-        )}
         <div style={{
-          fontFamily: t.fontHeading,
-          fontSize: `${(parsedTitleSize > 24 ? 22 : parsedTitleSize) * scale}px`,
-          fontWeight: 800,
-          color: t.textColor,
-          letterSpacing: `${3 * scale}px`,
-          marginBottom: `${6 * scale}px`,
-          lineHeight: '1.25',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: `${32 * scale}px ${44 * scale}px`,
+          background: 'rgba(255, 255, 255, 0.90)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: `${16 * scale}px`,
+          border: '1.5px solid rgba(255, 255, 255, 0.8)',
+          boxShadow: '0 16px 48px rgba(0, 0, 0, 0.15)',
+          maxWidth: isLandscape ? '75%' : '90%',
+          width: 'auto',
         }}>
-          {coverMainTitle}
-        </div>
-        <div style={{
-          fontFamily: t.fontHeading,
-          fontSize: `${10 * scale}px`,
-          color: t.coverSubtitleColor,
-          letterSpacing: `${2.5 * scale}px`,
-          marginBottom: `${16 * scale}px`,
-        }}>
-          {form.seriesName || '말씀과 함께하는 큐티'}
-        </div>
-        <div style={{
-          width: `${56 * scale}px`,
-          height: `${1 * scale}px`,
-          background: t.coverAccentLine,
-          margin: isLandscape ? `0 0 ${10 * scale}px 0` : `${10 * scale}px auto`,
-        }} />
-        <div style={{
-          fontSize: `${12 * scale}px`,
-          color: t.textMuted,
-          lineHeight: '1.9',
-        }}>
-          <div style={{
-            fontFamily: t.fontHeading,
-            fontSize: `${24 * scale}px`,
-            fontWeight: 800,
-            color: t.accent,
-            marginBottom: `${6 * scale}px`,
-            letterSpacing: `${1 * scale}px`,
-          }}>
-            {detectedBook}
-          </div>
-          <div style={{
-            fontSize: `${12 * scale}px`,
-            color: t.textColor,
-            fontWeight: 600,
-          }}>
-            {isMonthly ? '월간 통합 큐티' : `제${form.weekNumber}주`}
-          </div>
-          {(displayStartPassage || displayEndPassage) && (
+          {t.coverOrnament && (
             <div style={{
-              fontSize: `${10 * scale}px`,
-              color: t.textMuted,
-              marginTop: `${4 * scale}px`,
-              fontFamily: t.font,
-              letterSpacing: `${0.5 * scale}px`,
+              color: t.accent,
+              fontSize: `${18 * scale}px`,
+              letterSpacing: `${10 * scale}px`,
+              marginBottom: `${14 * scale}px`,
+              opacity: 0.85,
             }}>
-              {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
+              {t.coverOrnament}
+            </div>
+          )}
+          {selectedInfo?.isRecommended && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: `${6 * scale}px`,
+              padding: `${4 * scale}px ${12 * scale}px`, marginBottom: `${14 * scale}px`,
+              background: t.accentLight,
+              border: `1px solid ${t.sectionLabelBorder}`,
+              borderRadius: `${4 * scale}px`,
+              fontFamily: t.fontHeading, fontSize: `${11 * scale}px`, fontWeight: 700,
+              color: t.accent, letterSpacing: `${2.5 * scale}px`, textTransform: 'uppercase',
+            }}>
+              <span style={{ fontSize: `${12 * scale}px` }}>✦</span>
+              AI 추천 본문
             </div>
           )}
           <div style={{
-            fontSize: `${9 * scale}px`,
-            color: t.textMuted,
-            marginTop: `${5 * scale}px`,
+            fontFamily: t.fontHeading,
+            fontSize: `${30 * scale}px`,
+            fontWeight: 900,
+            color: t.textColor,
+            letterSpacing: `${3.5 * scale}px`,
+            marginBottom: `${8 * scale}px`,
+            lineHeight: '1.25',
           }}>
-            {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} {isMonthly ? `· 총 ${parsedDays.length}일` : ''}
+            {coverMainTitle}
+          </div>
+          <div style={{
+            fontFamily: t.fontHeading,
+            fontSize: `${13 * scale}px`,
+            color: t.coverSubtitleColor,
+            letterSpacing: `${3 * scale}px`,
+            marginBottom: `${18 * scale}px`,
+            fontWeight: 600,
+          }}>
+            {form.seriesName || '말씀과 함께하는 큐티'}
+          </div>
+          <div style={{
+            width: `${56 * scale}px`,
+            height: `${1 * scale}px`,
+            background: t.coverAccentLine,
+            margin: isLandscape ? `0 0 ${10 * scale}px 0` : `${10 * scale}px auto`,
+          }} />
+          <div style={{
+            fontSize: `${12 * scale}px`,
+            color: t.textMuted,
+            lineHeight: '1.9',
+          }}>
+            <div style={{
+              fontFamily: t.fontHeading,
+              fontSize: `${24 * scale}px`,
+              fontWeight: 800,
+              color: t.accent,
+              marginBottom: `${6 * scale}px`,
+              letterSpacing: `${1 * scale}px`,
+            }}>
+              {detectedBook}
+            </div>
+            <div style={{
+              fontSize: `${12 * scale}px`,
+              color: t.textColor,
+              fontWeight: 600,
+            }}>
+              {isMonthly ? '월간 통합 큐티' : `제${form.weekNumber}주`}
+            </div>
+            {(displayStartPassage || displayEndPassage) && (
+              <div style={{
+                fontSize: `${10 * scale}px`,
+                color: t.textMuted,
+                marginTop: `${4 * scale}px`,
+                fontFamily: t.font,
+                letterSpacing: `${0.5 * scale}px`,
+              }}>
+                {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
+              </div>
+            )}
+            <div style={{
+              fontSize: `${9 * scale}px`,
+              color: t.textMuted,
+              marginTop: `${5 * scale}px`,
+            }}>
+              {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} {isMonthly ? `· 총 ${parsedDays.length}일` : ''}
+            </div>
           </div>
         </div>
-      </div>
-      <div style={{
-        position: 'absolute',
-        bottom: `${mmToPx(14)}px`,
-        fontSize: `${8.5 * scale}px`,
-        color: '#ffffff',
-        textShadow: '0 1px 4px rgba(0,0,0,0.7)',
-        letterSpacing: `${2 * scale}px`,
-        fontWeight: 600,
-      }}>
-        bunker.ai.kr · 목회의 모든 순간을 잇다
-      </div>
+        <div style={{
+          position: 'absolute',
+          bottom: `${mmToPx(14)}px`,
+          fontSize: `${8.5 * scale}px`,
+          color: '#ffffff',
+          textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+          letterSpacing: `${2 * scale}px`,
+          fontWeight: 600,
+        }}>
+          bunker.ai.kr · 목회의 모든 순간을 잇다
+        </div>
       </div>
     </div>
   )
