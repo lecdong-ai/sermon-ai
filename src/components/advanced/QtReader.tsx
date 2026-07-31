@@ -34,6 +34,7 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
+  const [viewMode, setViewMode] = useState<'cover' | 'day'>('cover')
   const [dayIndex, setDayIndex] = useState(0)
   const [templateId, setTemplateId] = useState(initialTemplateId || 'publication-2a')
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
@@ -297,137 +298,199 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     {k:'영어말씀',v:'englishVerse'},{k:'공동체',v:'community'},{k:'기도',v:'prayer'},
   ]
 
-return (
+  return (
     <div className="flex flex-col min-h-0 flex-1 h-full">
       {/* ===== Minimal Header ===== */}
       <header className="flex items-center justify-between px-5 py-2.5 border-b border-white/5 bg-[#060a17] shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[11px] font-bold transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-[11px] font-bold transition-all"
           >
             <Edit3 className="w-3.5 h-3.5" />
-            편집
+            양식 편집
           </button>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-1.5">
+
+          {/* ✦ 뷰어 네비게이션: 표지(COVER) + DAY 탭들 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
             <button
-              onClick={() => setDayIndex(Math.max(0, dayIndex - 1))}
-              disabled={dayIndex === 0}
+              onClick={() => setViewMode('cover')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                viewMode === 'cover'
+                  ? 'bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow-md shadow-amber-500/20'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>✦ 표지 COVER</span>
+            </button>
+            <div className="w-px h-3 bg-white/10" />
+            <button
+              onClick={() => {
+                setViewMode('day')
+                setDayIndex(Math.max(0, dayIndex - 1))
+              }}
+              disabled={viewMode === 'day' && dayIndex === 0}
               className="p-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="text-center min-w-[80px]">
-              <div className="text-[12px] font-bold text-slate-200 leading-tight">DAY {dayIndex + 1}</div>
-              <div className="text-[9px] text-slate-500 leading-tight">{weekdays[dayIndex] || ''}</div>
+            <div className="flex items-center gap-1">
+              {days.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setViewMode('day')
+                    setDayIndex(idx)
+                  }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${
+                    viewMode === 'day' && dayIndex === idx
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  DAY {idx + 1}
+                </button>
+              ))}
             </div>
             <button
-              onClick={() => setDayIndex(Math.min(days.length - 1, dayIndex + 1))}
-              disabled={dayIndex >= days.length - 1}
+              onClick={() => {
+                setViewMode('day')
+                setDayIndex(Math.min(days.length - 1, dayIndex + 1))
+              }}
+              disabled={viewMode === 'day' && dayIndex >= days.length - 1}
               className="p-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
-            disabled={dayPdfLoading === dayIndex || days.length === 0}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 text-[10px] font-bold transition-all disabled:opacity-30"
-            title="이 Day만 PDF 저장"
-          >
-            {dayPdfLoading === dayIndex
-              ? <Loader2 className="w-3 h-3 animate-spin" />
-              : <Download className="w-3 h-3" />}
-            일일 PDF
-          </button>
+          {viewMode === 'day' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
+              disabled={dayPdfLoading === dayIndex || days.length === 0}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 text-[10px] font-bold transition-all disabled:opacity-30"
+              title="이 Day만 PDF 저장"
+            >
+              {dayPdfLoading === dayIndex
+                ? <Loader2 className="w-3 h-3 animate-spin" />
+                : <Download className="w-3 h-3" />}
+              일일 PDF
+            </button>
+          )}
           <button
             onClick={handlePdfDownload}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all disabled:opacity-40 shadow-lg shadow-indigo-600/20"
           >
             {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            {pdfLoading ? 'PDF 생성 중...' : 'PDF 다운로드'}
+            {pdfLoading ? '전체 PDF 생성 중...' : '전체 PDF 다운로드'}
           </button>
         </div>
       </header>
 
       {/* ===== Main: Content + Sidebar ===== */}
       <div className="flex flex-1 min-h-0">
-        {/* Left: QT Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            {selectedInfo?.isRecommended && (
-              <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
-                <div className="flex items-start gap-3">
-                  <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-4.5 h-4.5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">AI 추천</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">오늘의 큐티</span>
-                    </div>
-                    <div className="text-[14px] font-bold text-slate-100 leading-snug">
-                      {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
-                    </div>
-                    {selectedInfo.coreMessage && (
-                      <div className="text-[12px] text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
-                    )}
-                    {selectedInfo.reason && (
-                      <details className="mt-2">
-                        <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 select-none">선정 이유 보기</summary>
-                        <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">{selectedInfo.reason}</p>
-                      </details>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentDay ? (
+        {/* Left: QT Content (Cover or Day Card) */}
+        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
+          {viewMode === 'cover' ? (
+            /* ★ 표지 (COVER) 실물 뷰어 렌더링 */
+            <div className="w-full flex justify-center py-2">
               <div
-                className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col"
+                className="rounded-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-300"
                 style={{
-                  background: activeTmpl.pageBg,
-                  color: activeTmpl.textColor,
-                  borderColor: activeTmpl.border,
                   width: '100%',
-                  maxWidth: sizeOption === 'A4Portrait' ? '540px' : sizeOption === 'A4Landscape' ? '760px' : sizeOption === 'B5' ? '460px' : sizeOption === 'A5' ? '380px' : sizeOption === 'Tablet (iPad 4:3)' ? '500px' : '520px',
+                  maxWidth: sizeOption.includes('Landscape') ? '920px' : '680px',
                 }}
               >
-                <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
-                  <QtDayCard
-                    day={currentDay}
-                    dayNumber={dayIndex + 1}
-                    dateLabel={weekdays[dayIndex] || ''}
-                    variant="pdf"
-                    template={activeTmpl}
-                    isBilingualSideBySide={isBilingualSideBySide}
-                    editMode={isEditing}
-                    edits={editedContent[dayIndex] || {}}
-                    onSectionEdit={(sectionKey, value) => handleSectionEdit(dayIndex, sectionKey, value)}
-                    hiddenSections={layoutSettings.hiddenSections}
-                  />
-                </div>
+                <QtPdfLayout
+                  form={form}
+                  result={{ fullManuscript: accumulatedManuscript }}
+                  sizeOption={sizeOption}
+                  templateId={activeTmpl.id}
+                  startPassage={startPassage}
+                  endPassage={endPassage}
+                  selectedInfo={selectedInfo}
+                  monthCalendarStrip={monthCalendarStrip}
+                  layoutSettings={layoutSettings}
+                />
               </div>
-            ) : (
-              <div
-                className="rounded-2xl p-8 border overflow-y-auto scrollbar-thin"
-                style={{
-                  background: activeTmpl.pageBg,
-                  color: activeTmpl.textColor,
-                  borderColor: activeTmpl.border,
-                }}
-              >
-                <div className="text-[12px] leading-relaxed whitespace-pre-wrap font-mono opacity-80">
-                  {accumulatedManuscript || '생성된 내용이 없습니다.'}
+            </div>
+          ) : (
+            /* ★ 일자별 큐티 카드 (DAY CARD) 렌더링 */
+            <div className="w-full max-w-4xl mx-auto space-y-6">
+              {selectedInfo?.isRecommended && (
+                <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <Sparkles className="w-4.5 h-4.5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">AI 추천</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">오늘의 큐티</span>
+                      </div>
+                      <div className="text-[14px] font-bold text-slate-100 leading-snug">
+                        {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
+                      </div>
+                      {selectedInfo.coreMessage && (
+                        <div className="text-[12px] text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
+                      )}
+                      {selectedInfo.reason && (
+                        <details className="mt-2">
+                          <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 select-none">선정 이유 보기</summary>
+                          <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">{selectedInfo.reason}</p>
+                        </details>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+
+              {currentDay ? (
+                <div
+                  className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_8px_32px_rgba(0,0,0,0.15)] transition-all duration-300 flex flex-col"
+                  style={{
+                    background: activeTmpl.pageBg,
+                    color: activeTmpl.textColor,
+                    borderColor: activeTmpl.border,
+                    width: '100%',
+                    maxWidth: sizeOption.includes('Landscape') ? '920px' : '680px',
+                  }}
+                >
+                  <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
+                    <QtDayCard
+                      day={currentDay}
+                      dayNumber={dayIndex + 1}
+                      dateLabel={weekdays[dayIndex] || ''}
+                      variant="pdf"
+                      template={activeTmpl}
+                      isBilingualSideBySide={isBilingualSideBySide}
+                      editMode={isEditing}
+                      edits={editedContent[dayIndex] || {}}
+                      onSectionEdit={(sectionKey, value) => handleSectionEdit(dayIndex, sectionKey, value)}
+                      hiddenSections={layoutSettings.hiddenSections}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="rounded-2xl p-8 border overflow-y-auto scrollbar-thin"
+                  style={{
+                    background: activeTmpl.pageBg,
+                    color: activeTmpl.textColor,
+                    borderColor: activeTmpl.border,
+                  }}
+                >
+                  <div className="text-[12px] leading-relaxed whitespace-pre-wrap font-mono opacity-80">
+                    {accumulatedManuscript || '생성된 내용이 없습니다.'}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Sidebar */}
