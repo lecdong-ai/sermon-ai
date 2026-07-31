@@ -1833,6 +1833,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }
 
   // ============= 표지 (여백 없는 100% Edge-to-Edge bg.jpg 풀배경 + 큰 글씨 + 가운데 정렬) =============
+  // ============= 표지 (여백 0mm 풀채움 + 대형 타이포그래피) =============
   const renderCover = () => (
     <div className="qt-page" style={{
       ...pageStyle,
@@ -1854,7 +1855,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         justifyContent: 'center',
         textAlign: 'center',
         position: 'relative',
-        padding: `${mmToPx(16)}px`,
+        padding: 0,
+        margin: 0,
       }}>
         <div style={{
           display: 'flex',
@@ -1862,22 +1864,22 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          padding: `${32 * scale}px ${44 * scale}px`,
-          background: 'rgba(255, 255, 255, 0.90)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: `${16 * scale}px`,
-          border: '1.5px solid rgba(255, 255, 255, 0.8)',
-          boxShadow: '0 16px 48px rgba(0, 0, 0, 0.15)',
-          maxWidth: isLandscape ? '75%' : '90%',
+          padding: `${36 * scale}px ${52 * scale}px`,
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: `${20 * scale}px`,
+          border: '1.5px solid rgba(255, 255, 255, 0.85)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.18)',
+          maxWidth: isLandscape ? '80%' : '92%',
           width: 'auto',
         }}>
           {t.coverOrnament && (
             <div style={{
               color: t.accent,
-              fontSize: `${18 * scale}px`,
-              letterSpacing: `${10 * scale}px`,
-              marginBottom: `${14 * scale}px`,
-              opacity: 0.85,
+              fontSize: `${20 * scale}px`,
+              letterSpacing: `${12 * scale}px`,
+              marginBottom: `${16 * scale}px`,
+              opacity: 0.9,
             }}>
               {t.coverOrnament}
             </div>
@@ -1885,81 +1887,90 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           {selectedInfo?.isRecommended && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: `${6 * scale}px`,
-              padding: `${4 * scale}px ${12 * scale}px`, marginBottom: `${14 * scale}px`,
+              padding: `${4 * scale}px ${14 * scale}px`, marginBottom: `${16 * scale}px`,
               background: t.accentLight,
               border: `1px solid ${t.sectionLabelBorder}`,
-              borderRadius: `${4 * scale}px`,
-              fontFamily: t.fontHeading, fontSize: `${11 * scale}px`, fontWeight: 700,
+              borderRadius: `${6 * scale}px`,
+              fontFamily: t.fontHeading, fontSize: `${12 * scale}px`, fontWeight: 800,
               color: t.accent, letterSpacing: `${2.5 * scale}px`, textTransform: 'uppercase',
             }}>
-              <span style={{ fontSize: `${12 * scale}px` }}>✦</span>
+              <span style={{ fontSize: `${13 * scale}px` }}>✦</span>
               AI 추천 본문
             </div>
           )}
           <div style={{
             fontFamily: t.fontHeading,
-            fontSize: `${30 * scale}px`,
+            fontSize: `${34 * scale}px`,
             fontWeight: 900,
             color: t.textColor,
-            letterSpacing: `${3.5 * scale}px`,
-            marginBottom: `${8 * scale}px`,
-            lineHeight: '1.25',
+            letterSpacing: `${4 * scale}px`,
+            marginBottom: `${10 * scale}px`,
+            lineHeight: '1.2',
           }}>
             {coverMainTitle}
           </div>
           <div style={{
             fontFamily: t.fontHeading,
-            fontSize: `${13 * scale}px`,
+            fontSize: `${14 * scale}px`,
             color: t.coverSubtitleColor,
             letterSpacing: `${3 * scale}px`,
-            marginBottom: `${18 * scale}px`,
+            marginBottom: `${20 * scale}px`,
             fontWeight: 600,
           }}>
             {form.seriesName || '말씀과 함께하는 큐티'}
           </div>
           <div style={{
-            width: `${56 * scale}px`,
-            height: `${1 * scale}px`,
+            width: `${80 * scale}px`,
+            height: `${2 * scale}px`,
             background: t.coverAccentLine,
-            margin: isLandscape ? `0 0 ${10 * scale}px 0` : `${10 * scale}px auto`,
+            margin: `${14 * scale}px auto`,
+            borderRadius: `${1 * scale}px`,
           }} />
           <div style={{
-            fontSize: `${12 * scale}px`,
-            color: t.textMuted,
-            lineHeight: '1.9',
+            fontSize: `${15 * scale}px`,
+            color: t.textColor,
+            lineHeight: '2.1',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}>
             <div style={{
               fontFamily: t.fontHeading,
-              fontSize: `${24 * scale}px`,
-              fontWeight: 800,
+              fontSize: `${38 * scale}px`,
+              fontWeight: 900,
               color: t.accent,
-              marginBottom: `${6 * scale}px`,
-              letterSpacing: `${1 * scale}px`,
+              marginTop: `${8 * scale}px`,
+              marginBottom: `${8 * scale}px`,
+              letterSpacing: `${2 * scale}px`,
             }}>
               {detectedBook}
             </div>
             <div style={{
-              fontSize: `${12 * scale}px`,
+              fontSize: `${16 * scale}px`,
               color: t.textColor,
-              fontWeight: 600,
+              fontWeight: 700,
+              marginBottom: `${6 * scale}px`,
             }}>
               {isMonthly ? '월간 통합 큐티' : `제${form.weekNumber}주`}
             </div>
             {(displayStartPassage || displayEndPassage) && (
               <div style={{
-                fontSize: `${10 * scale}px`,
+                fontSize: `${14 * scale}px`,
                 color: t.textMuted,
-                marginTop: `${4 * scale}px`,
+                marginTop: `${6 * scale}px`,
                 fontFamily: t.font,
                 letterSpacing: `${0.5 * scale}px`,
+                fontWeight: 600,
               }}>
                 {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
               </div>
             )}
             <div style={{
-              fontSize: `${9 * scale}px`,
+              fontSize: `${13 * scale}px`,
               color: t.textMuted,
-              marginTop: `${5 * scale}px`,
+              marginTop: `${8 * scale}px`,
+              fontWeight: 600,
             }}>
               {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} {isMonthly ? `· 총 ${parsedDays.length}일` : ''}
             </div>
@@ -1967,12 +1978,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
         <div style={{
           position: 'absolute',
-          bottom: `${mmToPx(14)}px`,
-          fontSize: `${8.5 * scale}px`,
+          bottom: `${mmToPx(12)}px`,
+          fontSize: `${11 * scale}px`,
           color: '#ffffff',
-          textShadow: '0 1px 4px rgba(0,0,0,0.7)',
-          letterSpacing: `${2 * scale}px`,
-          fontWeight: 600,
+          textShadow: '0 2px 6px rgba(0,0,0,0.85)',
+          letterSpacing: `${2.5 * scale}px`,
+          fontWeight: 700,
         }}>
           bunker.ai.kr · 목회의 모든 순간을 잇다
         </div>
