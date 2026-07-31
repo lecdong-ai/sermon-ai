@@ -564,14 +564,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     <div style={{
       display: 'flex', alignItems: 'baseline', gap: `${4 * scale * marginScale}px`,
       marginTop: `${3 * scale * marginScale}px`, marginBottom: `${1.5 * scale * marginScale}px`,
-      borderBottom: `0.5px solid ${t.sectionLabelBorder}`,
+      borderBottom: `0.5px solid ${t.sectionLabelBorder || t.accent}`,
       paddingBottom: `${1.5 * scale * marginScale}px`,
     }}>
       <span style={{
         fontFamily: activeFontFamily,
-        fontSize: `${9 * scale * fontScale}px`,
+        fontSize: `${9.5 * scale * fontScale}px`,
         fontWeight: 800,
-        color: t.sectionLabelBorder,
+        color: t.accent,
         letterSpacing: `${2.5 * scale}px`,
         textTransform: 'uppercase',
       }}>
