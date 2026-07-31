@@ -113,14 +113,15 @@ export async function generateQtPdf(
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
       console.log(`[QtPdfGen] page ${i}: ${canvas.width}x${canvas.height}, dataUrl=${(imgData.length / 1024).toFixed(0)}KB`)
 
-      // html-to-image 가 CSS padding 을 캡처하지 못하므로,
-      // PDF addImage 좌표로 여백 구현 (상단 5mm, 좌/우/아래 14mm)
-      const marginSide = 14
-      const marginTop = 8
-      const drawW = widthMm - marginSide * 2
-      const drawH = heightMm - marginTop - marginSide
-      const drawX = marginSide
-      const drawY = marginTop
+      // 표지(i === 0)는 흰 여백 없이 PDF 종이 100% 풀채움 (Edge-to-Edge)
+      // 내지(i > 0)는 본문 여백 적용
+      const isCoverPage = (i === 0 && dayIndex === undefined)
+      const marginSide = isCoverPage ? 0 : 14
+      const marginTop = isCoverPage ? 0 : 8
+      const drawW = isCoverPage ? widthMm : widthMm - marginSide * 2
+      const drawH = isCoverPage ? heightMm : heightMm - marginTop - marginSide
+      const drawX = isCoverPage ? 0 : marginSide
+      const drawY = isCoverPage ? 0 : marginTop
 
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
