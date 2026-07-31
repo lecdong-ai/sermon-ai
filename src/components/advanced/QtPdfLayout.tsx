@@ -359,22 +359,18 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   // 1일 차 본문 시작 구절
   const displayStartPassage = useMemo(() => {
-    if (startPassage) return startPassage
     if (textScanned.startPassage) return textScanned.startPassage
-    if (parsedDays[0]?.passage) {
-      return parsedDays[0].passage.trim()
-    }
+    if (parsedDays[0]?.passage) return parsedDays[0].passage.trim()
+    if (startPassage && !startPassage.includes('창세기')) return startPassage
     return ''
   }, [startPassage, textScanned.startPassage, parsedDays])
 
   // 말일 차 본문 끝 구절
   const displayEndPassage = useMemo(() => {
-    if (endPassage) return endPassage
     if (textScanned.endPassage) return textScanned.endPassage
     const lastDay = parsedDays[parsedDays.length - 1]
-    if (lastDay?.passage) {
-      return lastDay.passage.trim()
-    }
+    if (lastDay?.passage) return lastDay.passage.trim()
+    if (endPassage && !endPassage.includes('창세기')) return endPassage
     return ''
   }, [endPassage, textScanned.endPassage, parsedDays])
 

@@ -309,8 +309,8 @@ export default function QtGenerator() {
   }, [normalizedStartDate, form.sizeOption])
 
   // 1단계 상태
-  const [startPassage, setStartPassage] = useState('창세기 1:1')
-  const [endPassage, setEndPassage] = useState('창세기 2:25')
+  const [startPassage, setStartPassage] = useState('')
+  const [endPassage, setEndPassage] = useState('')
   const [activeStartChapter, setActiveStartChapter] = useState<number | null>(1)
   const [activeEndChapter, setActiveEndChapter] = useState<number | null>(2)
   const [startVerse, setStartVerse] = useState<number | null>(1)
