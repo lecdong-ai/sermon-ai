@@ -4,6 +4,7 @@ import { useState, useMemo, useRef } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Download,
   Edit3,
   Loader2,
@@ -57,7 +58,8 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
-  const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false) // 전체화면 팝업 모달!
+  const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false) // 미니 달력 피커 모달!
   const [zoomScale, setZoomScale] = useState(1.0)
   const [viewMode, setViewMode] = useState<'cover' | 'day'>('cover')
   const [dayIndex, setDayIndex] = useState(0)
@@ -337,66 +339,133 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           </button>
         </div>
 
-        {/* Center: Cover Tab + Sunday-Excluded Calendar Date Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none max-w-full justify-center flex-1">
+        {/* Center: Cover Tab + Dropdown Mini Calendar Picker (No Scroll) */}
+        <div className="flex items-center gap-2.5 justify-center flex-1 relative">
           <button
-            onClick={() => setViewMode('cover')}
+            onClick={() => {
+              setViewMode('cover')
+              setIsDatePickerOpen(false)
+            }}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
               viewMode === 'cover'
                 ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
                 : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             표지 미리보기
           </button>
 
           <div className="w-px h-4 bg-white/10 mx-0.5 shrink-0" />
 
-          <button
-            onClick={() => {
-              setViewMode('day')
-              setDayIndex(Math.max(0, dayIndex - 1))
-            }}
-            disabled={viewMode === 'day' && dayIndex === 0}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+          {/* 📅 미니 달력 드롭다운 피커 그룹 */}
+          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-2xl border border-white/10 shadow-inner">
+            <button
+              onClick={() => {
+                setViewMode('day')
+                setDayIndex(Math.max(0, dayIndex - 1))
+              }}
+              disabled={viewMode === 'day' && dayIndex === 0}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0"
+              title="이전 날짜 큐티"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
 
-          {/* 일요일 제외한 실제 날짜/요일 달력 탭 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-            {days.map((_, idx) => {
-              const dateLabel = weekdays[idx] || `${idx + 1}일`
-              return (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setViewMode('day')
-                    setDayIndex(idx)
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                    viewMode === 'day' && dayIndex === idx
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/5'
-                  }`}
-                >
-                  {dateLabel}
-                </button>
-              )
-            })}
+            {/* 날짜 메인 드롭다운 버튼 */}
+            <button
+              onClick={() => {
+                if (viewMode !== 'day') setViewMode('day')
+                setIsDatePickerOpen(!isDatePickerOpen)
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1 rounded-xl text-xs font-bold transition-all border shadow-sm ${
+                viewMode === 'day'
+                  ? 'bg-indigo-600/90 text-white border-indigo-400/50 shadow-indigo-600/30'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
+              }`}
+            >
+              <CalendarIcon className="w-3.5 h-3.5 text-indigo-300" />
+              <span>{weekdays[dayIndex] || `${dayIndex + 1}일차`}</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/15 text-indigo-100 font-mono">
+                {dayIndex + 1}/{days.length}일
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isDatePickerOpen ? 'rotate-180 text-amber-400' : 'text-slate-400'}`} />
+            </button>
+
+            <button
+              onClick={() => {
+                setViewMode('day')
+                setDayIndex(Math.min(days.length - 1, dayIndex + 1))
+              }}
+              disabled={viewMode === 'day' && dayIndex >= days.length - 1}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0"
+              title="다음 날짜 큐티"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          <button
-            onClick={() => {
-              setViewMode('day')
-              setDayIndex(Math.min(days.length - 1, dayIndex + 1))
-            }}
-            disabled={viewMode === 'day' && dayIndex >= days.length - 1}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 border border-white/5 shrink-0"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {/* ★ ===== [미니 달력 팝업 드롭다운 모달] ===== */}
+          {isDatePickerOpen && (
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-[#080d22]/98 border border-indigo-400/40 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] p-4 w-[340px] backdrop-blur-2xl animate-in zoom-in-95 duration-150 text-left">
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-white/10">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-200">
+                  <CalendarIcon className="w-4 h-4 text-indigo-400" />
+                  <span>큐티 날짜 콕 집어 선택 ({days.length}일)</span>
+                </div>
+                <button
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 6일 (일요일 제외) 달력 그리드 카더 */}
+              <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+                {days.map((_, idx) => {
+                  const label = weekdays[idx] || `${idx + 1}일차`
+                  const isSelected = viewMode === 'day' && dayIndex === idx
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setDayIndex(idx)
+                        setViewMode('day')
+                        setIsDatePickerOpen(false)
+                      }}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white font-bold border-indigo-400 ring-2 ring-indigo-400/30 shadow-md'
+                          : 'bg-white/5 hover:bg-white/12 text-slate-300 border-white/10'
+                      }`}
+                    >
+                      <span className="truncate">{label}</span>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.3 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-900/60 text-slate-400'}`}>
+                        {idx + 1}일
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* 오늘 날짜 바로가기 버튼 */}
+              <div className="pt-3 mt-3 border-t border-white/10 flex justify-between items-center">
+                <button
+                  onClick={() => {
+                    setDayIndex(0)
+                    setViewMode('day')
+                    setIsDatePickerOpen(false)
+                  }}
+                  className="text-[11px] text-indigo-300 hover:text-indigo-100 font-semibold flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  첫째 날 큐티로 이동
+                </button>
+                <span className="text-[10px] text-slate-500 font-mono">주말(일요일) 제외</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Fullscreen PDF Inspector & Download Buttons */}
