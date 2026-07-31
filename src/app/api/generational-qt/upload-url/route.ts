@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getGenerationPathKey, toAsciiSafeName } from '@/lib/data/generational-qt'
 
 export const maxDuration = 60
 
@@ -12,18 +13,19 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedName = (fileName as string).normalize('NFC')
-    const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
+    // ★ Storage 경로는 ASCII-only 사용 (한글 경로 → Signed URL 서명 불일치 InvalidSignature 방지)
+    const safeBaseName = toAsciiSafeName(normalizedName)
     const timeStamp = Date.now()
-    const filePath = `generational-qt/${encodeURIComponent(generation || 'common')}/${timeStamp}_${safeBaseName}`
+    const filePath = `generational-qt/${getGenerationPathKey(generation || 'common')}/${timeStamp}_${safeBaseName}`
 
     const BUCKET_NAME = 'qt-files'
 
-    // 1. Storage 버킷 존재 확인 및 자동 생성
+    // 1. Storage 버킷 존재 확인 및 자동 생성 (Service Role 권한)
     try {
       const { data: buckets } = await supabaseAdmin.storage.listBuckets()
       const bucketNames = buckets?.map(b => b.name) || []
       if (!bucketNames.includes(BUCKET_NAME)) {
-        await supabaseAdmin.storage.createBucket(BUCKET_NAME, { public: true }).catch(() => {})
+        await supabaseAdmin.storage.createBucket(BUCKET_NAME, { public: true, fileSizeLimit: 104857600 })
       }
     } catch (e) {
       console.warn('Bucket list/create warning:', e)

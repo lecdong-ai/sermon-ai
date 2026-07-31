@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getGenerationPathKey, toAsciiSafeName } from '@/lib/data/generational-qt'
 
 export const maxDuration = 60
 
@@ -15,9 +16,10 @@ export async function POST(request: NextRequest) {
 
     // 한글 NFD -> NFC 정규화
     const normalizedName = file.name.normalize('NFC')
-    const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
+    // ★ Storage 경로는 ASCII-only 사용 (한글 경로 → Signed URL 서명 불일치 방지)
+    const safeBaseName = toAsciiSafeName(normalizedName)
     const timeStamp = Date.now()
-    const filePath = `generational-qt/${encodeURIComponent(generation)}/${timeStamp}_${safeBaseName}`
+    const filePath = `generational-qt/${getGenerationPathKey(generation)}/${timeStamp}_${safeBaseName}`
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
@@ -65,16 +67,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Storage 버킷 미설정(Bucket not found) 등의 상황에서 100% 무결점 보장을 위한 Fallback (Data URL)
-    const base64 = buffer.toString('base64')
-    const dataUrl = `data:${file.type || 'application/pdf'};base64,${base64}`
-
-    return NextResponse.json({
-      name: normalizedName,
-      url: dataUrl,
-      type: file.type || 'application/pdf',
-      size: file.size,
-    })
+    // 3. Storage 업로드 실패 — Data URL fallback은 DB JSONB 컬럼에 저장될 경우
+    //    대용량 base64로 인해 PostgreSQL statement timeout 유발하므로 사용하지 않음
+    return NextResponse.json(
+      { error: `파일 "${normalizedName}" Storage 업로드에 실패했습니다. Supabase Storage(qt-files 버킷) 설정을 확인해 주세요.` },
+      { status: 500 }
+    )
   } catch (err: any) {
     console.error('Generational QT upload route error:', err)
     return NextResponse.json(

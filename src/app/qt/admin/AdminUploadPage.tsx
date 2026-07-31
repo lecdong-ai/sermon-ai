@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Loader2, ArrowLeft, FileText, ExternalLink, AlertCircle, BookOpen, FileJson } from 'lucide-react'
 import { FileDropzone } from '@/components/qt/FileDropzone'
-import { getGenerations, getGenerationLabel, formatDate, formatFileSize, type Generation, type GenerationalQtItem, type GenerationalQtFile } from '@/lib/data/generational-qt'
+import { getGenerations, getGenerationLabel, getGenerationPathKey, toAsciiSafeName, formatDate, formatFileSize, type Generation, type GenerationalQtItem, type GenerationalQtFile } from '@/lib/data/generational-qt'
 import { cn } from '@/lib/utils/cn'
 import AdminQtArchive from '@/components/admin/AdminQtArchive'
 import AdminQtJsonArchive from '@/components/admin/AdminQtJsonArchive'
@@ -64,7 +64,7 @@ export default function AdminUploadPage() {
         const normalizedName = file.name.normalize('NFC')
         let fileUrl = ''
 
-        // 1단계: Signed Upload URL 토큰 요청
+        // 1단계: Signed Upload URL 토큰 기반 직통 업로드 (최우선 — 서버/대역폭 안 탐, 대용량 가능)
         try {
           const signRes = await fetch('/api/generational-qt/upload-url', {
             method: 'POST',
@@ -85,21 +85,78 @@ export default function AdminUploadPage() {
 
               if (!signedError && signedResult) {
                 fileUrl = publicUrl
+              } else {
+                console.warn('Signed URL upload failed:', signedError)
               }
             }
+          } else {
+            const errText = await signRes.text().catch(() => 'unknown error')
+            console.warn('Signed URL API returned non-ok:', signRes.status, errText)
           }
         } catch (e) {
           console.warn('Signed Upload URL pipeline failed:', e)
         }
 
-        // 2단계: 다중 스토리지 버킷 직통 탐색 업로드 (qt-files, public, sermons, files 등)
-        if (!fileUrl) {
-          const possibleBuckets = ['qt-files', 'public', 'sermons', 'files', 'documents']
-          const safeBaseName = normalizedName.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
-          const timeStamp = Date.now()
-          const filePath = `generational-qt/${encodeURIComponent(formGen)}/${timeStamp}_${safeBaseName}`
+        // 2단계: 서버사이드 API route 업로드 (supabaseAdmin, service role 우회)
+        // ※ 3MB 초과 파일은 서버 메모리/DB 부하 우려로 제외 (Data URL fallback 금지)
+        if (!fileUrl && file.size <= 3 * 1024 * 1024) {
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('generation', formGen)
 
-          for (const bName of possibleBuckets) {
+            const apiRes = await fetch('/api/generational-qt/upload', {
+              method: 'POST',
+              body: formData,
+            })
+
+            if (apiRes.ok) {
+              const result = await apiRes.json()
+              if (result.url) {
+                fileUrl = result.url
+              }
+            } else {
+              const errText = await apiRes.text().catch(() => '')
+              console.warn('Server-side upload API failed:', apiRes.status, errText)
+            }
+          } catch (e) {
+            console.warn('Server-side upload API exception:', e)
+          }
+        }
+
+        // 3단계: Supabase Storage Direct Upload (qt-files 버킷 — RLS가 허용할 경우만)
+        if (!fileUrl) {
+          try {
+            const safeBaseName = toAsciiSafeName(normalizedName)
+            const timeStamp = Date.now()
+            const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
+
+            const { data: uploadData, error: storageError } = await supabase.storage
+              .from('qt-files')
+              .upload(filePath, file, {
+                contentType: file.type || 'application/pdf',
+                upsert: true,
+              })
+
+            if (!storageError && uploadData) {
+              const { data: urlData } = supabase.storage.from('qt-files').getPublicUrl(uploadData.path)
+              fileUrl = urlData.publicUrl
+            } else if (storageError) {
+              console.warn('Direct qt-files upload warning:', storageError)
+            }
+          } catch (e) {
+            console.warn('Direct storage upload exception:', e)
+          }
+        }
+
+        // 4단계: 기타 공개 버킷 탐색 (public, sermons, files 등)
+        if (!fileUrl) {
+          const fallbackBuckets = ['public', 'sermons', 'files', 'documents']
+          const safeBaseName = toAsciiSafeName(normalizedName)
+          const timeStamp = Date.now()
+          const filePath = `generational-qt/${getGenerationPathKey(formGen)}/${timeStamp}_${safeBaseName}`
+
+          for (const bName of fallbackBuckets) {
             if (fileUrl) break
             try {
               const { data: uploadData, error: storageError } = await supabase.storage
@@ -114,14 +171,22 @@ export default function AdminUploadPage() {
                 fileUrl = urlData.publicUrl
               }
             } catch (e) {
-              // try next bucket
+              // try next
             }
           }
         }
 
-        // 3단계 Fallback: Base64 Data URL (최후 소형 보장용)
-        if (!fileUrl) {
+        // 5단계: 20MB 이하 파일은 Data URL로 인라인 fallback
+        if (!fileUrl && file.size <= 20 * 1024 * 1024) {
           fileUrl = await fileToDataUrl(file)
+        }
+
+        // 6단계: 모든 업로드 수단 실패
+        if (!fileUrl) {
+          throw new Error(
+            `파일("${file.name}", ${(file.size / 1024 / 1024).toFixed(1)}MB) 업로드에 실패했습니다. ` +
+            `Supabase Storage(qt-files 버킷)에 접근할 수 없습니다. 관리자에게 문의하거나 잠시 후 다시 시도해 주세요.`
+          )
         }
 
         uploadedFiles.push({
@@ -132,61 +197,29 @@ export default function AdminUploadPage() {
         })
       }
 
-      // 4단계: DB Record 생성 (Vercel 4.5MB Payload limit 우회를 위해 Supabase Direct Insert 1순위 실행)
-      let saved = false
-      let dbErrorMsg = ''
-      try {
-        const { data: dbData, error: directDbError } = await supabase
-          .from('generational_qt')
-          .insert({
-            generation: formGen,
-            title: formTitle,
-            description: formDesc || '',
-            bible_passage: formPassage || '',
-            week_label: formWeek || '',
-            files: uploadedFiles,
-          })
-          .select()
+      // 7단계: DB Record 생성 (Server API via supabaseAdmin)
+      const res = await fetch('/api/generational-qt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          generation: formGen,
+          title: formTitle,
+          description: formDesc,
+          bible_passage: formPassage,
+          week_label: formWeek,
+          files: uploadedFiles,
+        }),
+      })
 
-        if (!directDbError && dbData && dbData.length > 0) {
-          saved = true
-        } else if (directDbError) {
-          dbErrorMsg = directDbError.message
-          console.warn('Direct DB insert failed:', directDbError)
+      if (!res.ok) {
+        let errorMsg = ''
+        try {
+          const errData = await res.json()
+          errorMsg = typeof errData === 'string' ? errData : (errData?.error || errData?.message || JSON.stringify(errData))
+        } catch {
+          errorMsg = await res.text().catch(() => '')
         }
-      } catch (e: any) {
-        console.warn('Direct DB insert exception:', e)
-        dbErrorMsg = e.message
-      }
-
-      // 5단계 2차 Fallback: Server API route
-      if (!saved) {
-        const res = await fetch('/api/generational-qt', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            generation: formGen,
-            title: formTitle,
-            description: formDesc,
-            bible_passage: formPassage,
-            week_label: formWeek,
-            files: uploadedFiles,
-          }),
-        })
-
-        if (!res.ok) {
-          let errorMsg = ''
-          try {
-            const errData = await res.json()
-            errorMsg = typeof errData === 'string' ? errData : (errData?.error || errData?.message || JSON.stringify(errData))
-          } catch {
-            errorMsg = await res.text().catch(() => '')
-          }
-          if (res.status === 413) {
-            throw new Error(`파일 용량이 커서 저장소 업로드가 필요합니다. (Supabase Direct DB: ${dbErrorMsg || '권한 제한'})`)
-          }
-          throw new Error(errorMsg || `서버 오류 (${res.status})로 저장이 완료되지 않았습니다.`)
-        }
+        throw new Error(errorMsg || `서버 오류 (${res.status})로 저장이 완료되지 않았습니다.`)
       }
 
       // Reset form
