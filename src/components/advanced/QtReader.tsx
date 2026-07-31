@@ -523,32 +523,76 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
         {/* Right: Modern Sidebar Controls */}
         <aside className="w-[300px] shrink-0 border-l border-white/10 bg-[#080d1e]/95 overflow-y-auto p-4 flex flex-col gap-5 shadow-2xl backdrop-blur-md">
-          {/* 1. 디자인 템플릿 */}
+          {/* 1. 디자인 템플릿 쇼룸 */}
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-              템플릿 테마
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+                템플릿 테마 ({QT_TEMPLATES.length})
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium">클릭 시 즉시 반영</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {QT_TEMPLATES.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setTemplateId(t.id)}
-                  className={`h-9 rounded-xl border transition-all relative overflow-hidden flex items-center justify-center ${
-                    templateId === t.id
-                      ? 'border-indigo-400 ring-2 ring-indigo-400/40 scale-105 shadow-md'
-                      : 'border-white/10 hover:border-white/30 opacity-80 hover:opacity-100'
-                  }`}
-                  style={{ background: t.pageBg }}
-                  title={t.name}
-                >
-                  {templateId === t.id && (
-                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] shadow">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              ))}
+
+            {/* 현재 선택된 테마의 실시간 특징 브리핑 바 */}
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-400/25 mb-3 shadow-inner">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-indigo-200 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+                  {tmpl.name}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  {tmpl.nameEn}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">{tmpl.description}</p>
+            </div>
+
+            {/* 템플릿 테마 카드 리스트 (이름 + 설명 + 실물 색상 칩) */}
+            <div className="grid grid-cols-1 gap-2 max-h-[260px] overflow-y-auto pr-1 scrollbar-thin">
+              {QT_TEMPLATES.map(t => {
+                const isSelected = templateId === t.id
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTemplateId(t.id)}
+                    className={`flex items-start justify-between p-2.5 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? 'bg-indigo-600/20 border-indigo-400 ring-1 ring-indigo-400/40 shadow-md scale-[1.01]'
+                        : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-xs font-bold ${isSelected ? 'text-indigo-200' : 'text-slate-200'}`}>
+                          {t.name}
+                        </span>
+                        {isSelected && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-500 text-white">
+                            적용중
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate leading-tight">
+                        {t.description}
+                      </div>
+                    </div>
+
+                    {/* 실물 색상 듀얼 톤 프리뷰 칩 */}
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5 p-1 rounded-lg bg-slate-950/60 border border-white/10">
+                      <div
+                        className="w-3.5 h-5 rounded-sm border border-black/20 shadow-inner"
+                        style={{ background: t.pageBg }}
+                        title={`종이 배경: ${t.pageBg}`}
+                      />
+                      <div
+                        className="w-3.5 h-5 rounded-sm border border-black/20"
+                        style={{ background: t.accent }}
+                        title={`포인트 색상: ${t.accent}`}
+                      />
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
