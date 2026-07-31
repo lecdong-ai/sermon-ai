@@ -166,16 +166,20 @@ export function extractAllBibleVersesFromText(text: string): { book: string | nu
   const startPassage = first.cleanFull
   const endPassage = last.cleanFull
 
-  // 시작 구절과 끝 구절 연결 범위 텍스트 생성 (예: 3:1 ~ 4:20 또는 요한복음 3:1-15 ~ 4:1-20)
+  // 시작 구절과 끝 구절 연결 범위 텍스트 생성 (끝나는 절 20절까지 100% 명확 기록)
   let passageRangeText = ''
+  const firstStartV = first.verseStart
+  const lastEndV = last.verseEnd || last.verseStart
+
   if (first === last) {
     passageRangeText = first.cleanFull
   } else if (first.chapter === last.chapter) {
-    const endV = last.verseEnd || last.verseStart
-    passageRangeText = `${dominantBook} ${first.chapter}:${first.verseStart}~${endV}`
+    passageRangeText = `${dominantBook} ${first.chapter}:${firstStartV}~${lastEndV}`
   } else {
-    const endV = last.verseEnd ? `-${last.verseEnd}` : ''
-    passageRangeText = `${dominantBook} ${first.chapter}:${first.verseStart} ~ ${last.chapter}:${last.verseStart}${endV}`
+    // 3장 1절 ~ 4장 20절 포맷팅
+    const firstPart = `${first.chapter}:${firstStartV}`
+    const lastPart = `${last.chapter}:${lastEndV}`
+    passageRangeText = `${dominantBook} ${firstPart} ~ ${lastPart}`
   }
 
   return {
