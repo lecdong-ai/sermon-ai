@@ -110,6 +110,24 @@ export function parseBookName(text?: string): string | null {
   return null
 }
 
+// ===== 개별 본문 구절에서 성경권, 장, 시작절, 끝절(20절 등)을 100% 정확히 파싱하는 도우미 =====
+export function parseSingleVerseRange(passageText?: string): { book: string | null; chapter: number; verseStart: number; verseEnd: number; cleanText: string } | null {
+  if (!passageText) return null
+  const regex = /(?:([가-힣1-3A-Za-z]+(?:\s*[가-힣]+)?)\s*)?(\d+)\s*[:장]\s*(\d+)(?:\s*[~-]\s*(\d+)\s*절?)?/
+  const m = passageText.match(regex)
+  if (m) {
+    const rawBook = m[1] ? m[1].trim() : ''
+    const book = rawBook ? parseBookName(rawBook) : null
+    const chapter = parseInt(m[2], 10)
+    const verseStart = parseInt(m[3], 10)
+    const verseEnd = m[4] ? parseInt(m[4], 10) : verseStart
+    const verseOnly = verseStart === verseEnd ? `${chapter}:${verseStart}` : `${chapter}:${verseStart}-${verseEnd}`
+    const cleanText = book ? `${book} ${verseOnly}` : verseOnly
+    return { book, chapter, verseStart, verseEnd, cleanText }
+  }
+  return null
+}
+
 // ===== 원고 전체 텍스트에서 성경권 및 1일 차 시작 ~ 말일 차 끝 구절을 100% 영문 제거 및 한글 표준화하여 정밀 도출하는 스캐너 =====
 export function extractAllBibleVersesFromText(text: string): { book: string | null; startPassage: string; endPassage: string; passageRangeText: string } {
   if (!text) return { book: null, startPassage: '', endPassage: '', passageRangeText: '' }
@@ -176,7 +194,6 @@ export function extractAllBibleVersesFromText(text: string): { book: string | nu
   } else if (first.chapter === last.chapter) {
     passageRangeText = `${dominantBook} ${first.chapter}:${firstStartV}~${lastEndV}`
   } else {
-    // 3장 1절 ~ 4장 20절 포맷팅
     const firstPart = `${first.chapter}:${firstStartV}`
     const lastPart = `${last.chapter}:${lastEndV}`
     passageRangeText = `${dominantBook} ${firstPart} ~ ${lastPart}`
@@ -405,15 +422,34 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return ''
   }, [endPassage, textScanned.endPassage, parsedDays])
 
-  // 표지 본문 구절 범위 최종 표준화 텍스트 (John 등 영문 100% 제거 및 한글 정제)
+  // 표지 본문 구절 범위 최종 표준화 텍스트 (1일 차 ~ 6일 차 본문 구절 20절 100% 명확 도출)
   const coverPassageText = useMemo(() => {
+    // 1순위: parsedDays 의 첫 일차(0일 차) 구절과 마지막 일차(parsedDays.length - 1) 구절에서 직접 파싱!
+    const firstParsed = parsedDays.length > 0 ? parseSingleVerseRange(parsedDays[0]?.passage) : null
+    const lastParsed = parsedDays.length > 0 ? parseSingleVerseRange(parsedDays[parsedDays.length - 1]?.passage) : null
+
+    const book = detectedBook || firstParsed?.book || lastParsed?.book || textScanned.book || '성경'
+
+    if (firstParsed && lastParsed) {
+      const startChapter = firstParsed.chapter
+      const startVerse = firstParsed.verseStart
+      const endChapter = lastParsed.chapter
+      const endVerse = lastParsed.verseEnd || lastParsed.verseStart
+
+      if (startChapter === endChapter) {
+        return `${book} ${startChapter}:${startVerse}~${endVerse}`
+      } else {
+        return `${book} ${startChapter}:${startVerse} ~ ${endChapter}:${endVerse}`
+      }
+    }
+
     if (textScanned.passageRangeText) return textScanned.passageRangeText
     if (displayStartPassage && displayEndPassage) {
       if (displayStartPassage === displayEndPassage) return displayStartPassage
       return `${displayStartPassage} ~ ${displayEndPassage}`
     }
     return displayStartPassage || displayEndPassage || ''
-  }, [textScanned.passageRangeText, displayStartPassage, displayEndPassage])
+  }, [parsedDays, detectedBook, textScanned.passageRangeText, displayStartPassage, displayEndPassage])
 
   // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
   const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
