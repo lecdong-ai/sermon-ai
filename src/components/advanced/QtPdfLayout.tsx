@@ -164,6 +164,56 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return []
   }, [form.startDate, parsedDays.length, monthCalendarStrip])
 
+  // 월간 vs 주간 구분 및 성경책 자동 감지 헬퍼
+  const isMonthly = !!monthCalendarStrip || parsedDays.length > 7
+
+  const monthName = useMemo(() => {
+    if (monthCalendarStrip?.month) {
+      const m = monthCalendarStrip.month.match(/(\d+)월/)
+      if (m) return `${m[1]}월`
+    }
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length >= 2) return `${parseInt(parts[1], 10)}월`
+    }
+    return `${new Date().getMonth() + 1}월`
+  }, [monthCalendarStrip, form.startDate])
+
+  const detectedBook = useMemo(() => {
+    for (const day of parsedDays) {
+      if (day.passage) {
+        const match = day.passage.match(/^([가-힣1-3]+(?:\s*[가-힣]+)?)\s*\d+/)
+        if (match) return match[1].trim()
+      }
+    }
+    return form.bibleBook || '성경'
+  }, [parsedDays, form.bibleBook])
+
+  const coverMainTitle = useMemo(() => {
+    if (selectedInfo?.isRecommended) return '오늘의 큐티'
+    if (isMonthly) return `${monthName} Bunker 목양 월간 Q.T`
+    return 'Bunker 목양 주간 Q.T'
+  }, [selectedInfo, isMonthly, monthName])
+
+  const displayStartPassage = useMemo(() => {
+    if (startPassage) return startPassage
+    if (parsedDays[0]?.passage) {
+      const verses = parseBibleVerses(parsedDays[0].passage)
+      return verses.passageRange || parsedDays[0].passage
+    }
+    return ''
+  }, [startPassage, parsedDays])
+
+  const displayEndPassage = useMemo(() => {
+    if (endPassage) return endPassage
+    const lastDay = parsedDays[parsedDays.length - 1]
+    if (lastDay?.passage) {
+      const verses = parseBibleVerses(lastDay.passage)
+      return verses.passageRange || lastDay.passage
+    }
+    return ''
+  }, [endPassage, parsedDays])
+
   // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
   const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
   const STRIP_HEIGHT_MM = 16 // 본문 padding 확보 + 라벨 + 카드
@@ -479,7 +529,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div className="qt-page" style={pageStyle}>
         <div style={pageContentStyle}>
           {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
+          {landscapeHeader(`QT · ${detectedBook} · ${currentWeekNum}주`)}
 
         {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
         <div style={{
@@ -505,7 +555,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               letterSpacing: `${2 * scale}px`,
               textTransform: 'uppercase',
             }}>
-              ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
+              ◆ 주간 펼침 · {detectedBook} · 제{currentWeekNum}주
             </div>
             <div style={{
               fontFamily: t.fontHeading,
@@ -781,7 +831,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       <div className="qt-page" style={pageStyle}>
         <div style={pageContentStyle}>
           {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
-          {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
+          {landscapeHeader(`QT · ${detectedBook} · ${form.weekNumber}주 · 묵상`)}
 
         {/* 2열: 관찰 | 이해 */}
         <div style={{
@@ -1169,7 +1219,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 letterSpacing: `${1.5 * scale}px`,
                 opacity: 0.85,
               }}>
-                QT · {form.bibleBook} · {currentWeekNum}주
+                QT · {detectedBook} · {currentWeekNum}주
               </div>
             </div>
             <div style={{
@@ -1220,7 +1270,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
               }}>
-                ◆ 주간 펼침 · {form.bibleBook} · 제{currentWeekNum}주
+                ◆ 주간 펼침 · {detectedBook} · 제{currentWeekNum}주
               </span>
               <span style={{
                 fontFamily: t.fontHeading,
@@ -1471,7 +1521,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 letterSpacing: `${1.5 * scale}px`,
                 opacity: 0.85,
               }}>
-                QT · {form.bibleBook} · {form.weekNumber}주
+                QT · {detectedBook} · {form.weekNumber}주
               </div>
             </div>
             <div style={{
@@ -1806,13 +1856,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         flexDirection: 'column',
         alignItems: isLandscape ? 'flex-start' : 'center',
         textAlign: isLandscape ? 'left' : 'center',
-        padding: `${22 * scale}px ${32 * scale}px`,
+        padding: `${24 * scale}px ${34 * scale}px`,
         background: 'rgba(255, 255, 255, 0.88)',
         backdropFilter: 'blur(8px)',
         borderRadius: `${14 * scale}px`,
         border: '1px solid rgba(255, 255, 255, 0.7)',
         boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
-        maxWidth: isLandscape ? '65%' : '85%',
+        maxWidth: isLandscape ? '70%' : '88%',
       }}>
         {t.coverOrnament && (
           <div style={{
@@ -1840,13 +1890,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         )}
         <div style={{
           fontFamily: t.fontHeading,
-          fontSize: `${parsedTitleSize * scale}px`,
+          fontSize: `${(parsedTitleSize > 24 ? 22 : parsedTitleSize) * scale}px`,
           fontWeight: 800,
           color: t.textColor,
-          letterSpacing: `${5 * scale}px`,
-          marginBottom: `${3 * scale}px`,
+          letterSpacing: `${3 * scale}px`,
+          marginBottom: `${6 * scale}px`,
+          lineHeight: '1.25',
         }}>
-          {selectedInfo?.isRecommended ? '오늘의 큐티' : 'QT 소책자'}
+          {coverMainTitle}
         </div>
         <div style={{
           fontFamily: t.fontHeading,
@@ -1876,16 +1927,16 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             marginBottom: `${6 * scale}px`,
             letterSpacing: `${1 * scale}px`,
           }}>
-            {form.bibleBook}
+            {detectedBook}
           </div>
           <div style={{
             fontSize: `${12 * scale}px`,
             color: t.textColor,
             fontWeight: 600,
           }}>
-            제{form.weekNumber}주
+            {isMonthly ? '월간 통합 큐티' : `제${form.weekNumber}주`}
           </div>
-          {(startPassage || endPassage) && (
+          {(displayStartPassage || displayEndPassage) && (
             <div style={{
               fontSize: `${10 * scale}px`,
               color: t.textMuted,
@@ -1893,7 +1944,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               fontFamily: t.font,
               letterSpacing: `${0.5 * scale}px`,
             }}>
-              {startPassage}{endPassage ? ` ~ ${endPassage}` : ''}
+              {displayStartPassage}{displayEndPassage && displayEndPassage !== displayStartPassage ? ` ~ ${displayEndPassage}` : ''}
             </div>
           )}
           <div style={{
@@ -1901,7 +1952,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             color: t.textMuted,
             marginTop: `${5 * scale}px`,
           }}>
-            {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label}
+            {weekdays[0]?.label} ~ {weekdays[weekdays.length - 1]?.label} {isMonthly ? `· 총 ${parsedDays.length}일` : ''}
           </div>
         </div>
       </div>
