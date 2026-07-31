@@ -405,27 +405,33 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </button>
           </div>
 
-          {/* ★ ===== [미니 달력 팝업 드롭다운 모달: 선명한 High-Contrast 럭셔리 디자인] ===== */}
+          {/* ★ ===== [울트라 슬릭 럭셔리 모던 글래스모피즘 달력 피커 모달] ===== */}
           {isDatePickerOpen && (
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-slate-950 border-2 border-indigo-400/70 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.95)] p-4.5 w-[360px] backdrop-blur-2xl animate-in zoom-in-95 duration-150 text-left ring-1 ring-white/20">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/15">
-                <div className="flex items-center gap-2 text-sm font-extrabold text-white">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md">
-                    <CalendarIcon className="w-4 h-4 text-white" />
+            <div className="absolute top-13 left-1/2 -translate-x-1/2 z-50 bg-[#0c122c]/95 border border-white/15 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.85)] p-4 w-[340px] backdrop-blur-3xl animate-in zoom-in-95 duration-200 text-left ring-1 ring-white/10">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+                    <CalendarIcon className="w-3.5 h-3.5 text-indigo-300" />
                   </div>
-                  <span>큐티 날짜 선택 ({days.length}일)</span>
+                  <span className="text-xs font-extrabold text-slate-100 tracking-wide uppercase">
+                    큐티 날짜 선택
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
+                    {days.length}일
+                  </span>
                 </div>
                 <button
                   onClick={() => setIsDatePickerOpen(false)}
-                  className="p-1.5 rounded-xl bg-white/10 hover:bg-red-500/30 text-slate-300 hover:text-white transition-all border border-white/10"
+                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all"
                   title="닫기"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* 6일 (일요일 제외) 달력 그리드 카더 - 고대비 폰트 & 선명한 카더 */}
-              <div className="grid grid-cols-2 gap-2.5 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+              {/* Day Grid Matrix: Clean, Sleek, Modern Cards */}
+              <div className="grid grid-cols-2 gap-2 max-h-[230px] overflow-y-auto pr-1 scrollbar-none">
                 {days.map((_, idx) => {
                   const label = weekdays[idx] || `${idx + 1}일차`
                   const isSelected = viewMode === 'day' && dayIndex === idx
@@ -437,39 +443,39 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         setViewMode('day')
                         setIsDatePickerOpen(false)
                       }}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-xs transition-all shadow-sm ${
+                      className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all duration-200 ${
                         isSelected
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold border-amber-300 ring-2 ring-amber-300/60 shadow-lg scale-[1.02]'
-                          : 'bg-slate-900/90 hover:bg-indigo-950/80 text-white font-bold border-slate-700/90 hover:border-indigo-400'
+                          ? 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 text-white font-bold shadow-md shadow-indigo-500/25 ring-1 ring-white/30 scale-[1.02]'
+                          : 'bg-white/[0.04] hover:bg-white/[0.09] text-slate-200 hover:text-white border border-white/[0.08] hover:border-white/20'
                       }`}
                     >
-                      <span className="truncate text-xs tracking-tight">{label}</span>
-                      <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md shrink-0 ml-1 ${
+                      <span className="truncate font-semibold tracking-tight">{label}</span>
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.3 rounded-md shrink-0 ml-1.5 transition-colors ${
                         isSelected
-                          ? 'bg-amber-400 text-slate-950 shadow'
-                          : 'bg-slate-800 text-indigo-200 border border-slate-600'
+                          ? 'bg-white/25 text-white'
+                          : 'bg-white/5 text-slate-400 group-hover:text-slate-200'
                       }`}>
-                        {idx + 1}일차
+                        {idx + 1}일
                       </span>
                     </button>
                   )
                 })}
               </div>
 
-              {/* 오늘 날짜 바로가기 및 안내 바 */}
-              <div className="pt-3 mt-3 border-t border-white/15 flex justify-between items-center">
+              {/* Bottom Quick Bar */}
+              <div className="pt-3 mt-3 border-t border-white/10 flex justify-between items-center text-[11px]">
                 <button
                   onClick={() => {
                     setDayIndex(0)
                     setViewMode('day')
                     setIsDatePickerOpen(false)
                   }}
-                  className="text-xs text-amber-300 hover:text-amber-200 font-extrabold flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 transition-all"
+                  className="text-indigo-300 hover:text-indigo-100 font-bold flex items-center gap-1.5 transition-colors"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <Sparkles className="w-3 h-3 text-amber-400" />
                   첫째 날(1일차)로 이동
                 </button>
-                <span className="text-[11px] text-slate-300 font-semibold">주일 제외 (월~토)</span>
+                <span className="text-slate-500 font-medium">주일(일요일) 제외</span>
               </div>
             </div>
           )}
