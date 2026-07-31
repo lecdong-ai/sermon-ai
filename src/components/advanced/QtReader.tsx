@@ -407,7 +407,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           {/* ★ ===== [울트라 슬릭 럭셔리 모던 글래스모피즘 달력 피커 모달] ===== */}
           {isDatePickerOpen && (
-            <div className="absolute top-13 left-1/2 -translate-x-1/2 z-50 bg-[#0c122c]/95 border border-white/15 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.85)] p-4 w-[340px] backdrop-blur-3xl animate-in zoom-in-95 duration-200 text-left ring-1 ring-white/10">
+            <div className="absolute top-16 mt-2 left-1/2 -translate-x-1/2 z-50 bg-[#0c122c]/98 border border-white/15 rounded-2xl shadow-[0_32px_100px_rgba(0,0,0,0.9)] p-4 w-[340px] backdrop-blur-3xl animate-in zoom-in-95 duration-200 text-left ring-1 ring-white/10">
               {/* Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
