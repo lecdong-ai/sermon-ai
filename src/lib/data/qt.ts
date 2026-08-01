@@ -31,9 +31,11 @@ const allShop = shopRaw.items as Array<{
   price: number
 }>
 
+import { supabaseAdmin } from '@/lib/supabase'
+
 let archivePostsCache: QtPost[] | null = null
 let archiveCacheTime = 0
-const CACHE_TTL = 30_000 // 30초 TTL — 새 큐티 작성 후 최대 30초 내 반영
+const CACHE_TTL = 3_000 // 3초 TTL — 새 큐티 작성 후 즉각 반영
 
 async function fetchArchivePosts(): Promise<QtPost[]> {
   const now = Date.now()
@@ -41,31 +43,53 @@ async function fetchArchivePosts(): Promise<QtPost[]> {
     return archivePostsCache
   }
   try {
-    const { data } = await supabase
+    // supabaseAdmin을 통해 RLS 영향 없이 qt_archive 테이블 100% 신뢰 조회
+    const client = supabaseAdmin || supabase
+    const { data, error } = await client
       .from('qt_archive')
       .select('*')
-      .order('published_at', { ascending: false })
-      .limit(200)
-    if (data && data.length > 0) {
-      archivePostsCache = data.map((item: any): QtPost => ({
-        id: item.id,
-        slug: item.slug,
-        title: item.title,
-        excerpt: item.excerpt || '',
-        thumbnail: item.thumbnail_url
-          ? { src: item.thumbnail_url, alt: item.title, width: 800, height: 1000 }
-          : { src: '/images/qt/default-cover.jpg', alt: item.title, width: 800, height: 1000 },
-        season: item.season || '연중' as Season,
-        tags: [],
-        publishedAt: item.published_at,
-        viewCount: 0,
-        isFree: true,
-        bibleRange: item.bible_passage || undefined,
-      }))
-      archiveCacheTime = now
+      .order('created_at', { ascending: false })
+      .limit(300)
+
+    if (error) {
+      console.warn('fetchArchivePosts query warning:', error)
     }
-  } catch {
-    // silently fail, use mock only
+
+    if (data && data.length > 0) {
+      archivePostsCache = data.map((item: any): QtPost => {
+        const rawTags = Array.isArray(item.tags) ? item.tags : []
+        const tagObjs = rawTags.map((t: any, i: number) => {
+          const tagName = typeof t === 'string' ? t : (t?.name || String(t))
+          return {
+            id: `tag-${item.id}-${i}`,
+            slug: tagName.toLowerCase().replace(/\s+/g, '-'),
+            name: tagName,
+          }
+        })
+
+        return {
+          id: item.id,
+          slug: item.slug,
+          title: item.title,
+          excerpt: item.excerpt || '',
+          thumbnail: item.thumbnail_url
+            ? { src: item.thumbnail_url, alt: item.title, width: 800, height: 1000 }
+            : { src: '/images/qt/default-cover.jpg', alt: item.title, width: 800, height: 1000 },
+          season: (item.season || '연중') as Season,
+          tags: tagObjs,
+          publishedAt: item.published_at || item.created_at || new Date().toISOString(),
+          viewCount: 0,
+          isFree: true,
+          bibleRange: item.bible_passage || undefined,
+        }
+      })
+      archiveCacheTime = now
+    } else {
+      archivePostsCache = []
+    }
+  } catch (e) {
+    console.warn('fetchArchivePosts exception:', e)
+    archivePostsCache = []
   }
   return archivePostsCache || []
 }
@@ -170,7 +194,8 @@ export async function getQtPostDetail(
   // 캐시에 없으면 DB에서 직접 한 번 더 조회 (방금 작성된 큐티 대응)
   if (!post) {
     try {
-      const { data } = await supabase
+      const client = supabaseAdmin || supabase
+      const { data } = await client
         .from('qt_archive')
         .select('*')
         .eq('slug', normalizedSlug)
@@ -184,9 +209,9 @@ export async function getQtPostDetail(
           thumbnail: data.thumbnail_url
             ? { src: data.thumbnail_url, alt: data.title, width: 800, height: 1000 }
             : { src: '/images/qt/default-cover.jpg', alt: data.title, width: 800, height: 1000 },
-          season: data.season || '연중' as Season,
+          season: (data.season || '연중') as Season,
           tags: [],
-          publishedAt: data.published_at,
+          publishedAt: data.published_at || data.created_at || new Date().toISOString(),
           viewCount: 0,
           isFree: true,
           bibleRange: data.bible_passage || undefined,
@@ -208,7 +233,8 @@ export async function getQtPostDetail(
   let dbKeyVerse: string | undefined
   if (!detail) {
     try {
-      const { data } = await supabase
+      const client = supabaseAdmin || supabase
+      const { data } = await client
         .from('qt_archive')
         .select('content, bible_text, key_verse')
         .eq('slug', normalizedSlug)
