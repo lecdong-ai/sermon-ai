@@ -1455,6 +1455,9 @@ export default function QtGenerator() {
         }
       })
       setActiveDay('오늘')
+
+      // 추천 큐티 생성 완료 후 즉시 미리보기/결과 뷰어 단계(step 3)로 자동 이동!
+      setStep(3)
     } catch (e: any) {
       setError(e.message || '요청 중 오류가 발생했습니다.')
     } finally {
