@@ -67,15 +67,15 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       continue
     }
 
-    // Regular paragraph - enhanced typography
+    // Regular paragraph - elegant serif typography
     elements.push(
-      <p key={key++} className="text-base sm:text-[1.0625rem] text-foreground/90 leading-[1.9] mb-5 tracking-[0.01em]">
+      <p key={key++} className="font-serif text-base sm:text-[1.125rem] text-foreground/90 leading-[2.0] mb-6 tracking-normal">
         {line}
       </p>
     )
   }
 
   return (
-    <div className="max-w-content mx-auto qt-content">{elements}</div>
+    <div className="max-w-content mx-auto qt-content font-serif">{elements}</div>
   )
 }
