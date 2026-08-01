@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Trash2, Loader2, ArrowLeft, BookOpen, AlertCircle, X, Sparkles, Check } from 'lucide-react'
+import { Plus, Trash2, Loader2, ArrowLeft, BookOpen, AlertCircle, X, Sparkles, Check, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const SEASONS = ['연중', '대림', '성탄', '사순', '부활'] as const
@@ -32,6 +32,7 @@ export default function AdminQtJsonArchive() {
   const [items, setItems] = useState<QtJsonItem[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [editingItem, setEditingItem] = useState<QtJsonItem | null>(null)
 
   const [formTitle, setFormTitle] = useState('')
   const [formExcerpt, setFormExcerpt] = useState('')
@@ -63,12 +64,12 @@ export default function AdminQtJsonArchive() {
         excerpt: item.excerpt,
         season: item.season,
         bibleRange: item.bible_passage || '',
-        tags: (item.tags || []).map((t: string, i: number) => ({
+        tags: (item.tags || []).map((t: any, i: number) => ({
           id: `tag-${i}`,
-          slug: t.toLowerCase().replace(/\s+/g, '-'),
-          name: t,
+          slug: typeof t === 'string' ? t.toLowerCase().replace(/\s+/g, '-') : '',
+          name: typeof t === 'string' ? t : String(t?.name || t),
         })),
-        publishedAt: item.published_at,
+        publishedAt: item.published_at || item.created_at,
       }))
       setItems(mapped)
     } catch {
@@ -79,6 +80,57 @@ export default function AdminQtJsonArchive() {
   }, [])
 
   useEffect(() => { fetchItems() }, [fetchItems])
+
+  const resetForm = () => {
+    setFormTitle('')
+    setFormExcerpt('')
+    setFormBiblePassage('')
+    setFormBibleText('')
+    setFormKeyVerse('')
+    setFormContent('')
+    setFormSeason('연중')
+    setFormThumbnailSrc('')
+    setFormThumbnailAlt('')
+    setFormTags([])
+    setTagInput('')
+    setEditingItem(null)
+    setUploadError(null)
+  }
+
+  const cancelEdit = () => {
+    resetForm()
+    setMode('list')
+  }
+
+  const startEdit = async (item: QtJsonItem) => {
+    setEditingItem(item)
+    setMode('upload')
+    setUploading(true)
+    setUploadError(null)
+
+    try {
+      const res = await fetch(`/api/qt-archive`)
+      const json = await res.json()
+      const found = (json.items || []).find((x: any) => x.id === item.id)
+
+      setFormTitle(found?.title || item.title || '')
+      setFormExcerpt(found?.excerpt || item.excerpt || '')
+      setFormBiblePassage(found?.bible_passage || item.bibleRange || '')
+      setFormBibleText(found?.bible_text || '')
+      setFormKeyVerse(found?.key_verse || '')
+      setFormContent(found?.content || '')
+      setFormSeason(found?.season || item.season || '연중')
+      setFormThumbnailSrc(found?.thumbnail_url || '')
+      setFormTags((found?.tags || []).map((t: any) => (typeof t === 'string' ? t : t?.name || String(t))))
+    } catch {
+      setFormTitle(item.title)
+      setFormExcerpt(item.excerpt)
+      setFormBiblePassage(item.bibleRange || '')
+      setFormSeason(item.season)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const addTag = () => {
     const t = tagInput.trim()
@@ -142,21 +194,27 @@ export default function AdminQtJsonArchive() {
     setUploading(true)
     setUploadError(null)
 
+    const payload = {
+      title: formTitle,
+      excerpt: formExcerpt,
+      content: formContent,
+      bible_passage: formBiblePassage,
+      bible_text: formBibleText,
+      key_verse: formKeyVerse,
+      season: formSeason,
+      thumbnail_url: formThumbnailSrc,
+      tags: formTags,
+    }
+
     try {
-      const res = await fetch('/api/qt-archive', {
-        method: 'POST',
+      const isEdit = !!editingItem
+      const endpoint = isEdit ? `/api/qt-archive/${editingItem.id}` : '/api/qt-archive'
+      const method = isEdit ? 'PUT' : 'POST'
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formTitle,
-          excerpt: formExcerpt,
-          content: formContent,
-          bible_passage: formBiblePassage,
-          bible_text: formBibleText,
-          key_verse: formKeyVerse,
-          season: formSeason,
-          thumbnail_url: formThumbnailSrc,
-          tags: formTags,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!res.ok) {
@@ -164,17 +222,7 @@ export default function AdminQtJsonArchive() {
         throw new Error(err.error || '저장 실패')
       }
 
-      setFormTitle('')
-      setFormExcerpt('')
-      setFormBiblePassage('')
-      setFormBibleText('')
-      setFormKeyVerse('')
-      setFormContent('')
-      setFormSeason('연중')
-      setFormThumbnailSrc('')
-      setFormThumbnailAlt('')
-      setFormTags([])
-      setTagInput('')
+      resetForm()
       setMode('list')
       fetchItems()
     } catch (err: any) {
@@ -197,7 +245,6 @@ export default function AdminQtJsonArchive() {
     }
   }
 
-  // ── AI 추천 버튼 컴포넌트 ──
   const AiButton = ({ field, label, disabled }: { field: string; label: string; disabled?: boolean }) => (
     <button
       type="button"
@@ -210,7 +257,6 @@ export default function AdminQtJsonArchive() {
     </button>
   )
 
-  // ── 추천 카드 목록 ──
   const SuggestionList = ({ field }: { field: string }) => {
     if (!suggestions || suggestions.field !== field) return null
     return (
