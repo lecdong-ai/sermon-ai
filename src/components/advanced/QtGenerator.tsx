@@ -1930,11 +1930,11 @@ export default function QtGenerator() {
       {/* STEP 1: 주간/추천 본문 분할 */}
       {step === 1 && (
         <div className="space-y-5 animate-fadeIn">
-          {/* 모드 선택 탭 */}
-          <div className="flex items-center gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-2xl">
+          {/* 독자적 서비스 모드 선택 탭 */}
+          <div className="flex items-center gap-2 p-1.5 bg-[#050914] border border-white/10 rounded-2xl">
             {[
-              { id: 'weekly', name: '📅 주간 큐티', desc: '6일치 쪼개기 제작' },
-              { id: 'recommend', name: '✨ AI 추천 일일 큐티', desc: '스스로 선정 및 즉시 생성' },
+              { id: 'recommend', name: '✨ 독자적 일일 큐티 스튜디오', desc: '1일 묵상 전용 12단계 완전체' },
+              { id: 'weekly', name: '📅 주간/월간 큐티 교재 제작', desc: '6일 소책자 및 월간 청킹' },
             ].map(m => {
               const active = qtMode === m.id
               return (
@@ -1944,44 +1944,58 @@ export default function QtGenerator() {
                     const nextMode = m.id as 'weekly' | 'recommend'
                     setQtMode(nextMode)
                     setError(null)
-                    // 모드 전환 시 startDate를 모드 규칙에 맞게 재정규화
                     if (nextMode === 'weekly') {
                       updateForm({ startDate: getMondayOfWeek(form.startDate) })
                     }
                   }}
-                  className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-300 ${
+                  className={`flex-1 flex flex-col items-center justify-center py-3 rounded-xl transition-all duration-300 ${
                     active
-                      ? 'bg-indigo-600/10 border border-indigo-500/30 text-indigo-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
-                      : 'border border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.01]'
+                      ? 'bg-gradient-to-r from-indigo-600/30 to-purple-600/30 border border-indigo-400/40 text-white shadow-lg'
+                      : 'border border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
                   }`}
                 >
-                  <span className="text-[10px] font-bold">{m.name}</span>
-                  <span className="text-[8px] opacity-60 mt-0.5">{m.desc}</span>
+                  <span className="text-[11px] font-extrabold tracking-wide">{m.name}</span>
+                  <span className="text-[9px] opacity-70 mt-0.5">{m.desc}</span>
                 </button>
               )
             })}
           </div>
 
-          {/* AI 추천 모드인 경우 */}
+          {/* 독자적 일일 큐티 스튜디오 모드인 경우 */}
           {qtMode === 'recommend' && (
-            <div className="glass-dark rounded-2xl border border-white/5 p-8 flex flex-col items-center text-center space-y-5 animate-fadeIn">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center text-indigo-400 text-xl font-bold">
+            <div className="glass-dark rounded-2xl border border-indigo-500/20 p-8 flex flex-col items-center text-center space-y-6 animate-fadeIn shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
+              
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-2xl font-bold shadow-inner">
                 ✨
               </div>
-              <div className="space-y-1.5 max-w-sm">
-                <h4 className="text-[12px] font-bold text-slate-200">성경 66권 전체 대상 자동 묵상 생성</h4>
-                <p className="text-[10px] text-slate-500 leading-relaxed">
-                  오늘 묵상하기에 가장 은혜롭고 균형 있는 성경 본문을 AI 묵상 도우미가 직접 선별하고, 
-                  [장년용/청소년·새신자용] 이중화 묵상 원고를 1분 이내에 빌드합니다.
+              <div className="space-y-2 max-w-md">
+                <h4 className="text-sm font-extrabold text-white tracking-tight">독자적 일일 큐티 12단계 완전체 스튜디오</h4>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  월간/주간 틀에서 벗어나, <strong className="text-indigo-300 font-bold">오직 오늘 하루 묵상</strong>에 최적화된 12단계 원고(신학해설·복음조명·진단형성찰·행동적용·공동체나눔·오늘의기도)를 단번에 완성합니다.
                 </p>
               </div>
-              <button
-                onClick={handleGenerateRecommendDaily}
-                disabled={splitting}
-                className="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-3 text-[11px] font-bold transition-all shadow-[0_4px_12px_rgba(99,102,241,0.2)] disabled:opacity-50"
-              >
-                {splitting ? '⚡ 오늘의 말씀 선별 및 집필 중...' : '✨ 오늘의 추천 큐티 생성'}
-              </button>
+
+              {/* 생성 버튼 그룹 */}
+              <div className="w-full max-w-sm space-y-3 pt-2">
+                <button
+                  onClick={handleGenerateRecommendDaily}
+                  disabled={splitting}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl py-3.5 text-xs font-extrabold transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {splitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>⚡ 오늘의 본문 자율 선별 및 12단계 집필 중...</span>
+                    </>
+                  ) : (
+                    <span>✨ 오늘의 추천 일일 큐티 생성</span>
+                  )}
+                </button>
+                <div className="text-[9.5px] text-slate-500 font-medium">
+                  성경 66권 전체 중 오늘 성도들에게 가장 은혜로운 본문을 자동 선정합니다
+                </div>
+              </div>
             </div>
           )}
 

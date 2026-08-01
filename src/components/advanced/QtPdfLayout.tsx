@@ -1455,7 +1455,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: `${1.5 * scale}px`,
                   opacity: 0.85,
                 }}>
-                  QT · {form.bibleBook} · {currentWeekNum}주
+                  {selectedInfo?.isRecommended ? `오늘의 일일 큐티 · ${form.bibleBook}` : `QT · ${form.bibleBook} · ${currentWeekNum}주`}
                 </div>
               </div>
               <div style={{
@@ -1748,7 +1748,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   fontWeight: 700,
                   letterSpacing: `${2.5 * scale}px`,
                 }}>
-                  DAY {dayIdx + 1} · 묵상
+                  {selectedInfo?.isRecommended ? `오늘의 일일 큐티 · 묵상` : `DAY ${dayIdx + 1} · 묵상`}
                 </div>
                 <div style={{
                   fontFamily: t.fontHeading,
@@ -1757,7 +1757,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: `${1.5 * scale}px`,
                   opacity: 0.85,
                 }}>
-                  QT · {form.bibleBook} · {form.weekNumber}주
+                  {selectedInfo?.isRecommended ? `독자적 묵상 · ${form.bibleBook}` : `QT · ${form.bibleBook} · ${form.weekNumber}주`}
                 </div>
               </div>
               <div style={{
