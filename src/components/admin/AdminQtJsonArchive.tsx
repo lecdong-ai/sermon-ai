@@ -185,6 +185,7 @@ export default function AdminQtJsonArchive() {
       case 'bibleText': setFormBibleText(value); break
       case 'keyVerse': setFormKeyVerse(value); break
       case 'content': setFormContent(value); break
+      case 'thumbnail': setFormThumbnailSrc(value); break
     }
     setSuggestions(null)
   }
@@ -421,19 +422,15 @@ export default function AdminQtJsonArchive() {
           </div>
 
           {/* 썸네일 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-meta font-medium text-foreground-muted">썸네일 이미지 URL (선택)</label>
-              <input type="text" value={formThumbnailSrc} onChange={e => setFormThumbnailSrc(e.target.value)}
-                placeholder="https://... (비워두면 자동 생성)"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-2 text-foreground text-body placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all" />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-meta font-medium text-foreground-muted">썸네일 이미지 URL (비워두면 자동 생성)</label>
+              <AiButton field="thumbnail" label="AI 썸네일 추천" disabled={!formTitle.trim()} />
             </div>
-            <div className="space-y-2">
-              <label className="text-meta font-medium text-foreground-muted">썸네일 설명 (선택)</label>
-              <input type="text" value={formThumbnailAlt} onChange={e => setFormThumbnailAlt(e.target.value)}
-                placeholder="이미지 설명"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-2 text-foreground text-body placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all" />
-            </div>
+            <input type="text" value={formThumbnailSrc} onChange={e => setFormThumbnailSrc(e.target.value)}
+              placeholder="https://... (비워두면 성경/묵상 고화질 이미지 100% 자동 지정)"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-2 text-foreground text-body placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all" />
+            <SuggestionList field="thumbnail" />
           </div>
 
           {/* 에러 */}

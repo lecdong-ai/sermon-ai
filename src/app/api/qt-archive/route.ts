@@ -52,6 +52,19 @@ export async function POST(request: NextRequest) {
     .replace(/^-|-$/g, '')
     + '-' + Date.now().toString(36)
 
+  // 썸네일 이미지 자동 생성 알고리즘 (비어있는 경우 성경/묵상 고화질 이미지 100% 자동 매칭)
+  const autoThumbnails = [
+    'https://images.unsplash.com/photo-1499209974431-9dac3cea004b?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1509021436468-d510074251a3?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=800&auto=format&fit=crop&q=80',
+  ]
+  const titleHash = title.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+  const finalThumbnail = thumbnail_url?.trim()
+    ? thumbnail_url
+    : autoThumbnails[Math.abs(titleHash) % autoThumbnails.length]
+
   const { data, error } = await supabaseAdmin
     .from('qt_archive')
     .insert({
@@ -60,7 +73,9 @@ export async function POST(request: NextRequest) {
       excerpt: excerpt || '',
       content: content || '',
       bible_passage: bible_passage || '',
-      thumbnail_url: thumbnail_url || '',
+      bible_text: bible_text || '',
+      key_verse: key_verse || '',
+      thumbnail_url: finalThumbnail,
       season: season || '연중',
       tags: tags || [],
     })

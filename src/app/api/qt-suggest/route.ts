@@ -93,6 +93,20 @@ ${keyVerse ? `핵심 구절: ${keyVerse}` : ''}
         returnArray: false,
       }
 
+    case 'thumbnail':
+      return {
+        system: `${QT_SYSTEM_PROMPT}\n\n주어진 큐티 제목과 본문에 어울리는 고화질 큐티 커버 이미지 5가지를 추천하라.\n사용 가능한 고화질 성경/묵상 이미지 키워드(cross, bible, praying-hands, nature-sky, Shepherd-pasture, grace-light)에 해당하는 Unsplash 고화질 URL을 제공하라.`,
+        user: `제목: ${title}\n본문: ${passage}\n\n{"suggestions": [
+          {"value": "https://images.unsplash.com/photo-1499209974431-9dac3cea004b?w=800&auto=format&fit=crop&q=80", "reason": "고요한 잔잔한 수평선과 하나님의 은혜"},
+          {"value": "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=800&auto=format&fit=crop&q=80", "reason": "창조 세계와 자연의 빛"},
+          {"value": "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800&auto=format&fit=crop&q=80", "reason": "빛이 스며드는 십자가와 은혜"},
+          {"value": "https://images.unsplash.com/photo-1509021436468-d510074251a3?w=800&auto=format&fit=crop&q=80", "reason": "성경과 묵상의 시간"},
+          {"value": "https://images.unsplash.com/photo-1519817650390-64a93db51149?w=800&auto=format&fit=crop&q=80", "reason": "평안과 기도"}
+        ]} 형식으로 5가지를 추천해주세요.`,
+        maxTokens: 800,
+        returnArray: true,
+      }
+
     default:
       throw new Error(`Unknown field: ${field}`)
   }
@@ -145,7 +159,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { field, title, passage, bibleText, keyVerse, excerpt } = body
 
-    const validFields = ['title', 'passage', 'excerpt', 'bibleText', 'keyVerse', 'content']
+    const validFields = ['title', 'passage', 'excerpt', 'bibleText', 'keyVerse', 'content', 'thumbnail']
     if (!validFields.includes(field)) {
       return NextResponse.json({ success: false, error: '올바르지 않은 필드입니다' }, { status: 400 })
     }
