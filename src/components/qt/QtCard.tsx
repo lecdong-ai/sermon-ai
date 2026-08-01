@@ -62,18 +62,27 @@ export function QtCard({ post, variant = 'default' }: QtCardProps) {
       href={`/qt/${post.slug}`}
       className="group block bg-surface rounded-lg overflow-hidden transition-all duration-300 border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1"
     >
-      {post.thumbnail && (
-        <div className="aspect-[4/5] bg-surface-2 overflow-hidden">
-          <Image
-            src={post.thumbnail.src}
-            alt={post.thumbnail.alt}
-            width={post.thumbnail.width ?? 800}
-            height={post.thumbnail.height ?? 1000}
-            unoptimized
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
-          />
+        <div className="aspect-[4/5] bg-surface-2 overflow-hidden relative group">
+          {post.thumbnail?.src && !post.thumbnail.src.includes('default-cover.jpg') ? (
+            <img
+              src={post.thumbnail.src}
+              alt={post.thumbnail.alt || post.title}
+              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950/80 to-purple-950/70 p-6 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-accent/20 rounded-full blur-2xl" />
+              <div className="flex justify-between items-center relative z-10">
+                <SeasonBadge season={post.season} />
+                <span className="text-[10px] text-accent/70 font-mono">QT BOOK</span>
+              </div>
+              <div className="relative z-10 space-y-1">
+                <p className="font-serif text-lg text-white font-bold line-clamp-2 leading-snug">{post.title}</p>
+                {post.bibleRange && <p className="text-xs font-serif text-indigo-300">{post.bibleRange}</p>}
+              </div>
+            </div>
+          )}
         </div>
-      )}
       <div className="p-4 space-y-2">
         <div className="flex items-center gap-2 text-meta text-foreground-subtle">
           <span>{formatDate(post.publishedAt)}</span>

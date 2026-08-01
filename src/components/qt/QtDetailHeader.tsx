@@ -32,6 +32,29 @@ export function QtDetailHeader({ post }: QtDetailHeaderProps) {
           {post.title}
         </h1>
 
+        {/* Cover Image or Fallback Header Artwork */}
+        <div className="my-8 rounded-2xl overflow-hidden border border-border/60 shadow-lg bg-surface-2 aspect-[16/9] sm:aspect-[21/9] relative group">
+          {post.thumbnail?.src && !post.thumbnail.src.includes('default-cover.jpg') ? (
+            <img
+              src={post.thumbnail.src}
+              alt={post.thumbnail.alt || post.title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-slate-900/60 p-8 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-accent/20 rounded-full blur-3xl" />
+              <div className="flex justify-between items-start relative z-10">
+                <SeasonBadge season={post.season} />
+                <span className="text-xs font-serif text-accent/80 tracking-widest uppercase">말씀 연구실 Archive</span>
+              </div>
+              <div className="relative z-10 space-y-1">
+                <p className="font-serif text-2xl sm:text-3xl text-white font-bold tracking-tight">{post.title}</p>
+                {post.bibleRange && <p className="text-sm font-serif text-indigo-200">{post.bibleRange}</p>}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Bible range - elegant accent display */}
         {post.bibleRange && (
           <div className="flex items-center gap-3 mb-6">

@@ -56,7 +56,7 @@ async function fetchArchivePosts(): Promise<QtPost[]> {
     }
 
     if (data && data.length > 0) {
-      archivePostsCache = data.map((item: any): QtPost => {
+      archivePostsCache = data.map((item: any): QtPost & { content?: string; bibleText?: string; keyVerse?: string } => {
         const rawTags = Array.isArray(item.tags) ? item.tags : []
         const tagObjs = rawTags.map((t: any, i: number) => {
           const tagName = typeof t === 'string' ? t : (t?.name || String(t))
@@ -67,20 +67,30 @@ async function fetchArchivePosts(): Promise<QtPost[]> {
           }
         })
 
+        // 썸네일 이미지 fallback — 지정되지 않은 경우 절기/성경구절에 부합하는 고품질 커버 이미지 지정
+        const thumbSrc = item.thumbnail_url?.trim()
+          ? item.thumbnail_url
+          : item.season === '대림' ? '/images/qt/season-advent.jpg'
+          : item.season === '성탄' ? '/images/qt/season-christmas.jpg'
+          : item.season === '사순' ? '/images/qt/season-lent.jpg'
+          : item.season === '부활' ? '/images/qt/season-easter.jpg'
+          : '/images/qt/default-cover.jpg'
+
         return {
           id: item.id,
           slug: item.slug,
           title: item.title,
-          excerpt: item.excerpt || '',
-          thumbnail: item.thumbnail_url
-            ? { src: item.thumbnail_url, alt: item.title, width: 800, height: 1000 }
-            : { src: '/images/qt/default-cover.jpg', alt: item.title, width: 800, height: 1000 },
+          excerpt: item.excerpt || (item.content ? item.content.slice(0, 120) + '...' : ''),
+          thumbnail: { src: thumbSrc, alt: item.title, width: 800, height: 1000 },
           season: (item.season || '연중') as Season,
           tags: tagObjs,
           publishedAt: item.published_at || item.created_at || new Date().toISOString(),
           viewCount: 0,
           isFree: true,
           bibleRange: item.bible_passage || undefined,
+          content: item.content || '',
+          bibleText: item.bible_text || '',
+          keyVerse: item.key_verse || '',
         }
       })
       archiveCacheTime = now
@@ -227,11 +237,13 @@ export async function getQtPostDetail(
   // Mock 상세 데이터 조회
   const detail = detailMap.get(normalizedSlug)
 
-  // Mock에 없으면 Supabase에서 본문(content) 직접 가져오기
-  let dbContent = ''
-  let dbBibleText: string | undefined
-  let dbKeyVerse: string | undefined
-  if (!detail) {
+  // Mock에 없으면 post 객체 내장 데이터 또는 Supabase에서 본문(content) 직접 가져오기
+  const rawPost = post as any
+  let dbContent = rawPost.content || ''
+  let dbBibleText: string | undefined = rawPost.bibleText || undefined
+  let dbKeyVerse: string | undefined = rawPost.keyVerse || undefined
+
+  if (!detail && !dbContent) {
     try {
       const client = supabaseAdmin || supabase
       const { data } = await client
