@@ -21,7 +21,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export default function AdminUploadPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<'generational' | 'archive' | 'json'>('generational')
+  const [tab, setTab] = useState<'generational' | 'archive' | 'json'>('json')
   const [mode, setMode] = useState<'list' | 'upload'>('list')
   const [items, setItems] = useState<GenerationalQtItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -323,6 +323,15 @@ export default function AdminUploadPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="font-serif text-h1 text-foreground">관리자 페이지</h1>
         <div className="flex flex-wrap gap-1 p-1 bg-surface-2 rounded-xl border border-border">
+          <button onClick={() => setTab('json')}
+            className={cn(
+              'px-4 py-2 rounded-lg text-meta font-medium transition-all',
+              tab === 'json' ? 'bg-surface text-foreground shadow-sm' : 'text-foreground-muted hover:text-foreground'
+            )}
+          >
+            <BookOpen className="w-3.5 h-3.5 inline mr-1.5" />
+            큐티 게시글 관리 (/qt 반영)
+          </button>
           <button onClick={() => { setTab('generational'); setMode('list') }}
             className={cn(
               'px-4 py-2 rounded-lg text-meta font-medium transition-all',
@@ -330,33 +339,13 @@ export default function AdminUploadPage() {
             )}
           >
             <FileText className="w-3.5 h-3.5 inline mr-1.5" />
-            세대별 자료
-          </button>
-          <button onClick={() => setTab('archive')}
-            className={cn(
-              'px-4 py-2 rounded-lg text-meta font-medium transition-all',
-              tab === 'archive' ? 'bg-surface text-foreground shadow-sm' : 'text-foreground-muted hover:text-foreground'
-            )}
-          >
-            <BookOpen className="w-3.5 h-3.5 inline mr-1.5" />
-            큐티 목록
-          </button>
-          <button onClick={() => setTab('json')}
-            className={cn(
-              'px-4 py-2 rounded-lg text-meta font-medium transition-all',
-              tab === 'json' ? 'bg-surface text-foreground shadow-sm' : 'text-foreground-muted hover:text-foreground'
-            )}
-          >
-            <FileJson className="w-3.5 h-3.5 inline mr-1.5" />
-            큐티 자료
+            세대별 PDF 자료 관리
           </button>
         </div>
       </div>
 
       {tab === 'json' ? (
         <AdminQtJsonArchive />
-      ) : tab === 'archive' ? (
-        <AdminQtArchive />
       ) : (
         <>
           {mode === 'upload' ? (
