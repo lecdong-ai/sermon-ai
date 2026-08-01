@@ -513,11 +513,25 @@ export default function AdminQtJsonArchive() {
                 <span className="text-[11px] text-foreground-subtle">{formatDate(item.publishedAt)}</span>
               </div>
 
-              <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id}
-                className="p-2 rounded-lg hover:bg-red-50 text-foreground-subtle hover:text-red-500 transition-colors disabled:opacity-50"
-              >
-                {deleting === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => startEdit(item)}
+                  className="px-3 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 transition-colors flex items-center gap-1 text-xs font-semibold"
+                  title="큐티 내용 수정"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>수정</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deleting === item.id}
+                  className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
+                  title="큐티 삭제"
+                >
+                  {deleting === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>삭제</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
