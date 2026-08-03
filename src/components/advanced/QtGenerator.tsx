@@ -1927,84 +1927,14 @@ export default function QtGenerator() {
       {/* 새로 작성 모드: showHistory가 false일 때만 스텝 표시 */}
       {!showHistory && (
       <>
-      {/* STEP 1: 주간/추천 본문 분할 */}
+      {/* STEP 1: 주간 본문 분할 */}
       {step === 1 && (
         <div className="space-y-5 animate-fadeIn">
-          {/* 독자적 서비스 모드 선택 탭 */}
-          <div className="flex items-center gap-2 p-1.5 bg-[#050914] border border-white/10 rounded-2xl">
-            {[
-              { id: 'recommend', name: '✨ 독자적 일일 큐티 스튜디오', desc: '1일 묵상 전용 12단계 완전체' },
-              { id: 'weekly', name: '📅 주간/월간 큐티 교재 제작', desc: '6일 소책자 및 월간 청킹' },
-            ].map(m => {
-              const active = qtMode === m.id
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => {
-                    const nextMode = m.id as 'weekly' | 'recommend'
-                    setQtMode(nextMode)
-                    setError(null)
-                    if (nextMode === 'weekly') {
-                      updateForm({ startDate: getMondayOfWeek(form.startDate) })
-                    }
-                  }}
-                  className={`flex-1 flex flex-col items-center justify-center py-3 rounded-xl transition-all duration-300 ${
-                    active
-                      ? 'bg-gradient-to-r from-indigo-600/30 to-purple-600/30 border border-indigo-400/40 text-white shadow-lg'
-                      : 'border border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
-                  }`}
-                >
-                  <span className="text-[11px] font-extrabold tracking-wide">{m.name}</span>
-                  <span className="text-[9px] opacity-70 mt-0.5">{m.desc}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* 독자적 일일 큐티 스튜디오 모드인 경우 */}
-          {qtMode === 'recommend' && (
-            <div className="glass-dark rounded-2xl border border-indigo-500/20 p-8 flex flex-col items-center text-center space-y-6 animate-fadeIn shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
-              
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-2xl font-bold shadow-inner">
-                ✨
-              </div>
-              <div className="space-y-2 max-w-md">
-                <h4 className="text-sm font-extrabold text-white tracking-tight">독자적 일일 큐티 12단계 완전체 스튜디오</h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  월간/주간 틀에서 벗어나, <strong className="text-indigo-300 font-bold">오직 오늘 하루 묵상</strong>에 최적화된 12단계 원고(신학해설·복음조명·진단형성찰·행동적용·공동체나눔·오늘의기도)를 단번에 완성합니다.
-                </p>
-              </div>
-
-              {/* 생성 버튼 그룹 */}
-              <div className="w-full max-w-sm space-y-3 pt-2">
-                <button
-                  onClick={handleGenerateRecommendDaily}
-                  disabled={splitting}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl py-3.5 text-xs font-extrabold transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {splitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>⚡ 오늘의 본문 자율 선별 및 12단계 집필 중...</span>
-                    </>
-                  ) : (
-                    <span>✨ 오늘의 추천 일일 큐티 생성</span>
-                  )}
-                </button>
-                <div className="text-[9.5px] text-slate-500 font-medium">
-                  성경 66권 전체 중 오늘 성도들에게 가장 은혜로운 본문을 자동 선정합니다
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 주간 모드 설정 */}
-          {qtMode !== 'recommend' && (
-            <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
-              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
-                1단계: 주간 성경권 선택 및 범위 설정
-              </h3>
+          <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+              1단계: 주간 성경권 선택 및 범위 설정
+            </h3>
             
             {/* 성경권 격자 선택 */}
             <div className="space-y-1.5">
@@ -2326,7 +2256,6 @@ export default function QtGenerator() {
               </button>
             </div>
           </div>
-          )}
 
           {/* 분할안 결과 피드백 */}
           {splitMarkdown && (
