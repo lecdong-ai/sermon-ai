@@ -31,6 +31,7 @@ export default function QtMonthlyOverviewPage({
   return (
     <div
       data-page-key="overview"
+      data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,

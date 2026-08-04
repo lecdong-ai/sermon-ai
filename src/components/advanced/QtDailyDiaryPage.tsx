@@ -32,6 +32,7 @@ export default function QtDailyDiaryPage({
     <div
       data-page-key={`day-${dayNum}`}
       data-day={dayNum}
+      data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,

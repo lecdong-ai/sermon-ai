@@ -135,10 +135,15 @@ export async function generateQtPdf(
 
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
 
-      const drawW = widthMm
-      const drawH = heightMm
-      const drawX = 0
-      const drawY = 0
+      const isCoverPage = (i === 0 && dayIndex === undefined)
+      const isFullBleedPage = isCoverPage || pageEl.getAttribute('data-page-type') === 'full-bleed'
+
+      const marginSide = isFullBleedPage ? 0 : 14
+      const marginTop = isFullBleedPage ? 0 : 8
+      const drawW = isFullBleedPage ? widthMm : widthMm - marginSide * 2
+      const drawH = isFullBleedPage ? heightMm : heightMm - marginTop - marginSide
+      const drawX = isFullBleedPage ? 0 : marginSide
+      const drawY = isFullBleedPage ? 0 : marginTop
 
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')

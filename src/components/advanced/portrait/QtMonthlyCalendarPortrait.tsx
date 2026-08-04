@@ -37,6 +37,7 @@ export default function QtMonthlyCalendarPortrait({
   return (
     <div
       data-page-key="calendar"
+      data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
