@@ -1,11 +1,13 @@
-'use client'
-
 import { forwardRef, useMemo } from 'react'
+import React from 'react'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getTemplate } from '@/lib/qtTemplates'
 import { parseDays } from '@/lib/qtDayParser'
 import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData, QTResult } from './QtGenerator'
+import QtDailyDiaryPage from './QtDailyDiaryPage'
+import QtMonthlyCalendarPage from './QtMonthlyCalendarPage'
+import QtWeeklyPlanPage from './QtWeeklyPlanPage'
 
 interface QtSelectedInfo {
   book: string
@@ -227,6 +229,8 @@ interface QtPdfLayoutProps {
   }
   layoutSettings?: LayoutSettings
   editedContent?: Record<number, Record<string, string>>
+  includeDiaryPage?: boolean
+  includeMonthlyPlanner?: boolean
 }
 
 // 캘린더 스트립을 표시할 sizeOption 화이트리스트
@@ -277,7 +281,7 @@ function parseBibleVerses(passageText: string) {
   return { korVerse, engVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent, includeDiaryPage, includeMonthlyPlanner }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const ls = layoutSettings || {}
   const fontScale = ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
   const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
@@ -2224,6 +2228,44 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const totalPages = 1 + parsedDays.length * 3  // 1표지 + 1일=3페이지(overflow 대비)
   let pageCounter = 0
 
+  function parseDayLabelHelper(label?: string, dayIdx: number = 0) {
+    if (!label) return { dayNum: dayIdx + 1, dayName: 'DAY', dateLabel: `DAY ${dayIdx + 1}` }
+    const m = label.match(/(\d+)\/(\d+)\s*\(([^)]+)\)/)
+    if (m) {
+      const day = parseInt(m[2], 10)
+      const rawDayName = m[3].toUpperCase()
+      const nameMap: Record<string, string> = { '일': 'SUN', '월': 'MON', '화': 'TUE', '수': 'WED', '목': 'THU', '금': 'FRI', '토': 'SAT' }
+      const dayName = nameMap[rawDayName] || rawDayName
+      return { dayNum: day, dayName, dateLabel: `${String(day).padStart(2, '0')} ${dayName}` }
+    }
+    return { dayNum: dayIdx + 1, dayName: 'DAY', dateLabel: `DAY ${dayIdx + 1}` }
+  }
+
+  const isDiaryEnabled = includeDiaryPage ?? isMonthly
+  const isPlannerEnabled = includeMonthlyPlanner ?? isMonthly
+
+  const yearNum = useMemo(() => {
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length >= 1) return parseInt(parts[0], 10) || 2026
+    }
+    return 2026
+  }, [form.startDate])
+
+  const monthNum = useMemo(() => {
+    if (monthCalendarStrip?.month) {
+      const m = monthCalendarStrip.month.match(/(\d+)월/)
+      if (m) return parseInt(m[1], 10)
+    }
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length >= 2) return parseInt(parts[1], 10)
+    }
+    return 8
+  }, [monthCalendarStrip, form.startDate])
+
+  const themeColor = t.accent || '#B8C6D9'
+
   if (onlyCover) {
     return (
       <div>
@@ -2237,11 +2279,58 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   return (
     <div>
       <div ref={ref}>
+        {/* 1. Cover Page */}
         {renderCover()}
-        {isLandscape
-          ? parsedDays.map((day, dayIdx) => renderDailyLandscape(day, dayIdx))
-          : parsedDays.map((day, dayIdx) => renderDailyPortrait(day, dayIdx))
-        }
+
+        {/* 2. Monthly Calendar Page (P18 양식) */}
+        {isPlannerEnabled && (
+          <QtMonthlyCalendarPage
+            year={yearNum}
+            month={monthNum}
+            monthName={monthName}
+            themeColor={themeColor}
+          />
+        )}
+
+        {/* 3. Daily QT (Page A) + Daily Diary & Prayer (Page B) Pairs */}
+        {parsedDays.map((day, dayIdx) => {
+          const dateInfo = parseDayLabelHelper(weekdays[dayIdx]?.label, dayIdx)
+          const isWeekStart = dayIdx % 7 === 0
+          const currentWeekNum = Math.floor(dayIdx / 7) + 1
+
+          return (
+            <React.Fragment key={dayIdx}>
+              {/* Insert Weekly Plan page before each week */}
+              {isPlannerEnabled && isWeekStart && (
+                <QtWeeklyPlanPage
+                  weekNum={currentWeekNum}
+                  weekLabel={`WEEK ${currentWeekNum}`}
+                  monthName={monthName}
+                  themeColor={themeColor}
+                />
+              )}
+
+              {/* Page A: Daily QT Page */}
+              {isLandscape
+                ? renderDailyLandscape(day, dayIdx)
+                : renderDailyPortrait(day, dayIdx)
+              }
+
+              {/* Page B: Daily Diary & Prayer Page (diary.pdf 21쪽 양식) */}
+              {isDiaryEnabled && (
+                <QtDailyDiaryPage
+                  dateLabel={dateInfo.dateLabel}
+                  dayNum={dateInfo.dayNum}
+                  dayName={dateInfo.dayName}
+                  monthName={monthName}
+                  yearLabel={String(yearNum)}
+                  themeColor={themeColor}
+                  activeWeek={`W${currentWeekNum}`}
+                />
+              )}
+            </React.Fragment>
+          )
+        })}
       </div>
     </div>
   )

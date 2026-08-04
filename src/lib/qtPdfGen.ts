@@ -87,20 +87,43 @@ export async function generateQtPdf(
   await document.fonts.ready
   let hasContent = false
 
-  // ★ day → page 매핑 (전체 PDF 기준, dayIndex 미지정 시)
-  // page 0 = cover, 그 후 1일 2페이지, 2일 2페이지, ...
-  const dayToPageMap: Record<number, number> = {}
-  if (monthCalendarStrip && dayIndex === undefined) {
-    monthCalendarStrip.activeDays.forEach((day, idx) => {
-      // jsPDF는 1-based page number
-      dayToPageMap[day] = 1 + idx * pagesPerDay + 1  // cover(1) + dayIdx 시작
+  // ★ 1. 동적 Page Target Map 구축 (1-based jsPDF 페이지 번호)
+  const pageTargetMap: Record<string, number> = {}
+  targetPages.forEach((pageEl, idx) => {
+    const pageNum = idx + 1
+
+    const targetKey = pageEl.getAttribute('data-page-key')
+    if (targetKey && !pageTargetMap[targetKey]) {
+      pageTargetMap[targetKey] = pageNum
+    }
+
+    const dayAttr = pageEl.getAttribute('data-day')
+    if (dayAttr) {
+      const d = parseInt(dayAttr, 10)
+      if (d && !pageTargetMap[`day-${d}`]) {
+        pageTargetMap[`day-${d}`] = pageNum
+      }
+    }
+
+    const weekAttr = pageEl.getAttribute('data-week')
+    if (weekAttr) {
+      const w = parseInt(weekAttr, 10)
+      if (w && !pageTargetMap[`week-${w}`]) {
+        pageTargetMap[`week-${w}`] = pageNum
+      }
+    }
+
+    // 내부 자식 [data-page-key] 스캔
+    pageEl.querySelectorAll<HTMLElement>('[data-page-key]').forEach(el => {
+      const key = el.getAttribute('data-page-key')
+      if (key && !pageTargetMap[key]) {
+        pageTargetMap[key] = pageNum
+      }
     })
-  }
+  })
 
   for (let i = 0; i < targetPages.length; i++) {
     const pageEl = targetPages[i]
-    // 실제 전체 PDF에서 이 페이지의 인덱스 (dayIndex 미지정 시)
-    const globalPageIdx = dayIndex !== undefined ? dayIndex * pagesPerDay + i : i
 
     try {
       const canvas = await toCanvas(pageEl, {
@@ -111,10 +134,7 @@ export async function generateQtPdf(
       })
 
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
-      console.log(`[QtPdfGen] page ${i}: ${canvas.width}x${canvas.height}, dataUrl=${(imgData.length / 1024).toFixed(0)}KB`)
 
-      // 표지(i === 0)는 흰 여백 없이 PDF 종이 100% 풀채움 (Edge-to-Edge)
-      // 내지(i > 0)는 본문 여백 적용
       const isCoverPage = (i === 0 && dayIndex === undefined)
       const marginSide = isCoverPage ? 0 : 14
       const marginTop = isCoverPage ? 0 : 8
@@ -127,11 +147,8 @@ export async function generateQtPdf(
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
       hasContent = true
 
-      // ★ 디지털 PDF 캘린더 링크 추가
-      // 전체 PDF 생성 시 (dayIndex 미지정) + strip 정보가 있을 때만
-      if (monthCalendarStrip && dayIndex === undefined && Object.keys(dayToPageMap).length > 0) {
-        addCalendarLinks(pdf, monthCalendarStrip, dayToPageMap, pageEl, drawX, drawY, drawW, drawH)
-      }
+      // ★ 2. 디지털 PDF 하이퍼링크 자동 매핑 & 주입
+      addInteractiveLinks(pdf, pageTargetMap, pageEl, drawX, drawY, drawW, drawH)
     } catch (e: any) {
       console.warn(`[QtPdfGen] page ${i} failed:`, e?.message || e)
     }
@@ -150,14 +167,12 @@ export async function generateQtPdf(
 }
 
 /**
- * PDF 캘린더 카드에 내부 점프 링크 추가
- * - 각 카드가 가리키는 day의 페이지로 이동
- * - 인쇄용 PDF에서는 무시됨 (디지털 PDF에서만 활성화)
+ * PDF 내부 인터랙티브 이동 하이퍼링크 주입 도우미
+ * - 상단 탭, 월간달력, 주간계획, 일자별 큐티/다이어리 간 100% 클릭 이동 지원
  */
-function addCalendarLinks(
+function addInteractiveLinks(
   pdf: jsPDF,
-  strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] },
-  dayToPageMap: Record<number, number>,
+  pageTargetMap: Record<string, number>,
   pageEl: HTMLElement,
   drawX: number,
   drawY: number,
@@ -165,28 +180,51 @@ function addCalendarLinks(
   drawH: number,
 ) {
   const pageRect = pageEl.getBoundingClientRect()
-  const cards = pageEl.querySelectorAll<HTMLElement>('[data-day]')
+  const elements = pageEl.querySelectorAll<HTMLElement>('[data-nav-target], [data-day], [data-week], [data-target-page]')
 
-  for (const card of cards) {
-    const dayNum = parseInt(card.getAttribute('data-day') || '0', 10)
-    if (!dayNum) continue
-    const targetPage = dayToPageMap[dayNum]
-    if (!targetPage) continue
+  for (const el of elements) {
+    let targetPageNum: number | null = null
 
-    const rect = card.getBoundingClientRect()
+    const navTarget = el.getAttribute('data-nav-target')
+    const dayAttr = el.getAttribute('data-day')
+    const weekAttr = el.getAttribute('data-week')
+    const directTarget = el.getAttribute('data-target-page')
+
+    if (directTarget) {
+      targetPageNum = parseInt(directTarget, 10)
+    } else if (navTarget && pageTargetMap[navTarget]) {
+      targetPageNum = pageTargetMap[navTarget]
+    } else if (dayAttr && pageTargetMap[`day-${dayAttr}`]) {
+      targetPageNum = pageTargetMap[`day-${dayAttr}`]
+    } else if (weekAttr && pageTargetMap[`week-${weekAttr}`]) {
+      targetPageNum = pageTargetMap[`week-${weekAttr}`]
+    }
+
+    if (!targetPageNum) continue
+
+    const rect = el.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) continue
+
     const relX = rect.left - pageRect.left
     const relY = rect.top - pageRect.top
     const relW = rect.width
     const relH = rect.height
 
-    const scaleX = drawW / pageEl.offsetWidth
-    const scaleY = drawH / pageEl.offsetHeight
+    const baseW = pageEl.offsetWidth || pageRect.width || 1
+    const baseH = pageEl.offsetHeight || pageRect.height || 1
+
+    const scaleX = drawW / baseW
+    const scaleY = drawH / baseH
 
     const pdfX = drawX + relX * scaleX
     const pdfY = drawY + relY * scaleY
     const pdfW = relW * scaleX
     const pdfH = relH * scaleY
 
-    pdf.link(pdfX, pdfY, pdfW, pdfH, { pageNumber: targetPage })
+    try {
+      pdf.link(pdfX, pdfY, pdfW, pdfH, { pageNumber: targetPageNum })
+    } catch (e) {
+      // ignore single link failure
+    }
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { 
   BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronRight, 
   Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight,
@@ -1699,6 +1700,13 @@ export default function QtGenerator() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/diary"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold bg-amber-500/15 border-amber-400/30 text-amber-300 hover:bg-amber-500/25 transition-all shadow-sm"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            📓 수채화 다이어리 제작소 (독립)
+          </Link>
           <button
             onClick={() => setShowHistory(!showHistory)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all ${

@@ -58,6 +58,11 @@ interface QtReaderProps {
 
 export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
+
+  // ★ 주간 vs 월간 큐티 판별: externalStrip이 있거나 parsedDays > 7이면 월간
+  const { days: _parsedDaysForDetect } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
+  const isMonthlyMode = !!externalStrip || _parsedDaysForDetect.length > 7
+
   const [isPdfFullscreenModalOpen, setIsPdfFullscreenModalOpen] = useState(false)
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false) // 미니 달력 피커 모달!
   const [zoomScale, setZoomScale] = useState(1.0)
@@ -67,6 +72,9 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const [sizeOption, setSizeOption] = useState(form.sizeOption || 'A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
+  // ★ 주간 큐티 → 다이어리/플래너 기본 OFF, 월간 큐티 → 기본 ON
+  const [includeDiaryPage, setIncludeDiaryPage] = useState(isMonthlyMode)
+  const [includeMonthlyPlanner, setIncludeMonthlyPlanner] = useState(isMonthlyMode)
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
       const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
@@ -538,6 +546,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     selectedInfo={selectedInfo}
                     monthCalendarStrip={monthCalendarStrip}
                     layoutSettings={layoutSettings}
+                    includeDiaryPage={includeDiaryPage}
+                    includeMonthlyPlanner={includeMonthlyPlanner}
                   />
                 </div>
               </div>
@@ -732,6 +742,36 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 <Globe className="w-3.5 h-3.5 text-blue-400" />
                 한영대조
               </button>
+              {/* ★ 다이어리 & 플래너 옵션: 월간 큐티 모드에서만 표시 */}
+              {isMonthlyMode && (
+                <>
+                  <button
+                    onClick={() => setIncludeDiaryPage(!includeDiaryPage)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                      includeDiaryPage
+                        ? 'bg-amber-600/20 border-amber-400 text-amber-200 font-bold'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                    }`}
+                    title="diary.pdf 21쪽 양식 기반 데일리 다이어리 및 기도제목 포함"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                    데일리 다이어리 (Page B)
+                  </button>
+
+                  <button
+                    onClick={() => setIncludeMonthlyPlanner(!includeMonthlyPlanner)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                      includeMonthlyPlanner
+                        ? 'bg-purple-600/20 border-purple-400 text-purple-200 font-bold'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                    }`}
+                    title="diary.pdf 18/20쪽 양식 기반 월간달력 및 주간계획 포함"
+                  >
+                    <CalendarIcon className="w-3.5 h-3.5 text-purple-400" />
+                    월간/주간 플래너
+                  </button>
+                </>
+              )}
 
               <button
                 onClick={() => setIsEcoPrint(!isEcoPrint)}
@@ -977,6 +1017,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           monthCalendarStrip={monthCalendarStrip}
           layoutSettings={layoutSettings}
           editedContent={editedContent}
+          includeDiaryPage={includeDiaryPage}
+          includeMonthlyPlanner={includeMonthlyPlanner}
         />
       </div>
 
@@ -995,6 +1037,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             selectedInfo={selectedInfo}
             monthCalendarStrip={monthlyData.strip}
             layoutSettings={layoutSettings}
+            includeDiaryPage={includeDiaryPage}
+            includeMonthlyPlanner={includeMonthlyPlanner}
           />
         </div>
       )}
@@ -1093,6 +1137,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 monthCalendarStrip={monthCalendarStrip}
                 layoutSettings={layoutSettings}
                 editedContent={editedContent}
+                includeDiaryPage={includeDiaryPage}
+                includeMonthlyPlanner={includeMonthlyPlanner}
               />
             </div>
           </div>
