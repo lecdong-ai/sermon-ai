@@ -129,6 +129,34 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   }
 
   const { days } = useMemo(() => parseDays(accumulatedManuscript), [accumulatedManuscript])
+  const modalScrollRef = useRef<HTMLDivElement>(null)
+
+  // 팝업창 모달 스크롤 정확한 위치 이동 헬퍼
+  const scrollToTargetKey = (targetKey: string) => {
+    if (!modalScrollRef.current) return
+    const scrollContainer = modalScrollRef.current
+
+    const cleanKey = targetKey.startsWith('day-') || targetKey.startsWith('week-') || targetKey === 'calendar' || targetKey === 'overview'
+      ? targetKey
+      : !isNaN(Number(targetKey))
+        ? `day-${targetKey}`
+        : targetKey
+
+    const targetEl = document.getElementById(`qt-page-${cleanKey}`) ||
+      document.querySelector<HTMLElement>(`[data-page-key="${cleanKey}"]`) ||
+      document.querySelector<HTMLElement>(`[data-day="${cleanKey.replace('day-', '')}"]`) ||
+      document.querySelector<HTMLElement>(`[data-week="${cleanKey.replace('week-', '')}"]`)
+
+    if (targetEl) {
+      const containerRect = scrollContainer.getBoundingClientRect()
+      const targetRect = targetEl.getBoundingClientRect()
+      const relativeTop = targetRect.top - containerRect.top + scrollContainer.scrollTop
+      scrollContainer.scrollTo({
+        top: Math.max(0, relativeTop - 20),
+        behavior: 'smooth',
+      })
+    }
+  }
 
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
   const monthCalendarStrip = useMemo(() => {
@@ -1126,19 +1154,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 {/* 1. Monthly Pages */}
                 <div className="space-y-1">
                   <button
-                    onClick={() => {
-                      const el = document.querySelector<HTMLElement>('[data-page-key="calendar"]')
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => scrollToTargetKey('calendar')}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
                   >
                     <span>📅 P1. 월간 달력</span>
                   </button>
                   <button
-                    onClick={() => {
-                      const el = document.querySelector<HTMLElement>('[data-page-key="overview"]')
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => scrollToTargetKey('overview')}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
                   >
                     <span>📊 P2. 월간 개요</span>
@@ -1156,10 +1178,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   }).map((weekItem) => (
                     <div key={weekItem.w} className="space-y-1">
                       <button
-                        onClick={() => {
-                          const el = document.querySelector<HTMLElement>(`[data-page-key="week-${weekItem.w}"], [data-week="${weekItem.w}"]`)
-                          el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }}
+                        onClick={() => scrollToTargetKey(`week-${weekItem.w}`)}
                         className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
                       >
                         <span>📆 {weekItem.label}</span>
@@ -1168,10 +1187,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         {weekItem.dayNums.map((d) => (
                           <button
                             key={d}
-                            onClick={() => {
-                              const el = document.querySelector<HTMLElement>(`[data-page-key="day-${d}"], [data-day="${d}"]`)
-                              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            }}
+                            onClick={() => scrollToTargetKey(`day-${d}`)}
                             className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
                           >
                             {d}일
@@ -1186,6 +1202,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
             {/* Canvas Scroll Area */}
             <div
+              ref={modalScrollRef}
               onClick={(e) => {
                 const target = e.target as HTMLElement
                 const navTargetEl = target.closest('[data-nav-target], [data-day]') as HTMLElement | null
@@ -1194,21 +1211,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 const navTarget = navTargetEl.getAttribute('data-nav-target')
                 const dayAttr = navTargetEl.getAttribute('data-day')
 
-                let targetKey = ''
                 if (navTarget) {
-                  targetKey = navTarget
+                  scrollToTargetKey(navTarget)
                 } else if (dayAttr) {
-                  targetKey = `day-${dayAttr}`
-                }
-
-                if (!targetKey) return
-
-                const pageEl = document.querySelector<HTMLElement>(
-                  `[data-page-key="${targetKey}"], [data-day="${targetKey.replace('day-', '')}"]`
-                )
-
-                if (pageEl) {
-                  pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  scrollToTargetKey(`day-${dayAttr}`)
                 }
               }}
               className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"

@@ -771,7 +771,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
-        <div className="qt-page" style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${dayIdx + 1}`} data-page-key={`day-${dayIdx + 1}`} data-day={dayIdx + 1} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
             {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
@@ -1434,7 +1434,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* Page 1: 말씀 중심 */}
-        <div className="qt-page" style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${dayIdx + 1}`} data-page-key={`day-${dayIdx + 1}`} data-day={dayIdx + 1} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
             <div style={{
