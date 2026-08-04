@@ -117,6 +117,54 @@ export default function DiaryPage() {
     }
   }
 
+  // ★ 팝업 뷰어 캔버스 내부 클릭 시 링크 이벤트 처리 (날짜, 주차, 헤더 탭 클릭 시 부드럽게 자동 이동)
+  const handleModalCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    const navTargetEl = target.closest('[data-nav-target], [data-day]') as HTMLElement | null
+
+    if (!navTargetEl) return
+
+    const navTarget = navTargetEl.getAttribute('data-nav-target')
+    const dayAttr = navTargetEl.getAttribute('data-day')
+
+    if (navTarget) {
+      if (navTarget === 'calendar') {
+        if (modalViewMode === 'single') setModalActiveTab('calendar')
+        else scrollToPageElement('modal-page-calendar')
+      } else if (navTarget === 'overview') {
+        if (modalViewMode === 'single') setModalActiveTab('overview')
+        else scrollToPageElement('modal-page-overview')
+      } else if (navTarget.startsWith('week-')) {
+        const wNum = navTarget.replace('week-', '')
+        if (modalViewMode === 'single') {
+          setModalActiveTab('weekly')
+        } else {
+          scrollToPageElement(`modal-page-week-${wNum}`)
+        }
+      } else if (navTarget.startsWith('day-')) {
+        const dNum = Number(navTarget.replace('day-', ''))
+        if (!isNaN(dNum)) {
+          if (modalViewMode === 'single') {
+            setModalActiveTab('daily')
+            setModalDayNum(dNum)
+          } else {
+            scrollToPageElement(`modal-page-day-${dNum}`)
+          }
+        }
+      }
+    } else if (dayAttr) {
+      const dNum = Number(dayAttr)
+      if (!isNaN(dNum) && dNum > 0) {
+        if (modalViewMode === 'single') {
+          setModalActiveTab('daily')
+          setModalDayNum(dNum)
+        } else {
+          scrollToPageElement(`modal-page-day-${dNum}`)
+        }
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* 1. Header Navigation Bar */}
@@ -621,6 +669,7 @@ export default function DiaryPage() {
             {/* Main Scrollable Viewer Area */}
             <div
               ref={modalScrollRef}
+              onClick={handleModalCanvasClick}
               className="flex-1 overflow-y-auto p-8 flex flex-col items-center justify-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
             >
               {modalViewMode === 'continuous' ? (
