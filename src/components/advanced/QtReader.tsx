@@ -1113,33 +1113,132 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
           </header>
 
-          {/* Canvas Scroll Area: Zero Box Occlusion */}
-          <div className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]">
+          {/* Modal Main Content (Quick-Jump Sidebar + Scroll Canvas Area) */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {/* Quick-Jump Index Sidebar */}
+            {days.length >= 7 && (
+              <div className="w-56 bg-[#060a1a] border-r border-white/10 p-4 overflow-y-auto space-y-4 shrink-0 font-sans hidden md:block">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>📑 목차 Quick-Jump</span>
+                  <span className="text-[9px] text-indigo-400">{days.length} Days</span>
+                </div>
+
+                {/* 1. Monthly Pages */}
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      const el = document.querySelector<HTMLElement>('[data-page-key="calendar"]')
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
+                  >
+                    <span>📅 P1. 월간 달력</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const el = document.querySelector<HTMLElement>('[data-page-key="overview"]')
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
+                  >
+                    <span>📊 P2. 월간 개요</span>
+                  </button>
+                </div>
+
+                {/* 2. Weeks & Daily Pages */}
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  {Array.from({ length: Math.ceil(days.length / 7) }, (_, idx) => {
+                    const w = idx + 1
+                    const startD = idx * 7 + 1
+                    const endD = Math.min(days.length, (idx + 1) * 7)
+                    const dayNums = Array.from({ length: endD - startD + 1 }, (_, dIdx) => startD + dIdx)
+                    return { w, label: `W${w} (Day ${startD}~${endD})`, dayNums }
+                  }).map((weekItem) => (
+                    <div key={weekItem.w} className="space-y-1">
+                      <button
+                        onClick={() => {
+                          const el = document.querySelector<HTMLElement>(`[data-page-key="week-${weekItem.w}"], [data-week="${weekItem.w}"]`)
+                          el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
+                      >
+                        <span>📆 {weekItem.label}</span>
+                      </button>
+                      <div className="grid grid-cols-4 gap-1 pl-1">
+                        {weekItem.dayNums.map((d) => (
+                          <button
+                            key={d}
+                            onClick={() => {
+                              const el = document.querySelector<HTMLElement>(`[data-page-key="day-${d}"], [data-day="${d}"]`)
+                              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }}
+                            className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
+                          >
+                            {d}일
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Canvas Scroll Area */}
             <div
-              className="transition-all duration-200 origin-top shadow-[0_32px_120px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden bg-white border border-white/20 my-4"
-              style={{
-                transform: `scale(${zoomScale})`,
-                transformOrigin: 'top center',
+              onClick={(e) => {
+                const target = e.target as HTMLElement
+                const navTargetEl = target.closest('[data-nav-target], [data-day]') as HTMLElement | null
+                if (!navTargetEl) return
+
+                const navTarget = navTargetEl.getAttribute('data-nav-target')
+                const dayAttr = navTargetEl.getAttribute('data-day')
+
+                let targetKey = ''
+                if (navTarget) {
+                  targetKey = navTarget
+                } else if (dayAttr) {
+                  targetKey = `day-${dayAttr}`
+                }
+
+                if (!targetKey) return
+
+                const pageEl = document.querySelector<HTMLElement>(
+                  `[data-page-key="${targetKey}"], [data-day="${targetKey.replace('day-', '')}"]`
+                )
+
+                if (pageEl) {
+                  pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
               }}
+              className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
             >
-              <QtPdfLayout
-                form={form}
-                result={{ fullManuscript: accumulatedManuscript }}
-                sizeOption={sizeOption}
-                templateId={activeTmpl.id}
-                onlyCover={false}
-                startPassage={startPassage}
-                endPassage={endPassage}
-                userMemos={userMemos}
-                isBilingualSideBySide={isBilingualSideBySide}
-                selectedInfo={selectedInfo}
-                daySectionTitles={daySectionTitles}
-                monthCalendarStrip={monthCalendarStrip}
-                layoutSettings={layoutSettings}
-                editedContent={editedContent}
-                includeDiaryPage={includeDiaryPage}
-                includeMonthlyPlanner={includeMonthlyPlanner}
-              />
+              <div
+                className="transition-all duration-200 origin-top shadow-[0_32px_120px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden bg-white border border-white/20 my-4"
+                style={{
+                  transform: `scale(${zoomScale})`,
+                  transformOrigin: 'top center',
+                }}
+              >
+                <QtPdfLayout
+                  form={form}
+                  result={{ fullManuscript: accumulatedManuscript }}
+                  sizeOption={sizeOption}
+                  templateId={activeTmpl.id}
+                  onlyCover={false}
+                  startPassage={startPassage}
+                  endPassage={endPassage}
+                  userMemos={userMemos}
+                  isBilingualSideBySide={isBilingualSideBySide}
+                  selectedInfo={selectedInfo}
+                  daySectionTitles={daySectionTitles}
+                  monthCalendarStrip={monthCalendarStrip}
+                  layoutSettings={layoutSettings}
+                  editedContent={editedContent}
+                  includeDiaryPage={includeDiaryPage}
+                  includeMonthlyPlanner={includeMonthlyPlanner}
+                />
+              </div>
             </div>
           </div>
         </div>
