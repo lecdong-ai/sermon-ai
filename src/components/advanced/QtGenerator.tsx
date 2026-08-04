@@ -473,26 +473,7 @@ export default function QtGenerator() {
     month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[]
   } | undefined>(undefined)
 
-  // 💡 동일 월에 생성된 주간 큐티 2개 이상 자동 감지
-  const smartMergeGroup = useMemo(() => {
-    if (historyEntries.length < 2) return null
-    const monthGroup: Record<string, QtHistoryEntry[]> = {}
-    for (const entry of historyEntries) {
-      const d = entry.start_date || (entry.created_at ? entry.created_at.split('T')[0] : '')
-      if (!d) continue
-      const parts = d.split('-')
-      if (parts.length >= 2) {
-        const key = `${parts[0]}-${parseInt(parts[1], 10)}`
-        if (!monthGroup[key]) monthGroup[key] = []
-        monthGroup[key].push(entry)
-      }
-    }
-    const found = Object.entries(monthGroup).find(([_, list]) => list.length >= 2)
-    if (!found) return null
-    const [ym, list] = found
-    const [y, m] = ym.split('-')
-    return { year: parseInt(y, 10), month: parseInt(m, 10), label: `${y}년 ${m}월`, entries: list }
-  }, [historyEntries])
+
 
   // 단일 day PDF 상태
   const [singleDayPdf, setSingleDayPdf] = useState<string | null>(null)
@@ -1886,40 +1867,6 @@ export default function QtGenerator() {
           )}
         </button>
       </div>
-
-      {/* 💡 스마트 자동 감지 병합 알림 배너 */}
-      {smartMergeGroup && activeStudioTab === 'weekly' && !showHistory && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-purple-500/15 border border-amber-400/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-400 text-slate-950 font-bold shrink-0">
-              <Sparkles className="w-4 h-4 animate-spin-slow" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-amber-200">
-                💡 {smartMergeGroup.label} 작성 완료된 주간 큐티 {smartMergeGroup.entries.length}개 감지!
-              </h4>
-              <p className="text-[11px] text-slate-300">
-                {smartMergeGroup.entries.map(e => `${e.bible_book} ${e.week_number}주`).join(', ')} 주간 원고를 원클릭으로 {smartMergeGroup.label} 월간 다이어리로 합성합니다.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => {
-                const newSet = new Set<string>()
-                smartMergeGroup.entries.forEach(e => newSet.add(e.id))
-                setSelectedHistoryIds(newSet)
-                handleMonthlyPdf(true)
-              }}
-              disabled={monthlyLoading}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition-all border border-amber-300/30 flex items-center gap-1.5"
-            >
-              {monthlyLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
-              ✨ 1초 만에 {smartMergeGroup.label} 월간 다이어리로 합성하기
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 📅 1개월 월간 큐티 다이어리 마법사 패널 */}
       {activeStudioTab === 'monthly_wizard' && !showHistory && (
