@@ -460,6 +460,19 @@ export default function QtGenerator() {
   const [wizardGenerating, setWizardGenerating] = useState<boolean>(false)
   const [wizardProgressStep, setWizardProgressStep] = useState<string>('')
 
+  // 히스토리 상태
+  const [historyEntries, setHistoryEntries] = useState<QtHistoryEntry[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [savingHistory, setSavingHistory] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<QtHistoryEntry | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [historyError, setHistoryError] = useState('')
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set())
+  const [monthlyStrip, setMonthlyStrip] = useState<{
+    month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[]
+  } | undefined>(undefined)
+
   // 💡 동일 월에 생성된 주간 큐티 2개 이상 자동 감지
   const smartMergeGroup = useMemo(() => {
     if (historyEntries.length < 2) return null
@@ -480,19 +493,6 @@ export default function QtGenerator() {
     const [y, m] = ym.split('-')
     return { year: parseInt(y, 10), month: parseInt(m, 10), label: `${y}년 ${m}월`, entries: list }
   }, [historyEntries])
-
-  // 히스토리 상태
-  const [historyEntries, setHistoryEntries] = useState<QtHistoryEntry[]>([])
-  const [showHistory, setShowHistory] = useState(false)
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [savingHistory, setSavingHistory] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<QtHistoryEntry | null>(null)
-  const [editContent, setEditContent] = useState('')
-  const [historyError, setHistoryError] = useState('')
-  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set())
-  const [monthlyStrip, setMonthlyStrip] = useState<{
-    month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[]
-  } | undefined>(undefined)
 
   // 단일 day PDF 상태
   const [singleDayPdf, setSingleDayPdf] = useState<string | null>(null)
