@@ -438,6 +438,7 @@ export default function QtGenerator() {
   
   // 최종 결과 (QtReader 연동용)
   const [finalManuscript, setFinalManuscript] = useState('')
+  const [includeDiaryPage, setIncludeDiaryPage] = useState(true)
   // 일자별 성경 소제목 (PDF 표시용)
   const [daySectionTitles, setDaySectionTitles] = useState<Record<number, string[]>>({})
 
@@ -827,7 +828,8 @@ export default function QtGenerator() {
 
   // 월간 PDF: 선택한 history entries를 주차별로 fetch → combine
   const [monthlyLoading, setMonthlyLoading] = useState(false)
-  const handleMonthlyPdf = async () => {
+  const handleMonthlyPdf = async (withDiary: boolean = true) => {
+    setIncludeDiaryPage(withDiary)
     const entries = historyEntries
       .filter(e => selectedHistoryIds.has(e.id))
       .sort((a, b) => (a.start_date || a.created_at).localeCompare(b.start_date || b.created_at))
@@ -1673,6 +1675,7 @@ export default function QtGenerator() {
           selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : null}
           daySectionTitles={daySectionTitles}
           monthCalendarStrip={monthlyStrip}
+          initialIncludeDiaryPage={includeDiaryPage}
           onBack={() => {
             setFinalManuscript('')
             setDaySectionTitles({})
@@ -1775,10 +1778,7 @@ export default function QtGenerator() {
             {selectedHistoryIds.size >= 2 && (
               <div className="flex items-center gap-2 pb-2 border-b border-white/5 flex-wrap">
                 <button
-                  onClick={() => {
-                    setIncludeDiaryPage(false)
-                    handleMonthlyPdf()
-                  }}
+                  onClick={() => handleMonthlyPdf(false)}
                   disabled={monthlyLoading}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all disabled:opacity-40 border border-indigo-400/30"
                 >
@@ -1787,10 +1787,7 @@ export default function QtGenerator() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    setIncludeDiaryPage(true)
-                    handleMonthlyPdf()
-                  }}
+                  onClick={() => handleMonthlyPdf(true)}
                   disabled={monthlyLoading}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-[10px] font-bold transition-all shadow-md border border-amber-300/30 disabled:opacity-40"
                 >

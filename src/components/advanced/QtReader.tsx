@@ -53,10 +53,11 @@ interface QtReaderProps {
   selectedInfo?: QtSelectedInfo
   daySectionTitles?: Record<number, string[]>
   monthCalendarStrip?: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] }
+  initialIncludeDiaryPage?: boolean
   onBack: () => void
 }
 
-export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, onBack }: QtReaderProps) {
+export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, initialIncludeDiaryPage, onBack }: QtReaderProps) {
   const generationKey = form.audience || 'default'
 
   // ★ 주간 vs 월간 큐티 판별: externalStrip이 있거나 parsedDays > 7이면 월간
@@ -73,7 +74,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [isBilingualSideBySide, setIsBilingualSideBySide] = useState(false)
   // ★ 주간 큐티 → 다이어리/플래너 기본 OFF, 월간 큐티 → 기본 ON
-  const [includeDiaryPage, setIncludeDiaryPage] = useState(isMonthlyMode)
+  const [includeDiaryPage, setIncludeDiaryPage] = useState(initialIncludeDiaryPage ?? isMonthlyMode)
+
+  useEffect(() => {
+    if (initialIncludeDiaryPage !== undefined) {
+      setIncludeDiaryPage(initialIncludeDiaryPage)
+    }
+  }, [initialIncludeDiaryPage])
   const [includeMonthlyPlanner, setIncludeMonthlyPlanner] = useState(isMonthlyMode)
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
