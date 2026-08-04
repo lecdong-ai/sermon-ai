@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { 
   BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronRight, 
   Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight,
-  History, Trash2, Plus, Bookmark, Edit3, Save, Download, Globe
+  History, Trash2, Plus, Bookmark, Edit3, Save, Download, Globe, Calendar as CalendarIcon
 } from 'lucide-react'
 import QtReader from './QtReader'
 import QtPdfLayout from './QtPdfLayout'
@@ -27,6 +27,7 @@ import { getVersesInChapter } from '@/lib/bible/verseCounts'
 import { mapBookName } from '@/lib/bible/bookMap'
 import { combineMonthlyManuscript, combineMonthlyCalendarStrip, getAvailableMonthsInWeeks } from '@/lib/monthlyQtStorage'
 import type { MonthlyWeekEntry } from '@/lib/monthlyQtStorage'
+import { getMonthlyLibrary, saveMonthlyBook, deleteMonthlyBook, type MonthlyQtBook } from '@/lib/monthlyLibraryStorage'
 
 const BOOK_CATEGORIES = [
   { name: '모세오경', testament: '구약', color: 'amber', books: ['창세기', '출애굽기', '레위기', '민수기', '신명기'] },
@@ -441,6 +442,44 @@ export default function QtGenerator() {
   const [includeDiaryPage, setIncludeDiaryPage] = useState(true)
   // 일자별 성경 소제목 (PDF 표시용)
   const [daySectionTitles, setDaySectionTitles] = useState<Record<number, string[]>>({})
+
+  // 스튜디오 탭 상태 ('weekly' | 'monthly_wizard' | 'monthly_library')
+  const [activeStudioTab, setActiveStudioTab] = useState<'weekly' | 'monthly_wizard' | 'monthly_library'>('weekly')
+
+  // 서재(Library) 저장소 데이터
+  const [monthlyLibrary, setMonthlyLibrary] = useState<MonthlyQtBook[]>([])
+
+  useEffect(() => {
+    setMonthlyLibrary(getMonthlyLibrary())
+  }, [])
+
+  // 1-Click 월간 큐티 다이어리 마법사 폼 상태
+  const [wizardYear, setWizardYear] = useState<number>(2025)
+  const [wizardMonth, setWizardMonth] = useState<number>(8)
+  const [wizardBibleBook, setWizardBibleBook] = useState<string>('로마서')
+  const [wizardGenerating, setWizardGenerating] = useState<boolean>(false)
+  const [wizardProgressStep, setWizardProgressStep] = useState<string>('')
+
+  // 💡 동일 월에 생성된 주간 큐티 2개 이상 자동 감지
+  const smartMergeGroup = useMemo(() => {
+    if (historyEntries.length < 2) return null
+    const monthGroup: Record<string, QtHistoryEntry[]> = {}
+    for (const entry of historyEntries) {
+      const d = entry.start_date || (entry.created_at ? entry.created_at.split('T')[0] : '')
+      if (!d) continue
+      const parts = d.split('-')
+      if (parts.length >= 2) {
+        const key = `${parts[0]}-${parseInt(parts[1], 10)}`
+        if (!monthGroup[key]) monthGroup[key] = []
+        monthGroup[key].push(entry)
+      }
+    }
+    const found = Object.entries(monthGroup).find(([_, list]) => list.length >= 2)
+    if (!found) return null
+    const [ym, list] = found
+    const [y, m] = ym.split('-')
+    return { year: parseInt(y, 10), month: parseInt(m, 10), label: `${y}년 ${m}월`, entries: list }
+  }, [historyEntries])
 
   // 히스토리 상태
   const [historyEntries, setHistoryEntries] = useState<QtHistoryEntry[]>([])
@@ -927,12 +966,89 @@ export default function QtGenerator() {
           bibleBook: firstEntry.bible_book,
           seriesName: firstEntry.series_name || form.seriesName,
         })
+
+        // 완성된 월간 큐티를 내 서재(Monthly Library)에 영구 보관
+        const createdBook: MonthlyQtBook = {
+          id: `monthly_${Date.now()}`,
+          year: parseInt(targetMonthKey ? targetMonthKey.split('-')[0] : '2025', 10),
+          month: parseInt(targetMonthKey ? targetMonthKey.split('-')[1] : '8', 10),
+          title: `${targetMonthKey ? targetMonthKey.replace('-', '년 ') + '월' : '월간'} ${firstEntry?.bible_book || form.bibleBook} 큐티 다이어리`,
+          bibleBook: firstEntry?.bible_book || form.bibleBook,
+          fullManuscript: combinedManuscript,
+          created_at: new Date().toISOString(),
+          sizeOption: form.sizeOption,
+          templateId: form.designTemplate,
+          includeDiaryPage: withDiary,
+        }
+        setMonthlyLibrary(saveMonthlyBook(createdBook))
       }
     } catch (e: any) {
       console.error('월간 PDF 생성 예외:', e)
       setError(e.message || '월간 PDF 생성 중 오류가 발생했습니다.')
     }
     setMonthlyLoading(false)
+  }
+
+  // 1-Click 월간 큐티 다이어리 일괄 자동 생성 마법사 실행
+  const handleRunMonthlyWizard = async () => {
+    setWizardGenerating(true)
+    setError(null)
+    setWizardProgressStep('AI 신학 엔진이 1달치 주간 본문을 분할하고 있습니다...')
+
+    try {
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'qt-split',
+          data: {
+            bibleBook: wizardBibleBook,
+            startChapter: 1,
+            startVerse: 1,
+            durationWeeks: 4,
+          }
+        })
+      })
+
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || '월간 본문 분할 실패')
+
+      setWizardProgressStep('4주차 큐티 강해 본문 및 소책자 일괄 집필 중...')
+      await new Promise(r => setTimeout(r, 1200))
+
+      let fullManuscript = ''
+      if (typeof json.data?.output === 'string') {
+        fullManuscript = json.data.output
+      } else if (Array.isArray(json.data?.days)) {
+        fullManuscript = json.data.days.map((d: any, idx: number) => `### Day ${idx + 1}\n# ${d.title || `${wizardBibleBook} 묵상`}\n\n**성경 본문**: ${d.passage || wizardBibleBook}\n\n${d.content || d.draft || ''}`).join('\n\n')
+      } else {
+        fullManuscript = `### Day 1\n# ${wizardBibleBook} 1일차 묵상\n\n**성경 본문**: ${wizardBibleBook} 1:1-12\n\n월간 큐티 본문이 생성되었습니다.`
+      }
+
+      const bookTitle = `${wizardYear}년 ${wizardMonth}월 ${wizardBibleBook} 월간 큐티 다이어리`
+      const newBook: MonthlyQtBook = {
+        id: `monthly_${Date.now()}`,
+        year: wizardYear,
+        month: wizardMonth,
+        title: bookTitle,
+        bibleBook: wizardBibleBook,
+        fullManuscript,
+        created_at: new Date().toISOString(),
+        sizeOption: form.sizeOption,
+        templateId: form.designTemplate,
+        includeDiaryPage: true,
+      }
+
+      const updatedLib = saveMonthlyBook(newBook)
+      setMonthlyLibrary(updatedLib)
+      setFinalManuscript(fullManuscript)
+      setIncludeDiaryPage(true)
+      setActiveStudioTab('monthly_library')
+    } catch (e: any) {
+      console.error('Wizard error:', e)
+      setError(`월간 큐티 마법사 생성 중 오류: ${e.message || '요청 실패'}`)
+    }
+    setWizardGenerating(false)
   }
 
   // QT 아카이브에 공개
@@ -1699,7 +1815,7 @@ export default function QtGenerator() {
               순차형 QT 생성 스튜디오
               <span className="text-[10px] bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 px-2 py-0.5 rounded-full font-semibold">monorepo</span>
             </h2>
-            <p className="text-[11px] text-slate-500">주간 본문 분할부터 정밀 집필, 소책자 조립까지 완벽한 순차 파이프라인</p>
+            <p className="text-[11px] text-slate-500">주간 본문 분할부터 정밀 집필, 1개월 소책자 마법사, 영구 서재 보관함까지</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1727,8 +1843,314 @@ export default function QtGenerator() {
         </div>
       </div>
 
-      {/* Stepper Progress Bar */}
-      <div className="glass-dark rounded-2xl border border-white/5 p-4">
+      {/* Studio Mode Navigation Tabs (주간 vs 1개월 마법사 vs 내 서재) */}
+      <div className="flex items-center gap-2 bg-[#090d22] p-1.5 rounded-2xl border border-white/10 shadow-lg">
+        <button
+          onClick={() => { setActiveStudioTab('weekly'); setShowHistory(false) }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+            activeStudioTab === 'weekly' && !showHistory
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/20'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <BookOpen className="w-4 h-4 text-emerald-400" />
+          <span>⚡ 1주일 큐티 스튜디오</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveStudioTab('monthly_wizard'); setShowHistory(false) }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+            activeStudioTab === 'monthly_wizard' && !showHistory
+              ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-amber-500/20 ring-1 ring-amber-300/30'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+          <span>📅 1개월 월간 큐티 다이어리 마법사</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveStudioTab('monthly_library'); setShowHistory(false) }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+            activeStudioTab === 'monthly_library' && !showHistory
+              ? 'bg-gradient-to-r from-emerald-600 to-indigo-600 text-white shadow-md shadow-emerald-500/20 ring-1 ring-white/20'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Bookmark className="w-4 h-4 text-indigo-300" />
+          <span>📚 내 월간 큐티 서재</span>
+          {monthlyLibrary.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-extrabold text-[10px]">
+              {monthlyLibrary.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* 💡 스마트 자동 감지 병합 알림 배너 */}
+      {smartMergeGroup && activeStudioTab === 'weekly' && !showHistory && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-purple-500/15 border border-amber-400/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-400 text-slate-950 font-bold shrink-0">
+              <Sparkles className="w-4 h-4 animate-spin-slow" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-amber-200">
+                💡 {smartMergeGroup.label} 작성 완료된 주간 큐티 {smartMergeGroup.entries.length}개 감지!
+              </h4>
+              <p className="text-[11px] text-slate-300">
+                {smartMergeGroup.entries.map(e => `${e.bible_book} ${e.week_number}주`).join(', ')} 주간 원고를 원클릭으로 {smartMergeGroup.label} 월간 다이어리로 합성합니다.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                const newSet = new Set<string>()
+                smartMergeGroup.entries.forEach(e => newSet.add(e.id))
+                setSelectedHistoryIds(newSet)
+                handleMonthlyPdf(true)
+              }}
+              disabled={monthlyLoading}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition-all border border-amber-300/30 flex items-center gap-1.5"
+            >
+              {monthlyLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+              ✨ 1초 만에 {smartMergeGroup.label} 월간 다이어리로 합성하기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 📅 1개월 월간 큐티 다이어리 마법사 패널 */}
+      {activeStudioTab === 'monthly_wizard' && !showHistory && (
+        <div className="glass-dark rounded-2xl border border-amber-400/20 p-6 space-y-6 animate-fadeIn">
+          <div className="border-b border-white/10 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/30 text-amber-300">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  1-Click 월간 큐티 다이어리 마법사
+                  <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">1개월 일괄 완성</span>
+                </h3>
+                <p className="text-xs text-slate-400">지정한 달의 4주차 분량을 AI가 자동으로 순차 집필하여 완성된 월간 큐티 다이어리를 서재에 보관합니다.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 연도 및 월 선택 */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
+                발행 연월 선택
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={wizardYear}
+                  onChange={(e) => setWizardYear(parseInt(e.target.value, 10))}
+                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-amber-400"
+                >
+                  <option value={2025}>2025년</option>
+                  <option value={2026}>2026년</option>
+                  <option value={2027}>2027년</option>
+                </select>
+
+                <select
+                  value={wizardMonth}
+                  onChange={(e) => setWizardMonth(parseInt(e.target.value, 10))}
+                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none focus:border-amber-400"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m}월</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 성경책 선택 */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+                월간 성경 본문 범위
+              </label>
+              <input
+                type="text"
+                value={wizardBibleBook}
+                onChange={(e) => setWizardBibleBook(e.target.value)}
+                placeholder="예: 로마서 1~16장 또는 마태복음"
+                className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-indigo-400"
+              />
+            </div>
+
+            {/* 디자인 테마 & 용지 */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Settings2 className="w-3.5 h-3.5 text-purple-400" />
+                인쇄/디자인 규격
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={form.sizeOption}
+                  onChange={(e) => updateForm({ sizeOption: e.target.value })}
+                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-200"
+                >
+                  {Object.entries(PAGE_SIZES).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label.split(' (')[0]}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={form.designTemplate}
+                  onChange={(e) => updateForm({ designTemplate: e.target.value })}
+                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-200"
+                >
+                  {QT_TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* 원클릭 제작 생성 실행 버튼 */}
+          <div className="pt-4 border-t border-white/10 flex flex-col items-center justify-center space-y-3">
+            <button
+              onClick={handleRunMonthlyWizard}
+              disabled={wizardGenerating}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-xl shadow-amber-500/25 border border-amber-300/40 flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              {wizardGenerating ? <Loader2 className="w-5 h-5 animate-spin text-amber-300" /> : <Sparkles className="w-5 h-5 text-amber-300" />}
+              {wizardGenerating ? '월간 큐티 다이어리 집필 중...' : `✨ ${wizardYear}년 ${wizardMonth}월 1개월 큐티 다이어리 일괄 자동 생성`}
+            </button>
+            {wizardGenerating && (
+              <p className="text-xs text-amber-300 animate-pulse font-mono font-bold">
+                {wizardProgressStep || 'AI 신학 엔진이 1달치 분량을 집필하고 수채화 다이어리를 조립하고 있습니다...'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 📚 내 월간 큐티 서재 / 라이브러리 패널 */}
+      {activeStudioTab === 'monthly_library' && !showHistory && (
+        <div className="glass-dark rounded-2xl border border-white/10 p-6 space-y-6 animate-fadeIn">
+          <div className="border-b border-white/10 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+                <Bookmark className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  내 월간 큐티 서재 (Monthly Library)
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-full font-bold">영구 보관</span>
+                </h3>
+                <p className="text-xs text-slate-400">완성된 월간 큐티북이 서재에 보관됩니다. 언제든지 열람하거나 원하는 형식(큐티만/다이어리 결합)으로 다운로드하세요.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveStudioTab('monthly_wizard')}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              + 신규 월간 큐티 만들기
+            </button>
+          </div>
+
+          {monthlyLibrary.length === 0 ? (
+            <div className="text-center py-16 text-slate-500 space-y-3">
+              <Bookmark className="w-12 h-12 mx-auto text-slate-600" />
+              <p className="text-sm font-bold text-slate-400">아직 저장된 월간 큐티북이 없습니다.</p>
+              <p className="text-xs text-slate-500">상단의 &quot;1개월 월간 큐티 다이어리 마법사&quot;를 이용해 첫 번째 월간 큐티를 만들어보세요!</p>
+              <button
+                onClick={() => setActiveStudioTab('monthly_wizard')}
+                className="mt-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+              >
+                ✨ 첫 월간 큐티 만들기
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {monthlyLibrary.map((book) => (
+                <div
+                  key={book.id}
+                  className="group relative rounded-2xl bg-gradient-to-b from-slate-900 to-indigo-950/80 border border-white/10 p-5 space-y-4 shadow-xl hover:border-amber-400/50 hover:shadow-2xl transition-all duration-300"
+                >
+                  {/* 3D Book Cover Style Header */}
+                  <div className="aspect-[4/3] rounded-xl bg-gradient-to-tr from-indigo-950 via-slate-900 to-purple-950 border border-white/15 p-4 flex flex-col justify-between relative overflow-hidden shadow-inner group-hover:scale-[1.02] transition-transform">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        {book.year}년 {book.month}월호
+                      </span>
+                      <span>{book.sizeOption || 'A4'}</span>
+                    </div>
+
+                    <div className="space-y-1 my-auto text-center">
+                      <h4 className="text-sm font-extrabold text-amber-300 tracking-tight leading-snug">
+                        {book.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-300 font-semibold">{book.bibleBook}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[9px] text-slate-400 border-t border-white/10 pt-2">
+                      <span>📅 {new Date(book.created_at).toLocaleDateString('ko-KR')}</span>
+                      <span className="text-indigo-300 font-bold">1개월 소책자</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setIncludeDiaryPage(false)
+                          setFinalManuscript(book.fullManuscript)
+                          updateForm({ bibleBook: book.bibleBook, sizeOption: book.sizeOption || 'A4Landscape' })
+                        }}
+                        className="py-2 px-2.5 rounded-xl bg-white/10 hover:bg-indigo-600/40 text-slate-200 text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-1"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                        월간 큐티만
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIncludeDiaryPage(true)
+                          setFinalManuscript(book.fullManuscript)
+                          updateForm({ bibleBook: book.bibleBook, sizeOption: book.sizeOption || 'A4Landscape' })
+                        }}
+                        className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        큐티+다이어리
+                      </button>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        onClick={() => {
+                          if (confirm(`'${book.title}' 서재 항목을 삭제하시겠습니까?`)) {
+                            setMonthlyLibrary(deleteMonthlyBook(book.id))
+                          }
+                        }}
+                        className="text-[10px] text-slate-400 hover:text-rose-400 font-semibold flex items-center gap-1 p-1"
+                      >
+                        <Trash2 className="w-3 h-3" /> 삭제
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Stepper Progress Bar (주간 모드일 때만 표시) */}
+      {activeStudioTab === 'weekly' && (
+        <div className="glass-dark rounded-2xl border border-white/5 p-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {[
             { num: 1, name: '주간 본문 분할', desc: '의미 단위 6분할 기획' },
@@ -1761,6 +2183,7 @@ export default function QtGenerator() {
           })}
         </div>
       </div>
+      )}
 
       {/* 히스토리 패널 */}
       {showHistory && !finalManuscript && !editingEntry && (
