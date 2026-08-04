@@ -1771,20 +1771,31 @@ export default function QtGenerator() {
               <span className="text-[10px] text-slate-500">{historyEntries.length}개</span>
             </div>
 
-            {/* 선택한 기록 → 월간 PDF 생성 */}
+            {/* 선택한 기록 → 월간 PDF 생성 (월간 큐티 vs 월간 큐티+다이어리 분리) */}
             {selectedHistoryIds.size >= 2 && (
-              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/5 flex-wrap">
                 <button
-                  onClick={handleMonthlyPdf}
+                  onClick={() => {
+                    setIncludeDiaryPage(false)
+                    handleMonthlyPdf()
+                  }}
                   disabled={monthlyLoading}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all disabled:opacity-40 border border-indigo-400/30"
                 >
-                  {monthlyLoading ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <FileText className="w-3 h-3" />
-                  )}
-                  {monthlyLoading ? '생성 중...' : `📄 선택한 ${selectedHistoryIds.size}개 주간 PDF 생성`}
+                  {monthlyLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3 text-indigo-300" />}
+                  {monthlyLoading ? '생성 중...' : `📖 선택한 ${selectedHistoryIds.size}개주 ➔ 월간 큐티만 PDF`}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIncludeDiaryPage(true)
+                    handleMonthlyPdf()
+                  }}
+                  disabled={monthlyLoading}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-[10px] font-bold transition-all shadow-md border border-amber-300/30 disabled:opacity-40"
+                >
+                  {monthlyLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3 text-amber-300" />}
+                  {monthlyLoading ? '생성 중...' : `📖+📝 선택한 ${selectedHistoryIds.size}개주 ➔ 월간 큐티 + 다이어리 PDF`}
                 </button>
               </div>
             )}

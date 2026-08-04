@@ -281,9 +281,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     }
   }
 
-  const handlePdfDownload = async () => {
+  const handlePdfDownload = async (withDiary: boolean = true) => {
+    setIncludeDiaryPage(withDiary)
     setPdfLoading(true)
-    await new Promise(r => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, 400))
     try {
       if (pdfLayoutRef.current) {
         const result = { fullManuscript: accumulatedManuscript }
@@ -537,13 +538,26 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </button>
           )}
 
+          {/* 1. 월간 큐티만 저장 버튼 */}
           <button
-            onClick={handlePdfDownload}
+            onClick={() => handlePdfDownload(false)}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30 disabled:opacity-40 whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-indigo-500/20 text-slate-300 hover:text-white text-xs font-bold transition-all border border-white/10 disabled:opacity-40 whitespace-nowrap shrink-0"
+            title="큐티 강해 본문 + 월간/주간 플래너만 구성된 PDF 저장"
           >
-            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {pdfLoading ? 'PDF 생성 중...' : '전체 PDF 저장'}
+            {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-400" />}
+            📖 월간 큐티만 저장
+          </button>
+
+          {/* 2. 월간 큐티 + 다이어리 저장 버튼 */}
+          <button
+            onClick={() => handlePdfDownload(true)}
+            disabled={pdfLoading || days.length === 0}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-amber-300/30 disabled:opacity-40 whitespace-nowrap shrink-0"
+            title="큐티 강해 본문 + 날짜별 수채화 다이어리가 모두 결합된 PDF 저장"
+          >
+            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
+            📖+📝 월간 큐티 + 다이어리 저장
           </button>
         </div>
       </header>
@@ -1121,19 +1135,28 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
 
             {/* Right: PDF Save & Close */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
-                onClick={handlePdfDownload}
+                onClick={() => handlePdfDownload(false)}
                 disabled={pdfLoading || days.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-500/20 border border-amber-300/30"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-indigo-500/20 text-slate-300 hover:text-white text-xs font-bold transition-all border border-white/10 disabled:opacity-40"
               >
-                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {pdfLoading ? 'PDF 생성 중...' : 'PDF 저장하기'}
+                {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-400" />}
+                📖 월간 큐티만 PDF
+              </button>
+
+              <button
+                onClick={() => handlePdfDownload(true)}
+                disabled={pdfLoading || days.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-500/20 border border-amber-300/30 disabled:opacity-40"
+              >
+                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
+                📖+📝 월간 큐티 + 다이어리 PDF
               </button>
 
               <button
                 onClick={() => setIsPdfFullscreenModalOpen(false)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-red-500/20 text-slate-300 hover:text-red-200 text-xs font-bold transition-all border border-white/10"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-red-500/20 text-slate-300 hover:text-red-200 text-xs font-bold transition-all border border-white/10 ml-1"
               >
                 <X className="w-4 h-4" />
                 닫기
