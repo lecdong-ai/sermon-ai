@@ -135,13 +135,10 @@ export async function generateQtPdf(
 
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
 
-      const isCoverPage = (i === 0 && dayIndex === undefined)
-      const marginSide = isCoverPage ? 0 : 14
-      const marginTop = isCoverPage ? 0 : 8
-      const drawW = isCoverPage ? widthMm : widthMm - marginSide * 2
-      const drawH = isCoverPage ? heightMm : heightMm - marginTop - marginSide
-      const drawX = isCoverPage ? 0 : marginSide
-      const drawY = isCoverPage ? 0 : marginTop
+      const drawW = widthMm
+      const drawH = heightMm
+      const drawX = 0
+      const drawY = 0
 
       if (hasContent) pdf.addPage([widthMm, heightMm])
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')

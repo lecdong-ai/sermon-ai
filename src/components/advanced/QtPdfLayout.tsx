@@ -2295,6 +2295,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               month={monthNum}
               monthName={monthName}
               themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
             />
           ) : (
             <QtMonthlyCalendarPortrait
@@ -2302,6 +2304,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               month={monthNum}
               monthName={monthName}
               themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
             />
           )
         )}
@@ -2313,12 +2317,16 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               year={yearNum}
               monthName={monthName}
               themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
             />
           ) : (
             <QtMonthlyOverviewPortrait
               year={yearNum}
               monthName={monthName}
               themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
             />
           )
         )}
@@ -2339,6 +2347,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     weekLabel={`WEEK ${currentWeekNum}`}
                     monthName={monthName}
                     themeColor={themeColor}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
                   />
                 ) : (
                   <QtWeeklyPlanPortrait
@@ -2346,6 +2356,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     weekLabel={`WEEK ${currentWeekNum}`}
                     monthName={monthName}
                     themeColor={themeColor}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
                   />
                 )
               )}
@@ -2367,6 +2379,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     yearLabel={String(yearNum)}
                     themeColor={themeColor}
                     activeWeek={`W${currentWeekNum}`}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
                   />
                 ) : (
                   <QtDailyDiaryPortrait
@@ -2377,6 +2391,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     yearLabel={String(yearNum)}
                     themeColor={themeColor}
                     activeWeek={`W${currentWeekNum}`}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
                   />
                 )
               )}
