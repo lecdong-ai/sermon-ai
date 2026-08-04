@@ -7,7 +7,12 @@ import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMo
 import type { QTFormData, QTResult } from './QtGenerator'
 import QtDailyDiaryPage from './QtDailyDiaryPage'
 import QtMonthlyCalendarPage from './QtMonthlyCalendarPage'
+import QtMonthlyOverviewPage from './QtMonthlyOverviewPage'
 import QtWeeklyPlanPage from './QtWeeklyPlanPage'
+import QtDailyDiaryPortrait from './portrait/QtDailyDiaryPortrait'
+import QtMonthlyCalendarPortrait from './portrait/QtMonthlyCalendarPortrait'
+import QtMonthlyOverviewPortrait from './portrait/QtMonthlyOverviewPortrait'
+import QtWeeklyPlanPortrait from './portrait/QtWeeklyPlanPortrait'
 
 interface QtSelectedInfo {
   book: string
@@ -2282,17 +2287,43 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* 1. Cover Page */}
         {renderCover()}
 
-        {/* 2. Monthly Calendar Page (P18 양식) */}
+        {/* 2. Monthly Calendar Page */}
         {isPlannerEnabled && (
-          <QtMonthlyCalendarPage
-            year={yearNum}
-            month={monthNum}
-            monthName={monthName}
-            themeColor={themeColor}
-          />
+          isLandscape ? (
+            <QtMonthlyCalendarPage
+              year={yearNum}
+              month={monthNum}
+              monthName={monthName}
+              themeColor={themeColor}
+            />
+          ) : (
+            <QtMonthlyCalendarPortrait
+              year={yearNum}
+              month={monthNum}
+              monthName={monthName}
+              themeColor={themeColor}
+            />
+          )
         )}
 
-        {/* 3. Daily QT (Page A) + Daily Diary & Prayer (Page B) Pairs */}
+        {/* 3. Monthly Overview Page */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtMonthlyOverviewPage
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+            />
+          ) : (
+            <QtMonthlyOverviewPortrait
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+            />
+          )
+        )}
+
+        {/* 4. Daily QT (Page A) + Daily Diary & Prayer (Page B) Pairs */}
         {parsedDays.map((day, dayIdx) => {
           const dateInfo = parseDayLabelHelper(weekdays[dayIdx]?.label, dayIdx)
           const isWeekStart = dayIdx % 7 === 0
@@ -2302,12 +2333,21 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             <React.Fragment key={dayIdx}>
               {/* Insert Weekly Plan page before each week */}
               {isPlannerEnabled && isWeekStart && (
-                <QtWeeklyPlanPage
-                  weekNum={currentWeekNum}
-                  weekLabel={`WEEK ${currentWeekNum}`}
-                  monthName={monthName}
-                  themeColor={themeColor}
-                />
+                isLandscape ? (
+                  <QtWeeklyPlanPage
+                    weekNum={currentWeekNum}
+                    weekLabel={`WEEK ${currentWeekNum}`}
+                    monthName={monthName}
+                    themeColor={themeColor}
+                  />
+                ) : (
+                  <QtWeeklyPlanPortrait
+                    weekNum={currentWeekNum}
+                    weekLabel={`WEEK ${currentWeekNum}`}
+                    monthName={monthName}
+                    themeColor={themeColor}
+                  />
+                )
               )}
 
               {/* Page A: Daily QT Page */}
@@ -2316,17 +2356,29 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 : renderDailyPortrait(day, dayIdx)
               }
 
-              {/* Page B: Daily Diary & Prayer Page (diary.pdf 21쪽 양식) */}
+              {/* Page B: Daily Diary & Prayer Page */}
               {isDiaryEnabled && (
-                <QtDailyDiaryPage
-                  dateLabel={dateInfo.dateLabel}
-                  dayNum={dateInfo.dayNum}
-                  dayName={dateInfo.dayName}
-                  monthName={monthName}
-                  yearLabel={String(yearNum)}
-                  themeColor={themeColor}
-                  activeWeek={`W${currentWeekNum}`}
-                />
+                isLandscape ? (
+                  <QtDailyDiaryPage
+                    dateLabel={dateInfo.dateLabel}
+                    dayNum={dateInfo.dayNum}
+                    dayName={dateInfo.dayName}
+                    monthName={monthName}
+                    yearLabel={String(yearNum)}
+                    themeColor={themeColor}
+                    activeWeek={`W${currentWeekNum}`}
+                  />
+                ) : (
+                  <QtDailyDiaryPortrait
+                    dateLabel={dateInfo.dateLabel}
+                    dayNum={dateInfo.dayNum}
+                    dayName={dateInfo.dayName}
+                    monthName={monthName}
+                    yearLabel={String(yearNum)}
+                    themeColor={themeColor}
+                    activeWeek={`W${currentWeekNum}`}
+                  />
+                )
               )}
             </React.Fragment>
           )
