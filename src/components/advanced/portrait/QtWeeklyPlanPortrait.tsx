@@ -82,13 +82,13 @@ export default function QtWeeklyPlanPortrait({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-serif font-bold text-sm shadow-2xs"
+            className="px-3 py-1 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0"
             style={{ backgroundColor: themeColor }}
           >
-            {weekNum}
+            {weekNum}주차
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName} Weekly Plan</h2>
+            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName} Weekly Plan ({weekNum}주차)</h2>
             <div className="text-[11px] text-slate-400 font-medium">{dateRangeText}</div>
           </div>
         </div>

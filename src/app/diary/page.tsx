@@ -79,6 +79,36 @@ export default function DiaryPage() {
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
   const DailyComponent = isLandscape ? QtDailyDiaryPage : QtDailyDiaryPortrait
 
+  // ★ 해당 월/연도에 맞는 주차별 실제 날짜 & 1주차~5주차 정보 동적 계산 헬퍼
+  const getWeekData = (wIndex: number) => {
+    const totalDaysCount = new Date(selectedYear, selectedMonth, 0).getDate()
+    const startDay = (wIndex - 1) * 7 + 1
+    const endDay = Math.min(totalDaysCount, wIndex * 7)
+
+    const dateRangeText = `${String(selectedMonth).padStart(2, '0')}/${String(startDay).padStart(2, '0')} - ${String(selectedMonth).padStart(2, '0')}/${String(endDay).padStart(2, '0')}`
+
+    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    const daysInWeek = Array.from({ length: 7 }, (_, i) => {
+      const dayNum = (wIndex - 1) * 7 + i + 1
+      const isValid = dayNum <= totalDaysCount
+      const d = isValid ? new Date(selectedYear, selectedMonth - 1, dayNum) : null
+      const dayName = d ? dayNames[d.getDay()] : dayNames[i]
+      const dateStr = isValid ? `${String(selectedMonth).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}` : '-'
+      return {
+        dayNum: isValid ? dayNum : 0,
+        dayName,
+        dateStr,
+      }
+    })
+
+    return {
+      weekNum: wIndex,
+      weekLabel: `${wIndex}주차`,
+      dateRangeText,
+      daysInWeek,
+    }
+  }
+
   // PDF 다운로드 핸들러
   const handleDownloadFullPdf = async () => {
     if (!pdfContainerRef.current) return
@@ -491,16 +521,21 @@ export default function DiaryPage() {
                   pageHeight={pageHeight}
                 />
               )}
-              {previewTab === 'weekly' && (
-                <WeeklyComponent
-                  weekNum={1}
-                  weekLabel="WEEK 1"
-                  monthName={monthName}
-                  themeColor={activeColor}
-                  pageWidth={pageWidth}
-                  pageHeight={pageHeight}
-                />
-              )}
+              {previewTab === 'weekly' && (() => {
+                const w1Data = getWeekData(1)
+                return (
+                  <WeeklyComponent
+                    weekNum={w1Data.weekNum}
+                    weekLabel={w1Data.weekLabel}
+                    dateRangeText={w1Data.dateRangeText}
+                    daysInWeek={w1Data.daysInWeek}
+                    monthName={monthName}
+                    themeColor={activeColor}
+                    pageWidth={pageWidth}
+                    pageHeight={pageHeight}
+                  />
+                )
+              })()}
               {previewTab === 'daily' && (
                 <DailyComponent
                   dateLabel={`${String(activeDayNum).padStart(2, '0')} DAY`}
@@ -738,21 +773,27 @@ export default function DiaryPage() {
 
                     return (
                       <React.Fragment key={d}>
-                        {isWeekStart && (
-                          <div id={`modal-page-week-${currentWeek}`} className="relative group mt-6">
-                            <div className="absolute -top-6 left-0 text-[11px] font-bold text-indigo-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
-                              Week {currentWeek} 주간 계획
+                        {isWeekStart && (() => {
+                          const wData = getWeekData(currentWeek)
+                          return (
+                            <div id={`modal-page-week-${currentWeek}`} className="relative group mt-6">
+                              <div className="absolute -top-6 left-0 text-[11px] font-bold text-indigo-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10 flex items-center gap-2">
+                                <span>{selectedMonth}월 {currentWeek}주차 주간 계획</span>
+                                <span className="text-amber-300 font-mono">({wData.dateRangeText})</span>
+                              </div>
+                              <WeeklyComponent
+                                weekNum={wData.weekNum}
+                                weekLabel={wData.weekLabel}
+                                dateRangeText={wData.dateRangeText}
+                                daysInWeek={wData.daysInWeek}
+                                monthName={monthName}
+                                themeColor={activeColor}
+                                pageWidth={pageWidth}
+                                pageHeight={pageHeight}
+                              />
                             </div>
-                            <WeeklyComponent
-                              weekNum={currentWeek}
-                              weekLabel={`WEEK ${currentWeek}`}
-                              monthName={monthName}
-                              themeColor={activeColor}
-                              pageWidth={pageWidth}
-                              pageHeight={pageHeight}
-                            />
-                          </div>
-                        )}
+                          )
+                        })()}
                         <div id={`modal-page-day-${d}`} className="relative group">
                           <div className="absolute -top-6 left-0 text-[11px] font-bold text-slate-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
                             {selectedMonth}월 {d}일 데일리 다이어리 & 기도제목
@@ -801,16 +842,21 @@ export default function DiaryPage() {
                       pageHeight={pageHeight}
                     />
                   )}
-                  {modalActiveTab === 'weekly' && (
-                    <WeeklyComponent
-                      weekNum={1}
-                      weekLabel="WEEK 1"
-                      monthName={monthName}
-                      themeColor={activeColor}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                    />
-                  )}
+                  {modalActiveTab === 'weekly' && (() => {
+                    const w1Data = getWeekData(1)
+                    return (
+                      <WeeklyComponent
+                        weekNum={w1Data.weekNum}
+                        weekLabel={w1Data.weekLabel}
+                        dateRangeText={w1Data.dateRangeText}
+                        daysInWeek={w1Data.daysInWeek}
+                        monthName={monthName}
+                        themeColor={activeColor}
+                        pageWidth={pageWidth}
+                        pageHeight={pageHeight}
+                      />
+                    )
+                  })()}
                   {modalActiveTab === 'daily' && (
                     <DailyComponent
                       dateLabel={`${String(modalDayNum).padStart(2, '0')} DAY`}
