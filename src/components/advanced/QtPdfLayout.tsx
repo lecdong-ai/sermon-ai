@@ -9,10 +9,23 @@ import QtDailyDiaryPage from './QtDailyDiaryPage'
 import QtMonthlyCalendarPage from './QtMonthlyCalendarPage'
 import QtMonthlyOverviewPage from './QtMonthlyOverviewPage'
 import QtWeeklyPlanPage from './QtWeeklyPlanPage'
+import QtPrayerAnswerPage from './QtPrayerAnswerPage'
+import QtScriptureArtPage from './QtScriptureArtPage'
+import QtSundaySermonPage from './QtSundaySermonPage'
+import QtSundaySermonDeepPage from './QtSundaySermonDeepPage'
+import QtBibleReadingMapPage from './QtBibleReadingMapPage'
+import QtMonthlyLetterPage from './QtMonthlyLetterPage'
+
 import QtDailyDiaryPortrait from './portrait/QtDailyDiaryPortrait'
 import QtMonthlyCalendarPortrait from './portrait/QtMonthlyCalendarPortrait'
 import QtMonthlyOverviewPortrait from './portrait/QtMonthlyOverviewPortrait'
 import QtWeeklyPlanPortrait from './portrait/QtWeeklyPlanPortrait'
+import QtPrayerAnswerPortrait from './portrait/QtPrayerAnswerPortrait'
+import QtScriptureArtPortrait from './portrait/QtScriptureArtPortrait'
+import QtSundaySermonPortrait from './portrait/QtSundaySermonPortrait'
+import QtSundaySermonDeepPortrait from './portrait/QtSundaySermonDeepPortrait'
+import QtBibleReadingMapPortrait from './portrait/QtBibleReadingMapPortrait'
+import QtMonthlyLetterPortrait from './portrait/QtMonthlyLetterPortrait'
 
 interface QtSelectedInfo {
   book: string
@@ -2234,20 +2247,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   let pageCounter = 0
 
   function parseDayLabelHelper(label?: string, dayIdx: number = 0) {
-    if (!label) return { dayNum: dayIdx + 1, dayName: 'DAY', dateLabel: `DAY ${dayIdx + 1}` }
-    const m = label.match(/(\d+)\/(\d+)\s*\(([^)]+)\)/)
-    if (m) {
-      const day = parseInt(m[2], 10)
-      const rawDayName = m[3].toUpperCase()
-      const nameMap: Record<string, string> = { '일': 'SUN', '월': 'MON', '화': 'TUE', '수': 'WED', '목': 'THU', '금': 'FRI', '토': 'SAT' }
-      const dayName = nameMap[rawDayName] || rawDayName
-      return { dayNum: day, dayName, dateLabel: `${String(day).padStart(2, '0')} ${dayName}` }
+    const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    if (label) {
+      const m = label.match(/(\d+)\/(\d+)\s*\(([^)]+)\)/)
+      if (m) {
+        const day = parseInt(m[2], 10)
+        const rawDayName = m[3].toUpperCase()
+        const nameMap: Record<string, string> = { '일': 'SUN', '월': 'MON', '화': 'TUE', '수': 'WED', '목': 'THU', '금': 'FRI', '토': 'SAT' }
+        const dayName = nameMap[rawDayName] || rawDayName
+        return { dayNum: day, dayName, dateLabel: `${String(day).padStart(2, '0')} ${dayName}` }
+      }
     }
-    return { dayNum: dayIdx + 1, dayName: 'DAY', dateLabel: `DAY ${dayIdx + 1}` }
+    const day = dayIdx + 1
+    const dt = new Date(yearNum, monthNum - 1, day)
+    const dayName = dayNamesShort[dt.getDay()]
+    return { dayNum: day, dayName, dateLabel: `${String(day).padStart(2, '0')} ${dayName}` }
   }
 
   const isDiaryEnabled = includeDiaryPage ?? isMonthly
-  const isPlannerEnabled = includeMonthlyPlanner ?? isMonthly
+  const [includeMonthlyPlanner, setIncludeMonthlyPlanner] = useState(isMonthlyMode)
+  const [includeLuxuryPages, setIncludeLuxuryPages] = useState(true)
 
   const yearNum = useMemo(() => {
     if (form.startDate) {
@@ -2331,11 +2350,109 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           )
         )}
 
+        {/* 3-2. Prayer & Grace Milestone Page */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtPrayerAnswerPage
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          ) : (
+            <QtPrayerAnswerPortrait
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          )
+        )}
+
+        {/* 3-3. Scripture Art & Memory Card */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtScriptureArtPage
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          ) : (
+            <QtScriptureArtPortrait
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          )
+        )}
+
+        {/* 3-4. Monthly Sunday Sermon Summary Table */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtSundaySermonPage
+              year={yearNum}
+              month={monthNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          ) : (
+            <QtSundaySermonPortrait
+              year={yearNum}
+              month={monthNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          )
+        )}
+
+        {/* 3-5. Bible Reading 66 Journey Map */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtBibleReadingMapPage
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          ) : (
+            <QtBibleReadingMapPortrait
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          )
+        )}
+
         {/* 4. Daily QT (Page A) + Daily Diary & Prayer (Page B) Pairs */}
         {parsedDays.map((day, dayIdx) => {
           const dateInfo = parseDayLabelHelper(weekdays[dayIdx]?.label, dayIdx)
           const isWeekStart = dayIdx % 7 === 0
           const currentWeekNum = Math.floor(dayIdx / 7) + 1
+
+          // 주일 주차 계산 (매 주일 바로 앞장에 주일 심층 설교 노트 삽입)
+          const isSunday = dateInfo.dayName === 'SUN'
+          let sundayNo = 0
+          if (isSunday) {
+            let sCount = 0
+            for (let i = 0; i <= dayIdx; i++) {
+              const info = parseDayLabelHelper(weekdays[i]?.label, i)
+              if (info.dayName === 'SUN') sCount++
+            }
+            sundayNo = sCount
+          }
 
           return (
             <React.Fragment key={dayIdx}>
@@ -2354,6 +2471,33 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   <QtWeeklyPlanPortrait
                     weekNum={currentWeekNum}
                     weekLabel={`WEEK ${currentWeekNum}`}
+                    monthName={monthName}
+                    themeColor={themeColor}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
+                  />
+                )
+              )}
+
+              {/* 주일(SUN) 직전 위치에 해당 주차 주일 심층 설교 노트 (QtSundaySermonDeepPage) 삽입 */}
+              {isDiaryEnabled && isSunday && (
+                isLandscape ? (
+                  <QtSundaySermonDeepPage
+                    year={yearNum}
+                    month={monthNum}
+                    sundayNo={sundayNo}
+                    dateStr={`${String(monthNum).padStart(2, '0')}/${String(dateInfo.dayNum).padStart(2, '0')}`}
+                    monthName={monthName}
+                    themeColor={themeColor}
+                    pageWidth={mmToPx(size.widthMm)}
+                    pageHeight={mmToPx(size.heightMm)}
+                  />
+                ) : (
+                  <QtSundaySermonDeepPortrait
+                    year={yearNum}
+                    month={monthNum}
+                    sundayNo={sundayNo}
+                    dateStr={`${String(monthNum).padStart(2, '0')}/${String(dateInfo.dayNum).padStart(2, '0')}`}
                     monthName={monthName}
                     themeColor={themeColor}
                     pageWidth={mmToPx(size.widthMm)}
@@ -2399,6 +2543,27 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </React.Fragment>
           )
         })}
+
+        {/* 5. End-of-Month Letter to God Page (P-Last) */}
+        {isPlannerEnabled && (
+          isLandscape ? (
+            <QtMonthlyLetterPage
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          ) : (
+            <QtMonthlyLetterPortrait
+              year={yearNum}
+              monthName={monthName}
+              themeColor={themeColor}
+              pageWidth={mmToPx(size.widthMm)}
+              pageHeight={mmToPx(size.heightMm)}
+            />
+          )
+        )}
       </div>
     </div>
   )
