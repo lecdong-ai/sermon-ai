@@ -2265,8 +2265,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }
 
   const isDiaryEnabled = includeDiaryPage ?? isMonthly
-  const [includeMonthlyPlanner, setIncludeMonthlyPlanner] = useState(isMonthlyMode)
-  const [includeLuxuryPages, setIncludeLuxuryPages] = useState(true)
+  const isPlannerEnabled = includeMonthlyPlanner ?? isMonthly
 
   const yearNum = useMemo(() => {
     if (form.startDate) {
