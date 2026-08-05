@@ -20,8 +20,8 @@ interface PerfectGridNoteProps {
 export default function PerfectGridNote({
   baseStep,
   step = 16,
-  color = '#cbd5e1',
-  borderColor = 'border-slate-400',
+  color = '#e2e8f0',
+  borderColor = 'border-slate-300/70',
   rounded = 'rounded-lg',
   className = '',
   children,

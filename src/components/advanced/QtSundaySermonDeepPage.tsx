@@ -109,8 +109,8 @@ export default function QtSundaySermonDeepPage({
                 </div>
                 {/* Dot Grid Lines */}
                 <div className="space-y-1 py-1 flex-1 flex flex-col justify-around">
-                  <div className="border-b border-dashed border-slate-200 h-3" />
-                  <div className="border-b border-dashed border-slate-200 h-3" />
+                  <div className="border-b border-dashed border-slate-200/50 h-3" />
+                  <div className="border-b border-dashed border-slate-200/50 h-3" />
                 </div>
               </div>
             ))}
@@ -128,11 +128,11 @@ export default function QtSundaySermonDeepPage({
               <span className="text-[9px] text-rose-500 font-bold">Rhema Verse</span>
             </div>
 
-            <div className="flex-1 flex flex-col justify-around p-3 border border-dashed border-amber-200 rounded-xl bg-white/90 my-1">
-              <div className="border-b border-dashed border-amber-200/80 h-5" />
-              <div className="border-b border-dashed border-amber-200/80 h-5" />
-              <div className="border-b border-dashed border-amber-200/80 h-5" />
-              <div className="border-b border-dashed border-amber-200/80 h-5" />
+            <div className="flex-1 flex flex-col justify-around p-3 border border-dashed border-amber-200/60 rounded-xl bg-white/90 my-1">
+              <div className="border-b border-dashed border-amber-200/40 h-5" />
+              <div className="border-b border-dashed border-amber-200/40 h-5" />
+              <div className="border-b border-dashed border-amber-200/40 h-5" />
+              <div className="border-b border-dashed border-amber-200/40 h-5" />
             </div>
 
             <div className="text-[10px] text-slate-500 font-serif italic text-right border-t border-amber-200 pt-1 mt-1">
@@ -153,8 +153,8 @@ export default function QtSundaySermonDeepPage({
             <span className="text-[9px] text-emerald-600 font-bold">Action Point</span>
           </div>
           <div className="border border-emerald-200 rounded-xl p-2 bg-white/90 space-y-1.5 min-h-[36px]">
-            <div className="border-b border-dashed border-emerald-200/80 h-3.5" />
-            <div className="border-b border-dashed border-emerald-200/80 h-3.5" />
+            <div className="border-b border-dashed border-emerald-200/40 h-3.5" />
+            <div className="border-b border-dashed border-emerald-200/40 h-3.5" />
           </div>
         </div>
 
@@ -167,8 +167,8 @@ export default function QtSundaySermonDeepPage({
             <span className="text-[9px] text-indigo-600 font-bold">My Prayer</span>
           </div>
           <div className="border border-indigo-200 rounded-xl p-2 bg-white/90 space-y-1.5 min-h-[36px]">
-            <div className="border-b border-dashed border-indigo-200/80 h-3.5" />
-            <div className="border-b border-dashed border-indigo-200/80 h-3.5" />
+            <div className="border-b border-dashed border-indigo-200/40 h-3.5" />
+            <div className="border-b border-dashed border-indigo-200/40 h-3.5" />
           </div>
         </div>
       </div>

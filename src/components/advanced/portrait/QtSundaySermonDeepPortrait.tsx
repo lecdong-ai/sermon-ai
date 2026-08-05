@@ -93,7 +93,7 @@ export default function QtSundaySermonDeepPortrait({
           {[1, 2, 3].map((pt) => (
             <div key={pt} className="border border-slate-200 rounded-xl p-2 bg-slate-50/30 flex-1 flex flex-col justify-between">
               <span className="text-[10px] font-bold text-slate-700">제 {pt}대지</span>
-              <div className="border-b border-dashed border-slate-200 my-1" />
+              <div className="border-b border-dashed border-slate-200/50 my-1" />
             </div>
           ))}
         </div>
@@ -101,9 +101,9 @@ export default function QtSundaySermonDeepPortrait({
         {/* Rhema Scripture Box */}
         <div className="border-2 border-amber-300/80 rounded-2xl p-3 bg-gradient-to-b from-amber-50/40 via-white to-rose-50/30 shadow-2xs space-y-1">
           <span className="text-[10.5px] font-bold text-amber-900 block">📜 RHEMA SCRIPTURE (성령님의 레마 말씀)</span>
-          <div className="p-2 border border-dashed border-amber-200 rounded-xl bg-white/90 space-y-1.5 min-h-[44px]">
-            <div className="border-b border-dashed border-amber-200/80 h-4" />
-            <div className="border-b border-dashed border-amber-200/80 h-4" />
+          <div className="p-2 border border-dashed border-amber-200/60 rounded-xl bg-white/90 space-y-1.5 min-h-[44px]">
+            <div className="border-b border-dashed border-amber-200/40 h-4" />
+            <div className="border-b border-dashed border-amber-200/40 h-4" />
           </div>
         </div>
 
@@ -112,13 +112,13 @@ export default function QtSundaySermonDeepPortrait({
           <div className="border border-emerald-300 rounded-xl p-2 bg-emerald-50/40 text-[10px]">
             <span className="font-bold text-emerald-900 block mb-0.5">🌱 삶의 실천</span>
             <div className="bg-white p-1 rounded border border-emerald-200 min-h-[28px] flex flex-col justify-around">
-              <div className="border-b border-dashed border-emerald-200/80 h-3" />
+              <div className="border-b border-dashed border-emerald-200/40 h-3" />
             </div>
           </div>
           <div className="border border-indigo-300 rounded-xl p-2 bg-indigo-50/40 text-[10px]">
             <span className="font-bold text-indigo-900 block mb-0.5">🙏 결단 기도</span>
             <div className="bg-white p-1 rounded border border-indigo-200 min-h-[28px] flex flex-col justify-around">
-              <div className="border-b border-dashed border-indigo-200/80 h-3" />
+              <div className="border-b border-dashed border-indigo-200/40 h-3" />
             </div>
           </div>
         </div>
