@@ -1599,7 +1599,7 @@ export default function QtGenerator() {
     }
   }
 
-  // 직전 큐티 본문 이어서 추천 계산
+  // 직전 큐티 본문 이어서 추천 계산 (끝절 바로 다음절부터 시작)
   const applyLastHistoryPassage = () => {
     if (historyEntries.length === 0) {
       setError('이전 저장된 히스토리 기록이 존재하지 않습니다.')
@@ -1610,50 +1610,70 @@ export default function QtGenerator() {
     // 가장 최근 항목
     const lastEntry = historyEntries[0]
     const book = lastEntry.bible_book
-    const endPass = lastEntry.end_passage || lastEntry.start_passage || ''
+    // end_passage가 있으면 우선 사용하고, 없으면 start_passage 사용
+    const targetPass = lastEntry.end_passage || lastEntry.start_passage || ''
     
-    if (!endPass) {
+    if (!targetPass) {
       setError('이전 기록의 본문 정보를 분석할 수 없습니다.')
       return
     }
     
-    // 예: "창세기 2:25" 또는 "창세기 2장 25" 등 장절 파싱
-    const match = endPass.match(/(\d+)[:장]\s*(\d+)?/)
-    if (!match) {
-      // 장만 있는 경우 (예: "창세기 2장" 또는 "창세기 2")
-      const chapMatch = endPass.match(/(\d+)/)
-      if (chapMatch) {
-        const nextChap = parseInt(chapMatch[1]) + 1
-        updateForm({ bibleBook: book })
-        setActiveStartChapter(nextChap)
-        setActiveEndChapter(null)
-        setStartVerse(1)
-        setEndVerse(null)
-        setStartPassage(`${book} ${nextChap}:1`)
-        setEndPassage('')
-      } else {
-        setError('마지막 구절의 형식을 분석할 수 없습니다.')
-      }
+    // 괄호 및 한글 접미사 정단화 (예: "(끝절 포함)" 등 제거)
+    const cleanPass = targetPass.replace(/\([^)]*\)/g, '').trim()
+    
+    let lastChap: number | null = null
+    let lastVerse: number | null = null
+
+    // Pattern 1: "8:1-9:5" 또는 "8:1~9:5" (다른 장 cross-chapter 범위)
+    const crossChapterMatch = cleanPass.match(/(\d+)\s*[:：]\s*\d+\s*[-~]\s*(\d+)\s*[:：]\s*(\d+)/)
+    // Pattern 2: "8:1-17" 또는 "8:1~17" (동일 장 범위)
+    const sameChapterMatch = cleanPass.match(/(\d+)\s*[:：]\s*\d+\s*[-~]\s*(\d+)/)
+    // Pattern 3: "8:17" 또는 "8:17절" (단일 장:절)
+    const singleVerseMatch = cleanPass.match(/(\d+)\s*[:：]\s*(\d+)/)
+    // Pattern 4: "8장" 또는 "8" (장만 존재하는 경우)
+    const chapterOnlyMatch = cleanPass.match(/(\d+)/)
+
+    if (crossChapterMatch) {
+      lastChap = parseInt(crossChapterMatch[2], 10)
+      lastVerse = parseInt(crossChapterMatch[3], 10)
+    } else if (sameChapterMatch) {
+      lastChap = parseInt(sameChapterMatch[1], 10)
+      lastVerse = parseInt(sameChapterMatch[2], 10)
+    } else if (singleVerseMatch) {
+      lastChap = parseInt(singleVerseMatch[1], 10)
+      lastVerse = parseInt(singleVerseMatch[2], 10)
+    } else if (chapterOnlyMatch) {
+      lastChap = parseInt(chapterOnlyMatch[1], 10)
+    }
+
+    if (lastChap === null) {
+      setError('마지막 구절의 형식을 분석할 수 없습니다.')
       return
     }
-    
-    const chap = parseInt(match[1])
-    const verse = match[2] ? parseInt(match[2]) : null
-    
+
     updateForm({ bibleBook: book })
-    
-    if (verse !== null) {
-      // 절 다음 절로 이어서
-      const nextVerse = verse + 1
-      setActiveStartChapter(chap)
+
+    if (lastVerse !== null) {
+      // 해당 장의 총 절 수 확인 (없으면 기본 35절 기준)
+      const maxVerses = getVersesInChapter(book, lastChap) || 35
+      let nextChap = lastChap
+      let nextVerse = lastVerse + 1
+
+      // 마지막 절이 해당 장의 끝절 이상이면 다음 장 1절로 자동 이동
+      if (nextVerse > maxVerses) {
+        nextChap = lastChap + 1
+        nextVerse = 1
+      }
+
+      setActiveStartChapter(nextChap)
       setActiveEndChapter(null)
       setStartVerse(nextVerse)
       setEndVerse(null)
-      setStartPassage(`${book} ${chap}:${nextVerse}`)
+      setStartPassage(`${book} ${nextChap}:${nextVerse}`)
       setEndPassage('')
     } else {
-      // 장 다음 장으로 이어서
-      const nextChap = chap + 1
+      // 장만 있었던 경우 -> 다음 장 1절로 이어서
+      const nextChap = lastChap + 1
       setActiveStartChapter(nextChap)
       setActiveEndChapter(null)
       setStartVerse(1)
