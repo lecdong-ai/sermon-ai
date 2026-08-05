@@ -131,11 +131,11 @@ export function normalizeMonthlyDate(dateStr: string): string {
 // 주간: "7/15 (월) ~ 7/21 (일)"
 // 월간: "7/1 (수) ~ 7/31 (금) · 총 31일"
 export function formatDateRangeLabel(startDateStr: string, daysCount: number): string {
-  const list = getFormattedDateList(startDateStr, daysCount)
+  const list = getFormattedDateListWeekdays(startDateStr, daysCount)
   if (list.length === 0) return ''
   const first = list[0]
   const last = list[list.length - 1]
-  return `${first} ~ ${last}${daysCount > 7 ? ` · 총 ${daysCount}일` : ''}`
+  return `${first} ~ ${last}`
 }
 
 // 마지막 분할 본문에서 다음 시작 본문을 추출 (청킹 분할 연결용)

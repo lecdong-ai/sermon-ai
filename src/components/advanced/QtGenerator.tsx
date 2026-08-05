@@ -16,6 +16,7 @@ import {
   getTodayDateString,
   getDaysInMonth,
   getFormattedDateList,
+  getFormattedDateListWeekdays,
   formatDayLabel,
   getMondayOfWeek,
   formatDateRangeLabel,
@@ -267,16 +268,25 @@ export default function QtGenerator() {
 
   const updateForm = (patch: Partial<QTFormData>) => setForm(prev => ({ ...prev, ...patch }))
 
-  // 모드별 정규화된 시작 날짜와 일수 (UI 미리보기 + 분할 생성에 공통 사용)
+  // 시작 날짜 (자유 선택)
   const normalizedStartDate = useMemo(() => {
-    if (qtMode === 'weekly') return getMondayOfWeek(form.startDate)
     return form.startDate
-  }, [form.startDate, qtMode])
+  }, [form.startDate])
 
+  // 시작 날짜부터 그 주 토요일까지의 주간 일수 (일요일 제외)
   const previewDaysCount = useMemo(() => {
-    if (qtMode === 'weekly') return 6
-    return 1
-  }, [qtMode, normalizedStartDate])
+    if (!form.startDate) return 6
+    const parts = form.startDate.split('-')
+    if (parts.length !== 3) return 6
+    const year = parseInt(parts[0], 10)
+    const monthNum = parseInt(parts[1], 10)
+    const day = parseInt(parts[2], 10)
+    const startDate = new Date(year, monthNum - 1, day)
+    const dayOfWeek = startDate.getDay() // 0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat
+
+    if (dayOfWeek === 0) return 6 // 일요일 선택 시 월~토 6일간
+    return 6 - dayOfWeek + 1 // 선택 요일부터 토요일(6)까지 일수
+  }, [form.startDate])
 
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet 일일 페이지에서 표시)
   const monthCalendarStrip = useMemo(() => {
@@ -293,17 +303,22 @@ export default function QtGenerator() {
 
     const daysInMonth = new Date(year, monthNum, 0).getDate()
 
-    // ★ 주간 6일(일요일 제외)의 각 day 계산
+    // 시작일부터 토요일까지(일요일 제외)의 각 day 계산
     const startDate = new Date(year, monthNum - 1, day)
     const activeDays: number[] = []
-    for (let i = 0; i < 6; i++) {
+    let added = 0
+    let curOffset = 0
+    while (added < previewDaysCount && curOffset < 7) {
       const d = new Date(startDate)
-      d.setDate(d.getDate() + i)
-      if (d.getDay() !== 0) activeDays.push(d.getDate())
+      d.setDate(d.getDate() + curOffset)
+      if (d.getDay() !== 0) {
+        activeDays.push(d.getDate())
+        added++
+      }
+      curOffset++
     }
 
     // 각 day에 큐티 데이터가 있는지 (현재 week 기준)
-    // splitDays가 있으면 split된 day만 hasContent
     const dayHasContent: boolean[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dayNum = i + 1
       return activeDays.includes(dayNum)
@@ -315,7 +330,7 @@ export default function QtGenerator() {
       activeDays,
       dayHasContent,
     }
-  }, [normalizedStartDate, form.sizeOption])
+  }, [normalizedStartDate, previewDaysCount, form.sizeOption])
 
   // 1단계 상태
   const [startPassage, setStartPassage] = useState('')
@@ -1258,7 +1273,7 @@ export default function QtGenerator() {
     setSplitDays([])
 
     const daysCount = previewDaysCount
-    const dateList = getFormattedDateList(normalizedStartDate, daysCount)
+    const dateList = getFormattedDateListWeekdays(normalizedStartDate, daysCount)
 
     if (dateList.length === 0) {
       setError('시작 날짜가 올바르지 않습니다. 날짜를 다시 선택해주세요.')
@@ -2602,7 +2617,7 @@ export default function QtGenerator() {
                   <label className="text-[11px] font-bold text-slate-500">
                     시작 날짜
                     <span className="text-[9px] text-indigo-400/80 font-medium ml-1">
-                      (월요일 자동 정규화, 일요일 제외)
+                      (자유 선택 · 선택 날짜~이번 주 토요일)
                     </span>
                   </label>
                 </div>
@@ -2611,7 +2626,7 @@ export default function QtGenerator() {
                     value={form.startDate}
                     onChange={e => {
                       const val = e.target.value
-                      if (val) updateForm({ startDate: getMondayOfWeek(val) })
+                      if (val) updateForm({ startDate: val })
                     }}
                     className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 [color-scheme:dark]"
                   />
