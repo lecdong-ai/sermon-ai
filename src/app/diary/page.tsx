@@ -629,19 +629,24 @@ export default function DiaryPage() {
                   />
                 )
               })()}
-              {previewTab === 'daily' && (
-                <DailyComponent
-                  dateLabel={`${String(activeDayNum).padStart(2, '0')} DAY`}
-                  dayNum={activeDayNum}
-                  dayName={activeDayNum === 1 ? 'SAT' : activeDayNum % 7 === 1 ? 'SUN' : 'DAY'}
-                  monthName={monthName}
-                  yearLabel={String(selectedYear)}
-                  themeColor={activeColor}
-                  pageWidth={pageWidth}
-                  pageHeight={pageHeight}
-                  activeWeek={`W${Math.floor((activeDayNum - 1) / 7) + 1}`}
-                />
-              )}
+              {previewTab === 'daily' && (() => {
+                const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                const dateObj = new Date(selectedYear, selectedMonth - 1, activeDayNum)
+                const realDayName = dayNamesShort[dateObj.getDay()]
+                return (
+                  <DailyComponent
+                    dateLabel={`${String(activeDayNum).padStart(2, '0')} ${realDayName}`}
+                    dayNum={activeDayNum}
+                    dayName={realDayName}
+                    monthName={monthName}
+                    yearLabel={String(selectedYear)}
+                    themeColor={activeColor}
+                    pageWidth={pageWidth}
+                    pageHeight={pageHeight}
+                    activeWeek={`W${Math.floor((activeDayNum - 1) / 7) + 1}`}
+                  />
+                )
+              })()}
             </div>
           </div>
         </div>
@@ -990,20 +995,40 @@ export default function DiaryPage() {
                           )
                         })()}
                         <div id={`modal-page-day-${d}`} className="relative group">
-                          <div className="absolute -top-6 left-0 text-[11px] font-bold text-slate-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
-                            {selectedMonth}월 {d}일 데일리 다이어리 & 기도제목
+                          <div className="absolute -top-6 left-0 text-[11px] font-bold text-slate-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10 flex items-center gap-2">
+                            <span>{selectedMonth}월 {d}일 데일리 다이어리 & 기도제목</span>
+                            {(() => {
+                              const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                              const dateObj = new Date(selectedYear, selectedMonth - 1, d)
+                              const realDayName = dayNamesShort[dateObj.getDay()]
+                              const isSun = realDayName === 'SUN'
+                              return (
+                                <span className={`px-2 py-0.2 rounded text-[10px] font-bold ${
+                                  isSun ? 'bg-amber-400 text-slate-950 shadow-xs' : 'bg-slate-800 text-slate-300'
+                                }`}>
+                                  {d < 10 ? `0${d}` : d} {realDayName} {isSun ? ' (주일)' : ''}
+                                </span>
+                              )
+                            })()}
                           </div>
-                          <DailyComponent
-                            dateLabel={`${String(d).padStart(2, '0')} DAY`}
-                            dayNum={d}
-                            dayName={d === 1 ? 'SAT' : d % 7 === 1 ? 'SUN' : 'DAY'}
-                            monthName={monthName}
-                            yearLabel={String(selectedYear)}
-                            themeColor={activeColor}
-                            pageWidth={pageWidth}
-                            pageHeight={pageHeight}
-                            activeWeek={`W${currentWeek}`}
-                          />
+                          {(() => {
+                            const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                            const dateObj = new Date(selectedYear, selectedMonth - 1, d)
+                            const realDayName = dayNamesShort[dateObj.getDay()]
+                            return (
+                              <DailyComponent
+                                dateLabel={`${String(d).padStart(2, '0')} ${realDayName}`}
+                                dayNum={d}
+                                dayName={realDayName}
+                                monthName={monthName}
+                                yearLabel={String(selectedYear)}
+                                themeColor={activeColor}
+                                pageWidth={pageWidth}
+                                pageHeight={pageHeight}
+                                activeWeek={`W${currentWeek}`}
+                              />
+                            )
+                          })()}
                         </div>
                       </React.Fragment>
                     )
@@ -1112,19 +1137,24 @@ export default function DiaryPage() {
                       />
                     )
                   })()}
-                  {modalActiveTab === 'daily' && (
-                    <DailyComponent
-                      dateLabel={`${String(modalDayNum).padStart(2, '0')} DAY`}
-                      dayNum={modalDayNum}
-                      dayName={modalDayNum === 1 ? 'SAT' : modalDayNum % 7 === 1 ? 'SUN' : 'DAY'}
-                      monthName={monthName}
-                      yearLabel={String(selectedYear)}
-                      themeColor={activeColor}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      activeWeek={`W${Math.floor((modalDayNum - 1) / 7) + 1}`}
-                    />
-                  )}
+                  {modalActiveTab === 'daily' && (() => {
+                    const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                    const dateObj = new Date(selectedYear, selectedMonth - 1, modalDayNum)
+                    const realDayName = dayNamesShort[dateObj.getDay()]
+                    return (
+                      <DailyComponent
+                        dateLabel={`${String(modalDayNum).padStart(2, '0')} ${realDayName}`}
+                        dayNum={modalDayNum}
+                        dayName={realDayName}
+                        monthName={monthName}
+                        yearLabel={String(selectedYear)}
+                        themeColor={activeColor}
+                        pageWidth={pageWidth}
+                        pageHeight={pageHeight}
+                        activeWeek={`W${Math.floor((modalDayNum - 1) / 7) + 1}`}
+                      />
+                    )
+                  })()}
                 </div>
               )}
             </div>

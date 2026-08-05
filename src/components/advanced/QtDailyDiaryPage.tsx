@@ -27,13 +27,16 @@ export default function QtDailyDiaryPage({
   pageHeight = 768,
 }: QtDailyDiaryPageProps) {
   const paddedDay = String(dayNum).padStart(2, '0')
+  const isSunday = dayName === 'SUN'
 
   return (
     <div
       data-page-key={`day-${dayNum}`}
       data-day={dayNum}
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
+      className={`qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto transition-all ${
+        isSunday ? 'border-2 border-amber-400/90 bg-gradient-to-b from-amber-50/30 via-white to-rose-50/20' : ''
+      }`}
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
@@ -73,17 +76,26 @@ export default function QtDailyDiaryPage({
       <div className="flex items-center space-x-4 mb-4">
         {/* Date Circle Badge */}
         <div
-          className="w-12 h-12 rounded-full flex flex-col items-center justify-center text-white shadow-sm font-serif"
-          style={{ backgroundColor: themeColor }}
+          className={`w-12 h-12 rounded-full flex flex-col items-center justify-center text-white shadow-sm font-serif ${
+            isSunday ? 'bg-gradient-to-br from-amber-500 via-rose-500 to-amber-600 ring-2 ring-amber-300 shadow-md' : ''
+          }`}
+          style={{ backgroundColor: isSunday ? undefined : themeColor }}
         >
           <span className="text-base font-bold leading-tight">{paddedDay}</span>
-          <span className="text-[9px] uppercase tracking-tighter opacity-90">{dayName}</span>
+          <span className="text-[9px] uppercase tracking-tighter font-extrabold">{dayName}</span>
         </div>
 
         {/* Month Title & Subline */}
         <div>
-          <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName}</h2>
-          <div className="h-1 w-24 rounded-full mt-1" style={{ backgroundColor: themeColor, opacity: 0.6 }} />
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName}</h2>
+            {isSunday && (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                🕊️ LORD&apos;S DAY (주일 예배 & 안식)
+              </span>
+            )}
+          </div>
+          <div className="h-1 w-24 rounded-full mt-1" style={{ backgroundColor: isSunday ? '#f59e0b' : themeColor, opacity: 0.7 }} />
         </div>
       </div>
 
