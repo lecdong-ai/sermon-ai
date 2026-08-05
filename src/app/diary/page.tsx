@@ -493,8 +493,8 @@ export default function DiaryPage() {
               )}
               {previewTab === 'weekly' && (
                 <WeeklyComponent
-                  weekNum={32}
-                  weekLabel="WEEK 32"
+                  weekNum={1}
+                  weekLabel="WEEK 1"
                   monthName={monthName}
                   themeColor={activeColor}
                   pageWidth={pageWidth}
@@ -744,8 +744,8 @@ export default function DiaryPage() {
                               Week {currentWeek} 주간 계획
                             </div>
                             <WeeklyComponent
-                              weekNum={31 + currentWeek}
-                              weekLabel={`WEEK ${31 + currentWeek}`}
+                              weekNum={currentWeek}
+                              weekLabel={`WEEK ${currentWeek}`}
                               monthName={monthName}
                               themeColor={activeColor}
                               pageWidth={pageWidth}
@@ -803,8 +803,8 @@ export default function DiaryPage() {
                   )}
                   {modalActiveTab === 'weekly' && (
                     <WeeklyComponent
-                      weekNum={32}
-                      weekLabel="WEEK 32"
+                      weekNum={1}
+                      weekLabel="WEEK 1"
                       monthName={monthName}
                       themeColor={activeColor}
                       pageWidth={pageWidth}
