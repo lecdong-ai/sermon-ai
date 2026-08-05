@@ -2435,113 +2435,175 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           )
         )}
 
-        {/* 4. Daily QT (Page A) + Daily Diary & Prayer (Page B) Pairs */}
-        {parsedDays.map((day, dayIdx) => {
-          const dateInfo = parseDayLabelHelper(weekdays[dayIdx]?.label, dayIdx)
-          const isWeekStart = dayIdx % 7 === 0
-          const currentWeekNum = Math.floor(dayIdx / 7) + 1
+        {/* 4. 1일부터 31일까지 월간 달력 일자별 렌더링 (평일: 큐티원고+데일리저널 / 일요일: 주일심층설교노트+주일데일리저널) */}
+        {(() => {
+          const totalDaysInMonth = new Date(yearNum, monthNum, 0).getDate()
+          const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
-          // 주일 주차 계산 (매 주일 바로 앞장에 주일 심층 설교 노트 삽입)
-          const isSunday = dateInfo.dayName === 'SUN'
-          let sundayNo = 0
-          if (isSunday) {
-            let sCount = 0
-            for (let i = 0; i <= dayIdx; i++) {
-              const info = parseDayLabelHelper(weekdays[i]?.label, i)
-              if (info.dayName === 'SUN') sCount++
+          let qtIndex = 0
+          let sundayCounter = 0
+
+          const items = []
+          for (let d = 1; d <= totalDaysInMonth; d++) {
+            const dt = new Date(yearNum, monthNum - 1, d)
+            const dayName = dayNamesShort[dt.getDay()]
+            const paddedDay = String(d).padStart(2, '0')
+            const dateLabel = `${paddedDay} ${dayName}`
+
+            if (dayName === 'SUN') {
+              sundayCounter++
+              items.push({
+                type: 'sunday' as const,
+                dayNum: d,
+                dayName: 'SUN',
+                dateLabel,
+                sundayNo: sundayCounter,
+                dateStr: `${String(monthNum).padStart(2, '0')}/${paddedDay}`,
+              })
+            } else {
+              const qtDay = parsedDays[qtIndex] || null
+              if (qtDay) qtIndex++
+              items.push({
+                type: 'qt' as const,
+                dayNum: d,
+                dayName,
+                dateLabel,
+                qtDay,
+                dayIdx: qtIndex - 1,
+              })
             }
-            sundayNo = sCount
           }
 
-          return (
-            <React.Fragment key={dayIdx}>
-              {/* Insert Weekly Plan page before each week */}
-              {isPlannerEnabled && isWeekStart && (
-                isLandscape ? (
-                  <QtWeeklyPlanPage
-                    weekNum={currentWeekNum}
-                    weekLabel={`WEEK ${currentWeekNum}`}
-                    monthName={monthName}
-                    themeColor={themeColor}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
-                ) : (
-                  <QtWeeklyPlanPortrait
-                    weekNum={currentWeekNum}
-                    weekLabel={`WEEK ${currentWeekNum}`}
-                    monthName={monthName}
-                    themeColor={themeColor}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
-                )
-              )}
+          return items.map((item, idx) => {
+            const isWeekStart = (item.dayNum - 1) % 7 === 0 || item.dayNum === 1
+            const currentWeekNum = Math.floor((item.dayNum - 1) / 7) + 1
 
-              {/* 주일(SUN) 직전 위치에 해당 주차 주일 심층 설교 노트 (QtSundaySermonDeepPage) 삽입 */}
-              {isDiaryEnabled && isSunday && (
-                isLandscape ? (
-                  <QtSundaySermonDeepPage
-                    year={yearNum}
-                    month={monthNum}
-                    sundayNo={sundayNo}
-                    dateStr={`${String(monthNum).padStart(2, '0')}/${String(dateInfo.dayNum).padStart(2, '0')}`}
-                    monthName={monthName}
-                    themeColor={themeColor}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
-                ) : (
-                  <QtSundaySermonDeepPortrait
-                    year={yearNum}
-                    month={monthNum}
-                    sundayNo={sundayNo}
-                    dateStr={`${String(monthNum).padStart(2, '0')}/${String(dateInfo.dayNum).padStart(2, '0')}`}
-                    monthName={monthName}
-                    themeColor={themeColor}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
-                )
-              )}
+            return (
+              <React.Fragment key={item.dayNum}>
+                {/* 각 주차 시작 지점에 주간 계획(Weekly Plan) 페이지 삽입 */}
+                {isPlannerEnabled && isWeekStart && (
+                  isLandscape ? (
+                    <QtWeeklyPlanPage
+                      weekNum={currentWeekNum}
+                      weekLabel={`WEEK ${currentWeekNum}`}
+                      monthName={monthName}
+                      themeColor={themeColor}
+                      pageWidth={mmToPx(size.widthMm)}
+                      pageHeight={mmToPx(size.heightMm)}
+                    />
+                  ) : (
+                    <QtWeeklyPlanPortrait
+                      weekNum={currentWeekNum}
+                      weekLabel={`WEEK ${currentWeekNum}`}
+                      monthName={monthName}
+                      themeColor={themeColor}
+                      pageWidth={mmToPx(size.widthMm)}
+                      pageHeight={mmToPx(size.heightMm)}
+                    />
+                  )
+                )}
 
-              {/* Page A: Daily QT Page */}
-              {isLandscape
-                ? renderDailyLandscape(day, dayIdx)
-                : renderDailyPortrait(day, dayIdx)
-              }
+                {/* ── 일요일(SUN): 큐티 원고 대신 수채화 다이어리 제작소의 [주일 심층 설교 노트 (Page A)] 배치 ── */}
+                {item.type === 'sunday' ? (
+                  <>
+                    {/* Page A: 주일 심층 설교 노트 */}
+                    {isLandscape ? (
+                      <QtSundaySermonDeepPage
+                        year={yearNum}
+                        month={monthNum}
+                        sundayNo={item.sundayNo}
+                        dateStr={item.dateStr}
+                        monthName={monthName}
+                        themeColor={themeColor}
+                        pageWidth={mmToPx(size.widthMm)}
+                        pageHeight={mmToPx(size.heightMm)}
+                      />
+                    ) : (
+                      <QtSundaySermonDeepPortrait
+                        year={yearNum}
+                        month={monthNum}
+                        sundayNo={item.sundayNo}
+                        dateStr={item.dateStr}
+                        monthName={monthName}
+                        themeColor={themeColor}
+                        pageWidth={mmToPx(size.widthMm)}
+                        pageHeight={mmToPx(size.heightMm)}
+                      />
+                    )}
 
-              {/* Page B: Daily Diary & Prayer Page */}
-              {isDiaryEnabled && (
-                isLandscape ? (
-                  <QtDailyDiaryPage
-                    dateLabel={dateInfo.dateLabel}
-                    dayNum={dateInfo.dayNum}
-                    dayName={dateInfo.dayName}
-                    monthName={monthName}
-                    yearLabel={String(yearNum)}
-                    themeColor={themeColor}
-                    activeWeek={`W${currentWeekNum}`}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
+                    {/* Page B: 주일 데일리 저널 & 기도 (골드/로즈 뱃지 적용) */}
+                    {isDiaryEnabled && (
+                      isLandscape ? (
+                        <QtDailyDiaryPage
+                          dateLabel={item.dateLabel}
+                          dayNum={item.dayNum}
+                          dayName={'SUN'}
+                          monthName={monthName}
+                          yearLabel={String(yearNum)}
+                          themeColor={themeColor}
+                          activeWeek={`W${currentWeekNum}`}
+                          pageWidth={mmToPx(size.widthMm)}
+                          pageHeight={mmToPx(size.heightMm)}
+                        />
+                      ) : (
+                        <QtDailyDiaryPortrait
+                          dateLabel={item.dateLabel}
+                          dayNum={item.dayNum}
+                          dayName={'SUN'}
+                          monthName={monthName}
+                          yearLabel={String(yearNum)}
+                          themeColor={themeColor}
+                          activeWeek={`W${currentWeekNum}`}
+                          pageWidth={mmToPx(size.widthMm)}
+                          pageHeight={mmToPx(size.heightMm)}
+                        />
+                      )
+                    )}
+                  </>
                 ) : (
-                  <QtDailyDiaryPortrait
-                    dateLabel={dateInfo.dateLabel}
-                    dayNum={dateInfo.dayNum}
-                    dayName={dateInfo.dayName}
-                    monthName={monthName}
-                    yearLabel={String(yearNum)}
-                    themeColor={themeColor}
-                    activeWeek={`W${currentWeekNum}`}
-                    pageWidth={mmToPx(size.widthMm)}
-                    pageHeight={mmToPx(size.heightMm)}
-                  />
-                )
-              )}
-            </React.Fragment>
-          )
-        })}
+                  /* ── 평일(Mon~Sat): 큐티 원고 (Page A) + 데일리 저널 (Page B) ── */
+                  <>
+                    {/* Page A: Daily QT Page */}
+                    {item.qtDay ? (
+                      isLandscape
+                        ? renderDailyLandscape(item.qtDay, item.dayIdx)
+                        : renderDailyPortrait(item.qtDay, item.dayIdx)
+                    ) : null}
+
+                    {/* Page B: Daily Diary & Prayer Page */}
+                    {isDiaryEnabled && (
+                      isLandscape ? (
+                        <QtDailyDiaryPage
+                          dateLabel={item.dateLabel}
+                          dayNum={item.dayNum}
+                          dayName={item.dayName}
+                          monthName={monthName}
+                          yearLabel={String(yearNum)}
+                          themeColor={themeColor}
+                          activeWeek={`W${currentWeekNum}`}
+                          pageWidth={mmToPx(size.widthMm)}
+                          pageHeight={mmToPx(size.heightMm)}
+                        />
+                      ) : (
+                        <QtDailyDiaryPortrait
+                          dateLabel={item.dateLabel}
+                          dayNum={item.dayNum}
+                          dayName={item.dayName}
+                          monthName={monthName}
+                          yearLabel={String(yearNum)}
+                          themeColor={themeColor}
+                          activeWeek={`W${currentWeekNum}`}
+                          pageWidth={mmToPx(size.widthMm)}
+                          pageHeight={mmToPx(size.heightMm)}
+                        />
+                      )
+                    )}
+                  </>
+                )}
+              </React.Fragment>
+            )
+          })
+        })()}
 
         {/* 5. End-of-Month Letter to God Page (P-Last) */}
         {isPlannerEnabled && (
