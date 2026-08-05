@@ -471,10 +471,9 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 </button>
               </div>
 
-              {/* 컴팩트 3열 그리드 버튼 */}
-              <div className="grid grid-cols-3 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+              {/* 컴팩트 4열 그리드 버튼 (1일차, 2일차... 만 깔끔하게 표시) */}
+              <div className="grid grid-cols-4 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
                 {days.map((_, idx) => {
-                  const label = weekdays[idx] || `${idx + 1}일차`
                   const isSelected = viewMode === 'day' && dayIndex === idx
                   return (
                     <button
@@ -484,18 +483,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         setViewMode('day')
                         setIsDatePickerOpen(false)
                       }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+                      className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold text-center transition-all ${
                         isSelected
-                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-md'
+                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-md font-extrabold'
                           : 'bg-white/[0.03] hover:bg-white/10 border-white/5 text-slate-300 hover:text-white'
                       }`}
                     >
-                      <span className="truncate">{idx + 1}일차</span>
-                      <span className={`text-[9px] font-mono font-medium ml-1 shrink-0 ${
-                        isSelected ? 'text-indigo-200' : 'text-slate-500'
-                      }`}>
-                        {label.split(' ')[0]}
-                      </span>
+                      {idx + 1}일차
                     </button>
                   )
                 })}
