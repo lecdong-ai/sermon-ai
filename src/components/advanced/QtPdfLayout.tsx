@@ -307,6 +307,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const activeFontFamily = FONT_FAMILIES[ls.fontFamily || 'gothic'] || FONT_FAMILIES.gothic
   const hiddenSet = new Set(ls.hiddenSections || [])
 
+  const yearNum = useMemo(() => {
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length >= 1) return parseInt(parts[0], 10) || 2026
+    }
+    return 2026
+  }, [form.startDate])
+
+  const monthNum = useMemo(() => {
+    if (monthCalendarStrip?.month) {
+      const m = monthCalendarStrip.month.match(/(\d+)월/)
+      if (m) return parseInt(m[1], 10)
+    }
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length >= 2) return parseInt(parts[1], 10)
+    }
+    return 8
+  }, [monthCalendarStrip, form.startDate])
+
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   // 스케일: 짧은 변(210mm) 기준 1.0
   const scale = Math.min(size.widthMm, size.heightMm) / 210.0
@@ -373,26 +393,6 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   // 월간 vs 주간 구분 및 성경책 자동 감지 헬퍼
   const isMonthly = !!monthCalendarStrip || parsedDays.length > 7
-
-  const yearNum = useMemo(() => {
-    if (form.startDate) {
-      const parts = form.startDate.split('-')
-      if (parts.length >= 1) return parseInt(parts[0], 10) || 2026
-    }
-    return 2026
-  }, [form.startDate])
-
-  const monthNum = useMemo(() => {
-    if (monthCalendarStrip?.month) {
-      const m = monthCalendarStrip.month.match(/(\d+)월/)
-      if (m) return parseInt(m[1], 10)
-    }
-    if (form.startDate) {
-      const parts = form.startDate.split('-')
-      if (parts.length >= 2) return parseInt(parts[1], 10)
-    }
-    return 8
-  }, [monthCalendarStrip, form.startDate])
 
   const monthName = useMemo(() => {
     if (monthCalendarStrip?.month) {
