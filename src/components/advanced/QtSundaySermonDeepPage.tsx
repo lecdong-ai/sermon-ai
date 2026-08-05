@@ -124,11 +124,11 @@ export default function QtSundaySermonDeepPage({
               <span className="text-[9px] text-rose-500 font-bold">Rhema Verse</span>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-amber-200 rounded-xl bg-white/80 my-1">
-              <span className="text-xs text-amber-800 font-serif italic font-bold leading-relaxed mb-2">
-                &quot;오늘 설교 중 내 마음에 성령님이 콕 찍어주신 한 구절의 말씀을 정결하게 필사하세요.&quot;
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono italic">(구절 출처: ____________)</span>
+            <div className="flex-1 flex flex-col justify-around p-3 border border-dashed border-amber-200 rounded-xl bg-white/90 my-1">
+              <div className="border-b border-dashed border-amber-200/80 h-5" />
+              <div className="border-b border-dashed border-amber-200/80 h-5" />
+              <div className="border-b border-dashed border-amber-200/80 h-5" />
+              <div className="border-b border-dashed border-amber-200/80 h-5" />
             </div>
 
             <div className="text-[10px] text-slate-500 font-serif italic text-right border-t border-amber-200 pt-1 mt-1">

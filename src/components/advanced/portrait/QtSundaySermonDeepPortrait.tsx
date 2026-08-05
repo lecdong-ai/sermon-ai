@@ -97,8 +97,9 @@ export default function QtSundaySermonDeepPortrait({
         {/* Rhema Scripture Box */}
         <div className="border-2 border-amber-300/80 rounded-2xl p-3 bg-gradient-to-b from-amber-50/40 via-white to-rose-50/30 shadow-2xs space-y-1">
           <span className="text-[10.5px] font-bold text-amber-900 block">📜 RHEMA SCRIPTURE (성령님의 레마 말씀)</span>
-          <div className="p-2 border border-dashed border-amber-200 rounded-xl bg-white/80 text-center text-xs text-amber-800 font-serif italic">
-            &quot;오늘 설교 중 마음에 콕 찍어주신 한 구절을 적어주세요.&quot;
+          <div className="p-2 border border-dashed border-amber-200 rounded-xl bg-white/90 space-y-1.5 min-h-[44px]">
+            <div className="border-b border-dashed border-amber-200/80 h-4" />
+            <div className="border-b border-dashed border-amber-200/80 h-4" />
           </div>
         </div>
 
