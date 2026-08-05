@@ -15,6 +15,8 @@ import QtMonthlyCalendarPortrait from '@/components/advanced/portrait/QtMonthlyC
 import QtMonthlyOverviewPortrait from '@/components/advanced/portrait/QtMonthlyOverviewPortrait'
 import QtWeeklyPlanPortrait from '@/components/advanced/portrait/QtWeeklyPlanPortrait'
 import QtDailyDiaryPortrait from '@/components/advanced/portrait/QtDailyDiaryPortrait'
+import QtPrayerAnswerPage from '@/components/advanced/QtPrayerAnswerPage'
+import QtPrayerAnswerPortrait from '@/components/advanced/portrait/QtPrayerAnswerPortrait'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 
@@ -37,7 +39,7 @@ export default function DiaryPage() {
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0])
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
-  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'weekly' | 'daily'>('daily')
+  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'prayer' | 'weekly' | 'daily'>('prayer')
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
 
@@ -45,7 +47,7 @@ export default function DiaryPage() {
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
   const [modalViewMode, setModalViewMode] = useState<'single' | 'continuous'>('continuous') // 기본: 39페이지 연속 스크롤 뷰!
   const [zoomScale, setZoomScale] = useState(1.0)
-  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'weekly' | 'daily'>('calendar')
+  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'prayer' | 'weekly' | 'daily'>('calendar')
   const [modalDayNum, setModalDayNum] = useState(1)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null)
@@ -58,8 +60,6 @@ export default function DiaryPage() {
   const activeColor = isEcoPrint ? '#475569' : selectedTheme.color
 
   // ★ 선택된 용지 규격 → 화면 렌더링 픽셀 크기 계산
-  // 가로형: 가로 1024px 고정, 세로는 비율(724px 등) 계산
-  // 세로형: 세로 1024px 고정, 가로는 비율(724px 등) 계산
   const BASE_LONG = 1024
   const sizeInfo = PAGE_SIZES[selectedSizeOption] || PAGE_SIZES['A4Landscape']
   const isLandscape = sizeInfo.widthMm >= sizeInfo.heightMm
@@ -75,6 +75,7 @@ export default function DiaryPage() {
   // ★ isLandscape 여부에 따른 가로/세로 전용 컴포넌트 자동 전환
   const CalendarComponent = isLandscape ? QtMonthlyCalendarPage : QtMonthlyCalendarPortrait
   const OverviewComponent = isLandscape ? QtMonthlyOverviewPage : QtMonthlyOverviewPortrait
+  const PrayerComponent = isLandscape ? QtPrayerAnswerPage : QtPrayerAnswerPortrait
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
   const DailyComponent = isLandscape ? QtDailyDiaryPage : QtDailyDiaryPortrait
 
@@ -363,6 +364,17 @@ export default function DiaryPage() {
               </button>
 
               <button
+                onClick={() => setPreviewTab('prayer')}
+                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                  previewTab === 'prayer'
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                🙏 기도 & 습관 (New!)
+              </button>
+
+              <button
                 onClick={() => setPreviewTab('weekly')}
                 className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                   previewTab === 'weekly'
@@ -375,7 +387,7 @@ export default function DiaryPage() {
 
               <button
                 onClick={() => setPreviewTab('daily')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all col-span-2 ${
                   previewTab === 'daily'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
@@ -463,6 +475,15 @@ export default function DiaryPage() {
               )}
               {previewTab === 'overview' && (
                 <OverviewComponent
+                  year={selectedYear}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'prayer' && (
+                <PrayerComponent
                   year={selectedYear}
                   monthName={monthName}
                   themeColor={activeColor}
