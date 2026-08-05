@@ -1243,9 +1243,20 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               ref={modalScrollRef}
               onClick={(e) => {
                 const target = e.target as HTMLElement
-                // 페이지 전체 div[data-day]가 아닌, 명시적인 링크/버튼 [data-nav-target] 클릭만 수용
+                // 명시적인 네비게이션 버튼/배지 [data-nav-target]만 수용
                 const navBtn = target.closest('[data-nav-target]') as HTMLElement | null
                 if (!navBtn) return
+
+                // 방어 로직: 소형 뱃지/버튼이 아니거나 너비 180px 초과 거대 박스 내부 빈 영역 클릭 시 스크롤 점프 무시!
+                const isSmallBadge = navBtn.tagName === 'BUTTON' ||
+                  navBtn.tagName === 'SPAN' ||
+                  navBtn.tagName === 'A' ||
+                  navBtn.getAttribute('data-jump-btn') === 'true' ||
+                  navBtn.classList.contains('cursor-pointer')
+
+                if (!isSmallBadge && navBtn.offsetWidth > 180) {
+                  return
+                }
 
                 const navTarget = navBtn.getAttribute('data-nav-target')
                 if (navTarget) {

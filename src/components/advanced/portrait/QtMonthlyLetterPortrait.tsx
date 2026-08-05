@@ -75,8 +75,7 @@ export default function QtMonthlyLetterPortrait({
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => (
             <div key={l} className="border-b border-rose-200/70 pb-1.5 flex items-center gap-3">
               <span className="text-[10px] text-rose-300 font-serif font-bold">{l}.</span>
-              <div className="text-[11px] text-slate-400 font-serif italic">
-                (하나님, 지난 한 달 동안 저의 삶을 동행해 주셔서 감사합니다...)
+              <div className="text-[11px] text-slate-700 font-serif flex-1 min-h-[20px]">
               </div>
             </div>
           ))}

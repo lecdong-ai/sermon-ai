@@ -115,14 +115,15 @@ export default function QtMonthlyOverviewPage({
           {defaultWeeks.map((w, wIdx) => (
             <div
               key={w.weekLabel}
-              data-nav-target={`week-${wIdx + 1}`}
               className="border border-slate-400 rounded-lg p-2 bg-white flex flex-col justify-between shadow-2xs"
             >
               {/* Column Header */}
               <div className="border-b border-slate-300 pb-1.5 mb-1.5">
                 <div className="flex items-center justify-between">
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold font-serif"
+                    data-nav-target={`week-${wIdx + 1}`}
+                    data-jump-btn="true"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold font-serif cursor-pointer hover:scale-110 transition-transform"
                     style={{ backgroundColor: themeColor }}
                   >
                     {w.weekLabel}

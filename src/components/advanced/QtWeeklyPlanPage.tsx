@@ -123,15 +123,15 @@ export default function QtWeeklyPlanPage({
           return (
             <div
               key={d.dayNum}
-              data-day={d.dayNum}
-              data-nav-target={`day-${d.dayNum}`}
-              className="border border-slate-400 rounded-lg p-2.5 bg-white flex flex-col justify-between shadow-2xs relative hover:border-slate-500 cursor-pointer"
+              className="border border-slate-400 rounded-lg p-2.5 bg-white flex flex-col justify-between shadow-2xs relative"
             >
               {/* Day Header */}
               <div className="flex items-center justify-between border-b border-slate-300 pb-1 mb-1.5">
                 <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
                 <span
-                  className={`text-xs font-serif font-bold ${
+                  data-nav-target={`day-${d.dayNum}`}
+                  data-jump-btn="true"
+                  className={`text-xs font-serif font-bold px-1 py-0.5 rounded hover:bg-slate-200 cursor-pointer transition-colors ${
                     isSun ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-800'
                   }`}
                 >

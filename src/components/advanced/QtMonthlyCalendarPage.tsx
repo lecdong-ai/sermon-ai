@@ -119,18 +119,18 @@ export default function QtMonthlyCalendarPage({
               return (
                 <div
                   key={idx}
-                  data-day={dayNum || undefined}
-                  data-nav-target={dayNum ? `day-${dayNum}` : undefined}
                   className={`border rounded-md p-1.5 flex flex-col justify-between transition-colors relative ${
                     dayNum
-                      ? 'border-slate-400 bg-white hover:bg-slate-50 cursor-pointer shadow-2xs'
+                      ? 'border-slate-400 bg-white hover:bg-slate-50 shadow-2xs'
                       : 'border-slate-300 bg-slate-50/30 opacity-40'
                   }`}
                 >
                   {dayNum && (
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-bold font-serif ${
+                        data-nav-target={`day-${dayNum}`}
+                        data-jump-btn="true"
+                        className={`text-xs font-bold font-serif px-1 py-0.5 rounded hover:bg-slate-200 cursor-pointer transition-colors ${
                           isSun ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
                         }`}
                       >
