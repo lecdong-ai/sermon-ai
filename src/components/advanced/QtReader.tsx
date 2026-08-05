@@ -698,7 +698,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             </div>
 
             {/* 템플릿 테마 카드 리스트 (이름 + 설명 + 실물 색상 칩) */}
-            <div className="grid grid-cols-1 gap-2 max-h-[260px] overflow-y-auto pr-1 scrollbar-thin">
+            <div className="grid grid-cols-1 gap-2 max-h-[260px] overflow-y-auto p-1 scrollbar-thin">
               {QT_TEMPLATES.map(t => {
                 const isSelected = templateId === t.id
                 return (
@@ -707,7 +707,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     onClick={() => setTemplateId(t.id)}
                     className={`flex items-start justify-between p-2.5 rounded-xl border text-left transition-all ${
                       isSelected
-                        ? 'bg-indigo-600/20 border-indigo-400 ring-1 ring-indigo-400/40 shadow-md scale-[1.01]'
+                        ? 'bg-indigo-600/20 border-indigo-400 ring-1 ring-inset ring-indigo-400/40 shadow-md'
                         : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
                     }`}
                   >

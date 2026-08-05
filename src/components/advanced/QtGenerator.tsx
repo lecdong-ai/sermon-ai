@@ -3425,7 +3425,7 @@ export default function QtGenerator() {
                     onClick={() => updateForm({ designTemplate: t.id })}
                     className={`relative rounded-xl p-2.5 text-center transition-all border ${
                       selected
-                        ? 'bg-indigo-500/15 border-indigo-400/50 ring-1 ring-indigo-400/30'
+                        ? 'bg-indigo-500/15 border-indigo-400/50 ring-1 ring-inset ring-indigo-400/30'
                         : 'bg-white/[0.02] border-white/5 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
