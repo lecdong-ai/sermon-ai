@@ -453,9 +453,11 @@ export default function QtGenerator() {
     setMonthlyLibrary(getMonthlyLibrary())
   }, [])
 
-  // 1-Click 월간 큐티 다이어리 마법사 폼 상태
-  const [wizardYear, setWizardYear] = useState<number>(2025)
-  const [wizardMonth, setWizardMonth] = useState<number>(8)
+  // 1-Click 월간 큐티 다이어리 마법사 폼 상태 (현재 연도 기준 동적 설정)
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
+  const currentMonth = useMemo(() => new Date().getMonth() + 1, [])
+  const [wizardYear, setWizardYear] = useState<number>(currentYear)
+  const [wizardMonth, setWizardMonth] = useState<number>(currentMonth)
   const [wizardBibleBook, setWizardBibleBook] = useState<string>('로마서')
   const [wizardGenerating, setWizardGenerating] = useState<boolean>(false)
   const [wizardProgressStep, setWizardProgressStep] = useState<string>('')
@@ -1899,9 +1901,9 @@ export default function QtGenerator() {
                   onChange={(e) => setWizardYear(parseInt(e.target.value, 10))}
                   className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-amber-400"
                 >
-                  <option value={2025}>2025년</option>
-                  <option value={2026}>2026년</option>
-                  <option value={2027}>2027년</option>
+                  {Array.from({ length: 8 }, (_, i) => currentYear + i).map((y) => (
+                    <option key={y} value={y}>{y}년</option>
+                  ))}
                 </select>
 
                 <select
