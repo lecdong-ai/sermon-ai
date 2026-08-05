@@ -1905,87 +1905,99 @@ export default function QtGenerator() {
 
   return (
     <section className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-indigo-500/20 border border-white/10">
-            <BookOpen className="w-5 h-5 text-emerald-400" />
+      {/* Hero Studio Banner Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0d132c] via-[#090e24] to-[#120d28] border border-white/15 p-6 sm:p-8 shadow-[0_24px_80px_-15px_rgba(79,70,229,0.35)] space-y-5">
+        <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-amber-500/20 via-indigo-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-gradient-to-tr from-emerald-500/15 via-blue-500/15 to-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-indigo-500/20 to-emerald-500/20 border border-white/20 shadow-inner">
+                <BookOpen className="w-6 h-6 text-amber-300" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+                말씀 연구실 Q.T 스튜디오
+                <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 shadow-md">
+                  Studio Edition
+                </span>
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
+              주간 본문 정밀 분할부터 AI 전세대 맞춤 집필, 그리고 <strong className="text-amber-300 font-bold">1개월 월간 큐티 소책자 + 수채화 다이어리 자동 통합 출판</strong>까지 한곳에서 관리하세요.
+            </p>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              순차형 QT 생성 스튜디오
-              <span className="text-[10px] bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 px-2 py-0.5 rounded-full font-semibold">monorepo</span>
-            </h2>
-            <p className="text-[11px] text-slate-500">주간 본문 분할부터 정밀 집필, 1개월 소책자 마법사, 영구 서재 보관함까지</p>
+
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <Link
+              href="/diary"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-300 transition-all shadow-md backdrop-blur-md hover:scale-[1.02]"
+            >
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span>📓 수채화 다이어리 제작소</span>
+            </Link>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border shadow-md backdrop-blur-md hover:scale-[1.02] ${
+                showHistory
+                  ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <History className="w-4 h-4 text-indigo-400" />
+              <span>{showHistory ? '새로 작성' : '큐티 생성 기록'}</span>
+              {historyEntries.length > 0 && !showHistory && (
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 text-[10px] font-extrabold border border-indigo-400/30">
+                  {historyEntries.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/diary"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold bg-amber-500/15 border-amber-400/30 text-amber-300 hover:bg-amber-500/25 transition-all shadow-sm"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-            📓 수채화 다이어리 제작소 (독립)
-          </Link>
+
+        {/* Studio Mode Navigation Segmented Control */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-white/10">
           <button
-            onClick={() => setShowHistory(!showHistory)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
-              showHistory
-                ? 'bg-indigo-500/20 border-indigo-400/40 text-indigo-300'
-                : 'bg-white/[0.02] border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+            onClick={() => { setActiveStudioTab('weekly'); setShowHistory(false) }}
+            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+              activeStudioTab === 'weekly' && !showHistory
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400/50 shadow-lg shadow-indigo-600/30 ring-1 ring-white/20'
+                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            <History className="w-3.5 h-3.5" />
-            {showHistory ? '새로 작성' : '기록'}
-            {historyEntries.length > 0 && !showHistory && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[9px] font-bold">{historyEntries.length}</span>
+            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <span>⚡ 1주일 큐티 스튜디오</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveStudioTab('monthly_wizard'); setShowHistory(false) }}
+            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+              activeStudioTab === 'monthly_wizard' && !showHistory
+                ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white border-amber-400/50 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300/30'
+                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            <span>📅 1개월 월간 큐티 다이어리 마법사</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveStudioTab('monthly_library'); setShowHistory(false) }}
+            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+              activeStudioTab === 'monthly_library' && !showHistory
+                ? 'bg-gradient-to-r from-emerald-600 to-indigo-600 text-white border-emerald-400/50 shadow-lg shadow-emerald-500/20 ring-1 ring-white/20'
+                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Bookmark className="w-4 h-4 text-indigo-300" />
+            <span>📚 내 월간 큐티 서재</span>
+            {monthlyLibrary.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] shadow-sm">
+                {monthlyLibrary.length}
+              </span>
             )}
           </button>
         </div>
-      </div>
-
-      {/* Studio Mode Navigation Tabs (주간 vs 1개월 마법사 vs 내 서재) */}
-      <div className="flex items-center gap-2 bg-[#090d22] p-1.5 rounded-2xl border border-white/10 shadow-lg">
-        <button
-          onClick={() => { setActiveStudioTab('weekly'); setShowHistory(false) }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
-            activeStudioTab === 'weekly' && !showHistory
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <BookOpen className="w-4 h-4 text-emerald-400" />
-          <span>⚡ 1주일 큐티 스튜디오</span>
-        </button>
-
-        <button
-          onClick={() => { setActiveStudioTab('monthly_wizard'); setShowHistory(false) }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
-            activeStudioTab === 'monthly_wizard' && !showHistory
-              ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-amber-500/20 ring-1 ring-amber-300/30'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-          <span>📅 1개월 월간 큐티 다이어리 마법사</span>
-        </button>
-
-        <button
-          onClick={() => { setActiveStudioTab('monthly_library'); setShowHistory(false) }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
-            activeStudioTab === 'monthly_library' && !showHistory
-              ? 'bg-gradient-to-r from-emerald-600 to-indigo-600 text-white shadow-md shadow-emerald-500/20 ring-1 ring-white/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Bookmark className="w-4 h-4 text-indigo-300" />
-          <span>📚 내 월간 큐티 서재</span>
-          {monthlyLibrary.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-extrabold text-[10px]">
-              {monthlyLibrary.length}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* 📅 월간 큐티 다이어리 출판 마법사 패널 */}
@@ -2266,39 +2278,47 @@ export default function QtGenerator() {
 
       {/* Stepper Progress Bar (주간 모드일 때만 표시) */}
       {activeStudioTab === 'weekly' && (
-        <div className="glass-dark rounded-2xl border border-white/5 p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {[
-            { num: 1, name: '주간 본문 분할', desc: '의미 단위 6분할 기획' },
-            { num: 2, name: '요일별 QT 집필', desc: '초안 작성 & 자가 교열' },
-            { num: 3, name: '주간 소책자 조립', desc: '인트로 & 인쇄 메타데이터' },
-            { num: 4, name: '소책자 인쇄/다운로드', desc: 'PDF 다운로드 및 뷰어' }
-          ].map((s) => {
-            const isCompleted = step > s.num
-            const isActive = step === s.num
-            return (
-              <div key={s.num} className="flex-1 flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-[13px] border transition-all ${
-                  isCompleted 
-                    ? 'bg-emerald-600/20 border-emerald-400 text-emerald-300' 
-                    : isActive 
-                    ? 'bg-indigo-600/30 border-indigo-400 text-white shadow-[0_0_12px_rgba(99,102,241,0.2)]' 
-                    : 'bg-white/[0.02] border-white/5 text-slate-500'
-                }`}>
-                  {isCompleted ? '✓' : s.num}
-                </div>
-                <div className="flex-1">
-                  <div className={`text-[12px] font-bold ${isActive ? 'text-slate-100' : isCompleted ? 'text-emerald-400/80' : 'text-slate-500'}`}>
-                    {s.name}
+        <div className="rounded-3xl bg-[#0c1226]/90 border border-white/15 p-5 shadow-2xl backdrop-blur-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { num: 1, name: '1단계: 주간 본문 분할', desc: '의미 단위 6분할 기획' },
+              { num: 2, name: '2단계: 요일별 QT 집필', desc: '초안 작성 & 자가 교열' },
+              { num: 3, name: '3단계: 소책자 조립실', desc: '인트로 & 인쇄 메타데이터' },
+              { num: 4, name: '4단계: 소책자 인쇄 & 미리보기', desc: 'PDF 다운로드 및 뷰어' }
+            ].map((s) => {
+              const isCompleted = step > s.num
+              const isActive = step === s.num
+              return (
+                <div
+                  key={s.num}
+                  className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                    isActive
+                      ? 'bg-indigo-600/20 border-indigo-400/50 ring-1 ring-indigo-400/30 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
+                      : isCompleted
+                      ? 'bg-emerald-500/10 border-emerald-400/30'
+                      : 'bg-white/[0.02] border-white/5 opacity-60'
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs border transition-all shrink-0 ${
+                    isCompleted 
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md' 
+                      : isActive 
+                      ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white border-indigo-300 shadow-md' 
+                      : 'bg-white/5 border-white/10 text-slate-500'
+                  }`}>
+                    {isCompleted ? <Check className="w-4 h-4 text-slate-950 stroke-[3]" /> : s.num}
                   </div>
-                  <div className="text-[9px] text-slate-600 font-medium">{s.desc}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs font-bold truncate ${isActive ? 'text-white' : isCompleted ? 'text-emerald-300' : 'text-slate-400'}`}>
+                      {s.name}
+                    </div>
+                    <div className="text-[10px] text-slate-400 truncate mt-0.5">{s.desc}</div>
+                  </div>
                 </div>
-                {s.num < 4 && <ChevronRight className="hidden sm:block w-4 h-4 text-slate-700" />}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
-      </div>
       )}
 
       {/* 히스토리 패널 */}

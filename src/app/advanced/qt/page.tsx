@@ -26,8 +26,11 @@ export default function QtPage() {
 
   if (loading || checking) {
     return (
-      <div className="h-full overflow-y-auto scrollbar-thin pb-12 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="h-full overflow-y-auto scrollbar-thin flex items-center justify-center bg-[#030612]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-bold text-slate-400">말씀 연구실 Q.T 스튜디오 로딩 중...</span>
+        </div>
       </div>
     )
   }
@@ -35,8 +38,8 @@ export default function QtPage() {
   if (!isAdminUser) return null
 
   return (
-    <div className="h-full overflow-y-auto scrollbar-thin pb-12">
-      <div className="max-w-[1000px] mx-auto px-6 py-8 w-full">
+    <div className="h-full overflow-y-auto scrollbar-thin pb-16 bg-[#030612] text-slate-100">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-6 w-full">
         <QtGenerator />
       </div>
     </div>
