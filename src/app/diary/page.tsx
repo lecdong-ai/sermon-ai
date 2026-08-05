@@ -832,7 +832,7 @@ export default function DiaryPage() {
                 >
                   <span>🏛️ P5. 주일 설교 요약 (월간)</span>
                 </button>
-                <button
+                  <button
                   onClick={() => {
                     setModalActiveTab('sermondeep')
                     if (modalViewMode === 'continuous') scrollToPageElement('modal-page-sermondeep')
@@ -861,14 +861,28 @@ export default function DiaryPage() {
                 </button>
               </div>
 
-              {/* 2. Weeks & Daily Pages */}
+              {/* 2. Weeks & Daily Pages with Sunday Deep Sermon Notes */}
               <div className="space-y-3 pt-2 border-t border-white/10">
-                {Array.from({ length: Math.ceil(totalDays / 7) }, (_, idx) => {
-                  const w = idx + 1
-                  const startD = idx * 7 + 1
-                  const endD = Math.min(totalDays, (idx + 1) * 7)
-                  const days = Array.from({ length: endD - startD + 1 }, (_, dIdx) => startD + dIdx)
-                  return { w, label: `W${w} (${selectedMonth}/${startD}~${selectedMonth}/${endD})`, days }
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  주간 계획, 주일 심층 노트 & 데일리 (31일)
+                </span>
+                {Array.from({ length: Math.ceil(totalDays / 7) }, (_, i) => i + 1).map((w) => {
+                  const startD = (w - 1) * 7 + 1
+                  const endD = Math.min(totalDays, w * 7)
+                  const days = Array.from({ length: endD - startD + 1 }, (_, i) => startD + i)
+
+                  // 이 주차에 포함된 주일(일요일) 찾기
+                  const sundayInWeek = days.find((d) => new Date(selectedYear, selectedMonth - 1, d).getDay() === 0)
+                  let sundayNo = 0
+                  if (sundayInWeek) {
+                    let sCount = 0
+                    for (let d = 1; d <= sundayInWeek; d++) {
+                      if (new Date(selectedYear, selectedMonth - 1, d).getDay() === 0) sCount++
+                    }
+                    sundayNo = sCount
+                  }
+
+                  return { w, label: `W${w} (${selectedMonth}/${startD}~${selectedMonth}/${endD})`, days, sundayInWeek, sundayNo }
                 }).map((weekItem) => (
                   <div key={weekItem.w} className="space-y-1">
                     <button
@@ -880,20 +894,41 @@ export default function DiaryPage() {
                     >
                       <span>📆 {weekItem.label}</span>
                     </button>
+
+                    {/* 이 주차에 주일이 있으면 주일 심층 설교 노트 점프 버튼 배치 */}
+                    {weekItem.sundayInWeek && (
+                      <button
+                        onClick={() => {
+                          setModalActiveTab('sermondeep')
+                          if (modalViewMode === 'continuous') scrollToPageElement(`modal-page-sermon-deep-${weekItem.sundayNo}`)
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 flex items-center justify-between my-0.5"
+                      >
+                        <span>🌟 W{weekItem.w} 주일 심층 설교 노트 ({selectedMonth}/{weekItem.sundayInWeek < 10 ? `0${weekItem.sundayInWeek}` : weekItem.sundayInWeek})</span>
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-4 gap-1 pl-1">
-                      {weekItem.days.map((d) => (
-                        <button
-                          key={d}
-                          onClick={() => {
-                            setModalActiveTab('daily')
-                            setModalDayNum(d)
-                            if (modalViewMode === 'continuous') scrollToPageElement(`modal-page-day-${d}`)
-                          }}
-                          className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
-                        >
-                          {d}일
-                        </button>
-                      ))}
+                      {weekItem.days.map((d) => {
+                        const isSun = new Date(selectedYear, selectedMonth - 1, d).getDay() === 0
+                        return (
+                          <button
+                            key={d}
+                            onClick={() => {
+                              setModalActiveTab('daily')
+                              setModalDayNum(d)
+                              if (modalViewMode === 'continuous') scrollToPageElement(`modal-page-day-${d}`)
+                            }}
+                            className={`py-1 rounded text-[10px] text-center font-semibold ${
+                              isSun
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold'
+                                : 'bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-300'
+                            }`}
+                          >
+                            {d}일{isSun ? '(일)' : ''}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
@@ -1046,6 +1081,38 @@ export default function DiaryPage() {
                             </div>
                           )
                         })()}
+                        {/* 주일(일요일)인 경우 바로 앞장에 해당 주차 주일 심층 설교 노트 삽입 */}
+                        {(() => {
+                          const dateObj = new Date(selectedYear, selectedMonth - 1, d)
+                          const isSun = dateObj.getDay() === 0
+                          if (!isSun) return null
+
+                          // 주일 주차 번호 계산
+                          let sCount = 0
+                          for (let i = 1; i <= d; i++) {
+                            if (new Date(selectedYear, selectedMonth - 1, i).getDay() === 0) sCount++
+                          }
+                          const dateStr = `${String(selectedMonth).padStart(2, '0')}/${String(d).padStart(2, '0')}`
+
+                          return (
+                            <div id={`modal-page-sermon-deep-${sCount}`} className="relative group my-4">
+                              <div className="absolute -top-6 left-0 text-[11px] font-bold text-amber-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-amber-400/30 flex items-center gap-2">
+                                <span>🌟 P-Sermon. {selectedYear}년 {selectedMonth}월 {sCount}주차 주일 심층 설교 노트 ({dateStr})</span>
+                              </div>
+                              <SundaySermonDeepComponent
+                                year={selectedYear}
+                                month={selectedMonth}
+                                sundayNo={sCount}
+                                dateStr={dateStr}
+                                monthName={monthName}
+                                themeColor={activeColor}
+                                pageWidth={pageWidth}
+                                pageHeight={pageHeight}
+                              />
+                            </div>
+                          )
+                        })()}
+
                         <div id={`modal-page-day-${d}`} className="relative group">
                           <div className="absolute -top-6 left-0 text-[11px] font-bold text-slate-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10 flex items-center gap-2">
                             <span>{selectedMonth}월 {d}일 데일리 다이어리 & 기도제목</span>
