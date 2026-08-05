@@ -161,9 +161,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     if (targetEl) {
       const containerRect = scrollContainer.getBoundingClientRect()
       const targetRect = targetEl.getBoundingClientRect()
-      const relativeTop = targetRect.top - containerRect.top + scrollContainer.scrollTop
+      const scale = zoomScale || 1.0
+      const relativeTop = (targetRect.top - containerRect.top) / scale + scrollContainer.scrollTop
       scrollContainer.scrollTo({
-        top: Math.max(0, relativeTop - 20),
+        top: Math.max(0, relativeTop - 16),
         behavior: 'smooth',
       })
     }
@@ -1245,19 +1246,6 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 const target = e.target as HTMLElement
                 const navBtn = target.closest('[data-nav-target]') as HTMLElement | null
                 if (!navBtn) return
-
-                // Triple-Lock Safety Guard:
-                // 1. 좌측 Quick-Jump 사이드바 버튼 (#qt-quick-jump-sidebar)
-                // 2. 상단 캘린더 스트립 버튼 (#qt-top-calendar-strip)
-                // 3. 명시적 점프 허용 뱃지 (data-allow-jump="true" 또는 data-jump-btn="true")
-                // 위 3가지에 해당하지 않으면 본문 내의 그 어떤 텍스트/헤더/카드 클릭도 스크롤 점프를 100% 차단합니다.
-                const isSidebar = !!target.closest('#qt-quick-jump-sidebar')
-                const isStrip = !!target.closest('#qt-top-calendar-strip')
-                const isExplicitBadge = navBtn.getAttribute('data-allow-jump') === 'true' || navBtn.getAttribute('data-jump-btn') === 'true'
-
-                if (!isSidebar && !isStrip && !isExplicitBadge) {
-                  return
-                }
 
                 const navTarget = navBtn.getAttribute('data-nav-target')
                 if (navTarget) {
