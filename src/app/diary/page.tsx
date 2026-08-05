@@ -17,6 +17,14 @@ import QtWeeklyPlanPortrait from '@/components/advanced/portrait/QtWeeklyPlanPor
 import QtDailyDiaryPortrait from '@/components/advanced/portrait/QtDailyDiaryPortrait'
 import QtPrayerAnswerPage from '@/components/advanced/QtPrayerAnswerPage'
 import QtPrayerAnswerPortrait from '@/components/advanced/portrait/QtPrayerAnswerPortrait'
+import QtScriptureArtPage from '@/components/advanced/QtScriptureArtPage'
+import QtScriptureArtPortrait from '@/components/advanced/portrait/QtScriptureArtPortrait'
+import QtSundaySermonPage from '@/components/advanced/QtSundaySermonPage'
+import QtSundaySermonPortrait from '@/components/advanced/portrait/QtSundaySermonPortrait'
+import QtBibleReadingMapPage from '@/components/advanced/QtBibleReadingMapPage'
+import QtBibleReadingMapPortrait from '@/components/advanced/portrait/QtBibleReadingMapPortrait'
+import QtMonthlyLetterPage from '@/components/advanced/QtMonthlyLetterPage'
+import QtMonthlyLetterPortrait from '@/components/advanced/portrait/QtMonthlyLetterPortrait'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 
@@ -39,15 +47,15 @@ export default function DiaryPage() {
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0])
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
-  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'prayer' | 'weekly' | 'daily'>('prayer')
+  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('prayer')
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
 
   // ★ 팝업 뷰어 & 스크롤 모드 상태 변수
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
-  const [modalViewMode, setModalViewMode] = useState<'single' | 'continuous'>('continuous') // 기본: 39페이지 연속 스크롤 뷰!
+  const [modalViewMode, setModalViewMode] = useState<'single' | 'continuous'>('continuous')
   const [zoomScale, setZoomScale] = useState(1.0)
-  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'prayer' | 'weekly' | 'daily'>('calendar')
+  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('calendar')
   const [modalDayNum, setModalDayNum] = useState(1)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null)
@@ -76,6 +84,10 @@ export default function DiaryPage() {
   const CalendarComponent = isLandscape ? QtMonthlyCalendarPage : QtMonthlyCalendarPortrait
   const OverviewComponent = isLandscape ? QtMonthlyOverviewPage : QtMonthlyOverviewPortrait
   const PrayerComponent = isLandscape ? QtPrayerAnswerPage : QtPrayerAnswerPortrait
+  const ScriptureArtComponent = isLandscape ? QtScriptureArtPage : QtScriptureArtPortrait
+  const SundaySermonComponent = isLandscape ? QtSundaySermonPage : QtSundaySermonPortrait
+  const BibleMapComponent = isLandscape ? QtBibleReadingMapPage : QtBibleReadingMapPortrait
+  const MonthlyLetterComponent = isLandscape ? QtMonthlyLetterPage : QtMonthlyLetterPortrait
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
   const DailyComponent = isLandscape ? QtDailyDiaryPage : QtDailyDiaryPortrait
 
@@ -370,10 +382,10 @@ export default function DiaryPage() {
               <Layers className="w-4 h-4 mr-1.5 text-indigo-400" />
               미리보기 양식 전환
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={() => setPreviewTab('calendar')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
                   previewTab === 'calendar'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
@@ -384,7 +396,7 @@ export default function DiaryPage() {
 
               <button
                 onClick={() => setPreviewTab('overview')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
                   previewTab === 'overview'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
@@ -395,18 +407,62 @@ export default function DiaryPage() {
 
               <button
                 onClick={() => setPreviewTab('prayer')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
                   previewTab === 'prayer'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                 }`}
               >
-                🙏 기도 & 습관 (New!)
+                🙏 기도 & 습관
+              </button>
+
+              <button
+                onClick={() => setPreviewTab('scripture')}
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
+                  previewTab === 'scripture'
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-300 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                📜 암송 필사
+              </button>
+
+              <button
+                onClick={() => setPreviewTab('sermon')}
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
+                  previewTab === 'sermon'
+                    ? 'bg-blue-500/20 border-blue-400 text-blue-300 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                🏛️ 주일 설교
+              </button>
+
+              <button
+                onClick={() => setPreviewTab('biblemap')}
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
+                  previewTab === 'biblemap'
+                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                🕊️ 66권 통독
+              </button>
+
+              <button
+                onClick={() => setPreviewTab('letter')}
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
+                  previewTab === 'letter'
+                    ? 'bg-rose-500/20 border-rose-400 text-rose-300 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                💌 월말 편지
               </button>
 
               <button
                 onClick={() => setPreviewTab('weekly')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
                   previewTab === 'weekly'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
@@ -417,7 +473,7 @@ export default function DiaryPage() {
 
               <button
                 onClick={() => setPreviewTab('daily')}
-                className={`p-2.5 rounded-xl border text-xs font-semibold transition-all col-span-2 ${
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
                   previewTab === 'daily'
                     ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
@@ -514,6 +570,42 @@ export default function DiaryPage() {
               )}
               {previewTab === 'prayer' && (
                 <PrayerComponent
+                  year={selectedYear}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'scripture' && (
+                <ScriptureArtComponent
+                  year={selectedYear}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'sermon' && (
+                <SundaySermonComponent
+                  year={selectedYear}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'biblemap' && (
+                <BibleMapComponent
+                  year={selectedYear}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'letter' && (
+                <MonthlyLetterComponent
                   year={selectedYear}
                   monthName={monthName}
                   themeColor={activeColor}
@@ -690,6 +782,42 @@ export default function DiaryPage() {
                 >
                   <span>🙏 P3. 기도 & 은혜 기념비</span>
                 </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('scripture')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-scripture')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 flex items-center justify-between"
+                >
+                  <span>📜 P4. 암송 필사 카드</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('sermon')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-sermon')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 flex items-center justify-between"
+                >
+                  <span>🏛️ P5. 주일 설교 노트</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('biblemap')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-biblemap')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 flex items-center justify-between"
+                >
+                  <span>🕊️ P6. 성경 66권 통독 맵</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('letter')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-letter')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 flex items-center justify-between"
+                >
+                  <span>💌 P-Last. 하나님께 드리는 편지</span>
+                </button>
               </div>
 
               {/* 2. Weeks & Daily Pages */}
@@ -789,6 +917,48 @@ export default function DiaryPage() {
                     />
                   </div>
 
+                  {/* P4: Scripture Art */}
+                  <div id="modal-page-scripture" className="relative group">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-purple-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P4. {selectedYear}년 {selectedMonth}월 수채화 암송 & 필사 카드
+                    </div>
+                    <ScriptureArtComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
+
+                  {/* P5: Sunday Sermon Notes */}
+                  <div id="modal-page-sermon" className="relative group">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-blue-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P5. {selectedYear}년 {selectedMonth}월 주일 설교 묵상 노트
+                    </div>
+                    <SundaySermonComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
+
+                  {/* P6: Bible Reading Journey Map */}
+                  <div id="modal-page-biblemap" className="relative group">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-emerald-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P6. {selectedYear}년 {selectedMonth}월 성경 66권 통독 맵
+                    </div>
+                    <BibleMapComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
+
                   {/* Pages 3~39: 5 Weeks & 31 Days */}
                   {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
                     const currentWeek = Math.floor((d - 1) / 7) + 1
@@ -836,6 +1006,20 @@ export default function DiaryPage() {
                       </React.Fragment>
                     )
                   })}
+
+                  {/* P-Last: End-of-Month Letter to God */}
+                  <div id="modal-page-letter" className="relative group mt-6">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-rose-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P-Last. {selectedYear}년 {selectedMonth}월 하나님께 드리는 월말 편지 & 감사 회고
+                    </div>
+                    <MonthlyLetterComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
                 </div>
               ) : (
                 /* ★ 단일 페이지 뷰 모드 */
