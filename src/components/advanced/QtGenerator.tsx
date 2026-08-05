@@ -143,6 +143,34 @@ export interface QtHistoryEntry {
   updated_at: string
 }
 
+// 히스토리 항목에서 사용 예정 월(year, month) 파싱 헬퍼 (DB 컬럼 미존재 시 메타데이터 태그 및 start_date 폴백)
+export function parseEntryTargetMonth(entry: QtHistoryEntry): { year: number; month: number } {
+  if (entry.target_year && entry.target_month) {
+    return { year: entry.target_year, month: entry.target_month }
+  }
+  // series_name 또는 subtitle에 포함된 ||TARGET:YYYY-MM|| 메타 태그 파싱
+  const tagMatch = (entry.series_name || '').match(/\|\|TARGET:(\d{4})-(\d{1,2})\|\|/) ||
+                   (entry.subtitle || '').match(/\|\|TARGET:(\d{4})-(\d{1,2})\|\|/)
+  if (tagMatch) {
+    return { year: parseInt(tagMatch[1], 10), month: parseInt(tagMatch[2], 10) }
+  }
+  // start_date 또는 created_at 폴백
+  const dateStr = entry.start_date || entry.created_at
+  if (dateStr) {
+    const parts = dateStr.split('T')[0].split('-')
+    if (parts.length >= 2) {
+      return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10) }
+    }
+  }
+  const now = new Date()
+  return { year: now.getFullYear(), month: now.getMonth() + 1 }
+}
+
+export function cleanSeriesName(seriesName?: string): string {
+  if (!seriesName) return ''
+  return seriesName.replace(/\s*\|\|TARGET:[^|]+\|\|/g, '').trim()
+}
+
 // 마크다운 테이블 파싱 헬퍼
 function parseSplitTable(markdown: string): DaySplitData[] {
   const lines = markdown.split('\n')
@@ -546,6 +574,8 @@ export default function QtGenerator() {
         focus: m.focus,
         finalContent: m.finalContent,
       }))
+      const targetTag = `||TARGET:${form.targetYear}-${String(form.targetMonth).padStart(2, '0')}||`
+      const taggedSeriesName = `${form.seriesName || ''} ${targetTag}`.trim()
       const res = await fetch('/api/advanced/qt/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -555,7 +585,7 @@ export default function QtGenerator() {
           audience: form.audience,
           level: form.level,
           tone: form.tone,
-          series_name: form.seriesName,
+          series_name: taggedSeriesName,
           size_option: form.sizeOption,
           design_template: form.designTemplate,
           full_manuscript: manuscript,
@@ -563,6 +593,7 @@ export default function QtGenerator() {
           start_passage: startPassage,
           end_passage: endPassage || startPassage || null,
           subtitle: subtitle || null,
+          start_date: form.startDate,
           target_year: form.targetYear,
           target_month: form.targetMonth,
         }),
@@ -850,7 +881,9 @@ export default function QtGenerator() {
       dayName: day, passage: m.passage, title: m.title, focus: m.focus, finalContent: m.finalContent,
     }))
     try {
-       await fetch('/api/advanced/qt/history', {
+      const targetTag = `||TARGET:${form.targetYear}-${String(form.targetMonth).padStart(2, '0')}||`
+      const taggedSeriesName = `${form.seriesName || ''} ${targetTag}`.trim()
+      await fetch('/api/advanced/qt/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -859,7 +892,7 @@ export default function QtGenerator() {
           audience: gen,
           generation: gen,
           level: form.level, tone: form.tone,
-          series_name: form.seriesName,
+          series_name: taggedSeriesName,
           size_option: form.sizeOption, design_template: form.designTemplate,
           full_manuscript: manuscript,
           day_data: dayData,
@@ -1944,23 +1977,10 @@ export default function QtGenerator() {
             // 주간 큐티 항목들을 사용 예정 월(target_year/month) 기준으로 그룹핑
             const monthGroups: Record<string, { year: number; month: number; entries: QtHistoryEntry[] }> = {}
             for (const entry of historyEntries) {
-              let year = entry.target_year
-              let month = entry.target_month
-              if (!year || !month) {
-                const dateStr = entry.start_date || entry.created_at
-                if (dateStr) {
-                  const parts = dateStr.split('T')[0].split('-')
-                  if (parts.length >= 2) {
-                    year = parseInt(parts[0], 10)
-                    month = parseInt(parts[1], 10)
-                  }
-                }
-              }
-              if (year && month) {
-                const key = `${year}-${String(month).padStart(2, '0')}`
-                if (!monthGroups[key]) monthGroups[key] = { year, month, entries: [] }
-                monthGroups[key].entries.push(entry)
-              }
+              const { year, month } = parseEntryTargetMonth(entry)
+              const key = `${year}-${String(month).padStart(2, '0')}`
+              if (!monthGroups[key]) monthGroups[key] = { year, month, entries: [] }
+              monthGroups[key].entries.push(entry)
             }
 
             const sortedGroupKeys = Object.keys(monthGroups).sort().reverse()
@@ -2283,13 +2303,10 @@ export default function QtGenerator() {
               const monthGroups: Record<string, { year: number; month: number; entries: QtHistoryEntry[] }> = {}
               const ungrouped: QtHistoryEntry[] = []
               for (const entry of historyEntries) {
-                if (entry.target_year && entry.target_month) {
-                  const key = `${entry.target_year}-${String(entry.target_month).padStart(2, '0')}`
-                  if (!monthGroups[key]) monthGroups[key] = { year: entry.target_year, month: entry.target_month, entries: [] }
-                  monthGroups[key].entries.push(entry)
-                } else {
-                  ungrouped.push(entry)
-                }
+                const { year, month } = parseEntryTargetMonth(entry)
+                const key = `${year}-${String(month).padStart(2, '0')}`
+                if (!monthGroups[key]) monthGroups[key] = { year, month, entries: [] }
+                monthGroups[key].entries.push(entry)
               }
               const sortedGroupKeys = Object.keys(monthGroups).sort().reverse()
 
@@ -2708,7 +2725,12 @@ export default function QtGenerator() {
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={form.targetYear}
-                    onChange={e => updateForm({ targetYear: parseInt(e.target.value, 10) })}
+                    onChange={e => {
+                      const y = parseInt(e.target.value, 10)
+                      const m = form.targetMonth
+                      const newStartDate = `${y}-${String(m).padStart(2, '0')}-01`
+                      updateForm({ targetYear: y, startDate: newStartDate })
+                    }}
                     className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
                   >
                     {Array.from({ length: 8 }, (_, i) => currentYear + i).map(y => (
@@ -2717,7 +2739,12 @@ export default function QtGenerator() {
                   </select>
                   <select
                     value={form.targetMonth}
-                    onChange={e => updateForm({ targetMonth: parseInt(e.target.value, 10) })}
+                    onChange={e => {
+                      const m = parseInt(e.target.value, 10)
+                      const y = form.targetYear
+                      const newStartDate = `${y}-${String(m).padStart(2, '0')}-01`
+                      updateForm({ targetMonth: m, startDate: newStartDate })
+                    }}
                     className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-amber-300 font-bold outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
