@@ -521,6 +521,10 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     fontFamily: activeFontFamily,
     position: 'relative',
     pageBreakAfter: 'always',
+    marginBottom: '32px',
+    borderRadius: '16px',
+    boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+    overflow: 'hidden',
   }
 
   const pageMarginMm = 5 * marginScale

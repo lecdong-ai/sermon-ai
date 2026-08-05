@@ -1269,7 +1269,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
             >
               <div
-                className="transition-all duration-200 origin-top shadow-[0_32px_120px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden bg-white border border-white/20 my-4"
+                className="transition-all duration-200 origin-top my-6 flex flex-col items-center gap-8"
                 style={{
                   transform: `scale(${zoomScale})`,
                   transformOrigin: 'top center',
