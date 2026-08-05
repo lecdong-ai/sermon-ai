@@ -48,7 +48,7 @@ export async function PUT(
 
   const { id } = await params
   const body = await request.json()
-  const { full_manuscript, day_data, series_name, size_option, design_template, subtitle } = body
+  const { full_manuscript, day_data, series_name, size_option, design_template, subtitle, target_year, target_month, start_date } = body
 
   const updateData: Record<string, any> = {}
   if (full_manuscript !== undefined) updateData.full_manuscript = full_manuscript
@@ -57,14 +57,32 @@ export async function PUT(
   if (size_option !== undefined) updateData.size_option = size_option
   if (design_template !== undefined) updateData.design_template = design_template
   if (subtitle !== undefined) updateData.subtitle = subtitle
+  if (target_year !== undefined) updateData.target_year = target_year
+  if (target_month !== undefined) updateData.target_month = target_month
+  if (start_date !== undefined) updateData.start_date = start_date
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('qt_history')
     .update(updateData)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single()
+
+  if (error && (error.message?.includes('target_year') || error.message?.includes('target_month') || error.message?.includes('start_date'))) {
+    delete updateData.target_year
+    delete updateData.target_month
+    delete updateData.start_date
+    const retry = await supabaseAdmin
+      .from('qt_history')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    data = retry.data
+    error = retry.error
+  }
 
   if (error || !data) {
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: error ? 500 : 404 })

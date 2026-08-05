@@ -1170,6 +1170,39 @@ export default function QtGenerator() {
     } catch {}
   }
 
+  // 특정 월 그룹 기록 일괄 삭제
+  const handleDeleteMonthGroup = async (entries: QtHistoryEntry[], monthLabel: string) => {
+    if (!window.confirm(`${monthLabel} 기록 ${entries.length}개를 완전히 삭제하시겠습니까?`)) return
+    try {
+      await Promise.all(entries.map(e => fetch(`/api/advanced/qt/history/${e.id}`, { method: 'DELETE' })))
+      loadHistory()
+    } catch {}
+  }
+
+  // 특정 월 그룹의 모든 항목 사용 월 변경 (예: 8월 -> 9월)
+  const handleChangeMonthGroup = async (entries: QtHistoryEntry[], newYear: number, newMonth: number) => {
+    try {
+      const targetTag = `||TARGET:${newYear}-${String(newMonth).padStart(2, '0')}||`
+      const newStartDate = `${newYear}-${String(newMonth).padStart(2, '0')}-01`
+
+      await Promise.all(entries.map(async e => {
+        const cleanName = cleanSeriesName(e.series_name)
+        const taggedSeriesName = `${cleanName} ${targetTag}`.trim()
+        await fetch(`/api/advanced/qt/history/${e.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target_year: newYear,
+            target_month: newMonth,
+            start_date: newStartDate,
+            series_name: taggedSeriesName,
+          })
+        })
+      }))
+      loadHistory()
+    } catch {}
+  }
+
   // 히스토리 보기
   const handleViewHistory = async (entry: QtHistoryEntry) => {
     const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
@@ -2032,13 +2065,35 @@ export default function QtGenerator() {
                           </div>
                         </div>
 
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
-                          isFullMonth
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-400/40'
-                        }`}>
-                          {group.entries.length}주차 작성됨 {isFullMonth ? ' (완성)' : ''}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {/* 월 변경 드롭다운 */}
+                          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+                            <span className="text-[10px] text-slate-400 font-bold">월 변경:</span>
+                            <select
+                              value={group.month}
+                              onChange={(e) => {
+                                const m = parseInt(e.target.value, 10)
+                                if (m !== group.month) {
+                                  handleChangeMonthGroup(group.entries, group.year, m)
+                                }
+                              }}
+                              className="bg-transparent text-[11px] font-extrabold text-amber-300 outline-none cursor-pointer [color-scheme:dark]"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                <option key={m} value={m} className="bg-slate-900 text-slate-100">{m}월호로 변경</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 이 달 전체 삭제 버튼 */}
+                          <button
+                            onClick={() => handleDeleteMonthGroup(group.entries, `${group.year}년 ${group.month}월호`)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                            title="이 달 전체 기록 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* 포함된 주차 목록 미리보기 */}
