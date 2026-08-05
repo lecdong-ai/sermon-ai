@@ -31,7 +31,7 @@ export default function QtSundaySermonDeepPage({
       data-page-key={dayNum ? `day-${dayNum}` : `sunday-sermon-deep-${sundayNo}`}
       data-day={dayNum || sundayNo}
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.15)] rounded-2xl mb-8 mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.5)] rounded-none mb-12 mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,

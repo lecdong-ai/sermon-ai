@@ -521,9 +521,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     fontFamily: activeFontFamily,
     position: 'relative',
     pageBreakAfter: 'always',
-    marginBottom: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+    marginBottom: '48px',
+    borderRadius: '0px',
+    boxShadow: '0 14px 45px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 0, 0, 0.3)',
     overflow: 'hidden',
   }
 

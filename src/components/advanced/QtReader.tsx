@@ -1266,10 +1266,17 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   scrollToTargetKey(navTarget)
                 }
               }}
-              className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
+              className="qt-reader-canvas flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
             >
+              <style>{`
+                .qt-reader-canvas .qt-page {
+                  border-radius: 0px !important;
+                  margin-bottom: 48px !important;
+                  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.3) !important;
+                }
+              `}</style>
               <div
-                className="transition-all duration-200 origin-top my-6 flex flex-col items-center gap-8"
+                className="transition-all duration-200 origin-top my-6 flex flex-col items-center gap-12"
                 style={{
                   transform: `scale(${zoomScale})`,
                   transformOrigin: 'top center',
