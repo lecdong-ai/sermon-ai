@@ -53,7 +53,6 @@ export default function QtPrayerAnswerPage({
           <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
             <span>🙏 {monthName} Prayer & Grace Milestone</span>
           </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5">이달의 간절한 기도 제목과 하나님께서 응답해주신 은혜의 순간을 기록하는 영성 기록장</p>
         </div>
         <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
           {year}년 {monthName} 은혜의 기념비
@@ -82,9 +81,6 @@ export default function QtPrayerAnswerPage({
                   {dayNum}
                 </div>
               ))}
-            </div>
-            <div className="text-[9px] text-slate-400 text-center mt-1 border-t border-slate-200 pt-1">
-              큐티를 완료한 날 동그라미/스티커로 색칠해보세요! ✨
             </div>
           </div>
 
@@ -142,10 +138,9 @@ export default function QtPrayerAnswerPage({
                 <span className="text-[9px] text-slate-400 font-mono">응답일: ____월 ____일</span>
               </div>
               <div className="text-[11px] text-slate-700 font-serif min-h-[20px] flex items-center">
-                <span className="text-slate-400 text-[10px] mr-1">기도 제목:</span>
               </div>
               <div className="text-[10px] text-amber-700 bg-amber-50/60 rounded px-2 py-0.5 border border-amber-200/50 flex items-center justify-between">
-                <span>✨ 응답 및 은혜의 소감:</span>
+                <span>✨ 응답 소감:</span>
                 <span className="text-[9px] font-bold text-amber-600">Amen!</span>
               </div>
             </div>

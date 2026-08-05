@@ -132,7 +132,6 @@ export default function QtDailyDiaryPortrait({
             <h4 className="text-[11px] font-bold tracking-wider uppercase flex items-center" style={{ color: themeColor }}>
               PRAYER TOPICS (오늘의 기도)
             </h4>
-            <span className="text-[9px] text-slate-400 font-normal">3가지 기도제목</span>
           </div>
           <div className="space-y-1 text-[11px] text-slate-600">
             <div className="flex items-center border-b border-slate-300 pb-0.5 h-5">

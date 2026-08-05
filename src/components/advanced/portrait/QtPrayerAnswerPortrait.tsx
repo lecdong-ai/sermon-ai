@@ -53,7 +53,6 @@ export default function QtPrayerAnswerPortrait({
           <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
             <span>🙏 {monthName} Prayer & Grace Milestone</span>
           </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5">이달의 간절한 기도 제목과 하나님께서 응답해주신 은혜의 순간을 기록하는 영성 기록장</p>
         </div>
         <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
           {year}년 {monthName} 은혜의 기념비
