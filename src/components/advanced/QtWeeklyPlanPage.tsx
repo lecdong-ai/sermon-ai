@@ -80,15 +80,15 @@ export default function QtWeeklyPlanPage({
 
       {/* 2. Page Title Header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-start space-x-3">
           <div
-            className="px-3.5 py-1.5 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-2xs shrink-0"
+            className="px-3.5 py-1 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 mt-0.5"
             style={{ backgroundColor: themeColor }}
           >
             {weekNum}주차
           </div>
-          <div className="flex flex-col justify-center">
-            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide leading-tight">{monthName} Weekly Plan</h2>
+          <div>
+            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide leading-snug">{monthName} Weekly Plan</h2>
             <div className="text-[11px] text-slate-400 font-medium mt-0.5">{dateRangeText}</div>
           </div>
         </div>

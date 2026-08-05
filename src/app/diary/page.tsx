@@ -681,6 +681,15 @@ export default function DiaryPage() {
                 >
                   <span>📊 P2. 월간 개요</span>
                 </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('prayer')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-prayer')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
+                >
+                  <span>🙏 P3. 기도 & 은혜 기념비</span>
+                </button>
               </div>
 
               {/* 2. Weeks & Daily Pages */}
@@ -758,6 +767,20 @@ export default function DiaryPage() {
                       P2. {selectedYear}년 {selectedMonth}월 월간 개요
                     </div>
                     <OverviewComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
+
+                  {/* P3: Prayer & Grace Milestone */}
+                  <div id="modal-page-prayer" className="relative group">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-amber-400 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P3. {selectedYear}년 {selectedMonth}월 기도 & 은혜의 기념비
+                    </div>
+                    <PrayerComponent
                       year={selectedYear}
                       monthName={monthName}
                       themeColor={activeColor}
