@@ -473,9 +473,23 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return displayStartPassage || displayEndPassage || ''
   }, [parsedDays, detectedBook, textScanned.passageRangeText, displayStartPassage, displayEndPassage])
 
-  // 캘린더 스트립 표시 여부: 화이트리스트 사이즈 + 일일 페이지에서만
-  const showStrip = !!monthCalendarStrip && STRIP_SIZE_OPTIONS.has(sizeOption)
-  const STRIP_HEIGHT_MM = 16 // 본문 padding 확보 + 라벨 + 카드
+  // 캘린더 스트립 표시 여부: 월간 모드(isMonthly)이거나 monthCalendarStrip이 존재할 때 항상 표시
+  const showStrip = isMonthly || !!monthCalendarStrip
+  const STRIP_HEIGHT_MM = 12 // 본문 padding 확보 + 라벨 + 카드
+
+  // 월간 캘린더 스트립 자동 생성 헬퍼
+  const activeMonthStrip = useMemo(() => {
+    if (monthCalendarStrip) return monthCalendarStrip
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
+    const activeDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+    const dayHasContent = Array.from({ length: daysInMonth }, () => true)
+    return {
+      month: `${yearNum}년 ${monthNum}월`,
+      daysInMonth,
+      activeDays,
+      dayHasContent,
+    }
+  }, [monthCalendarStrip, yearNum, monthNum])
 
   // 페이지 스타일 — padding은 inner wrapper에서 처리
   const pageStyle: React.CSSProperties = {
@@ -500,17 +514,17 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     overflow: 'hidden',
   }
 
-  // 캘린더 스트립 렌더 함수 (A4 가로 / iPad / Tablet에서만 호출)
+  // 캘린더 스트립 렌더 함수 (A4 가로 / iPad / Tablet / 세로 등 월간 페이지 상단 탑재)
   // activeDay: 현재 페이지의 day (1~31) — 동적 매칭
   const renderCalendarStrip = (activeDay: number) => {
-    if (!showStrip || !monthCalendarStrip) return null
-    const { month, daysInMonth, dayHasContent } = monthCalendarStrip
+    if (!showStrip || !activeMonthStrip) return null
+    const { month, daysInMonth } = activeMonthStrip
 
-    // 카드 폭 계산: 페이지 가로(mm) - 좌우 padding(20mm) - 라벨 영역(22mm) - 카드 사이 gap
+    // 카드 폭 계산: 페이지 가로(mm) - 좌우 padding(16mm) - 라벨 영역(24mm) - 카드 사이 gap
     const pageW = size.widthMm
-    const labelWidth = 22
-    const sidePadding = 10
-    const cardGap = 0.5
+    const labelWidth = 24
+    const sidePadding = 8
+    const cardGap = 0.4
     const availableW = pageW - labelWidth - sidePadding * 2
     const cardW = (availableW - cardGap * (daysInMonth - 1)) / daysInMonth
     const cardH = 5.5
@@ -527,17 +541,17 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         padding: `0 ${sidePadding}mm`,
         display: 'flex',
         alignItems: 'center',
-        gap: `${6 * scale}px`,
-        borderBottom: `0.5px solid #00000020`,
+        gap: `${4 * scale}px`,
+        borderBottom: `1px solid #e2e8f0`,
         background: '#ffffff',
-        zIndex: 10,
+        zIndex: 20,
       }}>
         <span style={{
           fontFamily: t.fontHeading,
           fontSize: `${8 * scale}px`,
-          fontWeight: 700,
-          color: '#000000',
-          letterSpacing: `${1 * scale}px`,
+          fontWeight: 800,
+          color: '#1e293b',
+          letterSpacing: `${0.5 * scale}px`,
           whiteSpace: 'nowrap',
         }}>
           ◆ {month}
@@ -550,15 +564,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         }}>
           {days.map(d => {
             const isActive = d === activeDay
-            // 일요일 여부 판별 (monthNum & yearNum 기반)
             const isSunday = new Date(yearNum, monthNum - 1, d).getDay() === 0
-            const hasContent = isSunday ? true : (dayHasContent[d - 1] ?? false)
-            const isEmpty = !hasContent && !isActive
 
-            let textColor = isActive ? '#ffffff' : (isEmpty ? '#00000040' : '#000000')
-            let bgColor = isActive ? '#000000' : 'transparent'
-            let borderColor = isActive ? '#000000' : (isEmpty ? '#00000010' : '#00000030')
-            let fontWeight: number | string = isActive ? 800 : 500
+            let textColor = isActive ? '#ffffff' : '#334155'
+            let bgColor = isActive ? '#0f172a' : '#f8fafc'
+            let borderColor = isActive ? '#0f172a' : '#cbd5e1'
+            let fontWeight: number | string = isActive ? 800 : 600
 
             // 일요일 차별화 스타일 (Rose / Grace Badge)
             if (isSunday) {
@@ -570,7 +581,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               } else {
                 bgColor = '#fff1f2'
                 textColor = '#be123c'
-                borderColor = '#fda4af'
+                borderColor = '#fecdd3'
                 fontWeight = 700
               }
             }
@@ -589,16 +600,15 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: `${8.5 * scale}px`,
+                  fontSize: `${8 * scale}px`,
                   fontWeight,
                   color: textColor,
                   background: bgColor,
                   border: `0.5px solid ${borderColor}`,
                   borderRadius: `${1.5 * scale}px`,
-                  opacity: isEmpty ? 0.5 : 1,
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
-                  boxShadow: isSunday && !isActive ? '0 1px 2px rgba(225,29,72,0.1)' : 'none',
+                  boxShadow: isSunday && !isActive ? '0 1px 2px rgba(225,29,72,0.15)' : 'none',
                 }}
               >
                 {d}
@@ -1118,7 +1128,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* ══════ Page 2 (뒷면): 관찰/묵상/적용 — 2열 레이아웃 ══════ */}
         <div className="qt-page" style={pageStyle}>
           <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {renderCalendarStrip(targetDayNum)}
             {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
 
             {/* 2열: 관찰 | 이해 */}
@@ -1366,7 +1376,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {hasOverflow && (
           <div className="qt-page" style={pageStyle}>
             <div style={pageContentStyle}>
-              {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+              {renderCalendarStrip(targetDayNum)}
               <div style={{
                 fontFamily: t.fontHeading,
                 fontSize: `${9 * scale}px`,
