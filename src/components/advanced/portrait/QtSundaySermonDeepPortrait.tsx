@@ -107,11 +107,15 @@ export default function QtSundaySermonDeepPortrait({
         <div className="grid grid-cols-2 gap-2">
           <div className="border border-emerald-300 rounded-xl p-2 bg-emerald-50/40 text-[10px]">
             <span className="font-bold text-emerald-900 block mb-0.5">🌱 삶의 실천</span>
-            <div className="bg-white p-1 rounded border border-emerald-200 text-slate-400 italic">구체적 순종...</div>
+            <div className="bg-white p-1 rounded border border-emerald-200 min-h-[28px] flex flex-col justify-around">
+              <div className="border-b border-dashed border-emerald-200/80 h-3" />
+            </div>
           </div>
           <div className="border border-indigo-300 rounded-xl p-2 bg-indigo-50/40 text-[10px]">
             <span className="font-bold text-indigo-900 block mb-0.5">🙏 결단 기도</span>
-            <div className="bg-white p-1 rounded border border-indigo-200 text-slate-400 italic">감사와 회개...</div>
+            <div className="bg-white p-1 rounded border border-indigo-200 min-h-[28px] flex flex-col justify-around">
+              <div className="border-b border-dashed border-indigo-200/80 h-3" />
+            </div>
           </div>
         </div>
       </div>

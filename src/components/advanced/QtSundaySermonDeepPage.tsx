@@ -148,8 +148,9 @@ export default function QtSundaySermonDeepPage({
             </span>
             <span className="text-[9px] text-emerald-600 font-bold">Action Point</span>
           </div>
-          <div className="border border-emerald-200 rounded-xl p-2 bg-white/90 text-[11px] text-slate-500 font-serif italic min-h-[36px]">
-            듣기만 하지 않고, 이번 한 주간 구체적으로 순종할 1가지 결단...
+          <div className="border border-emerald-200 rounded-xl p-2 bg-white/90 space-y-1.5 min-h-[36px]">
+            <div className="border-b border-dashed border-emerald-200/80 h-3.5" />
+            <div className="border-b border-dashed border-emerald-200/80 h-3.5" />
           </div>
         </div>
 
@@ -161,8 +162,9 @@ export default function QtSundaySermonDeepPage({
             </span>
             <span className="text-[9px] text-indigo-600 font-bold">My Prayer</span>
           </div>
-          <div className="border border-indigo-200 rounded-xl p-2 bg-white/90 text-[11px] text-slate-500 font-serif italic min-h-[36px]">
-            오늘 들은 말씀을 붙들고 드리는 감사와 회개의 기도문...
+          <div className="border border-indigo-200 rounded-xl p-2 bg-white/90 space-y-1.5 min-h-[36px]">
+            <div className="border-b border-dashed border-indigo-200/80 h-3.5" />
+            <div className="border-b border-dashed border-indigo-200/80 h-3.5" />
           </div>
         </div>
       </div>
