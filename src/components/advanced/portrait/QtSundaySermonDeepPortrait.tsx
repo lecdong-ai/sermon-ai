@@ -6,6 +6,7 @@ interface QtSundaySermonDeepPortraitProps {
   year?: number
   month?: number
   sundayNo?: number
+  dayNum?: number
   dateStr?: string
   monthName?: string
   themeColor?: string
@@ -17,6 +18,7 @@ export default function QtSundaySermonDeepPortrait({
   year = 2026,
   month = 8,
   sundayNo = 1,
+  dayNum,
   dateStr = '08/02',
   monthName = 'August',
   themeColor = '#B8C6D9',
@@ -25,7 +27,9 @@ export default function QtSundaySermonDeepPortrait({
 }: QtSundaySermonDeepPortraitProps) {
   return (
     <div
-      data-page-key={`sunday-sermon-deep-portrait-${sundayNo}`}
+      id={dayNum ? `qt-page-day-${dayNum}` : `qt-page-sunday-deep-${sundayNo}`}
+      data-page-key={dayNum ? `day-${dayNum}` : `sunday-sermon-deep-${sundayNo}`}
+      data-day={dayNum || sundayNo}
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{

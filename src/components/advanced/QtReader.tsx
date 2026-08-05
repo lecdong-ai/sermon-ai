@@ -149,9 +149,11 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
         ? `day-${targetKey}`
         : targetKey
 
+    const dayNumStr = cleanKey.replace('day-', '')
+
     const targetEl = document.getElementById(`qt-page-${cleanKey}`) ||
       document.querySelector<HTMLElement>(`[data-page-key="${cleanKey}"]`) ||
-      document.querySelector<HTMLElement>(`[data-day="${cleanKey.replace('day-', '')}"]`) ||
+      document.querySelector<HTMLElement>(`[data-day="${dayNumStr}"]`) ||
       document.querySelector<HTMLElement>(`[data-week="${cleanKey.replace('week-', '')}"]`)
 
     if (targetEl) {

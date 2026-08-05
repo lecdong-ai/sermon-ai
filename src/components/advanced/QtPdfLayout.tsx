@@ -506,14 +506,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     if (!showStrip || !monthCalendarStrip) return null
     const { month, daysInMonth, dayHasContent } = monthCalendarStrip
 
-    // 카드 폭 계산: 페이지 가로(mm) - 좌우 padding(20mm) - 라벨 영역(20mm) - 카드 사이 gap
+    // 카드 폭 계산: 페이지 가로(mm) - 좌우 padding(20mm) - 라벨 영역(22mm) - 카드 사이 gap
     const pageW = size.widthMm
-    const labelWidth = 22 // "◆ 2026년 3월" 영역
+    const labelWidth = 22
     const sidePadding = 10
     const cardGap = 0.5
     const availableW = pageW - labelWidth - sidePadding * 2
     const cardW = (availableW - cardGap * (daysInMonth - 1)) / daysInMonth
-    const cardH = 5
+    const cardH = 5.5
 
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
@@ -530,7 +530,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         gap: `${6 * scale}px`,
         borderBottom: `0.5px solid #00000020`,
         background: '#ffffff',
-        zIndex: 5,
+        zIndex: 10,
       }}>
         <span style={{
           fontFamily: t.fontHeading,
@@ -550,26 +550,55 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         }}>
           {days.map(d => {
             const isActive = d === activeDay
-            const hasContent = dayHasContent[d - 1] ?? false
-            // 3단계 색상: active(검정) / existing(흰+검정테두리) / empty(회색)
+            // 일요일 여부 판별 (monthNum & yearNum 기반)
+            const isSunday = new Date(yearNum, monthNum - 1, d).getDay() === 0
+            const hasContent = isSunday ? true : (dayHasContent[d - 1] ?? false)
             const isEmpty = !hasContent && !isActive
+
+            let textColor = isActive ? '#ffffff' : (isEmpty ? '#00000040' : '#000000')
+            let bgColor = isActive ? '#000000' : 'transparent'
+            let borderColor = isActive ? '#000000' : (isEmpty ? '#00000010' : '#00000030')
+            let fontWeight: number | string = isActive ? 800 : 500
+
+            // 일요일 차별화 스타일 (Rose / Grace Badge)
+            if (isSunday) {
+              if (isActive) {
+                bgColor = '#e11d48'
+                textColor = '#ffffff'
+                borderColor = '#be123c'
+                fontWeight = 900
+              } else {
+                bgColor = '#fff1f2'
+                textColor = '#be123c'
+                borderColor = '#fda4af'
+                fontWeight = 700
+              }
+            }
+
             return (
               <div
                 key={d}
+                data-nav-target={`day-${d}`}
                 data-day={d}
+                role="button"
+                tabIndex={0}
+                title={isSunday ? `${d}일 (주일 심층 설교 노트로 이동)` : `${d}일로 이동`}
                 style={{
                   width: `${cardW}mm`,
                   height: `${cardH}mm`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: `${9 * scale}px`,
-                  fontWeight: isActive ? 800 : 500,
-                  color: isActive ? '#ffffff' : (isEmpty ? '#00000040' : '#000000'),
-                  background: isActive ? '#000000' : 'transparent',
-                  border: `0.5px solid ${isActive ? '#000000' : (isEmpty ? '#00000010' : '#00000030')}`,
-                  borderRadius: `${1 * scale}px`,
+                  fontSize: `${8.5 * scale}px`,
+                  fontWeight,
+                  color: textColor,
+                  background: bgColor,
+                  border: `0.5px solid ${borderColor}`,
+                  borderRadius: `${1.5 * scale}px`,
                   opacity: isEmpty ? 0.5 : 1,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isSunday && !isActive ? '0 1px 2px rgba(225,29,72,0.1)' : 'none',
                 }}
               >
                 {d}
@@ -635,7 +664,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }
 
   // ============= A안: 가로 2페이지 (1일 2페이지, 2-A 디자인) =============
-  const renderDailyLandscape = (day: any, dayIdx: number) => {
+  const renderDailyLandscape = (day: any, dayIdx: number, dayNum?: number) => {
+    const targetDayNum = dayNum || (dayIdx + 1)
     const verses = parseBibleVerses(day.passage || '')
     const firstSentence = (() => {
       if (day.passageOverview) {
@@ -784,9 +814,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
-        <div className="qt-page" id={`qt-page-day-${dayIdx + 1}`} data-page-key={`day-${dayIdx + 1}`} data-day={dayIdx + 1} style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {renderCalendarStrip(targetDayNum)}
             {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
 
             {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
@@ -1411,7 +1441,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }
 
   // ============= A안: 세로 2면 (1일 2페이지, 2-A 디자인 유지) =============
-  const renderDailyPortrait = (day: any, dayIdx: number) => {
+  const renderDailyPortrait = (day: any, dayIdx: number, dayNum?: number) => {
+    const targetDayNum = dayNum || (dayIdx + 1)
     const verses = parseBibleVerses(day.passage || '')
     pageCounter = 1 + dayIdx * 3 + 1
 
@@ -1447,9 +1478,9 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* Page 1: 말씀 중심 */}
-        <div className="qt-page" id={`qt-page-day-${dayIdx + 1}`} data-page-key={`day-${dayIdx + 1}`} data-day={dayIdx + 1} style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {renderCalendarStrip(targetDayNum)}
             <div style={{
               marginBottom: `${5 * scale}px`,
               paddingBottom: `${3 * scale}px`,
@@ -2512,6 +2543,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         year={yearNum}
                         month={monthNum}
                         sundayNo={item.sundayNo}
+                        dayNum={item.dayNum}
                         dateStr={item.dateStr}
                         monthName={monthName}
                         themeColor={themeColor}
@@ -2523,6 +2555,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         year={yearNum}
                         month={monthNum}
                         sundayNo={item.sundayNo}
+                        dayNum={item.dayNum}
                         dateStr={item.dateStr}
                         monthName={monthName}
                         themeColor={themeColor}
@@ -2566,8 +2599,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     {/* Page A: Daily QT Page */}
                     {item.qtDay ? (
                       isLandscape
-                        ? renderDailyLandscape(item.qtDay, item.dayIdx)
-                        : renderDailyPortrait(item.qtDay, item.dayIdx)
+                        ? renderDailyLandscape(item.qtDay, item.dayIdx, item.dayNum)
+                        : renderDailyPortrait(item.qtDay, item.dayIdx, item.dayNum)
                     ) : null}
 
                     {/* Page B: Daily Diary & Prayer Page */}
