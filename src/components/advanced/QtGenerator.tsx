@@ -989,12 +989,18 @@ export default function QtGenerator() {
             startChapter: 1,
             startVerse: 1,
             durationWeeks: 4,
+            ignorePoolCheck: true,
           }
         })
       })
 
       const json = await res.json()
-      if (!json.success) throw new Error(json.error || '월간 본문 분할 실패')
+      if (!json.success) {
+        if (json.error === 'POOL_INSUFFICIENT') {
+          throw new Error(`선택하신 성경 책("${wizardBibleBook}")의 구절 수가 1개월분(최소 480절)에 비해 적습니다. 분량이 짧은 책의 경우 본문 범위를 확장해 주시거나 다른 책과 함께 지정해 주세요.`)
+        }
+        throw new Error(json.message || json.error || '월간 본문 분할 실패')
+      }
 
       setWizardProgressStep('4주차 큐티 강해 본문 및 소책자 일괄 집필 중...')
       await new Promise(r => setTimeout(r, 1200))
