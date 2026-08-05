@@ -552,20 +552,23 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
     return (
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: `${mmToPx(STRIP_HEIGHT_MM)}px`,
-        padding: `0 ${sidePadding}mm`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: `${4 * scale}px`,
-        borderBottom: `1px solid #e2e8f0`,
-        background: '#ffffff',
-        zIndex: 20,
-      }}>
+      <div
+        id="qt-top-calendar-strip"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: `${mmToPx(STRIP_HEIGHT_MM)}px`,
+          padding: `0 ${sidePadding}mm`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: `${4 * scale}px`,
+          borderBottom: `1px solid #e2e8f0`,
+          background: '#ffffff',
+          zIndex: 20,
+        }}
+      >
         <span style={{
           fontFamily: t.fontHeading,
           fontSize: `${8 * scale}px`,
@@ -610,6 +613,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               <div
                 key={d}
                 data-nav-target={`day-${d}`}
+                data-allow-jump="true"
                 data-day={d}
                 role="button"
                 tabIndex={0}

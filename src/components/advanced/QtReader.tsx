@@ -1179,7 +1179,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           <div className="flex flex-1 min-h-0 overflow-hidden">
             {/* Quick-Jump Index Sidebar */}
             {days.length >= 7 && (
-              <div className="w-56 bg-[#060a1a] border-r border-white/10 p-4 overflow-y-auto space-y-4 shrink-0 font-sans hidden md:block">
+              <div id="qt-quick-jump-sidebar" className="w-56 bg-[#060a1a] border-r border-white/10 p-4 overflow-y-auto space-y-4 shrink-0 font-sans hidden md:block">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                   <span>📑 목차 Quick-Jump</span>
                   <span className="text-[9px] text-indigo-400">{days.length} Days</span>
@@ -1243,18 +1243,19 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               ref={modalScrollRef}
               onClick={(e) => {
                 const target = e.target as HTMLElement
-                // 명시적인 네비게이션 버튼/배지 [data-nav-target]만 수용
                 const navBtn = target.closest('[data-nav-target]') as HTMLElement | null
                 if (!navBtn) return
 
-                // 방어 로직: 소형 뱃지/버튼이 아니거나 너비 180px 초과 거대 박스 내부 빈 영역 클릭 시 스크롤 점프 무시!
-                const isSmallBadge = navBtn.tagName === 'BUTTON' ||
-                  navBtn.tagName === 'SPAN' ||
-                  navBtn.tagName === 'A' ||
-                  navBtn.getAttribute('data-jump-btn') === 'true' ||
-                  navBtn.classList.contains('cursor-pointer')
+                // Triple-Lock Safety Guard:
+                // 1. 좌측 Quick-Jump 사이드바 버튼 (#qt-quick-jump-sidebar)
+                // 2. 상단 캘린더 스트립 버튼 (#qt-top-calendar-strip)
+                // 3. 명시적 점프 허용 뱃지 (data-allow-jump="true" 또는 data-jump-btn="true")
+                // 위 3가지에 해당하지 않으면 본문 내의 그 어떤 텍스트/헤더/카드 클릭도 스크롤 점프를 100% 차단합니다.
+                const isSidebar = !!target.closest('#qt-quick-jump-sidebar')
+                const isStrip = !!target.closest('#qt-top-calendar-strip')
+                const isExplicitBadge = navBtn.getAttribute('data-allow-jump') === 'true' || navBtn.getAttribute('data-jump-btn') === 'true'
 
-                if (!isSmallBadge && navBtn.offsetWidth > 180) {
+                if (!isSidebar && !isStrip && !isExplicitBadge) {
                   return
                 }
 
