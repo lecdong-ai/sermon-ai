@@ -1922,7 +1922,7 @@ export default function QtGenerator() {
         </button>
       </div>
 
-      {/* 📅 1개월 월간 큐티 다이어리 마법사 패널 */}
+      {/* 📅 월간 큐티 다이어리 출판 마법사 패널 */}
       {activeStudioTab === 'monthly_wizard' && !showHistory && (
         <div className="glass-dark rounded-2xl border border-amber-400/20 p-6 space-y-6 animate-fadeIn">
           <div className="border-b border-white/10 pb-4 flex items-center justify-between">
@@ -1932,105 +1932,145 @@ export default function QtGenerator() {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  1-Click 월간 큐티 다이어리 마법사
-                  <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">1개월 일괄 완성</span>
+                  월간 큐티 다이어리 출판 마법사
+                  <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">사용 월 기준 자동 묶음</span>
                 </h3>
-                <p className="text-xs text-slate-400">지정한 달의 4주차 분량을 AI가 자동으로 순차 집필하여 완성된 월간 큐티 다이어리를 서재에 보관합니다.</p>
+                <p className="text-xs text-slate-400">제작된 주간 큐티들을 사용 예정 월별로 자동 수집하여 1초 만에 완성된 월간 큐티북/다이어리로 출판합니다.</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 연도 및 월 선택 */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
-                발행 연월 선택
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={wizardYear}
-                  onChange={(e) => setWizardYear(parseInt(e.target.value, 10))}
-                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-amber-400"
-                >
-                  {Array.from({ length: 8 }, (_, i) => currentYear + i).map((y) => (
-                    <option key={y} value={y}>{y}년</option>
-                  ))}
-                </select>
+          {(() => {
+            // 주간 큐티 항목들을 사용 예정 월(target_year/month) 기준으로 그룹핑
+            const monthGroups: Record<string, { year: number; month: number; entries: QtHistoryEntry[] }> = {}
+            for (const entry of historyEntries) {
+              let year = entry.target_year
+              let month = entry.target_month
+              if (!year || !month) {
+                const dateStr = entry.start_date || entry.created_at
+                if (dateStr) {
+                  const parts = dateStr.split('T')[0].split('-')
+                  if (parts.length >= 2) {
+                    year = parseInt(parts[0], 10)
+                    month = parseInt(parts[1], 10)
+                  }
+                }
+              }
+              if (year && month) {
+                const key = `${year}-${String(month).padStart(2, '0')}`
+                if (!monthGroups[key]) monthGroups[key] = { year, month, entries: [] }
+                monthGroups[key].entries.push(entry)
+              }
+            }
 
-                <select
-                  value={wizardMonth}
-                  onChange={(e) => setWizardMonth(parseInt(e.target.value, 10))}
-                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none focus:border-amber-400"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m}월</option>
-                  ))}
-                </select>
+            const sortedGroupKeys = Object.keys(monthGroups).sort().reverse()
+
+            if (sortedGroupKeys.length === 0) {
+              return (
+                <div className="text-center py-12 text-slate-400 space-y-3">
+                  <Bookmark className="w-12 h-12 mx-auto text-slate-600" />
+                  <h4 className="text-sm font-bold text-slate-300">아직 제작된 주간 큐티 기록이 없습니다.</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    &quot;⚡ 1주일 큐티 스튜디오&quot;에서 주간 큐티를 집필하실 때 <strong>[사용 예정 월]</strong>을 지정하시면, 여기에 자동으로 모여 클릭 한 번으로 월간 큐티 다이어리가 완성됩니다.
+                  </p>
+                  <button
+                    onClick={() => setActiveStudioTab('weekly')}
+                    className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-2 mx-auto"
+                  >
+                    <BookOpen className="w-4 h-4 text-emerald-400" />
+                    ⚡ 첫 주간 큐티 작성하러 가기
+                  </button>
+                </div>
+              )
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {sortedGroupKeys.map(key => {
+                  const group = monthGroups[key]
+                  const booksSet = Array.from(new Set(group.entries.map(e => e.bible_book)))
+                  const booksLabel = booksSet.join(', ')
+                  const isFullMonth = group.entries.length >= 4
+
+                  return (
+                    <div
+                      key={key}
+                      className="rounded-2xl bg-gradient-to-b from-slate-900 to-indigo-950/70 border border-white/10 p-5 space-y-4 shadow-xl hover:border-amber-400/40 transition-all"
+                    >
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
+                            <CalendarIcon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-extrabold text-slate-100">
+                              {group.year}년 {group.month}월호
+                            </h4>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                              포함 성경책: <span className="text-amber-300 font-bold">{booksLabel}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
+                          isFullMonth
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                        }`}>
+                          {group.entries.length}주차 작성됨 {isFullMonth ? ' (완성)' : ''}
+                        </span>
+                      </div>
+
+                      {/* 포함된 주차 목록 미리보기 */}
+                      <div className="space-y-1.5 bg-black/30 p-3 rounded-xl border border-white/5">
+                        <div className="text-[10px] font-bold text-slate-400 mb-1 flex items-center justify-between">
+                          <span>수집된 주간 원고 ({group.entries.length}개)</span>
+                          <span>날짜순 결합</span>
+                        </div>
+                        {group.entries.map((entry, idx) => (
+                          <div key={entry.id || idx} className="text-xs text-slate-300 flex items-center justify-between font-mono">
+                            <span className="truncate">• {entry.bible_book} {entry.week_number}주차 ({entry.start_passage || '본문'})</span>
+                            <span className="text-[10px] text-slate-500 shrink-0 ml-2">{entry.start_date || '일정미정'}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 제작 실행 버튼 2가지 */}
+                      <div className="grid grid-cols-2 gap-2.5 pt-2">
+                        <button
+                          onClick={() => {
+                            const newSet = new Set<string>()
+                            group.entries.forEach(e => newSet.add(e.id))
+                            setSelectedHistoryIds(newSet)
+                            handleMonthlyPdf(false)
+                          }}
+                          disabled={monthlyLoading}
+                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-indigo-600/40 text-slate-200 text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-1.5 disabled:opacity-40"
+                        >
+                          <FileText className="w-4 h-4 text-indigo-400" />
+                          📖 {group.month}월 큐티만
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const newSet = new Set<string>()
+                            group.entries.forEach(e => newSet.add(e.id))
+                            setSelectedHistoryIds(newSet)
+                            handleMonthlyPdf(true)
+                          }}
+                          disabled={monthlyLoading}
+                          className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md border border-amber-300/30 flex items-center justify-center gap-1.5 disabled:opacity-40"
+                        >
+                          <Sparkles className="w-4 h-4 text-amber-300" />
+                          📖+📝 큐티 + 다이어리
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-
-            {/* 성경책 선택 */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-                월간 성경 본문 범위
-              </label>
-              <input
-                type="text"
-                value={wizardBibleBook}
-                onChange={(e) => setWizardBibleBook(e.target.value)}
-                placeholder="예: 로마서 1~16장 또는 마태복음"
-                className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-indigo-400"
-              />
-            </div>
-
-            {/* 디자인 테마 & 용지 */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Settings2 className="w-3.5 h-3.5 text-purple-400" />
-                인쇄/디자인 규격
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={form.sizeOption}
-                  onChange={(e) => updateForm({ sizeOption: e.target.value })}
-                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-200"
-                >
-                  {Object.entries(PAGE_SIZES).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label.split(' (')[0]}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={form.designTemplate}
-                  onChange={(e) => updateForm({ designTemplate: e.target.value })}
-                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-200"
-                >
-                  {QT_TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* 원클릭 제작 생성 실행 버튼 */}
-          <div className="pt-4 border-t border-white/10 flex flex-col items-center justify-center space-y-3">
-            <button
-              onClick={handleRunMonthlyWizard}
-              disabled={wizardGenerating}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-xl shadow-amber-500/25 border border-amber-300/40 flex items-center justify-center gap-2 disabled:opacity-40"
-            >
-              {wizardGenerating ? <Loader2 className="w-5 h-5 animate-spin text-amber-300" /> : <Sparkles className="w-5 h-5 text-amber-300" />}
-              {wizardGenerating ? '월간 큐티 다이어리 집필 중...' : `✨ ${wizardYear}년 ${wizardMonth}월 1개월 큐티 다이어리 일괄 자동 생성`}
-            </button>
-            {wizardGenerating && (
-              <p className="text-xs text-amber-300 animate-pulse font-mono font-bold">
-                {wizardProgressStep || 'AI 신학 엔진이 1달치 분량을 집필하고 수채화 다이어리를 조립하고 있습니다...'}
-              </p>
-            )}
-          </div>
+            )
+          })()}
         </div>
       )}
 
