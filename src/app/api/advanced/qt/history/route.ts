@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
   const offset = (page - 1) * limit
 
-  const selectFields = 'id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle, start_date'
+  const selectFields = 'id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle, start_date, target_year, target_month'
 
   let { data, error, count } = await supabaseAdmin
     .from('qt_history')
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (error && error.message?.includes('start_date')) {
+  if (error && (error.message?.includes('start_date') || error.message?.includes('target_year') || error.message?.includes('target_month'))) {
     const fallback = await supabaseAdmin
       .from('qt_history')
       .select('id, bible_book, week_number, series_name, audience, generation, level, tone, size_option, design_template, created_at, updated_at, start_passage, end_passage, subtitle', { count: 'exact' })
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { bible_book, week_number, audience, generation, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle, start_date } = body
+  const { bible_book, week_number, audience, generation, level, tone, series_name, size_option, design_template, full_manuscript, day_data, start_passage, end_passage, subtitle, start_date, target_year, target_month } = body
 
   if (!bible_book || !week_number || !full_manuscript) {
     return NextResponse.json({ error: 'bible_book, week_number, full_manuscript are required' }, { status: 400 })
@@ -82,6 +82,8 @@ export async function POST(request: NextRequest) {
       subtitle: subtitle || null,
     }
   if (start_date) insertData.start_date = start_date
+  if (target_year) insertData.target_year = target_year
+  if (target_month) insertData.target_month = target_month
 
   let { data, error } = await supabaseAdmin
     .from('qt_history')
@@ -89,8 +91,11 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error && error.message?.includes('start_date') && start_date) {
+  if (error && (error.message?.includes('start_date') || error.message?.includes('target_year') || error.message?.includes('target_month'))) {
+    // DB에 아직 컬럼이 없을 수 있으므로 graceful 제거 후 재시도
     delete insertData.start_date
+    delete insertData.target_year
+    delete insertData.target_month
     const retry = await supabaseAdmin
       .from('qt_history')
       .insert(insertData)

@@ -91,6 +91,8 @@ export interface QTFormData {
   sizeOption: string
   designTemplate: string
   startDate: string // YYYY-MM-DD
+  targetYear: number   // 사용 예정 연도 (예: 2026)
+  targetMonth: number  // 사용 예정 월 (예: 8)
 }
 
 export interface DaySplitData {
@@ -133,6 +135,9 @@ export interface QtHistoryEntry {
   start_passage?: string
   end_passage?: string
   subtitle?: string
+  start_date?: string
+  target_year?: number
+  target_month?: number
   created_at: string
   updated_at: string
 }
@@ -233,6 +238,8 @@ export default function QtGenerator() {
     sizeOption: 'A4Landscape',
     designTemplate: 'qtland-classic',
     startDate: getMondayOfWeek(getTodayDateString()),
+    targetYear: new Date().getFullYear(),
+    targetMonth: new Date().getMonth() + 1,
   })
 
   const [selectedGeneration, setSelectedGeneration] = useState<string>('장년부')
@@ -541,6 +548,8 @@ export default function QtGenerator() {
           start_passage: startPassage,
           end_passage: endPassage || startPassage || null,
           subtitle: subtitle || null,
+          target_year: form.targetYear,
+          target_month: form.targetMonth,
         }),
       })
       if (!res.ok) {
@@ -826,7 +835,7 @@ export default function QtGenerator() {
       dayName: day, passage: m.passage, title: m.title, focus: m.focus, finalContent: m.finalContent,
     }))
     try {
-      await fetch('/api/advanced/qt/history', {
+       await fetch('/api/advanced/qt/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -843,6 +852,8 @@ export default function QtGenerator() {
           start_passage: startPassage,
           end_passage: endPassage || startPassage || null,
           subtitle: genData.subtitle || null,
+          target_year: form.targetYear,
+          target_month: form.targetMonth,
         }),
       })
     } catch {}
@@ -2192,85 +2203,176 @@ export default function QtGenerator() {
                 <p className="text-[12px]">아직 저장된 큐티 기록이 없습니다.</p>
                 <p className="text-[10px] text-slate-600">QT를 생성하면 자동으로 여기에 저장됩니다.</p>
               </div>
-            ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin">
-                {historyEntries.map(entry => (
-                  <div
-                    key={entry.id}
-                    className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
-                  >
-                    <div className="flex items-center pt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedHistoryIds.has(entry.id)}
-                        onChange={() => {
-                          const next = new Set(selectedHistoryIds)
-                          if (next.has(entry.id)) next.delete(entry.id)
-                          else next.add(entry.id)
-                          setSelectedHistoryIds(next)
-                        }}
-                        className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 accent-indigo-500 cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between gap-2 w-full">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
+            ) : (() => {
+              // 월별 그룹핑
+              const monthGroups: Record<string, { year: number; month: number; entries: QtHistoryEntry[] }> = {}
+              const ungrouped: QtHistoryEntry[] = []
+              for (const entry of historyEntries) {
+                if (entry.target_year && entry.target_month) {
+                  const key = `${entry.target_year}-${String(entry.target_month).padStart(2, '0')}`
+                  if (!monthGroups[key]) monthGroups[key] = { year: entry.target_year, month: entry.target_month, entries: [] }
+                  monthGroups[key].entries.push(entry)
+                } else {
+                  ungrouped.push(entry)
+                }
+              }
+              const sortedGroupKeys = Object.keys(monthGroups).sort().reverse()
+
+              return (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-thin">
+                  {/* 월별 그룹 */}
+                  {sortedGroupKeys.map(key => {
+                    const group = monthGroups[key]
+                    const allInGroup = group.entries.map(e => e.id)
+                    const allSelected = allInGroup.every(id => selectedHistoryIds.has(id))
+                    return (
+                      <div key={key} className="space-y-2">
+                        {/* 월 그룹 헤더 */}
+                        <div className="flex items-center justify-between px-2 py-1.5 bg-amber-500/10 rounded-xl border border-amber-400/20">
+                          <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-xs font-bold text-amber-300">{group.year}년 {group.month}월</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-bold">{group.entries.length}주차</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const next = new Set(selectedHistoryIds)
+                                if (allSelected) {
+                                  allInGroup.forEach(id => next.delete(id))
+                                } else {
+                                  allInGroup.forEach(id => next.add(id))
+                                }
+                                setSelectedHistoryIds(next)
+                              }}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${
+                                allSelected
+                                  ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+                                  : 'bg-white/5 text-slate-400 hover:text-amber-300 border border-white/10'
+                              }`}
+                            >
+                              {allSelected ? '✓ 전체 선택됨' : `${group.month}월 전체 선택`}
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => handleViewHistory(entry)}
-                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors"
-                            title="보기"
+                        {/* 그룹 내 항목들 */}
+                        {group.entries.map(entry => (
+                          <div
+                            key={entry.id}
+                            className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors ml-2"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleRegenerateHistory(entry)}
-                            className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors"
-                            title="재생성"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleEditHistory(entry)}
-                            className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors"
-                            title="편집"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteHistory(entry.id)}
-                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                            <div className="flex items-center pt-0.5">
+                              <input
+                                type="checkbox"
+                                checked={selectedHistoryIds.has(entry.id)}
+                                onChange={() => {
+                                  const next = new Set(selectedHistoryIds)
+                                  if (next.has(entry.id)) next.delete(entry.id)
+                                  else next.add(entry.id)
+                                  setSelectedHistoryIds(next)
+                                }}
+                                className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 accent-indigo-500 cursor-pointer"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center justify-between gap-2 w-full">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-bold shrink-0 border border-amber-400/20">📂 {group.month}월</span>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="보기"><Eye className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="편집"><Edit3 className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                                </div>
+                              </div>
+                              {(entry.series_name || entry.subtitle) && (
+                                <div className="text-[10px] text-slate-400">
+                                  {entry.series_name && <span>시리즈: {entry.series_name}</span>}
+                                  {entry.series_name && entry.subtitle && <span> · </span>}
+                                  {entry.subtitle && <span>부제: {entry.subtitle}</span>}
+                                </div>
+                              )}
+                              <div className="text-[10px] text-slate-400">
+                                📅 {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                {entry.audience && ` · 👥 ${entry.audience}`}
+                                {entry.level && ` · 🎯 Lv.${entry.level}`}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      {(entry.series_name || entry.subtitle) && (
-                        <div className="text-[10px] text-slate-400">
-                          {entry.series_name && <span>시리즈: {entry.series_name}</span>}
-                          {entry.series_name && entry.subtitle && <span> · </span>}
-                          {entry.subtitle && <span>부제: {entry.subtitle}</span>}
+                    )
+                  })}
+
+                  {/* 미분류(월 지정 안된 기록) */}
+                  {ungrouped.length > 0 && (
+                    <div className="space-y-2">
+                      {sortedGroupKeys.length > 0 && (
+                        <div className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded-xl border border-white/5">
+                          <History className="w-3.5 h-3.5 text-slate-500" />
+                          <span className="text-xs font-bold text-slate-400">미분류 (월 미지정)</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-400 font-bold">{ungrouped.length}개</span>
                         </div>
                       )}
-                      <div className="text-[10px] text-slate-400">
-                        📅 {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        {entry.audience && ` · 👥 ${entry.audience}`}
-                        {entry.level && ` · 🎯 Lv.${entry.level}`}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        {entry.size_option && <span>📐 {PAGE_SIZES[entry.size_option]?.label?.split(' (')[0] || entry.size_option}</span>}
-                        {entry.design_template && <span> · 🎨 {QT_TEMPLATES.find(t => t.id === entry.design_template)?.name || entry.design_template}</span>}
-                        {entry.tone && <span> · 🎵 {entry.tone}</span>}
-                      </div>
+                      {ungrouped.map(entry => (
+                        <div
+                          key={entry.id}
+                          className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex items-center pt-0.5">
+                            <input
+                              type="checkbox"
+                              checked={selectedHistoryIds.has(entry.id)}
+                              onChange={() => {
+                                const next = new Set(selectedHistoryIds)
+                                if (next.has(entry.id)) next.delete(entry.id)
+                                else next.add(entry.id)
+                                setSelectedHistoryIds(next)
+                              }}
+                              className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 accent-indigo-500 cursor-pointer"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center justify-between gap-2 w-full">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="보기"><Eye className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="편집"><Edit3 className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </div>
+                            </div>
+                            {(entry.series_name || entry.subtitle) && (
+                              <div className="text-[10px] text-slate-400">
+                                {entry.series_name && <span>시리즈: {entry.series_name}</span>}
+                                {entry.series_name && entry.subtitle && <span> · </span>}
+                                {entry.subtitle && <span>부제: {entry.subtitle}</span>}
+                              </div>
+                            )}
+                            <div className="text-[10px] text-slate-400">
+                              📅 {new Date(entry.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {entry.audience && ` · 👥 ${entry.audience}`}
+                              {entry.level && ` · 🎯 Lv.${entry.level}`}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {entry.size_option && <span>📐 {PAGE_SIZES[entry.size_option]?.label?.split(' (')[0] || entry.size_option}</span>}
+                              {entry.design_template && <span> · 🎨 {QT_TEMPLATES.find(t => t.id === entry.design_template)?.name || entry.design_template}</span>}
+                              {entry.tone && <span> · 🎵 {entry.tone}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  )}
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}
@@ -2515,6 +2617,41 @@ export default function QtGenerator() {
                   />
                 <div className="text-[9px] text-indigo-400 font-bold flex items-center gap-1">
                   📅 {`${formatDateRangeLabel(normalizedStartDate, previewDaysCount)} · 총 ${previewDaysCount}일 (일요일 제외)`}
+                </div>
+              </div>
+
+              {/* 📅 사용 예정 월 지정 */}
+              <div className="space-y-1.5">
+                <div className="flex items-center h-5">
+                  <label className="text-[11px] font-bold text-slate-500">
+                    📅 사용 예정 월
+                    <span className="text-[9px] text-amber-400/80 font-medium ml-1">
+                      (월간 큐티 자동 조립에 사용됩니다)
+                    </span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={form.targetYear}
+                    onChange={e => updateForm({ targetYear: parseInt(e.target.value, 10) })}
+                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
+                  >
+                    {Array.from({ length: 8 }, (_, i) => currentYear + i).map(y => (
+                      <option key={y} value={y}>{y}년</option>
+                    ))}
+                  </select>
+                  <select
+                    value={form.targetMonth}
+                    onChange={e => updateForm({ targetMonth: parseInt(e.target.value, 10) })}
+                    className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-amber-300 font-bold outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                      <option key={m} value={m}>{m}월</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="text-[9px] text-amber-400/80 font-bold flex items-center gap-1">
+                  📂 이 큐티는 {form.targetYear}년 {form.targetMonth}월 그룹에 저장되어 월간 큐티 조립 시 자동 반영됩니다
                 </div>
               </div>
 
