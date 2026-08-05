@@ -151,10 +151,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
     const dayNumStr = cleanKey.replace('day-', '')
 
-    const targetEl = document.getElementById(`qt-page-${cleanKey}`) ||
-      document.querySelector<HTMLElement>(`[data-page-key="${cleanKey}"]`) ||
-      document.querySelector<HTMLElement>(`[data-day="${dayNumStr}"]`) ||
-      document.querySelector<HTMLElement>(`[data-week="${cleanKey.replace('week-', '')}"]`)
+    // 작은 캘린더 스트립 버튼이 아닌, 실제 페이지 컨테이너(.qt-page) 요소만 정밀 타겟팅!
+    const targetEl = document.querySelector<HTMLElement>(`.qt-page#qt-page-${cleanKey}`) ||
+      document.querySelector<HTMLElement>(`.qt-page[data-page-key="${cleanKey}"]`) ||
+      document.querySelector<HTMLElement>(`.qt-page[data-day="${dayNumStr}"]`) ||
+      document.querySelector<HTMLElement>(`.qt-page[data-week="${cleanKey.replace('week-', '')}"]`) ||
+      document.getElementById(`qt-page-${cleanKey}`)
 
     if (targetEl) {
       const containerRect = scrollContainer.getBoundingClientRect()
@@ -1186,12 +1188,14 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 {/* 1. Monthly Pages */}
                 <div className="space-y-1">
                   <button
+                    data-nav-target="calendar"
                     onClick={() => scrollToTargetKey('calendar')}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
                   >
                     <span>📅 P1. 월간 달력</span>
                   </button>
                   <button
+                    data-nav-target="overview"
                     onClick={() => scrollToTargetKey('overview')}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-amber-300 border border-white/5 flex items-center justify-between"
                   >
@@ -1210,6 +1214,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   }).map((weekItem) => (
                     <div key={weekItem.w} className="space-y-1">
                       <button
+                        data-nav-target={`week-${weekItem.w}`}
                         onClick={() => scrollToTargetKey(`week-${weekItem.w}`)}
                         className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
                       >
@@ -1219,6 +1224,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         {weekItem.dayNums.map((d) => (
                           <button
                             key={d}
+                            data-nav-target={`day-${d}`}
                             onClick={() => scrollToTargetKey(`day-${d}`)}
                             className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
                           >
@@ -1237,16 +1243,15 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               ref={modalScrollRef}
               onClick={(e) => {
                 const target = e.target as HTMLElement
-                const navTargetEl = target.closest('[data-nav-target], [data-day]') as HTMLElement | null
-                if (!navTargetEl) return
+                // 페이지 전체 div[data-day]가 아닌, 명시적인 링크/버튼 [data-nav-target] 클릭만 수용
+                const navBtn = target.closest('[data-nav-target]') as HTMLElement | null
+                if (!navBtn) return
 
-                const navTarget = navTargetEl.getAttribute('data-nav-target')
-                const dayAttr = navTargetEl.getAttribute('data-day')
-
+                const navTarget = navBtn.getAttribute('data-nav-target')
                 if (navTarget) {
+                  e.preventDefault()
+                  e.stopPropagation()
                   scrollToTargetKey(navTarget)
-                } else if (dayAttr) {
-                  scrollToTargetKey(`day-${dayAttr}`)
                 }
               }}
               className="flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
