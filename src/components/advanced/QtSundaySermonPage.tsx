@@ -104,11 +104,11 @@ export default function QtSundaySermonPage({
             <div className="grid grid-cols-12 gap-1.5 text-[10px]">
               <div className="col-span-8 p-1 rounded-lg bg-white border border-slate-200">
                 <span className="text-[8px] text-slate-400 font-bold block">설교 제목:</span>
-                <div className="text-slate-400 font-serif italic min-h-[14px]">제목 작성...</div>
+                <div className="text-slate-700 font-serif min-h-[14px]"></div>
               </div>
               <div className="col-span-4 p-1 rounded-lg bg-white border border-slate-200">
                 <span className="text-[8px] text-slate-400 font-bold block">본문:</span>
-                <div className="text-slate-400 font-mono italic text-[9px] min-h-[14px]">성경 구절...</div>
+                <div className="text-slate-700 font-mono text-[9px] min-h-[14px]"></div>
               </div>
             </div>
 
@@ -120,7 +120,7 @@ export default function QtSundaySermonPage({
                   <span className="w-3 h-3 rounded-full bg-slate-100 text-slate-600 text-[8px] font-bold flex items-center justify-center shrink-0">
                     {pt}
                   </span>
-                  <span className="font-serif italic text-[9px]">핵심 대지 {pt}...</span>
+                  <span className="font-serif text-[9px] flex-1"></span>
                 </div>
               ))}
             </div>

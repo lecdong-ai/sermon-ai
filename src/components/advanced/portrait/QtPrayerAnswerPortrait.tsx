@@ -117,8 +117,7 @@ export default function QtPrayerAnswerPortrait({
                   </span>
                   <span className="text-[9px] text-slate-400">응답일: __월 __일</span>
                 </div>
-                <div className="text-[10px] text-slate-400 min-h-[30px] italic">
-                  기도 제목을 자유롭게 적어보세요...
+                <div className="text-[10px] text-slate-700 min-h-[30px]">
                 </div>
                 <div className="text-[9px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200">
                   ✨ 응답 소감:
@@ -141,8 +140,8 @@ export default function QtPrayerAnswerPortrait({
           <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 space-y-1">
             <h5 className="text-[10px] font-bold text-slate-700">🎁 TOP 3 감사 순간</h5>
             <div className="text-[9px] text-slate-400 space-y-0.5">
-              <div>1. 은혜로운 한 주간...</div>
-              <div>2. 기도 응답의 경험...</div>
+              <div>1. __________________</div>
+              <div>2. __________________</div>
             </div>
           </div>
         </div>

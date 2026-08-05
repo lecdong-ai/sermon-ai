@@ -77,11 +77,11 @@ export default function QtSundaySermonDeepPage({
         <div className="grid grid-cols-12 gap-2 text-xs">
           <div className="col-span-8 p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 block shrink-0 mr-2">📌 설교 대제목 (SERMON TITLE):</span>
-            <span className="text-slate-400 font-serif italic flex-1 text-sm">목사님 설교 말씀 제목을 기록해 주세요...</span>
+            <span className="text-slate-700 font-serif flex-1 text-sm min-h-[20px]"></span>
           </div>
           <div className="col-span-4 p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 block shrink-0 mr-2">📖 본문 (PASSAGE):</span>
-            <span className="text-slate-400 font-mono italic text-xs">성경 구절...</span>
+            <span className="text-slate-700 font-mono text-xs flex-1 min-h-[20px]"></span>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function QtSundaySermonDeepPage({
                   <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                     {pt}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-700 font-serif">제 {pt}대지: ______________________________</span>
+                  <span className="text-[11px] font-bold text-slate-700 font-serif">제 {pt}대지</span>
                 </div>
                 {/* Dot Grid Lines */}
                 <div className="space-y-1 py-1 flex-1 flex flex-col justify-around">

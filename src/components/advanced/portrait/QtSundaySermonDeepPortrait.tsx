@@ -74,11 +74,11 @@ export default function QtSundaySermonDeepPortrait({
         <div className="space-y-1 text-xs">
           <div className="p-1.5 rounded-xl bg-white border border-slate-200 flex items-center">
             <span className="text-[10px] font-bold text-slate-400 mr-2">📌 설교 대제목:</span>
-            <span className="text-slate-400 font-serif italic text-xs">목사님 설교 말씀 제목을 기록해 주세요...</span>
+            <span className="text-slate-700 font-serif text-xs flex-1 min-h-[18px]"></span>
           </div>
           <div className="p-1.5 rounded-xl bg-white border border-slate-200 flex items-center">
             <span className="text-[10px] font-bold text-slate-400 mr-2">📖 본문 구절:</span>
-            <span className="text-slate-400 font-mono italic text-xs">성경 구절...</span>
+            <span className="text-slate-700 font-mono text-xs flex-1 min-h-[18px]"></span>
           </div>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function QtSundaySermonDeepPortrait({
           </h4>
           {[1, 2, 3].map((pt) => (
             <div key={pt} className="border border-slate-200 rounded-xl p-2 bg-slate-50/30 flex-1 flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-slate-700">제 {pt}대지: ______________________________</span>
+              <span className="text-[10px] font-bold text-slate-700">제 {pt}대지</span>
               <div className="border-b border-dashed border-slate-200 my-1" />
             </div>
           ))}

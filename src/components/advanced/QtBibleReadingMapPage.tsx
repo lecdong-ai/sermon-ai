@@ -127,8 +127,7 @@ export default function QtBibleReadingMapPage({
             <h4 className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
               <span>🎯 이달의 성경 통독 목표 & 스크랩</span>
             </h4>
-            <div className="text-[11px] text-slate-500 font-serif italic flex-1 p-2 rounded-lg bg-white/80 border border-emerald-200 min-h-[40px]">
-              이번 달 집중해서 읽을 성경 권수 및 묵상 계획...
+            <div className="text-[11px] text-slate-700 font-serif flex-1 p-2 rounded-lg bg-white/80 border border-emerald-200 min-h-[40px]">
             </div>
           </div>
         </div>

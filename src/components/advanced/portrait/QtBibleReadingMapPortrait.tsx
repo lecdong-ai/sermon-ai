@@ -103,8 +103,7 @@ export default function QtBibleReadingMapPortrait({
         {/* 통독 메모 */}
         <div className="border border-emerald-300 rounded-2xl p-3 bg-emerald-50/40 flex-1 flex flex-col justify-between">
           <h5 className="text-[10px] font-bold text-emerald-900">🎯 이달의 통독 목표 & 묵상 스크랩</h5>
-          <div className="text-[10px] text-slate-500 italic p-2 rounded bg-white/80 border border-emerald-200 flex-1 min-h-[40px]">
-            이번 달 집중해서 읽을 성경 묵상 기록...
+          <div className="text-[10px] text-slate-700 p-2 rounded bg-white/80 border border-emerald-200 flex-1 min-h-[40px]">
           </div>
         </div>
       </div>

@@ -100,17 +100,16 @@ export default function QtSundaySermonPortrait({
             <div className="grid grid-cols-12 gap-1.5 text-[9.5px]">
               <div className="col-span-8 p-1 rounded bg-white border border-slate-200">
                 <span className="text-[8px] text-slate-400 font-bold block">설교 제목:</span>
-                <span className="text-slate-400 italic">제목 작성...</span>
+                <span className="text-slate-700 block min-h-[14px]"></span>
               </div>
               <div className="col-span-4 p-1 rounded bg-white border border-slate-200">
                 <span className="text-[8px] text-slate-400 font-bold block">본문:</span>
-                <span className="text-slate-400 italic">성경 구절...</span>
+                <span className="text-slate-700 block min-h-[14px]"></span>
               </div>
             </div>
 
             <div className="bg-white p-1 rounded-lg border border-slate-200 flex items-center justify-between text-[9px]">
               <span className="font-bold text-slate-600">💡 핵심 대지:</span>
-              <span className="text-slate-400 italic">1. 핵심 요약 내용...</span>
               <span className="text-blue-900 bg-blue-50 px-1 py-0.5 rounded text-[8px] font-bold">Action Point</span>
             </div>
           </div>

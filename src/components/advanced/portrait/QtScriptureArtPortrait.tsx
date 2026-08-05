@@ -85,8 +85,7 @@ export default function QtScriptureArtPortrait({
             {[1, 2, 3, 4, 5, 6].map((l) => (
               <div key={l} className="border-b border-slate-300/80 pb-1 flex items-center gap-2">
                 <span className="text-[9px] text-slate-300 font-mono">{l}.</span>
-                <div className="text-[11px] text-slate-400 font-serif italic">
-                  (여기에 말씀을 정갈하게 직접 필사해 보세요...)
+                <div className="text-[11px] text-slate-700 font-serif flex-1 min-h-[18px]">
                 </div>
               </div>
             ))}
@@ -98,8 +97,7 @@ export default function QtScriptureArtPortrait({
           <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1">
             🌱 말씀과 나의 삶 (Reflection & Commitment)
           </h4>
-          <div className="text-[11px] text-slate-500 font-serif italic p-2.5 rounded-lg bg-white/80 border border-purple-100 min-h-[45px]">
-            이 말씀을 묵상하며 오늘 내 삶에서 실천할 한 가지 다짐...
+          <div className="text-[11px] text-slate-700 font-serif p-2.5 rounded-lg bg-white/80 border border-purple-100 min-h-[45px]">
           </div>
         </div>
       </div>

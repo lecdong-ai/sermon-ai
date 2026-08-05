@@ -97,8 +97,7 @@ export default function QtScriptureArtPage({
               {[1, 2, 3, 4, 5].map((lineNo) => (
                 <div key={lineNo} className="border-b border-slate-300/80 pb-1 flex items-center gap-2">
                   <span className="text-[9px] text-slate-300 font-mono">{lineNo}.</span>
-                  <div className="text-[11px] text-slate-400 font-serif italic">
-                    (여기에 말씀을 정갈하게 직접 필사해 보세요...)
+                  <div className="text-[11px] text-slate-700 font-serif flex-1 min-h-[18px]">
                   </div>
                 </div>
               ))}
@@ -110,8 +109,7 @@ export default function QtScriptureArtPage({
             <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
               <span>🌱 말씀과 나의 삶 (Reflection & Commitment)</span>
             </h4>
-            <div className="text-[11px] text-slate-500 font-serif italic flex-1 p-2 rounded-lg bg-white/70 border border-purple-100 min-h-[50px]">
-              이 말씀을 묵상하며 오늘 내 삶에서 실천할 한 가지 다짐:
+            <div className="text-[11px] text-slate-700 font-serif flex-1 p-2 rounded-lg bg-white/70 border border-purple-100 min-h-[50px]">
             </div>
           </div>
         </div>

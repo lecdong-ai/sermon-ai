@@ -141,8 +141,8 @@ export default function QtPrayerAnswerPage({
                 </span>
                 <span className="text-[9px] text-slate-400 font-mono">응답일: ____월 ____일</span>
               </div>
-              <div className="text-[11px] text-slate-400 font-serif italic min-h-[20px]">
-                기도 제목: (하나님께 아뢰는 간절한 기도...)
+              <div className="text-[11px] text-slate-700 font-serif min-h-[20px] flex items-center">
+                <span className="text-slate-400 text-[10px] mr-1">기도 제목:</span>
               </div>
               <div className="text-[10px] text-amber-700 bg-amber-50/60 rounded px-2 py-0.5 border border-amber-200/50 flex items-center justify-between">
                 <span>✨ 응답 및 은혜의 소감:</span>
@@ -179,8 +179,7 @@ export default function QtPrayerAnswerPage({
                   <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {num}
                   </span>
-                  <div className="text-[10px] text-slate-400 min-h-[24px]">
-                    감사했던 일을 기록해보세요...
+                  <div className="text-[10px] text-slate-700 min-h-[24px] flex-1">
                   </div>
                 </div>
               ))}
