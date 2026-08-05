@@ -589,6 +589,7 @@ export default function DiaryPage() {
               {previewTab === 'sermon' && (
                 <SundaySermonComponent
                   year={selectedYear}
+                  month={selectedMonth}
                   monthName={monthName}
                   themeColor={activeColor}
                   pageWidth={pageWidth}
@@ -938,6 +939,7 @@ export default function DiaryPage() {
                     </div>
                     <SundaySermonComponent
                       year={selectedYear}
+                      month={selectedMonth}
                       monthName={monthName}
                       themeColor={activeColor}
                       pageWidth={pageWidth}
@@ -1042,6 +1044,52 @@ export default function DiaryPage() {
                   )}
                   {modalActiveTab === 'overview' && (
                     <OverviewComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'prayer' && (
+                    <PrayerComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'scripture' && (
+                    <ScriptureArtComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'sermon' && (
+                    <SundaySermonComponent
+                      year={selectedYear}
+                      month={selectedMonth}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'biblemap' && (
+                    <BibleMapComponent
+                      year={selectedYear}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'letter' && (
+                    <MonthlyLetterComponent
                       year={selectedYear}
                       monthName={monthName}
                       themeColor={activeColor}

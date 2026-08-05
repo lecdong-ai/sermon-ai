@@ -4,6 +4,7 @@ import React from 'react'
 
 interface QtSundaySermonPageProps {
   year?: number
+  month?: number
   monthName?: string
   themeColor?: string
   pageWidth?: number
@@ -12,11 +13,31 @@ interface QtSundaySermonPageProps {
 
 export default function QtSundaySermonPage({
   year = 2026,
+  month = 8,
   monthName = 'August',
   themeColor = '#B8C6D9',
   pageWidth = 1024,
   pageHeight = 768,
 }: QtSundaySermonPageProps) {
+  // 해당 연도 & 월의 실제 모든 주일(일요일) 날짜 및 주차 동적 계산 (4주 또는 5주 자동 감지)
+  const totalDays = new Date(year, month, 0).getDate()
+  const sundaysList: { no: number; day: number; dateStr: string; label: string }[] = []
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dt = new Date(year, month - 1, d)
+    if (dt.getDay() === 0) {
+      const no = sundaysList.length + 1
+      sundaysList.push({
+        no,
+        day: d,
+        dateStr: `${String(month).padStart(2, '0')}/${String(d).padStart(2, '0')}`,
+        label: `${month}월 ${d}일 주일 예배 (${no}주차)`,
+      })
+    }
+  }
+
+  const isFiveSundays = sundaysList.length >= 5
+
   return (
     <div
       data-page-key="sunday-sermon"
@@ -43,72 +64,79 @@ export default function QtSundaySermonPage({
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
           <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
           <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer shadow-xs">SUNDAY SERMON</span>
+          <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer shadow-xs">
+            SUNDAY SERMON ({sundaysList.length}주)
+          </span>
         </div>
       </div>
 
       {/* 2. Page Title */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
             <span>🏛️ {monthName} Sunday Sermon & Pulpit Notes</span>
           </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5">주일 예배 설교 말씀 요약과 한 주간 삶의 실천을 정리하는 예배 바인더</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {year}년 {month}월은 총 <strong className="text-blue-700 font-bold">{sundaysList.length}번의 주일</strong>이 있습니다. 주일 설교 말씀과 삶의 실천을 기록하세요.
+          </p>
         </div>
         <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
-          {year}년 {monthName} 주일 설교 노치
+          {year}년 {month}월 ({sundaysList.length}주일 구성)
         </div>
       </div>
 
-      {/* 3. Main Grid (2x2 Cards = 4 Sundays) */}
-      <div className="grid grid-cols-2 gap-3.5 flex-1">
-        {[1, 2, 3, 4].map((sundayNo) => (
-          <div key={sundayNo} className="border border-slate-300 rounded-2xl p-3.5 bg-slate-50/40 flex flex-col justify-between shadow-2xs space-y-2">
+      {/* 3. Dynamic Grid (4 Sundays vs 5 Sundays layout) */}
+      <div className={`grid ${isFiveSundays ? 'grid-cols-3' : 'grid-cols-2'} gap-2.5 flex-1`}>
+        {sundaysList.map((sItem) => (
+          <div
+            key={sItem.no}
+            className="border border-slate-300 rounded-2xl p-2.5 bg-slate-50/40 flex flex-col justify-between shadow-2xs space-y-1.5"
+          >
             {/* Card Top Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg text-white" style={{ backgroundColor: themeColor }}>
-                {monthName} Week {sundayNo} 주일 예배
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+              <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-lg text-white" style={{ backgroundColor: themeColor }}>
+                {sItem.label}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Date: ____년 __월 __일</span>
+              <span className="text-[9.5px] text-slate-500 font-mono font-bold">Date: {sItem.dateStr}</span>
             </div>
 
             {/* Title & Passage */}
-            <div className="grid grid-cols-12 gap-2 text-[11px]">
-              <div className="col-span-8 p-1.5 rounded-lg bg-white border border-slate-200">
-                <span className="text-[9px] text-slate-400 font-bold block">설교 제목 (Sermon Title):</span>
-                <div className="text-slate-400 font-serif italic min-h-[16px]">제목을 적어주세요...</div>
+            <div className="grid grid-cols-12 gap-1.5 text-[10px]">
+              <div className="col-span-8 p-1 rounded-lg bg-white border border-slate-200">
+                <span className="text-[8px] text-slate-400 font-bold block">설교 제목:</span>
+                <div className="text-slate-400 font-serif italic min-h-[14px]">제목 작성...</div>
               </div>
-              <div className="col-span-4 p-1.5 rounded-lg bg-white border border-slate-200">
-                <span className="text-[9px] text-slate-400 font-bold block">성경 본문 (Passage):</span>
-                <div className="text-slate-400 font-mono italic text-[10px] min-h-[16px]">본문...</div>
+              <div className="col-span-4 p-1 rounded-lg bg-white border border-slate-200">
+                <span className="text-[8px] text-slate-400 font-bold block">본문:</span>
+                <div className="text-slate-400 font-mono italic text-[9px] min-h-[14px]">성경 구절...</div>
               </div>
             </div>
 
             {/* 3 Key Points */}
-            <div className="space-y-1.5 flex-1 bg-white p-2 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-600 block mb-1">💡 핵심 메시지 3가지 (3 Key Points):</span>
+            <div className="space-y-1 flex-1 bg-white p-1.5 rounded-xl border border-slate-200">
+              <span className="text-[9.5px] font-bold text-slate-600 block mb-0.5">💡 핵심 메시지 3가지:</span>
               {[1, 2, 3].map((pt) => (
-                <div key={pt} className="text-[10px] text-slate-400 flex items-center gap-1.5 border-b border-slate-100 pb-1">
-                  <span className="w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold flex items-center justify-center shrink-0">
+                <div key={pt} className="text-[9.5px] text-slate-400 flex items-center gap-1 border-b border-slate-100 pb-0.5">
+                  <span className="w-3 h-3 rounded-full bg-slate-100 text-slate-600 text-[8px] font-bold flex items-center justify-center shrink-0">
                     {pt}
                   </span>
-                  <span className="font-serif italic">핵심 대지 및 요약 {pt}...</span>
+                  <span className="font-serif italic text-[9px]">핵심 대지 {pt}...</span>
                 </div>
               ))}
             </div>
 
             {/* Application */}
-            <div className="text-[10px] text-blue-900 bg-blue-50/70 p-1.5 rounded-lg border border-blue-100 flex items-center justify-between">
-              <span>🌱 이번 주 나의 삶의 실천:</span>
-              <span className="text-[9px] text-blue-600 font-bold">Action Point</span>
+            <div className="text-[9.5px] text-blue-900 bg-blue-50/70 p-1 rounded-lg border border-blue-100 flex items-center justify-between">
+              <span>🌱 이번 주 삶의 실천:</span>
+              <span className="text-[8.5px] text-blue-600 font-bold">Action</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* 4. Footer */}
-      <div className="flex items-center justify-between border-t border-slate-300 pt-2 mt-2 text-[10px] text-slate-400">
-        <span>SERMON AI QT DIARY — SUNDAY SERMON NOTES</span>
+      <div className="flex items-center justify-between border-t border-slate-300 pt-1.5 mt-1.5 text-[10px] text-slate-400">
+        <span>SERMON AI QT DIARY — SUNDAY SERMON NOTES ({sundaysList.length} SUNDAYS)</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>
