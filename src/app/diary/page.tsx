@@ -21,6 +21,8 @@ import QtScriptureArtPage from '@/components/advanced/QtScriptureArtPage'
 import QtScriptureArtPortrait from '@/components/advanced/portrait/QtScriptureArtPortrait'
 import QtSundaySermonPage from '@/components/advanced/QtSundaySermonPage'
 import QtSundaySermonPortrait from '@/components/advanced/portrait/QtSundaySermonPortrait'
+import QtSundaySermonDeepPage from '@/components/advanced/QtSundaySermonDeepPage'
+import QtSundaySermonDeepPortrait from '@/components/advanced/portrait/QtSundaySermonDeepPortrait'
 import QtBibleReadingMapPage from '@/components/advanced/QtBibleReadingMapPage'
 import QtBibleReadingMapPortrait from '@/components/advanced/portrait/QtBibleReadingMapPortrait'
 import QtMonthlyLetterPage from '@/components/advanced/QtMonthlyLetterPage'
@@ -47,7 +49,7 @@ export default function DiaryPage() {
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0])
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
-  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('prayer')
+  const [previewTab, setPreviewTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'sermondeep' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('prayer')
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
 
@@ -55,7 +57,7 @@ export default function DiaryPage() {
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
   const [modalViewMode, setModalViewMode] = useState<'single' | 'continuous'>('continuous')
   const [zoomScale, setZoomScale] = useState(1.0)
-  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('calendar')
+  const [modalActiveTab, setModalActiveTab] = useState<'calendar' | 'overview' | 'prayer' | 'scripture' | 'sermon' | 'sermondeep' | 'biblemap' | 'letter' | 'weekly' | 'daily'>('calendar')
   const [modalDayNum, setModalDayNum] = useState(1)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null)
@@ -86,6 +88,7 @@ export default function DiaryPage() {
   const PrayerComponent = isLandscape ? QtPrayerAnswerPage : QtPrayerAnswerPortrait
   const ScriptureArtComponent = isLandscape ? QtScriptureArtPage : QtScriptureArtPortrait
   const SundaySermonComponent = isLandscape ? QtSundaySermonPage : QtSundaySermonPortrait
+  const SundaySermonDeepComponent = isLandscape ? QtSundaySermonDeepPage : QtSundaySermonDeepPortrait
   const BibleMapComponent = isLandscape ? QtBibleReadingMapPage : QtBibleReadingMapPortrait
   const MonthlyLetterComponent = isLandscape ? QtMonthlyLetterPage : QtMonthlyLetterPortrait
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
@@ -435,7 +438,18 @@ export default function DiaryPage() {
                     : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                 }`}
               >
-                🏛️ 주일 설교
+                🏛️ 주일 설교(월간)
+              </button>
+
+              <button
+                onClick={() => setPreviewTab('sermondeep')}
+                className={`p-2 rounded-xl border text-[11px] font-semibold transition-all ${
+                  previewTab === 'sermondeep'
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                🌟 주일 심층 노트(Draft1)
               </button>
 
               <button
@@ -590,6 +604,18 @@ export default function DiaryPage() {
                 <SundaySermonComponent
                   year={selectedYear}
                   month={selectedMonth}
+                  monthName={monthName}
+                  themeColor={activeColor}
+                  pageWidth={pageWidth}
+                  pageHeight={pageHeight}
+                />
+              )}
+              {previewTab === 'sermondeep' && (
+                <SundaySermonDeepComponent
+                  year={selectedYear}
+                  month={selectedMonth}
+                  sundayNo={1}
+                  dateStr="08/02"
                   monthName={monthName}
                   themeColor={activeColor}
                   pageWidth={pageWidth}
@@ -804,7 +830,16 @@ export default function DiaryPage() {
                   }}
                   className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 flex items-center justify-between"
                 >
-                  <span>🏛️ P5. 주일 설교 노트</span>
+                  <span>🏛️ P5. 주일 설교 요약 (월간)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setModalActiveTab('sermondeep')
+                    if (modalViewMode === 'continuous') scrollToPageElement('modal-page-sermondeep')
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 flex items-center justify-between"
+                >
+                  <span>🌟 P5-2. 주일 심층 노트 (Draft 1)</span>
                 </button>
                 <button
                   onClick={() => {
@@ -940,11 +975,28 @@ export default function DiaryPage() {
                   {/* P5: Sunday Sermon Notes */}
                   <div id="modal-page-sermon" className="relative group">
                     <div className="absolute -top-6 left-0 text-[11px] font-bold text-blue-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
-                      P5. {selectedYear}년 {selectedMonth}월 주일 설교 묵상 노트
+                      P5. {selectedYear}년 {selectedMonth}월 주일 설교 요약표
                     </div>
                     <SundaySermonComponent
                       year={selectedYear}
                       month={selectedMonth}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  </div>
+
+                  {/* P5-2: Sunday Sermon Deep Journal (Draft 1) */}
+                  <div id="modal-page-sermondeep" className="relative group">
+                    <div className="absolute -top-6 left-0 text-[11px] font-bold text-amber-300 bg-slate-900/90 px-3 py-0.5 rounded-t-lg border border-white/10">
+                      P5-2. {selectedYear}년 {selectedMonth}월 주일 심층 묵상 바인더 (Draft 1)
+                    </div>
+                    <SundaySermonDeepComponent
+                      year={selectedYear}
+                      month={selectedMonth}
+                      sundayNo={1}
+                      dateStr="08/02"
                       monthName={monthName}
                       themeColor={activeColor}
                       pageWidth={pageWidth}
@@ -1098,6 +1150,18 @@ export default function DiaryPage() {
                     <SundaySermonComponent
                       year={selectedYear}
                       month={selectedMonth}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                    />
+                  )}
+                  {modalActiveTab === 'sermondeep' && (
+                    <SundaySermonDeepComponent
+                      year={selectedYear}
+                      month={selectedMonth}
+                      sundayNo={1}
+                      dateStr="08/02"
                       monthName={monthName}
                       themeColor={activeColor}
                       pageWidth={pageWidth}
