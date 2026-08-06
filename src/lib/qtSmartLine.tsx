@@ -126,30 +126,33 @@ export function renderSmartLine(
     )
   }
 
-  // 1. Colon Prefix Title (e.g. "복음이 다시 보여주는 진실: ...", "원어: ...", "묵상: ...", "의미: ...", "예문: ...")
-  // Strip leading hyphen for subheaders like "- 원어:", "- 묵상:", "- 예문:", "- 의미:"
-  trimmed = trimmed.replace(/^[-*·•]\s*(원어|묵상|예문|의미)\s*[:：]/i, '$1:')
-
-  const colonIdx = trimmed.indexOf(':')
+  // 1. Colon Prefix Title (e.g. "- 원어:", "- 묵상:", "- 의미:", "- 공동체 연결:", "- 예문:")
+  // Clean optional leading hyphens for subheaders
+  const cleanedSubHeader = trimmed.replace(/^[-*·•]\s*/, '')
+  const colonIdx = cleanedSubHeader.indexOf(':')
   if (
     colonIdx > 0 &&
     colonIdx <= 35 &&
-    !trimmed.startsWith('http://') &&
-    !trimmed.startsWith('https://') &&
-    !/\d:\d/.test(trimmed.slice(Math.max(0, colonIdx - 1), colonIdx + 2)) &&
-    !/[.,!?]/.test(trimmed.slice(0, colonIdx))
+    !cleanedSubHeader.startsWith('http://') &&
+    !cleanedSubHeader.startsWith('https://') &&
+    !/\d:\d/.test(cleanedSubHeader.slice(Math.max(0, colonIdx - 1), colonIdx + 2)) &&
+    !/[.,!?]/.test(cleanedSubHeader.slice(0, colonIdx))
   ) {
-    let prefix = trimmed.slice(0, colonIdx + 1).trim()
-    const body = trimmed.slice(colonIdx + 1).trim()
+    let rawPrefix = cleanedSubHeader.slice(0, colonIdx + 1).trim()
+    const body = cleanedSubHeader.slice(colonIdx + 1).trim()
     
     // Replace internal spaces in prefix with non-breaking spaces (\u00A0)
-    prefix = prefix.replace(/\s+/g, '\u00A0')
+    rawPrefix = rawPrefix.replace(/\s+/g, '\u00A0')
+
+    // Add leading hyphen if it's a known sub-label (원어, 의미, 묵상, 예문, 공동체 연결, 적용, 기도 등)
+    const isStandardSubLabel = /^(원어|의미|묵상|예문|공동체\u00A0연결|공동체연결|공동체|적용|기도)/i.test(rawPrefix)
+    const displayPrefix = isStandardSubLabel ? `- ${rawPrefix}` : rawPrefix
 
     if (body) {
       return (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '6px', ...extraStyle }}>
           <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0, whiteSpace: 'nowrap' }}>
-            {prefix}
+            {displayPrefix}
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
             {body}

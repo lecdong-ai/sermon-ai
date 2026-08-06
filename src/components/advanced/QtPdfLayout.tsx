@@ -659,7 +659,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     }}>
       <span style={{
         fontFamily: activeFontFamily,
-        fontSize: `${9.5 * scale * fontScale}px`,
+        fontSize: `${12.5 * scale * fontScale}px`,
         fontWeight: 800,
         color: t.accent,
         letterSpacing: `${2.5 * scale}px`,
@@ -1213,7 +1213,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2 * scale}px`,
@@ -1246,7 +1246,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   }}>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${9.5 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 800,
                       color: t.accent,
                       letterSpacing: `${1.5 * scale}px`,
@@ -1267,7 +1267,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   }}>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${9.5 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 800,
                       color: t.textColor,
                       letterSpacing: `${1.5 * scale}px`,
@@ -1388,7 +1388,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <span style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${9.5 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1420,7 +1420,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 }}>
                   <div style={{
                     fontFamily: t.fontHeading,
-                    fontSize: `${9.5 * scale}px`,
+                    fontSize: `${12 * scale}px`,
                     fontWeight: 800,
                     color: t.accent,
                     letterSpacing: `${1.5 * scale}px`,
@@ -2008,7 +2008,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2 * scale}px`,
@@ -2035,7 +2035,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${9.5 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.textColor,
                   letterSpacing: `${1.5 * scale}px`,
@@ -2059,7 +2059,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${9.5 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -2084,7 +2084,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <span style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${9.5 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -2213,7 +2213,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 }}>
                   <div style={{
                     fontFamily: t.fontHeading,
-                    fontSize: `${9.5 * scale}px`,
+                    fontSize: `${12 * scale}px`,
                     fontWeight: 800,
                     color: t.accent,
                     letterSpacing: `${1.5 * scale}px`,
