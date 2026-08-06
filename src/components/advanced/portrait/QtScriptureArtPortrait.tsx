@@ -94,7 +94,7 @@ export default function QtScriptureArtPortrait({
 
         {/* Bottom: 묵상 노트 & 나눔 결단 */}
         <div className="border border-purple-200 rounded-2xl p-3 bg-purple-50/30 flex flex-col justify-between shadow-2xs">
-          <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1">
+          <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1 whitespace-nowrap">
             🌱 말씀과 나의 삶 (Reflection & Commitment)
           </h4>
           <div className="text-[11px] text-slate-700 font-serif p-2.5 rounded-lg bg-white/80 border border-purple-100 min-h-[45px]">

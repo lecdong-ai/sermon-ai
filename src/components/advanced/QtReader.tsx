@@ -1274,35 +1274,106 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
                 {/* 2. Weeks & Daily Pages */}
                 <div className="space-y-3 pt-2 border-t border-white/10">
-                  {Array.from({ length: Math.ceil(days.length / 7) }, (_, idx) => {
-                    const w = idx + 1
-                    const startD = idx * 7 + 1
-                    const endD = Math.min(days.length, (idx + 1) * 7)
-                    const dayNums = Array.from({ length: endD - startD + 1 }, (_, dIdx) => startD + dIdx)
-                    return { w, label: `W${w} (Day ${startD}~${endD})`, dayNums }
-                  }).map((weekItem) => (
-                    <div key={weekItem.w} className="space-y-1">
-                      <button
-                        data-nav-target={`week-${weekItem.w}`}
-                        onClick={() => scrollToTargetKey(`week-${weekItem.w}`)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
-                      >
-                        <span>📆 {weekItem.label}</span>
-                      </button>
-                      <div className="grid grid-cols-4 gap-1 pl-1">
-                        {weekItem.dayNums.map((d) => (
-                          <button
-                            key={d}
-                            data-nav-target={`day-${d}`}
-                            onClick={() => scrollToTargetKey(`day-${d}`)}
-                            className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
-                          >
-                            {d}일
-                          </button>
-                        ))}
+                  {(() => {
+                    // monthCalendarStrip가 있으면 실제 달력 일자(activeDays) 사용
+                    // 없으면 기존 sequential 방식 (days.length 기반)
+                    const calDays = monthCalendarStrip?.activeDays
+                    if (calDays && calDays.length > 0) {
+                      // 실제 달력 기반: 7일 단위로 주차 분리 (일요일 포함 전체 달력 기준)
+                      const totalDaysInMonth = monthCalendarStrip?.daysInMonth || 31
+                      const yearMonth = monthCalendarStrip?.month || ''
+                      const ym = yearMonth.match(/(\d+)년\s*(\d+)월/)
+                      const yr = ym ? parseInt(ym[1], 10) : new Date().getFullYear()
+                      const mn = ym ? parseInt(ym[2], 10) : new Date().getMonth() + 1
+                      const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+
+                      // 전체 일자를 7일 단위 주차로 분류
+                      const weeks: { w: number, label: string, dayEntries: { dayNum: number, isSunday: boolean, dateLabel: string }[] }[] = []
+                      let weekIdx = 0
+                      for (let d = 1; d <= totalDaysInMonth; d++) {
+                        const dt = new Date(yr, mn - 1, d)
+                        const isSunday = dt.getDay() === 0
+                        if (d === 1 || dt.getDay() === 0 && weeks.length > 0) {
+                          // 새 주차 시작: 매 주일마다 또는 1일
+                        }
+                        if (!weeks[weekIdx]) {
+                          weeks[weekIdx] = { w: weekIdx + 1, label: `W${weekIdx + 1}`, dayEntries: [] }
+                        }
+                        weeks[weekIdx].dayEntries.push({
+                          dayNum: d,
+                          isSunday,
+                          dateLabel: `${d}일(${dayNames[dt.getDay()]})`,
+                        })
+                        // 토요일이면 다음 주차로
+                        if (dt.getDay() === 6 && d < totalDaysInMonth) {
+                          weekIdx++
+                        }
+                      }
+
+                      return weeks.map((wk) => {
+                        const firstDay = wk.dayEntries[0]?.dayNum
+                        const lastDay = wk.dayEntries[wk.dayEntries.length - 1]?.dayNum
+                        return (
+                          <div key={wk.w} className="space-y-1">
+                            <button
+                              data-nav-target={`week-${wk.w}`}
+                              onClick={() => scrollToTargetKey(`week-${wk.w}`)}
+                              className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
+                            >
+                              <span>📆 {wk.label} ({firstDay}~{lastDay}일)</span>
+                            </button>
+                            <div className="grid grid-cols-4 gap-1 pl-1">
+                              {wk.dayEntries.map((entry) => (
+                                <button
+                                  key={entry.dayNum}
+                                  data-nav-target={`day-${entry.dayNum}`}
+                                  onClick={() => scrollToTargetKey(`day-${entry.dayNum}`)}
+                                  className={`py-1 rounded text-[10px] text-center font-semibold ${
+                                    entry.isSunday
+                                      ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/40'
+                                      : 'bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-300'
+                                  }`}
+                                >
+                                  {entry.dayNum}일
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })
+                    }
+
+                    // 폴백: 기존 sequential 로직 (비-월간 모드)
+                    return Array.from({ length: Math.ceil(days.length / 7) }, (_, idx) => {
+                      const w = idx + 1
+                      const startD = idx * 7 + 1
+                      const endD = Math.min(days.length, (idx + 1) * 7)
+                      const dayNums = Array.from({ length: endD - startD + 1 }, (_, dIdx) => startD + dIdx)
+                      return { w, label: `W${w} (Day ${startD}~${endD})`, dayNums }
+                    }).map((weekItem) => (
+                      <div key={weekItem.w} className="space-y-1">
+                        <button
+                          data-nav-target={`week-${weekItem.w}`}
+                          onClick={() => scrollToTargetKey(`week-${weekItem.w}`)}
+                          className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/25 flex items-center justify-between"
+                        >
+                          <span>📆 {weekItem.label}</span>
+                        </button>
+                        <div className="grid grid-cols-4 gap-1 pl-1">
+                          {weekItem.dayNums.map((d) => (
+                            <button
+                              key={d}
+                              data-nav-target={`day-${d}`}
+                              onClick={() => scrollToTargetKey(`day-${d}`)}
+                              className="py-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white text-[10px] text-slate-300 text-center font-semibold"
+                            >
+                              {d}일
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  })()}
                 </div>
               </div>
             )}

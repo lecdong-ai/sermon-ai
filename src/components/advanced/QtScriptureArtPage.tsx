@@ -106,7 +106,7 @@ export default function QtScriptureArtPage({
 
           {/* 묵상 노트 & 삶의 결단 */}
           <div className="border border-purple-200 rounded-2xl p-3 bg-purple-50/30 flex-1 flex flex-col justify-between shadow-2xs">
-            <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1.5 whitespace-nowrap">
               <span>🌱 말씀과 나의 삶 (Reflection & Commitment)</span>
             </h4>
             <div className="text-[11px] text-slate-700 font-serif flex-1 p-2 rounded-lg bg-white/70 border border-purple-100 min-h-[50px]">
