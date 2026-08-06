@@ -1169,47 +1169,50 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       {isPdfFullscreenModalOpen && (
         <div className="fixed inset-0 z-[100] bg-[#030612]/98 backdrop-blur-2xl flex flex-col min-h-screen min-w-full animate-in fade-in duration-200">
           {/* Top Inspector Bar */}
-          <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#090e24]/95 backdrop-blur-md shrink-0 shadow-2xl">
+          <header className="flex items-center justify-between px-6 py-3.5 border-b border-white/10 bg-[#060b1e]/90 backdrop-blur-xl shrink-0 shadow-2xl z-30">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300 font-extrabold text-xs shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                 <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" />
                 <span>전체화면 PDF 실물 뷰어</span>
               </div>
-              <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">
-                · 용지: <strong className="text-slate-200">{sizeOption}</strong> | 테마: <strong className="text-slate-200">{tmpl.name}</strong>
+              <span className="text-xs text-slate-300 font-medium hidden md:inline-flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
+                용지: <strong className="text-white font-bold px-1.5 py-0.5 rounded bg-white/10">{sizeOption}</strong>
+                <span className="text-slate-500">|</span>
+                테마: <strong className="text-white font-bold px-1.5 py-0.5 rounded bg-white/10">{tmpl.name}</strong>
               </span>
             </div>
 
             {/* Center: Zoom Controls */}
-            <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-white/10 shadow-inner">
+            <div className="flex items-center gap-1.5 bg-slate-950/90 p-1.5 rounded-2xl border border-white/15 shadow-inner">
               <button
                 onClick={() => setZoomScale(s => Math.max(0.4, Number((s - 0.1).toFixed(1))))}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-all"
+                className="p-1.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95"
                 title="축소"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
 
-              <span className="text-xs font-mono font-bold px-3 text-indigo-200 min-w-[54px] text-center">
+              <span className="text-xs font-mono font-bold px-3 text-indigo-300 min-w-[56px] text-center bg-indigo-500/10 py-1 rounded-lg border border-indigo-500/20">
                 {Math.round(zoomScale * 100)}%
               </span>
 
               <button
                 onClick={() => setZoomScale(s => Math.min(2.0, Number((s + 0.1).toFixed(1))))}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-all"
+                className="p-1.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95"
                 title="확대"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
 
-              <div className="w-px h-4 bg-white/15 mx-1" />
+              <div className="w-px h-4 bg-white/20 mx-1" />
 
               <button
                 onClick={() => setZoomScale(1.0)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10 text-[11px] font-bold text-slate-300 hover:text-white transition-all"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-white/10 text-[11px] font-bold text-slate-300 hover:text-white transition-all active:scale-95"
                 title="100% 원본 크기 리셋"
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw className="w-3.5 h-3.5 text-indigo-400" />
                 100%
               </button>
             </div>
@@ -1219,27 +1222,27 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               <button
                 onClick={() => handlePdfDownload(false)}
                 disabled={pdfLoading || days.length === 0}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-indigo-500/20 text-slate-300 hover:text-white text-xs font-bold transition-all border border-white/10 disabled:opacity-40"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-indigo-600/30 text-slate-200 hover:text-white text-xs font-bold transition-all border border-white/15 shadow-md disabled:opacity-40 hover:scale-[1.02] active:scale-95"
               >
-                {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-400" />}
-                📖 월간 큐티만 PDF
+                {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-300" /> : <FileText className="w-3.5 h-3.5 text-indigo-400" />}
+                <span>📖 월간 큐티만 PDF</span>
               </button>
 
               <button
                 onClick={() => handlePdfDownload(true)}
                 disabled={pdfLoading || days.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-500/20 border border-amber-300/30 disabled:opacity-40"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-extrabold transition-all shadow-lg shadow-amber-500/25 border border-amber-300/40 disabled:opacity-40 hover:scale-[1.02] active:scale-95"
               >
-                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
-                📖+📝 월간 큐티 + 다이어리 PDF
+                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin text-amber-200" /> : <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />}
+                <span>📖+📝 월간 큐티 + 다이어리 PDF</span>
               </button>
 
               <button
                 onClick={() => setIsPdfFullscreenModalOpen(false)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-red-500/20 text-slate-300 hover:text-red-200 text-xs font-bold transition-all border border-white/10 ml-1"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 text-xs font-bold transition-all border border-rose-500/20 ml-1 hover:scale-105 active:scale-95"
               >
                 <X className="w-4 h-4" />
-                닫기
+                <span>닫기</span>
               </button>
             </div>
           </header>
@@ -1393,13 +1396,17 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   scrollToTargetKey(navTarget)
                 }
               }}
-              className="qt-reader-canvas flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-gradient-to-b from-[#030612] via-[#080d22] to-[#030612]"
+              className="qt-reader-canvas flex-1 overflow-auto p-8 flex justify-center items-start scrollbar-thin bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0b102b] via-[#040714] to-[#010206]"
             >
               <style>{`
                 .qt-reader-canvas .qt-page {
-                  border-radius: 0px !important;
-                  margin-bottom: 48px !important;
-                  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.3) !important;
+                  border-radius: 4px !important;
+                  margin-bottom: 52px !important;
+                  box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+                  transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .qt-reader-canvas .qt-page:hover {
+                  box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(245, 158, 11, 0.25) !important;
                 }
               `}</style>
               <div

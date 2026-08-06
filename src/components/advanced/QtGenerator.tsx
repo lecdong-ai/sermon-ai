@@ -783,11 +783,8 @@ export default function QtGenerator() {
           const nextBook = getNextBookInOrder(form.bibleBook)
           if (nextBook) {
             const nextStartPassage = getNextStartPassage(lastDay.passage, nextBook)
-            updateForm({
-              bibleBook: nextBook,
-              bible_book: nextBook,
-              startPassage: nextStartPassage,
-            })
+            updateForm({ bibleBook: nextBook })
+            setStartPassage(nextStartPassage)
             console.log(`[QT] 66권 순서: ${form.bibleBook} 완료 → ${nextBook} (${nextStartPassage}) 자동 진행`)
           }
         }
@@ -1892,7 +1889,7 @@ export default function QtGenerator() {
           templateId={form.designTemplate}
           startPassage={startPassage}
           endPassage={endPassage}
-          selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : null}
+          selectedInfo={recommendInfo ? { ...recommendInfo, isRecommended: true } : undefined}
           daySectionTitles={daySectionTitles}
           monthCalendarStrip={monthlyStrip}
           initialIncludeDiaryPage={includeDiaryPage}
@@ -2609,7 +2606,7 @@ export default function QtGenerator() {
               <button
                 onClick={() => {
                   const firstBook = getFirstBookInOrder()
-                  updateForm({ bibleBook: firstBook, bible_book: firstBook })
+                  updateForm({ bibleBook: firstBook })
                   setStartPassage(`${firstBook} 1:1`)
                   setActiveStartChapter(1)
                   setStartVerse(1)
@@ -3624,7 +3621,7 @@ export default function QtGenerator() {
                   setError(null)
                   const nextBook = getNextBookInOrder(form.bibleBook)
                   if (nextBook) {
-                    updateForm({ bibleBook: nextBook, bible_book: nextBook })
+                    updateForm({ bibleBook: nextBook })
                     setStartPassage(`${nextBook} 1:1`)
                     setActiveStartChapter(1)
                     setStartVerse(1)
