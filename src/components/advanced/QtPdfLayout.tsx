@@ -963,30 +963,34 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             </div>
 
-            {/* 본문 한눈에 — 2줄 풀폭 */}
+            {/* 본문 한눈에 — 2줄 풀폭 카드 */}
             {day.passageOverview && (
               <div style={{
-                padding: `${2 * scale}px ${4 * scale}px`,
-                marginBottom: `${4 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
+                marginBottom: `${10 * scale}px`,
                 background: t.accentLight,
-                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+                borderRadius: `${8 * scale}px`,
+                borderLeft: `${3.5 * scale}px solid ${t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderRight: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${11 * scale}px`,
+                  fontSize: `${10.5 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale}px`,
+                  marginBottom: `${3 * scale}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: `${4 * scale}px`,
                 }}>
-                  본문 한눈에 보기
+                  📖 BIBLE OVERVIEW · 본문 한눈에 보기
                 </div>
                 <div style={{
-                  fontSize: `${13 * scale}px`,
+                  fontSize: `${12.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                   textAlign: 'justify',
@@ -1009,8 +1013,8 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: `${14 * scale}px`,
-                  marginBottom: `${4 * scale}px`,
+                  gap: `${18 * scale}px`,
+                  marginBottom: `${10 * scale}px`,
                 }}>
                   {/* 좌: 한글 · 개역개정 */}
                   <div>
@@ -1021,12 +1025,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       color: t.accent,
                       letterSpacing: `${1.5 * scale}px`,
                       textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                      paddingBottom: `${1 * scale}px`,
-                      borderBottom: `0.5px solid ${t.border}`,
-                      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                      marginBottom: `${4 * scale}px`,
+                      paddingBottom: `${2 * scale}px`,
+                      borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>한글 · 개역개정</span>
+                      <span>🇰🇷 한글 · 개역개정</span>
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
@@ -1042,14 +1046,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     </div>
                     <div style={{
                       fontFamily: t.font,
-                      fontSize: `${13 * scale}px`,
+                      fontSize: `${12.5 * scale}px`,
                       lineHeight: activeLineHeight,
                       color: t.textColor,
                       textAlign: 'justify',
                       wordBreak: 'keep-all',
                     }}>
                       {Array.from({ length: maxLen }).map((_, i) => (
-                        <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                        <div key={i} style={{ marginBottom: `${3 * scale}px`, minHeight: `${16 * scale}px` }}>
                           {korLines[i] || ''}
                         </div>
                       ))}
@@ -1064,12 +1068,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       color: t.accent,
                       letterSpacing: `${1.5 * scale}px`,
                       textTransform: 'uppercase',
-                      marginBottom: `${1.5 * scale}px`,
-                      paddingBottom: `${1 * scale}px`,
-                      borderBottom: `0.5px solid ${t.border}`,
-                      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                      marginBottom: `${4 * scale}px`,
+                      paddingBottom: `${2 * scale}px`,
+                      borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>English · KJV</span>
+                      <span>🇺🇸 English · KJV</span>
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
@@ -1091,7 +1095,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       textAlign: 'justify',
                     }}>
                       {Array.from({ length: maxLen }).map((_, i) => (
-                        <div key={i} style={{ marginBottom: `${1 * scale}px`, minHeight: `${15 * scale}px` }}>
+                        <div key={i} style={{ marginBottom: `${3 * scale}px`, minHeight: `${16 * scale}px` }}>
                           {nivLines[i] || ''}
                         </div>
                       ))}
@@ -1101,13 +1105,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               )
             })()}
 
-            {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
+            {/* 영어로 붙드는 말씀 — (quote box card) */}
             {day.englishVerse && (
               <div style={{
-                marginBottom: `${1.5 * scale * marginScale}px`,
-                padding: `${4 * scale}px ${7 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
                 background: t.bibleQuoteBg,
-                borderLeft: `${1.5 * scale}px solid ${t.bibleQuoteBorder}`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.bibleQuoteBorder || t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderRight: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
@@ -1115,13 +1120,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 <div style={{
                   fontFamily: t.fontHeading,
                   fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale}px`,
+                  marginBottom: `${3 * scale}px`,
                 }}>
-                  영어로 붙드는 말씀
+                  📜 MEMORY VERSE · 영어로 붙드는 말씀
                 </div>
                 <div style={{
                   fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -1135,14 +1140,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 천천히 읽기 — NEW */}
+            {/* 천천히 읽기 카드 */}
             {day.slowReading && (
               <div style={{
-                paddingTop: `${2 * scale}px`,
-                borderTop: `0.5px solid ${t.border}`,
-                marginTop: `${2 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
+                background: 'rgba(0,0,0,0.02)',
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.accent}`,
+                marginBottom: `${8 * scale}px`,
               }}>
-                {sectionLabel('천천히 읽기')}
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${3 * scale}px`,
+                }}>
+                  🔍 SLOW READING · 천천히 읽기
+                </div>
                 {bodyText(
                   reflect('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
                   12
@@ -1783,30 +1800,34 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             </div>
 
-            {/* 본문 한눈에 보기 */}
+            {/* 본문 한눈에 보기 (spacious card) */}
             {day.passageOverview && (
               <div style={{
-                marginBottom: `${5 * scale * marginScale}px`,
-                padding: `${5 * scale}px ${8 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
                 background: t.accentLight,
-                borderLeft: `${2 * scale}px solid ${t.accent}`,
+                borderRadius: `${8 * scale}px`,
+                borderLeft: `${3.5 * scale}px solid ${t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderRight: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${11 * scale}px`,
+                  fontSize: `${10.5 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale * marginScale}px`,
+                  marginBottom: `${3 * scale}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: `${4 * scale}px`,
                 }}>
-                  본문 한눈에 보기
+                  📖 BIBLE OVERVIEW · 본문 한눈에 보기
                 </div>
                 <div style={{
-                  fontSize: `${13 * scale}px`,
+                  fontSize: `${12.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                   textAlign: 'justify',
@@ -1824,49 +1845,49 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: `${14 * scale}px`,
-              marginBottom: `${6 * scale}px`,
+              gap: `${18 * scale}px`,
+              marginBottom: `${10 * scale}px`,
             }}>
               <div>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10.5 * scale}px`,
+                  fontSize: `${10 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
-                  letterSpacing: `${2.2 * scale}px`,
+                  letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale * marginScale}px`,
-                  paddingBottom: `${1.5 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
+                  marginBottom: `${4 * scale}px`,
+                  paddingBottom: `${2 * scale}px`,
+                  borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
                 }}>
-                  한글 · 개역개정
+                  🇰🇷 한글 · 개역개정
                 </div>
                 <div style={{
                   fontFamily: t.font,
-                  fontSize: `${13 * scale}px`,
+                  fontSize: `${12.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                   textAlign: 'justify',
                   wordBreak: 'keep-all',
                 }}>
                   {verses.korVerse.split('\n').map((l, i) => (
-                    <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
+                    <div key={i} style={{ marginBottom: `${3 * scale}px` }}>{l}</div>
                   ))}
                 </div>
               </div>
               <div>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10.5 * scale}px`,
+                  fontSize: `${10 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
-                  letterSpacing: `${2.2 * scale}px`,
+                  letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale * marginScale}px`,
-                  paddingBottom: `${1.5 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
+                  marginBottom: `${4 * scale}px`,
+                  paddingBottom: `${2 * scale}px`,
+                  borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
                 }}>
-                  English · KJV
+                  🇺🇸 English · KJV
                 </div>
                 <div style={{
                   fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -1877,19 +1898,20 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   fontStyle: 'italic',
                 }}>
                   {verses.engVerse.split('\n').map((l, i) => (
-                    <div key={i} style={{ marginBottom: `${2 * scale}px` }}>{l}</div>
+                    <div key={i} style={{ marginBottom: `${3 * scale}px` }}>{l}</div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* 영어로 붇는 말씀 — NEW (compact quote box) */}
+            {/* 영어로 붙드는 말씀 (spacious quote box) */}
             {day.englishVerse && (
               <div style={{
-                marginBottom: `${5 * scale * marginScale}px`,
-                padding: `${5 * scale}px ${8 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
                 background: t.bibleQuoteBg,
-                borderLeft: `${2 * scale}px solid ${t.bibleQuoteBorder}`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.bibleQuoteBorder || t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderRight: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
@@ -1897,13 +1919,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 <div style={{
                   fontFamily: t.fontHeading,
                   fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale * marginScale}px`,
+                  marginBottom: `${3 * scale}px`,
                 }}>
-                  영어로 붙드는 말씀
+                  📜 MEMORY VERSE · 영어로 붙드는 말씀
                 </div>
                 <div style={{
                   fontFamily: "'Georgia', 'Noto Serif', 'Times New Roman', serif",
@@ -1917,10 +1939,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 천천히 읽기 — NEW */}
+            {/* 천천히 읽기 카드 */}
             {day.slowReading && (
-              <div>
-                {sectionLabel('천천히 읽기')}
+              <div style={{
+                padding: `${6 * scale}px ${10 * scale}px`,
+                background: 'rgba(0,0,0,0.02)',
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.accent}`,
+                marginBottom: `${8 * scale}px`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${10 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${3 * scale}px`,
+                }}>
+                  🔍 SLOW READING · 천천히 읽기
+                </div>
                 {bodyText(
                   reflectP('slowReading').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'),
                   12
