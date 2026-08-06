@@ -222,7 +222,7 @@ export default function QtDayCard({
                 alignItems: 'center',
                 gap: '4px',
               }}>
-                <span>🏛️ 원어 핵심</span>
+                <span style={{ whiteSpace: 'nowrap' }}>🏛️ 원어 핵심</span>
                 <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
               </div>
               <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>
@@ -250,7 +250,7 @@ export default function QtDayCard({
                 alignItems: 'center',
                 gap: '4px',
               }}>
-                <span>🔤 영어 핵심</span>
+                <span style={{ whiteSpace: 'nowrap' }}>🔤 영어 핵심</span>
                 <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
               </div>
               <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>

@@ -1340,7 +1340,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           alignItems: 'center',
                           gap: `${4 * scale}px`,
                         }}>
-                          <span>🏛️ 원어 핵심</span>
+                          <span style={{ whiteSpace: 'nowrap' }}>🏛️ 원어 핵심</span>
                           <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
                         </div>
                         {bodyText(reflect('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 11.5)}
@@ -1365,7 +1365,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           alignItems: 'center',
                           gap: `${4 * scale}px`,
                         }}>
-                          <span>🔤 영어 핵심</span>
+                          <span style={{ whiteSpace: 'nowrap' }}>🔤 영어 핵심</span>
                           <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
                         </div>
                         {bodyText(reflect('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 11.5)}
@@ -2166,7 +2166,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         alignItems: 'center',
                         gap: `${4 * scale}px`,
                       }}>
-                        <span>🏛️ 원어 핵심</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>🏛️ 원어 핵심</span>
                         <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
                       </div>
                       {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 11.5)}
@@ -2191,7 +2191,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                         alignItems: 'center',
                         gap: `${4 * scale}px`,
                       }}>
-                        <span>🔤 영어 핵심</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>🔤 영어 핵심</span>
                         <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
                       </div>
                       {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 11.5)}
