@@ -856,8 +856,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             <div className="mt-3 space-y-3.5 pt-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 w-12 shrink-0">줄간격</span>
-                <div className="flex gap-1">
-                  {['1.3', '1.5', '1.8', '2.0'].map(v => (
+                <div className="flex flex-wrap gap-1">
+                  {['1.1', '1.2', '1.3', '1.5', '1.8', '2.0'].map(v => (
                     <button key={v} onClick={() => updateLayoutSettings({ lineSpacing: v })}
                       className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
                         layoutSettings.lineSpacing === v
@@ -870,8 +870,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 w-12 shrink-0">글자크기</span>
-                <div className="flex gap-1">
-                  {[{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
+                <div className="flex flex-wrap gap-1">
+                  {[{k:'더작게',v:'xsmall'},{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
                     <button key={v} onClick={() => updateLayoutSettings({ fontSize: v })}
                       className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
                         layoutSettings.fontSize === v
@@ -884,8 +884,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 w-12 shrink-0">서체</span>
-                <div className="flex gap-1">
-                  {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'영문',v:'english'}].map(({k,v}) => (
+                <div className="flex flex-wrap gap-1">
+                  {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'SUIT',v:'suit'},{k:'리디바탕',v:'ridi'},{k:'영문',v:'english'}].map(({k,v}) => (
                     <button key={v} onClick={() => updateLayoutSettings({ fontFamily: v })}
                       className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
                         layoutSettings.fontFamily === v

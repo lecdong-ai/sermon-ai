@@ -256,9 +256,11 @@ interface QtPdfLayoutProps {
 const STRIP_SIZE_OPTIONS = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
 
 const FONT_FAMILIES: Record<string, string> = {
-  gothic: "'Noto Sans KR', 'Malgun Gothic', sans-serif",
-  myeongjo: "'Noto Serif KR', 'Nanum Myeongjo', serif",
-  english: "'Inter', 'Noto Sans KR', sans-serif",
+  gothic: "'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif",
+  myeongjo: "'Nanum Myeongjo', 'Noto Serif KR', serif",
+  suit: "'SUIT', 'Pretendard', 'Noto Sans KR', sans-serif",
+  ridi: "'RIDIBatang', 'KoPubWorldBatang', 'Nanum Myeongjo', serif",
+  english: "'Inter', 'Cinzel', 'Noto Sans KR', serif",
 }
 
 function parseBibleVerses(passageText: string) {
@@ -302,7 +304,7 @@ function parseBibleVerses(passageText: string) {
 
 function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent, includeDiaryPage, includeMonthlyPlanner }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const ls = layoutSettings || {}
-  const fontScale = ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
+  const fontScale = ls.fontSize === 'xsmall' ? 0.82 : ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
   const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
   const activeLineHeight = ls.lineSpacing || '1.3'
   const activeFontFamily = FONT_FAMILIES[ls.fontFamily || 'gothic'] || FONT_FAMILIES.gothic

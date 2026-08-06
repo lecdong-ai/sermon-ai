@@ -33,13 +33,13 @@ export default function QtBibleReadingMapPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '28px 24px',
+        padding: '16px 18px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
       {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
+      <div className="flex items-center justify-between border-b border-slate-300 pb-1.5 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
           <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
           <span>{year}</span>
@@ -56,60 +56,70 @@ export default function QtBibleReadingMapPortrait({
       </div>
 
       {/* 2. Page Title */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 tracking-wide flex items-center gap-2">
             <span>🕊️ 성경 66권 통독 여정 맵 (Bible Reading Journey)</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">성경을 읽을 때마다 권별 스티커나 색칠로 완독을 기록하는 감성 여정표</p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs shrink-0" style={{ backgroundColor: themeColor }}>
           성경 통독 미니 체크북
         </div>
       </div>
 
       {/* 3. Vertical Stack Layout */}
-      <div className="flex-1 flex flex-col space-y-3">
+      <div className="flex-1 flex flex-col space-y-2 min-h-0">
         {/* 구약 39권 */}
-        <div className="border border-slate-300 rounded-2xl p-3 bg-slate-50/40 space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
-            <span className="flex items-center gap-1 whitespace-nowrap">📜 구약 39권 통독 체크 (OLD TESTAMENT)</span>
-            <span className="text-[9px] text-slate-400 whitespace-nowrap">39 Books</span>
+        <div className="border border-slate-300 rounded-2xl p-2.5 bg-slate-50/50 space-y-1 shadow-2xs">
+          <h4 className="text-[11.5px] font-extrabold text-slate-800 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+              📜 구약 39권 통독 체크 (OLD TESTAMENT)
+            </span>
+            <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">39 Books</span>
           </h4>
           <div className="grid grid-cols-8 gap-1">
             {OLD_TESTAMENT_BOOKS.map((b, i) => (
-              <div key={i} className="aspect-square rounded border border-slate-300 bg-white text-[9px] font-bold text-slate-700 flex items-center justify-center">
-                {b}
+              <div key={i} className="rounded-lg border border-slate-300 bg-white text-[11px] font-extrabold text-slate-800 flex flex-col items-center justify-center p-1 hover:border-emerald-500 transition-colors shadow-2xs">
+                <span className="text-[7.5px] font-mono text-slate-400 font-bold leading-none mb-0.5">{i + 1}</span>
+                <span className="truncate max-w-full leading-none">{b}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* 신약 27권 */}
-        <div className="border border-slate-300 rounded-2xl p-3 bg-slate-50/40 space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
-            <span className="flex items-center gap-1 whitespace-nowrap">✝️ 신약 27권 통독 체크 (NEW TESTAMENT)</span>
-            <span className="text-[9px] text-slate-400 whitespace-nowrap">27 Books</span>
+        <div className="border border-slate-300 rounded-2xl p-2.5 bg-slate-50/50 space-y-1 shadow-2xs">
+          <h4 className="text-[11.5px] font-extrabold text-slate-800 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+              ✝️ 신약 27권 통독 체크 (NEW TESTAMENT)
+            </span>
+            <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">27 Books</span>
           </h4>
-          <div className="grid grid-cols-6 gap-1">
+          <div className="grid grid-cols-7 gap-1">
             {NEW_TESTAMENT_BOOKS.map((b, i) => (
-              <div key={i} className="aspect-square rounded border border-slate-300 bg-white text-[9px] font-bold text-slate-700 flex items-center justify-center">
-                {b}
+              <div key={i} className="rounded-lg border border-slate-300 bg-white text-[11px] font-extrabold text-slate-800 flex flex-col items-center justify-center p-1 hover:border-indigo-500 transition-colors shadow-2xs">
+                <span className="text-[7.5px] font-mono text-slate-400 font-bold leading-none mb-0.5">{i + 1}</span>
+                <span className="truncate max-w-full leading-none">{b}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* 통독 메모 */}
-        <div className="border border-emerald-300 rounded-2xl p-3 bg-emerald-50/40 flex-1 flex flex-col justify-between">
-          <h5 className="text-[10px] font-bold text-emerald-900">🎯 이달의 통독 목표 & 묵상 스크랩</h5>
-          <div className="text-[10px] text-slate-700 p-2 rounded bg-white/80 border border-emerald-200 flex-1 min-h-[40px]">
+        <div className="border border-emerald-300 rounded-2xl p-2.5 bg-emerald-50/50 flex-1 flex flex-col justify-between shadow-2xs min-h-0">
+          <h5 className="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5 mb-1">
+            🎯 이달의 성경 통독 목표 & 묵상 스크랩
+          </h5>
+          <div className="text-[11px] text-slate-700 p-2 rounded-lg bg-white/90 border border-emerald-200 flex-1 min-h-[36px]">
           </div>
         </div>
       </div>
 
       {/* 4. Footer */}
-      <div className="flex items-center justify-between border-t border-slate-300 pt-2 mt-2 text-[10px] text-slate-400">
+      <div className="flex items-center justify-between border-t border-slate-300 pt-1.5 mt-1.5 text-[10px] text-slate-400 font-medium">
         <span>SERMON AI QT DIARY — BIBLE READING JOURNEY MAP</span>
         <span>{year} {monthName} Edition</span>
       </div>
