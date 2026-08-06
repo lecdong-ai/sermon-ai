@@ -38,11 +38,11 @@
 - **Applications page**: 401/403 auth 에러 시 로그인 안내 버튼
 - **Form submit**: `res.ok` 체크 + `data.application?.id` null 방어
 - **Shop page**: `src/app/shop/page.tsx` 신규 — 6개 섹션 (Hero, Categories, Featured Products, How It Works, Why Shop Here, CTA)
-- **build**: 성공 ✅ | 커밋: `2c41676`
+- **build**: 성공 ✅ | 커밋: `96cf9b3` (fix(qt): add nowrap to pdf header badges & add community connection line rule)
 - **Tailwind 동적 클래스 수정**: `${color}` 템플릿 리터럴 → 정적 className 객체로 변경 (JIT 인식 문제 해결)
 
 ## Active / Blocked
-- **Active**: Vercel auto-deploy (GitHub push → `bunker.ai.kr` 배포 중)
+- **Active**: Vercel auto-deploy (GitHub main `96cf9b3` push 완료 → `bunker.ai.kr` 배포 중)
 - **Blocked**: 없음
 
 ## Next Steps (After Deploy Verify)
@@ -56,7 +56,7 @@
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
 - **Vercel 프로젝트**: `sermon-dashboard` (prj_PDAy19aQvpFcRZXYULDyiovljsE2) — `bunker.ai.kr`
 - **GitHub**: `lecdong-ai/sermon-ai` (monorepo, main 브랜치)
-- **현재 HEAD**: `2c41676`
+- **현재 HEAD**: `96cf9b3`
 - **구 Vercel 프로젝트** (삭제 예정):
   - `church-school` (prj_bpDO10wPvg1V9G3oDoe8vkZ6Ro6f)
   - `qt-archive` (prj_ZBOh0L7lMGM5LzYs7QGF5CLfvN5l)
