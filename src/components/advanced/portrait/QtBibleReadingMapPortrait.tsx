@@ -121,11 +121,11 @@ export default function QtBibleReadingMapPortrait({
         </div>
 
         {/* 통독 메모 */}
-        <div className="border border-emerald-300 rounded-xl p-2 bg-emerald-50/50 flex-1 flex flex-col justify-between shadow-2xs min-h-0">
-          <h5 className="text-[10.5px] font-bold text-emerald-950 flex items-center gap-1.5 mb-0.5 shrink-0">
-            🎯 이달의 성경 통독 목표 & 묵상 스크랩
+        <div className="border border-emerald-300 rounded-xl p-1.5 bg-emerald-50/50 shrink-0 flex flex-col shadow-2xs">
+          <h5 className="text-[9.5px] font-bold text-emerald-950 flex items-center gap-1.5 mb-0.5 shrink-0">
+            🎯 이달의 성경 통독 목표
           </h5>
-          <div className="text-[10.5px] text-slate-700 p-1.5 rounded-lg bg-white/90 border border-emerald-200 flex-1 min-h-[30px]">
+          <div className="text-[9.5px] text-slate-700 p-1 rounded-lg bg-white/90 border border-emerald-200 min-h-[24px]">
           </div>
         </div>
       </div>

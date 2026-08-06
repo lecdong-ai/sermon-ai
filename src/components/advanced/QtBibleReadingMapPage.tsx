@@ -112,7 +112,7 @@ export default function QtBibleReadingMapPage({
         {/* Right: 신약 27권 체크 맵 & 이달의 통독 목표 (5 cols) */}
         <div className="col-span-5 flex flex-col space-y-1.5 min-h-0">
           {/* 신약 27권 */}
-          <div className="border border-slate-300 rounded-xl p-2 bg-slate-50/50 flex-1 flex flex-col justify-between shadow-2xs min-h-0">
+          <div className="border border-slate-300 rounded-xl p-2 bg-slate-50/50 flex-[3] flex flex-col justify-between shadow-2xs min-h-0">
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1 shrink-0">
               <h4 className="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
@@ -135,11 +135,11 @@ export default function QtBibleReadingMapPage({
           </div>
 
           {/* 이달의 읽기 목표 & 메모 */}
-          <div className="border border-emerald-300 rounded-xl p-2 bg-emerald-50/50 flex-1 flex flex-col justify-between shadow-2xs min-h-0">
-            <h4 className="text-[10.5px] font-bold text-emerald-950 uppercase tracking-wider mb-0.5 flex items-center gap-1.5 shrink-0">
-              <span>🎯 이달의 성경 통독 목표 & 스크랩</span>
+          <div className="border border-emerald-300 rounded-xl p-1.5 bg-emerald-50/50 shrink-0 flex flex-col shadow-2xs">
+            <h4 className="text-[9.5px] font-bold text-emerald-950 uppercase tracking-wider mb-0.5 flex items-center gap-1.5 shrink-0">
+              <span>🎯 이달의 통독 목표</span>
             </h4>
-            <div className="text-[10.5px] text-slate-700 font-serif flex-1 p-1.5 rounded-lg bg-white/90 border border-emerald-200 min-h-[30px]">
+            <div className="text-[9.5px] text-slate-700 font-serif p-1 rounded-lg bg-white/90 border border-emerald-200 min-h-[24px]">
             </div>
           </div>
         </div>
