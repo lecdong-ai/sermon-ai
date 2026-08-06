@@ -517,15 +517,45 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const activeMonthStrip = useMemo(() => {
     if (monthCalendarStrip) return monthCalendarStrip
     const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
-    const activeDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-    const dayHasContent = Array.from({ length: daysInMonth }, () => true)
+
+    // form.startDate 기반으로 실제 활성 날짜(월~토 6일)만 계산
+    let activeDays: number[] = []
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length === 3) {
+        const sy = parseInt(parts[0], 10)
+        const sm = parseInt(parts[1], 10)
+        const sd = parseInt(parts[2], 10)
+        if (!isNaN(sy) && !isNaN(sm) && !isNaN(sd)) {
+          const start = new Date(sy, sm - 1, sd)
+          let count = 0
+          let offset = 0
+          while (count < 6 && offset < 14) {
+            const d = new Date(start)
+            d.setDate(start.getDate() + offset)
+            if (d.getMonth() + 1 === sm && d.getFullYear() === sy && d.getDay() !== 0) {
+              activeDays.push(d.getDate())
+              count++
+            }
+            offset++
+          }
+        }
+      }
+    }
+
+    // form.startDate가 없거나 계산 실패 시 fallback: 모든 날짜 활성
+    if (activeDays.length === 0) {
+      activeDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+    }
+
+    const dayHasContent = Array.from({ length: daysInMonth }, (_, i) => activeDays.includes(i + 1))
     return {
       month: `${yearNum}년 ${monthNum}월`,
       daysInMonth,
-      activeDays,
+      activeDays: Array.from(new Set(activeDays)).sort((a, b) => a - b),
       dayHasContent,
     }
-  }, [monthCalendarStrip, yearNum, monthNum])
+  }, [monthCalendarStrip, yearNum, form.startDate, monthNum])
 
   // 페이지 스타일 — padding은 inner wrapper에서 처리
   const pageStyle: React.CSSProperties = {
