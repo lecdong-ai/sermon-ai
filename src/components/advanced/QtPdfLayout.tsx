@@ -336,6 +336,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const cssH = `${mmToPx(size.heightMm)}px`
   const tmpl = useMemo(() => getTemplate(templateId), [templateId])
   const t = tmpl
+  const isTablet = useMemo(() => {
+    if (!sizeOption) return false
+    const s = sizeOption.toLowerCase()
+    return s.includes('ipad') || s.includes('tablet')
+  }, [sizeOption])
+
   const isLandscape = size.widthMm > size.heightMm
   const fullManuscript = result.fullManuscript || ''
 
@@ -528,10 +534,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     overflow: 'hidden',
   }
 
-  const pageMarginMm = 5 * marginScale
+  const pageMarginMm = isTablet ? 3.5 * marginScale : 5 * marginScale
   const pageContentStyle: React.CSSProperties = {
-    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + 2)}px` : `${mmToPx(pageMarginMm)}px`,
+    paddingTop: showStrip ? `${mmToPx(STRIP_HEIGHT_MM + (isTablet ? 1 : 2))}px` : `${mmToPx(pageMarginMm)}px`,
     paddingBottom: `${mmToPx(pageMarginMm)}px`,
+    paddingLeft: `${mmToPx(pageMarginMm + (isTablet ? 2 : 4))}px`,
+    paddingRight: `${mmToPx(pageMarginMm + (isTablet ? 2 : 4))}px`,
     width: '100%',
     height: '100%',
     boxSizing: 'border-box',
@@ -1186,13 +1194,13 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               marginBottom: `${8 * scale}px`,
             }}>
               {day.observation && (
-                <div style={{ maxHeight: `${130 * scale}px`, overflow: 'hidden' }}>
+                <div>
                   {sectionLabel('본문 관찰하기')}
                   {bodyText(reflect('observation'), 12)}
                 </div>
               )}
               {day.understanding && (
-                <div style={{ maxHeight: `${120 * scale}px`, overflow: 'hidden' }}>
+                <div>
                   {sectionLabel('말씀 이해하기')}
                   {bodyText(reflect('understanding'), 12)}
                 </div>
