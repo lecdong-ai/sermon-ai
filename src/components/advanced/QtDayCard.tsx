@@ -201,11 +201,11 @@ export default function QtDayCard({
         <div style={{
           display: 'grid',
           gridTemplateColumns: hasOriginal && hasEnglish ? 'repeat(auto-fit, minmax(240px, 1fr))' : '1fr',
-          gap: '12px',
+          gap: '16px',
         }}>
           {hasOriginal && (
             <div style={{
-              padding: '12px 14px',
+              padding: '14px 16px',
               background: t!.prayerBoxBg || '#ffffff',
               borderRadius: '8px',
               borderLeft: `3.5px solid ${t!.accent}`,
@@ -217,7 +217,7 @@ export default function QtDayCard({
                 fontWeight: 700,
                 color: t!.accent,
                 letterSpacing: '1.5px',
-                marginBottom: '8px',
+                marginBottom: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
@@ -226,14 +226,14 @@ export default function QtDayCard({
                 <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
               </div>
               <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>
-                {preprocessSmartText(origText).map((l, i) => renderSmartLine(l, i, t!.accent, '3px'))}
+                {preprocessSmartText(origText).map((l, i) => renderSmartLine(l, i, t!.accent, '6px'))}
               </div>
             </div>
           )}
 
           {hasEnglish && (
             <div style={{
-              padding: '12px 14px',
+              padding: '14px 16px',
               background: t!.prayerBoxBg || '#ffffff',
               borderRadius: '8px',
               borderLeft: `3.5px solid ${t!.accent}`,
@@ -245,7 +245,7 @@ export default function QtDayCard({
                 fontWeight: 700,
                 color: t!.accent,
                 letterSpacing: '1.5px',
-                marginBottom: '8px',
+                marginBottom: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
@@ -254,7 +254,7 @@ export default function QtDayCard({
                 <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
               </div>
               <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>
-                {preprocessSmartText(engText).map((l, i) => renderSmartLine(l, i, t!.accent, '3px'))}
+                {preprocessSmartText(engText).map((l, i) => renderSmartLine(l, i, t!.accent, '6px'))}
               </div>
             </div>
           )}

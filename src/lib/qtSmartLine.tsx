@@ -2,7 +2,8 @@ import React from 'react'
 
 /**
  * Split combined inline sections, clean legacy labels, reorder 묵상 연결 before 예문,
- * strip leading hyphens from subheaders (묵상, 의미, 예문), and convert duplicate "예문" to "의미".
+ * strip all leading hyphens from Word Meditation parts (원어, 묵상, 의미, 예문),
+ * and convert duplicate "예문" to "의미".
  */
 export function preprocessSmartText(text: string): string[] {
   if (!text) return []
@@ -12,7 +13,7 @@ export function preprocessSmartText(text: string): string[] {
     .replace(/[-*·•]?\s*본문\s*의미\s*&\s*묵상\s*[:：]/gi, '묵상:')
     .replace(/[-*·•]?\s*본문\s*의미\s*&\s*예문\s*[:：]/gi, '의미:')
     .replace(/예문\s*[:：]\s*(.*?)\s*(?=예문\s*[:：])/gi, '의미: $1 ')
-    .replace(/^[-*·•]\s*(묵상|예문|의미)\s*[:：]/gim, '$1:')
+    .replace(/^[-*·•]\s*(원어|묵상|예문|의미)\s*[:：]/gim, '$1:')
 
   const rawLines = cleaned.split('\n')
   
@@ -37,7 +38,7 @@ export function preprocessSmartText(text: string): string[] {
     }
 
     // Split inline sub-headers if combined on one line
-    const inlineMarkerRegex = /(?<=\S\s*)(?=(?:의미|묵상|예문|적용|기도|질문|참고):\s*|\[(?:의미|묵상|예문|적용|기도|질문|참고)\])/g
+    const inlineMarkerRegex = /(?<=\S\s*)(?=(?:원어|의미|묵상|예문|적용|기도|질문|참고):\s*|\[(?:원어|의미|묵상|예문|적용|기도|질문|참고)\])/g
     const splitParts = line.split(inlineMarkerRegex)
 
     for (const part of splitParts) {
@@ -85,8 +86,8 @@ export function preprocessSmartText(text: string): string[] {
       continue
     }
 
-    // Strip leading hyphens for sub-headers like "- 묵상:", "- 예문:", "- 의미:"
-    const cleanCur = cur.replace(/^[-*·•]\s*(묵상|예문|의미)\s*[:：]/i, '$1:')
+    // Strip leading hyphens for sub-headers like "- 원어:", "- 묵상:", "- 예문:", "- 의미:"
+    const cleanCur = cur.replace(/^[-*·•]\s*(원어|묵상|예문|의미)\s*[:：]/i, '$1:')
     finalLines.push(cleanCur)
     i++
   }
@@ -108,12 +109,12 @@ export function renderSmartLine(
   let trimmed = l.trim()
 
   // 0. Bracketed Sub-headers like "[의미] 내용...", "[묵상] 내용...", "[예문] 내용..."
-  const bracketMatch = trimmed.match(/^(?:[-*·•]\s*)?\[(의미|묵상|예문|적용|기도|질문|핵심|원어|참고)\]\s*(.*)$/)
+  const bracketMatch = trimmed.match(/^(?:[-*·•]\s*)?\[(원어|의미|묵상|예문|적용|기도|질문|핵심|참고)\]\s*(.*)$/)
   if (bracketMatch) {
     const subTitle = `[${bracketMatch[1]}]`
     const body = bracketMatch[2]
     return (
-      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '4px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
+      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '4px', marginBottom: marginBottomStyle || '6px', ...extraStyle }}>
         <span style={{ fontWeight: 800, color: accentColor || '#4f46e5', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {subTitle}
         </span>
@@ -124,9 +125,9 @@ export function renderSmartLine(
     )
   }
 
-  // 1. Colon Prefix Title (e.g. "복음이 다시 보여주는 진실: ...", "묵상: ...", "의미: ...", "예문: ...")
-  // Strip leading hyphen for subheaders like "- 묵상:", "- 예문:", "- 의미:"
-  trimmed = trimmed.replace(/^[-*·•]\s*(묵상|예문|의미)\s*[:：]/i, '$1:')
+  // 1. Colon Prefix Title (e.g. "복음이 다시 보여주는 진실: ...", "원어: ...", "묵상: ...", "의미: ...", "예문: ...")
+  // Strip leading hyphen for subheaders like "- 원어:", "- 묵상:", "- 예문:", "- 의미:"
+  trimmed = trimmed.replace(/^[-*·•]\s*(원어|묵상|예문|의미)\s*[:：]/i, '$1:')
 
   const colonIdx = trimmed.indexOf(':')
   if (
@@ -145,7 +146,7 @@ export function renderSmartLine(
 
     if (body) {
       return (
-        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
+        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '6px', ...extraStyle }}>
           <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0, whiteSpace: 'nowrap' }}>
             {prefix}
           </span>
@@ -163,7 +164,7 @@ export function renderSmartLine(
     const bullet = listMatch[1]
     const body = listMatch[2]
     return (
-      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
+      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '6px', ...extraStyle }}>
         <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {bullet}
         </span>
@@ -176,7 +177,7 @@ export function renderSmartLine(
 
   // 3. Standard line
   return (
-    <div key={i} style={{ marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
+    <div key={i} style={{ marginBottom: marginBottomStyle || '6px', ...extraStyle }}>
       {l}
     </div>
   )
