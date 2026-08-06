@@ -308,7 +308,14 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
   const activeLineHeight = ls.lineSpacing || '1.3'
   const activeFontFamily = FONT_FAMILIES[ls.fontFamily || 'gothic'] || FONT_FAMILIES.gothic
-  const hiddenSet = new Set(ls.hiddenSections || [])
+  const isLeaderEdition = ls.editionMode === 'leader'
+  const hiddenSet = useMemo(() => {
+    const set = new Set(ls.hiddenSections || [])
+    if (!isLeaderEdition) {
+      set.add('leaderGuide')
+    }
+    return set
+  }, [ls.hiddenSections, isLeaderEdition])
 
   const yearNum = useMemo(() => {
     if (form.startDate) {
@@ -1455,7 +1462,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
 
             {/* 인도자 해설 — 미주 */}
-            {day.leaderGuide && (
+            {day.leaderGuide && !hiddenSet.has('leaderGuide') && (
               <div style={{
                 position: 'absolute',
                 bottom: `${mmToPx(10)}px`,
@@ -2248,7 +2255,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
 
             {/* 인도자 해설 */}
-            {day.leaderGuide && (
+            {day.leaderGuide && !hiddenSet.has('leaderGuide') && (
               <div style={{
                 position: 'absolute',
                 bottom: `${mmToPx(6)}px`,

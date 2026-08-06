@@ -112,13 +112,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   const handleEditionChange = (mode: 'member' | 'leader') => {
     setEditionMode(mode)
     if (mode === 'member') {
-      if (!layoutSettings.hiddenSections.includes('leaderGuide')) {
-        const next = [...layoutSettings.hiddenSections, 'leaderGuide']
-        setLayoutSettings(prev => ({ ...prev, hiddenSections: next }))
-      }
+      const next = layoutSettings.hiddenSections.includes('leaderGuide')
+        ? layoutSettings.hiddenSections
+        : [...layoutSettings.hiddenSections, 'leaderGuide']
+      setLayoutSettings(prev => ({ ...prev, editionMode: 'member', hiddenSections: next }))
     } else {
       const next = layoutSettings.hiddenSections.filter(s => s !== 'leaderGuide')
-      setLayoutSettings(prev => ({ ...prev, hiddenSections: next }))
+      setLayoutSettings(prev => ({ ...prev, editionMode: 'leader', hiddenSections: next }))
     }
   }
   const [editedContent, setEditedContent] = useState<Record<number, Record<string, string>>>(() => {
