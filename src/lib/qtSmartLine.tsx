@@ -2,7 +2,7 @@ import React from 'react'
 
 /**
  * Split combined inline sections, clean legacy labels, reorder 묵상 연결 before 예문,
- * and strip the "- 묵상 연결:" header label so only its content displays cleanly.
+ * strip the "- 묵상 연결:" header label, and prevent hyphens from splitting onto separate lines.
  */
 export function preprocessSmartText(text: string): string[] {
   if (!text) return []
@@ -13,9 +13,22 @@ export function preprocessSmartText(text: string): string[] {
     .replace(/[-*·•]?\s*본문\s*의미\s*&\s*예문\s*[:：]/gi, '- 예문:')
 
   const rawLines = cleaned.split('\n')
+  
+  // Merge orphaned bullet lines (e.g. line containing only "-") with next line
+  const mergedLines: string[] = []
+  for (let idx = 0; idx < rawLines.length; idx++) {
+    const cur = rawLines[idx]
+    if (/^\s*[-*·•]\s*$/.test(cur) && idx + 1 < rawLines.length && rawLines[idx + 1].trim()) {
+      mergedLines.push(`- ${rawLines[idx + 1].trim()}`)
+      idx++
+    } else {
+      mergedLines.push(cur)
+    }
+  }
+
   const intermediateLines: string[] = []
 
-  for (const line of rawLines) {
+  for (const line of mergedLines) {
     if (!line.trim()) {
       intermediateLines.push('')
       continue
@@ -97,7 +110,7 @@ export function renderSmartLine(
     const body = bracketMatch[2]
     return (
       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '4px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
-        <span style={{ fontWeight: 800, color: accentColor || '#4f46e5', flexShrink: 0 }} className="whitespace-nowrap">
+        <span style={{ fontWeight: 800, color: accentColor || '#4f46e5', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {subTitle}
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
@@ -107,7 +120,7 @@ export function renderSmartLine(
     )
   }
 
-  // 1. Colon Prefix Title (e.g. "복음이 다시 보여주는 진실: ...", "의미: ...", "묵상: ...", "예문: ...")
+  // 1. Colon Prefix Title (e.g. "복음이 다시 보여주는 진실: ...", "- 묵상: ...", "- 예문: ...")
   const colonIdx = trimmed.indexOf(':')
   if (
     colonIdx > 0 &&
@@ -117,12 +130,16 @@ export function renderSmartLine(
     !/\d:\d/.test(trimmed.slice(Math.max(0, colonIdx - 1), colonIdx + 2)) &&
     !/[.,!?]/.test(trimmed.slice(0, colonIdx))
   ) {
-    const prefix = trimmed.slice(0, colonIdx + 1).trim()
+    let prefix = trimmed.slice(0, colonIdx + 1).trim()
     const body = trimmed.slice(colonIdx + 1).trim()
+    
+    // Replace internal spaces in prefix with non-breaking spaces (\u00A0) so hyphen & title NEVER separate
+    prefix = prefix.replace(/\s+/g, '\u00A0')
+
     if (body) {
       return (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
-          <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0 }} className="whitespace-nowrap">
+          <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0, whiteSpace: 'nowrap' }}>
             {prefix}
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
@@ -140,7 +157,7 @@ export function renderSmartLine(
     const body = listMatch[2]
     return (
       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: marginBottomStyle || '4px', ...extraStyle }}>
-        <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, color: accentColor || 'inherit', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {bullet}
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
