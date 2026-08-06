@@ -4,7 +4,7 @@ import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getTemplate } from '@/lib/qtTemplates'
 import { parseDays } from '@/lib/qtDayParser'
 import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
-import { renderSmartLine } from '@/lib/qtSmartLine'
+import { renderSmartLine, preprocessSmartText } from '@/lib/qtSmartLine'
 import type { QTFormData, QTResult } from './QtGenerator'
 import QtDailyDiaryPage from './QtDailyDiaryPage'
 import QtMonthlyCalendarPage from './QtMonthlyCalendarPage'
@@ -679,7 +679,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       letterSpacing: '0.01em',
       fontFamily: activeFontFamily,
     }}>
-      {text.split('\n').map((l, i) => (
+      {preprocessSmartText(text).map((l, i) => (
         renderSmartLine(l, i, t.accent, `${1.5 * scale * marginScale}px`)
       ))}
     </div>

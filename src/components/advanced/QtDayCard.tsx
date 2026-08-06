@@ -2,7 +2,7 @@
 
 import type { ParsedDay } from '@/lib/qtDayParser'
 import type { QtTemplate } from '@/lib/qtTemplates'
-import { renderSmartLine } from '@/lib/qtSmartLine'
+import { renderSmartLine, preprocessSmartText } from '@/lib/qtSmartLine'
 
 interface StudyRef {
   background?: string
@@ -85,27 +85,27 @@ export default function QtDayCard({
       if (style === 'box') {
         return (
           <div style={{ ...base, color: t!.bibleQuoteText, padding: '12px 16px', margin: '6px 0', borderLeft: `3px solid ${t!.bibleQuoteBorder}`, background: t!.bibleQuoteBg, borderRadius: '0 6px 6px 0' }}>
-            {displayContent.split('\n').map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
+            {preprocessSmartText(displayContent).map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
           </div>
         )
       }
       if (style === 'prayer') {
         return (
           <div style={{ ...base, background: t!.prayerBoxBg, borderRadius: '8px', padding: '14px 18px', marginTop: '6px', color: t!.prayerBoxText }}>
-            {displayContent.split('\n').map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
+            {preprocessSmartText(displayContent).map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
           </div>
         )
       }
       if (style === 'accent') {
         return (
           <div style={{ ...base, color: t!.textColor, padding: '10px 14px', margin: '6px 0', background: t!.accentLight, borderRadius: '6px', border: `1px solid ${t!.borderLight}` }}>
-            {displayContent.split('\n').map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
+            {preprocessSmartText(displayContent).map((l, i) => renderSmartLine(l, i, t!.accent, '2px'))}
           </div>
         )
       }
       return (
         <div style={{ ...base, color: t!.textColor }}>
-          {displayContent.split('\n').map((l, i) => renderSmartLine(l, i, t!.accent, '4px'))}
+          {preprocessSmartText(displayContent).map((l, i) => renderSmartLine(l, i, t!.accent, '4px'))}
         </div>
       )
     })()
