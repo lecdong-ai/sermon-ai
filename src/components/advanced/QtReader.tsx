@@ -198,13 +198,26 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     if (isNaN(year) || isNaN(monthNum) || isNaN(day)) return undefined
     const daysInMonth = new Date(year, monthNum, 0).getDate()
 
-    // 주간 6일(일요일 제외)의 각 day 계산
+    const dayCount = Math.max(days.length, 1)
     const startDate = new Date(year, monthNum - 1, day)
     const activeDays: number[] = []
-    for (let i = 0; i < 6; i++) {
-      const d = new Date(startDate)
-      d.setDate(d.getDate() + i)
-      if (d.getDay() !== 0) activeDays.push(d.getDate())
+
+    // 1. 월간 큐티 다이어리 (7일 초과 분량) -> 원고의 총 일수(한 달 분량)만큼 날짜들을 계산하여 모두 활성화!
+    if (dayCount > 7) {
+      for (let i = 0; i < dayCount; i++) {
+        const d = new Date(startDate)
+        d.setDate(d.getDate() + i)
+        if (d.getMonth() === monthNum - 1) {
+          activeDays.push(d.getDate())
+        }
+      }
+    } else {
+      // 2. 단일 주간 큐티 (일요일 제외 6일 평일)
+      for (let i = 0; i < dayCount; i++) {
+        const d = new Date(startDate)
+        d.setDate(d.getDate() + i)
+        if (d.getDay() !== 0) activeDays.push(d.getDate())
+      }
     }
 
     // 각 day에 큐티 데이터가 있는지
@@ -219,7 +232,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       activeDays,
       dayHasContent,
     }
-  }, [form.startDate, sizeOption])
+  }, [externalStrip, form.startDate, sizeOption, days.length])
 
   // 현재 보고 있는 day 계산
   const currentActiveDay = useMemo(() => {
