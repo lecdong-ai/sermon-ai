@@ -676,7 +676,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     }}>
       <span style={{
         fontFamily: activeFontFamily,
-        fontSize: `${12.5 * scale * fontScale}px`,
+        fontSize: `${14 * scale * fontScale}px`,
         fontWeight: 800,
         color: t.accent,
         letterSpacing: `${2.5 * scale}px`,
@@ -877,7 +877,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
             {/* ═══ 주간 펼침 (6일 그리드) — compact ═══ */}
             <div style={{
-              marginBottom: `${3 * scale * marginScale}px`,
+              marginBottom: `${14 * scale * marginScale}px`,
               padding: `${2 * scale}px ${4 * scale}px`,
               background: t.accentLight,
               borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
@@ -994,7 +994,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10.5 * scale}px`,
+                  fontSize: `${12.5 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2.5 * scale}px`,
@@ -1014,7 +1014,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: '0.01em',
                   fontWeight: 500,
                 }}>
-                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 6).map(l =>
+                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 6).map((l: string) =>
                     l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
                   ).join('\n')}
                 </div>
@@ -1037,7 +1037,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   <div>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 800,
                       color: t.accent,
                       letterSpacing: `${1.5 * scale}px`,
@@ -1051,7 +1051,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
-                          fontSize: `${9 * scale}px`,
+                          fontSize: `${11 * scale}px`,
                           fontWeight: 700,
                           color: t.textColor,
                           letterSpacing: `${0.3 * scale}px`,
@@ -1081,7 +1081,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   <div>
                     <div style={{
                       fontFamily: t.fontHeading,
-                      fontSize: `${10 * scale}px`,
+                      fontSize: `${12 * scale}px`,
                       fontWeight: 800,
                       color: t.accent,
                       letterSpacing: `${1.5 * scale}px`,
@@ -1095,7 +1095,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
-                          fontSize: `${9 * scale}px`,
+                          fontSize: `${11 * scale}px`,
                           fontWeight: 700,
                           color: t.textColor,
                           letterSpacing: `${0.3 * scale}px`,
@@ -1137,7 +1137,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1169,7 +1169,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1685,7 +1685,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
             {/* 주간 펼침 (portrait compact) */}
             <div style={{
-              marginBottom: `${5 * scale}px`,
+              marginBottom: `${14 * scale}px`,
               padding: `${2 * scale}px ${3 * scale}px`,
               background: t.accentLight,
               borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
@@ -1792,7 +1792,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10.5 * scale}px`,
+                  fontSize: `${12.5 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2.5 * scale}px`,
@@ -1812,7 +1812,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: '0.01em',
                   fontWeight: 500,
                 }}>
-                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map(l =>
+                  {day.passageOverview.split('\n').filter(l => l.trim()).slice(0, 2).map((l: string) =>
                     l.replace(/^[-*·•\s]*\s*(보기|단락\s*요약|문맥\s*위치|오늘의\s*핵심\s*메시지|핵심\s*메시지|요약)\s*[:：]\s*/i, '').trim()
                   ).join('\n')}
                 </div>
@@ -1829,7 +1829,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               <div>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1857,7 +1857,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               <div>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1898,7 +1898,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
@@ -1930,7 +1930,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
