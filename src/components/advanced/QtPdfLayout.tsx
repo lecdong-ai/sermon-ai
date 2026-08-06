@@ -1442,47 +1442,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 한 줄 기록 카드 */}
-            <div style={{
-              marginBottom: `${8 * scale}px`,
-              padding: `${8 * scale}px ${12 * scale}px`,
-              background: '#ffffff',
-              borderRadius: `${8 * scale}px`,
-              border: `1px solid ${t.border || '#e5e7eb'}`,
-            }}>
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${9.5 * scale}px`,
-                fontWeight: 800,
-                color: t.textMuted,
-                letterSpacing: `${1.5 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${4 * scale}px`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: `${4 * scale}px`,
-              }}>
-                <span>✍️ 오늘 내 마음에 남은 한 문장</span>
-              </div>
-              {userMemos[dayIdx] ? (
-                <div style={{
-                  fontFamily: t.font,
-                  fontSize: `${11.5 * scale}px`,
-                  lineHeight: activeLineHeight,
-                  color: t.textColor,
-                  fontStyle: 'italic',
-                  minHeight: `${14 * scale}px`,
-                  wordBreak: 'break-all',
-                }}>
-                  {userMemos[dayIdx]}
-                </div>
-              ) : (
-                <div style={{
-                  height: `${14 * scale}px`,
-                  borderBottom: `1px dashed ${t.border || '#d1d5db'}`,
-                }} />
-              )}
-            </div>
+
 
             {/* 인도자 해설 — 미주 */}
             {day.leaderGuide && (
@@ -2275,49 +2235,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 오늘 내 마음에 남은 한 문장 카드 */}
-            <div style={{
-              marginBottom: `${8 * scale}px`,
-              padding: `${8 * scale}px ${12 * scale}px`,
-              background: '#ffffff',
-              borderRadius: `${8 * scale}px`,
-              border: `1px solid ${t.border || '#e5e7eb'}`,
-            }}>
-              <div style={{
-                fontFamily: t.fontHeading,
-                fontSize: `${9.5 * scale}px`,
-                fontWeight: 800,
-                color: t.textMuted,
-                letterSpacing: `${1.5 * scale}px`,
-                textTransform: 'uppercase',
-                marginBottom: `${4 * scale}px`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: `${4 * scale}px`,
-              }}>
-                <span>✍️ 오늘 내 마음에 남은 한 문장</span>
-              </div>
-              {userMemos[dayIdx] ? (
-                <div style={{
-                  fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
-                  lineHeight: activeLineHeight,
-                  color: t.textColor,
-                  fontStyle: 'italic',
-                  minHeight: `${14 * scale}px`,
-                  paddingBottom: `${2 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
-                  wordBreak: 'break-all',
-                }}>
-                  {userMemos[dayIdx]}
-                </div>
-              ) : (
-                <div style={{
-                  height: `${14 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
-                }} />
-              )}
-            </div>
+
 
             {/* 인도자 해설 */}
             {day.leaderGuide && (

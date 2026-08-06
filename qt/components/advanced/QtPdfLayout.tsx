@@ -753,40 +753,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           </div>
         )}
 
-        <div>
-          <div style={{
-            fontFamily: t.fontHeading,
-            fontSize: `${8.5 * scale}px`,
-            fontWeight: 700,
-            color: t.textMuted,
-            letterSpacing: `${1.8 * scale}px`,
-            textTransform: 'uppercase',
-            marginBottom: `${3 * scale}px`,
-            marginTop: `${2 * scale}px`,
-          }}>
-            오늘 내 마음에 남은 한 문장
-          </div>
-          {userMemos[dayIdx] ? (
-            <div style={{
-              fontFamily: t.font,
-              fontSize: `${11 * scale}px`,
-              lineHeight: '1.55',
-              color: t.textColor,
-              fontStyle: 'italic',
-              minHeight: `${12 * scale}px`,
-              paddingBottom: `${2 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
-              wordBreak: 'break-all',
-            }}>
-              {userMemos[dayIdx]}
-            </div>
-          ) : (
-            <div style={{
-              height: `${12 * scale}px`,
-              borderBottom: `0.5px solid ${t.border}`,
-            }} />
-          )}
-        </div>
+
 
         {pageNumber(pageCounter + 1, totalPages)}
       </div>
@@ -1083,40 +1050,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             </div>
           )}
 
-          {/* 한 줄 기록 */}
-          <div style={{ marginTop: `${5 * scale}px` }}>
-            <div style={{
-              fontFamily: t.fontHeading,
-              fontSize: `${8.5 * scale}px`,
-              fontWeight: 700,
-              color: t.textMuted,
-              letterSpacing: `${1.8 * scale}px`,
-              textTransform: 'uppercase',
-              marginBottom: `${3 * scale}px`,
-            }}>
-              오늘 내 마음에 남은 한 문장
-            </div>
-            {userMemos[dayIdx] ? (
-              <div style={{
-                fontFamily: t.font,
-                fontSize: `${11.5 * scale}px`,
-                lineHeight: '1.55',
-                color: t.textColor,
-                fontStyle: 'italic',
-                minHeight: `${12 * scale}px`,
-                paddingBottom: `${2 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
-                wordBreak: 'break-all',
-              }}>
-                {userMemos[dayIdx]}
-              </div>
-            ) : (
-              <div style={{
-                height: `${12 * scale}px`,
-                borderBottom: `0.5px solid ${t.border}`,
-              }} />
-            )}
-          </div>
+
 
           {pageNumber(pageCounter + 1, totalPages)}
         </div>
