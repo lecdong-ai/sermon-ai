@@ -12,6 +12,7 @@ export function preprocessSmartText(text: string): string[] {
   let cleaned = text
     .replace(/[-*·•]?\s*본문\s*의미\s*&\s*묵상\s*[:：]/gi, '묵상:')
     .replace(/[-*·•]?\s*본문\s*의미\s*&\s*예문\s*[:：]/gi, '의미:')
+    .replace(/[-*·•]?\s*공동체적\s*의미\s*[:：]/gi, '공동체 연결:')
     .replace(/예문\s*[:：]\s*(.*?)\s*(?=예문\s*[:：])/gi, '의미: $1 ')
     .replace(/^[-*·•]\s*(원어|묵상|예문|의미)\s*[:：]/gim, '$1:')
 

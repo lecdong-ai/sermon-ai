@@ -1030,7 +1030,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>🇰🇷 한글 · 개역개정</span>
+                      <span style={{ whiteSpace: 'nowrap' }}>🇰🇷 한글 · 개역개정</span>
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
@@ -1039,6 +1039,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           color: t.textColor,
                           letterSpacing: `${0.3 * scale}px`,
                           textTransform: 'none',
+                          whiteSpace: 'nowrap',
                         }}>
                           {verses.passageRange}
                         </span>
@@ -1073,7 +1074,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                       borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
-                      <span>🇺🇸 English · KJV</span>
+                      <span style={{ whiteSpace: 'nowrap' }}>🇺🇸 English · KJV</span>
                       {verses.passageRange && (
                         <span style={{
                           fontFamily: t.fontHeading,
@@ -1859,6 +1860,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   marginBottom: `${4 * scale}px`,
                   paddingBottom: `${2 * scale}px`,
                   borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
+                  whiteSpace: 'nowrap',
                 }}>
                   🇰🇷 한글 · 개역개정
                 </div>
@@ -1886,6 +1888,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   marginBottom: `${4 * scale}px`,
                   paddingBottom: `${2 * scale}px`,
                   borderBottom: `1px solid ${t.sectionLabelBorder || t.border}`,
+                  whiteSpace: 'nowrap',
                 }}>
                   🇺🇸 English · KJV
                 </div>
