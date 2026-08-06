@@ -103,7 +103,7 @@ export default function QtPrayerAnswerPortrait({
 
         {/* Middle: 4개의 기도 & 응답 카드 */}
         <div className="flex-1 space-y-2">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1 whitespace-nowrap">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
             🙏 이달의 기도 제목 & 응답의 날 (Prayer & Answers)
           </h4>
@@ -111,14 +111,14 @@ export default function QtPrayerAnswerPortrait({
             {[1, 2, 3, 4].map((no) => (
               <div key={no} className="border border-slate-300 rounded-xl p-2.5 bg-white space-y-1.5 shadow-2xs">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-white" style={{ backgroundColor: themeColor }}>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-white whitespace-nowrap" style={{ backgroundColor: themeColor }}>
                     기도 {no}
                   </span>
-                  <span className="text-[9px] text-slate-400">응답일: __월 __일</span>
+                  <span className="text-[9px] text-slate-400 whitespace-nowrap">응답일: __월 __일</span>
                 </div>
                 <div className="text-[10px] text-slate-700 min-h-[30px]">
                 </div>
-                <div className="text-[9px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200">
+                <div className="text-[9px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200 whitespace-nowrap">
                   ✨ 응답 소감:
                 </div>
               </div>

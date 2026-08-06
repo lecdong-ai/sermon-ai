@@ -50,11 +50,11 @@ export default function QtPrayerAnswerPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🙏 {monthName} Prayer & Grace Milestone</span>
           </h1>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs whitespace-nowrap" style={{ backgroundColor: themeColor }}>
           {year}년 {monthName} 은혜의 기념비
         </div>
       </div>
@@ -66,11 +66,11 @@ export default function QtPrayerAnswerPage({
           {/* 31일 큐티 출석 트래커 */}
           <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 flex-1 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
                 🌿 31일 큐티 출석 습관 트래커
               </h4>
-              <span className="text-[10px] text-slate-400 font-bold">Daily Streak</span>
+              <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap">Daily Streak</span>
             </div>
             <div className="grid grid-cols-7 gap-1.5 py-1">
               {Array.from({ length: 31 }, (_, i) => i + 1).map((dayNum) => (
@@ -86,13 +86,13 @@ export default function QtPrayerAnswerPage({
 
           {/* 영성 체온계 & 감사 지수 */}
           <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 flex-1 flex flex-col justify-between">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
               💖 이달의 마음 영성 체온계
             </h4>
             <div className="space-y-2 text-[11px]">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">😊 감사와 기쁨 지수</span>
+                <span className="text-slate-600 font-medium whitespace-nowrap">😊 감사와 기쁨 지수</span>
                 <div className="flex gap-1">
                   {['💗', '💗', '💗', '💗', '💗'].map((h, i) => (
                     <span key={i} className="text-xs cursor-pointer hover:scale-125 transition-transform">{h}</span>
@@ -100,7 +100,7 @@ export default function QtPrayerAnswerPage({
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">🕊️ 마음의 평안 지수</span>
+                <span className="text-slate-600 font-medium whitespace-nowrap">🕊️ 마음의 평안 지수</span>
                 <div className="flex gap-1">
                   {['💙', '💙', '💙', '💙', '💙'].map((h, i) => (
                     <span key={i} className="text-xs cursor-pointer hover:scale-125 transition-transform">{h}</span>
@@ -122,26 +122,26 @@ export default function QtPrayerAnswerPage({
         {/* Middle Column: 기도 제목 & 응답 기록 카드 5개 (5 cols) */}
         <div className="col-span-5 flex flex-col space-y-2 border-r border-slate-200 pr-3">
           <div className="flex items-center justify-between mb-1">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
               🙏 이달의 기도 제목 & 응답의 날 (Prayer & Answers)
             </h4>
-            <span className="text-[9px] text-slate-400">Date / Answer</span>
+            <span className="text-[9px] text-slate-400 whitespace-nowrap">Date / Answer</span>
           </div>
 
           {Array.from({ length: 5 }, (_, i) => i + 1).map((no) => (
-            <div key={no} className="border border-slate-300 rounded-xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-white" style={{ backgroundColor: themeColor }}>
+            <div key={no} className="border border-slate-300 rounded-xl p-2 bg-white shadow-2xs space-y-1 flex-1 flex flex-col justify-between">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-white whitespace-nowrap" style={{ backgroundColor: themeColor }}>
                   기도 {no}
                 </span>
-                <span className="text-[9px] text-slate-400 font-mono">응답일: ____월 ____일</span>
+                <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">응답일: ____월 ____일</span>
               </div>
-              <div className="text-[11px] text-slate-700 font-serif min-h-[20px] flex items-center">
+              <div className="text-[11px] text-slate-700 font-serif min-h-[16px] flex items-center">
               </div>
               <div className="text-[10px] text-amber-700 bg-amber-50/60 rounded px-2 py-0.5 border border-amber-200/50 flex items-center justify-between">
-                <span>✨ 응답 소감:</span>
-                <span className="text-[9px] font-bold text-amber-600">Amen!</span>
+                <span className="whitespace-nowrap">✨ 응답 소감:</span>
+                <span className="text-[9px] font-bold text-amber-600 whitespace-nowrap">Amen!</span>
               </div>
             </div>
           ))}

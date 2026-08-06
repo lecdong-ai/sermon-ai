@@ -211,9 +211,10 @@ export default function QtBibleReadingMapPortrait({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h1 style={{
-              fontSize: '17px', fontWeight: 800, color: '#0F172A', margin: 0,
+              fontSize: '15px', fontWeight: 800, color: '#0F172A', margin: 0,
               fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
               letterSpacing: '0.01em',
+              whiteSpace: 'nowrap',
             }}>
               🕊️ 성경 66권 통독 여정 맵 (Bible Reading Journey)
             </h1>
