@@ -144,8 +144,8 @@ export function renderSmartLine(
     // Replace internal spaces in prefix with non-breaking spaces (\u00A0)
     rawPrefix = rawPrefix.replace(/\s+/g, '\u00A0')
 
-    // Add leading hyphen if it's a known sub-label (원어, 의미, 묵상, 예문, 공동체 연결, 적용, 기도 등)
-    const isStandardSubLabel = /^(원어|의미|묵상|예문|공동체\u00A0연결|공동체연결|공동체|적용|기도)/i.test(rawPrefix)
+    // Add leading hyphen if it's a known sub-label (원어, 의미, 묵상, 예문, 적용, 기도 등). "공동체 연결" is excluded as requested.
+    const isStandardSubLabel = /^(원어|의미|묵상|예문|적용|기도)/i.test(rawPrefix)
     const displayPrefix = isStandardSubLabel ? `- ${rawPrefix}` : rawPrefix
 
     if (body) {
