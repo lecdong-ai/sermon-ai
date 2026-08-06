@@ -644,6 +644,7 @@ export default function DiaryPage() {
                 const w1Data = getWeekData(1)
                 return (
                   <WeeklyComponent
+                    year={selectedYear}
                     weekNum={w1Data.weekNum}
                     weekLabel={w1Data.weekLabel}
                     dateRangeText={w1Data.dateRangeText}
@@ -1069,6 +1070,7 @@ export default function DiaryPage() {
                                 <span className="text-amber-300 font-mono">({wData.dateRangeText})</span>
                               </div>
                               <WeeklyComponent
+                    year={selectedYear}
                                 weekNum={wData.weekNum}
                                 weekLabel={wData.weekLabel}
                                 dateRangeText={wData.dateRangeText}
@@ -1257,6 +1259,7 @@ export default function DiaryPage() {
                     const w1Data = getWeekData(1)
                     return (
                       <WeeklyComponent
+                    year={selectedYear}
                         weekNum={w1Data.weekNum}
                         weekLabel={w1Data.weekLabel}
                         dateRangeText={w1Data.dateRangeText}
@@ -1322,6 +1325,7 @@ export default function DiaryPage() {
               <React.Fragment key={d}>
                 {isWeekStart && (
                   <WeeklyComponent
+                    year={selectedYear}
                     weekNum={currentWeek}
                     weekLabel={`WEEK ${31 + currentWeek}`}
                     monthName={monthName}

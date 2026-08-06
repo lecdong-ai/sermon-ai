@@ -1,9 +1,9 @@
-'use client'
-
 import React from 'react'
 import PerfectGridNote from '../PerfectGridNote'
+import { getHolidaysAndFestivals } from '@/lib/holidays'
 
 interface QtWeeklyPlanPortraitProps {
+  year?: number
   weekNum: number
   weekLabel?: string
   monthName?: string
@@ -14,7 +14,13 @@ interface QtWeeklyPlanPortraitProps {
   pageHeight?: number
 }
 
+const MONTH_MAP: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+}
+
 export default function QtWeeklyPlanPortrait({
+  year = 2026,
   weekNum = 32,
   weekLabel = 'WEEK 32',
   monthName = 'August',
@@ -24,6 +30,8 @@ export default function QtWeeklyPlanPortrait({
   pageWidth = 724,
   pageHeight = 1024,
 }: QtWeeklyPlanPortraitProps) {
+  const monthNum = MONTH_MAP[monthName] || 8
+
   const defaultDays = daysInWeek || [
     { dayNum: 3, dayName: 'SUN', dateStr: '08/03' },
     { dayNum: 4, dayName: 'MON', dateStr: '08/04' },
@@ -33,6 +41,18 @@ export default function QtWeeklyPlanPortrait({
     { dayNum: 8, dayName: 'FRI', dateStr: '08/08' },
     { dayNum: 9, dayName: 'SAT', dateStr: '08/09' },
   ]
+
+  const parseMonthDay = (dateStr?: string, defaultMonth: number = 8, dayNum: number = 1) => {
+    if (dateStr) {
+      const parts = dateStr.split('/')
+      if (parts.length === 2) {
+        const m = parseInt(parts[0], 10)
+        const d = parseInt(parts[1], 10)
+        if (!isNaN(m) && !isNaN(d)) return { m, d }
+      }
+    }
+    return { m: defaultMonth, d: dayNum }
+  }
 
   const leftDays = defaultDays.slice(0, 4) // SUN, MON, TUE, WED
   const rightDays = defaultDays.slice(4)  // THU, FRI, SAT
@@ -55,7 +75,7 @@ export default function QtWeeklyPlanPortrait({
       <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
           <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
-          <span>2026</span>
+          <span>{year}</span>
           <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
@@ -121,6 +141,10 @@ export default function QtWeeklyPlanPortrait({
         <div className="flex flex-col space-y-2.5 flex-1">
           {leftDays.map((d) => {
             const isSun = d.dayName === 'SUN'
+            const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
+            const holidays = getHolidaysAndFestivals(year, m, parsedDay)
+            const hasRedDay = isSun || holidays.some(h => h.isRedDay)
+
             return (
               <div
                 key={d.dayNum}
@@ -128,11 +152,32 @@ export default function QtWeeklyPlanPortrait({
                 data-nav-target={`day-${d.dayNum}`}
                 className="border border-slate-400 rounded-lg p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs hover:border-slate-500 cursor-pointer"
               >
-                <div className="flex items-center justify-between border-b border-slate-300 pb-1 mb-1">
-                  <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
-                  <span className={`text-xs font-serif font-bold ${isSun ? 'text-rose-500' : 'text-slate-800'}`}>
-                    {String(d.dayNum).padStart(2, '0')}
-                  </span>
+                <div className="border-b border-slate-300 pb-1 mb-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
+                    <span className={`text-xs font-serif font-bold ${hasRedDay ? 'text-rose-500' : 'text-slate-800'}`}>
+                      {String(d.dayNum).padStart(2, '0')}
+                    </span>
+                  </div>
+                  {holidays.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                      {holidays.map((h, hIdx) => (
+                        <span
+                          key={hIdx}
+                          className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                            h.isRedDay
+                              ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
+                              : h.type === 'christian'
+                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
+                              : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                          }`}
+                          title={h.name}
+                        >
+                          {h.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <PerfectGridNote step={12} />
@@ -146,6 +191,10 @@ export default function QtWeeklyPlanPortrait({
         <div className="flex flex-col space-y-2.5 flex-1">
           {rightDays.map((d) => {
             const isSat = d.dayName === 'SAT'
+            const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
+            const holidays = getHolidaysAndFestivals(year, m, parsedDay)
+            const hasRedDay = holidays.some(h => h.isRedDay)
+
             return (
               <div
                 key={d.dayNum}
@@ -153,11 +202,32 @@ export default function QtWeeklyPlanPortrait({
                 data-nav-target={`day-${d.dayNum}`}
                 className="border border-slate-400 rounded-lg p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs hover:border-slate-500 cursor-pointer"
               >
-                <div className="flex items-center justify-between border-b border-slate-300 pb-1 mb-1">
-                  <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
-                  <span className={`text-xs font-serif font-bold ${isSat ? 'text-blue-600' : 'text-slate-800'}`}>
-                    {String(d.dayNum).padStart(2, '0')}
-                  </span>
+                <div className="border-b border-slate-300 pb-1 mb-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
+                    <span className={`text-xs font-serif font-bold ${hasRedDay ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-800'}`}>
+                      {String(d.dayNum).padStart(2, '0')}
+                    </span>
+                  </div>
+                  {holidays.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                      {holidays.map((h, hIdx) => (
+                        <span
+                          key={hIdx}
+                          className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                            h.isRedDay
+                              ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
+                              : h.type === 'christian'
+                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
+                              : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                          }`}
+                          title={h.name}
+                        >
+                          {h.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <PerfectGridNote step={12} />

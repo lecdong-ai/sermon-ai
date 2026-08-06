@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PerfectGridNote from './PerfectGridNote'
+import { getHolidaysAndFestivals } from '@/lib/holidays'
 
 interface QtMonthlyCalendarPageProps {
   year: number         // 예: 2026
@@ -115,29 +116,54 @@ export default function QtMonthlyCalendarPage({
               const colIdx = idx % 7
               const isSun = colIdx === 0
               const isSat = colIdx === 6
+              const holidays = dayNum ? getHolidaysAndFestivals(year, month, dayNum) : []
+              const hasRedDay = isSun || holidays.some(h => h.isRedDay)
 
               return (
                 <div
                   key={idx}
-                  className={`border rounded-md p-1.5 flex flex-col justify-between transition-colors relative ${
+                  className={`border rounded-md p-1 flex flex-col justify-between transition-colors relative overflow-hidden ${
                     dayNum
                       ? 'border-slate-400 bg-white hover:bg-slate-50 shadow-2xs'
                       : 'border-slate-300 bg-slate-50/30 opacity-40'
                   }`}
                 >
-                  {dayNum && (
-                    <div className="flex items-center justify-between">
-                      <span
-                        data-nav-target={`day-${dayNum}`}
-                        data-jump-btn="true"
-                        className={`text-xs font-bold font-serif px-1 py-0.5 rounded hover:bg-slate-200 cursor-pointer transition-colors ${
-                          isSun ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
-                        }`}
-                      >
-                        {dayNum}
-                      </span>
-                    </div>
-                  )}
+                  {dayNum ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span
+                          data-nav-target={`day-${dayNum}`}
+                          data-jump-btn="true"
+                          className={`text-xs font-bold font-serif px-1 py-0.5 rounded hover:bg-slate-200 cursor-pointer transition-colors ${
+                            hasRedDay ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
+                          }`}
+                        >
+                          {dayNum}
+                        </span>
+                      </div>
+
+                      {/* 공휴일 및 기독교 절기 라벨 */}
+                      {holidays.length > 0 && (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          {holidays.map((h, hIdx) => (
+                            <div
+                              key={hIdx}
+                              className={`text-[8.5px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                                h.isRedDay
+                                  ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
+                                  : h.type === 'christian'
+                                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                              }`}
+                              title={h.name}
+                            >
+                              {h.name}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : null}
                 </div>
               )
             })}

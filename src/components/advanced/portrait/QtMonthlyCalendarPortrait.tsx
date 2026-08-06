@@ -2,10 +2,11 @@
 
 import React from 'react'
 import PerfectGridNote from '../PerfectGridNote'
+import { getHolidaysAndFestivals } from '@/lib/holidays'
 
 interface QtMonthlyCalendarPortraitProps {
-  year?: number
-  month?: number
+  year: number
+  month: number
   monthName?: string
   themeColor?: string
   pageWidth?: number
@@ -17,14 +18,14 @@ export default function QtMonthlyCalendarPortrait({
   month = 8,
   monthName = 'August',
   themeColor = '#B8C6D9',
-  pageWidth = 724,
+  pageWidth = 768,
   pageHeight = 1024,
 }: QtMonthlyCalendarPortraitProps) {
   const dateObj = new Date(year, month - 1, 1)
   const firstDay = dateObj.getDay()
   const lastDate = new Date(year, month, 0).getDate()
 
-  const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+  const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
   const calendarCells: (number | null)[] = []
   for (let i = 0; i < firstDay; i++) {
@@ -34,11 +35,13 @@ export default function QtMonthlyCalendarPortrait({
     calendarCells.push(d)
   }
 
+  const totalWeeks = Math.ceil(calendarCells.length / 7)
+
   return (
     <div
       data-page-key="calendar"
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.5)] rounded-none mb-12 mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
@@ -48,8 +51,8 @@ export default function QtMonthlyCalendarPortrait({
       }}
     >
       {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+        <div className="flex items-center space-x-2 text-[10.5px] font-medium tracking-wider text-slate-400">
           <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
           <span>{year}</span>
           <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
@@ -57,12 +60,12 @@ export default function QtMonthlyCalendarPortrait({
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold cursor-pointer">MONTHLY</span>
+        <div className="flex items-center space-x-2 text-[10.5px] font-medium text-slate-400">
+          <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 font-bold cursor-pointer">MONTHLY</span>
           <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          {['W1', 'W2', 'W3', 'W4', 'W5'].map((w, idx) => (
-            <span key={w} data-nav-target={`week-${idx + 1}`} className="hover:text-slate-600 cursor-pointer px-1 py-0.5">
-              {w}
+          {Array.from({ length: totalWeeks }).map((_, wIdx) => (
+            <span key={wIdx} data-nav-target={`week-${wIdx + 1}`} className="hover:text-slate-600 cursor-pointer px-0.5 py-0.5">
+              W{wIdx + 1}
             </span>
           ))}
         </div>
@@ -107,29 +110,54 @@ export default function QtMonthlyCalendarPortrait({
             const colIdx = idx % 7
             const isSun = colIdx === 0
             const isSat = colIdx === 6
+            const holidays = dayNum ? getHolidaysAndFestivals(year, month, dayNum) : []
+            const hasRedDay = isSun || holidays.some(h => h.isRedDay)
 
             return (
               <div
                 key={idx}
                 data-day={dayNum || undefined}
                 data-nav-target={dayNum ? `day-${dayNum}` : undefined}
-                className={`border rounded-md p-1.5 flex flex-col justify-between transition-colors relative ${
+                className={`border rounded-md p-1 flex flex-col justify-between transition-colors relative overflow-hidden ${
                   dayNum
                     ? 'border-slate-400 bg-white hover:bg-slate-50 cursor-pointer shadow-2xs'
                     : 'border-slate-300 bg-slate-50/30 opacity-40'
                 }`}
               >
-                {dayNum && (
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs font-bold font-serif ${
-                        isSun ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
-                      }`}
-                    >
-                      {dayNum}
-                    </span>
-                  </div>
-                )}
+                {dayNum ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs font-bold font-serif ${
+                          hasRedDay ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
+                        }`}
+                      >
+                        {dayNum}
+                      </span>
+                    </div>
+
+                    {/* 공휴일 및 기독교 절기 라벨 */}
+                    {holidays.length > 0 && (
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        {holidays.map((h, hIdx) => (
+                          <div
+                            key={hIdx}
+                            className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                              h.isRedDay
+                                ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
+                                : h.type === 'christian'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                            }`}
+                            title={h.name}
+                          >
+                            {h.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : null}
               </div>
             )
           })}

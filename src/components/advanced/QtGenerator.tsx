@@ -335,28 +335,18 @@ export default function QtGenerator() {
     const startDate = new Date(year, monthNum - 1, day)
     const activeDays: number[] = []
 
-    if (dayCount > 7) {
-      // 월간 큐티 다이어리 (7일 초과 분량) -> 원고의 총 일수(한 달 분량)만큼 날짜들을 계산하여 모두 활성화!
-      for (let i = 0; i < dayCount; i++) {
-        const d = new Date(startDate)
-        d.setDate(d.getDate() + i)
+    let added = 0
+    let curOffset = 0
+    while (added < dayCount && curOffset < 60) {
+      const d = new Date(startDate)
+      d.setDate(d.getDate() + curOffset)
+      if (d.getDay() !== 0) { // 일요일(0) 제외
         if (d.getMonth() === monthNum - 1) {
           activeDays.push(d.getDate())
         }
+        added++
       }
-    } else {
-      // 단일 주간 큐티 (6일 평일)
-      let added = 0
-      let curOffset = 0
-      while (added < dayCount && curOffset < 14) {
-        const d = new Date(startDate)
-        d.setDate(d.getDate() + curOffset)
-        if (d.getDay() !== 0) {
-          activeDays.push(d.getDate())
-          added++
-        }
-        curOffset++
-      }
+      curOffset++
     }
 
     // 각 day에 큐티 데이터가 있는지 (현재 week 기준)

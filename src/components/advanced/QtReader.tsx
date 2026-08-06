@@ -32,7 +32,7 @@ import { parseDays } from '@/lib/qtDayParser'
 import { getTemplate, QT_TEMPLATES } from '@/lib/qtTemplates'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
-import { getFormattedDateList, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
+import { getFormattedDateList, getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
 import { saveWeeklyToMonthly, getMonthlyWeeks, clearMonthlyWeeks, getMonthlyWeekCount, combineMonthlyManuscript, combineMonthlyUserMemos, combineMonthlyCalendarStrip } from '@/lib/monthlyQtStorage'
 
@@ -202,22 +202,18 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     const startDate = new Date(year, monthNum - 1, day)
     const activeDays: number[] = []
 
-    // 1. 월간 큐티 다이어리 (7일 초과 분량) -> 원고의 총 일수(한 달 분량)만큼 날짜들을 계산하여 모두 활성화!
-    if (dayCount > 7) {
-      for (let i = 0; i < dayCount; i++) {
-        const d = new Date(startDate)
-        d.setDate(d.getDate() + i)
+    let added = 0
+    let curOffset = 0
+    while (added < dayCount && curOffset < 60) {
+      const d = new Date(startDate)
+      d.setDate(d.getDate() + curOffset)
+      if (d.getDay() !== 0) { // 일요일(0) 제외
         if (d.getMonth() === monthNum - 1) {
           activeDays.push(d.getDate())
         }
+        added++
       }
-    } else {
-      // 2. 단일 주간 큐티 (일요일 제외 6일 평일)
-      for (let i = 0; i < dayCount; i++) {
-        const d = new Date(startDate)
-        d.setDate(d.getDate() + i)
-        if (d.getDay() !== 0) activeDays.push(d.getDate())
-      }
+      curOffset++
     }
 
     // 각 day에 큐티 데이터가 있는지
@@ -273,7 +269,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     if (dayCount === getWeekdayCountInMonth(form.startDate)) {
       return getWeekdayDateLabels(form.startDate)
     }
-    const list = getFormattedDateList(form.startDate, dayCount)
+    const list = getFormattedDateListWeekdays(form.startDate, dayCount)
     if (list.length > 0) return list
     return []
   }, [form.startDate, days.length, selectedInfo?.isRecommended])
@@ -1019,6 +1015,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   const isActive = d === currentActiveDay
                   const hasContent = monthCalendarStrip.dayHasContent[i] ?? false
                   const isEmpty = !hasContent
+                  const isSunday = form.startDate ? new Date(
+                    parseInt(form.startDate.split('-')[0]),
+                    parseInt(form.startDate.split('-')[1]) - 1,
+                    d
+                  ).getDay() === 0 : false
+
                   return (
                     <button
                       key={d}
@@ -1028,9 +1030,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         if (targetIdx >= 0) setDayIndex(targetIdx)
                       }}
                       disabled={isEmpty}
+                      title={isSunday ? `${d}일 (일요일 - 주일 설교 노트)` : isEmpty ? `${d}일 (큐티 없음)` : `${d}일 큐티로 이동`}
                       className={`w-full aspect-square rounded-md text-[10px] font-bold border transition-all ${
                         isActive
                           ? 'bg-indigo-600 border-indigo-400 text-white shadow-md'
+                          : isSunday
+                          ? 'bg-rose-500/10 border-rose-500/20 text-rose-400/50 cursor-not-allowed'
                           : isEmpty
                           ? 'bg-transparent border-white/5 text-slate-700 cursor-not-allowed'
                           : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-200'

@@ -2743,6 +2743,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 {isPlannerEnabled && isWeekStart && (
                   isLandscape ? (
                     <QtWeeklyPlanPage
+                      year={yearNum}
                       weekNum={currentWeekNum}
                       weekLabel={`WEEK ${currentWeekNum}`}
                       monthName={monthName}
@@ -2752,6 +2753,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                     />
                   ) : (
                     <QtWeeklyPlanPortrait
+                      year={yearNum}
                       weekNum={currentWeekNum}
                       weekLabel={`WEEK ${currentWeekNum}`}
                       monthName={monthName}
