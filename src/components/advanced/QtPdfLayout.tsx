@@ -1227,39 +1227,95 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 )}
               </div>
               {(day.originalWords || day.englishWords) && (
-                <div>
-                  {sectionLabel('단어 묵상')}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
+                <div style={{
+                  marginBottom: `${6 * scale}px`,
+                  padding: `${8 * scale}px ${10 * scale}px`,
+                  background: t.accentLight,
+                  borderRadius: `${8 * scale}px`,
+                  border: `1px solid ${t.borderLight || t.sectionLabelBorder}`,
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: `${6 * scale}px`,
+                    paddingBottom: `${4 * scale}px`,
+                    borderBottom: `1px solid ${t.sectionLabelBorder}`,
+                  }}>
+                    <span style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${10 * scale * fontScale}px`,
+                      fontWeight: 800,
+                      color: t.accent,
+                      letterSpacing: `${2 * scale}px`,
+                      textTransform: 'uppercase',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: `${4 * scale}px`,
+                    }}>
+                      🔤 WORD MEDITATION · 단어 묵상
+                    </span>
+                    <span style={{
+                      fontSize: `${8 * scale}px`,
+                      fontWeight: 700,
+                      color: t.textMuted,
+                      background: 'rgba(0,0,0,0.04)',
+                      padding: `${1 * scale}px ${5 * scale}px`,
+                      borderRadius: `${4 * scale}px`,
+                    }}>
+                      원어 & 영어 단어 통찰
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: day.originalWords && day.englishWords ? '1fr 1fr' : '1fr', gap: `${10 * scale}px` }}>
                     {day.originalWords && (
-                      <div>
+                      <div style={{
+                        padding: `${6 * scale}px ${8 * scale}px`,
+                        background: t.prayerBoxBg || '#ffffff',
+                        borderRadius: `${6 * scale}px`,
+                        borderLeft: `${3 * scale}px solid ${t.accent}`,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                      }}>
                         <div style={{
                           fontFamily: t.fontHeading,
-                          fontSize: `${10 * scale}px`,
+                          fontSize: `${9 * scale}px`,
                           fontWeight: 700,
-                          color: t.textMuted,
+                          color: t.accent,
                           letterSpacing: `${1.5 * scale}px`,
-                          textTransform: 'uppercase',
-                          marginBottom: `${1.5 * scale}px`,
+                          marginBottom: `${4 * scale}px`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: `${4 * scale}px`,
                         }}>
-                          원어
+                          <span>🏛️ 원어 핵심</span>
+                          <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
                         </div>
-                        {bodyText(reflect('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
+                        {bodyText(reflect('originalWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 11.5)}
                       </div>
                     )}
                     {day.englishWords && (
-                      <div>
+                      <div style={{
+                        padding: `${6 * scale}px ${8 * scale}px`,
+                        background: t.prayerBoxBg || '#ffffff',
+                        borderRadius: `${6 * scale}px`,
+                        borderLeft: `${3 * scale}px solid ${t.accent}`,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                      }}>
                         <div style={{
                           fontFamily: t.fontHeading,
-                          fontSize: `${10 * scale}px`,
+                          fontSize: `${9 * scale}px`,
                           fontWeight: 700,
-                          color: t.textMuted,
+                          color: t.accent,
                           letterSpacing: `${1.5 * scale}px`,
-                          textTransform: 'uppercase',
-                          marginBottom: `${1.5 * scale}px`,
+                          marginBottom: `${4 * scale}px`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: `${4 * scale}px`,
                         }}>
-                          영어
+                          <span>🔤 영어 핵심</span>
+                          <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
                         </div>
-                        {bodyText(reflect('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 12)}
+                        {bodyText(reflect('englishWords').split('\n').filter(l => l.trim()).slice(0, 3).join('\n'), 11.5)}
                       </div>
                     )}
                   </div>
@@ -1952,39 +2008,95 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
             {/* 단어 묵상 */}
             {(day.originalWords || day.englishWords) && (
-              <div style={{ marginBottom: `${5 * scale}px` }}>
-                {sectionLabel('단어 묵상')}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
+              <div style={{
+                marginBottom: `${6 * scale}px`,
+                padding: `${8 * scale}px ${10 * scale}px`,
+                background: t.accentLight,
+                borderRadius: `${8 * scale}px`,
+                border: `1px solid ${t.borderLight || t.sectionLabelBorder}`,
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: `${6 * scale}px`,
+                  paddingBottom: `${4 * scale}px`,
+                  borderBottom: `1px solid ${t.sectionLabelBorder}`,
+                }}>
+                  <span style={{
+                    fontFamily: t.fontHeading,
+                    fontSize: `${10 * scale * fontScale}px`,
+                    fontWeight: 800,
+                    color: t.accent,
+                    letterSpacing: `${2 * scale}px`,
+                    textTransform: 'uppercase',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: `${4 * scale}px`,
+                  }}>
+                    🔤 WORD MEDITATION · 단어 묵상
+                  </span>
+                  <span style={{
+                    fontSize: `${8 * scale}px`,
+                    fontWeight: 700,
+                    color: t.textMuted,
+                    background: 'rgba(0,0,0,0.04)',
+                    padding: `${1 * scale}px ${5 * scale}px`,
+                    borderRadius: `${4 * scale}px`,
+                  }}>
+                    원어 & 영어 단어 통찰
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: day.originalWords && day.englishWords ? '1fr 1fr' : '1fr', gap: `${10 * scale}px` }}>
                   {day.originalWords && (
-                    <div>
+                    <div style={{
+                      padding: `${6 * scale}px ${8 * scale}px`,
+                      background: t.prayerBoxBg || '#ffffff',
+                      borderRadius: `${6 * scale}px`,
+                      borderLeft: `${3 * scale}px solid ${t.accent}`,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    }}>
                       <div style={{
                         fontFamily: t.fontHeading,
-                        fontSize: `${10 * scale}px`,
+                        fontSize: `${9 * scale}px`,
                         fontWeight: 700,
-                        color: t.textMuted,
+                        color: t.accent,
                         letterSpacing: `${1.5 * scale}px`,
-                        textTransform: 'uppercase',
-                        marginBottom: `${1.5 * scale}px`,
+                        marginBottom: `${4 * scale}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: `${4 * scale}px`,
                       }}>
-                        원어
+                        <span>🏛️ 원어 핵심</span>
+                        <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
                       </div>
-                      {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
+                      {bodyText(reflectP('originalWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 11.5)}
                     </div>
                   )}
                   {day.englishWords && (
-                    <div>
+                    <div style={{
+                      padding: `${6 * scale}px ${8 * scale}px`,
+                      background: t.prayerBoxBg || '#ffffff',
+                      borderRadius: `${6 * scale}px`,
+                      borderLeft: `${3 * scale}px solid ${t.accent}`,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    }}>
                       <div style={{
                         fontFamily: t.fontHeading,
-                        fontSize: `${10 * scale}px`,
+                        fontSize: `${9 * scale}px`,
                         fontWeight: 700,
-                        color: t.textMuted,
+                        color: t.accent,
                         letterSpacing: `${1.5 * scale}px`,
-                        textTransform: 'uppercase',
-                        marginBottom: `${1.5 * scale}px`,
+                        marginBottom: `${4 * scale}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: `${4 * scale}px`,
                       }}>
-                        영어
+                        <span>🔤 영어 핵심</span>
+                        <span style={{ fontSize: `${7.5 * scale}px`, opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
                       </div>
-                      {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 12)}
+                      {bodyText(reflectP('englishWords').split('\n').filter(l => l.trim()).slice(0, 4).join('\n'), 11.5)}
                     </div>
                   )}
                 </div>

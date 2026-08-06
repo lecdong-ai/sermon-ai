@@ -148,6 +148,121 @@ export default function QtDayCard({
     )
   }
 
+  const renderWordMeditationSection = () => {
+    const hasOriginal = day.originalWords && !hiddenSet.has('originalWords')
+    const hasEnglish = day.englishWords && !hiddenSet.has('englishWords')
+    if (!hasOriginal && !hasEnglish) return null
+
+    const origText = edits['originalWords'] !== undefined ? edits['originalWords'] : day.originalWords
+    const engText = edits['englishWords'] !== undefined ? edits['englishWords'] : day.englishWords
+
+    return (
+      <div style={{
+        marginTop: '20px',
+        marginBottom: '20px',
+        padding: '16px',
+        background: t!.accentLight || 'rgba(99, 102, 241, 0.05)',
+        borderRadius: '12px',
+        border: `1px solid ${t!.borderLight || t!.sectionLabelBorder}`,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px',
+          paddingBottom: '8px',
+          borderBottom: `1px solid ${t!.sectionLabelBorder}`,
+        }}>
+          <span style={{
+            fontFamily: t!.fontHeading,
+            fontSize: '11px',
+            fontWeight: 800,
+            color: t!.accent,
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}>
+            🔤 WORD MEDITATION · 단어 묵상
+          </span>
+          <span style={{
+            fontSize: '9.5px',
+            fontWeight: 700,
+            color: t!.textMuted,
+            background: 'rgba(0,0,0,0.04)',
+            padding: '2px 8px',
+            borderRadius: '6px',
+          }}>
+            원어 & 영어 단어 통찰
+          </span>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: hasOriginal && hasEnglish ? 'repeat(auto-fit, minmax(240px, 1fr))' : '1fr',
+          gap: '12px',
+        }}>
+          {hasOriginal && (
+            <div style={{
+              padding: '12px 14px',
+              background: t!.prayerBoxBg || '#ffffff',
+              borderRadius: '8px',
+              borderLeft: `3.5px solid ${t!.accent}`,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}>
+              <div style={{
+                fontFamily: t!.fontHeading,
+                fontSize: '10.5px',
+                fontWeight: 700,
+                color: t!.accent,
+                letterSpacing: '1.5px',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
+                <span>🏛️ 원어 핵심</span>
+                <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(HEBREW/GREEK)</span>
+              </div>
+              <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>
+                {preprocessSmartText(origText).map((l, i) => renderSmartLine(l, i, t!.accent, '3px'))}
+              </div>
+            </div>
+          )}
+
+          {hasEnglish && (
+            <div style={{
+              padding: '12px 14px',
+              background: t!.prayerBoxBg || '#ffffff',
+              borderRadius: '8px',
+              borderLeft: `3.5px solid ${t!.accent}`,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}>
+              <div style={{
+                fontFamily: t!.fontHeading,
+                fontSize: '10.5px',
+                fontWeight: 700,
+                color: t!.accent,
+                letterSpacing: '1.5px',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
+                <span>🔤 영어 핵심</span>
+                <span style={{ fontSize: '9px', opacity: 0.6, fontWeight: 500 }}>(KEYWORDS & MEDITATION)</span>
+              </div>
+              <div style={{ fontSize: t!.bodySize, lineHeight: t!.bodyLineHeight, color: t!.textColor }}>
+                {preprocessSmartText(engText).map((l, i) => renderSmartLine(l, i, t!.accent, '3px'))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const refSection = () => {
     if (!studyRef) return null
     const hasContent = studyRef.background || studyRef.keyWords || studyRef.commentary || studyRef.parallelPassages
@@ -180,8 +295,7 @@ export default function QtDayCard({
       {section('본문 한눈에 보기', day.passageOverview, 'default', 'passageOverview')}
       {section('천천히 읽기', day.slowReading, 'default', 'slowReading')}
       {section('본문 관찰하기', day.observation, 'question', 'observation')}
-      {section('원어 핵심단어', day.originalWords, 'box', 'originalWords')}
-      {section('영어 핵심단어', day.englishWords, 'box', 'englishWords')}
+      {renderWordMeditationSection()}
       {section('말씀 이해하기', day.understanding, 'default', 'understanding')}
       {section('복음으로 보기', day.gospel, 'accent', 'gospel')}
       {section('나를 비추어 보기', day.reflection, 'question', 'reflection')}
