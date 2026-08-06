@@ -89,8 +89,8 @@ export default function QtDailyDiaryPortrait({
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName}</h2>
               {isSunday && (
-                <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                  🕊️ LORD&apos;S DAY
+                <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap inline-block">
+                  🕊️ LORD&apos;S DAY (주일 예배 & 안식)
                 </span>
               )}
             </div>
@@ -98,7 +98,7 @@ export default function QtDailyDiaryPortrait({
           </div>
         </div>
 
-        <div className="text-right text-xs text-slate-400 font-medium">
+        <div className="text-right text-xs text-slate-400 font-medium whitespace-nowrap">
           {isSunday ? '주일 예배 묵상 & 안식' : '매일 QT 묵상 & 일기'}
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function QtDailyDiaryPortrait({
         {/* DAILY AFFIRMATION & PRIORITIES (6 cols) */}
         <div className="col-span-6 border border-slate-400 rounded-lg p-2.5 bg-slate-50/30 flex flex-col justify-between">
           <div>
-            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center">
+            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
               PRIORITIES & AFFIRMATION
             </h4>
@@ -129,7 +129,7 @@ export default function QtDailyDiaryPortrait({
         {/* PRAYER TOPICS (오늘의 기도) (6 cols) */}
         <div className="col-span-6 border border-slate-400 rounded-lg p-2.5 bg-white shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-1">
-            <h4 className="text-[11px] font-bold tracking-wider uppercase flex items-center" style={{ color: themeColor }}>
+            <h4 className="text-[11px] font-bold tracking-wider uppercase flex items-center whitespace-nowrap" style={{ color: themeColor }}>
               PRAYER TOPICS (오늘의 기도)
             </h4>
           </div>
@@ -153,7 +153,7 @@ export default function QtDailyDiaryPortrait({
         <div className="col-span-5 flex flex-col justify-between space-y-3">
           {/* TO DO LIST */}
           <div className="border border-slate-400 rounded-lg p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs">
-            <h3 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
+            <h3 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
               TO DO LIST
             </h3>
@@ -169,28 +169,28 @@ export default function QtDailyDiaryPortrait({
 
           {/* HEALTH LOG */}
           <div className="border border-slate-400 rounded-lg p-2 bg-slate-50/20">
-            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1 whitespace-nowrap">
               HEALTH LOG
             </h4>
             <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600">
               <div className="bg-slate-100 p-1 rounded border border-slate-300 flex justify-between">
-                <span className="font-semibold text-slate-500">MOOD</span>
-                <span className="text-slate-400">Good / Normal / Bad</span>
+                <span className="font-semibold text-slate-500 whitespace-nowrap">MOOD</span>
+                <span className="text-slate-400 whitespace-nowrap">Good / Normal / Bad</span>
               </div>
               <div className="bg-slate-100 p-1 rounded border border-slate-300 flex justify-between">
-                <span className="font-semibold text-slate-500">EXERCISE</span>
-                <span className="text-slate-400">____분</span>
+                <span className="font-semibold text-slate-500 whitespace-nowrap">EXERCISE</span>
+                <span className="text-slate-400 whitespace-nowrap">____분</span>
               </div>
               <div className="bg-slate-100 p-1 rounded border border-slate-300 flex justify-between col-span-2">
-                <span className="font-semibold text-slate-500">MEALS</span>
-                <span className="text-slate-400">아침 / 점심 / 저녁</span>
+                <span className="font-semibold text-slate-500 whitespace-nowrap">MEALS</span>
+                <span className="text-slate-400 whitespace-nowrap">아침 / 점심 / 저녁</span>
               </div>
             </div>
           </div>
 
           {/* FOR TOMORROW */}
           <div className="border border-slate-400 rounded-lg p-2 bg-slate-50/20 h-16">
-            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1 whitespace-nowrap">
               FOR TOMORROW
             </h4>
           </div>
@@ -198,8 +198,8 @@ export default function QtDailyDiaryPortrait({
           {/* TODAY'S SATISFACTION */}
           <div className="border border-slate-400 rounded-lg p-1.5 bg-slate-50/30">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="font-semibold text-slate-500">TODAY&apos;S SATISFACTION</span>
-              <span className="text-amber-400 text-xs">★ ★ ★ ★ ★</span>
+              <span className="font-semibold text-slate-500 whitespace-nowrap">TODAY&apos;S SATISFACTION</span>
+              <span className="text-amber-400 text-xs whitespace-nowrap">★ ★ ★ ★ ★</span>
             </div>
           </div>
         </div>
@@ -207,11 +207,11 @@ export default function QtDailyDiaryPortrait({
         {/* Right Column (7 cols): JOURNAL & NOTES (Full-Height Grid Note) */}
         <div className="col-span-7 flex flex-col">
           <div className="flex items-center justify-between mb-1.5">
-            <h3 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider flex items-center">
+            <h3 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider flex items-center whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
               JOURNAL & NOTES
             </h3>
-            <span className="text-[10px] text-slate-400">Grid Note</span>
+            <span className="text-[10px] text-slate-400 whitespace-nowrap">Grid Note</span>
           </div>
 
           <div className="flex-1">
