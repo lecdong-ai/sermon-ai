@@ -1,32 +1,80 @@
 import React from 'react'
 
 /**
- * Split combined inline sections like "의미: ... 묵상: ..." or "[의미] ... [예문] ..." into separate lines.
+ * Split combined inline sections, clean legacy labels, reorder 묵상 연결 before 예문,
+ * and strip the "- 묵상 연결:" header label so only its content displays cleanly.
  */
 export function preprocessSmartText(text: string): string[] {
   if (!text) return []
 
-  const rawLines = text.split('\n')
-  const processedLines: string[] = []
+  // 1. Label replacement for legacy text
+  const cleaned = text
+    .replace(/[-*·•]?\s*본문\s*의미\s*&\s*묵상\s*[:：]/gi, '- 묵상:')
+    .replace(/[-*·•]?\s*본문\s*의미\s*&\s*예문\s*[:：]/gi, '- 예문:')
+
+  const rawLines = cleaned.split('\n')
+  const intermediateLines: string[] = []
 
   for (const line of rawLines) {
     if (!line.trim()) {
-      processedLines.push('')
+      intermediateLines.push('')
       continue
     }
 
-    // Split inline sub-headers like "묵상:", "예문:", "적용:", "[묵상]", "[예문]", "[적용]" if preceded by text
+    // Split inline sub-headers if combined on one line
     const inlineMarkerRegex = /(?<=\S\s*)(?=(?:의미|묵상|예문|적용|기도|질문|참고):\s*|\[(?:의미|묵상|예문|적용|기도|질문|참고)\])/g
     const splitParts = line.split(inlineMarkerRegex)
 
     for (const part of splitParts) {
       if (part.trim()) {
-        processedLines.push(part.trim())
+        intermediateLines.push(part.trim())
       }
     }
   }
 
-  return processedLines
+  // 2. Reorder (묵상 연결 and 예문) and strip "- 묵상 연결:" label header
+  const finalLines: string[] = []
+  let i = 0
+  while (i < intermediateLines.length) {
+    const cur = intermediateLines[i]
+    const next = intermediateLines[i + 1]
+
+    const isCurExample = /^\s*[-*·•]?\s*예문\s*[:：]/.test(cur)
+    const isCurMeditationConn = /^\s*[-*·•]?\s*묵상\s*연결\s*[:：]/.test(cur)
+    const isNextMeditationConn = next && /^\s*[-*·•]?\s*묵상\s*연결\s*[:：]/.test(next)
+    const isNextExample = next && /^\s*[-*·•]?\s*예문\s*[:：]/.test(next)
+
+    // Case A: cur is 예문 and next is 묵상 연결 -> Swap!
+    if (isCurExample && isNextMeditationConn) {
+      const meditationContent = next.replace(/^\s*[-*·•]?\s*묵상\s*연결\s*[:：]\s*/i, '- ').trim()
+      finalLines.push(meditationContent)
+      finalLines.push(cur)
+      i += 2
+      continue
+    }
+
+    // Case B: cur is 묵상 연결 and next is 예문 -> Already in order, just strip label from cur
+    if (isCurMeditationConn && isNextExample) {
+      const meditationContent = cur.replace(/^\s*[-*·•]?\s*묵상\s*연결\s*[:：]\s*/i, '- ').trim()
+      finalLines.push(meditationContent)
+      finalLines.push(next)
+      i += 2
+      continue
+    }
+
+    // Case C: cur is 묵상 연결 standalone -> strip label
+    if (isCurMeditationConn) {
+      const meditationContent = cur.replace(/^\s*[-*·•]?\s*묵상\s*연결\s*[:：]\s*/i, '- ').trim()
+      finalLines.push(meditationContent)
+      i++
+      continue
+    }
+
+    finalLines.push(cur)
+    i++
+  }
+
+  return finalLines
 }
 
 export function renderSmartLine(
