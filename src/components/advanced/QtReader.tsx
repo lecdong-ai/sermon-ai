@@ -100,13 +100,27 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     strip: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] } | undefined
   } | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [editionMode, setEditionMode] = useState<'member' | 'leader'>('member')
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(() => {
     try {
       const saved = localStorage.getItem(`qt_layout_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
       if (saved) return JSON.parse(saved)
     } catch {}
-    return { lineSpacing: '1.5', fontSize: 'medium', fontFamily: 'gothic', margin: 'normal', hiddenSections: [] }
+    return { lineSpacing: '1.5', fontSize: 'medium', fontFamily: 'gothic', margin: 'normal', hiddenSections: ['leaderGuide'] }
   })
+
+  const handleEditionChange = (mode: 'member' | 'leader') => {
+    setEditionMode(mode)
+    if (mode === 'member') {
+      if (!layoutSettings.hiddenSections.includes('leaderGuide')) {
+        const next = [...layoutSettings.hiddenSections, 'leaderGuide']
+        setLayoutSettings(prev => ({ ...prev, hiddenSections: next }))
+      }
+    } else {
+      const next = layoutSettings.hiddenSections.filter(s => s !== 'leaderGuide')
+      setLayoutSettings(prev => ({ ...prev, hiddenSections: next }))
+    }
+  }
   const [editedContent, setEditedContent] = useState<Record<number, Record<string, string>>>(() => {
     try {
       const saved = localStorage.getItem(`qt_edits_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
@@ -515,6 +529,31 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
         {/* Right: Fullscreen PDF Inspector & Download Buttons */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* ★ 에디션 모드 선택 토글 (성도용 vs 리더용) */}
+          <div className="flex items-center p-0.5 bg-white/10 rounded-xl border border-white/10 text-xs font-bold shrink-0">
+            <button
+              onClick={() => handleEditionChange('member')}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                editionMode === 'member'
+                  ? 'bg-indigo-600 text-white shadow-xs font-extrabold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="성도용 교재: 인도자 해설을 제외하고 본문/적용 공간을 여유롭게 확대합니다."
+            >
+              <span>📖 성도용</span>
+            </button>
+            <button
+              onClick={() => handleEditionChange('leader')}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                editionMode === 'leader'
+                  ? 'bg-amber-600 text-white shadow-xs font-extrabold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="리더용 교재: 하단에 인도자 해설(본문 핵심, 나눔 유의점 팁)이 포함됩니다."
+            >
+              <span>👑 리더용</span>
+            </button>
+          </div>
           {/* 전체화면 PDF 미리보기 팝업 버튼 */}
           <button
             onClick={() => setIsPdfFullscreenModalOpen(true)}
@@ -854,6 +893,28 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               <span className="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="mt-3 space-y-3.5 pt-1">
+              <div className="flex items-center gap-2 pb-1 border-b border-white/5">
+                <span className="text-xs text-slate-400 w-12 shrink-0">에디션</span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleEditionChange('member')}
+                    className={`px-2.5 py-0.5 rounded-md text-xs border transition-all ${
+                      editionMode === 'member'
+                        ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-bold'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >📖 성도용 (해설제외)</button>
+                  <button
+                    onClick={() => handleEditionChange('leader')}
+                    className={`px-2.5 py-0.5 rounded-md text-xs border transition-all ${
+                      editionMode === 'leader'
+                        ? 'bg-amber-600/40 border-amber-400 text-amber-200 font-bold'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >👑 리더용 (해설포함)</button>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 w-12 shrink-0">줄간격</span>
                 <div className="flex flex-wrap gap-1">
