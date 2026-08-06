@@ -73,11 +73,11 @@ export default function QtBibleReadingMapPage({
         {/* Left: 구약 39권 체크 맵 (7 cols) */}
         <div className="col-span-7 border border-slate-300 rounded-2xl p-3.5 bg-slate-50/40 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              📜 구약 39권 통독 체크 (Old Testament)
+            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="whitespace-nowrap">📜 구약 39권 통독 체크 (OLD TESTAMENT)</span>
             </h4>
-            <span className="text-[9px] text-slate-400 font-bold">39 Books</span>
+            <span className="text-[9px] text-slate-400 font-bold whitespace-nowrap">39 Books</span>
           </div>
 
           <div className="grid grid-cols-8 gap-1.5 flex-1 py-1">
@@ -102,11 +102,11 @@ export default function QtBibleReadingMapPage({
           {/* 신약 27권 */}
           <div className="border border-slate-300 rounded-2xl p-3 bg-slate-50/40 flex-1 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
-              <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                ✝️ 신약 27권 통독 체크 (New Testament)
+              <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                <span className="whitespace-nowrap">✝️ 신약 27권 통독 체크 (NEW TESTAMENT)</span>
               </h4>
-              <span className="text-[9px] text-slate-400 font-bold">27 Books</span>
+              <span className="text-[9px] text-slate-400 font-bold whitespace-nowrap">27 Books</span>
             </div>
 
             <div className="grid grid-cols-6 gap-1.5 flex-1 py-1">

@@ -72,9 +72,9 @@ export default function QtBibleReadingMapPortrait({
       <div className="flex-1 flex flex-col space-y-3">
         {/* 구약 39권 */}
         <div className="border border-slate-300 rounded-2xl p-3 bg-slate-50/40 space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-            <span className="flex items-center gap-1">📜 구약 39권 통독 체크</span>
-            <span className="text-[9px] text-slate-400">39 Books</span>
+          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
+            <span className="flex items-center gap-1 whitespace-nowrap">📜 구약 39권 통독 체크 (OLD TESTAMENT)</span>
+            <span className="text-[9px] text-slate-400 whitespace-nowrap">39 Books</span>
           </h4>
           <div className="grid grid-cols-8 gap-1">
             {OLD_TESTAMENT_BOOKS.map((b, i) => (
@@ -87,9 +87,9 @@ export default function QtBibleReadingMapPortrait({
 
         {/* 신약 27권 */}
         <div className="border border-slate-300 rounded-2xl p-3 bg-slate-50/40 space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-            <span className="flex items-center gap-1">✝️ 신약 27권 통독 체크</span>
-            <span className="text-[9px] text-slate-400">27 Books</span>
+          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between whitespace-nowrap">
+            <span className="flex items-center gap-1 whitespace-nowrap">✝️ 신약 27권 통독 체크 (NEW TESTAMENT)</span>
+            <span className="text-[9px] text-slate-400 whitespace-nowrap">27 Books</span>
           </h4>
           <div className="grid grid-cols-6 gap-1">
             {NEW_TESTAMENT_BOOKS.map((b, i) => (
