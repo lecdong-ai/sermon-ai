@@ -1181,23 +1181,29 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               )}
             </div>
 
-            {/* 복음으로 보기 (full, compact) */}
+            {/* 복음으로 보기 (full, spacious banner) */}
             {day.gospel && (
               <div style={{
-                marginBottom: `${5 * scale * marginScale}px`,
-                padding: `${3 * scale}px ${6 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
                 background: `${t.accent}0D`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
                   fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale}px`,
+                  marginBottom: `${3 * scale}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: `${4 * scale}px`,
                 }}>
                   ✦ 복음으로 보기
                 </div>
@@ -1209,26 +1215,55 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: `${15 * scale}px`,
-              marginBottom: `${6 * scale}px`,
+              gap: `${16 * scale}px`,
+              marginBottom: `${10 * scale}px`,
             }}>
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${8 * scale}px` }}>
                 {day.application && (
-                  <div style={{ marginBottom: `${4 * scale}px` }}>
-                    {sectionLabel('오늘의 적용')}
+                  <div style={{
+                    padding: `${6 * scale}px ${8 * scale}px`,
+                    background: t.accentLight || 'rgba(0,0,0,0.02)',
+                    borderRadius: `${6 * scale}px`,
+                    borderLeft: `${3 * scale}px solid ${t.accent}`,
+                  }}>
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${9.5 * scale}px`,
+                      fontWeight: 800,
+                      color: t.accent,
+                      letterSpacing: `${1.5 * scale}px`,
+                      textTransform: 'uppercase',
+                      marginBottom: `${3 * scale}px`,
+                    }}>
+                      🎯 오늘의 적용
+                    </div>
                     {bodyText(reflect('application'), 12)}
                   </div>
                 )}
                 {day.reflection && (
-                  <div>
-                    {sectionLabel('나를 비추어 보기')}
+                  <div style={{
+                    padding: `${6 * scale}px ${8 * scale}px`,
+                    background: 'rgba(0,0,0,0.02)',
+                    borderRadius: `${6 * scale}px`,
+                    borderLeft: `${3 * scale}px solid ${t.textMuted || t.accent}`,
+                  }}>
+                    <div style={{
+                      fontFamily: t.fontHeading,
+                      fontSize: `${9.5 * scale}px`,
+                      fontWeight: 800,
+                      color: t.textColor,
+                      letterSpacing: `${1.5 * scale}px`,
+                      textTransform: 'uppercase',
+                      marginBottom: `${3 * scale}px`,
+                    }}>
+                      🪞 나를 비추어 보기
+                    </div>
                     {bodyText(reflect('reflection'), 12)}
                   </div>
                 )}
               </div>
               {(day.originalWords || day.englishWords) && (
                 <div style={{
-                  marginBottom: `${6 * scale}px`,
                   padding: `${8 * scale}px ${10 * scale}px`,
                   background: t.accentLight,
                   borderRadius: `${8 * scale}px`,
@@ -1323,29 +1358,30 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               )}
             </div>
 
-            {/* 공동체 연결 — NEW (compact) */}
+            {/* 공동체 연결 */}
             {day.community && (
               <div style={{
-                marginBottom: `${5 * scale}px`,
-                display: 'flex', alignItems: 'baseline', gap: `${5 * scale}px`,
-                padding: `${2 * scale}px ${5 * scale}px`,
+                marginBottom: `${8 * scale}px`,
+                display: 'flex', alignItems: 'center', gap: `${6 * scale}px`,
+                padding: `${4 * scale}px ${8 * scale}px`,
                 background: t.accentLight,
-                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${2.5 * scale}px solid ${t.accent}`,
               }}>
                 <span style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontSize: `${9.5 * scale}px`,
+                  fontWeight: 800,
                   color: t.accent,
-                  letterSpacing: `${1.8 * scale}px`,
+                  letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
                 }}>
-                  공동체 연결
+                  🤝 공동체 연결
                 </span>
                 <span style={{
                   fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
+                  fontSize: `${11.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                 }}>
@@ -1354,56 +1390,78 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 오늘의 기도 — 전체폭 */}
+            {/* 오늘의 기도 — 전체폭 카드 */}
             {day.prayer && (
-              <div style={{ marginBottom: `${5 * scale}px` }}>
-                {sectionLabel('오늘의 기도')}
+              <div style={{ marginBottom: `${10 * scale}px` }}>
                 <div style={{
-                  padding: `${5 * scale}px ${7 * scale}px`,
-                  background: t.prayerBoxBg,
-                  borderLeft: `${1.5 * scale}px solid ${t.accent}`,
-                  fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
-                  lineHeight: activeLineHeight,
-                  color: t.prayerBoxText,
-                  fontStyle: 'italic',
+                  padding: `${8 * scale}px ${12 * scale}px`,
+                  background: t.prayerBoxBg || 'rgba(0,0,0,0.03)',
+                  borderRadius: `${8 * scale}px`,
+                  borderLeft: `${3 * scale}px solid ${t.accent}`,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 }}>
-                  {reflect('prayer').split('\n').filter(l => l.trim()).join('\n')}
+                  <div style={{
+                    fontFamily: t.fontHeading,
+                    fontSize: `${9.5 * scale}px`,
+                    fontWeight: 800,
+                    color: t.accent,
+                    letterSpacing: `${1.5 * scale}px`,
+                    textTransform: 'uppercase',
+                    marginBottom: `${4 * scale}px`,
+                  }}>
+                    🙏 오늘의 기도
+                  </div>
+                  <div style={{
+                    fontFamily: t.font,
+                    fontSize: `${11.5 * scale}px`,
+                    lineHeight: activeLineHeight,
+                    color: t.prayerBoxText || t.textColor,
+                    fontStyle: 'italic',
+                  }}>
+                    {reflect('prayer').split('\n').filter(l => l.trim()).join('\n')}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 한 줄 기록 */}
-            <div style={{ marginBottom: `${4 * scale}px` }}>
+            {/* 한 줄 기록 카드 */}
+            <div style={{
+              marginBottom: `${8 * scale}px`,
+              padding: `${8 * scale}px ${12 * scale}px`,
+              background: '#ffffff',
+              borderRadius: `${8 * scale}px`,
+              border: `1px solid ${t.border || '#e5e7eb'}`,
+            }}>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
+                fontSize: `${9.5 * scale}px`,
+                fontWeight: 800,
                 color: t.textMuted,
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
+                marginBottom: `${4 * scale}px`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: `${4 * scale}px`,
               }}>
-                오늘 내 마음에 남은 한 문장
+                <span>✍️ 오늘 내 마음에 남은 한 문장</span>
               </div>
               {userMemos[dayIdx] ? (
                 <div style={{
                   fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
+                  fontSize: `${11.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                   fontStyle: 'italic',
-                  minHeight: `${12 * scale}px`,
-                  paddingBottom: `${2 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
+                  minHeight: `${14 * scale}px`,
                   wordBreak: 'break-all',
                 }}>
                   {userMemos[dayIdx]}
                 </div>
               ) : (
                 <div style={{
-                  height: `${12 * scale}px`,
-                  borderBottom: `0.5px solid ${t.border}`,
+                  height: `${14 * scale}px`,
+                  borderBottom: `1px dashed ${t.border || '#d1d5db'}`,
                 }} />
               )}
             </div>
@@ -1935,23 +1993,29 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 복음으로 보기 (full) */}
+            {/* 복음으로 보기 (full, spacious banner) */}
             {day.gospel && (
               <div style={{
-                marginBottom: `${5 * scale}px`,
-                padding: `${4 * scale}px ${7 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${10 * scale}px`,
                 background: `${t.accent}0D`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.accent}`,
                 borderTop: `0.5px solid ${t.borderLight}`,
                 borderBottom: `0.5px solid ${t.borderLight}`,
+                borderRight: `0.5px solid ${t.borderLight}`,
               }}>
                 <div style={{
                   fontFamily: t.fontHeading,
                   fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${2 * scale}px`,
                   textTransform: 'uppercase',
-                  marginBottom: `${1.5 * scale * marginScale}px`,
+                  marginBottom: `${3 * scale}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: `${4 * scale}px`,
                 }}>
                   ✦ 복음으로 보기
                 </div>
@@ -1959,45 +2023,78 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 나를 비추어 보기 */}
+            {/* 나를 비추어 보기 (card style) */}
             {day.reflection && (
-              <div style={{ marginBottom: `${5 * scale}px` }}>
-                {sectionLabel('나를 비추어 보기')}
+              <div style={{
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${8 * scale}px`,
+                background: 'rgba(0,0,0,0.02)',
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.textMuted || t.accent}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9.5 * scale}px`,
+                  fontWeight: 800,
+                  color: t.textColor,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${3 * scale}px`,
+                }}>
+                  🪞 나를 비추어 보기
+                </div>
                 {bodyText(reflectP('reflection'), 12)}
               </div>
             )}
 
-            {/* 적용 (full) */}
+            {/* 적용 (card style) */}
             {day.application && (
-              <div style={{ marginBottom: `${5 * scale}px` }}>
-                {sectionLabel('오늘의 적용')}
+              <div style={{
+                marginBottom: `${10 * scale}px`,
+                padding: `${6 * scale}px ${8 * scale}px`,
+                background: t.accentLight || 'rgba(0,0,0,0.02)',
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${3 * scale}px solid ${t.accent}`,
+              }}>
+                <div style={{
+                  fontFamily: t.fontHeading,
+                  fontSize: `${9.5 * scale}px`,
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: `${1.5 * scale}px`,
+                  textTransform: 'uppercase',
+                  marginBottom: `${3 * scale}px`,
+                }}>
+                  🎯 오늘의 적용
+                </div>
                 {bodyText(reflectP('application'), 13)}
               </div>
             )}
 
-            {/* 공동체 연결 (compact line) */}
+            {/* 공동체 연결 (compact line card) */}
             {day.community && (
               <div style={{
-                marginBottom: `${5 * scale}px`,
-                display: 'flex', alignItems: 'baseline', gap: `${4 * scale}px`,
-                padding: `${2 * scale}px ${5 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                display: 'flex', alignItems: 'center', gap: `${6 * scale}px`,
+                padding: `${4 * scale}px ${8 * scale}px`,
                 background: t.accentLight,
-                borderLeft: `${1.5 * scale}px solid ${t.sectionLabelBorder}`,
+                borderRadius: `${6 * scale}px`,
+                borderLeft: `${2.5 * scale}px solid ${t.accent}`,
               }}>
                 <span style={{
                   fontFamily: t.fontHeading,
-                  fontSize: `${10 * scale}px`,
-                  fontWeight: 700,
+                  fontSize: `${9.5 * scale}px`,
+                  fontWeight: 800,
                   color: t.accent,
                   letterSpacing: `${1.5 * scale}px`,
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
                 }}>
-                  공동체 연결
+                  🤝 공동체 연결
                 </span>
                 <span style={{
                   fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
+                  fontSize: `${11.5 * scale}px`,
                   lineHeight: activeLineHeight,
                   color: t.textColor,
                 }}>
@@ -2009,7 +2106,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
             {/* 단어 묵상 */}
             {(day.originalWords || day.englishWords) && (
               <div style={{
-                marginBottom: `${6 * scale}px`,
+                marginBottom: `${10 * scale}px`,
                 padding: `${8 * scale}px ${10 * scale}px`,
                 background: t.accentLight,
                 borderRadius: `${8 * scale}px`,
@@ -2103,37 +2200,61 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
               </div>
             )}
 
-            {/* 오늘의 기도 */}
+            {/* 오늘의 기도 — 전체폭 카드 */}
             {day.prayer && (
-              <div style={{ marginBottom: `${5 * scale}px` }}>
-                {sectionLabel('오늘의 기도')}
+              <div style={{ marginBottom: `${10 * scale}px` }}>
                 <div style={{
-                  padding: `${5 * scale}px ${6 * scale}px`,
-                  background: t.prayerBoxBg,
-                  borderLeft: `${1.5 * scale}px solid ${t.accent}`,
-                  fontFamily: t.font,
-                  fontSize: `${12 * scale}px`,
-                  lineHeight: activeLineHeight,
-                  color: t.prayerBoxText,
-                  fontStyle: 'italic',
+                  padding: `${8 * scale}px ${12 * scale}px`,
+                  background: t.prayerBoxBg || 'rgba(0,0,0,0.03)',
+                  borderRadius: `${8 * scale}px`,
+                  borderLeft: `${3 * scale}px solid ${t.accent}`,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 }}>
-                  {reflectP('prayer').split('\n').filter(l => l.trim()).join('\n')}
+                  <div style={{
+                    fontFamily: t.fontHeading,
+                    fontSize: `${9.5 * scale}px`,
+                    fontWeight: 800,
+                    color: t.accent,
+                    letterSpacing: `${1.5 * scale}px`,
+                    textTransform: 'uppercase',
+                    marginBottom: `${4 * scale}px`,
+                  }}>
+                    🙏 오늘의 기도
+                  </div>
+                  <div style={{
+                    fontFamily: t.font,
+                    fontSize: `${11.5 * scale}px`,
+                    lineHeight: activeLineHeight,
+                    color: t.prayerBoxText || t.textColor,
+                    fontStyle: 'italic',
+                  }}>
+                    {reflectP('prayer').split('\n').filter(l => l.trim()).join('\n')}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 오늘 내 마음에 남은 한 문장 */}
-            <div style={{ marginBottom: `${5 * scale}px` }}>
+            {/* 오늘 내 마음에 남은 한 문장 카드 */}
+            <div style={{
+              marginBottom: `${8 * scale}px`,
+              padding: `${8 * scale}px ${12 * scale}px`,
+              background: '#ffffff',
+              borderRadius: `${8 * scale}px`,
+              border: `1px solid ${t.border || '#e5e7eb'}`,
+            }}>
               <div style={{
                 fontFamily: t.fontHeading,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
+                fontSize: `${9.5 * scale}px`,
+                fontWeight: 800,
                 color: t.textMuted,
                 letterSpacing: `${1.5 * scale}px`,
                 textTransform: 'uppercase',
-                marginBottom: `${1.5 * scale * marginScale}px`,
+                marginBottom: `${4 * scale}px`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: `${4 * scale}px`,
               }}>
-                오늘 내 마음에 남은 한 문장
+                <span>✍️ 오늘 내 마음에 남은 한 문장</span>
               </div>
               {userMemos[dayIdx] ? (
                 <div style={{
