@@ -87,18 +87,14 @@ import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 
 const THEMES = [
-  { id: 'cool-blue', name: '쿨 블루', color: '#B8C6D9' },
-  { id: 'butter-yellow', name: '버터 옐로우', color: '#E8D8A0' },
-  { id: 'soft-lavender', name: '라벤더', color: '#C8B8D8' },
-  { id: 'sage-green', name: '세이지 그린', color: '#A0C8B0' },
-  { id: 'soft-peach', name: '소프트 피치', color: '#E8B0B0' },
-  { id: 'sakura-pink', name: '사쿠라 핑크', color: '#F4C2C2' },
-  { id: 'cream-tangerine', name: '크림 귤', color: '#F8C8A0' },
-  { id: 'matcha-green', name: '말차 그린', color: '#B5D8A6' },
-  { id: 'cerulean-mist', name: '세룰리안', color: '#9ED0E0' },
-  { id: 'pale-violet', name: '바이올렛', color: '#D4B8E0' },
-  { id: 'washed-coral', name: '코랄 핑크', color: '#F0A89C' },
-  { id: 'mocha-beige', name: '모카 베이지', color: '#D6C2B0' },
+  { id: 'ocean-blue', name: '딥 오션 블루', color: '#4F7796' },
+  { id: 'emerald-sage', name: '에메랄드 세이지', color: '#3B7A57' },
+  { id: 'butter-gold', name: '버터 골드', color: '#D99B26' },
+  { id: 'royal-lavender', name: '로얄 라벤더', color: '#8E559E' },
+  { id: 'coral-rose', name: '코랄 로즈', color: '#E05A47' },
+  { id: 'sand-brown', name: '모카 샌드', color: '#9E6B4C' },
+  { id: 'teal-mint', name: '민트 틸', color: '#2A9D8F' },
+  { id: 'classic-charcoal', name: '클래식 차콜', color: '#334155' },
 ]
 
 const MONTH_NAMES = [
@@ -690,7 +686,7 @@ export default function DiaryPage() {
                 <FileText className="w-3.5 h-3.5 text-indigo-400" />
                 파스텔 수채화 테마
               </span>
-              <div className="grid grid-cols-6 gap-1.5">
+              <div className="grid grid-cols-4 gap-2">
                 {THEMES.map((t) => {
                   const isSel = selectedTheme.id === t.id
                   return (
