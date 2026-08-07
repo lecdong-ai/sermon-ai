@@ -23,14 +23,12 @@ export default function QtMonthlyCalendarPage({
   pageWidth = 1024,
   pageHeight = 768,
 }: QtMonthlyCalendarPageProps) {
-  // 2026년 8월 기준 계산 (기본값)
   const dateObj = new Date(year, month - 1, 1)
-  const firstDay = dateObj.getDay() // 0 = Sunday
-  const lastDate = new Date(year, month, 0).getDate() // 31일
+  const firstDay = dateObj.getDay()
+  const lastDate = new Date(year, month, 0).getDate()
 
   const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
 
-  // 5~6주 달력 그리드 일자 배열 구성
   const calendarCells: (number | null)[] = []
   for (let i = 0; i < firstDay; i++) {
     calendarCells.push(null)
@@ -45,7 +43,7 @@ export default function QtMonthlyCalendarPage({
     <div
       data-page-key="calendar"
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.5)] rounded-none mb-12 mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
@@ -55,17 +53,17 @@ export default function QtMonthlyCalendarPage({
       }}
     >
       {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
+        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
           <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
           <span>{year}</span>
-          <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+          <span data-nav-target="calendar" className="px-2 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold cursor-pointer">MONTHLY</span>
+        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400 font-mono">
+          <span data-nav-target="calendar" className="px-2 py-0.5 rounded bg-slate-800 text-white font-bold cursor-pointer shadow-2xs">MONTHLY PLANNER</span>
           <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
           {Array.from({ length: totalWeeks }).map((_, wIdx) => (
             <span key={wIdx} data-nav-target={`week-${wIdx + 1}`} className="hover:text-slate-600 cursor-pointer px-1 py-0.5">
@@ -75,36 +73,90 @@ export default function QtMonthlyCalendarPage({
         </div>
       </div>
 
-      {/* 2. Month Header Title */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide">{monthName}</h1>
-          <div className="h-1.5 w-32 rounded-full mt-1" style={{ backgroundColor: themeColor, opacity: 0.7 }} />
+      {/* 2. Month Header & Monthly Verse Banner */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">{monthName}</h1>
+          <span className="text-xs font-mono font-bold text-slate-400 border-l border-slate-300 pl-3">
+            {year}년 {month}월
+          </span>
         </div>
-        <div className="text-right text-xs text-slate-400">
-          <span className="font-semibold text-slate-600">{year}년 {month}월</span> 월간 달력
+
+        {/* Monthly Inspiration Banner */}
+        <div className="bg-gradient-to-r from-amber-50/80 via-rose-50/40 to-amber-50/80 border border-amber-200/90 rounded-xl px-3 py-1 text-right shadow-2xs">
+          <span className="text-[8px] font-bold text-amber-800 uppercase block font-mono">MONTHLY SCRIPTURE & THEME</span>
+          <span className="text-[10px] font-serif font-semibold text-slate-800">
+            &quot;여호와는 나의 목자시니 내게 부족함이 없으리로다 (시편 23:1)&quot;
+          </span>
         </div>
       </div>
 
-      {/* 3. Main Content: Left Memo + Main Calendar Grid */}
-      <div className="grid grid-cols-12 gap-4 flex-1">
-        {/* Left Side Memo Zone (3 cols) */}
-        <div className="col-span-3 flex flex-col pr-2 border-r border-slate-300">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
-            <span className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-            MEMO & GOALS
+      {/* 3. Main Content: Left 3-in-1 Focus Zone + Right Calendar Grid */}
+      <div className="grid grid-cols-12 gap-3 flex-1 mb-2">
+        {/* Left Focus Zone (3 cols) */}
+        <div className="col-span-3 flex flex-col justify-between space-y-2 pr-1 border-r border-slate-200">
+          {/* Priority 3 Goals */}
+          <div className="border border-slate-200 rounded-xl p-2 bg-slate-50/50 space-y-1">
+            <div className="text-[9.5px] font-bold text-slate-800 font-serif flex items-center justify-between border-b border-slate-200 pb-0.5">
+              <span>🎯 이달의 3대 핵심 목표</span>
+              <span className="text-[8px] font-mono text-slate-400">Goals</span>
+            </div>
+            <div className="space-y-1 text-[8.5px] text-slate-600 font-serif pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded border border-slate-400 inline-block"></span>
+                <span>1. ___________________</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded border border-slate-400 inline-block"></span>
+                <span>2. ___________________</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded border border-slate-400 inline-block"></span>
+                <span>3. ___________________</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <PerfectGridNote step={16} />
+
+          {/* Habit / Spiritual Disciplines Tracker */}
+          <div className="border border-indigo-100 rounded-xl p-2 bg-indigo-50/20 space-y-1">
+            <div className="text-[9.5px] font-bold text-indigo-950 font-serif flex items-center justify-between border-b border-indigo-200 pb-0.5">
+              <span>✨ 영적 수련 & 습관 체크</span>
+              <span className="text-[8px] font-mono text-indigo-600">Disciplines</span>
+            </div>
+            <div className="space-y-1 text-[8px] text-slate-600 font-serif pt-0.5">
+              <div className="flex justify-between items-center">
+                <span>📖 매일 말씀 QT</span>
+                <span className="font-mono text-indigo-700">□ □ □ □ □</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>🙏 정시 기도 30분</span>
+                <span className="font-mono text-indigo-700">□ □ □ □ □</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>💖 하루 3감사 쓰기</span>
+                <span className="font-mono text-indigo-700">□ □ □ □ □</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes & Reflection */}
+          <div className="flex-1 border border-slate-200 rounded-xl p-2 bg-white flex flex-col justify-between shadow-2xs">
+            <div className="text-[9.5px] font-bold text-slate-800 font-serif border-b border-slate-200 pb-0.5 flex items-center justify-between">
+              <span>📝 월간 아이디어 & 은혜 노트</span>
+              <span className="text-[8px] font-mono text-slate-400">Notes</span>
+            </div>
+            <div className="flex-1 pt-1">
+              <PerfectGridNote step={15} />
+            </div>
           </div>
         </div>
 
-        {/* Right Side 7-Column Calendar Grid (9 cols) */}
-        <div className="col-span-9 flex flex-col">
+        {/* Right 7-Column Calendar Grid (9 cols) */}
+        <div className="col-span-9 flex flex-col justify-between">
           {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-1 text-center mb-1 text-[11px] font-bold text-slate-500 bg-slate-50 py-1 rounded border border-slate-400">
+          <div className="grid grid-cols-7 gap-1 text-center mb-1 text-[10px] font-bold text-slate-600 bg-slate-100/80 py-1 rounded-lg border border-slate-300 font-serif">
             {daysOfWeek.map((d, i) => (
-              <span key={d} className={i === 0 ? 'text-rose-500' : i === 6 ? 'text-blue-500' : ''}>
+              <span key={d} className={i === 0 ? 'text-rose-600' : i === 6 ? 'text-blue-600' : ''}>
                 {d}
               </span>
             ))}
@@ -117,43 +169,50 @@ export default function QtMonthlyCalendarPage({
               const isSun = colIdx === 0
               const isSat = colIdx === 6
               const holidays = dayNum ? getHolidaysAndFestivals(year, month, dayNum) : []
-              const hasRedDay = isSun || holidays.some(h => h.isRedDay)
+              const hasRedDay = isSun || holidays.some((h) => h.isRedDay)
 
               return (
                 <div
                   key={idx}
-                  className={`border rounded-md p-1 flex flex-col justify-between transition-colors relative overflow-hidden ${
+                  className={`border rounded-xl p-1 flex flex-col justify-between transition-all relative overflow-hidden ${
                     dayNum
-                      ? 'border-slate-400 bg-white hover:bg-slate-50 shadow-2xs'
-                      : 'border-slate-300 bg-slate-50/30 opacity-40'
+                      ? 'border-slate-300 bg-white hover:border-slate-400 hover:shadow-xs'
+                      : 'border-slate-200/50 bg-slate-50/40 opacity-30'
                   }`}
                 >
                   {dayNum ? (
                     <>
-                      <div className="flex items-center justify-between">
+                      {/* Top Date Header */}
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
                         <span
                           data-nav-target={`day-${dayNum}`}
                           data-jump-btn="true"
-                          className={`text-xs font-bold font-serif px-1 py-0.5 rounded hover:bg-slate-200 cursor-pointer transition-colors ${
-                            hasRedDay ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-700'
+                          className={`text-[11px] font-bold font-serif px-1 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
+                            hasRedDay ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-800'
                           }`}
                         >
                           {dayNum}
                         </span>
+
+                        {/* Mini Daily Checklist Dots */}
+                        <div className="flex items-center gap-0.5 text-[7px] font-mono text-slate-300">
+                          <span title="QT" className="hover:text-amber-600">Q</span>
+                          <span title="Prayer" className="hover:text-indigo-600">P</span>
+                        </div>
                       </div>
 
-                      {/* 공휴일 및 기독교 절기 라벨 */}
+                      {/* Holidays & Festivals */}
                       {holidays.length > 0 && (
                         <div className="flex flex-col gap-0.5 mt-0.5">
                           {holidays.map((h, hIdx) => (
                             <div
                               key={hIdx}
-                              className={`text-[8.5px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                              className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
                                 h.isRedDay
-                                  ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
+                                  ? 'bg-rose-100 text-rose-700 border border-rose-200'
                                   : h.type === 'christian'
-                                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
-                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                               }`}
                               title={h.name}
                             >
@@ -169,6 +228,12 @@ export default function QtMonthlyCalendarPage({
             })}
           </div>
         </div>
+      </div>
+
+      {/* 4. Bottom Footer */}
+      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200">
+        <span>PREMIUM DIARY STUDIO — MONTHLY CALENDAR MASTER</span>
+        <span>{year} {monthName} Edition</span>
       </div>
     </div>
   )
