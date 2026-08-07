@@ -37,6 +37,7 @@ import QtMonthlyLetterPage2 from '@/components/advanced/QtMonthlyLetterPage2'
 import QtMonthlyLetterPortrait2 from '@/components/advanced/portrait/QtMonthlyLetterPortrait2'
 
 // 신규 일반인용 6종 컴포넌트 임포트 (가로/세로)
+import QuickIndexRibbon from '@/components/advanced/common/QuickIndexRibbon'
 import QtHabitTrackerPage from '@/components/advanced/QtHabitTrackerPage'
 import QtHabitTrackerPortrait from '@/components/advanced/portrait/QtHabitTrackerPortrait'
 import QtHabitTrackerPage2 from '@/components/advanced/QtHabitTrackerPage2'
@@ -300,7 +301,7 @@ export default function DiaryPage() {
     }
   }
 
-  // ★ 팝업 뷰어 캔버스 내부 클릭 시 링크 이벤트 처리 (날짜, 주차, 헤더 탭 클릭 시 부드럽게 자동 이동)
+  // ★ 팝업 뷰어 & 캔버스 내부 클릭 시 링크 이벤트 처리 (날짜, 주차, 헤더 탭 클릭 시 1초 부드러운 스크롤 이동)
   const handleModalCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement
     const navTargetEl = target.closest('[data-nav-target], [data-day]') as HTMLElement | null
@@ -311,13 +312,7 @@ export default function DiaryPage() {
     const dayAttr = navTargetEl.getAttribute('data-day')
 
     if (navTarget) {
-      if (navTarget === 'calendar') {
-        if (modalViewMode === 'single') setModalActiveTab('calendar')
-        else scrollToPageElement('modal-page-calendar')
-      } else if (navTarget === 'overview') {
-        if (modalViewMode === 'single') setModalActiveTab('overview')
-        else scrollToPageElement('modal-page-overview')
-      } else if (navTarget.startsWith('week-')) {
+      if (navTarget.startsWith('week-')) {
         const wNum = navTarget.replace('week-', '')
         if (modalViewMode === 'single') {
           setModalActiveTab('weekly')
@@ -334,6 +329,14 @@ export default function DiaryPage() {
             scrollToPageElement(`modal-page-day-${dNum}`)
           }
         }
+      } else {
+        // Any specific page tab target (calendar, overview, habit, budget, culture, kpt, etc.)
+        if (modalViewMode === 'single') {
+          setModalActiveTab(navTarget)
+        } else {
+          scrollToPageElement(`modal-page-${navTarget}`)
+        }
+        setPreviewTab(navTarget)
       }
     } else if (dayAttr) {
       const dNum = Number(dayAttr)
@@ -1308,6 +1311,17 @@ export default function DiaryPage() {
             </div>
           </div>
 
+          {/* ⚡ 1초 퀵 페이지 이동 리본 바 */}
+          <div
+            onClick={handleModalCanvasClick}
+            className="w-full mb-3 flex items-center justify-between bg-slate-900/60 p-2 rounded-2xl border border-white/10 backdrop-blur-md cursor-pointer"
+          >
+            <span className="text-[11px] font-bold text-slate-400 font-mono flex items-center gap-1 shrink-0">
+              ⚡ 1초 퀵 점프:
+            </span>
+            <QuickIndexRibbon activeTarget={previewTab} isChurchMode={categoryFilter === 'church'} />
+          </div>
+
           {/* Interactive Dot Grid Studio Canvas Frame */}
           {(() => {
             const canvasScale = isLandscape ? 0.72 : 0.58
@@ -1561,6 +1575,14 @@ export default function DiaryPage() {
               <X className="w-5 h-5" />
             </button>
           </header>
+
+          {/* Modal 1초 Quick Jump Sub-Header */}
+          <div className="bg-slate-900 border-b border-white/10 px-6 py-2 flex items-center justify-between overflow-x-auto no-scrollbar shrink-0">
+            <span className="text-[11px] font-bold text-slate-400 font-mono flex items-center gap-1.5 shrink-0 mr-3">
+              ⚡ 1초 퀵 점프:
+            </span>
+            <QuickIndexRibbon activeTarget={modalActiveTab} isChurchMode={categoryFilter === 'church'} className="w-full justify-start" />
+          </div>
 
           {/* Modal Main View */}
           <div
@@ -1871,6 +1893,17 @@ export default function DiaryPage() {
           </div>
         </div>
       )}
+
+      {/* ⚡ 화면 우하단 1초 퀵 페이지 이동 플로팅 조종기 */}
+      <div
+        onClick={handleModalCanvasClick}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-950/90 border border-white/10 p-2 rounded-full shadow-2xl backdrop-blur-xl hover:border-indigo-500/50 transition-all max-w-[90vw] overflow-x-auto no-scrollbar cursor-pointer"
+      >
+        <span className="text-[10px] font-bold text-amber-400 font-mono px-2 flex items-center gap-1 shrink-0">
+          ⚡ 퀵 점프
+        </span>
+        <QuickIndexRibbon activeTarget={previewTab} isChurchMode={categoryFilter === 'church'} />
+      </div>
 
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
