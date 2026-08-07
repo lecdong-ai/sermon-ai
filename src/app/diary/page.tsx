@@ -221,6 +221,7 @@ export default function DiaryPage() {
   const IntercessoryComponent = isLandscape ? QtIntercessoryPrayerPage : QtIntercessoryPrayerPortrait
   const Intercessory2Component = isLandscape ? QtIntercessoryPrayerPage2 : QtIntercessoryPrayerPortrait2
   const SoapJournalComponent = isLandscape ? QtSoapJournalPage : QtSoapJournalPortrait
+  const SoapJournal2Component = isLandscape ? QtSoapJournalPage2 : QtSoapJournalPortrait2
   const FruitsTrackerComponent = isLandscape ? QtFruitsTrackerPage : QtFruitsTrackerPortrait
 
   // ★ 해당 월/연도에 맞는 주차별 실제 날짜 & 1주차~5주차 정보 동적 계산 헬퍼
