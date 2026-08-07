@@ -78,6 +78,8 @@ import QtIntercessoryPrayerPage2 from '@/components/advanced/QtIntercessoryPraye
 import QtIntercessoryPrayerPortrait2 from '@/components/advanced/portrait/QtIntercessoryPrayerPortrait2'
 import QtSoapJournalPage from '@/components/advanced/QtSoapJournalPage'
 import QtSoapJournalPortrait from '@/components/advanced/portrait/QtSoapJournalPortrait'
+import QtSoapJournalPage2 from '@/components/advanced/QtSoapJournalPage2'
+import QtSoapJournalPortrait2 from '@/components/advanced/portrait/QtSoapJournalPortrait2'
 import QtFruitsTrackerPage from '@/components/advanced/QtFruitsTrackerPage'
 import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrackerPortrait'
 
@@ -102,7 +104,7 @@ export type PreviewTabType =
   | 'habit' | 'habit2' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
   | 'buckettravel' | 'wellnessmood' | 'hundredgoal' | 'hundredgoal2'
   | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'biblemap2' | 'letter' | 'letter2'
-  | 'intercessory' | 'intercessory2' | 'soapjournal' | 'fruitstracker'
+  | 'intercessory' | 'intercessory2' | 'soapjournal' | 'soapjournal2' | 'fruitstracker'
 
 export default function DiaryPage() {
   const [selectedYear, setSelectedYear] = useState(2026)
@@ -149,6 +151,7 @@ export default function DiaryPage() {
     intercessory: true,
     intercessory2: true,
     soapjournal: true,
+    soapjournal2: true,
     fruitstracker: true,
   })
 
@@ -373,6 +376,7 @@ export default function DiaryPage() {
         intercessory: false,
         intercessory2: false,
         soapjournal: false,
+        soapjournal2: false,
         fruitstracker: false,
       })
       setCategoryFilter('general')
@@ -411,6 +415,7 @@ export default function DiaryPage() {
         intercessory: true,
         intercessory2: true,
         soapjournal: true,
+        soapjournal2: true,
         fruitstracker: true,
       })
       setCategoryFilter('church')
@@ -449,6 +454,7 @@ export default function DiaryPage() {
         intercessory: false,
         intercessory2: false,
         soapjournal: false,
+        soapjournal2: false,
         fruitstracker: false,
       })
       setCategoryFilter('basic')
@@ -487,6 +493,7 @@ export default function DiaryPage() {
         intercessory: true,
         intercessory2: true,
         soapjournal: true,
+        soapjournal2: true,
         fruitstracker: true,
       })
       setCategoryFilter('all')
@@ -585,9 +592,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>⛪ 크리스천 묵상 팩</span>
-                  <span className="text-[9px] opacity-70">18종</span>
+                  <span className="text-[9px] opacity-70">19종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천14종</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천15종</span>
               </button>
 
               <button
@@ -607,7 +614,7 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">33종</span>
+                  <span className="text-[9px] opacity-70">34종</span>
                 </div>
                 <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
@@ -725,7 +732,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">33 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">34 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -736,7 +743,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (33)
+                전체 (34)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
@@ -1080,7 +1087,18 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>📖 SOAP 묵상</span>
+                    <span>📖 SOAP① 필사&관찰</span>
+                    <span className="text-[8px] px-1 bg-indigo-500/20 text-indigo-400 rounded font-normal">교회</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('soapjournal2')}
+                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
+                      previewTab === 'soapjournal2'
+                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🌱 SOAP② 순종&기도</span>
                     <span className="text-[8px] px-1 bg-indigo-500/20 text-indigo-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -1216,7 +1234,8 @@ export default function DiaryPage() {
                 { id: 'letter2', label: '💌 편지② 나&이웃축복' },
                 { id: 'intercessory', label: '💖 중보① 가족공동체' },
                 { id: 'intercessory2', label: '💌 중보② 치유열방' },
-                { id: 'soapjournal', label: '📖 SOAP 묵상' },
+                { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
+                { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
                 { id: 'fruitstracker', label: '🌱 성령의 열매' },
               ].map((pg) => (
                 <label
@@ -1378,6 +1397,9 @@ export default function DiaryPage() {
                     )}
                     {previewTab === 'soapjournal' && (
                       <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    )}
+                    {previewTab === 'soapjournal2' && (
+                      <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
                     {previewTab === 'fruitstracker' && (
                       <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1567,6 +1589,7 @@ export default function DiaryPage() {
                 {modalActiveTab === 'intercessory' && <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'intercessory2' && <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'soapjournal' && <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
+                {modalActiveTab === 'soapjournal2' && <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'fruitstracker' && <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'prayer' && <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'prayer2' && <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
@@ -1723,6 +1746,11 @@ export default function DiaryPage() {
                 {selectedPages.soapjournal && (
                   <div id="modal-page-soapjournal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.soapjournal2 && (
+                  <div id="modal-page-soapjournal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.fruitstracker && (
@@ -1897,6 +1925,9 @@ export default function DiaryPage() {
           )}
           {selectedPages.soapjournal && (
             <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.soapjournal2 && (
+            <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.fruitstracker && (
             <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />

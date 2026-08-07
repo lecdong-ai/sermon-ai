@@ -19,7 +19,7 @@ export default function QtSoapJournalPage({
 }: QtSoapJournalPageProps) {
   return (
     <div
-      data-page-key="soap-journal"
+      data-page-key="soap-journal-1"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -31,7 +31,7 @@ export default function QtSoapJournalPage({
       }}
     >
       {/* 1. Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2.5">
+      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
           <span>YEARLY</span>
           <span>{year}</span>
@@ -41,94 +41,91 @@ export default function QtSoapJournalPage({
         </div>
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span>BIBLE MEDITATION</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-bold text-[10px] shadow-xs">
-            📖 SOAP BIBLE JOURNAL
+          <span>SOAP BIBLE MEDITATION (VOL. 1: S & O)</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-600 text-white font-bold text-[10px] shadow-xs">
+            📖 SOAP① 말씀 필사 & 본문 관찰 (VOL. 1)
           </span>
         </div>
       </div>
 
-      {/* 2. Title */}
-      <div className="flex items-center justify-between mb-2.5">
+      {/* 2. Page Title */}
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>📖 {monthName} SOAP 4-Step Bible Meditation</span>
+          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+            📖 {monthName} SOAP Meditation: Scripture & Observation
           </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            S(본문), O(관찰), A(적용), P(기도) 4단계를 통해 말씀을 깊이 묵상하고 삶으로 순종합니다.
+          <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
+            S(본문 필사)와 O(본문 관찰)를 통해 마음을 울린 하나님의 말씀을 정결하게 적고 깊이 묵상합니다.
           </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 shadow-xs">
-          SOAP 명품 묵상 노트
+
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-amber-950 bg-amber-50 border border-amber-200 shadow-2xs whitespace-nowrap">
+          SOAP① 말씀 필사 & 관찰
         </div>
       </div>
 
-      {/* 3. SOAP 4-Grid Cards Container */}
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        {/* S: Scripture */}
-        <div className="border border-slate-200/90 rounded-2xl p-3 bg-amber-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider flex items-center justify-between border-b border-amber-200 pb-1">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[10px] flex items-center justify-center font-bold">S</span>
-              SCRIPTURE (본문 말씀)
+      {/* 3. Main Grid (Left 6 Cols S: Scripture Copy / Right 6 Cols O: Observation 3-Key) */}
+      <div className="grid grid-cols-12 gap-3 flex-1 mb-2">
+        {/* Left: S - Scripture Copying (6 cols) */}
+        <div className="col-span-6 border border-amber-200 rounded-2xl p-3 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/20 flex flex-col justify-between shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-amber-200 pb-1.5 text-[9.5px]">
+            <span className="font-bold text-amber-950 font-serif flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[9px] flex items-center justify-center font-bold">S</span>
+              📜 SCRIPTURE (성경 본문 구절 & 명품 필사)
             </span>
-            <span className="text-[9px] text-amber-700 font-mono">Word & Verse</span>
-          </h4>
-          <div className="bg-white p-2 rounded-xl border border-amber-200/80 flex-1 flex flex-col justify-around">
-            <div className="border-b border-dashed border-amber-200/60 h-4 text-[9px] text-slate-400 font-serif">본문 구절:</div>
-            <div className="border-b border-dashed border-amber-200/60 h-4 text-[9px] text-slate-400 font-serif">마음에 와닿은 말씀 필사...</div>
+            <span className="font-mono text-[8px] text-amber-700">Word & Copy</span>
+          </div>
+
+          <div className="bg-white p-2 rounded-xl border border-amber-200/80 flex-1 flex flex-col justify-between space-y-1 text-[8.5px]">
+            <div className="flex justify-between items-center border-b border-amber-100 pb-1 text-[8px]">
+              <span className="font-bold text-amber-900">📖 본문 구절 (Passage):</span>
+              <span className="text-slate-400 font-serif">____________________</span>
+            </div>
+            <div className="space-y-1 flex-1 flex flex-col justify-around text-slate-400 font-serif text-[8.5px] py-1">
+              {[1, 2, 3, 4, 5].map((lNo) => (
+                <div key={lNo} className="border-b border-amber-100 pb-0.5">
+                  {lNo}. __________________________________________________
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* O: Observation */}
-        <div className="border border-slate-200/90 rounded-2xl p-3 bg-blue-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider flex items-center justify-between border-b border-blue-200 pb-1">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-mono text-[10px] flex items-center justify-center font-bold">O</span>
-              OBSERVATION (관찰 & 영적 진리)
+        {/* Right: O - Observation 3-Key Truths (6 cols) */}
+        <div className="col-span-6 border border-blue-200 rounded-2xl p-3 bg-gradient-to-b from-blue-50/40 via-white to-blue-50/20 flex flex-col justify-between shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-blue-200 pb-1.5 text-[9.5px]">
+            <span className="font-bold text-blue-950 font-serif flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-mono text-[9px] flex items-center justify-center font-bold">O</span>
+              🔍 OBSERVATION (본문 정밀 관찰 & 영적 진리)
             </span>
-            <span className="text-[9px] text-blue-700 font-mono">Truth & God</span>
-          </h4>
-          <div className="bg-white p-2 rounded-xl border border-blue-200/80 flex-1 flex flex-col justify-around">
-            <div className="border-b border-dashed border-blue-200/60 h-4 text-[9px] text-slate-400 font-serif">하나님은 어떤 분이신가?</div>
-            <div className="border-b border-dashed border-blue-200/60 h-4 text-[9px] text-slate-400 font-serif">본문 속 영적 진리와 메시지...</div>
+            <span className="font-mono text-[8px] text-blue-700">3-Key Truths</span>
           </div>
-        </div>
 
-        {/* A: Application */}
-        <div className="border border-slate-200/90 rounded-2xl p-3 bg-emerald-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider flex items-center justify-between border-b border-emerald-200 pb-1">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono text-[10px] flex items-center justify-center font-bold">A</span>
-              APPLICATION (삶의 실천 & 적용)
-            </span>
-            <span className="text-[9px] text-emerald-700 font-mono">Action Today</span>
-          </h4>
-          <div className="bg-white p-2 rounded-xl border border-emerald-200/80 flex-1 flex flex-col justify-around">
-            <div className="border-b border-dashed border-emerald-200/60 h-4 text-[9px] text-slate-400 font-serif">오늘 일상에서 구체적으로 실천할 순종:</div>
-            <div className="border-b border-dashed border-emerald-200/60 h-4 text-[9px] text-slate-400 font-serif">액션 플랜...</div>
-          </div>
-        </div>
+          <div className="space-y-1.5 flex-1 flex flex-col justify-around text-[8.5px]">
+            {/* Truth 1: God's Character */}
+            <div className="bg-white p-2 rounded-xl border border-blue-200/80">
+              <span className="font-bold text-blue-900 text-[8px] block">👑 1. 하나님은 어떤 분이신가? (Character of God)</span>
+              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+            </div>
 
-        {/* P: Prayer */}
-        <div className="border border-slate-200/90 rounded-2xl p-3 bg-purple-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-extrabold text-purple-900 uppercase tracking-wider flex items-center justify-between border-b border-purple-200 pb-1">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full bg-purple-600 text-white font-mono text-[10px] flex items-center justify-center font-bold">P</span>
-              PRAYER (결단 기도)
-            </span>
-            <span className="text-[9px] text-purple-700 font-mono">My Prayer</span>
-          </h4>
-          <div className="bg-white p-2 rounded-xl border border-purple-200/80 flex-1 flex flex-col justify-around">
-            <div className="border-b border-dashed border-purple-200/60 h-4 text-[9px] text-slate-400 font-serif">말씀대로 살기 위해 드리는 기도:</div>
-            <div className="border-b border-dashed border-purple-200/60 h-4 text-[9px] text-slate-400 font-serif">아멘...</div>
+            {/* Truth 2: Lessons & Commands */}
+            <div className="bg-white p-2 rounded-xl border border-blue-200/80">
+              <span className="font-bold text-blue-900 text-[8px] block">💡 2. 나에게 주시는 교훈 & 경고 (Lessons & Commands)</span>
+              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+            </div>
+
+            {/* Truth 3: Rhema Message */}
+            <div className="bg-white p-2 rounded-xl border border-blue-200/80">
+              <span className="font-bold text-blue-900 text-[8px] block">🕊️ 3. 본문 속 레마(Rhema)의 발견 (Rhema Message)</span>
+              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* 4. Footer */}
       <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 mt-1.5">
-        <span>SUNDAY SERMON STUDIO — SOAP BIBLE MEDITATION</span>
+        <span>PREMIUM DIARY STUDIO — SOAP BIBLE MEDITATION (VOL. 1)</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>
