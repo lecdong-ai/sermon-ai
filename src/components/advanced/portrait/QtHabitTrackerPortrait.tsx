@@ -70,7 +70,7 @@ export default function QtHabitTrackerPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌱 {monthName} 30-Day Habit & Routine Master</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">

@@ -96,7 +96,7 @@ export default function QtWeeklyPlanPortrait({
             W{weekNum}
           </div>
           <div>
-            <h2 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">{monthName} Weekly Plan</h2>
+            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap">{monthName} Weekly Plan</h2>
             <div className="text-xs text-slate-400 font-mono font-medium">{dateRangeText}</div>
           </div>
         </div>

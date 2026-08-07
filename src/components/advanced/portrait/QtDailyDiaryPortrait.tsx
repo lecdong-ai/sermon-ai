@@ -77,7 +77,7 @@ export default function QtDailyDiaryPortrait({
 
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">{monthName} {paddedDay}</h2>
+              <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap">{monthName} {paddedDay}</h2>
               {isSunday && (
                 <span className={`px-3 py-0.5 rounded-full text-xs font-bold border shadow-xs whitespace-nowrap inline-block ${
                   isChurchMode

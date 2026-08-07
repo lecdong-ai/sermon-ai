@@ -60,7 +60,7 @@ export default function QtMonthlyOverviewPortrait({
       {/* 2. Month Title Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">
+          <h1 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap">
             📊 {monthName} 5-Week Strategy Master Overview
           </h1>
           <p className="text-xs text-slate-500 mt-1">
