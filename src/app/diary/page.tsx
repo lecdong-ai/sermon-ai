@@ -169,7 +169,7 @@ export default function DiaryPage() {
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
   const [showPageCheckerFloating, setShowPageCheckerFloating] = useState(true)
-  const [isPageCheckerOpen, setIsPageCheckerOpen] = useState(false)
+  const [isPageCheckerOpen, setIsPageCheckerOpen] = useState(true)
   const [isPreviewSelectorOpen, setIsPreviewSelectorOpen] = useState(true)
 
   const [previewPos, setPreviewPos] = useState({ x: 30, y: 110 })
