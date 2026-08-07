@@ -1,10 +1,12 @@
+'use client'
+
 import React from 'react'
 import PerfectGridNote from '../PerfectGridNote'
 import { getHolidaysAndFestivals } from '@/lib/holidays'
 
 interface QtWeeklyPlanPortraitProps {
   year?: number
-  weekNum: number
+  weekNum?: number
   weekLabel?: string
   monthName?: string
   dateRangeText?: string
@@ -12,11 +14,12 @@ interface QtWeeklyPlanPortraitProps {
   daysInWeek?: { dayNum: number; dayName: string; dateStr: string }[]
   pageWidth?: number
   pageHeight?: number
+  isGeneralMode?: boolean
 }
 
 const MONTH_MAP: Record<string, number> = {
   January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
-  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
 }
 
 export default function QtWeeklyPlanPortrait({
@@ -27,8 +30,9 @@ export default function QtWeeklyPlanPortrait({
   dateRangeText = '08/03 - 08/09',
   themeColor = '#B8C6D9',
   daysInWeek,
-  pageWidth = 724,
-  pageHeight = 1024,
+  pageWidth = 1024,
+  pageHeight = 1448,
+  isGeneralMode = false,
 }: QtWeeklyPlanPortraitProps) {
   const monthNum = MONTH_MAP[monthName] || 8
 
@@ -54,199 +58,175 @@ export default function QtWeeklyPlanPortrait({
     return { m: defaultMonth, d: dayNum }
   }
 
-  const leftDays = defaultDays.slice(0, 4) // SUN, MON, TUE, WED
-  const rightDays = defaultDays.slice(4)  // THU, FRI, SAT
-
   return (
     <div
-      data-page-key={`week-${weekNum}`}
+      data-page-key={`week-${weekNum}-portrait`}
       data-week={weekNum}
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 28px',
+        padding: '36px 44px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
+      {/* 1. Header Bar */}
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
+        <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
           <span>{year}</span>
-          <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+          <span className="px-2.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
-
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          {['W1', 'W2', 'W3', 'W4', 'W5'].map((w, idx) => (
-            <span
-              key={w}
-              data-nav-target={`week-${idx + 1}`}
-              className={`cursor-pointer px-1.5 py-0.5 rounded ${
-                idx + 1 === weekNum ? 'bg-slate-200 text-slate-800 font-bold' : 'hover:text-slate-600'
-              }`}
-            >
-              {w}
-            </span>
-          ))}
-        </div>
+        <span className="px-3 py-1 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xs">
+          📅 WEEK {weekNum} PLANNER
+        </span>
       </div>
 
-      {/* 2. Page Title Header */}
+      {/* 2. Page Title Header & Weekly Inspiration Banner */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-start space-x-3">
+        <div className="flex items-center gap-3">
           <div
-            className="px-3.5 py-1 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 mt-0.5"
+            className="px-3.5 py-1.5 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-xs shrink-0 font-mono"
             style={{ backgroundColor: themeColor }}
           >
-            {weekNum}주차
+            W{weekNum}
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide leading-snug">{monthName} Weekly Plan</h2>
-            <div className="text-[11px] text-slate-400 font-medium mt-0.5">{dateRangeText}</div>
+            <h2 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">{monthName} Weekly Plan</h2>
+            <div className="text-xs text-slate-400 font-mono font-medium">{dateRangeText}</div>
           </div>
         </div>
-        <div className="text-right text-xs text-slate-500 font-semibold">
-          주간 성경 읽기 & 목표 수립
+
+        <div className={`border rounded-xl px-4 py-2 text-right shadow-xs ${
+          isGeneralMode
+            ? 'bg-gradient-to-r from-emerald-50/80 via-teal-50/40 to-emerald-50/80 border-emerald-200'
+            : 'bg-gradient-to-r from-indigo-50/80 via-purple-50/40 to-indigo-50/80 border-indigo-200'
+        }`}>
+          <span className={`text-[9px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}`}>
+            {isGeneralMode ? 'WEEKLY FOCUS' : 'WEEKLY SCRIPTURE'}
+          </span>
+          <span className="text-xs font-serif font-semibold text-slate-800">
+            {isGeneralMode
+              ? '🎯 "이번 주 핵심 목표: 우선순위에 집중하고 흔들림 없이 성취하라"'
+              : '📖 "내 발의 등등이요 내 길에 빛이니이다 (시편 119:105)"'
+            }
+          </span>
         </div>
       </div>
 
-      {/* 3. Upper Full-Width Box: WEEKLY PLAN */}
-      <div className="border border-slate-400 rounded-lg p-3 bg-slate-50/40 mb-3 shadow-2xs">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center">
-          <span className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-          WEEKLY PLAN & GOALS
-        </h3>
-        <div className="grid grid-cols-2 gap-3 text-[11px]">
-          <div className="border-b border-slate-300 pb-1">
-            <span className="font-semibold text-slate-500">주간 큐티 주제:</span>
-            <div className="h-6" />
+      {/* 3. Top Master Control Box */}
+      <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/60 mb-3 grid grid-cols-3 gap-3 text-xs shadow-xs">
+        <div className="space-y-1">
+          <span className="font-bold text-slate-800 font-serif block text-xs">📌 이주의 3대 핵심 우선순위:</span>
+          <div className="bg-white p-2 rounded-lg border border-slate-200 space-y-1 text-xs font-serif">
+            <div>1. ___________________</div>
+            <div>2. ___________________</div>
           </div>
-          <div className="border-b border-slate-300 pb-1">
-            <span className="font-semibold text-slate-500">주간 핵심 목표 (Goals):</span>
-            <div className="h-6" />
+        </div>
+
+        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-serif space-y-1">
+          <span className="font-bold text-slate-700 block text-xs">{isGeneralMode ? '✨ 갓생 습관 7일 체크:' : '✨ 영적 수련 7일 체크:'}</span>
+          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
+            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
           </div>
+          <div className="flex justify-between items-center text-[10px] font-mono text-slate-600">
+            <span>○</span><span>○</span><span>○</span><span>○</span><span>○</span><span>○</span><span>○</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-serif text-slate-500">
+          <span className="font-bold text-slate-700 block text-xs">💖 이주의 감사 & 성찰:</span>
+          <div className="min-h-[20px]">_________________________</div>
         </div>
       </div>
 
-      {/* 4. Main 2-Column Vertical Grid Layout (Left: 4 Days / Right: 3 Days + Notes) */}
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        {/* Left Column (SUN ~ WED) */}
-        <div className="flex flex-col space-y-2.5 flex-1">
-          {leftDays.map((d) => {
-            const isSun = d.dayName === 'SUN'
-            const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
-            const holidays = getHolidaysAndFestivals(year, m, parsedDay)
-            const hasRedDay = isSun || holidays.some(h => h.isRedDay)
+      {/* 4. 7 Days Vertical Stack */}
+      <div className="flex-1 flex flex-col justify-between mb-3 space-y-2">
+        {defaultDays.map((d) => {
+          const isSun = d.dayName === 'SUN'
+          const isSat = d.dayName === 'SAT'
+          const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
+          const holidays = getHolidaysAndFestivals(year, m, parsedDay)
+          const hasRedDay = isSun || holidays.some((h) => h.isRedDay)
 
-            return (
-              <div
-                key={d.dayNum}
-                data-day={d.dayNum}
-                data-nav-target={`day-${d.dayNum}`}
-                className="border border-slate-400 rounded-lg p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs hover:border-slate-500 cursor-pointer"
-              >
-                <div className="border-b border-slate-300 pb-1 mb-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
-                    <span className={`text-xs font-serif font-bold ${hasRedDay ? 'text-rose-500' : 'text-slate-800'}`}>
-                      {String(d.dayNum).padStart(2, '0')}
-                    </span>
-                  </div>
+          return (
+            <div
+              key={d.dayNum}
+              className="border border-slate-300 rounded-xl p-2.5 bg-white flex flex-col justify-between shadow-xs hover:border-slate-400 transition-colors flex-1"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={`font-extrabold font-mono uppercase ${
+                    isSun ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-700'
+                  }`}>
+                    {d.dayName}
+                  </span>
+                  <span
+                    data-nav-target={`day-${d.dayNum}`}
+                    data-jump-btn="true"
+                    className={`font-serif font-bold px-1.5 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
+                      hasRedDay ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-800'
+                    }`}
+                  >
+                    {String(d.dayNum).padStart(2, '0')}일
+                  </span>
                   {holidays.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-0.5">
-                      {holidays.map((h, hIdx) => (
-                        <span
-                          key={hIdx}
-                          className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
-                            h.isRedDay
-                              ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
-                              : h.type === 'christian'
-                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
-                              : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
-                          }`}
-                          title={h.name}
-                        >
-                          {h.name}
-                        </span>
-                      ))}
+                    <div className="flex items-center gap-1">
+                      {holidays.map((h, hIdx) => {
+                        const isChristianTag = !isGeneralMode && h.type === 'christian'
+                        return (
+                          <span
+                            key={hIdx}
+                            className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded leading-tight ${
+                              h.isRedDay
+                                ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                                : isChristianTag
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            }`}
+                          >
+                            {h.name}
+                          </span>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <PerfectGridNote step={12} />
+
+                <div className="text-slate-400 text-xs font-serif">
+                  {isGeneralMode ? '📌 일정/목표: ___________________________' : '📖 묵상 본문: ___________________________'}
                 </div>
               </div>
-            )
-          })}
-        </div>
 
-        {/* Right Column (THU ~ SAT + WEEKLY NOTES) */}
-        <div className="flex flex-col space-y-2.5 flex-1">
-          {rightDays.map((d) => {
-            const isSat = d.dayName === 'SAT'
-            const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
-            const holidays = getHolidaysAndFestivals(year, m, parsedDay)
-            const hasRedDay = holidays.some(h => h.isRedDay)
-
-            return (
-              <div
-                key={d.dayNum}
-                data-day={d.dayNum}
-                data-nav-target={`day-${d.dayNum}`}
-                className="border border-slate-400 rounded-lg p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs hover:border-slate-500 cursor-pointer"
-              >
-                <div className="border-b border-slate-300 pb-1 mb-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-600 uppercase">{d.dayName}</span>
-                    <span className={`text-xs font-serif font-bold ${hasRedDay ? 'text-rose-500' : isSat ? 'text-blue-600' : 'text-slate-800'}`}>
-                      {String(d.dayNum).padStart(2, '0')}
-                    </span>
+              <div className="grid grid-cols-2 gap-2 flex-1 pt-1">
+                <div className="space-y-1 text-xs font-serif text-slate-600">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 border border-slate-300 rounded-xs bg-white inline-block"></span>
+                    <span>___________________________</span>
                   </div>
-                  {holidays.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-0.5">
-                      {holidays.map((h, hIdx) => (
-                        <span
-                          key={hIdx}
-                          className={`text-[8px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
-                            h.isRedDay
-                              ? 'bg-rose-100 text-rose-700 border border-rose-300/60'
-                              : h.type === 'christian'
-                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-300/60'
-                              : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
-                          }`}
-                          title={h.name}
-                        >
-                          {h.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 border border-slate-300 rounded-xs bg-white inline-block"></span>
+                    <span>___________________________</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <PerfectGridNote step={12} />
+
+                <div className="border border-slate-200 rounded-lg p-1 bg-white">
+                  <PerfectGridNote step={13} />
                 </div>
               </div>
-            )
-          })}
+            </div>
+          )
+        })}
+      </div>
 
-          {/* Box 8: WEEKLY NOTES */}
-          <div className="border border-slate-400 rounded-lg p-2.5 bg-slate-50/30 flex-1 flex flex-col justify-between shadow-2xs">
-            <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-              WEEKLY NOTES
-            </div>
-            <div className="flex-1">
-              <PerfectGridNote step={12} />
-            </div>
-          </div>
-        </div>
+      {/* 5. Footer */}
+      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
+        <span>PREMIUM DIARY STUDIO — WEEKLY PLAN MASTER</span>
+        <span>{year} {monthName} Edition</span>
       </div>
     </div>
   )

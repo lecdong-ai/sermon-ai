@@ -1448,6 +1448,7 @@ export default function DiaryPage() {
                           themeColor={activeColor}
                           pageWidth={pageWidth}
                           pageHeight={pageHeight}
+                          isGeneralMode={categoryFilter === 'general'}
                         />
                       )
                     })()}
@@ -1615,6 +1616,7 @@ export default function DiaryPage() {
                       themeColor={activeColor}
                       pageWidth={pageWidth}
                       pageHeight={pageHeight}
+                      isGeneralMode={categoryFilter === 'general'}
                     />
                   )
                 })()}
@@ -1826,6 +1828,7 @@ export default function DiaryPage() {
                           themeColor={activeColor}
                           pageWidth={pageWidth}
                           pageHeight={pageHeight}
+                          isGeneralMode={categoryFilter === 'general'}
                         />
                       </div>
                     )
@@ -1978,6 +1981,7 @@ export default function DiaryPage() {
                       themeColor={activeColor}
                       pageWidth={pageWidth}
                       pageHeight={pageHeight}
+                      isGeneralMode={categoryFilter === 'general'}
                     />
                   )}
                   <DailyComponent
