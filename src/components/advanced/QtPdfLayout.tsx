@@ -900,7 +900,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* ══════ Page 1 (앞면): 말씀 중심 ══════ */}
-        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} data-day-idx={dayIdx} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(targetDayNum)}
             {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주`)}
@@ -1220,7 +1220,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
 
         {/* ══════ Page 2 (뒷면): 관찰/묵상/적용 — 2열 레이아웃 ══════ */}
-        <div className="qt-page" style={pageStyle}>
+        <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(targetDayNum)}
             {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
@@ -1542,7 +1542,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
         {/* ══════ Page 3 (조건부): 이어짐 ══════ */}
         {hasOverflow && (
-          <div className="qt-page" style={pageStyle}>
+          <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
             <div style={pageContentStyle}>
               {renderCalendarStrip(targetDayNum)}
               <div style={{
@@ -1656,7 +1656,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     return (
       <div key={dayIdx}>
         {/* Page 1: 말씀 중심 */}
-        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} style={pageStyle}>
+        <div className="qt-page" id={`qt-page-day-${targetDayNum}`} data-page-key={`day-${targetDayNum}`} data-day={targetDayNum} data-day-idx={dayIdx} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(targetDayNum)}
             <div style={{
@@ -1981,7 +1981,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         </div>
 
         {/* Page 2: 관찰/묵상/적용 — full width, 가독성 우선 */}
-        <div className="qt-page" style={pageStyle}>
+        <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
             <div style={{
@@ -2333,7 +2333,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
         {/* ══════ Portrait Page 3 (조건부): 이어짐 ══════ */}
         {hasOverflowP && (
-          <div className="qt-page" style={pageStyle}>
+          <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
             <div style={pageContentStyle}>
               {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
               <div style={{

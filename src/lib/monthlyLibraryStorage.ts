@@ -14,6 +14,12 @@ export interface MonthlyQtBook {
   audience?: string
   level?: number
   tone?: string
+  monthCalendarStrip?: {
+    month: string
+    daysInMonth: number
+    activeDays: number[]
+    dayHasContent: boolean[]
+  }
 }
 
 const LIBRARY_STORAGE_KEY = 'qt_monthly_library_v1'

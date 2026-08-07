@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-interface QtSundaySermonPageProps {
+interface QtSundayGeneralPageProps {
   year?: number
   month?: number
   monthName?: string
@@ -11,14 +11,14 @@ interface QtSundaySermonPageProps {
   pageHeight?: number
 }
 
-export default function QtSundaySermonPage({
+export default function QtSundayGeneralPage({
   year = 2026,
   month = 8,
   monthName = 'August',
   themeColor = '#B8C6D9',
   pageWidth = 1024,
   pageHeight = 768,
-}: QtSundaySermonPageProps) {
+}: QtSundayGeneralPageProps) {
   const totalDays = new Date(year, month, 0).getDate()
   const sundaysList: { no: number; day: number; dateStr: string; label: string }[] = []
 
@@ -30,7 +30,7 @@ export default function QtSundaySermonPage({
         no,
         day: d,
         dateStr: `${String(month).padStart(2, '0')}/${String(d).padStart(2, '0')}`,
-        label: `${month}월 ${d}일 (${no}주차 예배)`,
+        label: `${month}월 ${d}일 (${no}주차 선데이)`,
       })
     }
   }
@@ -39,7 +39,7 @@ export default function QtSundaySermonPage({
 
   return (
     <div
-      data-page-key="sunday-sermon"
+      data-page-key="sunday-general"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -63,8 +63,8 @@ export default function QtSundaySermonPage({
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
           <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
           <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-600 to-indigo-600 text-white font-bold text-[10px] shadow-xs">
-            🏛️ SUNDAY SERMON ({sundaysList.length}주)
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs">
+            🌿 SUNDAY RESET ({sundaysList.length}주)
           </span>
         </div>
       </div>
@@ -73,14 +73,14 @@ export default function QtSundaySermonPage({
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>🏛️ {monthName} Sunday Worship & Sermon Notes</span>
+            <span>🌿 {monthName} Sunday Reset & Weekly Refresh</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {year}년 {month}월 <strong className="text-amber-700 font-bold">{sundaysList.length}번의 주일 예배</strong> 말씀과 삶의 구체적인 순종 결단을 기록합니다.
+            한 주를 온전히 마무리하고 다음 주를 충전하는 {month}월 <strong className="text-emerald-700 font-bold">{sundaysList.length}번의 일요일</strong> 성찰 노트입니다.
           </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-amber-950 bg-amber-50 border border-amber-300 shadow-xs">
-          {year}년 {month}월 ({sundaysList.length}개 주일 구성)
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-emerald-950 bg-emerald-100 border border-emerald-300 shadow-xs">
+          {year}년 {month}월 ({sundaysList.length}개 일요일)
         </div>
       </div>
 
@@ -89,45 +89,48 @@ export default function QtSundaySermonPage({
         {sundaysList.map((sItem) => (
           <div
             key={sItem.no}
-            className="border border-slate-200/90 rounded-2xl p-3 bg-slate-50/50 flex flex-col justify-between shadow-xs space-y-1.5 hover:border-amber-300 transition-colors"
+            className="border border-slate-200/80 rounded-2xl p-3 bg-slate-50/50 flex flex-col justify-between shadow-xs space-y-1.5 hover:border-emerald-300 transition-colors"
           >
             {/* Card Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r from-amber-600 to-indigo-600 shadow-2xs">
+              <span className="text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full text-white bg-emerald-600 shadow-2xs">
                 {sItem.label}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono font-bold">Date: {sItem.dateStr}</span>
             </div>
 
-            {/* Title & Passage */}
-            <div className="grid grid-cols-12 gap-1.5 text-[10px]">
-              <div className="col-span-7 p-1.5 rounded-xl bg-white border border-slate-200/80">
-                <span className="text-[8px] text-amber-800 font-bold block">설교 제목:</span>
-                <div className="text-slate-700 font-serif min-h-[14px]"></div>
-              </div>
-              <div className="col-span-5 p-1.5 rounded-xl bg-white border border-slate-200/80">
-                <span className="text-[8px] text-indigo-700 font-bold block">본문 말씀:</span>
-                <div className="text-slate-700 font-mono text-[9px] min-h-[14px]"></div>
+            {/* Weekly Wins & Gratitude */}
+            <div className="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1">
+              <span className="text-[9.5px] font-bold text-emerald-800 flex items-center gap-1">
+                <span>☀️ 이번 주 감사 & 성과 (Weekly Wins):</span>
+              </span>
+              <div className="space-y-0.5">
+                <div className="border-b border-dashed border-slate-200 h-3 text-[9px] text-slate-400" />
+                <div className="border-b border-dashed border-slate-200 h-3 text-[9px] text-slate-400" />
               </div>
             </div>
 
-            {/* 3 Key Points */}
+            {/* Next Week Top Priorities */}
             <div className="space-y-1 flex-1 bg-white p-2 rounded-xl border border-slate-200/80">
-              <span className="text-[9.5px] font-bold text-slate-700 block mb-0.5">💡 설교 대지 & 핵심 말씀 3가지:</span>
+              <span className="text-[9.5px] font-bold text-slate-700 flex items-center gap-1">
+                <span>🎯 다음 주 핵심 목표 TOP 3:</span>
+              </span>
               {[1, 2, 3].map((pt) => (
-                <div key={pt} className="text-[9.5px] text-slate-400 flex items-center gap-1.5 border-b border-dashed border-slate-200 pb-0.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-amber-100 text-amber-800 text-[8px] font-bold flex items-center justify-center shrink-0">
+                <div key={pt} className="text-[9.5px] text-slate-400 flex items-center gap-1.5 border-b border-slate-100 pb-0.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-bold flex items-center justify-center shrink-0">
                     {pt}
                   </span>
-                  <span className="font-serif text-[9px] flex-1"></span>
+                  <span className="font-sans text-[9px] flex-1"></span>
                 </div>
               ))}
             </div>
 
-            {/* Application */}
-            <div className="text-[9.5px] text-indigo-950 bg-indigo-50/60 p-1.5 rounded-xl border border-indigo-100 flex items-center justify-between">
-              <span>🌱 이번 주 삶의 순종 & 결단:</span>
-              <span className="text-[8.5px] text-indigo-600 font-bold">Action Plan</span>
+            {/* Weekend Self-Care & Key Lesson */}
+            <div className="text-[9.5px] text-slate-700 bg-emerald-50/60 p-1.5 rounded-xl border border-emerald-100 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <span>☕ 휴식 & 리프레시:</span>
+              </span>
+              <span className="text-[8.5px] text-emerald-700 font-bold">Self-Care & Mindset</span>
             </div>
           </div>
         ))}
@@ -135,7 +138,7 @@ export default function QtSundaySermonPage({
 
       {/* 4. Footer */}
       <div className="flex items-center justify-between border-t border-slate-200 pt-1.5 mt-1.5 text-[10px] text-slate-400">
-        <span>SUNDAY SERMON STUDIO — WORSHIP NOTES ({sundaysList.length} SUNDAYS)</span>
+        <span>PREMIUM DIARY STUDIO — SUNDAY RESET & WEEKLY REFRESH ({sundaysList.length} SUNDAYS)</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>

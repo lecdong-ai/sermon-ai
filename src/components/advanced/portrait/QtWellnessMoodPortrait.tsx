@@ -1,0 +1,134 @@
+'use client'
+
+import React from 'react'
+
+interface QtWellnessMoodPortraitProps {
+  year?: number
+  monthName?: string
+  themeColor?: string
+  pageWidth?: number
+  pageHeight?: number
+}
+
+export default function QtWellnessMoodPortrait({
+  year = 2026,
+  monthName = 'August',
+  themeColor = '#B8C6D9',
+  pageWidth = 1024,
+  pageHeight = 1448,
+}: QtWellnessMoodPortraitProps) {
+  return (
+    <div
+      data-page-key="wellness-mood-portrait"
+      data-page-type="full-bleed"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
+      style={{
+        width: `${pageWidth}px`,
+        height: `${pageHeight}px`,
+        padding: '36px 44px',
+        boxSizing: 'border-box',
+        fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
+      }}
+    >
+      {/* 1. Header Bar */}
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-4">
+        <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
+          <span>{year}</span>
+          <span className="px-2.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
+            {monthName.toUpperCase().slice(0, 3)}
+          </span>
+        </div>
+        <span className="px-3 py-1 rounded-full bg-teal-600 text-white font-bold text-xs shadow-xs">
+          🥗 WELLNESS & MOOD TRACKER
+        </span>
+      </div>
+
+      {/* 2. Page Title */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+            <span>🥗 {monthName} Wellness & Mood Tracker</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            한 달 동안의 감정 흐름(Mood Pixels), 수면 시간과 몸과 마음의 밸런스를 기록하는 케어 노트입니다.
+          </p>
+        </div>
+        <div className="px-4 py-1.5 rounded-full text-xs font-bold text-teal-950 bg-teal-50 border border-teal-200 shadow-xs">
+          {year}년 웰니스 & 마인드 픽셀
+        </div>
+      </div>
+
+      {/* 3. 31-Day Mood Pixels Grid Section */}
+      <div className="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/50 space-y-3 shadow-xs mb-4">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+          <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0" />
+            🎨 31일 감정 구슬 (Mood Pixels)
+          </h4>
+          <span className="text-xs text-slate-400 font-mono">Daily Mood Palette</span>
+        </div>
+
+        {/* Color Legend */}
+        <div className="flex items-center justify-around bg-white p-2 rounded-xl border border-slate-200/80 text-xs text-slate-600">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> 😊 기쁨</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" /> 🌿 평온</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-purple-400 inline-block" /> ☕ 피곤</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-400 inline-block" /> 🌧️ 우울</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-rose-400 inline-block" /> 🔥 스트레스</span>
+        </div>
+
+        {/* 31 Pixels */}
+        <div className="grid grid-cols-7 gap-2 py-2">
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+            <div
+              key={d}
+              className="aspect-square rounded-xl border border-slate-200 bg-white flex flex-col items-center justify-center text-xs font-extrabold text-slate-400 hover:border-teal-400 hover:text-teal-700 cursor-pointer shadow-2xs"
+            >
+              <span>{d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Sleep & Hydration Section */}
+      <div className="border border-slate-200/90 rounded-2xl p-4 bg-white space-y-2.5 shadow-xs mb-4">
+        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1.5">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+            🌙 수면 패턴 & 수분 섭취 (Sleep & Hydration)
+          </span>
+          <span className="text-xs text-slate-400 font-mono">Target: 7~8 hrs</span>
+        </h4>
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="bg-slate-50/60 p-2.5 rounded-xl border border-slate-200/80 space-y-1">
+            <span className="font-bold text-slate-700 block">🌙 주간 평균 수면:</span>
+            <span className="text-slate-400 font-mono">_____ 시간 (목표: 8시간)</span>
+          </div>
+          <div className="bg-slate-50/60 p-2.5 rounded-xl border border-slate-200/80 space-y-1">
+            <span className="font-bold text-slate-700 block">💧 하루 물 섭취량:</span>
+            <span className="text-slate-400 font-mono">💧 💧 💧 💧 💧 💧 (8잔)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Mindful Self-Care Note */}
+      <div className="flex-1 border border-slate-200/90 rounded-2xl p-4 bg-teal-50/40 space-y-2 shadow-xs mb-4 flex flex-col justify-between">
+        <h4 className="text-xs font-bold text-teal-900 uppercase tracking-wider border-b border-teal-200 pb-1.5">
+          💖 지친 나에게 전하는 따뜻한 응원의 한마디 (Self-Compassion Note)
+        </h4>
+        <div className="space-y-2 flex-1 flex flex-col justify-around my-2">
+          <div className="border-b border-dashed border-teal-200 h-5 text-xs text-teal-800/60 font-serif"></div>
+          <div className="border-b border-dashed border-teal-200 h-5 text-xs text-teal-800/60 font-serif"></div>
+          <div className="border-b border-dashed border-teal-200 h-5 text-xs text-teal-800/60 font-serif"></div>
+        </div>
+      </div>
+
+      {/* 6. Footer */}
+      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300 mt-3">
+        <span>PREMIUM DIARY STUDIO — WELLNESS & MOOD TRACKER</span>
+        <span>{year} {monthName} Edition</span>
+      </div>
+    </div>
+  )
+}

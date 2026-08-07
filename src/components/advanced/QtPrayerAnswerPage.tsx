@@ -108,7 +108,7 @@ export default function QtPrayerAnswerPage({
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">🔥 기도와 간절함 지수</span>
+                <span className="text-slate-600 font-medium whitespace-nowrap">🔥 기도와 간절함 지수</span>
                 <div className="flex gap-1">
                   {['💛', '💛', '💛', '💛', '💛'].map((h, i) => (
                     <span key={i} className="text-xs cursor-pointer hover:scale-125 transition-transform">{h}</span>

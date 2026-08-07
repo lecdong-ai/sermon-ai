@@ -199,7 +199,11 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     const daysInMonth = new Date(year, monthNum, 0).getDate()
 
     const dayCount = Math.max(days.length, 1)
-    const startDate = new Date(year, monthNum - 1, day)
+    // 월간 모드(일수 > 7): 월간 원고의 Day 1은 해당 월의 첫 평일(월 1일 기준)부터 배치되므로
+    // (combineMonthlyManuscript / QtPdfLayout 일별 루프와 동일 기준) 달력 스트립도 월 1일부터 평일을 세어야
+    // 날짜 클릭 매핑이 어긋나지 않는다. (구버전: form.startDate 기준 → 8/3 시작 시 8/1 포함 원고와 1일 어긋남)
+    const isMonthlyAnchor = days.length > 7
+    const startDate = new Date(year, monthNum - 1, isMonthlyAnchor ? 1 : day)
     const activeDays: number[] = []
 
     let added = 0
@@ -264,6 +268,11 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
         const d = new Date(mon); d.setDate(mon.getDate() + i)
         return `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`
       })
+    }
+    // 월간 모드: 달력 스트립과 동일하게 월 1일 첫 평일부터 라벨 정렬 (헤더 날짜 = 달력 클릭 날짜)
+    if (days.length > 7) {
+      const monthLabels = getWeekdayDateLabels(form.startDate)
+      if (monthLabels.length > 0) return monthLabels.slice(0, dayCount)
     }
     // 월~토(일요일 제외) 일수와 일치하면 주말 제외 모드
     if (dayCount === getWeekdayCountInMonth(form.startDate)) {

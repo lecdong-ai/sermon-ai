@@ -11,6 +11,7 @@ interface QtDailyDiaryPortraitProps {
   yearLabel?: string
   themeColor?: string
   activeWeek?: string
+  isChurchMode?: boolean
   pageWidth?: number
   pageHeight?: number
 }
@@ -23,6 +24,7 @@ export default function QtDailyDiaryPortrait({
   yearLabel = '2026',
   themeColor = '#B8C6D9',
   activeWeek = 'W1',
+  isChurchMode = false,
   pageWidth = 724,
   pageHeight = 1024,
 }: QtDailyDiaryPortraitProps) {
@@ -35,7 +37,7 @@ export default function QtDailyDiaryPortrait({
       data-day={dayNum}
       data-page-type="full-bleed"
       className={`qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto transition-all ${
-        isSunday ? 'border-2 border-amber-400/90 bg-gradient-to-b from-amber-50/30 via-white to-rose-50/20' : ''
+        isSunday ? 'border-2 border-emerald-400/80 bg-gradient-to-b from-emerald-50/30 via-white to-slate-50/20' : ''
       }`}
       style={{
         width: `${pageWidth}px`,
@@ -77,7 +79,7 @@ export default function QtDailyDiaryPortrait({
         <div className="flex items-center space-x-4">
           <div
             className={`w-12 h-12 rounded-full flex flex-col items-center justify-center text-white shadow-sm font-serif ${
-              isSunday ? 'bg-gradient-to-br from-amber-500 via-rose-500 to-amber-600 ring-2 ring-amber-300 shadow-md' : ''
+              isSunday ? 'bg-emerald-600 ring-2 ring-emerald-300 shadow-md' : ''
             }`}
             style={{ backgroundColor: isSunday ? undefined : themeColor }}
           >
@@ -89,17 +91,23 @@ export default function QtDailyDiaryPortrait({
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-serif font-bold text-slate-800 tracking-wide">{monthName}</h2>
               {isSunday && (
-                <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap inline-block">
-                  🕊️ LORD&apos;S DAY (주일 예배 & 안식)
+                <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-bold border shadow-2xs whitespace-nowrap inline-block ${
+                  isChurchMode
+                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                    : 'bg-emerald-100 text-emerald-950 border-emerald-300'
+                }`}>
+                  {isChurchMode ? "🕊️ LORD'S DAY (주일 예배 & 안식)" : "☀️ SUNDAY RESET (주말 휴식 & 리프레시)"}
                 </span>
               )}
             </div>
-            <div className="h-1 w-24 rounded-full mt-1" style={{ backgroundColor: isSunday ? '#f59e0b' : themeColor, opacity: 0.7 }} />
+            <div className="h-1 w-24 rounded-full mt-1" style={{ backgroundColor: isSunday ? '#059669' : themeColor, opacity: 0.7 }} />
           </div>
         </div>
 
         <div className="text-right text-xs text-slate-400 font-medium whitespace-nowrap">
-          {isSunday ? '주일 예배 묵상 & 안식' : '매일 QT 묵상 & 일기'}
+          {isSunday
+            ? (isChurchMode ? '주일 예배 묵상 & 안식' : '주말 성찰 & 리프레시')
+            : (isChurchMode ? '매일 QT 묵상 & 일기' : '데일리 플래너 & 일기')}
         </div>
       </div>
 

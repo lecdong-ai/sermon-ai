@@ -70,9 +70,18 @@ export async function generateQtPdf(
   }
 
   const pagesPerDay = 2  // 가로/세로 모두 1일=2페이지
-  const targetPages = dayIndex !== undefined
-    ? pages.slice(1 + dayIndex * pagesPerDay, 1 + dayIndex * pagesPerDay + pagesPerDay)
-    : pages
+  let targetPages = pages
+  if (dayIndex !== undefined) {
+    // ★ 월간 레이아웃에서도 정확한 날짜 매칭: data-day-idx로 해당 QT 페이지를 찾고,
+    // 같은 data-day(=달력 일자)를 가진 페이지(큐티 + 다이어리)를 모두 선택
+    const qtPage = pages.find(p => p.getAttribute('data-day-idx') === String(dayIndex))
+    const matchedDay = qtPage?.getAttribute('data-day')
+    if (matchedDay) {
+      targetPages = pages.filter(p => p.getAttribute('data-day') === matchedDay)
+    } else {
+      targetPages = pages.slice(1 + dayIndex * pagesPerDay, 1 + dayIndex * pagesPerDay + pagesPerDay)
+    }
+  }
 
   if (targetPages.length === 0) {
     throw new Error('해당 day의 페이지를 찾을 수 없습니다.')

@@ -1021,6 +1021,7 @@ export default function QtGenerator() {
           sizeOption: form.sizeOption,
           templateId: form.designTemplate,
           includeDiaryPage: withDiary,
+          monthCalendarStrip: combinedStrip,
         }
         setMonthlyLibrary(saveMonthlyBook(createdBook))
       }
@@ -2234,8 +2235,13 @@ export default function QtGenerator() {
                       <button
                         onClick={() => {
                           setIncludeDiaryPage(false)
+                          setMonthlyStrip(book.monthCalendarStrip)
                           setFinalManuscript(book.fullManuscript)
-                          updateForm({ bibleBook: book.bibleBook, sizeOption: book.sizeOption || 'A4Landscape' })
+                          updateForm({
+                            bibleBook: book.bibleBook,
+                            sizeOption: book.sizeOption || 'A4Landscape',
+                            startDate: `${book.year}-${String(book.month).padStart(2, '0')}-01`,
+                          })
                         }}
                         className="py-2 px-2.5 rounded-xl bg-white/10 hover:bg-indigo-600/40 text-slate-200 text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-1"
                       >
@@ -2246,8 +2252,13 @@ export default function QtGenerator() {
                       <button
                         onClick={() => {
                           setIncludeDiaryPage(true)
+                          setMonthlyStrip(book.monthCalendarStrip)
                           setFinalManuscript(book.fullManuscript)
-                          updateForm({ bibleBook: book.bibleBook, sizeOption: book.sizeOption || 'A4Landscape' })
+                          updateForm({
+                            bibleBook: book.bibleBook,
+                            sizeOption: book.sizeOption || 'A4Landscape',
+                            startDate: `${book.year}-${String(book.month).padStart(2, '0')}-01`,
+                          })
                         }}
                         className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1"
                       >
