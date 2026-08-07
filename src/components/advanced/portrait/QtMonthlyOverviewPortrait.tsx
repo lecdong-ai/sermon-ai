@@ -10,6 +10,7 @@ interface QtMonthlyOverviewPortraitProps {
   weeksInfo?: { weekLabel: string; dateRange: string }[]
   pageWidth?: number
   pageHeight?: number
+  isGeneralMode?: boolean
 }
 
 export default function QtMonthlyOverviewPortrait({
@@ -17,140 +18,146 @@ export default function QtMonthlyOverviewPortrait({
   monthName = 'August',
   themeColor = '#B8C6D9',
   weeksInfo,
-  pageWidth = 724,
-  pageHeight = 1024,
+  pageWidth = 1024,
+  pageHeight = 1448,
+  isGeneralMode = false,
 }: QtMonthlyOverviewPortraitProps) {
   const defaultWeeks = weeksInfo || [
-    { weekLabel: 'W1', dateRange: '08/01 - 08/02' },
-    { weekLabel: 'W2', dateRange: '08/03 - 08/09' },
-    { weekLabel: 'W3', dateRange: '08/10 - 08/16' },
-    { weekLabel: 'W4', dateRange: '08/17 - 08/23' },
-    { weekLabel: 'W5', dateRange: '08/24 - 08/31' },
+    { weekLabel: 'W1', dateRange: '08/01 - 08/07' },
+    { weekLabel: 'W2', dateRange: '08/08 - 08/14' },
+    { weekLabel: 'W3', dateRange: '08/15 - 08/21' },
+    { weekLabel: 'W4', dateRange: '08/22 - 08/28' },
+    { weekLabel: 'W5', dateRange: '08/29 - 08/31' },
   ]
 
   return (
     <div
-      data-page-key="overview"
+      data-page-key="overview-portrait"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 28px',
+        padding: '36px 44px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
+      {/* 1. Header Bar */}
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
+        <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
           <span>{year}</span>
-          <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+          <span className="px-2.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
-
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span data-nav-target="overview" className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold cursor-pointer">OVERVIEW</span>
-          {defaultWeeks.map((w, idx) => (
-            <span key={w.weekLabel} data-nav-target={`week-${idx + 1}`} className="hover:text-slate-600 cursor-pointer px-1 py-0.5">
-              {w.weekLabel}
-            </span>
-          ))}
-        </div>
+        <span className="px-3 py-1 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xs">
+          📊 MONTHLY OVERVIEW MASTER
+        </span>
       </div>
 
       {/* 2. Month Title Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide">{monthName} Overview</h1>
-          <div className="h-1.5 w-36 rounded-full mt-1" style={{ backgroundColor: themeColor, opacity: 0.7 }} />
+          <h1 className="text-3xl font-serif font-bold text-slate-900 tracking-wide">
+            📊 {monthName} 5-Week Strategy Master Overview
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            한 달의 흐름을 한눈에 조망하며, 주차별 실행과 결실을 완벽하게 이뤄내는 통합 대시보드입니다.
+          </p>
         </div>
-        <div className="text-right text-xs text-slate-500 font-semibold">
-          월간 개요 및 주별 요약
-        </div>
-      </div>
-
-      {/* 3. Upper Section: 2x2 Summary Cards Grid */}
-      <div className="grid grid-cols-2 gap-2.5 mb-3">
-        {/* DATE / SCHEDULE */}
-        <div className="border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 h-24 flex flex-col">
-          <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-            DATE / SCHEDULE
-          </h4>
-        </div>
-
-        {/* TO DO LIST */}
-        <div className="border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 h-24 flex flex-col">
-          <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-            TO DO LIST
-          </h4>
-        </div>
-
-        {/* MEMO */}
-        <div className="border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 h-24 flex flex-col">
-          <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-            MEMO
-          </h4>
-        </div>
-
-        {/* SUMMARY */}
-        <div className="border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 h-24 flex flex-col">
-          <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: themeColor }} />
-            SUMMARY
-          </h4>
+        <div className="px-4 py-1.5 rounded-full text-xs font-bold text-slate-900 bg-slate-100 border border-slate-300 shadow-xs">
+          5주차 종합 대시보드
         </div>
       </div>
 
-      {/* 4. Main Section: 5 Weekly Columns Grid (Tall & Spacious) */}
-      <div className="flex-1 grid grid-cols-5 gap-2">
+      {/* 3. Top Control Center (3 Boxes) */}
+      <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
+        {/* Milestones */}
+        <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 space-y-1.5">
+          <div className="font-bold text-slate-800 font-serif flex items-center justify-between border-b border-slate-200 pb-1">
+            <span>📅 핵심 일정 & 디데이</span>
+            <span className="font-mono text-[10px] text-slate-400">Milestones</span>
+          </div>
+          <div className="space-y-1 text-xs text-slate-600 font-serif">
+            <div>• _______________________</div>
+            <div>• _______________________</div>
+          </div>
+        </div>
+
+        {/* Top Priorities */}
+        <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 space-y-1.5">
+          <div className="font-bold text-slate-800 font-serif flex items-center justify-between border-b border-slate-200 pb-1">
+            <span>✅ 이달의 3대 핵심 과제</span>
+            <span className="font-mono text-[10px] text-slate-400">Top 3</span>
+          </div>
+          <div className="space-y-1 text-xs text-slate-600 font-serif">
+            <div>1. _______________________</div>
+            <div>2. _______________________</div>
+          </div>
+        </div>
+
+        {/* Reflection */}
+        <div className="border border-indigo-100 rounded-xl p-3 bg-indigo-50/20 space-y-1.5">
+          <div className="font-bold text-indigo-950 font-serif flex items-center justify-between border-b border-indigo-200 pb-1">
+            <span>🏆 성과 & 감사 피드백</span>
+            <span className="font-mono text-[10px] text-indigo-600">Feedback</span>
+          </div>
+          <div className="space-y-1 text-xs text-slate-600 font-serif">
+            <div>💡 _______________________</div>
+            <div>💖 _______________________</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. 5-Week Grid Stack */}
+      <div className="flex-1 flex flex-col justify-between mb-3 space-y-3">
         {defaultWeeks.map((w, wIdx) => (
           <div
             key={w.weekLabel}
-            data-nav-target={`week-${wIdx + 1}`}
-            className="border border-slate-400 rounded-lg p-2 bg-white flex flex-col justify-between shadow-2xs hover:border-slate-500 cursor-pointer"
+            className="border border-slate-300 rounded-xl p-3 bg-white flex flex-col justify-between shadow-xs flex-1"
           >
-            {/* Column Header */}
-            <div className="border-b border-slate-300 pb-1.5 mb-1.5">
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-1.5 text-xs">
+              <div className="flex items-center gap-2">
                 <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold font-serif"
+                  data-nav-target={`week-${wIdx + 1}`}
+                  data-jump-btn="true"
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold font-serif cursor-pointer hover:scale-110 transition-transform shadow-xs"
                   style={{ backgroundColor: themeColor }}
                 >
                   {w.weekLabel}
                 </span>
-                <span className="text-[10px] font-semibold text-slate-400">{w.dateRange}</span>
+                <span className="font-bold text-slate-800 font-serif">주차 핵심 비전: ____________________________________</span>
+              </div>
+              <span className="font-mono text-xs font-bold text-slate-400">{w.dateRange}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs flex-1">
+              <div className="space-y-1 text-xs text-slate-600 font-serif">
+                <div className="font-bold text-slate-800 text-xs">☑️ 주차별 실행 과제:</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 border border-slate-400 rounded-xs bg-white inline-block"></span>
+                  <span>_________________________________</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 border border-slate-400 rounded-xs bg-white inline-block"></span>
+                  <span>_________________________________</span>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-lg p-1 bg-white">
+                <PerfectGridNote step={14} />
               </div>
             </div>
-
-            {/* Weekly Schedule Area */}
-            <div className="h-24 border-b border-dashed border-slate-300 mb-2 p-1" />
-
-            {/* Weekly To Do List Area */}
-            <div className="space-y-1.5 mb-2 flex-1">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-3 h-3 border border-slate-400 rounded-xs bg-slate-50/50 mr-1.5" />
-                  <div className="flex-1 border-b border-slate-300 h-2.5" />
-                </div>
-              ))}
-            </div>
-
-            {/* Weekly Grid Note Area */}
-            <div className="h-28">
-              <PerfectGridNote step={12} />
-            </div>
-
-            {/* Weekly Summary Area */}
-            <div className="mt-2 pt-1 border-t border-slate-300 h-8" />
           </div>
         ))}
+      </div>
+
+      {/* 5. Footer */}
+      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
+        <span>PREMIUM DIARY STUDIO — MONTHLY OVERVIEW MASTER</span>
+        <span>{year} {monthName} Edition</span>
       </div>
     </div>
   )
