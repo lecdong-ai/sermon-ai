@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   Calendar as CalendarIcon, Download, Sparkles, BookOpen, Layers,
   ChevronLeft, ArrowLeft, RotateCcw, Check, FileText, Maximize2,
-  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp
+  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp,
+  GripHorizontal, Move, Pin
 } from 'lucide-react'
 import Link from 'next/link'
 import QtMonthlyCalendarPage from '@/components/advanced/QtMonthlyCalendarPage'
@@ -158,7 +159,45 @@ export default function DiaryPage() {
     fruitstracker: true,
   })
 
+  // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
+  const [showPreviewFloating, setShowPreviewFloating] = useState(true)
+  const [showPageCheckerFloating, setShowPageCheckerFloating] = useState(true)
   const [isPageCheckerOpen, setIsPageCheckerOpen] = useState(false)
+  const [isPreviewSelectorOpen, setIsPreviewSelectorOpen] = useState(true)
+
+  const [previewPos, setPreviewPos] = useState({ x: 30, y: 110 })
+  const [pageCheckerPos, setPageCheckerPos] = useState({ x: 360, y: 110 })
+
+  const activeDragTarget = useRef<'preview' | 'checker' | null>(null)
+  const dragStartOffset = useRef({ x: 0, y: 0 })
+
+  const handlePointerDown = (e: React.PointerEvent, target: 'preview' | 'checker') => {
+    activeDragTarget.current = target
+    const currentPos = target === 'preview' ? previewPos : pageCheckerPos
+    dragStartOffset.current = {
+      x: e.clientX - currentPos.x,
+      y: e.clientY - currentPos.y,
+    }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!activeDragTarget.current) return
+    const newX = Math.max(10, Math.min(window.innerWidth - 320, e.clientX - dragStartOffset.current.x))
+    const newY = Math.max(70, Math.min(window.innerHeight - 100, e.clientY - dragStartOffset.current.y))
+
+    if (activeDragTarget.current === 'preview') {
+      setPreviewPos({ x: newX, y: newY })
+    } else {
+      setPageCheckerPos({ x: newX, y: newY })
+    }
+  }
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (activeDragTarget.current) {
+      activeDragTarget.current = null
+    }
+  }
 
   // ★ 팝업 뷰어 & 스크롤 모드 상태 변수
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
@@ -551,18 +590,30 @@ export default function DiaryPage() {
         </div>
 
         <div className="flex items-center space-x-2.5">
-          {/* 내지 구성 선택 팝오버 토글 버튼 */}
+          {/* 미리보기 양식 선택 플로팅 창 토글 버튼 */}
           <button
-            onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
+            onClick={() => setShowPreviewFloating(!showPreviewFloating)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border shadow-md ${
-              isPageCheckerOpen
+              showPreviewFloating
+                ? 'bg-indigo-600 border-indigo-400 text-white shadow-indigo-500/20'
+                : 'bg-white/5 hover:bg-white/10 text-slate-400 border-white/10 hover:text-white'
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5 text-indigo-300" />
+            <span>미리보기 패널</span>
+          </button>
+
+          {/* 내지 구성 선택 플로팅 창 토글 버튼 */}
+          <button
+            onClick={() => setShowPageCheckerFloating(!showPageCheckerFloating)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border shadow-md ${
+              showPageCheckerFloating
                 ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-amber-500/20'
                 : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>내지 구성 ({activeSelectedCount}종 선택)</span>
-            {isPageCheckerOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <span>내지 구성 ({activeSelectedCount}종)</span>
           </button>
 
           {/* 전체화면 팝업 뷰어 버튼 */}
@@ -751,589 +802,15 @@ export default function DiaryPage() {
               </div>
             </div>
           </div>
-
-          {/* Module 3: Preview Form Selector with Categories */}
-          <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/10 space-y-3 backdrop-blur-md shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                미리보기 양식 선택
-              </h3>
-              <span className="text-[10px] text-slate-400 font-mono">34 Formats</span>
+          {/* Floating Control Windows Info Card in Sidebar */}
+          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2 backdrop-blur-md shadow-xl">
+            <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
+              <Move className="w-4 h-4 text-indigo-400 animate-pulse" />
+              <span>마우스 드래그 플로팅 패널</span>
             </div>
-
-            {/* Category Filter Pills */}
-            <div className="grid grid-cols-4 gap-1 p-1 bg-slate-950/80 rounded-xl border border-white/10 text-[10px] font-bold">
-              <button
-                onClick={() => setCategoryFilter('all')}
-                className={`py-1 rounded-lg transition-all ${
-                  categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                전체 (34)
-              </button>
-              <button
-                onClick={() => setCategoryFilter('general')}
-                className={`py-1 rounded-lg transition-all ${
-                  categoryFilter === 'general' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🌿 일반
-              </button>
-              <button
-                onClick={() => setCategoryFilter('church')}
-                className={`py-1 rounded-lg transition-all ${
-                  categoryFilter === 'church' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                ⛪ 교회
-              </button>
-              <button
-                onClick={() => setCategoryFilter('basic')}
-                className={`py-1 rounded-lg transition-all ${
-                  categoryFilter === 'basic' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                📅 기본
-              </button>
-            </div>
-
-            {/* Template Buttons Grid */}
-            <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1">
-              {/* 1. 일반 6종 */}
-              {(categoryFilter === 'all' || categoryFilter === 'general') && (
-                <>
-                  <button
-                    onClick={() => setPreviewTab('habit')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'habit'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🌱 습관① 매트릭스</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/30 text-emerald-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('habit2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'habit2'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🔥 습관② 주간회고</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/30 text-emerald-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('gratitude')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'gratitude'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>☀️ 감사 & 확언</span>
-                    <span className="text-[8px] px-1 bg-amber-500/30 text-amber-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('quote')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'quote'
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-300 ring-1 ring-purple-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📖 명언 & 책 필사</span>
-                    <span className="text-[8px] px-1 bg-purple-500/30 text-purple-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('budget')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'budget'
-                        ? 'bg-blue-500/20 border-blue-400 text-blue-300 ring-1 ring-blue-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💰 가계부① 예산&자산</span>
-                    <span className="text-[8px] px-1 bg-blue-500/30 text-blue-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('budget2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'budget2'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💳 가계부② 데일리</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/30 text-emerald-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('culture')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'culture'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🎬 문화① 메인</span>
-                    <span className="text-[8px] px-1 bg-rose-500/30 text-rose-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('culture2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'culture2'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🎞️ 문화② 컬렉션</span>
-                    <span className="text-[8px] px-1 bg-rose-500/30 text-rose-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('kpt')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'kpt'
-                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 ring-1 ring-indigo-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🔄 KPT① 마스터</span>
-                    <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('kpt2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'kpt2'
-                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 ring-1 ring-indigo-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>⚡ KPT② 4주차 실행</span>
-                    <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('sundaygeneral')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'sundaygeneral'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🌿 선데이 리셋</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/30 text-emerald-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('buckettravel')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'buckettravel'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>✈️ 버킷 & 트래블</span>
-                    <span className="text-[8px] px-1 bg-rose-500/30 text-rose-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('wellnessmood')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'wellnessmood'
-                        ? 'bg-teal-500/20 border-teal-400 text-teal-300 ring-1 ring-teal-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🥗 웰니스 & 감정</span>
-                    <span className="text-[8px] px-1 bg-teal-500/30 text-teal-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('hundredgoal')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'hundredgoal'
-                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 ring-1 ring-indigo-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🎯 100일① 전반전</span>
-                    <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('hundredgoal2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'hundredgoal2'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/50'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🏆 100일② 완주전</span>
-                    <span className="text-[8px] px-1 bg-rose-500/30 text-rose-300 rounded font-normal">일반</span>
-                  </button>
-                </>
-              )}
-
-              {/* 2. 교회 9종 */}
-              {(categoryFilter === 'all' || categoryFilter === 'church') && (
-                <>
-                  <button
-                    onClick={() => setPreviewTab('prayer')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'prayer'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🙏 기도① 제목말씀</span>
-                    <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('prayer2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'prayer2'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🎉 기도② 은혜응답</span>
-                    <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('scripture')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'scripture'
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📜 암송① 대표필사</span>
-                    <span className="text-[8px] px-1 bg-purple-500/20 text-purple-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('scripture2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'scripture2'
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📜 암송② 4주차암송</span>
-                    <span className="text-[8px] px-1 bg-purple-500/20 text-purple-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('sermon')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'sermon'
-                        ? 'bg-blue-500/20 border-blue-400 text-blue-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🏛️ 설교① 주일설교</span>
-                    <span className="text-[8px] px-1 bg-blue-500/20 text-blue-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('sermondeep')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'sermondeep'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🌟 설교② 심층나눔</span>
-                    <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('biblemap')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'biblemap'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🕊️ 통독① 66권진도맵</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/20 text-emerald-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('biblemap2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'biblemap2'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📖 통독② 31일플래너</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/20 text-emerald-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('letter')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'letter'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💌 편지① 하나님감사</span>
-                    <span className="text-[8px] px-1 bg-rose-500/20 text-rose-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('letter2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'letter2'
-                        ? 'bg-rose-500/20 border-rose-400 text-rose-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💌 편지② 나&이웃축복</span>
-                    <span className="text-[8px] px-1 bg-rose-500/20 text-rose-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('intercessory')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'intercessory'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💖 중보① 가족공동체</span>
-                    <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('intercessory2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'intercessory2'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>💌 중보② 치유열방</span>
-                    <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('soapjournal')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'soapjournal'
-                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📖 SOAP① 필사&관찰</span>
-                    <span className="text-[8px] px-1 bg-indigo-500/20 text-indigo-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('soapjournal2')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'soapjournal2'
-                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🌱 SOAP② 순종&기도</span>
-                    <span className="text-[8px] px-1 bg-indigo-500/20 text-indigo-400 rounded font-normal">교회</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('fruitstracker')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'fruitstracker'
-                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>🌱 성령의 열매</span>
-                    <span className="text-[8px] px-1 bg-emerald-500/20 text-emerald-400 rounded font-normal">교회</span>
-                  </button>
-                </>
-              )}
-
-              {/* 3. 기본 4종 */}
-              {(categoryFilter === 'all' || categoryFilter === 'basic') && (
-                <>
-                  <button
-                    onClick={() => setPreviewTab('calendar')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'calendar'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📅 월간 달력</span>
-                    <span className="text-[8px] px-1 bg-slate-700 text-slate-300 rounded font-normal">기본</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('overview')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'overview'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📊 월간 개요</span>
-                    <span className="text-[8px] px-1 bg-slate-700 text-slate-300 rounded font-normal">기본</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('weekly')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'weekly'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📆 주간 계획</span>
-                    <span className="text-[8px] px-1 bg-slate-700 text-slate-300 rounded font-normal">기본</span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewTab('daily')}
-                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
-                      previewTab === 'daily'
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>📝 데일리 노트</span>
-                    <span className="text-[8px] px-1 bg-slate-700 text-slate-300 rounded font-normal">기본</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Daily Selector */}
-            {previewTab === 'daily' && (
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <label className="text-[10px] text-slate-400 font-semibold mb-1 block">
-                  {selectedMonth}월 일자 선택 (1일 ~ {totalDays}일)
-                </label>
-                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
-                  {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setActiveDayNum(d)}
-                      className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all ${
-                        activeDayNum === d
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white/5 hover:bg-white/15 text-slate-300'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Module 4: Custom Page Selector (Collapsible Accordion & Quick Actions) */}
-          <div className="rounded-2xl bg-slate-900/70 border border-white/10 backdrop-blur-md shadow-2xl overflow-hidden transition-all duration-300">
-            {/* Header Accordion Button */}
-            <button
-              onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
-              className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-all text-left group"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-200 tracking-tight flex items-center gap-2">
-                    내지 구성 선택
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      {activeSelectedCount}개 선택됨
-                    </span>
-                  </h3>
-                  <p className="text-[9.5px] text-slate-400">PDF 다운로드에 수록될 내지 조립 커스텀</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-slate-400 group-hover:text-white">
-                <span className="text-[10px] font-mono font-medium hidden sm:inline">
-                  {isPageCheckerOpen ? '접기' : '펼치기'}
-                </span>
-                {isPageCheckerOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </div>
-            </button>
-
-            {/* Collapsible Content Sheet */}
-            {isPageCheckerOpen && (
-              <div className="p-4 pt-0 border-t border-white/10 space-y-3 animate-fadeIn">
-                {/* 1-Click Quick Action Buttons */}
-                <div className="flex items-center gap-1.5 pt-2">
-                  <button
-                    onClick={() => applyPreset('all')}
-                    className="flex-1 py-1 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-400/40 text-indigo-300 font-bold text-[10px] transition-all"
-                  >
-                    ✨ 전체 선택
-                  </button>
-                  <button
-                    onClick={() => applyPreset('basic')}
-                    className="flex-1 py-1 px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/40 text-blue-300 font-bold text-[10px] transition-all"
-                  >
-                    📌 기본 4종만
-                  </button>
-                  <button
-                    onClick={() => {
-                      const noneMap: Record<string, boolean> = {}
-                      Object.keys(selectedPages).forEach(k => { noneMap[k] = false })
-                      setSelectedPages(noneMap as any)
-                    }}
-                    className="py-1 px-2.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-400/40 text-rose-300 font-bold text-[10px] transition-all"
-                  >
-                    ❌ 전체 해제
-                  </button>
-                </div>
-
-                {/* Grid Page Checklist */}
-                <div className="grid grid-cols-2 gap-1.5 text-xs max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                  {[
-                    { id: 'calendar', label: '📅 월간 달력' },
-                    { id: 'overview', label: '📊 월간 개요' },
-                    { id: 'weekly', label: '📆 주간 계획' },
-                    { id: 'daily', label: '📝 데일리 노트' },
-                    { id: 'habit', label: '🌱 습관① 매트릭스' },
-                    { id: 'habit2', label: '🔥 습관② 주간회고' },
-                    { id: 'gratitude', label: '☀️ 감사 & 확언' },
-                    { id: 'quote', label: '📖 명언 & 필사' },
-                    { id: 'budget', label: '💰 가계부① 예산&자산' },
-                    { id: 'budget2', label: '💳 가계부② 데일리' },
-                    { id: 'culture', label: '🎬 문화① 메인' },
-                    { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
-                    { id: 'kpt', label: '🔄 KPT① 마스터' },
-                    { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
-                    { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
-                    { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
-                    { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
-                    { id: 'hundredgoal', label: '🎯 100일① 전반전' },
-                    { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
-                    { id: 'prayer', label: '🙏 기도① 제목말씀' },
-                    { id: 'prayer2', label: '🎉 기도② 은혜응답' },
-                    { id: 'scripture', label: '📜 암송① 대표필사' },
-                    { id: 'scripture2', label: '📜 암송② 4주차암송' },
-                    { id: 'sermon', label: '🏛️ 설교① 주일설교' },
-                    { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
-                    { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
-                    { id: 'biblemap2', label: '📖 통독② 31일플래너' },
-                    { id: 'letter', label: '💌 편지① 하나님감사' },
-                    { id: 'letter2', label: '💌 편지② 나&이웃축복' },
-                    { id: 'intercessory', label: '💖 중보① 가족공동체' },
-                    { id: 'intercessory2', label: '💌 중보② 치유열방' },
-                    { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
-                    { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
-                    { id: 'fruitstracker', label: '🌱 성령의 열매' },
-                  ].map((pg) => (
-                    <label
-                      key={pg.id}
-                      className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer ${
-                        selectedPages[pg.id]
-                          ? 'bg-indigo-600/20 border-indigo-400/50 text-slate-200 font-bold'
-                          : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!selectedPages[pg.id]}
-                        onChange={(e) => setSelectedPages({ ...selectedPages, [pg.id]: e.target.checked })}
-                        className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-600 focus:ring-0 cursor-pointer"
-                      />
-                      <span className="text-[10px] truncate">{pg.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+            <p className="text-[10.5px] text-slate-400 leading-relaxed">
+              <strong className="text-indigo-300">[미리보기 패널]</strong> 및 <strong className="text-amber-300">[내지 구성 선택]</strong> 창은 마우스로 잡고 화면 어디든 자유롭게 드래그하여 배치하실 수 있습니다. (상단 바 버튼으로 ON/OFF 가능)
+            </p>
           </div>
         </div>
 
@@ -2079,6 +1556,264 @@ export default function DiaryPage() {
           )}
         </div>
       </div>
+      {/* 🖱️ 마우스 드래그 가능한 스마트 플로팅 윈도우 1: 미리보기 양식 선택 */}
+      {showPreviewFloating && (
+        <div
+          style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px` }}
+          className="fixed z-50 w-72 rounded-2xl bg-slate-950/90 border border-indigo-500/30 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow duration-300 hover:border-indigo-400"
+        >
+          {/* Title Bar Handle */}
+          <div
+            onPointerDown={(e) => handlePointerDown(e, 'preview')}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+          >
+            <div className="flex items-center gap-2">
+              <GripHorizontal className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                미리보기 패널
+                <span className="text-[9px] font-mono text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                  드래그 가능
+                </span>
+              </h3>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsPreviewSelectorOpen(!isPreviewSelectorOpen)}
+                className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                title={isPreviewSelectorOpen ? '접기' : '펼치기'}
+              >
+                {isPreviewSelectorOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => setShowPreviewFloating(false)}
+                className="p-1 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                title="닫기"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          {isPreviewSelectorOpen && (
+            <div className="p-3 space-y-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {/* Category Filter */}
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-[10px] font-bold">
+                <button
+                  onClick={() => setCategoryFilter('all')}
+                  className={`flex-1 py-1 rounded-lg transition-all ${
+                    categoryFilter === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  전체 ({CATEGORY_COUNTS.all})
+                </button>
+                <button
+                  onClick={() => setCategoryFilter('general')}
+                  className={`flex-1 py-1 rounded-lg transition-all ${
+                    categoryFilter === 'general' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  갓생 ({CATEGORY_COUNTS.general})
+                </button>
+                <button
+                  onClick={() => setCategoryFilter('church')}
+                  className={`flex-1 py-1 rounded-lg transition-all ${
+                    categoryFilter === 'church' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  영성 ({CATEGORY_COUNTS.church})
+                </button>
+              </div>
+
+              {/* Template Buttons */}
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { id: 'calendar', label: '📅 월간 달력' },
+                  { id: 'overview', label: '📊 월간 개요' },
+                  { id: 'weekly', label: '📆 주간 계획' },
+                  { id: 'daily', label: '📝 데일리 노트' },
+                  { id: 'habit', label: '🌱 습관① 매트릭스' },
+                  { id: 'habit2', label: '🔥 습관② 주간회고' },
+                  { id: 'gratitude', label: '☀️ 감사 & 확언' },
+                  { id: 'quote', label: '📖 명언 & 필사' },
+                  { id: 'budget', label: '💰 가계부① 예산' },
+                  { id: 'budget2', label: '💳 가계부② 데일리' },
+                  { id: 'culture', label: '🎬 문화① 메인' },
+                  { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
+                  { id: 'kpt', label: '🔄 KPT① 마스터' },
+                  { id: 'kpt2', label: '⚡ KPT② 4주차' },
+                  { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
+                  { id: 'buckettravel', label: '✈️ 버킷&트래블' },
+                  { id: 'wellnessmood', label: '🥗 웰니스&감정' },
+                  { id: 'hundredgoal', label: '🎯 100일① 전반전' },
+                  { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
+                  ...(categoryFilter !== 'general' ? [
+                    { id: 'prayer', label: '🙏 기도① 제목' },
+                    { id: 'prayer2', label: '🎉 기도② 은혜' },
+                    { id: 'scripture', label: '📜 암송① 대표' },
+                    { id: 'scripture2', label: '📜 암송② 4주차' },
+                    { id: 'sermon', label: '🏛️ 설교① 주일' },
+                    { id: 'sermondeep', label: '🌟 설교② 심층' },
+                    { id: 'biblemap', label: '🕊️ 통독① 66권' },
+                    { id: 'biblemap2', label: '📖 통독② 31일' },
+                    { id: 'letter', label: '💌 편지① 감사' },
+                    { id: 'letter2', label: '💌 편지② 축복' },
+                    { id: 'intercessory', label: '💖 중보① 가족' },
+                    { id: 'intercessory2', label: '💌 중보② 열방' },
+                    { id: 'soapjournal', label: '📖 SOAP① 관찰' },
+                    { id: 'soapjournal2', label: '🌱 SOAP② 순종' },
+                    { id: 'fruitstracker', label: '🌱 성령의 열매' },
+                  ] : [])
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setPreviewTab(item.id as PreviewTabType)}
+                    className={`p-1.5 rounded-lg border text-[10.5px] font-bold transition-all text-left truncate ${
+                      previewTab === item.id
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-sm'
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🖱️ 마우스 드래그 가능한 스마트 플로팅 윈도우 2: 내지 구성 선택 */}
+      {showPageCheckerFloating && (
+        <div
+          style={{ left: `${pageCheckerPos.x}px`, top: `${pageCheckerPos.y}px` }}
+          className="fixed z-50 w-80 rounded-2xl bg-slate-950/90 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow duration-300 hover:border-amber-400"
+        >
+          {/* Title Bar Handle */}
+          <div
+            onPointerDown={(e) => handlePointerDown(e, 'checker')}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+          >
+            <div className="flex items-center gap-2">
+              <GripHorizontal className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                내지 구성 선택
+                <span className="text-[9px] font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                  {activeSelectedCount}개 선택됨
+                </span>
+              </h3>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
+                className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                title={isPageCheckerOpen ? '접기' : '펼치기'}
+              >
+                {isPageCheckerOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => setShowPageCheckerFloating(false)}
+                className="p-1 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                title="닫기"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          {isPageCheckerOpen && (
+            <div className="p-3 space-y-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {/* Quick Actions */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => applyPreset('all')}
+                  className="flex-1 py-1 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-400/40 text-indigo-300 font-bold text-[10px] transition-all"
+                >
+                  ✨ 전체 선택
+                </button>
+                <button
+                  onClick={() => applyPreset('basic')}
+                  className="flex-1 py-1 px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/40 text-blue-300 font-bold text-[10px] transition-all"
+                >
+                  📌 기본 4종만
+                </button>
+                <button
+                  onClick={() => {
+                    const noneMap: Record<string, boolean> = {}
+                    Object.keys(selectedPages).forEach(k => { noneMap[k] = false })
+                    setSelectedPages(noneMap as any)
+                  }}
+                  className="py-1 px-2.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-400/40 text-rose-300 font-bold text-[10px] transition-all"
+                >
+                  ❌ 전체 해제
+                </button>
+              </div>
+
+              {/* Grid Page Checklist */}
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                {[
+                  { id: 'calendar', label: '📅 월간 달력' },
+                  { id: 'overview', label: '📊 월간 개요' },
+                  { id: 'weekly', label: '📆 주간 계획' },
+                  { id: 'daily', label: '📝 데일리 노트' },
+                  { id: 'habit', label: '🌱 습관① 매트릭스' },
+                  { id: 'habit2', label: '🔥 습관② 주간회고' },
+                  { id: 'gratitude', label: '☀️ 감사 & 확언' },
+                  { id: 'quote', label: '📖 명언 & 필사' },
+                  { id: 'budget', label: '💰 가계부① 예산&자산' },
+                  { id: 'budget2', label: '💳 가계부② 데일리' },
+                  { id: 'culture', label: '🎬 문화① 메인' },
+                  { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
+                  { id: 'kpt', label: '🔄 KPT① 마스터' },
+                  { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
+                  { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
+                  { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
+                  { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
+                  { id: 'hundredgoal', label: '🎯 100일① 전반전' },
+                  { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
+                  { id: 'prayer', label: '🙏 기도① 제목말씀' },
+                  { id: 'prayer2', label: '🎉 기도② 은혜응답' },
+                  { id: 'scripture', label: '📜 암송① 대표필사' },
+                  { id: 'scripture2', label: '📜 암송② 4주차암송' },
+                  { id: 'sermon', label: '🏛️ 설교① 주일설교' },
+                  { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
+                  { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
+                  { id: 'biblemap2', label: '📖 통독② 31일플래너' },
+                  { id: 'letter', label: '💌 편지① 하나님감사' },
+                  { id: 'letter2', label: '💌 편지② 나&이웃축복' },
+                  { id: 'intercessory', label: '💖 중보① 가족공동체' },
+                  { id: 'intercessory2', label: '💌 중보② 치유열방' },
+                  { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
+                  { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
+                  { id: 'fruitstracker', label: '🌱 성령의 열매' },
+                ].map((pg) => (
+                  <label
+                    key={pg.id}
+                    className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                      selectedPages[pg.id]
+                        ? 'bg-indigo-600/20 border-indigo-400/50 text-slate-200 font-bold'
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!selectedPages[pg.id]}
+                      onChange={(e) => setSelectedPages({ ...selectedPages, [pg.id]: e.target.checked })}
+                      className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-600 focus:ring-0 cursor-pointer"
+                    />
+                    <span className="text-[10px] truncate">{pg.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
