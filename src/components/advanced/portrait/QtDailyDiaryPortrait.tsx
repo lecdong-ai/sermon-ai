@@ -30,6 +30,7 @@ export default function QtDailyDiaryPortrait({
 }: QtDailyDiaryPortraitProps) {
   const paddedDay = String(dayNum).padStart(2, '0')
   const isSunday = dayName === 'SUN'
+  const isSaturday = dayName === 'SAT'
 
   return (
     <div
@@ -57,7 +58,7 @@ export default function QtDailyDiaryPortrait({
           </span>
         </div>
         <span className="px-3 py-1 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xs font-mono">
-          📅 DAILY PLANNER ({paddedDay} {dayName})
+          📅 DAILY JOURNAL ({paddedDay} {dayName})
         </span>
       </div>
 
@@ -66,9 +67,9 @@ export default function QtDailyDiaryPortrait({
         <div className="flex items-center space-x-4">
           <div
             className={`w-14 h-14 rounded-full flex flex-col items-center justify-center text-white shadow-xs font-serif ${
-              isSunday ? 'bg-emerald-600 ring-2 ring-emerald-300 shadow-md' : ''
+              isSunday ? 'bg-emerald-600 ring-2 ring-emerald-300 shadow-md' : isSaturday ? 'bg-blue-600' : ''
             }`}
-            style={{ backgroundColor: isSunday ? undefined : themeColor }}
+            style={{ backgroundColor: isSunday || isSaturday ? undefined : themeColor }}
           >
             <span className="text-xl font-bold leading-tight">{paddedDay}</span>
             <span className="text-[10px] uppercase tracking-tighter font-extrabold">{dayName}</span>
@@ -91,12 +92,18 @@ export default function QtDailyDiaryPortrait({
           </div>
         </div>
 
-        <div className="text-right border border-slate-200 rounded-xl px-4 py-2 bg-slate-50/60 shadow-xs">
-          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase block">DAILY REFLECTION</span>
+        <div className={`text-right border rounded-xl px-4 py-2 shadow-xs ${
+          isChurchMode
+            ? 'bg-gradient-to-r from-amber-50/80 via-orange-50/40 to-amber-50/80 border-amber-200'
+            : 'bg-gradient-to-r from-emerald-50/80 via-teal-50/40 to-emerald-50/80 border-emerald-200'
+        }`}>
+          <span className={`text-[9px] font-mono font-bold uppercase block ${isChurchMode ? 'text-amber-800' : 'text-emerald-800'}`}>
+            {isChurchMode ? 'DAILY GRACE & REFLECTION' : 'DAILY MINDSET & VISION'}
+          </span>
           <span className="text-xs font-serif font-semibold text-slate-800">
             {isChurchMode
-              ? '"오늘도 내 걸음을 인도하시는 주님의 은혜 안에 거합니다"'
-              : '"오늘 하루의 정성 어린 노력이 내일의 성장을 만든다"'
+              ? '"오늘도 나를 향한 주님의 은혜와 사랑을 기억하며 하루를 감사함으로 봉헌합니다"'
+              : '"오늘 하루를 가치 있게 채운 찰나의 순간들이 나를 지지하는 든든한 자산이 됩니다"'
             }
           </span>
         </div>
@@ -107,7 +114,7 @@ export default function QtDailyDiaryPortrait({
         {/* Priorities */}
         <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 space-y-1.5">
           <div className="font-bold text-slate-800 font-serif flex items-center justify-between border-b border-slate-200 pb-1">
-            <span>🎯 오늘의 3대 핵심 우선순위</span>
+            <span>🎯 오늘의 3대 골든 타임 과제</span>
             <span className="font-mono text-[10px] text-slate-400">Priorities</span>
           </div>
           <div className="space-y-1 text-xs text-slate-600 font-serif">
@@ -124,40 +131,49 @@ export default function QtDailyDiaryPortrait({
           <div className={`font-bold font-serif border-b pb-1 flex items-center justify-between ${
             isChurchMode ? 'text-amber-950 border-amber-200' : 'text-emerald-950 border-emerald-200'
           }`}>
-            <span>{isChurchMode ? '🙏 오늘의 기도제목 & 감사' : '💡 오늘의 다짐 & 마인드셋'}</span>
+            <span>{isChurchMode ? '🙏 오늘의 기도제목 & 은혜 묵상' : '💡 오늘의 다짐 & 마인드셋'}</span>
             <span className="font-mono text-[10px] text-slate-400">{isChurchMode ? 'Prayer' : 'Mindset'}</span>
           </div>
           <div className="space-y-1 text-xs font-serif text-slate-600">
             <div>① {isChurchMode ? '하나님을 향한 감사:' : '긍정 확언 (Daily Affirmation):'} ___________________</div>
-            <div>② {isChurchMode ? '간절한 중보 기도제목:' : '핵심 미션 & 태도:'} ___________________</div>
+            <div>② {isChurchMode ? '간절한 중보 기도제목:' : '나를 성장시킬 핵심 태도:'} ___________________</div>
           </div>
         </div>
       </div>
 
       {/* 4. Main Stack: To-Do List & Full Journal Note */}
       <div className="grid grid-cols-12 gap-3 flex-1 mb-3">
-        {/* Left: To-Do List & Health (5 cols) */}
+        {/* Left: Time-based To-Do List & Wellness Routine (5 cols) */}
         <div className="col-span-5 flex flex-col justify-between space-y-3 border-r border-slate-200 pr-3">
           <div className="border border-slate-200 rounded-xl p-3 bg-white flex-1 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="font-bold text-slate-800 font-serif flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
-              <span>☑️ TO-DO LIST (할 일 목록)</span>
+              <span>☑️ 시간대별 할 일 (To-Do)</span>
               <span className="font-mono text-[10px] text-slate-400">Tasks</span>
             </div>
             <div className="space-y-1.5 flex-1 flex flex-col justify-around text-xs font-serif">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="w-3.5 h-3.5 border border-slate-400 rounded-xs bg-slate-50" />
-                  <div className="flex-1 border-b border-slate-200 ml-2 h-3 text-slate-400">_______________</div>
-                </div>
-              ))}
+              <div className="text-[10px] font-bold text-slate-500 font-mono">🌅 MORNING (아침):</div>
+              <div className="flex items-center justify-between">
+                <div className="w-3.5 h-3.5 border border-slate-400 rounded-xs bg-slate-50" />
+                <div className="flex-1 border-b border-slate-200 ml-2 h-3 text-slate-400">_______________</div>
+              </div>
+              <div className="text-[10px] font-bold text-slate-500 font-mono mt-1">☀️ AFTERNOON (낮):</div>
+              <div className="flex items-center justify-between">
+                <div className="w-3.5 h-3.5 border border-slate-400 rounded-xs bg-slate-50" />
+                <div className="flex-1 border-b border-slate-200 ml-2 h-3 text-slate-400">_______________</div>
+              </div>
+              <div className="text-[10px] font-bold text-slate-500 font-mono mt-1">🌙 EVENING (저녁):</div>
+              <div className="flex items-center justify-between">
+                <div className="w-3.5 h-3.5 border border-slate-400 rounded-xs bg-slate-50" />
+                <div className="flex-1 border-b border-slate-200 ml-2 h-3 text-slate-400">_______________</div>
+              </div>
             </div>
           </div>
 
           <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/40 text-xs font-serif space-y-1">
-            <span className="font-bold text-slate-700 block">🥗 웰니스 & 헬스 로그:</span>
+            <span className="font-bold text-slate-700 block">🌿 웰니스 & 라이프 루틴:</span>
             <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600">
-              <div className="bg-white p-1 rounded border border-slate-200">감정: Good / Bad</div>
-              <div className="bg-white p-1 rounded border border-slate-200">운동: ___분 달성</div>
+              <div className="bg-white p-1 rounded border border-slate-200">감정: 😊 맑음 / 😐 보통 / 🌧️ 지침</div>
+              <div className="bg-white p-1 rounded border border-slate-200">운동 & 수분: ___분 / 물 2L 💧</div>
             </div>
           </div>
         </div>
@@ -165,19 +181,25 @@ export default function QtDailyDiaryPortrait({
         {/* Right: Full Journal Note (7 cols) */}
         <div className="col-span-7 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
-            <h3 className="font-bold text-slate-800 font-serif">📝 데일리 일기 & 자유 메모 (Journal & Notes)</h3>
+            <h3 className="font-bold text-slate-800 font-serif">📝 데일리 일기 & 자유 노트 (Journal & Notes)</h3>
             <span className="font-mono text-[10px] text-slate-400">Grid Note</span>
           </div>
 
-          <div className="flex-1 border border-slate-200 rounded-xl p-1 bg-white">
-            <PerfectGridNote step={15} />
+          <div className="flex-1 border border-slate-200 rounded-xl p-1 bg-white flex flex-col justify-between">
+            <div className="flex-1">
+              <PerfectGridNote step={15} />
+            </div>
+            <div className="border-t border-dashed border-slate-200 pt-1.5 mt-1.5 text-xs font-serif text-slate-600">
+              <span className="font-bold text-slate-800 block">💖 오늘 가장 소중했던 순간 1가지:</span>
+              <div className="text-slate-400 min-h-[14px]">__________________________________________________</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* 5. Footer */}
       <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
-        <span>PREMIUM DIARY STUDIO — DAILY PLANNER MASTER</span>
+        <span>PREMIUM DIARY STUDIO — DAILY JOURNAL MASTER</span>
         <span>{yearLabel} {monthName} Edition</span>
       </div>
     </div>
