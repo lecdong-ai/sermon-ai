@@ -33,6 +33,8 @@ import QtBibleReadingMapPage2 from '@/components/advanced/QtBibleReadingMapPage2
 import QtBibleReadingMapPortrait2 from '@/components/advanced/portrait/QtBibleReadingMapPortrait2'
 import QtMonthlyLetterPage from '@/components/advanced/QtMonthlyLetterPage'
 import QtMonthlyLetterPortrait from '@/components/advanced/portrait/QtMonthlyLetterPortrait'
+import QtMonthlyLetterPage2 from '@/components/advanced/QtMonthlyLetterPage2'
+import QtMonthlyLetterPortrait2 from '@/components/advanced/portrait/QtMonthlyLetterPortrait2'
 
 // 신규 일반인용 6종 컴포넌트 임포트 (가로/세로)
 import QtHabitTrackerPage from '@/components/advanced/QtHabitTrackerPage'
@@ -99,7 +101,7 @@ export type PreviewTabType =
   | 'calendar' | 'overview' | 'weekly' | 'daily'
   | 'habit' | 'habit2' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
   | 'buckettravel' | 'wellnessmood' | 'hundredgoal' | 'hundredgoal2'
-  | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'biblemap2' | 'letter'
+  | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'biblemap2' | 'letter' | 'letter2'
   | 'intercessory' | 'intercessory2' | 'soapjournal' | 'fruitstracker'
 
 export default function DiaryPage() {
@@ -143,6 +145,7 @@ export default function DiaryPage() {
     biblemap: true,
     biblemap2: true,
     letter: true,
+    letter2: true,
     intercessory: true,
     intercessory2: true,
     soapjournal: true,
@@ -190,6 +193,7 @@ export default function DiaryPage() {
   const BibleMapComponent = isLandscape ? QtBibleReadingMapPage : QtBibleReadingMapPortrait
   const BibleMap2Component = isLandscape ? QtBibleReadingMapPage2 : QtBibleReadingMapPortrait2
   const MonthlyLetterComponent = isLandscape ? QtMonthlyLetterPage : QtMonthlyLetterPortrait
+  const MonthlyLetter2Component = isLandscape ? QtMonthlyLetterPage2 : QtMonthlyLetterPortrait2
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
   const DailyComponent = isLandscape ? QtDailyDiaryPage : QtDailyDiaryPortrait
 
@@ -365,6 +369,7 @@ export default function DiaryPage() {
         biblemap: false,
         biblemap2: false,
         letter: false,
+        letter2: false,
         intercessory: false,
         intercessory2: false,
         soapjournal: false,
@@ -402,6 +407,7 @@ export default function DiaryPage() {
         biblemap: true,
         biblemap2: true,
         letter: true,
+        letter2: true,
         intercessory: true,
         intercessory2: true,
         soapjournal: true,
@@ -439,6 +445,7 @@ export default function DiaryPage() {
         biblemap: false,
         biblemap2: false,
         letter: false,
+        letter2: false,
         intercessory: false,
         intercessory2: false,
         soapjournal: false,
@@ -476,6 +483,7 @@ export default function DiaryPage() {
         biblemap: true,
         biblemap2: true,
         letter: true,
+        letter2: true,
         intercessory: true,
         intercessory2: true,
         soapjournal: true,
@@ -577,9 +585,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>⛪ 크리스천 묵상 팩</span>
-                  <span className="text-[9px] opacity-70">17종</span>
+                  <span className="text-[9px] opacity-70">18종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천13종</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천14종</span>
               </button>
 
               <button
@@ -599,7 +607,7 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">32종</span>
+                  <span className="text-[9px] opacity-70">33종</span>
                 </div>
                 <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
@@ -717,7 +725,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">32 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">33 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -728,7 +736,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (32)
+                전체 (33)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
@@ -1028,7 +1036,18 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>💌 월말 편지</span>
+                    <span>💌 편지① 하나님감사</span>
+                    <span className="text-[8px] px-1 bg-rose-500/20 text-rose-400 rounded font-normal">교회</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('letter2')}
+                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
+                      previewTab === 'letter2'
+                        ? 'bg-rose-500/20 border-rose-400 text-rose-300'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>💌 편지② 나&이웃축복</span>
                     <span className="text-[8px] px-1 bg-rose-500/20 text-rose-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -1193,7 +1212,8 @@ export default function DiaryPage() {
                 { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
                 { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
                 { id: 'biblemap2', label: '📖 통독② 31일플래너' },
-                { id: 'letter', label: '💌 월말 편지' },
+                { id: 'letter', label: '💌 편지① 하나님감사' },
+                { id: 'letter2', label: '💌 편지② 나&이웃축복' },
                 { id: 'intercessory', label: '💖 중보① 가족공동체' },
                 { id: 'intercessory2', label: '💌 중보② 치유열방' },
                 { id: 'soapjournal', label: '📖 SOAP 묵상' },
@@ -1389,6 +1409,9 @@ export default function DiaryPage() {
                     {previewTab === 'letter' && (
                       <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
+                    {previewTab === 'letter2' && (
+                      <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    )}
                     {previewTab === 'weekly' && (() => {
                       const w1Data = getWeekData(1)
                       return (
@@ -1554,6 +1577,7 @@ export default function DiaryPage() {
                 {modalActiveTab === 'biblemap' && <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'biblemap2' && <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'letter' && <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
+                {modalActiveTab === 'letter2' && <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'weekly' && (() => {
                   const w1Data = getWeekData(1)
                   return (
@@ -1753,6 +1777,11 @@ export default function DiaryPage() {
                     <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
+                {selectedPages.letter2 && (
+                  <div id="modal-page-letter2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
                 {selectedPages.weekly && (
                   Array.from({ length: 5 }, (_, i) => i + 1).map((wNum) => {
                     const wData = getWeekData(wNum)
@@ -1897,6 +1926,9 @@ export default function DiaryPage() {
           )}
           {selectedPages.letter && (
             <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.letter2 && (
+            <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.weekly && selectedPages.daily && (
             Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
