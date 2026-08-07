@@ -41,9 +41,9 @@ export default function QtIntercessoryPrayerPage2({
         </div>
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span>HEALING & WORLD INTERCESSION (VOL. 2)</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-bold text-[10px] shadow-xs">
-            💌 치유·열방 중보 & 응답 소식 (VOL. 2)
+          <span>HEALING, MISSIONS & ANSWER MEMORIAL (VOL. 2)</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs">
+            💌 중보② 치유·열방 & 응답 기념비 (VOL. 2)
           </span>
         </div>
       </div>
@@ -52,79 +52,85 @@ export default function QtIntercessoryPrayerPage2({
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
-            💌 {monthName} Healing & World Intercession & Answer News
+            💌 {monthName} Healing, World Missions & Answered Prayer Memorial
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
-            환우들의 치유와 열방 선교사를 위한 간절한 중보 기도 및 공동체의 기도 응답 소식을 나눕니다.
+            환우의 회복과 열방 선교를 위해 중보하고, 하나님께서 우리 공동체에 이뤄주신 기도 응답을 기념합니다.
           </p>
         </div>
 
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-rose-950 bg-rose-50 border border-rose-200 shadow-xs whitespace-nowrap">
-          중보 응답 소식 모음
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-emerald-950 bg-emerald-50 border border-emerald-200 shadow-2xs whitespace-nowrap">
+          치유·선교 & 응답 기념비
         </div>
       </div>
 
-      {/* 3. 4 Intercessory & Answer News Cards (2x2 Grid) */}
-      <div className="grid grid-cols-2 gap-3 flex-1 mb-2">
-        {[
-          { title: '🏥 01. 환우 긴급 치유 & 회복 중보', category: '치유 중보', color: 'border-amber-300 bg-amber-50/20' },
-          { title: '🌏 02. 열방 선교사 & 이웃 중보', category: '선교 중보', color: 'border-emerald-300 bg-emerald-50/20' },
-          { title: '🎉 03. 공동체 중보기도 응답 소식 #1', category: '응답 소식 #1', color: 'border-rose-300 bg-rose-50/20' },
-          { title: '💌 04. 공동체 중보기도 응답 소식 #2', category: '응답 소식 #2', color: 'border-indigo-300 bg-indigo-50/20' },
-        ].map((card, idx) => (
-          <div
-            key={idx}
-            className={`border rounded-2xl p-2.5 ${card.color} flex flex-col justify-between shadow-2xs space-y-1`}
-          >
-            {/* Card Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-slate-800 font-serif flex items-center gap-1">
-                {card.title}
-              </span>
-              <span className="font-mono text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-rose-800">
-                {card.category}
-              </span>
+      {/* 3. Main Grid (Left 6 Cols Healing & Missions / Right 6 Cols Answered Prayer Memorial) */}
+      <div className="grid grid-cols-12 gap-3 flex-1 mb-2">
+        {/* Left: Healing & World Missions (6 cols) */}
+        <div className="col-span-6 flex flex-col justify-between space-y-2">
+          {/* Healing */}
+          <div className="border border-amber-200 rounded-2xl p-2.5 bg-amber-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
+            <div className="flex items-center justify-between border-b border-amber-200 pb-1 text-[9.5px]">
+              <span className="font-bold text-amber-950 font-serif">🏥 01. 환우 / 치유 & 영육 회복 중보</span>
+              <span className="font-mono text-[8px] text-amber-700">Healing & Deliverance</span>
             </div>
-
-            {/* Target & Date Info */}
-            <div className="grid grid-cols-12 gap-1 text-[8.5px]">
-              <div className="col-span-7 bg-white p-1 rounded-xl border border-slate-200/80 flex items-center justify-between">
-                <span className="text-[7.5px] font-bold text-slate-400">기도 대상자/선교지:</span>
-                <span className="text-slate-700 font-bold font-serif text-[8.5px]">____________</span>
+            <div className="space-y-1 flex-1 flex flex-col justify-around text-[8.5px]">
+              <div className="bg-white p-1.5 rounded-xl border border-amber-200/80">
+                <span className="font-bold text-amber-800 text-[8px] block">📌 치유 대상자 & 기도제목:</span>
+                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
               </div>
-              <div className="col-span-5 bg-white p-1 rounded-xl border border-slate-200/80 flex items-center justify-between">
-                <span className="text-[7.5px] font-bold text-rose-800">응답 날짜:</span>
-                <span className="text-rose-700 font-bold text-[8px]">2026.__.__</span>
-              </div>
-            </div>
-
-            {/* Topic & Story lines */}
-            <div className="space-y-1 flex-1 bg-white p-2 rounded-xl border border-slate-200/80 text-[8.5px]">
-              <div>
-                <span className="font-bold text-slate-700 text-[8px] block">📌 중보 기도 제목 (Intercession Topic):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">_____________________________________________</div>
-              </div>
-              <div>
-                <span className="font-bold text-rose-800 text-[8px] block">💌 하나님이 주신 응답 소식 & 축복 (Answer News):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">_____________________________________________</div>
+              <div className="bg-white p-1.5 rounded-xl border border-amber-200/80">
+                <span className="font-bold text-amber-800 text-[8px] block">📖 신유의 약속 말씀:</span>
+                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* 4. Bottom Blessing Banner */}
-      <div className="border border-rose-200/90 rounded-2xl p-2 bg-rose-50/70 shadow-2xs space-y-1">
-        <div className="flex items-center justify-between text-[9.5px] font-bold text-rose-950">
-          <span>💌 환우들과 열방에 하나님의 치유와 회복의 은혜가 충만하기를 기도합니다</span>
-          <span className="text-rose-700 font-mono">Community Blessing</span>
+          {/* Missions & Evangelism */}
+          <div className="border border-emerald-200 rounded-2xl p-2.5 bg-emerald-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
+            <div className="flex items-center justify-between border-b border-emerald-200 pb-1 text-[9.5px]">
+              <span className="font-bold text-emerald-950 font-serif">🌏 02. 열방 / 선교사 & 태신자(영혼구원)</span>
+              <span className="font-mono text-[8px] text-emerald-700">Missions & Evangelism</span>
+            </div>
+            <div className="space-y-1 flex-1 flex flex-col justify-around text-[8.5px]">
+              <div className="bg-white p-1.5 rounded-xl border border-emerald-200/80">
+                <span className="font-bold text-emerald-800 text-[8px] block">📌 선교지 기도 & 전도 대상자 이름:</span>
+                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="border-b border-dashed border-rose-200 h-3 text-[8.5px] text-rose-900/80 font-serif">"여호와 라파, 나는 너희를 치료하는 여호와임이라 (출애굽기 15:26)"</div>
+
+        {/* Right: Answered Prayer Memorial (6 cols) */}
+        <div className="col-span-6 border border-indigo-200 rounded-2xl p-2.5 bg-indigo-50/20 flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[9.5px] font-bold text-indigo-950 font-serif">
+            <span>🎉 03. 이번 달 공동체 기도 응답 기념비 (Answered Prayer Memorial)</span>
+            <span className="font-mono text-[8px] text-indigo-400">Answered Stories</span>
+          </div>
+
+          <div className="space-y-1.5 flex-1 flex flex-col justify-around text-[8.5px] my-1">
+            {[1, 2, 3].map((aNo) => (
+              <div key={aNo} className="bg-white p-2 rounded-xl border border-indigo-200/80 flex flex-col justify-between space-y-1">
+                <div className="flex justify-between items-center text-[8px] border-b border-indigo-100 pb-0.5">
+                  <span className="font-bold text-indigo-900">응답 사건 {aNo}:</span>
+                  <span className="font-mono text-slate-300">Answered!</span>
+                </div>
+                <div className="text-slate-400 font-serif text-[8px] min-h-[16px]">
+                  _______________________________________________________
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-indigo-200 pt-1 text-[8px] text-indigo-900 font-serif italic text-right">
+            "여호와께서 우리를 위하여 큰 일을 행하셨으니 우리는 기쁘도다 (시편 126:3)"
+          </div>
+        </div>
       </div>
 
-      {/* 5. Footer */}
+      {/* 4. Footer */}
       <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 mt-1.5">
-        <span>PREMIUM DIARY STUDIO — HEALING & WORLD INTERCESSORY (VOL. 2)</span>
+        <span>PREMIUM DIARY STUDIO — HEALING, MISSIONS & ANSWER MEMORIAL (VOL. 2)</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>
