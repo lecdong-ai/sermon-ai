@@ -103,6 +103,13 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+const CATEGORY_COUNTS = {
+  all: 34,
+  general: 15,
+  church: 15,
+  basic: 4,
+}
+
 export type PreviewTabType =
   | 'calendar' | 'overview' | 'weekly' | 'daily'
   | 'habit' | 'habit2' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
