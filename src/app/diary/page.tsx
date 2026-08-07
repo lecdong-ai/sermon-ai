@@ -1696,20 +1696,20 @@ export default function DiaryPage() {
       {showPageCheckerFloating && (
         <div
           style={{ left: `${pageCheckerPos.x}px`, top: `${pageCheckerPos.y}px` }}
-          className="fixed z-50 w-80 rounded-2xl bg-slate-950/90 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow duration-300 hover:border-amber-400"
+          className="fixed z-50 w-84 rounded-2xl bg-slate-950/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(8,145,178,0.2)] overflow-hidden transition-all duration-300 hover:border-cyan-400/60"
         >
           {/* Title Bar Handle */}
           <div
             onPointerDown={(e) => handlePointerDown(e, 'checker')}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+            className="p-3.5 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
           >
             <div className="flex items-center gap-2">
-              <GripHorizontal className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <GripHorizontal className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <h3 className="text-xs font-bold text-slate-100 flex items-center gap-2 tracking-tight">
                 내지 구성 선택
-                <span className="text-[9px] font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                <span className="text-[9.5px] font-mono font-semibold text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full border border-cyan-500/30 shadow-xs">
                   {activeSelectedCount}개 선택됨
                 </span>
               </h3>
@@ -1734,20 +1734,20 @@ export default function DiaryPage() {
 
           {/* Body */}
           {isPageCheckerOpen && (
-            <div className="p-3 space-y-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="p-3.5 space-y-3 max-h-[62vh] overflow-y-auto custom-scrollbar">
               {/* Quick Actions */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-xl border border-white/5">
                 <button
                   onClick={() => applyPreset('all')}
-                  className="flex-1 py-1 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-400/40 text-indigo-300 font-bold text-[10px] transition-all"
+                  className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 font-bold text-[10px] transition-all text-center"
                 >
                   ✨ 전체 선택
                 </button>
                 <button
                   onClick={() => applyPreset('basic')}
-                  className="flex-1 py-1 px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/40 text-blue-300 font-bold text-[10px] transition-all"
+                  className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-[10px] transition-all text-center"
                 >
-                  📌 기본 4종만
+                  📌 기본 4종
                 </button>
                 <button
                   onClick={() => {
@@ -1755,9 +1755,9 @@ export default function DiaryPage() {
                     Object.keys(selectedPages).forEach(k => { noneMap[k] = false })
                     setSelectedPages(noneMap as any)
                   }}
-                  className="py-1 px-2.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-400/40 text-rose-300 font-bold text-[10px] transition-all"
+                  className="py-1.5 px-2.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-[10px] transition-all text-center"
                 >
-                  ❌ 전체 해제
+                  ✕ 해제
                 </button>
               </div>
 
@@ -1772,12 +1772,12 @@ export default function DiaryPage() {
                   { id: 'habit2', label: '🔥 습관② 주간회고' },
                   { id: 'gratitude', label: '☀️ 감사 & 확언' },
                   { id: 'quote', label: '📖 명언 & 필사' },
-                  { id: 'budget', label: '💰 가계부① 예산&자산' },
+                  { id: 'budget', label: '💰 가계부① 예산' },
                   { id: 'budget2', label: '💳 가계부② 데일리' },
                   { id: 'culture', label: '🎬 문화① 메인' },
                   { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
                   { id: 'kpt', label: '🔄 KPT① 마스터' },
-                  { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
+                  { id: 'kpt2', label: '⚡ KPT② 4주차' },
                   { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
                   { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
                   { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
@@ -1786,36 +1786,44 @@ export default function DiaryPage() {
                   { id: 'prayer', label: '🙏 기도① 제목말씀' },
                   { id: 'prayer2', label: '🎉 기도② 은혜응답' },
                   { id: 'scripture', label: '📜 암송① 대표필사' },
-                  { id: 'scripture2', label: '📜 암송② 4주차암송' },
+                  { id: 'scripture2', label: '📜 암송② 4주차' },
                   { id: 'sermon', label: '🏛️ 설교① 주일설교' },
                   { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
-                  { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
-                  { id: 'biblemap2', label: '📖 통독② 31일플래너' },
+                  { id: 'biblemap', label: '🕊️ 통독① 66권진도' },
+                  { id: 'biblemap2', label: '📖 통독② 31일' },
                   { id: 'letter', label: '💌 편지① 하나님감사' },
-                  { id: 'letter2', label: '💌 편지② 나&이웃축복' },
-                  { id: 'intercessory', label: '💖 중보① 가족공동체' },
-                  { id: 'intercessory2', label: '💌 중보② 치유열방' },
-                  { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
-                  { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
+                  { id: 'letter2', label: '💌 편지② 축복' },
+                  { id: 'intercessory', label: '💖 중보① 가족' },
+                  { id: 'intercessory2', label: '💌 중보② 열방' },
+                  { id: 'soapjournal', label: '📖 SOAP① 필사' },
+                  { id: 'soapjournal2', label: '🌱 SOAP② 순종' },
                   { id: 'fruitstracker', label: '🌱 성령의 열매' },
-                ].map((pg) => (
-                  <label
-                    key={pg.id}
-                    className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer ${
-                      selectedPages[pg.id]
-                        ? 'bg-indigo-600/20 border-indigo-400/50 text-slate-200 font-bold'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!selectedPages[pg.id]}
-                      onChange={(e) => setSelectedPages({ ...selectedPages, [pg.id]: e.target.checked })}
-                      className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-600 focus:ring-0 cursor-pointer"
-                    />
-                    <span className="text-[10px] truncate">{pg.label}</span>
-                  </label>
-                ))}
+                ].map((pg) => {
+                  const isChecked = !!selectedPages[pg.id]
+                  return (
+                    <button
+                      key={pg.id}
+                      type="button"
+                      onClick={() => setSelectedPages({ ...selectedPages, [pg.id]: !isChecked })}
+                      className={`flex items-center justify-between p-2 rounded-xl border text-left transition-all group select-none ${
+                        isChecked
+                          ? 'bg-gradient-to-r from-cyan-950/50 to-indigo-950/50 border-cyan-500/40 text-cyan-200 shadow-sm shadow-cyan-950/50 font-semibold'
+                          : 'bg-slate-900/40 border-white/5 text-slate-400 hover:bg-white/5 hover:text-slate-300'
+                      }`}
+                    >
+                      <span className="text-[10.5px] truncate pr-1">{pg.label}</span>
+                      <div
+                        className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-all ${
+                          isChecked
+                            ? 'bg-cyan-500 border-cyan-400 text-slate-950 shadow-xs'
+                            : 'border-white/15 bg-white/5 group-hover:border-white/30'
+                        }`}
+                      >
+                        {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
