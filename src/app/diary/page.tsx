@@ -45,6 +45,8 @@ import QtCultureLogPage2 from '@/components/advanced/QtCultureLogPage2'
 import QtCultureLogPortrait2 from '@/components/advanced/portrait/QtCultureLogPortrait2'
 import QtKptReviewPage from '@/components/advanced/QtKptReviewPage'
 import QtKptReviewPortrait from '@/components/advanced/portrait/QtKptReviewPortrait'
+import QtKptReviewPage2 from '@/components/advanced/QtKptReviewPage2'
+import QtKptReviewPortrait2 from '@/components/advanced/portrait/QtKptReviewPortrait2'
 
 // 신규 일반인용 선데이 리셋 컴포넌트 임포트 (가로/세로)
 import QtSundayGeneralPage from '@/components/advanced/QtSundayGeneralPage'
@@ -83,7 +85,7 @@ const MONTH_NAMES = [
 
 export type PreviewTabType =
   | 'calendar' | 'overview' | 'weekly' | 'daily'
-  | 'habit' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'sundaygeneral'
+  | 'habit' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
   | 'buckettravel' | 'wellnessmood' | 'hundredgoal'
   | 'prayer' | 'scripture' | 'sermon' | 'sermondeep' | 'biblemap' | 'letter'
   | 'intercessory' | 'soapjournal' | 'fruitstracker'
@@ -113,6 +115,7 @@ export default function DiaryPage() {
     culture: true,
     culture2: true,
     kpt: true,
+    kpt2: true,
     sundaygeneral: true,
     buckettravel: true,
     wellnessmood: true,
@@ -178,6 +181,7 @@ export default function DiaryPage() {
   const CultureComponent = isLandscape ? QtCultureLogPage : QtCultureLogPortrait
   const Culture2Component = isLandscape ? QtCultureLogPage2 : QtCultureLogPortrait2
   const KptComponent = isLandscape ? QtKptReviewPage : QtKptReviewPortrait
+  const Kpt2Component = isLandscape ? QtKptReviewPage2 : QtKptReviewPortrait2
   const SundayGeneralComponent = isLandscape ? QtSundayGeneralPage : QtSundayGeneralPortrait
 
   const BucketTravelComponent = isLandscape ? QtBucketTravelPage : QtBucketTravelPortrait
@@ -321,6 +325,7 @@ export default function DiaryPage() {
         culture: true,
         culture2: true,
         kpt: true,
+        kpt2: true,
         sundaygeneral: true,
         buckettravel: true,
         wellnessmood: true,
@@ -351,6 +356,7 @@ export default function DiaryPage() {
         culture: false,
         culture2: false,
         kpt: false,
+        kpt2: false,
         sundaygeneral: false,
         buckettravel: false,
         wellnessmood: false,
@@ -381,6 +387,7 @@ export default function DiaryPage() {
         culture: false,
         culture2: false,
         kpt: false,
+        kpt2: false,
         sundaygeneral: false,
         buckettravel: false,
         wellnessmood: false,
@@ -411,6 +418,7 @@ export default function DiaryPage() {
         culture: true,
         culture2: true,
         kpt: true,
+        kpt2: true,
         sundaygeneral: true,
         buckettravel: true,
         wellnessmood: true,
@@ -510,9 +518,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>🌿 일반인 갓생 팩</span>
-                  <span className="text-[9px] opacity-70">16종</span>
+                  <span className="text-[9px] opacity-70">17종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인12종</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인13종</span>
               </button>
 
               <button
@@ -543,7 +551,7 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">25종</span>
+                  <span className="text-[9px] opacity-70">26종</span>
                 </div>
                 <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
@@ -661,7 +669,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">25 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">26 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -672,7 +680,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (25)
+                전체 (26)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
@@ -790,7 +798,18 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                     }`}
                   >
-                    <span>🔄 KPT 회고</span>
+                    <span>🔄 KPT① 마스터</span>
+                    <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('kpt2')}
+                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
+                      previewTab === 'kpt2'
+                        ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 ring-1 ring-indigo-400/50'
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>⚡ KPT② 4주차 실행</span>
                     <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
                   </button>
                   <button
@@ -1044,7 +1063,8 @@ export default function DiaryPage() {
                 { id: 'budget2', label: '💳 가계부② 데일리' },
                 { id: 'culture', label: '🎬 문화① 메인' },
                 { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
-                { id: 'kpt', label: '🔄 KPT 회고' },
+                { id: 'kpt', label: '🔄 KPT① 마스터' },
+                { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
                 { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
                 { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
                 { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
@@ -1187,6 +1207,9 @@ export default function DiaryPage() {
                     )}
                     {previewTab === 'kpt' && (
                       <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    )}
+                    {previewTab === 'kpt2' && (
+                      <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
                     {previewTab === 'sundaygeneral' && (
                       <SundayGeneralComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1372,6 +1395,7 @@ export default function DiaryPage() {
                 {modalActiveTab === 'culture' && <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'culture2' && <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'kpt' && <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
+                {modalActiveTab === 'kpt2' && <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'sundaygeneral' && <SundayGeneralComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'buckettravel' && <BucketTravelComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'wellnessmood' && <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
@@ -1478,6 +1502,11 @@ export default function DiaryPage() {
                 {selectedPages.kpt && (
                   <div id="modal-page-kpt" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.kpt2 && (
+                  <div id="modal-page-kpt2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.sundaygeneral && (
@@ -1628,6 +1657,9 @@ export default function DiaryPage() {
           )}
           {selectedPages.kpt && (
             <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.kpt2 && (
+            <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.sundaygeneral && (
             <SundayGeneralComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
