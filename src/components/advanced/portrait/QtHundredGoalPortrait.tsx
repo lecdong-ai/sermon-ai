@@ -31,7 +31,7 @@ export default function QtHundredGoalPortrait({
       }}
     >
       {/* 1. Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-4">
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
         <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">
           <span>YEARLY</span>
           <span>{year}</span>
@@ -40,93 +40,90 @@ export default function QtHundredGoalPortrait({
           </span>
         </div>
         <span className="px-3 py-1 rounded-full bg-indigo-600 text-white font-bold text-xs shadow-xs">
-          🎯 100-DAY GOAL ROADMAP
+          🎯 100-DAY ROADMAP (VOL. 1)
         </span>
       </div>
 
       {/* 2. Page Title */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>🎯 100-Day Goal Challenge Roadmap</span>
+            <span>🎯 {monthName} 100-Day Goal Challenge (Day 01 ~ 50)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            원대한 단일 목표를 향해 100일간 매일 도장을 찍어 완주하는 성취 챌린지 맵입니다.
+            하나의 목표를 향해 100일간 매일 한 걸음씩 실행 내용을 기록하며 50일 반환점을 도달하세요.
           </p>
         </div>
         <div className="px-4 py-1.5 rounded-full text-xs font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 shadow-xs">
-          100일 완주 프로젝트 맵
+          100일 서약 & 50일 전반전
         </div>
       </div>
 
-      {/* 3. Goal & Reward Cards */}
-      <div className="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/50 mb-4 shadow-xs">
-        <div className="grid grid-cols-12 gap-3 text-xs">
-          <div className="col-span-7 bg-white p-3 rounded-xl border border-slate-200/80">
-            <span className="text-[10px] font-bold text-indigo-800 block">📌 100일 동안 완주할 목표 (GOAL):</span>
-            <div className="text-slate-700 font-serif min-h-[20px]">__________________________________________</div>
+      {/* 3. Goal Pledge Card */}
+      <div className="border border-slate-200/90 rounded-2xl p-3.5 bg-slate-50/60 shadow-xs mb-3 space-y-2">
+        <div className="grid grid-cols-12 gap-2 text-xs">
+          <div className="col-span-6 bg-white p-2 rounded-xl border border-slate-200/80">
+            <span className="text-[10px] font-bold text-indigo-800 block">📌 100일 동안 달성할 핵심 목표 (GOAL):</span>
+            <div className="text-slate-800 font-bold font-serif text-xs min-h-[16px]">____________________________</div>
           </div>
-          <div className="col-span-5 bg-white p-3 rounded-xl border border-slate-200/80">
-            <span className="text-[10px] font-bold text-emerald-700 block">🎁 완주 축하 선물 (REWARD):</span>
-            <div className="text-slate-700 min-h-[20px]">______________________</div>
+          <div className="col-span-3 bg-white p-2 rounded-xl border border-slate-200/80">
+            <span className="text-[10px] font-bold text-emerald-800 block">🎁 완주 시 나에게 줄 보상:</span>
+            <div className="text-slate-700 min-h-[16px]">________________</div>
+          </div>
+          <div className="col-span-3 bg-white p-2 rounded-xl border border-slate-200/80 text-right">
+            <span className="text-[10px] font-bold text-slate-400 block">🗓️ 챌린지 기간:</span>
+            <div className="text-slate-700 font-mono text-xs">2026.__.__ ~ __.__</div>
           </div>
         </div>
       </div>
 
-      {/* 4. 100 Stamps Matrix Grid (10x10) */}
-      <div className="border border-slate-200/90 rounded-2xl p-4 bg-white flex-1 flex flex-col justify-between shadow-xs mb-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
-          <span className="text-xs font-bold text-slate-700">🏆 100일 스탬프 매트릭스 (Stamps Matrix)</span>
-          <div className="flex items-center gap-3 text-xs font-bold text-slate-500">
-            <span className="text-amber-600">★ Day 25</span>
-            <span className="text-blue-600">★ Day 50</span>
-            <span className="text-purple-600">★ Day 75</span>
-            <span className="text-rose-600">🎉 Day 100</span>
-          </div>
+      {/* 4. Day 01 ~ Day 50 Matrix */}
+      <div className="border border-slate-200/90 rounded-2xl p-4 bg-white flex-1 flex flex-col justify-between shadow-xs mb-3">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
+          <span className="text-xs font-bold text-slate-800 font-serif">
+            📝 Day 01 ~ Day 50 매일 실행 기록 트래커 (Daily Micro Action)
+          </span>
+          <span className="text-xs text-amber-600 font-bold font-mono">★ Day 25 Milestone | ★ Day 50 Halfway</span>
         </div>
 
-        <div className="grid grid-cols-10 gap-2 flex-1 py-1">
-          {Array.from({ length: 100 }, (_, i) => i + 1).map((d) => {
-            const isMilestone = d === 25 || d === 50 || d === 75 || d === 100
+        <div className="grid grid-cols-5 gap-2 flex-1 text-xs">
+          {Array.from({ length: 50 }, (_, i) => i + 1).map((d) => {
+            const isMilestone = d === 25 || d === 50
             return (
               <div
                 key={d}
-                className={`aspect-square rounded-xl border flex flex-col items-center justify-center text-xs font-extrabold cursor-pointer transition-all ${
+                className={`p-2 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                   isMilestone
-                    ? 'bg-amber-50 border-amber-300 text-amber-900 ring-1 ring-amber-400/40 shadow-xs'
-                    : 'bg-slate-50/40 border-slate-200 text-slate-400 hover:border-indigo-400 hover:text-indigo-700'
+                    ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-400/40 shadow-xs'
+                    : 'bg-slate-50/40 border-slate-200 hover:border-indigo-300'
                 }`}
               >
-                <span>{d}</span>
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                  <span className={`font-mono font-extrabold text-xs ${isMilestone ? 'text-amber-900' : 'text-slate-600'}`}>D-{d}</span>
+                  <span className="text-xs text-slate-300">□</span>
+                </div>
+                <div className="text-slate-400 font-serif text-[10px] truncate py-1">______</div>
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* 5. Milestone Review Checkpoints */}
-      <div className="grid grid-cols-4 gap-3 text-xs mb-4">
-        <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-200 text-center">
-          <span className="font-bold text-amber-900 block">Day 25 소감</span>
-          <span className="text-slate-400 text-[10px]">_______</span>
+      {/* 5. Milestones Banner */}
+      <div className="grid grid-cols-2 gap-3 text-xs mb-2">
+        <div className="bg-amber-50/60 border border-amber-200 p-2.5 rounded-xl space-y-1">
+          <span className="font-bold text-amber-900 block">🎉 Day 25 첫 번째 고지 성찰:</span>
+          <div className="text-slate-700 font-serif text-xs min-h-[16px]">"첫 25일 달성! 내 삶에 일어난 변화: ________"</div>
         </div>
-        <div className="bg-blue-50/60 p-2.5 rounded-xl border border-blue-200 text-center">
-          <span className="font-bold text-blue-900 block">Day 50 반환점</span>
-          <span className="text-slate-400 text-[10px]">_______</span>
-        </div>
-        <div className="bg-purple-50/60 p-2.5 rounded-xl border border-purple-200 text-center">
-          <span className="font-bold text-purple-900 block">Day 75 고지전</span>
-          <span className="text-slate-400 text-[10px]">_______</span>
-        </div>
-        <div className="bg-rose-50/60 p-2.5 rounded-xl border border-rose-200 text-center">
-          <span className="font-bold text-rose-900 block">Day 100 완주!</span>
-          <span className="text-slate-400 text-[10px]">🎉 SUCCESS</span>
+        <div className="bg-indigo-50/60 border border-indigo-200 p-2.5 rounded-xl space-y-1">
+          <span className="font-bold text-indigo-950 block">🏆 Day 50 반환점 돌파 성찰:</span>
+          <div className="text-slate-700 font-serif text-xs min-h-[16px]">"50% 완주 성공! 포기하지 않은 나에게 한 줄 칭찬: ________"</div>
         </div>
       </div>
 
       {/* 6. Footer */}
-      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300 mt-3">
-        <span>PREMIUM DIARY STUDIO — 100-DAY GOAL ROADMAP</span>
+      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
+        <span>PREMIUM DIARY STUDIO — 100-DAY ROADMAP (VOL. 1: DAY 01~50)</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>

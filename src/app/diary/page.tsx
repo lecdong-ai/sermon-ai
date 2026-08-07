@@ -59,6 +59,8 @@ import QtWellnessMoodPage from '@/components/advanced/QtWellnessMoodPage'
 import QtWellnessMoodPortrait from '@/components/advanced/portrait/QtWellnessMoodPortrait'
 import QtHundredGoalPage from '@/components/advanced/QtHundredGoalPage'
 import QtHundredGoalPortrait from '@/components/advanced/portrait/QtHundredGoalPortrait'
+import QtHundredGoalPage2 from '@/components/advanced/QtHundredGoalPage2'
+import QtHundredGoalPortrait2 from '@/components/advanced/portrait/QtHundredGoalPortrait2'
 
 import QtIntercessoryPrayerPage from '@/components/advanced/QtIntercessoryPrayerPage'
 import QtIntercessoryPrayerPortrait from '@/components/advanced/portrait/QtIntercessoryPrayerPortrait'
@@ -86,7 +88,7 @@ const MONTH_NAMES = [
 export type PreviewTabType =
   | 'calendar' | 'overview' | 'weekly' | 'daily'
   | 'habit' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
-  | 'buckettravel' | 'wellnessmood' | 'hundredgoal'
+  | 'buckettravel' | 'wellnessmood' | 'hundredgoal' | 'hundredgoal2'
   | 'prayer' | 'scripture' | 'sermon' | 'sermondeep' | 'biblemap' | 'letter'
   | 'intercessory' | 'soapjournal' | 'fruitstracker'
 
@@ -120,6 +122,7 @@ export default function DiaryPage() {
     buckettravel: true,
     wellnessmood: true,
     hundredgoal: true,
+    hundredgoal2: true,
     prayer: true,
     scripture: true,
     sermon: true,
@@ -187,6 +190,7 @@ export default function DiaryPage() {
   const BucketTravelComponent = isLandscape ? QtBucketTravelPage : QtBucketTravelPortrait
   const WellnessMoodComponent = isLandscape ? QtWellnessMoodPage : QtWellnessMoodPortrait
   const HundredGoalComponent = isLandscape ? QtHundredGoalPage : QtHundredGoalPortrait
+  const HundredGoal2Component = isLandscape ? QtHundredGoalPage2 : QtHundredGoalPortrait2
 
   const IntercessoryComponent = isLandscape ? QtIntercessoryPrayerPage : QtIntercessoryPrayerPortrait
   const SoapJournalComponent = isLandscape ? QtSoapJournalPage : QtSoapJournalPortrait
@@ -330,6 +334,7 @@ export default function DiaryPage() {
         buckettravel: true,
         wellnessmood: true,
         hundredgoal: true,
+        hundredgoal2: true,
         prayer: false,
         scripture: false,
         sermon: false,
@@ -361,6 +366,7 @@ export default function DiaryPage() {
         buckettravel: false,
         wellnessmood: false,
         hundredgoal: false,
+        hundredgoal2: false,
         prayer: true,
         scripture: true,
         sermon: true,
@@ -392,6 +398,7 @@ export default function DiaryPage() {
         buckettravel: false,
         wellnessmood: false,
         hundredgoal: false,
+        hundredgoal2: false,
         prayer: false,
         scripture: false,
         sermon: false,
@@ -423,6 +430,7 @@ export default function DiaryPage() {
         buckettravel: true,
         wellnessmood: true,
         hundredgoal: true,
+        hundredgoal2: true,
         prayer: true,
         scripture: true,
         sermon: true,
@@ -518,9 +526,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>🌿 일반인 갓생 팩</span>
-                  <span className="text-[9px] opacity-70">17종</span>
+                  <span className="text-[9px] opacity-70">18종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인13종</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인14종</span>
               </button>
 
               <button
@@ -551,7 +559,7 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">26종</span>
+                  <span className="text-[9px] opacity-70">27종</span>
                 </div>
                 <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
@@ -669,7 +677,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">26 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">27 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -680,7 +688,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (26)
+                전체 (27)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
@@ -853,8 +861,19 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                     }`}
                   >
-                    <span>🎯 100일 로드맵</span>
+                    <span>🎯 100일① 전반전</span>
                     <span className="text-[8px] px-1 bg-indigo-500/30 text-indigo-300 rounded font-normal">일반</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('hundredgoal2')}
+                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
+                      previewTab === 'hundredgoal2'
+                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/50'
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🏆 100일② 완주전</span>
+                    <span className="text-[8px] px-1 bg-rose-500/30 text-rose-300 rounded font-normal">일반</span>
                   </button>
                 </>
               )}
@@ -1068,7 +1087,8 @@ export default function DiaryPage() {
                 { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
                 { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
                 { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
-                { id: 'hundredgoal', label: '🎯 100일 로드맵' },
+                { id: 'hundredgoal', label: '🎯 100일① 전반전' },
+                { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
                 { id: 'prayer', label: '🙏 기도 (교회)' },
                 { id: 'scripture', label: '📜 필사 (교회)' },
                 { id: 'sermon', label: '🏛️ 설교 (교회)' },
@@ -1222,6 +1242,9 @@ export default function DiaryPage() {
                     )}
                     {previewTab === 'hundredgoal' && (
                       <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    )}
+                    {previewTab === 'hundredgoal2' && (
+                      <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
                     {previewTab === 'intercessory' && (
                       <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1400,6 +1423,7 @@ export default function DiaryPage() {
                 {modalActiveTab === 'buckettravel' && <BucketTravelComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'wellnessmood' && <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'hundredgoal' && <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
+                {modalActiveTab === 'hundredgoal2' && <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'intercessory' && <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'soapjournal' && <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'fruitstracker' && <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
@@ -1529,6 +1553,11 @@ export default function DiaryPage() {
                 {selectedPages.hundredgoal && (
                   <div id="modal-page-hundredgoal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.hundredgoal2 && (
+                  <div id="modal-page-hundredgoal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.intercessory && (
@@ -1676,6 +1705,9 @@ export default function DiaryPage() {
           )}
           {selectedPages.hundredgoal && (
             <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.hundredgoal2 && (
+            <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.intercessory && (
             <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
