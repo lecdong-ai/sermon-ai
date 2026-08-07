@@ -352,7 +352,7 @@ export default function DiaryPage() {
         prayer: true,
         scripture: true,
         sermon: true,
-        sermondeep: false,
+        sermondeep: true,
         biblemap: true,
         letter: true,
         intercessory: true,
@@ -502,9 +502,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>🌿 일반인 갓생 팩</span>
-                  <span className="text-[9px] opacity-70">10종</span>
+                  <span className="text-[9px] opacity-70">15종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">해빗/감사/가계부/KPT 위주</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인11종</span>
               </button>
 
               <button
@@ -513,9 +513,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>⛪ 크리스천 묵상 팩</span>
-                  <span className="text-[9px] opacity-70">9종</span>
+                  <span className="text-[9px] opacity-70">13종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기도/암송/설교/66권 위주</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천9종</span>
               </button>
 
               <button
@@ -535,9 +535,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">15종</span>
+                  <span className="text-[9px] opacity-70">24종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">모든 내지 전체 포함</span>
+                <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
             </div>
           </div>
@@ -653,7 +653,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">16 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">24 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -664,7 +664,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (16)
+                전체 (24)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
