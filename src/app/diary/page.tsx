@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   Calendar as CalendarIcon, Download, Sparkles, BookOpen, Layers,
   ChevronLeft, ArrowLeft, RotateCcw, Check, FileText, Maximize2,
-  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List
+  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp
 } from 'lucide-react'
 import Link from 'next/link'
 import QtMonthlyCalendarPage from '@/components/advanced/QtMonthlyCalendarPage'
@@ -157,6 +157,8 @@ export default function DiaryPage() {
     soapjournal2: true,
     fruitstracker: true,
   })
+
+  const [isPageCheckerOpen, setIsPageCheckerOpen] = useState(false)
 
   // ★ 팝업 뷰어 & 스크롤 모드 상태 변수
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
@@ -548,7 +550,21 @@ export default function DiaryPage() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
+          {/* 내지 구성 선택 팝오버 토글 버튼 */}
+          <button
+            onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border shadow-md ${
+              isPageCheckerOpen
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-amber-500/20'
+                : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:text-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-400" />
+            <span>내지 구성 ({activeSelectedCount}종 선택)</span>
+            {isPageCheckerOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+
           {/* 전체화면 팝업 뷰어 버튼 */}
           <button
             onClick={() => setIsFullscreenModalOpen(true)}
@@ -1202,71 +1218,122 @@ export default function DiaryPage() {
             )}
           </div>
 
-          {/* Module 4: Custom Page Selector */}
-          <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/10 space-y-2.5 backdrop-blur-md shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-amber-400" />
-                내지 포함 체커 ({activeSelectedCount}개 선택됨)
-              </h3>
-              <span className="text-[10px] text-slate-400 font-mono">Custom Assembly</span>
-            </div>
+          {/* Module 4: Custom Page Selector (Collapsible Accordion & Quick Actions) */}
+          <div className="rounded-2xl bg-slate-900/70 border border-white/10 backdrop-blur-md shadow-2xl overflow-hidden transition-all duration-300">
+            {/* Header Accordion Button */}
+            <button
+              onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
+              className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-all text-left group"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-200 tracking-tight flex items-center gap-2">
+                    내지 구성 선택
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      {activeSelectedCount}개 선택됨
+                    </span>
+                  </h3>
+                  <p className="text-[9.5px] text-slate-400">PDF 다운로드에 수록될 내지 조립 커스텀</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-slate-400 group-hover:text-white">
+                <span className="text-[10px] font-mono font-medium hidden sm:inline">
+                  {isPageCheckerOpen ? '접기' : '펼치기'}
+                </span>
+                {isPageCheckerOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </button>
 
-            <div className="grid grid-cols-2 gap-1.5 text-xs max-h-40 overflow-y-auto pr-1">
-              {[
-                { id: 'calendar', label: '📅 월간 달력' },
-                { id: 'overview', label: '📊 월간 개요' },
-                { id: 'weekly', label: '📆 주간 계획' },
-                { id: 'daily', label: '📝 데일리 노트' },
-                { id: 'habit', label: '🌱 습관① 매트릭스' },
-                { id: 'habit2', label: '🔥 습관② 주간회고' },
-                { id: 'gratitude', label: '☀️ 감사 & 확언' },
-                { id: 'quote', label: '📖 명언 & 필사' },
-                { id: 'budget', label: '💰 가계부① 예산&자산' },
-                { id: 'budget2', label: '💳 가계부② 데일리' },
-                { id: 'culture', label: '🎬 문화① 메인' },
-                { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
-                { id: 'kpt', label: '🔄 KPT① 마스터' },
-                { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
-                { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
-                { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
-                { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
-                { id: 'hundredgoal', label: '🎯 100일① 전반전' },
-                { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
-                { id: 'prayer', label: '🙏 기도① 제목말씀' },
-                { id: 'prayer2', label: '🎉 기도② 은혜응답' },
-                { id: 'scripture', label: '📜 암송① 대표필사' },
-                { id: 'scripture2', label: '📜 암송② 4주차암송' },
-                { id: 'sermon', label: '🏛️ 설교① 주일설교' },
-                { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
-                { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
-                { id: 'biblemap2', label: '📖 통독② 31일플래너' },
-                { id: 'letter', label: '💌 편지① 하나님감사' },
-                { id: 'letter2', label: '💌 편지② 나&이웃축복' },
-                { id: 'intercessory', label: '💖 중보① 가족공동체' },
-                { id: 'intercessory2', label: '💌 중보② 치유열방' },
-                { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
-                { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
-                { id: 'fruitstracker', label: '🌱 성령의 열매' },
-              ].map((pg) => (
-                <label
-                  key={pg.id}
-                  className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer ${
-                    selectedPages[pg.id]
-                      ? 'bg-indigo-600/20 border-indigo-400/50 text-slate-200 font-bold'
-                      : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!selectedPages[pg.id]}
-                    onChange={(e) => setSelectedPages({ ...selectedPages, [pg.id]: e.target.checked })}
-                    className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span className="text-[10px] truncate">{pg.label}</span>
-                </label>
-              ))}
-            </div>
+            {/* Collapsible Content Sheet */}
+            {isPageCheckerOpen && (
+              <div className="p-4 pt-0 border-t border-white/10 space-y-3 animate-fadeIn">
+                {/* 1-Click Quick Action Buttons */}
+                <div className="flex items-center gap-1.5 pt-2">
+                  <button
+                    onClick={() => applyPreset('all')}
+                    className="flex-1 py-1 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-400/40 text-indigo-300 font-bold text-[10px] transition-all"
+                  >
+                    ✨ 전체 선택
+                  </button>
+                  <button
+                    onClick={() => applyPreset('basic')}
+                    className="flex-1 py-1 px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/40 text-blue-300 font-bold text-[10px] transition-all"
+                  >
+                    📌 기본 4종만
+                  </button>
+                  <button
+                    onClick={() => {
+                      const noneMap: Record<string, boolean> = {}
+                      Object.keys(selectedPages).forEach(k => { noneMap[k] = false })
+                      setSelectedPages(noneMap as any)
+                    }}
+                    className="py-1 px-2.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-400/40 text-rose-300 font-bold text-[10px] transition-all"
+                  >
+                    ❌ 전체 해제
+                  </button>
+                </div>
+
+                {/* Grid Page Checklist */}
+                <div className="grid grid-cols-2 gap-1.5 text-xs max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                  {[
+                    { id: 'calendar', label: '📅 월간 달력' },
+                    { id: 'overview', label: '📊 월간 개요' },
+                    { id: 'weekly', label: '📆 주간 계획' },
+                    { id: 'daily', label: '📝 데일리 노트' },
+                    { id: 'habit', label: '🌱 습관① 매트릭스' },
+                    { id: 'habit2', label: '🔥 습관② 주간회고' },
+                    { id: 'gratitude', label: '☀️ 감사 & 확언' },
+                    { id: 'quote', label: '📖 명언 & 필사' },
+                    { id: 'budget', label: '💰 가계부① 예산&자산' },
+                    { id: 'budget2', label: '💳 가계부② 데일리' },
+                    { id: 'culture', label: '🎬 문화① 메인' },
+                    { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
+                    { id: 'kpt', label: '🔄 KPT① 마스터' },
+                    { id: 'kpt2', label: '⚡ KPT② 4주차 실행' },
+                    { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
+                    { id: 'buckettravel', label: '✈️ 버킷 & 트래블' },
+                    { id: 'wellnessmood', label: '🥗 웰니스 & 감정' },
+                    { id: 'hundredgoal', label: '🎯 100일① 전반전' },
+                    { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
+                    { id: 'prayer', label: '🙏 기도① 제목말씀' },
+                    { id: 'prayer2', label: '🎉 기도② 은혜응답' },
+                    { id: 'scripture', label: '📜 암송① 대표필사' },
+                    { id: 'scripture2', label: '📜 암송② 4주차암송' },
+                    { id: 'sermon', label: '🏛️ 설교① 주일설교' },
+                    { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
+                    { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
+                    { id: 'biblemap2', label: '📖 통독② 31일플래너' },
+                    { id: 'letter', label: '💌 편지① 하나님감사' },
+                    { id: 'letter2', label: '💌 편지② 나&이웃축복' },
+                    { id: 'intercessory', label: '💖 중보① 가족공동체' },
+                    { id: 'intercessory2', label: '💌 중보② 치유열방' },
+                    { id: 'soapjournal', label: '📖 SOAP① 필사&관찰' },
+                    { id: 'soapjournal2', label: '🌱 SOAP② 순종&기도' },
+                    { id: 'fruitstracker', label: '🌱 성령의 열매' },
+                  ].map((pg) => (
+                    <label
+                      key={pg.id}
+                      className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                        selectedPages[pg.id]
+                          ? 'bg-indigo-600/20 border-indigo-400/50 text-slate-200 font-bold'
+                          : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!selectedPages[pg.id]}
+                        onChange={(e) => setSelectedPages({ ...selectedPages, [pg.id]: e.target.checked })}
+                        className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-600 focus:ring-0 cursor-pointer"
+                      />
+                      <span className="text-[10px] truncate">{pg.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
