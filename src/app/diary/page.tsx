@@ -976,7 +976,7 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>🏛️ 주일 설교(월간)</span>
+                    <span>🏛️ 주일 설교 마스터</span>
                     <span className="text-[8px] px-1 bg-blue-500/20 text-blue-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -1170,7 +1170,7 @@ export default function DiaryPage() {
                 { id: 'prayer2', label: '🎉 기도② 은혜응답' },
                 { id: 'scripture', label: '📜 암송① 대표필사' },
                 { id: 'scripture2', label: '📜 암송② 4주차암송' },
-                { id: 'sermon', label: '🏛️ 설교 (교회)' },
+                { id: 'sermon', label: '🏛️ 주일 설교 마스터' },
                 { id: 'biblemap', label: '🕊️ 66권 (교회)' },
                 { id: 'letter', label: '💌 월말 편지' },
                 { id: 'intercessory', label: '💖 중보① 가족공동체' },
@@ -1702,9 +1702,11 @@ export default function DiaryPage() {
                   </div>
                 )}
                 {selectedPages.sermon && (
-                  <div id="modal-page-sermon" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <SundaySermonComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
+                  Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
+                    <div key={`modal-sermon-${sNo}`} id={`modal-page-sermon-${sNo}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                      <SundaySermonComponent year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 주일예배`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    </div>
+                  ))
                 )}
                 {selectedPages.sermondeep && (
                   <div id="modal-page-sermondeep" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
@@ -1853,7 +1855,9 @@ export default function DiaryPage() {
             <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.sermon && (
-            <SundaySermonComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+            Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
+              <SundaySermonComponent key={`pdf-sermon-${sNo}`} year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 주일예배`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+            ))
           )}
           {selectedPages.biblemap && (
             <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />

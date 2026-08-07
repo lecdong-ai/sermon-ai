@@ -5,6 +5,9 @@ import React from 'react'
 interface QtSundaySermonPageProps {
   year?: number
   month?: number
+  sundayNo?: number
+  dateStr?: string
+  sundayLabel?: string
   monthName?: string
   themeColor?: string
   pageWidth?: number
@@ -14,32 +17,17 @@ interface QtSundaySermonPageProps {
 export default function QtSundaySermonPage({
   year = 2026,
   month = 8,
+  sundayNo = 1,
+  dateStr = '08/02',
+  sundayLabel = '8월 1주차 주일예배',
   monthName = 'August',
   themeColor = '#B8C6D9',
   pageWidth = 1024,
   pageHeight = 768,
 }: QtSundaySermonPageProps) {
-  const totalDays = new Date(year, month, 0).getDate()
-  const sundaysList: { no: number; day: number; dateStr: string; label: string }[] = []
-
-  for (let d = 1; d <= totalDays; d++) {
-    const dt = new Date(year, month - 1, d)
-    if (dt.getDay() === 0) {
-      const no = sundaysList.length + 1
-      sundaysList.push({
-        no,
-        day: d,
-        dateStr: `${String(month).padStart(2, '0')}/${String(d).padStart(2, '0')}`,
-        label: `${month}월 ${d}일 (${no}주차 예배)`,
-      })
-    }
-  }
-
-  const isFiveSundays = sundaysList.length >= 5
-
   return (
     <div
-      data-page-key="sunday-sermon"
+      data-page-key={`sunday-sermon-${sundayNo}`}
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -50,93 +38,117 @@ export default function QtSundaySermonPage({
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600 font-mono">YEARLY</span>
-          <span className="font-mono">{year}</span>
-          <span data-nav-target="calendar" className="px-2 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+      {/* 1. Header Bar */}
+      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
+        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
+          <span>{year}</span>
+          <span className="px-2 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-600 to-indigo-600 text-white font-bold text-[10px] shadow-xs">
-            🏛️ SUNDAY SERMON ({sundaysList.length}주)
+          <span>SUNDAY WORSHIP & SERMON MASTER</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-600 text-white font-bold text-[10px] shadow-xs">
+            🏛️ {sundayNo}주차 주일예배 설교 노트
           </span>
         </div>
       </div>
 
-      {/* 2. Page Title */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>🏛️ {monthName} Sunday Worship & Sermon Notes</span>
-          </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {year}년 {month}월 <strong className="text-amber-700 font-bold">{sundaysList.length}번의 주일 예배</strong> 말씀과 삶의 구체적인 순종 결단을 기록합니다.
-          </p>
+      {/* 2. Worship Header Banner */}
+      <div className="border border-amber-200/90 rounded-2xl p-2.5 bg-gradient-to-r from-amber-50/70 via-indigo-50/30 to-white shadow-2xs mb-2 space-y-1.5">
+        <div className="flex items-center justify-between border-b border-amber-200/60 pb-1 text-[9.5px]">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold px-2.5 py-0.5 rounded-full text-white bg-amber-600 shadow-2xs">
+              {sundayLabel}
+            </span>
+            <span className="font-mono text-slate-500 font-bold text-[9px]">DATE: {year}.{dateStr}</span>
+          </div>
+          <div className="flex items-center gap-3 text-[9px] text-slate-500">
+            <span>⛪ 설교자: <strong className="text-slate-700 font-bold">_____ 목사님</strong></span>
+            <span>🎵 찬양: <strong className="text-slate-700 font-bold">_____</strong></span>
+          </div>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-amber-950 bg-amber-50 border border-amber-300 shadow-xs">
-          {year}년 {month}월 ({sundaysList.length}개 주일 구성)
+
+        <div className="grid grid-cols-12 gap-2 text-[9px]">
+          <div className="col-span-8 bg-white/90 p-1.5 rounded-xl border border-amber-200 flex items-center justify-between">
+            <span className="font-bold text-amber-800 shrink-0 mr-2">📌 설교 제목 (Title):</span>
+            <div className="text-slate-400 font-serif text-[9px] flex-1 min-h-[14px]">__________________________________________</div>
+          </div>
+          <div className="col-span-4 bg-white/90 p-1.5 rounded-xl border border-amber-200 flex items-center justify-between">
+            <span className="font-bold text-amber-800 shrink-0 mr-2">📖 성경 본문:</span>
+            <div className="text-slate-400 font-serif text-[9px] flex-1 min-h-[14px]">__________________</div>
+          </div>
         </div>
       </div>
 
-      {/* 3. Dynamic Grid (4 Sundays vs 5 Sundays layout) */}
-      <div className={`grid ${isFiveSundays ? 'grid-cols-3' : 'grid-cols-2'} gap-2.5 flex-1`}>
-        {sundaysList.map((sItem) => (
-          <div
-            key={sItem.no}
-            className="border border-slate-200/90 rounded-2xl p-3 bg-slate-50/50 flex flex-col justify-between shadow-xs space-y-1.5 hover:border-amber-300 transition-colors"
-          >
-            {/* Card Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full text-white bg-gradient-to-r from-amber-600 to-indigo-600 shadow-2xs">
-                {sItem.label}
-              </span>
-              <span className="text-[9.5px] text-slate-400 font-mono font-bold">Date: {sItem.dateStr}</span>
-            </div>
+      {/* 3. Main Content: 3 Sermon Points + Rhema & Action (2 Cols) */}
+      <div className="grid grid-cols-12 gap-3 flex-1 mb-2">
+        {/* Left Column: 3 Key Sermon Outline Notes (7 cols) */}
+        <div className="col-span-7 border border-slate-200 rounded-2xl p-2.5 bg-slate-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
+            <span className="font-bold text-slate-800 font-serif">💡 설교 3대 대지 요약 & 말씀 필기 (Outline)</span>
+            <span className="font-mono text-[8px] text-slate-400">3 Key Points</span>
+          </div>
 
-            {/* Title & Passage */}
-            <div className="grid grid-cols-12 gap-1.5 text-[10px]">
-              <div className="col-span-7 p-1.5 rounded-xl bg-white border border-slate-200/80">
-                <span className="text-[8px] text-amber-800 font-bold block">설교 제목:</span>
-                <div className="text-slate-700 font-serif min-h-[14px]"></div>
-              </div>
-              <div className="col-span-5 p-1.5 rounded-xl bg-white border border-slate-200/80">
-                <span className="text-[8px] text-indigo-700 font-bold block">본문 말씀:</span>
-                <div className="text-slate-700 font-mono text-[9px] min-h-[14px]"></div>
-              </div>
-            </div>
-
-            {/* 3 Key Points */}
-            <div className="space-y-1 flex-1 bg-white p-2 rounded-xl border border-slate-200/80">
-              <span className="text-[9.5px] font-bold text-slate-700 block mb-0.5">💡 설교 대지 & 핵심 말씀 3가지:</span>
-              {[1, 2, 3].map((pt) => (
-                <div key={pt} className="text-[9.5px] text-slate-400 flex items-center gap-1.5 border-b border-dashed border-slate-200 pb-0.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-amber-100 text-amber-800 text-[8px] font-bold flex items-center justify-center shrink-0">
-                    {pt}
-                  </span>
-                  <span className="font-serif text-[9px] flex-1"></span>
+          <div className="space-y-1.5 flex-1 flex flex-col justify-between">
+            {[
+              { pt: '01. 첫 번째 대지 (Point 1)', label: 'Point 1' },
+              { pt: '02. 두 번째 대지 (Point 2)', label: 'Point 2' },
+              { pt: '03. 세 번째 대지 (Point 3)', label: 'Point 3' },
+            ].map((p, pIdx) => (
+              <div key={pIdx} className="bg-white p-2 rounded-xl border border-slate-200 flex-1 flex flex-col justify-between space-y-1">
+                <div className="flex justify-between items-center text-[8.5px] border-b border-slate-100 pb-0.5">
+                  <span className="font-bold text-amber-800">{p.pt}</span>
+                  <span className="font-mono text-slate-300 text-[8px]">{p.label}</span>
                 </div>
-              ))}
-            </div>
+                <div className="text-slate-400 font-serif text-[8.5px] min-h-[22px] flex-1 flex flex-col justify-around">
+                  <div>__________________________________________________</div>
+                  <div>__________________________________________________</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            {/* Application */}
-            <div className="text-[9.5px] text-indigo-950 bg-indigo-50/60 p-1.5 rounded-xl border border-indigo-100 flex items-center justify-between">
-              <span>🌱 이번 주 삶의 순종 & 결단:</span>
-              <span className="text-[8.5px] text-indigo-600 font-bold">Action Plan</span>
+        {/* Right Column: Rhema Message & Weekly Obedience Action (5 cols) */}
+        <div className="col-span-5 flex flex-col justify-between space-y-2">
+          {/* Rhema Word */}
+          <div className="border border-indigo-200/90 rounded-2xl p-2.5 bg-indigo-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
+            <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[9.5px]">
+              <span className="font-bold text-indigo-950 font-serif">🕊️ 내게 주신 레마(Rhema)의 한 문장</span>
+              <span className="font-mono text-[8px] text-indigo-400">Personal Word</span>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-indigo-200/80 flex-1 text-[8.5px]">
+              <div className="text-slate-400 font-serif italic min-h-[36px]">"하나님께서 오늘 나에게 개인적으로 선포하신 약속과 결단의 한 마디를 적습니다..."</div>
             </div>
           </div>
-        ))}
+
+          {/* Weekly Obedience Action Plan */}
+          <div className="border border-emerald-200/90 rounded-2xl p-2.5 bg-emerald-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
+            <div className="flex items-center justify-between border-b border-emerald-200 pb-1 text-[9.5px]">
+              <span className="font-bold text-emerald-950 font-serif">🌱 이번 주 구체적 순종 결단 (Action Plan)</span>
+              <span className="text-emerald-700 font-mono text-[8px]">Obedience Note</span>
+            </div>
+            <div className="space-y-1 text-[8.5px] bg-white p-2 rounded-xl border border-emerald-200/80 flex-1 flex flex-col justify-around">
+              <div>
+                <span className="font-bold text-emerald-800 text-[8px]">📌 실천 행동 1:</span>
+                <div className="text-slate-400 font-serif min-h-[12px]">_________________________________</div>
+              </div>
+              <div>
+                <span className="font-bold text-emerald-800 text-[8px]">📌 실천 행동 2:</span>
+                <div className="text-slate-400 font-serif min-h-[12px]">_________________________________</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 4. Footer */}
-      <div className="flex items-center justify-between border-t border-slate-200 pt-1.5 mt-1.5 text-[10px] text-slate-400">
-        <span>SUNDAY SERMON STUDIO — WORSHIP NOTES ({sundaysList.length} SUNDAYS)</span>
-        <span>{year} {monthName} Edition</span>
+      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 mt-1.5">
+        <span>PREMIUM DIARY STUDIO — SUNDAY WORSHIP & SERMON MASTER</span>
+        <span>{year} {monthName} Week {sundayNo} Edition</span>
       </div>
     </div>
   )
