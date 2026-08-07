@@ -49,9 +49,9 @@ export default function QtSundaySermonPage({
         </div>
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span>SUNDAY WORSHIP & SERMON MASTER</span>
+          <span>SUNDAY WORSHIP & SERMON SUMMARY (VOL. 1)</span>
           <span className="px-2.5 py-0.5 rounded-full bg-amber-600 text-white font-bold text-[10px] shadow-xs">
-            🏛️ {sundayNo}주차 주일예배 설교 노트
+            🏛️ 설교① 주일 설교 요약 ({sundayNo}주차)
           </span>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function QtSundaySermonPage({
         <div className="flex items-center justify-between border-b border-amber-200/60 pb-1 text-[9.5px]">
           <div className="flex items-center gap-2">
             <span className="font-extrabold px-2.5 py-0.5 rounded-full text-white bg-amber-600 shadow-2xs">
-              {sundayLabel}
+              🏛️ 설교① {sundayLabel}
             </span>
             <span className="font-mono text-slate-500 font-bold text-[9px]">DATE: {year}.{dateStr}</span>
           </div>

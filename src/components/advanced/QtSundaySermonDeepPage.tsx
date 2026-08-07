@@ -54,7 +54,7 @@ export default function QtSundaySermonDeepPage({
           <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
           <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
           <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white font-bold text-[10px] shadow-xs whitespace-nowrap">
-            🕊️ SUNDAY SERMON BINDER ({sundayNo}주차)
+            🌟 설교② 심층 묵상 & 나눔 (VOL. 2)
           </span>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function QtSundaySermonDeepPage({
         <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold text-white bg-gradient-to-r from-amber-500 to-rose-500 shadow-xs whitespace-nowrap">
-              {month}월 {sundayNo}주차 주일 예배
+              🌟 설교② {month}월 {sundayNo}주차 심층 묵상
             </span>
             <span className="text-xs font-mono font-bold text-slate-600 whitespace-nowrap">Date: {year}.{dateStr}</span>
           </div>

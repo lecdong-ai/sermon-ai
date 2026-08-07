@@ -48,7 +48,7 @@ export default function QtSundaySermonPortrait({
           </span>
         </div>
         <span className="px-3 py-1 rounded-full bg-amber-600 text-white font-bold text-xs shadow-xs">
-          🏛️ SUNDAY WORSHIP & SERMON
+          🏛️ 설교① 주일 설교 요약 (VOL. 1)
         </span>
       </div>
 
@@ -56,14 +56,14 @@ export default function QtSundaySermonPortrait({
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>🏛️ {monthName} Sunday Worship & Sermon</span>
+            <span>🏛️ {monthName} Sunday Worship & Sermon (Vol. 1)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             {sundayLabel} 말씀의 3대 대지 요약과 하나님이 직접 주신 레마의 말씀, 삶의 순종을 기록합니다.
           </p>
         </div>
         <div className="px-4 py-1.5 rounded-full text-xs font-bold text-amber-950 bg-amber-50 border border-amber-200 shadow-xs">
-          {sundayLabel}
+          🏛️ 설교① {sundayLabel}
         </div>
       </div>
 

@@ -29,6 +29,8 @@ import QtSundaySermonDeepPage from '@/components/advanced/QtSundaySermonDeepPage
 import QtSundaySermonDeepPortrait from '@/components/advanced/portrait/QtSundaySermonDeepPortrait'
 import QtBibleReadingMapPage from '@/components/advanced/QtBibleReadingMapPage'
 import QtBibleReadingMapPortrait from '@/components/advanced/portrait/QtBibleReadingMapPortrait'
+import QtBibleReadingMapPage2 from '@/components/advanced/QtBibleReadingMapPage2'
+import QtBibleReadingMapPortrait2 from '@/components/advanced/portrait/QtBibleReadingMapPortrait2'
 import QtMonthlyLetterPage from '@/components/advanced/QtMonthlyLetterPage'
 import QtMonthlyLetterPortrait from '@/components/advanced/portrait/QtMonthlyLetterPortrait'
 
@@ -97,7 +99,7 @@ export type PreviewTabType =
   | 'calendar' | 'overview' | 'weekly' | 'daily'
   | 'habit' | 'habit2' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
   | 'buckettravel' | 'wellnessmood' | 'hundredgoal' | 'hundredgoal2'
-  | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'letter'
+  | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'biblemap2' | 'letter'
   | 'intercessory' | 'intercessory2' | 'soapjournal' | 'fruitstracker'
 
 export default function DiaryPage() {
@@ -139,6 +141,7 @@ export default function DiaryPage() {
     sermon: true,
     sermondeep: false,
     biblemap: true,
+    biblemap2: true,
     letter: true,
     intercessory: true,
     intercessory2: true,
@@ -185,6 +188,7 @@ export default function DiaryPage() {
   const SundaySermonComponent = isLandscape ? QtSundaySermonPage : QtSundaySermonPortrait
   const SundaySermonDeepComponent = isLandscape ? QtSundaySermonDeepPage : QtSundaySermonDeepPortrait
   const BibleMapComponent = isLandscape ? QtBibleReadingMapPage : QtBibleReadingMapPortrait
+  const BibleMap2Component = isLandscape ? QtBibleReadingMapPage2 : QtBibleReadingMapPortrait2
   const MonthlyLetterComponent = isLandscape ? QtMonthlyLetterPage : QtMonthlyLetterPortrait
   const WeeklyComponent = isLandscape ? QtWeeklyPlanPage : QtWeeklyPlanPortrait
   const DailyComponent = isLandscape ? QtDailyDiaryPage : QtDailyDiaryPortrait
@@ -359,6 +363,7 @@ export default function DiaryPage() {
         sermon: false,
         sermondeep: false,
         biblemap: false,
+        biblemap2: false,
         letter: false,
         intercessory: false,
         intercessory2: false,
@@ -395,6 +400,7 @@ export default function DiaryPage() {
         sermon: true,
         sermondeep: true,
         biblemap: true,
+        biblemap2: true,
         letter: true,
         intercessory: true,
         intercessory2: true,
@@ -431,6 +437,7 @@ export default function DiaryPage() {
         sermon: false,
         sermondeep: false,
         biblemap: false,
+        biblemap2: false,
         letter: false,
         intercessory: false,
         intercessory2: false,
@@ -467,6 +474,7 @@ export default function DiaryPage() {
         sermon: true,
         sermondeep: true,
         biblemap: true,
+        biblemap2: true,
         letter: true,
         intercessory: true,
         intercessory2: true,
@@ -569,9 +577,9 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>⛪ 크리스천 묵상 팩</span>
-                  <span className="text-[9px] opacity-70">16종</span>
+                  <span className="text-[9px] opacity-70">17종</span>
                 </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천12종</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천13종</span>
               </button>
 
               <button
@@ -591,7 +599,7 @@ export default function DiaryPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">31종</span>
+                  <span className="text-[9px] opacity-70">32종</span>
                 </div>
                 <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
               </button>
@@ -709,7 +717,7 @@ export default function DiaryPage() {
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 미리보기 양식 선택
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">31 Formats</span>
+              <span className="text-[10px] text-slate-400 font-mono">32 Formats</span>
             </div>
 
             {/* Category Filter Pills */}
@@ -720,7 +728,7 @@ export default function DiaryPage() {
                   categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                전체 (31)
+                전체 (32)
               </button>
               <button
                 onClick={() => setCategoryFilter('general')}
@@ -976,7 +984,7 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>🏛️ 주일 설교 마스터</span>
+                    <span>🏛️ 설교① 주일설교</span>
                     <span className="text-[8px] px-1 bg-blue-500/20 text-blue-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -987,7 +995,7 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>🌟 주일 심층 노트</span>
+                    <span>🌟 설교② 심층나눔</span>
                     <span className="text-[8px] px-1 bg-amber-500/20 text-amber-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -998,7 +1006,18 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                     }`}
                   >
-                    <span>🕊️ 66권 통독</span>
+                    <span>🕊️ 통독① 66권진도맵</span>
+                    <span className="text-[8px] px-1 bg-emerald-500/20 text-emerald-400 rounded font-normal">교회</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('biblemap2')}
+                    className={`p-2 rounded-xl border text-[11px] font-bold transition-all text-left flex items-center justify-between ${
+                      previewTab === 'biblemap2'
+                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>📖 통독② 31일플래너</span>
                     <span className="text-[8px] px-1 bg-emerald-500/20 text-emerald-400 rounded font-normal">교회</span>
                   </button>
                   <button
@@ -1170,8 +1189,10 @@ export default function DiaryPage() {
                 { id: 'prayer2', label: '🎉 기도② 은혜응답' },
                 { id: 'scripture', label: '📜 암송① 대표필사' },
                 { id: 'scripture2', label: '📜 암송② 4주차암송' },
-                { id: 'sermon', label: '🏛️ 주일 설교 마스터' },
-                { id: 'biblemap', label: '🕊️ 66권 (교회)' },
+                { id: 'sermon', label: '🏛️ 설교① 주일설교' },
+                { id: 'sermondeep', label: '🌟 설교② 심층나눔' },
+                { id: 'biblemap', label: '🕊️ 통독① 66권진도맵' },
+                { id: 'biblemap2', label: '📖 통독② 31일플래너' },
                 { id: 'letter', label: '💌 월말 편지' },
                 { id: 'intercessory', label: '💖 중보① 가족공동체' },
                 { id: 'intercessory2', label: '💌 중보② 치유열방' },
@@ -1362,6 +1383,9 @@ export default function DiaryPage() {
                     {previewTab === 'biblemap' && (
                       <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
+                    {previewTab === 'biblemap2' && (
+                      <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    )}
                     {previewTab === 'letter' && (
                       <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     )}
@@ -1528,6 +1552,7 @@ export default function DiaryPage() {
                 {modalActiveTab === 'sermon' && <SundaySermonComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'sermondeep' && <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'biblemap' && <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
+                {modalActiveTab === 'biblemap2' && <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'letter' && <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />}
                 {modalActiveTab === 'weekly' && (() => {
                   const w1Data = getWeekData(1)
@@ -1718,6 +1743,11 @@ export default function DiaryPage() {
                     <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
+                {selectedPages.biblemap2 && (
+                  <div id="modal-page-biblemap2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
                 {selectedPages.letter && (
                   <div id="modal-page-letter" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1861,6 +1891,9 @@ export default function DiaryPage() {
           )}
           {selectedPages.biblemap && (
             <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.biblemap2 && (
+            <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.letter && (
             <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
