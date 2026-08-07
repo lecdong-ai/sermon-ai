@@ -92,7 +92,7 @@ export default function QtDailyDiaryPage({
           {/* Month Title & Subline */}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide">{monthName} {paddedDay}일</h2>
+              <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide">{monthName} {paddedDay}</h2>
               {isSunday && (
                 <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-bold border shadow-2xs whitespace-nowrap inline-block ${
                   isChurchMode

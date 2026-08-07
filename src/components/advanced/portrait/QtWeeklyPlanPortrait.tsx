@@ -172,7 +172,7 @@ export default function QtWeeklyPlanPortrait({
                       hasRedDay ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-800'
                     }`}
                   >
-                    {String(d.dayNum).padStart(2, '0')}일
+                    {String(d.dayNum).padStart(2, '0')}
                   </span>
                   {holidays.length > 0 && (
                     <div className="flex items-center gap-1">
