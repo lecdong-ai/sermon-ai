@@ -1566,15 +1566,15 @@ export default function DiaryPage() {
       {/* 🖱️ 마우스 드래그 가능한 스마트 플로팅 윈도우 1: 미리보기 양식 선택 */}
       {showPreviewFloating && (
         <div
-          style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px` }}
-          className="fixed z-50 w-72 rounded-2xl bg-slate-950/90 border border-indigo-500/30 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow duration-300 hover:border-indigo-400"
+          style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px`, touchAction: 'none' }}
+          className="fixed z-50 w-72 rounded-2xl bg-slate-950/90 border border-indigo-500/30 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-indigo-400 select-none"
         >
           {/* Title Bar Handle */}
           <div
             onPointerDown={(e) => handlePointerDown(e, 'preview')}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+            className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group touch-none"
           >
             <div className="flex items-center gap-2">
               <GripHorizontal className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
@@ -1695,15 +1695,15 @@ export default function DiaryPage() {
       {/* 🖱️ 마우스 드래그 가능한 스마트 플로팅 윈도우 2: 내지 구성 선택 */}
       {showPageCheckerFloating && (
         <div
-          style={{ left: `${pageCheckerPos.x}px`, top: `${pageCheckerPos.y}px` }}
-          className="fixed z-50 w-84 rounded-2xl bg-slate-950/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(8,145,178,0.2)] overflow-hidden transition-all duration-300 hover:border-cyan-400/60"
+          style={{ left: `${pageCheckerPos.x}px`, top: `${pageCheckerPos.y}px`, touchAction: 'none' }}
+          className="fixed z-50 w-84 rounded-2xl bg-slate-950/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(8,145,178,0.2)] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-cyan-400/60 select-none"
         >
           {/* Title Bar Handle */}
           <div
             onPointerDown={(e) => handlePointerDown(e, 'checker')}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="p-3.5 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+            className="p-3.5 bg-slate-900/90 border-b border-white/10 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group touch-none"
           >
             <div className="flex items-center gap-2">
               <GripHorizontal className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
