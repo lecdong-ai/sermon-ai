@@ -105,8 +105,8 @@ const MONTH_NAMES = [
 
 const CATEGORY_COUNTS = {
   all: 34,
-  general: 15,
-  church: 15,
+  general: 19, // 기본 4종 + 갓생라이프 15종
+  church: 19,  // 기본 4종 + 크리스천 영성 15종
   basic: 4,
 }
 
@@ -1637,25 +1637,32 @@ export default function DiaryPage() {
               {/* Template Buttons */}
               <div className="grid grid-cols-2 gap-1.5">
                 {[
+                  // 1. 기본 4종 (언제나 포함)
                   { id: 'calendar', label: '📅 월간 달력' },
                   { id: 'overview', label: '📊 월간 개요' },
                   { id: 'weekly', label: '📆 주간 계획' },
                   { id: 'daily', label: '📝 데일리 노트' },
-                  { id: 'habit', label: '🌱 습관① 매트릭스' },
-                  { id: 'habit2', label: '🔥 습관② 주간회고' },
-                  { id: 'gratitude', label: '☀️ 감사 & 확언' },
-                  { id: 'quote', label: '📖 명언 & 필사' },
-                  { id: 'budget', label: '💰 가계부① 예산' },
-                  { id: 'budget2', label: '💳 가계부② 데일리' },
-                  { id: 'culture', label: '🎬 문화① 메인' },
-                  { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
-                  { id: 'kpt', label: '🔄 KPT① 마스터' },
-                  { id: 'kpt2', label: '⚡ KPT② 4주차' },
-                  { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
-                  { id: 'buckettravel', label: '✈️ 버킷&트래블' },
-                  { id: 'wellnessmood', label: '🥗 웰니스&감정' },
-                  { id: 'hundredgoal', label: '🎯 100일① 전반전' },
-                  { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
+
+                  // 2. 갓생라이프 15종 (영성 전용 탭일 때는 숨김)
+                  ...(categoryFilter !== 'church' ? [
+                    { id: 'habit', label: '🌱 습관① 매트릭스' },
+                    { id: 'habit2', label: '🔥 습관② 주간회고' },
+                    { id: 'gratitude', label: '☀️ 감사 & 확언' },
+                    { id: 'quote', label: '📖 명언 & 필사' },
+                    { id: 'budget', label: '💰 가계부① 예산' },
+                    { id: 'budget2', label: '💳 가계부② 데일리' },
+                    { id: 'culture', label: '🎬 문화① 메인' },
+                    { id: 'culture2', label: '🎞️ 문화② 컬렉션' },
+                    { id: 'kpt', label: '🔄 KPT① 마스터' },
+                    { id: 'kpt2', label: '⚡ KPT② 4주차' },
+                    { id: 'sundaygeneral', label: '🌿 선데이 리셋' },
+                    { id: 'buckettravel', label: '✈️ 버킷&트래블' },
+                    { id: 'wellnessmood', label: '🥗 웰니스&감정' },
+                    { id: 'hundredgoal', label: '🎯 100일① 전반전' },
+                    { id: 'hundredgoal2', label: '🏆 100일② 완주전' },
+                  ] : []),
+
+                  // 3. 크리스천 영성 15종 (갓생 전용 탭일 때는 숨김)
                   ...(categoryFilter !== 'general' ? [
                     { id: 'prayer', label: '🙏 기도① 제목' },
                     { id: 'prayer2', label: '🎉 기도② 은혜' },
