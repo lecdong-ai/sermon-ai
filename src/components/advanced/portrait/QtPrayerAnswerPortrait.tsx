@@ -14,8 +14,8 @@ export default function QtPrayerAnswerPortrait({
   year = 2026,
   monthName = 'August',
   themeColor = '#B8C6D9',
-  pageWidth = 768,
-  pageHeight = 1024,
+  pageWidth = 1024,
+  pageHeight = 1448,
 }: QtPrayerAnswerPortraitProps) {
   return (
     <div
@@ -25,130 +25,98 @@ export default function QtPrayerAnswerPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '28px 24px',
+        padding: '36px 44px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      {/* 1. Header Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
+      {/* 1. Header Bar */}
+      <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
+        <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
           <span>{year}</span>
-          <span data-nav-target="calendar" className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+          <span className="px-2.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
-
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold cursor-pointer shadow-xs">PRAYER & GRACE</span>
-        </div>
+        <span className="px-3 py-1 rounded-full bg-amber-600 text-white font-bold text-xs shadow-xs">
+          🙏 PERSONAL PRAYER MASTER
+        </span>
       </div>
 
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>🙏 {monthName} Prayer & Grace Milestone</span>
+          <h1 className="text-3xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+            <span>🙏 {monthName} Prayer & Grace Answer Journal</span>
           </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            개인의 핵심 기도 제목을 간구하고 응답받은 날짜와 성경 말씀의 은혜를 기념하는 마스터 노틀입니다.
+          </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
-          {year}년 {monthName} 은혜의 기념비
-        </div>
-      </div>
-
-      {/* 3. Vertical Layout */}
-      <div className="flex-1 flex flex-col space-y-4">
-        {/* Top: 31일 큐티 출석 습관 트래커 & 영성 체온계 */}
-        <div className="grid grid-cols-2 gap-3 border-b border-slate-200 pb-3">
-          {/* 31일 큐티 트래커 */}
-          <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
-              🌿 31일 큐티 습관 트래커
-            </h4>
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                <div key={d} className="aspect-square rounded border border-slate-300 bg-white text-[9px] font-bold text-slate-400 flex items-center justify-center">
-                  {d}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 영성 체온계 */}
-          <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
-              💖 이달의 마음 영성 체온계
-            </h4>
-            <div className="space-y-1.5 text-[10px]">
-              <div className="flex items-center justify-between">
-                <span>😊 감사 지수</span>
-                <span>💗💗💗💗💗</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>🕊️ 평안 지수</span>
-                <span>💙💙💙💙💙</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>🔥 기도 지수</span>
-                <span>💛💛💛💛💛</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Middle: 4개의 기도 & 응답 카드 */}
-        <div className="flex-1 space-y-2">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1 whitespace-nowrap">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
-            🙏 이달의 기도 제목 & 응답의 날 (Prayer & Answers)
-          </h4>
-          <div className="grid grid-cols-2 gap-2">
-            {[1, 2, 3, 4].map((no) => (
-              <div key={no} className="border border-slate-300 rounded-xl p-2.5 bg-white space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-white whitespace-nowrap" style={{ backgroundColor: themeColor }}>
-                    기도 {no}
-                  </span>
-                  <span className="text-[9px] text-slate-400 whitespace-nowrap">응답일: __월 __일</span>
-                </div>
-                <div className="text-[10px] text-slate-700 min-h-[30px]">
-                </div>
-                <div className="text-[9px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200 whitespace-nowrap">
-                  ✨ 응답 소감:
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom: 약속의 말씀 & TOP 3 감사 */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <div className="border border-amber-300 rounded-xl p-3 bg-amber-50/40 text-center">
-            <h5 className="text-[10px] font-bold text-amber-800 mb-1">📖 이달의 약속의 말씀</h5>
-            <p className="text-[10px] font-serif font-bold text-slate-800">
-              &quot;너희 구핛 것을 감사함으로 하나님께 아뢰라&quot;
-            </p>
-            <span className="text-[9px] text-amber-700 font-bold">(빌립보서 4:6)</span>
-          </div>
-
-          <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 space-y-1">
-            <h5 className="text-[10px] font-bold text-slate-700">🎁 TOP 3 감사 순간</h5>
-            <div className="text-[9px] text-slate-400 space-y-0.5">
-              <div>1. __________________</div>
-              <div>2. __________________</div>
-            </div>
-          </div>
+        <div className="px-4 py-1.5 rounded-full text-xs font-bold text-amber-950 bg-amber-50 border border-amber-200 shadow-xs">
+          은혜의 기념비 & 응답 노트
         </div>
       </div>
 
-      {/* 4. Footer */}
-      <div className="flex items-center justify-between border-t border-slate-300 pt-2 mt-2 text-[10px] text-slate-400">
-        <span>SERMON AI QT DIARY — PRAYER & GRACE MILESTONE</span>
+      {/* 3. 4 Core Prayer Cards Stack */}
+      <div className="space-y-3.5 flex-1 flex flex-col justify-between mb-3">
+        {[
+          { title: '🕊️ 01. 개인 영성 & 성품 기도', category: '영성 성품', color: 'border-amber-300 bg-amber-50/20' },
+          { title: '💼 02. 비전, 진로 & 사명 기도', category: '비전 사명', color: 'border-indigo-300 bg-indigo-50/20' },
+          { title: '👨‍👩‍👧‍👦 03. 가정, 관계 & 치유 기도', category: '가정 관계', color: 'border-emerald-300 bg-emerald-50/20' },
+          { title: '🎉 04. 이달의 은혜 응답 기념비', category: '응답 은혜', color: 'border-rose-300 bg-rose-50/20' },
+        ].map((card, idx) => (
+          <div
+            key={idx}
+            className={`border rounded-2xl p-3.5 ${card.color} flex flex-col justify-between shadow-xs space-y-2 flex-1`}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
+              <span className="font-bold text-slate-800 font-serif flex items-center gap-1">
+                {card.title}
+              </span>
+              <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
+                {card.category}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-12 gap-2 text-xs">
+              <div className="col-span-6 bg-white p-1.5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-400">기도 시작일:</span>
+                <span className="text-slate-600 font-mono text-xs">2026.08.__</span>
+              </div>
+              <div className="col-span-6 bg-white p-1.5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-emerald-800">응답 날짜:</span>
+                <span className="text-emerald-700 font-mono font-bold text-xs">2026.__.__</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 flex-1 bg-white p-2.5 rounded-xl border border-slate-200/80 text-xs">
+              <div>
+                <span className="font-bold text-slate-700 text-[10px] block">📌 핵심 기도 제목 (Prayer Topic):</span>
+                <div className="text-slate-400 font-serif text-xs min-h-[16px]">________________________________________________</div>
+              </div>
+              <div>
+                <span className="font-bold text-indigo-800 text-[10px] block">📖 붙잡을 말씀 & 묵상 구절 (Scripture):</span>
+                <div className="text-slate-400 font-serif text-xs min-h-[16px]">________________________________________________</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 4. Bottom Prayer Mantra Banner */}
+      <div className="border border-amber-200/90 rounded-2xl p-3 bg-amber-50/70 shadow-xs mb-2 space-y-1">
+        <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+          <span>💡 하나님의 때에 가장 선한 방법으로 응답하실 주님을 신뢰합니다</span>
+          <span className="text-amber-700 font-mono">Faith & Prayer</span>
+        </div>
+        <div className="border-b border-dashed border-amber-200 h-4 text-xs text-amber-900/80 font-serif">"아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로, 너희 구할 것을 감사함으로 하나님께 아뢰라 (빌 4:6)"</div>
+      </div>
+
+      {/* 5. Footer */}
+      <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
+        <span>PREMIUM DIARY STUDIO — PERSONAL PRAYER & GRACE ANSWER MASTER</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>

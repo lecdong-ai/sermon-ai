@@ -10,15 +10,27 @@ interface QtHabitTrackerPageProps {
   pageHeight?: number
 }
 
-const DEFAULT_HABITS = [
-  '💧 하루 물 2L 마시기',
-  '🏃 30분 수영 / 유산소 운동',
-  '📖 책 20페이지 읽기',
-  '🧘 10분 명상 & 스케줄 정리',
-  '🍏 영양제 & 과일 챙겨먹기',
-  '💻 몰입 포모도로 4세트',
-  '😴 11시 이전 취침 준비',
-  '✍️ 하루 감사 일기 작성',
+const HABIT_CATEGORIES = [
+  {
+    category: '🌅 MORNING RITUAL (아침 리추얼)',
+    color: 'bg-amber-500/10 border-amber-300 text-amber-900',
+    habits: ['💧 하루 시작 물 한 잔 & 10분 스트레칭', '☀️ 5분 확언 & 오늘 하루 감사 묵상'],
+  },
+  {
+    category: '💻 FOCUS & OUTPUT (몰입 & 성과)',
+    color: 'bg-indigo-500/10 border-indigo-300 text-indigo-900',
+    habits: ['🎯 하루 2시간 최우선 몰입 작업 (Deep Work)', '📖 책 20페이지 읽기 또는 좋은 글 필사'],
+  },
+  {
+    category: '🥗 WELLNESS & HEALTH (건강 & 웰니스)',
+    color: 'bg-emerald-500/10 border-emerald-300 text-emerald-900',
+    habits: ['🏃 30분 유산소/수영/만보 걷기', '🍏 영양제 챙겨먹기 & 건강식 섭취'],
+  },
+  {
+    category: '🌙 EVENING UNPLUG (저녁 리셋)',
+    color: 'bg-purple-500/10 border-purple-300 text-purple-900',
+    habits: ['✍️ 하루 성찰 & 3가지 감사 일기 작성', '🕯️ 11시 전 스마트폰 OFF & 딥슬립 취침'],
+  },
 ]
 
 export default function QtHabitTrackerPage({
@@ -42,95 +54,105 @@ export default function QtHabitTrackerPage({
       }}
     >
       {/* 1. Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
-          <span className="cursor-pointer hover:text-slate-600">YEARLY</span>
+      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
+        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
+          <span>YEARLY</span>
           <span>{year}</span>
-          <span className="px-1.5 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
+          <span className="px-2 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span className="hover:text-slate-600 cursor-pointer">HABIT</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-500 text-white font-bold shadow-xs">30-DAY HABIT TRACKER</span>
+          <span>30-DAY HABIT MASTER</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs">
+            🌱 30일 습관 & 루틴 성취 매트릭스
+          </span>
         </div>
       </div>
 
       {/* 2. Page Title */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
-            <span>🌱 {monthName} Habit & Routine Tracker</span>
+          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+            <span>🌱 {monthName} 30-Day Habit & Routine Master</span>
           </h1>
+          <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
+            아침, 몰입, 건강, 저녁 4대 영역별 습관을 31일간 체크하며 나만의 일상 시스템을 완성하세요.
+          </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs whitespace-nowrap" style={{ backgroundColor: themeColor }}>
-          {year}년 {monthName} 30일 습관 성취 매트릭스
+
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-emerald-950 bg-emerald-50 border border-emerald-200 shadow-xs whitespace-nowrap">
+          습관 성취 스트릭 마스터
         </div>
       </div>
 
-      {/* 3. Habit Grid Table */}
-      <div className="flex-1 flex flex-col justify-between space-y-3">
-        <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-50/30 flex-1 flex flex-col">
-          <div className="grid grid-cols-[180px_repeat(31,1fr)_50px] bg-slate-100 border-b border-slate-300 text-[10px] font-bold text-slate-700 text-center py-1.5">
-            <div className="text-left px-3">습관 / 루틴 목표</div>
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-              <div key={d} className="border-l border-slate-200">{d}</div>
-            ))}
-            <div className="border-l border-slate-300">달성</div>
-          </div>
-
-          <div className="flex-1 divide-y divide-slate-200 overflow-hidden flex flex-col justify-around">
-            {DEFAULT_HABITS.map((habit, idx) => (
-              <div key={idx} className="grid grid-cols-[180px_repeat(31,1fr)_50px] items-center text-[10px] bg-white hover:bg-slate-50/80 transition-colors py-1">
-                <div className="px-3 font-semibold text-slate-700 truncate">{habit}</div>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                  <div key={d} className="border-l border-slate-150 h-5 flex items-center justify-center text-slate-300 hover:text-emerald-500 cursor-pointer">
-                    ·
-                  </div>
-                ))}
-                <div className="border-l border-slate-300 font-bold text-slate-600 text-center">
-                  /31
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* 3. Habit Grid Table (4 Categories x 2 Habits = 8 Habits Grid) */}
+      <div className="border border-slate-300 rounded-2xl overflow-hidden bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
+        {/* Table Header */}
+        <div className="grid grid-cols-[200px_repeat(31,1fr)_55px] bg-slate-100 border-b border-slate-300 text-[9.5px] font-bold text-slate-700 text-center py-1.5">
+          <div className="text-left px-3 font-serif">🌱 카테고리 / 습관 목표</div>
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+            <div key={d} className="border-l border-slate-200/80 font-mono text-[8.5px]">{d}</div>
+          ))}
+          <div className="border-l border-slate-300 font-mono">달성률</div>
         </div>
 
-        {/* 4. Bottom Reflection & Mood Meter */}
-        <div className="grid grid-cols-12 gap-3 h-24">
-          <div className="col-span-8 border border-slate-300 rounded-xl p-2.5 bg-slate-50/50 flex flex-col justify-between">
-            <h4 className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
-              📝 이달의 습관 성찰 & 피드백 (Habit Review)
-            </h4>
-            <div className="space-y-1 text-[11px] text-slate-400 flex-1 mt-1">
-              <div className="border-b border-dashed border-slate-200 pb-1">· 가장 꾸준히 지킨 최고의 습관:</div>
-              <div className="border-b border-dashed border-slate-200 pb-1">· 다음 달 보완이 필요한 개선점:</div>
-            </div>
-          </div>
+        {/* Table Rows */}
+        <div className="flex-1 divide-y divide-slate-200 flex flex-col justify-between">
+          {HABIT_CATEGORIES.map((cat, cIdx) => (
+            <React.Fragment key={cIdx}>
+              {/* Category Header Row */}
+              <div className={`px-3 py-0.5 text-[8.5px] font-bold border-b border-slate-200 font-mono flex items-center justify-between ${cat.color}`}>
+                <span>{cat.category}</span>
+                <span className="opacity-70">Category #{cIdx + 1}</span>
+              </div>
 
-          <div className="col-span-4 border border-slate-300 rounded-xl p-2.5 bg-slate-50/50 flex flex-col justify-between">
-            <h4 className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
-              🔥 성취 만족도 스코어
-            </h4>
-            <div className="flex items-center justify-around flex-1 my-1">
-              {['⭐ 20%', '⭐ 40%', '⭐ 60%', '⭐ 80%', '🏆 100%'].map((score, sIdx) => (
-                <div key={sIdx} className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-1 rounded-md">
-                  {score}
+              {/* Habit Rows */}
+              {cat.habits.map((habit, hIdx) => (
+                <div key={hIdx} className="grid grid-cols-[200px_repeat(31,1fr)_55px] items-center text-[9px] bg-white hover:bg-slate-50/80 transition-colors py-1">
+                  <div className="px-3 font-semibold text-slate-700 truncate">{habit}</div>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <div key={d} className="border-l border-slate-150 h-5 flex items-center justify-center text-slate-300 hover:text-emerald-600 cursor-pointer">
+                      ·
+                    </div>
+                  ))}
+                  <div className="border-l border-slate-300 font-bold text-slate-600 text-center font-mono text-[8.5px]">
+                    __/31
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
+            </React.Fragment>
+          ))}
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-200 mt-2">
-        <span>Bunker Diary Collection · Habit Tracker</span>
-        <span>Page Habit-01</span>
+      {/* 4. Habit Scorecard & Reward Banner */}
+      <div className="grid grid-cols-12 gap-2 text-[9px]">
+        <div className="col-span-8 bg-emerald-50/60 border border-emerald-200 p-2 rounded-xl flex items-center justify-around font-mono font-bold text-[9px]">
+          <div className="text-center">
+            <span className="text-[7.5px] text-slate-400 block font-sans">총 달성 횟수</span>
+            <span className="text-emerald-800 text-xs">___ / 248회</span>
+          </div>
+          <div className="text-center border-l border-emerald-200 pl-3">
+            <span className="text-[7.5px] text-slate-400 block font-sans">월간 달성률</span>
+            <span className="text-indigo-800 text-xs">___%</span>
+          </div>
+          <div className="text-center border-l border-emerald-200 pl-3">
+            <span className="text-[7.5px] text-slate-400 block font-sans">최장 연속 불꽃 (Streak)</span>
+            <span className="text-amber-800 text-xs">🔥 __일 연속</span>
+          </div>
+        </div>
+        <div className="col-span-4 bg-white border border-slate-200 p-2 rounded-xl space-y-0.5">
+          <span className="text-[8px] font-bold text-slate-600 block">🏆 습관 80% 달성 시 스스로에게 줄 보상:</span>
+          <div className="text-slate-800 font-serif text-[8.5px] min-h-[14px]">____________________________________</div>
+        </div>
+      </div>
+
+      {/* 5. Footer */}
+      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 mt-1.5">
+        <span>PREMIUM DIARY STUDIO — 30-DAY HABIT & ROUTINE MASTER</span>
+        <span>{year} {monthName} Edition</span>
       </div>
     </div>
   )
