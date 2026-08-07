@@ -5,14 +5,15 @@ import PerfectGridNote from '../PerfectGridNote'
 import { getHolidaysAndFestivals } from '@/lib/holidays'
 
 interface QtMonthlyCalendarPortraitProps {
-  year: number
-  month: number
+  year?: number
+  month?: number
   monthName?: string
   themeColor?: string
   daysInMonth?: number
   startDayOfWeek?: number
   pageWidth?: number
   pageHeight?: number
+  isGeneralMode?: boolean
 }
 
 export default function QtMonthlyCalendarPortrait({
@@ -22,6 +23,7 @@ export default function QtMonthlyCalendarPortrait({
   themeColor = '#B8C6D9',
   pageWidth = 1024,
   pageHeight = 1448,
+  isGeneralMode = false,
 }: QtMonthlyCalendarPortraitProps) {
   const dateObj = new Date(year, month - 1, 1)
   const firstDay = dateObj.getDay()
@@ -60,7 +62,7 @@ export default function QtMonthlyCalendarPortrait({
           </span>
         </div>
         <span className="px-3 py-1 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xs">
-          📅 MONTHLY PLANNER
+          {isGeneralMode ? '🌿 GENERAL LIFE PLANNER' : '📅 MONTHLY PLANNER'}
         </span>
       </div>
 
@@ -68,13 +70,22 @@ export default function QtMonthlyCalendarPortrait({
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-4xl font-serif font-bold text-slate-900 tracking-wide">{monthName}</h1>
-          <p className="text-xs text-slate-500 mt-1">{year}년 {month}월 비전 & 은혜 플래너</p>
+          <p className="text-xs text-slate-500 mt-1">{year}년 {month}월 {isGeneralMode ? '갓생 비전 & 습관 플래너' : '비전 & 은혜 플래너'}</p>
         </div>
 
-        <div className="bg-gradient-to-r from-amber-50/80 via-rose-50/40 to-amber-50/80 border border-amber-200/90 rounded-xl px-4 py-2 text-right shadow-xs">
-          <span className="text-[9px] font-bold text-amber-800 uppercase block font-mono">MONTHLY SCRIPTURE</span>
+        <div className={`border rounded-xl px-4 py-2 text-right shadow-xs ${
+          isGeneralMode
+            ? 'bg-gradient-to-r from-emerald-50/80 via-teal-50/40 to-emerald-50/80 border-emerald-200'
+            : 'bg-gradient-to-r from-amber-50/80 via-rose-50/40 to-amber-50/80 border-amber-200'
+        }`}>
+          <span className={`text-[9px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-amber-800'}`}>
+            {isGeneralMode ? 'MONTHLY MOTIVATION' : 'MONTHLY SCRIPTURE'}
+          </span>
           <span className="text-xs font-serif font-semibold text-slate-800">
-            &quot;여호와는 나의 목자시니 내게 부족함이 없으리로다 (시편 23:1)&quot;
+            {isGeneralMode
+              ? '"작은 습관의 변화가 위대한 운명을 만든다 (아리스토텔레스)"'
+              : '"여호와는 나의 목자시니 내게 부족함이 없으리로다 (시편 23:1)"'
+            }
           </span>
         </div>
       </div>
@@ -99,20 +110,24 @@ export default function QtMonthlyCalendarPortrait({
           </div>
         </div>
 
-        {/* Spiritual Habits */}
-        <div className="border border-indigo-100 rounded-xl p-2.5 bg-indigo-50/20 space-y-1">
-          <div className="font-bold text-indigo-950 font-serif flex items-center justify-between border-b border-indigo-200 pb-0.5">
-            <span>✨ 영적 수련 & 습관 체크</span>
-            <span className="font-mono text-[10px] text-indigo-600">Disciplines</span>
+        {/* Spiritual / General Habits */}
+        <div className={`border rounded-xl p-2.5 space-y-1 ${
+          isGeneralMode ? 'border-emerald-100 bg-emerald-50/20' : 'border-indigo-100 bg-indigo-50/20'
+        }`}>
+          <div className={`font-bold font-serif flex items-center justify-between border-b pb-0.5 ${
+            isGeneralMode ? 'text-emerald-950 border-emerald-200' : 'text-indigo-950 border-indigo-200'
+          }`}>
+            <span>{isGeneralMode ? '✨ 갓생 습관 트래커' : '✨ 영적 수련 & 습관 체크'}</span>
+            <span className={`font-mono text-[10px] ${isGeneralMode ? 'text-emerald-700' : 'text-indigo-600'}`}>Habits</span>
           </div>
           <div className="space-y-1 text-xs text-slate-600 font-serif pt-0.5">
             <div className="flex justify-between items-center">
-              <span>📖 매일 말씀 QT & 기도</span>
-              <span className="font-mono text-indigo-700">□ □ □ □ □</span>
+              <span>{isGeneralMode ? '📖 매일 독서 30분' : '📖 매일 말씀 QT & 기도'}</span>
+              <span className={`font-mono ${isGeneralMode ? 'text-emerald-700' : 'text-indigo-700'}`}>□ □ □ □ □</span>
             </div>
             <div className="flex justify-between items-center">
-              <span>💖 하루 3감사 노트</span>
-              <span className="font-mono text-indigo-700">□ □ □ □ □</span>
+              <span>{isGeneralMode ? '🏃 건강 운동 / 스트레칭' : '💖 하루 3감사 노트'}</span>
+              <span className={`font-mono ${isGeneralMode ? 'text-emerald-700' : 'text-indigo-700'}`}>□ □ □ □ □</span>
             </div>
           </div>
         </div>
@@ -159,26 +174,31 @@ export default function QtMonthlyCalendarPortrait({
                       >
                         {dayNum}
                       </span>
-                      <span className="text-[9px] font-mono text-slate-300">Q/P</span>
+                      <span className="text-[9px] font-mono text-slate-300">
+                        {isGeneralMode ? 'H/G' : 'Q/P'}
+                      </span>
                     </div>
 
                     {holidays.length > 0 && (
                       <div className="flex flex-col gap-0.5 mt-1">
-                        {holidays.map((h, hIdx) => (
-                          <div
-                            key={hIdx}
-                            className={`text-[9px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
-                              h.isRedDay
-                                ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                                : h.type === 'christian'
-                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            }`}
-                            title={h.name}
-                          >
-                            {h.name}
-                          </div>
-                        ))}
+                        {holidays.map((h, hIdx) => {
+                          const isChristianTag = !isGeneralMode && h.type === 'christian'
+                          return (
+                            <div
+                              key={hIdx}
+                              className={`text-[9px] font-extrabold px-1 py-0.2 rounded truncate leading-tight tracking-tight ${
+                                h.isRedDay
+                                  ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                                  : isChristianTag
+                                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}
+                              title={h.name}
+                            >
+                              {h.name}
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                   </>
@@ -191,7 +211,7 @@ export default function QtMonthlyCalendarPortrait({
 
       {/* 5. Footer */}
       <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-300">
-        <span>PREMIUM DIARY STUDIO — MONTHLY CALENDAR MASTER</span>
+        <span>PREMIUM DIARY STUDIO — {isGeneralMode ? 'GENERAL LIFE PLANNER' : 'MONTHLY CALENDAR MASTER'}</span>
         <span>{year} {monthName} Edition</span>
       </div>
     </div>
