@@ -48,30 +48,25 @@ export default function QtDailyDiaryPage({
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      {/* 1. Top Navigation Bar (Header & PDF Hyperlink Index Tabs) */}
+      {/* 1. Top Navigation Bar (Header) */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         {/* Left Nav */}
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600 font-bold">YEARLY</span>
+          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
           <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">{yearLabel}</span>
           <span data-nav-target="calendar" className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold cursor-pointer">{monthName.toUpperCase().slice(0, 3)}</span>
         </div>
 
-        {/* Right PDF Interactive Navigation Index Tabs */}
-        <div className="flex items-center space-x-1.5 text-[10px] font-medium text-slate-500 font-mono">
-          <span data-nav-target="calendar" className="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">📅 CAL</span>
-          <span data-nav-target="overview" className="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">📊 OVV</span>
-          <span data-nav-target="habit" className="cursor-pointer px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold">🌱 HBT</span>
-          <span data-nav-target="budget" className="cursor-pointer px-1.5 py-0.5 rounded bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold">💰 BGT</span>
-          <span data-nav-target="culture" className="cursor-pointer px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold">🎬 CLT</span>
-          <span data-nav-target="kpt" className="cursor-pointer px-1.5 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold">🔄 KPT</span>
-          <span className="text-slate-300">|</span>
+        {/* Right Nav */}
+        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400 font-mono">
+          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">MONTHLY</span>
+          <span data-nav-target="overview" className="cursor-pointer hover:text-slate-600">OVERVIEW</span>
           {['W1', 'W2', 'W3', 'W4', 'W5'].map((w, idx) => (
             <span
               key={w}
               data-nav-target={`week-${idx + 1}`}
               className={`cursor-pointer px-1.5 py-0.5 rounded ${
-                activeWeek === w ? 'bg-slate-800 text-white font-bold shadow-2xs' : 'hover:bg-slate-100 text-slate-600'
+                activeWeek === w ? 'bg-slate-800 text-white font-bold shadow-2xs' : 'hover:text-slate-600'
               }`}
             >
               {w}
