@@ -131,10 +131,10 @@ const MONTH_NAMES = [
 ]
 
 const CATEGORY_COUNTS = {
-  all: 34,
-  general: 19, // 기본 4종 + 갓생라이프 15종
-  church: 19,  // 기본 4종 + 크리스천 영성 15종
-  basic: 4,
+  all: 35,
+  general: 20, // 기본 5종 + 갓생라이프 15종
+  church: 20,  // 기본 5종 + 크리스천 영성 15종
+  basic: 5,
 }
 
 export type PreviewTabType =
@@ -528,6 +528,7 @@ export default function DiaryPage() {
   const applyPreset = (presetType: 'general' | 'church' | 'basic' | 'all') => {
     if (presetType === 'general') {
       setSelectedPages({
+        yearlygrid: true,
         calendar: true,
         overview: true,
         weekly: true,
@@ -564,9 +565,10 @@ export default function DiaryPage() {
         fruitstracker: false,
       })
       setCategoryFilter('general')
-      setPreviewTab('buckettravel')
+      setPreviewTab('yearlygrid')
     } else if (presetType === 'church') {
       setSelectedPages({
+        yearlygrid: true,
         calendar: true,
         overview: true,
         weekly: true,
@@ -603,9 +605,10 @@ export default function DiaryPage() {
         fruitstracker: true,
       })
       setCategoryFilter('church')
-      setPreviewTab('intercessory')
+      setPreviewTab('yearlygrid')
     } else if (presetType === 'basic') {
       setSelectedPages({
+        yearlygrid: true,
         calendar: true,
         overview: true,
         weekly: true,
@@ -642,9 +645,10 @@ export default function DiaryPage() {
         fruitstracker: false,
       })
       setCategoryFilter('basic')
-      setPreviewTab('calendar')
+      setPreviewTab('yearlygrid')
     } else {
       setSelectedPages({
+        yearlygrid: true,
         calendar: true,
         overview: true,
         weekly: true,
@@ -1696,49 +1700,57 @@ export default function DiaryPage() {
           {selectedPages.hundredgoal2 && (
             <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.prayer && (
-            <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.prayer2 && (
-            <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.scripture && (
-            <ScriptureArtComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.scripture2 && (
-            <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.sermon && (
-            Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
-              <SundaySermonComponent key={`pdf-sermon-${sNo}`} year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 주일예배`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-            ))
-          )}
-          {selectedPages.biblemap && (
-            <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.biblemap2 && (
-            <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.letter && (
-            <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.letter2 && (
-            <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.intercessory && (
-            <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.intercessory2 && (
-            <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.soapjournal && (
-            <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.soapjournal2 && (
-            <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.fruitstracker && (
-            <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          {/* 5. 크리스천 영성 전용 내지 15종 (일반인 갓생 팩 선택 시 PDF 렌더링 100% 원천 차단) */}
+          {categoryFilter !== 'general' && (
+            <>
+              {selectedPages.prayer && (
+                <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.prayer2 && (
+                <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.scripture && (
+                <ScriptureArtComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.scripture2 && (
+                <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.sermon && (
+                Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
+                  <SundaySermonComponent key={`pdf-sermon-${sNo}`} year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 주일예배`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                ))
+              )}
+              {selectedPages.sermondeep && (
+                <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.biblemap && (
+                <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.biblemap2 && (
+                <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.letter && (
+                <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.letter2 && (
+                <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.intercessory && (
+                <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.intercessory2 && (
+                <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.soapjournal && (
+                <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.soapjournal2 && (
+                <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.fruitstracker && (
+                <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+            </>
           )}
         </div>
       </div>
