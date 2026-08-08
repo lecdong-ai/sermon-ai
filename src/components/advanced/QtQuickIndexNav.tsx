@@ -38,7 +38,7 @@ export default function QtQuickIndexNav({
       className="absolute right-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Core Section Tabs (YEAR, CAL, OVR - Zero Overlap with main page) */}
+      {/* 1. Core Section Tabs (YEAR, CAL, OVR - Zero Overlap) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
         {/* YEAR Tab */}
         <button
@@ -151,43 +151,39 @@ export default function QtQuickIndexNav({
       {/* Divider */}
       <div className="w-4 h-px bg-slate-200 my-0.5 self-center opacity-60" />
 
-      {/* 4. Refined Tracker Korean Labels: 🌱 습관 | ☀️ 감사 | 💰 가계 | 🔄 KPT */}
-      <div className="flex flex-col space-y-1 w-full items-end pr-0.5 font-sans">
+      {/* 4. Ultra-clean Simple English Tracker Tags (HABIT | THANKS | BUDGET | KPT) */}
+      <div className="flex flex-col space-y-1 w-full items-end pr-0.5">
         <button
           type="button"
           data-nav-target="habit"
-          className="h-4.5 px-1.5 rounded-l-md bg-emerald-700 text-white border-r-2 border-emerald-300 text-[7.5px] font-bold tracking-tight shadow-2xs hover:w-9.5 transition-all cursor-pointer flex items-center space-x-1"
-          title="습관 트래커"
+          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-emerald-300 border-r-2 border-emerald-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          title="Habit Tracker"
         >
-          <span>🌱</span>
-          <span>습관</span>
+          HABIT
         </button>
         <button
           type="button"
           data-nav-target="gratitude"
-          className="h-4.5 px-1.5 rounded-l-md bg-amber-600 text-white border-r-2 border-amber-300 text-[7.5px] font-bold tracking-tight shadow-2xs hover:w-9.5 transition-all cursor-pointer flex items-center space-x-1"
-          title="감사 일기"
+          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-amber-300 border-r-2 border-amber-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          title="Gratitude Journal"
         >
-          <span>☀️</span>
-          <span>감사</span>
+          THANKS
         </button>
         <button
           type="button"
           data-nav-target="budget"
-          className="h-4.5 px-1.5 rounded-l-md bg-teal-700 text-white border-r-2 border-teal-300 text-[7.5px] font-bold tracking-tight shadow-2xs hover:w-9.5 transition-all cursor-pointer flex items-center space-x-1"
-          title="지출 가계부"
+          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-teal-300 border-r-2 border-teal-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          title="Budget Tracker"
         >
-          <span>💰</span>
-          <span>가계</span>
+          BUDGET
         </button>
         <button
           type="button"
           data-nav-target="kpt"
-          className="h-4.5 px-1.5 rounded-l-md bg-indigo-700 text-white border-r-2 border-indigo-300 text-[7.5px] font-bold tracking-tight shadow-2xs hover:w-9.5 transition-all cursor-pointer flex items-center space-x-1"
-          title="KPT 회고"
+          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-indigo-300 border-r-2 border-indigo-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          title="KPT Review"
         >
-          <span>🔄</span>
-          <span>KPT</span>
+          KPT
         </button>
       </div>
     </div>

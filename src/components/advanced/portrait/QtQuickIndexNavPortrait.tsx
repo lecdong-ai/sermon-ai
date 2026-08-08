@@ -37,7 +37,7 @@ export default function QtQuickIndexNavPortrait({
       className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Ribbon: Main Section Buttons + Korean Emoji Tracker Tabs + Week Jumpers */}
+      {/* Upper Ribbon: Main Section Buttons + Clean English Tracker Tags + Week Jumpers */}
       <div className="flex items-center space-x-1.5 bg-white/95 px-2 py-1 rounded-xl border border-slate-200/90 shadow-sm backdrop-blur-xs">
         {/* Main Section Buttons */}
         <div className="flex items-center space-x-1">
@@ -86,43 +86,39 @@ export default function QtQuickIndexNavPortrait({
 
         <div className="h-3.5 w-px bg-slate-200" />
 
-        {/* Korean Emoji Tracker Tabs: 🌱 습관 | ☀️ 감사 | 💰 가계 | 🔄 KPT */}
-        <div className="flex items-center space-x-1 font-sans">
+        {/* Clean English Tracker Tags: HABIT | THANKS | BUDGET | KPT */}
+        <div className="flex items-center space-x-1">
           <button
             type="button"
             data-nav-target="habit"
-            className="px-1.5 py-0.5 rounded bg-emerald-700 text-white font-bold text-[7.5px] hover:bg-emerald-800 transition-colors cursor-pointer flex items-center space-x-0.5"
-            title="습관 트래커"
+            className="px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 font-black text-[7px] tracking-wider hover:text-white transition-colors cursor-pointer"
+            title="Habit Tracker"
           >
-            <span>🌱</span>
-            <span>습관</span>
+            HABIT
           </button>
           <button
             type="button"
             data-nav-target="gratitude"
-            className="px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold text-[7.5px] hover:bg-amber-700 transition-colors cursor-pointer flex items-center space-x-0.5"
-            title="감사 일기"
+            className="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-black text-[7px] tracking-wider hover:text-white transition-colors cursor-pointer"
+            title="Gratitude Journal"
           >
-            <span>☀️</span>
-            <span>감사</span>
+            THANKS
           </button>
           <button
             type="button"
             data-nav-target="budget"
-            className="px-1.5 py-0.5 rounded bg-teal-700 text-white font-bold text-[7.5px] hover:bg-teal-800 transition-colors cursor-pointer flex items-center space-x-0.5"
-            title="지출 가계부"
+            className="px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 font-black text-[7px] tracking-wider hover:text-white transition-colors cursor-pointer"
+            title="Budget Tracker"
           >
-            <span>💰</span>
-            <span>가계</span>
+            BUDGET
           </button>
           <button
             type="button"
             data-nav-target="kpt"
-            className="px-1.5 py-0.5 rounded bg-indigo-700 text-white font-bold text-[7.5px] hover:bg-indigo-800 transition-colors cursor-pointer flex items-center space-x-0.5"
-            title="KPT 회고"
+            className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-black text-[7px] tracking-wider hover:text-white transition-colors cursor-pointer"
+            title="KPT Review"
           >
-            <span>🔄</span>
-            <span>KPT</span>
+            KPT
           </button>
         </div>
 
