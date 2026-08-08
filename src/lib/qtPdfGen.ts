@@ -241,13 +241,24 @@ function addInteractiveLinks(
 }
 
 /**
- * ⚡ 연간 마스터 다이어리 청크 단위 PDF 생성기
- * - 메모리 과부하 없이 각 월/구간을 캔버스로 변환하여 jsPDF 인스턴스에 누적
+ * ⚡ 연간 마스터 다이어리 멀티 몬스(Multi-Month) 전용 헬퍼 함수군
  */
-export async function generateYearlyChunkedPdf(
+export function createMasterPdfDoc(sizeOption: string): { pdf: jsPDF; widthMm: number; heightMm: number } {
+  const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
+  const { widthMm, heightMm } = size
+  const pdf = new jsPDF({
+    orientation: widthMm > heightMm ? 'landscape' : 'portrait',
+    unit: 'mm',
+    format: [widthMm, heightMm],
+  })
+  return { pdf, widthMm, heightMm }
+}
+
+export async function appendContainerPagesToPdf(
+  pdf: jsPDF,
   container: HTMLDivElement,
   sizeOption: string,
-  onProgress?: (step: number, total: number, monthName: string) => void
+  state: { hasContent: boolean }
 ) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
@@ -268,29 +279,15 @@ export async function generateYearlyChunkedPdf(
     collectPages(allChildren[i])
   }
 
-  if (pages.length === 0) {
-    throw new Error('연간 다이어리 렌더링 페이지 요소를 찾을 수 없습니다.')
-  }
-
-  const pdf = new jsPDF({
-    orientation: widthMm > heightMm ? 'landscape' : 'portrait',
-    unit: 'mm',
-    format: [widthMm, heightMm],
-  })
+  if (pages.length === 0) return
 
   await document.fonts.ready
-  let hasContent = false
 
   for (let i = 0; i < pages.length; i++) {
     const pageEl = pages[i]
-    if (onProgress) {
-      const monthAttr = pageEl.getAttribute('data-month-name') || `페이지 ${i + 1}`
-      onProgress(i + 1, pages.length, monthAttr)
-    }
-
     try {
       const canvas = await toCanvas(pageEl, {
-        pixelRatio: 1.5, // 1.5배율로 메모리 절약 & 가독성 양립
+        pixelRatio: 1.5,
         cacheBust: true,
       })
 
@@ -303,22 +300,22 @@ export async function generateYearlyChunkedPdf(
       const drawX = isFullBleedPage ? 0 : marginSide
       const drawY = isFullBleedPage ? 0 : marginTop
 
-      if (hasContent) pdf.addPage([widthMm, heightMm])
+      if (state.hasContent) {
+        pdf.addPage([widthMm, heightMm])
+      }
       pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
-      hasContent = true
+      state.hasContent = true
 
-      // 강제 잠시 멈춤(UI 렌더링 보장 & 브라우저 가비지 컬렉터 휴식)
+      // 브라우저 가비지 컬렉터와 DOM 렌더링에 숨 돌릴 시간 30ms 부여
       await new Promise((resolve) => setTimeout(resolve, 30))
     } catch (e: any) {
-      console.warn(`[YearlyPdfGen] page ${i} failed:`, e?.message || e)
+      console.warn(`[MultiMonthPdfGen] page append failed:`, e?.message || e)
     }
   }
+}
 
-  if (!hasContent) {
-    throw new Error('연간 다이어리 PDF 생성에 실패했습니다.')
-  }
-
-  const filename = `Master_Diary_Yearly_${sizeOption.replace(/\s/g, '')}.pdf`
+export function saveMasterPdf(pdf: jsPDF, filename: string) {
   pdf.save(filename)
 }
+
 

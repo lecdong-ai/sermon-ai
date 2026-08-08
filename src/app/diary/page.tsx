@@ -84,7 +84,7 @@ import QtSoapJournalPortrait2 from '@/components/advanced/portrait/QtSoapJournal
 import QtFruitsTrackerPage from '@/components/advanced/QtFruitsTrackerPage'
 import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrackerPortrait'
 
-import { generateQtPdf, generateYearlyChunkedPdf } from '@/lib/qtPdfGen'
+import { generateQtPdf, createMasterPdfDoc, appendContainerPagesToPdf, saveMasterPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/diary/YearlyBuilderModal'
 
@@ -341,26 +341,67 @@ export default function DiaryPage() {
     }
   }
 
-  // 연간 마스터 다이어리 청크 일괄 생성 핸들러
+  // 연간 마스터 다이어리 청크 순차 일괄 생성 핸들러 (17개월 분할 렌더링)
   const handleStartYearlyMaster = async (cfg: YearlyMasterConfig) => {
     if (!pdfContainerRef.current) return
     setIsYearlyGenerating(true)
-    setYearlyProgress({ currentStep: 0, totalSteps: 1, currentMonthName: '시작 중...', percentage: 0 })
+
+    // 시작 연월부터 종료 연월까지 17개 월 목록 구축
+    const monthList: { year: number; month: number; label: string }[] = []
+    let currY = cfg.startYear
+    let currM = cfg.startMonth
+
+    while (currY < cfg.endYear || (currY === cfg.endYear && currM <= cfg.endMonth)) {
+      monthList.push({
+        year: currY,
+        month: currM,
+        label: `${currY}년 ${currM}월`
+      })
+      currM++
+      if (currM > 12) {
+        currM = 1
+        currY++
+      }
+    }
+
+    const totalSteps = monthList.length
+    setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '연간 PDF 엔진 가동 중...', percentage: 0 })
 
     try {
-      await generateYearlyChunkedPdf(
-        pdfContainerRef.current,
-        selectedSizeOption,
-        (step, total, monthName) => {
-          const pct = Math.round((step / total) * 100)
-          setYearlyProgress({
-            currentStep: step,
-            totalSteps: total,
-            currentMonthName: monthName,
-            percentage: pct,
-          })
+      const { pdf } = createMasterPdfDoc(selectedSizeOption)
+      const pdfState = { hasContent: false }
+
+      for (let i = 0; i < monthList.length; i++) {
+        const target = monthList[i]
+        const pct = Math.round(((i + 1) / totalSteps) * 100)
+        setYearlyProgress({
+          currentStep: i + 1,
+          totalSteps,
+          currentMonthName: `${target.label} 다이어리 렌더링 중...`,
+          percentage: pct,
+        })
+
+        // 1. 상태(연도, 월) 변경하여 해당 월 DOM 새로 그리기
+        setSelectedYear(target.year)
+        setSelectedMonth(target.month)
+
+        // 2. React DOM 렌더링 완성 대기 (350ms)
+        await new Promise((resolve) => setTimeout(resolve, 350))
+
+        // 3. 현재 월 DOM 페이지들을 PDF 인스턴스에 순차 캡처 추가
+        if (pdfContainerRef.current) {
+          await appendContainerPagesToPdf(pdf, pdfContainerRef.current, selectedSizeOption, pdfState)
         }
-      )
+      }
+
+      if (pdfState.hasContent) {
+        saveMasterPdf(
+          pdf,
+          `Master_Diary_${cfg.startYear}.${String(cfg.startMonth).padStart(2, '0')}-${cfg.endYear}.${String(cfg.endMonth).padStart(2, '0')}.pdf`
+        )
+      } else {
+        alert('렌더링할 다이어리 페이지가 없습니다.')
+      }
     } catch (e: any) {
       console.error(e)
       alert(`연간 마스터 PDF 생성 실패: ${e?.message || '알 수 없는 오류'}`)
