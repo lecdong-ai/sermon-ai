@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
 
 interface QtFruitsTrackerPortraitProps {
   year?: number
