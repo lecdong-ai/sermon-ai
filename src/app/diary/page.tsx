@@ -1119,42 +1119,71 @@ export default function DiaryPage() {
 
         {/* Right Studio Live Canvas Panel (8 cols) */}
         <div className="col-span-12 lg:col-span-8 flex flex-col items-center justify-start">
-          {/* Top Canvas Toolbar */}
-          <div className="w-full flex items-center justify-between mb-3 px-1 text-xs text-slate-400">
-            <div className="flex items-center gap-3">
-              <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                스튜디오 캔버스
-              </span>
-              <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                {sizeLabel} ({pageWidth} × {pageHeight}px)
-              </span>
+          {/* Top Canvas Toolbar with Quick Preview Navigator Chips */}
+          <div className="w-full space-y-2 mb-3 px-1 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  스튜디오 라이브 캔버스
+                </span>
+                <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                  {sizeLabel} ({pageWidth} × {pageHeight}px)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Eco print toggle button */}
+                <button
+                  onClick={() => setIsEcoPrint(!isEcoPrint)}
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                    isEcoPrint
+                      ? 'bg-emerald-600/20 border-emerald-400 text-emerald-300'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>🌿 잉크 절약:</span>
+                  <span>{isEcoPrint ? 'ON (순백색)' : 'OFF (컬러)'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setModalActiveTab(previewTab)
+                    setIsFullscreenModalOpen(true)
+                  }}
+                  className="text-amber-400 hover:text-amber-300 font-bold text-[11px] flex items-center gap-1 transition-all hover:underline"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  전체화면 팝업
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Eco print toggle button */}
-              <button
-                onClick={() => setIsEcoPrint(!isEcoPrint)}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1.5 ${
-                  isEcoPrint
-                    ? 'bg-emerald-600/20 border-emerald-400 text-emerald-300'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>🌿 잉크 절약:</span>
-                <span>{isEcoPrint ? 'ON (순백색)' : 'OFF (컬러)'}</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setModalActiveTab(previewTab)
-                  setIsFullscreenModalOpen(true)
-                }}
-                className="text-amber-400 hover:text-amber-300 font-bold text-[11px] flex items-center gap-1 transition-all hover:underline"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-                전체화면 팝업
-              </button>
+            {/* Quick Preview Switcher Chips */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none text-[11px] font-extrabold">
+              {[
+                { id: 'yearlygrid', label: '📅 연간 캘린더 (YEAR)' },
+                { id: 'wallcalendar', label: '🖼️ 연간 벽달력 (WALL)' },
+                { id: 'calendar', label: '🗓️ 월간 달력 (CAL)' },
+                { id: 'overview', label: '📑 월간 개요 (OVR)' },
+                { id: 'habit', label: '🌱 습관 (HABIT)' },
+                { id: 'budget', label: '💰 가계부 (CASH)' },
+                { id: 'kpt', label: '🔄 KPT (회고)' },
+                { id: 'weekly', label: '📋 주간 계획 (WEEK)' },
+                { id: 'daily', label: '📓 일간 일기 (DAY)' },
+              ].map((chip) => (
+                <button
+                  key={chip.id}
+                  onClick={() => setPreviewTab(chip.id as any)}
+                  className={`px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all cursor-pointer ${
+                    previewTab === chip.id
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-xs font-black scale-105'
+                      : 'bg-slate-900/80 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
             </div>
           </div>
 
