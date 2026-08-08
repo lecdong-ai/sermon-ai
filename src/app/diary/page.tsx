@@ -151,7 +151,7 @@ export default function DiaryPage() {
   const [activeThemeCategory, setActiveThemeCategory] = useState<'watercolor' | 'modern'>('watercolor')
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
-  const [previewTab, setPreviewTab] = useState<PreviewTabType>('habit')
+  const [previewTab, setPreviewTab] = useState<PreviewTabType>('yearlygrid')
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'general' | 'church' | 'basic'>('all')
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
@@ -1810,7 +1810,8 @@ export default function DiaryPage() {
               {/* Template Buttons */}
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  // 1. 기본 4종 (언제나 포함)
+                  // 1. 기본 5종 (언제나 포함)
+                  { id: 'yearlygrid', label: '✨ 12개월 연간달력' },
                   { id: 'calendar', label: '📅 월간 달력' },
                   { id: 'overview', label: '📊 월간 개요' },
                   { id: 'weekly', label: '📆 주간 계획' },
@@ -1944,6 +1945,7 @@ export default function DiaryPage() {
               {/* Grid Page Checklist */}
               <div className="grid grid-cols-2 gap-1.5 text-xs">
                 {[
+                  { id: 'yearlygrid', label: '✨ 12개월 연간달력' },
                   { id: 'calendar', label: '📅 월간 달력' },
                   { id: 'overview', label: '📊 월간 개요' },
                   { id: 'weekly', label: '📆 주간 계획' },
