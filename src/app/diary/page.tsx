@@ -850,91 +850,98 @@ export default function DiaryPage() {
   return (
     <DiaryPeriodProvider periodMonths={diaryPeriodMonths} currentYear={selectedYear} currentMonth={selectedMonth}>
       <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* 1. Glassmorphic Top Studio Bar */}
-      <header className="sticky top-0 z-40 px-6 py-3.5 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between shadow-2xl">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/advanced/qt"
-            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-medium group"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
-            고급 큐티 스튜디오
-          </Link>
-          <div className="h-4 w-px bg-white/10" />
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-amber-500 p-0.5 shadow-lg shadow-indigo-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-indigo-300" />
+      {/* 1. Divine Luxury Top Studio Bar (Centered Balance & State-of-the-Art Glassmorphism) */}
+      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/85 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+        <div className="max-w-[1600px] mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+          
+          {/* Left Studio Title & Back Link */}
+          <div className="flex items-center space-x-3.5">
+            <Link
+              href="/advanced/qt"
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition-all duration-200 flex items-center gap-1.5 text-xs font-semibold shadow-inner group hover:border-indigo-400/40"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-indigo-400 group-hover:-translate-x-1 transition-transform" />
+              <span>QT 스튜디오</span>
+            </Link>
+
+            <div className="h-4 w-px bg-white/15" />
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 via-indigo-500 to-purple-600 p-0.5 shadow-lg shadow-indigo-500/25">
+                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-sm font-extrabold text-white tracking-tight flex items-center gap-2">
+                  다이어리 제작 스튜디오
+                  <span className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 tracking-wider">
+                    STUDIO 2.5
+                  </span>
+                </h1>
+                <p className="text-[10px] text-slate-400 font-medium tracking-tight">
+                  {selectedYear}.{String(selectedMonth).padStart(2, '0')} · {sizeLabel} · 내지 {activeSelectedCount}종 선택 ({estimatedPdfPages}p)
+                </p>
               </div>
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                커스텀 다이어리 제작 스튜디오
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  v2.5 Studio Edition
-                </span>
-              </h1>
-              <p className="text-[10px] text-slate-400 font-medium">
-                {selectedYear}년 {selectedMonth}월 · {sizeLabel} · 선택된 내지 {activeSelectedCount}종 (예상 {estimatedPdfPages}p)
-              </p>
-            </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2.5">
-          {/* 미리보기 양식 선택 플로팅 창 토글 버튼 */}
-          <button
-            onClick={() => setShowPreviewFloating(!showPreviewFloating)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border shadow-md ${
-              showPreviewFloating
-                ? 'bg-indigo-600 border-indigo-400 text-white shadow-indigo-500/20'
-                : 'bg-white/5 hover:bg-white/10 text-slate-400 border-white/10 hover:text-white'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5 text-indigo-300" />
-            <span>미리보기 패널</span>
-          </button>
+          {/* Center-Gathered Luxury Action Buttons (Divine Studio Toolbar) */}
+          <div className="flex items-center justify-center flex-wrap gap-2 mx-auto lg:mx-0">
+            {/* 미리보기 패널 토글 버튼 */}
+            <button
+              onClick={() => setShowPreviewFloating(!showPreviewFloating)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border cursor-pointer ${
+                showPreviewFloating
+                  ? 'bg-indigo-600/90 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.02]'
+                  : 'bg-slate-900/90 text-slate-300 border-white/10 hover:border-indigo-400/50 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5 text-indigo-300" />
+              <span>미리보기 패널</span>
+            </button>
 
-          {/* 내지 구성 선택 플로팅 창 토글 버튼 */}
-          <button
-            onClick={() => setShowPageCheckerFloating(!showPageCheckerFloating)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border shadow-md ${
-              showPageCheckerFloating
-                ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-amber-500/20'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>내지 구성 ({activeSelectedCount}종)</span>
-          </button>
+            {/* 내지 구성 선택 플로팅 창 토글 버튼 */}
+            <button
+              onClick={() => setShowPageCheckerFloating(!showPageCheckerFloating)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border cursor-pointer ${
+                showPageCheckerFloating
+                  ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[1.02]'
+                  : 'bg-slate-900/90 text-slate-300 border-white/10 hover:border-amber-400/50 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <span>내지 구성 ({activeSelectedCount}종)</span>
+            </button>
 
-          {/* 전체화면 팝업 뷰어 버튼 */}
-          <button
-            onClick={() => setIsFullscreenModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all shadow-md hover:shadow-amber-500/10"
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
-            전체화면 팝업 뷰어
-          </button>
+            {/* 전체화면 팝업 뷰어 버튼 */}
+            <button
+              onClick={() => setIsFullscreenModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-amber-500/10 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all duration-200 shadow-md hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:scale-[1.02] cursor-pointer"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+              <span>전체화면 팝업</span>
+            </button>
 
-          {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
-          <button
-            onClick={() => setIsYearlyModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-400/40 text-xs font-extrabold transition-all shadow-lg shadow-amber-500/10 animate-pulse"
-          >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>✨ 연간 일괄 제작 (2026~2027)</span>
-          </button>
+            {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
+            <button
+              onClick={() => setIsYearlyModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-indigo-500/20 hover:from-amber-500/30 hover:to-indigo-500/30 text-amber-300 border border-amber-400/50 text-xs font-black transition-all duration-200 shadow-lg shadow-amber-500/15 hover:scale-[1.02] cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>✨ 연간 일괄 제작</span>
+            </button>
 
-          {/* PDF 다운로드 버튼 */}
-          <button
-            onClick={handleDownloadFullPdf}
-            disabled={isPdfGenerating}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] hover:bg-right transition-all duration-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 border border-indigo-300/30 disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            {isPdfGenerating ? 'PDF 제작 중...' : `월간 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}
-          </button>
+            {/* PDF 다운로드 메인 CTA 버튼 */}
+            <button
+              onClick={handleDownloadFullPdf}
+              disabled={isPdfGenerating}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-indigo-600 hover:from-amber-300 hover:to-indigo-500 text-slate-950 font-black text-xs shadow-[0_0_25px_rgba(245,158,11,0.35)] border border-amber-200 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer ml-1"
+            >
+              <Download className="w-4 h-4 text-slate-950" />
+              <span>{isPdfGenerating ? 'PDF 제작 중...' : `월간 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}</span>
+            </button>
+          </div>
         </div>
       </header>
 
