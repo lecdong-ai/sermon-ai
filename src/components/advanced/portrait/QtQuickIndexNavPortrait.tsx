@@ -7,22 +7,23 @@ interface QtQuickIndexNavPortraitProps {
   currentWeek?: number
   activeTab?: 'yearlygrid' | 'calendar' | 'overview' | 'weekly' | 'daily' | 'tracker'
   themeColor?: string
-  isChristian?: boolean // 일반인 / 크리스천 스마트 구분
+  isChristian?: boolean
 }
 
+// 12개월 영문 3글자 약자 (Jan ~ Dec)
 const SEASONAL_MONTH_COLORS: Record<number, { bg: string; text: string; label: string }> = {
-  1: { bg: '#8395A7', text: '#FFFFFF', label: '01' },
-  2: { bg: '#95A5A6', text: '#FFFFFF', label: '02' },
-  3: { bg: '#D4A5B7', text: '#FFFFFF', label: '03' },
-  4: { bg: '#C896A6', text: '#FFFFFF', label: '04' },
-  5: { bg: '#96B396', text: '#FFFFFF', label: '05' },
-  6: { bg: '#7BA493', text: '#FFFFFF', label: '06' },
-  7: { bg: '#6B9DB9', text: '#FFFFFF', label: '07' },
-  8: { bg: '#7895B2', text: '#FFFFFF', label: '08' },
-  9: { bg: '#BE9B7B', text: '#FFFFFF', label: '09' },
-  10: { bg: '#B07D62', text: '#FFFFFF', label: '10' },
-  11: { bg: '#8E6E6E', text: '#FFFFFF', label: '11' },
-  12: { bg: '#657786', text: '#FFFFFF', label: '12' },
+  1: { bg: '#8395A7', text: '#FFFFFF', label: 'Jan' },
+  2: { bg: '#95A5A6', text: '#FFFFFF', label: 'Feb' },
+  3: { bg: '#D4A5B7', text: '#FFFFFF', label: 'Mar' },
+  4: { bg: '#C896A6', text: '#FFFFFF', label: 'Apr' },
+  5: { bg: '#96B396', text: '#FFFFFF', label: 'May' },
+  6: { bg: '#7BA493', text: '#FFFFFF', label: 'Jun' },
+  7: { bg: '#6B9DB9', text: '#FFFFFF', label: 'Jul' },
+  8: { bg: '#7895B2', text: '#FFFFFF', label: 'Aug' },
+  9: { bg: '#BE9B7B', text: '#FFFFFF', label: 'Sep' },
+  10: { bg: '#B07D62', text: '#FFFFFF', label: 'Oct' },
+  11: { bg: '#8E6E6E', text: '#FFFFFF', label: 'Nov' },
+  12: { bg: '#657786', text: '#FFFFFF', label: 'Dec' },
 }
 
 export default function QtQuickIndexNavPortrait({
@@ -39,7 +40,7 @@ export default function QtQuickIndexNavPortrait({
       className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Ultra-Slim Weeks */}
+      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Active Prominent Weeks */}
       <div className="flex items-center space-x-1 bg-white/95 px-1.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs backdrop-blur-xs">
         {/* Main Section Buttons */}
         <div className="flex items-center space-x-0.5">
@@ -48,8 +49,8 @@ export default function QtQuickIndexNavPortrait({
             data-nav-target="yearlygrid"
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
               activeTab === 'yearlygrid'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
+                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
             }`}
             title="연간 캘린더"
           >
@@ -61,8 +62,8 @@ export default function QtQuickIndexNavPortrait({
             data-nav-target="calendar"
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
               activeTab === 'calendar'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
+                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
             }`}
             title="월간 달력"
           >
@@ -74,8 +75,8 @@ export default function QtQuickIndexNavPortrait({
             data-nav-target="overview"
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
               activeTab === 'overview'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
+                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
             }`}
             title="월간 개요"
           >
@@ -85,7 +86,7 @@ export default function QtQuickIndexNavPortrait({
 
         <div className="h-3 w-px bg-slate-200" />
 
-        {/* Separated Sub-Tracker Tags for General Users vs Christian Users */}
+        {/* Separated Sub-Tracker Tags */}
         <div className="flex items-center space-x-0.5">
           {isChristian ? (
             <>
@@ -162,7 +163,7 @@ export default function QtQuickIndexNavPortrait({
 
         <div className="h-3 w-px bg-slate-200" />
 
-        {/* Ultra-Slim Week Direct Jumpers */}
+        {/* Week Direct Jumpers (Active week W1~W5 is larger & prominent) */}
         <div className="flex items-center space-x-0.5">
           {[1, 2, 3, 4, 5].map((wNo) => {
             const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -172,10 +173,10 @@ export default function QtQuickIndexNavPortrait({
                 type="button"
                 data-nav-target={`week-${wNo}`}
                 data-week={wNo}
-                className={`px-1 py-0.5 rounded text-[7px] font-bold transition-all cursor-pointer ${
+                className={`px-1.5 py-0.5 rounded text-[7.5px] font-bold transition-all cursor-pointer ${
                   isCurrentW
-                    ? 'bg-slate-900 text-white font-black shadow-2xs border-b border-amber-400'
-                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-800'
+                    ? 'bg-slate-900 text-white font-black shadow-md border-b-2 border-amber-300 scale-110 z-10'
+                    : 'text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100 hover:text-slate-800'
                 }`}
               >
                 W{wNo}
@@ -185,7 +186,7 @@ export default function QtQuickIndexNavPortrait({
         </div>
       </div>
 
-      {/* Lower Ribbon: Muted 12-Month Palette */}
+      {/* Lower Ribbon: Muted 12-Month Palette with 3-letter English Month (Jan ~ Dec) */}
       <div className="flex items-center space-x-0.5 bg-white/95 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isSelectedM = currentMonth === mNum
@@ -199,8 +200,8 @@ export default function QtQuickIndexNavPortrait({
               data-nav-target={`month-${mNum}`}
               className={`py-0.5 text-center transition-all relative cursor-pointer ${
                 isSelectedM
-                  ? 'w-4.5 text-[7.5px] text-white font-black shadow-2xs border-b border-amber-300 rounded'
-                  : 'w-3.5 text-[7px] text-slate-500 opacity-55 hover:opacity-100 hover:w-4'
+                  ? 'w-5 text-[8px] text-white font-black shadow-2xs border-b border-amber-300 rounded scale-105 z-10'
+                  : 'w-4 text-[7px] text-slate-500 opacity-60 hover:opacity-100 hover:w-4.5'
               }`}
               style={{
                 backgroundColor: isSelectedM ? palette.bg : undefined,
