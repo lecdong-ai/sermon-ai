@@ -40,7 +40,7 @@ export default function QtQuickIndexNavPortrait({
       className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Active Prominent Weeks */}
+      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Active Prominent Weeks (Week1 ~ Week5) */}
       <div className="flex items-center space-x-1 bg-white/95 px-1.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs backdrop-blur-xs">
         {/* Main Section Buttons */}
         <div className="flex items-center space-x-0.5">
@@ -163,7 +163,7 @@ export default function QtQuickIndexNavPortrait({
 
         <div className="h-3 w-px bg-slate-200" />
 
-        {/* Week Direct Jumpers (Active week W1~W5 is larger & prominent) */}
+        {/* Week Direct Jumpers (Week1 ~ Week5) */}
         <div className="flex items-center space-x-0.5">
           {[1, 2, 3, 4, 5].map((wNo) => {
             const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -175,18 +175,18 @@ export default function QtQuickIndexNavPortrait({
                 data-week={wNo}
                 className={`px-1.5 py-0.5 rounded text-[7.5px] font-bold transition-all cursor-pointer ${
                   isCurrentW
-                    ? 'bg-slate-900 text-white font-black shadow-md border-b-2 border-amber-300 scale-110 z-10'
+                    ? 'bg-slate-900 text-white font-black shadow-md border-b-2 border-amber-300 scale-105 z-10'
                     : 'text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100 hover:text-slate-800'
                 }`}
               >
-                W{wNo}
+                Week{wNo}
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* Lower Ribbon: Muted 12-Month Palette with 3-letter English Month (Jan ~ Dec) */}
+      {/* Lower Ribbon: Muted 12-Month Palette (Jan ~ Dec) */}
       <div className="flex items-center space-x-0.5 bg-white/95 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isSelectedM = currentMonth === mNum
