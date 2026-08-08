@@ -26,6 +26,15 @@ const SEASONAL_MONTH_COLORS: Record<number, { bg: string; text: string; label: s
   12: { bg: '#657786', text: '#FFFFFF', label: 'Dec' },
 }
 
+// 1주차~5주차 정교한 파스텔 톤 팔레트
+const WEEK_PASTEL_COLORS: Record<number, { bg: string; activeBg: string; text: string; activeText: string }> = {
+  1: { bg: '#F7E9DD', activeBg: '#D89664', text: '#7A4A28', activeText: '#FFFFFF' }, // Week1 Warm Amber
+  2: { bg: '#E4ECF4', activeBg: '#7A97B6', text: '#344E6B', activeText: '#FFFFFF' }, // Week2 Slate Blue
+  3: { bg: '#E4F1E9', activeBg: '#76A68D', text: '#2C5440', activeText: '#FFFFFF' }, // Week3 Sage Mint
+  4: { bg: '#F7E7EC', activeBg: '#C77F92', text: '#6D3444', activeText: '#FFFFFF' }, // Week4 Dusty Rose
+  5: { bg: '#EBE9F5', activeBg: '#8A83AB', text: '#3E375C', activeText: '#FFFFFF' }, // Week5 Soft Lavender
+}
+
 export default function QtQuickIndexNav({
   currentMonth = 8,
   currentWeek = 1,
@@ -87,36 +96,7 @@ export default function QtQuickIndexNav({
 
       {/* 2. 12-Month Palette Tabs (Jan ~ Dec) */}
       <div className="flex flex-col space-y-0.5 w-full items-end my-auto">
-        {[1, 2, 3, 4, 5].map((mNum) => {
-          const isCurrent = currentMonth === mNum
-          const isToday = todayMonth === mNum
-          const colInfo = SEASONAL_MONTH_COLORS[mNum]
-
-          return (
-            <button
-              key={`m-${mNum}`}
-              type="button"
-              data-nav-target={`month-${mNum}`}
-              data-month={mNum}
-              className={`h-4.5 rounded-l-xs text-[7.5px] font-extrabold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
-                isCurrent
-                  ? 'w-10 text-white font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-                  : 'w-7.5 opacity-60 hover:opacity-100 hover:w-9'
-              }`}
-              style={{
-                backgroundColor: colInfo.bg,
-                color: colInfo.text,
-              }}
-              title={`${mNum}월 (${colInfo.label}) 플래너로 이동`}
-            >
-              <span>{colInfo.label}</span>
-              {isToday && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
-              )}
-            </button>
-          )
-        })}
-        {[6, 7, 8, 9, 10, 11, 12].map((mNum) => {
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isCurrent = currentMonth === mNum
           const isToday = todayMonth === mNum
           const colInfo = SEASONAL_MONTH_COLORS[mNum]
@@ -150,21 +130,26 @@ export default function QtQuickIndexNav({
       {/* Divider */}
       <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 3. Week Direct Jumpers (Week1 ~ Week5 - Clean English Labels) */}
+      {/* 3. Week Direct Jumpers with Individual Pastel Palette (Week1 ~ Week5) */}
       <div className="flex flex-col space-y-0.5 w-full items-end">
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
+          const wColor = WEEK_PASTEL_COLORS[wNo]
           return (
             <button
               key={`w-${wNo}`}
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`h-4 rounded-l-xs text-[7px] font-extrabold flex items-center justify-center transition-all cursor-pointer ${
+              className={`h-4 rounded-l-xs text-[7.5px] font-black flex items-center justify-center transition-all cursor-pointer ${
                 isCurrentW
-                  ? 'w-10 bg-slate-900 text-white font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-                  : 'w-7.5 bg-slate-100/80 text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-9'
+                  ? 'w-10 font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
+                  : 'w-7.5 opacity-80 hover:opacity-100 hover:w-9 font-bold'
               }`}
+              style={{
+                backgroundColor: isCurrentW ? wColor.activeBg : wColor.bg,
+                color: isCurrentW ? wColor.activeText : wColor.text,
+              }}
               title={`${wNo}주차 (Week${wNo}) 주간 계획`}
             >
               Week{wNo}
