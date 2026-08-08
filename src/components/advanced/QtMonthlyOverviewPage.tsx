@@ -45,7 +45,7 @@ export default function QtMonthlyOverviewPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 52px 20px 24px',
+        padding: '20px 48px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}

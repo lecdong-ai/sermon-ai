@@ -22,7 +22,7 @@ export default function QtQuickIndexNav({
 }: QtQuickIndexNavProps) {
   return (
     <div
-      className="absolute right-2 top-4 bottom-4 w-11 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
+      className="absolute right-0.5 top-4 bottom-4 w-11 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
       {/* Upper Main Section Tabs (YR, CAL, OVR - Shifted slightly left for easy tapping) */}
