@@ -252,13 +252,13 @@ export default function DiaryPage() {
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<1 | 2 | 3>(1)
   const [modalFullMaster, setModalFullMaster] = useState(false)
 
-  // ★ 사용자가 지정한 시작 연월 ~ 종료 연월의 전체 기간 월 목록 동적 계산 (예: 2026.08 ~ 2027.12 = 17개월 전체)
+  // ★ 현재 선택된 연월(예: 2026.08)부터 12개월치 전체 연간 기간 월 목록 동적 계산
   const activePeriodMonths = useMemo(() => {
     const list: { year: number; month: number; label: string }[] = []
-    let currY = yearlyConfig.startYear
-    let currM = yearlyConfig.startMonth
+    let currY = selectedYear
+    let currM = selectedMonth
 
-    while (currY < yearlyConfig.endYear || (currY === yearlyConfig.endYear && currM <= yearlyConfig.endMonth)) {
+    for (let i = 0; i < 12; i++) {
       list.push({
         year: currY,
         month: currM,
@@ -271,7 +271,7 @@ export default function DiaryPage() {
       }
     }
     return list
-  }, [yearlyConfig.startYear, yearlyConfig.startMonth, yearlyConfig.endYear, yearlyConfig.endMonth])
+  }, [selectedYear, selectedMonth])
 
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
