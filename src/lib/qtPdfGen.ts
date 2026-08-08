@@ -241,9 +241,28 @@ function addInteractiveLinks(
 }
 
 /**
- * ⚡ 연간 마스터 다이어리 멀티 몬스(Multi-Month) 전용 헬퍼 함수군
+ * ⚡ 연간 마스터 다이어리 멀티 몬스(Multi-Month) 전용 2-Pass 스마트 하이퍼링크 캡처 엔진
  */
-export function createMasterPdfDoc(sizeOption: string): { pdf: jsPDF; widthMm: number; heightMm: number } {
+export interface MasterPdfContext {
+  pdf: jsPDF
+  widthMm: number
+  heightMm: number
+  currentPageIndex: number
+  pageTargetMap: Record<string, number>
+  pendingLinks: {
+    pdfPageIndex: number
+    pageEl: HTMLElement
+    drawX: number
+    drawY: number
+    drawW: number
+    drawH: number
+    year: number
+    month: number
+  }[]
+  hasContent: boolean
+}
+
+export function createMasterPdfContext(sizeOption: string): MasterPdfContext {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
   const pdf = new jsPDF({
@@ -251,14 +270,23 @@ export function createMasterPdfDoc(sizeOption: string): { pdf: jsPDF; widthMm: n
     unit: 'mm',
     format: [widthMm, heightMm],
   })
-  return { pdf, widthMm, heightMm }
+  return {
+    pdf,
+    widthMm,
+    heightMm,
+    currentPageIndex: 0,
+    pageTargetMap: {},
+    pendingLinks: [],
+    hasContent: false,
+  }
 }
 
-export async function appendContainerPagesToPdf(
-  pdf: jsPDF,
+export async function appendContainerPagesToMasterPdf(
+  ctx: MasterPdfContext,
   container: HTMLDivElement,
   sizeOption: string,
-  state: { hasContent: boolean }
+  year: number,
+  month: number
 ) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
@@ -285,6 +313,33 @@ export async function appendContainerPagesToPdf(
 
   for (let i = 0; i < pages.length; i++) {
     const pageEl = pages[i]
+    ctx.currentPageIndex += 1
+    const pageNum = ctx.currentPageIndex
+
+    // 1-Pass: 고유 Page Target Key 수집 & 인덱싱
+    const pageKey = pageEl.getAttribute('data-page-key')
+    const dayKey = pageEl.getAttribute('data-day')
+    const weekKey = pageEl.getAttribute('data-week')
+
+    if (pageKey) {
+      ctx.pageTargetMap[`${year}-${month}-${pageKey}`] = pageNum
+      if (!ctx.pageTargetMap[pageKey]) ctx.pageTargetMap[pageKey] = pageNum
+    }
+    if (dayKey) {
+      ctx.pageTargetMap[`${year}-${month}-day-${dayKey}`] = pageNum
+      if (!ctx.pageTargetMap[`day-${dayKey}`]) ctx.pageTargetMap[`day-${dayKey}`] = pageNum
+    }
+    if (weekKey) {
+      ctx.pageTargetMap[`${year}-${month}-week-${weekKey}`] = pageNum
+      if (!ctx.pageTargetMap[`week-${weekKey}`]) ctx.pageTargetMap[`week-${weekKey}`] = pageNum
+    }
+
+    // 월별 달력 첫 페이지를 대표 월 인덱스로 등록
+    if (pageKey === 'calendar') {
+      ctx.pageTargetMap[`month-${month}`] = pageNum
+      ctx.pageTargetMap[`month-${year}-${month}`] = pageNum
+    }
+
     try {
       const canvas = await toCanvas(pageEl, {
         pixelRatio: 1.5,
@@ -300,16 +355,98 @@ export async function appendContainerPagesToPdf(
       const drawX = isFullBleedPage ? 0 : marginSide
       const drawY = isFullBleedPage ? 0 : marginTop
 
-      if (state.hasContent) {
-        pdf.addPage([widthMm, heightMm])
+      if (ctx.hasContent) {
+        ctx.pdf.addPage([widthMm, heightMm])
       }
-      pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
-      state.hasContent = true
+      ctx.pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
+      ctx.hasContent = true
 
-      // 브라우저 가비지 컬렉터와 DOM 렌더링에 숨 돌릴 시간 30ms 부여
-      await new Promise((resolve) => setTimeout(resolve, 30))
+      ctx.pendingLinks.push({
+        pdfPageIndex: pageNum,
+        pageEl,
+        drawX,
+        drawY,
+        drawW,
+        drawH,
+        year,
+        month,
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 35))
     } catch (e: any) {
-      console.warn(`[MultiMonthPdfGen] page append failed:`, e?.message || e)
+      console.warn(`[MasterPdfGen] page append failed:`, e?.message || e)
+    }
+  }
+}
+
+/**
+ * ⚡ 2-Pass: 전체 17개월 페이지 번호 인덱스가 완료된 후 PDF 하이퍼링크 일괄 주입
+ */
+export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
+  const { pdf, pageTargetMap, pendingLinks } = ctx
+
+  for (const item of pendingLinks) {
+    const { pdfPageIndex, pageEl, drawX, drawY, drawW, drawH, year, month } = item
+    const pageRect = pageEl.getBoundingClientRect()
+    const clickableElements = pageEl.querySelectorAll<HTMLElement>(
+      '[data-nav-target], [data-day], [data-week], [data-target-page]'
+    )
+
+    pdf.setPage(pdfPageIndex)
+
+    for (const el of clickableElements) {
+      let targetPageNum: number | null = null
+
+      const navTarget = el.getAttribute('data-nav-target')
+      const dayAttr = el.getAttribute('data-day')
+      const weekAttr = el.getAttribute('data-week')
+      const directTarget = el.getAttribute('data-target-page')
+
+      if (directTarget) {
+        targetPageNum = parseInt(directTarget, 10)
+      } else if (navTarget) {
+        if (navTarget.startsWith('month-')) {
+          const mNum = navTarget.replace('month-', '')
+          targetPageNum = pageTargetMap[`month-${year}-${mNum}`] || pageTargetMap[`month-${mNum}`]
+        } else if (pageTargetMap[`${year}-${month}-${navTarget}`]) {
+          targetPageNum = pageTargetMap[`${year}-${month}-${navTarget}`]
+        } else if (pageTargetMap[navTarget]) {
+          targetPageNum = pageTargetMap[navTarget]
+        }
+      } else if (dayAttr) {
+        targetPageNum =
+          pageTargetMap[`${year}-${month}-day-${dayAttr}`] || pageTargetMap[`day-${dayAttr}`]
+      } else if (weekAttr) {
+        targetPageNum =
+          pageTargetMap[`${year}-${month}-week-${weekAttr}`] || pageTargetMap[`week-${weekAttr}`]
+      }
+
+      if (!targetPageNum) continue
+
+      const rect = el.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) continue
+
+      const relX = rect.left - pageRect.left
+      const relY = rect.top - pageRect.top
+      const relW = rect.width
+      const relH = rect.height
+
+      const baseW = pageEl.offsetWidth || pageRect.width || 1
+      const baseH = pageEl.offsetHeight || pageRect.height || 1
+
+      const scaleX = drawW / baseW
+      const scaleY = drawH / baseH
+
+      const pdfX = drawX + relX * scaleX
+      const pdfY = drawY + relY * scaleY
+      const pdfW = relW * scaleX
+      const pdfH = relH * scaleY
+
+      try {
+        pdf.link(pdfX, pdfY, pdfW, pdfH, { pageNumber: targetPageNum })
+      } catch (e) {
+        // ignore single link failure
+      }
     }
   }
 }
@@ -317,5 +454,6 @@ export async function appendContainerPagesToPdf(
 export function saveMasterPdf(pdf: jsPDF, filename: string) {
   pdf.save(filename)
 }
+
 
 

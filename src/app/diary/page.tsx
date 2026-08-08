@@ -84,7 +84,7 @@ import QtSoapJournalPortrait2 from '@/components/advanced/portrait/QtSoapJournal
 import QtFruitsTrackerPage from '@/components/advanced/QtFruitsTrackerPage'
 import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrackerPortrait'
 
-import { generateQtPdf, createMasterPdfDoc, appendContainerPagesToPdf, saveMasterPdf } from '@/lib/qtPdfGen'
+import { generateQtPdf, createMasterPdfContext, appendContainerPagesToMasterPdf, finalizeMasterPdfLinks, saveMasterPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/diary/YearlyBuilderModal'
 
@@ -341,7 +341,7 @@ export default function DiaryPage() {
     }
   }
 
-  // 연간 마스터 다이어리 청크 순차 일괄 생성 핸들러 (17개월 분할 렌더링)
+  // 연간 마스터 다이어리 청크 순차 일괄 생성 및 2-Pass 스마트 하이퍼링크 구축 핸들러
   const handleStartYearlyMaster = async (cfg: YearlyMasterConfig) => {
     if (!pdfContainerRef.current) return
     setIsYearlyGenerating(true)
@@ -365,19 +365,18 @@ export default function DiaryPage() {
     }
 
     const totalSteps = monthList.length
-    setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '연간 PDF 엔진 가동 중...', percentage: 0 })
+    setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '연간 PDF & 하이퍼링크 엔진 가동 중...', percentage: 0 })
 
     try {
-      const { pdf } = createMasterPdfDoc(selectedSizeOption)
-      const pdfState = { hasContent: false }
+      const masterCtx = createMasterPdfContext(selectedSizeOption)
 
       for (let i = 0; i < monthList.length; i++) {
         const target = monthList[i]
-        const pct = Math.round(((i + 1) / totalSteps) * 100)
+        const pct = Math.round(((i + 1) / totalSteps) * 90)
         setYearlyProgress({
           currentStep: i + 1,
           totalSteps,
-          currentMonthName: `${target.label} 다이어리 렌더링 중...`,
+          currentMonthName: `${target.label} 다이어리 렌더링 & 페이지 인덱싱 중...`,
           percentage: pct,
         })
 
@@ -388,15 +387,31 @@ export default function DiaryPage() {
         // 2. React DOM 렌더링 완성 대기 (350ms)
         await new Promise((resolve) => setTimeout(resolve, 350))
 
-        // 3. 현재 월 DOM 페이지들을 PDF 인스턴스에 순차 캡처 추가
+        // 3. 현재 월 DOM 페이지들을 Master Context에 순차 캡처 및 페이지 번호 인덱싱
         if (pdfContainerRef.current) {
-          await appendContainerPagesToPdf(pdf, pdfContainerRef.current, selectedSizeOption, pdfState)
+          await appendContainerPagesToMasterPdf(masterCtx, pdfContainerRef.current, selectedSizeOption, target.year, target.month)
         }
       }
 
-      if (pdfState.hasContent) {
+      // 4. 2-Pass: 모든 17개월 페이지 번호 매핑 완성 후 PDF 인터랙티브 하이퍼링크 일괄 주입
+      setYearlyProgress({
+        currentStep: totalSteps,
+        totalSteps,
+        currentMonthName: '✨ 17개월 스마트 하이퍼링크(월/날짜/주차) 100% 매핑 주입 중...',
+        percentage: 95,
+      })
+      finalizeMasterPdfLinks(masterCtx)
+
+      setYearlyProgress({
+        currentStep: totalSteps,
+        totalSteps,
+        currentMonthName: '🎉 마스터 다이어리 생성 완료!',
+        percentage: 100,
+      })
+
+      if (masterCtx.hasContent) {
         saveMasterPdf(
-          pdf,
+          masterCtx.pdf,
           `Master_Diary_${cfg.startYear}.${String(cfg.startMonth).padStart(2, '0')}-${cfg.endYear}.${String(cfg.endMonth).padStart(2, '0')}.pdf`
         )
       } else {
