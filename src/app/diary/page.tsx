@@ -583,7 +583,6 @@ export default function DiaryPage() {
       alert(`연간 마스터 PDF 생성 실패: ${e?.message || '알 수 없는 오류'}`)
     } finally {
       setIsYearlyGenerating(false)
-      setIsYearlyModalOpen(false)
       setActiveWallChunks(null)
       setYearlyBatchIndex(-1)
     }
@@ -1001,9 +1000,10 @@ export default function DiaryPage() {
               <span>전체화면</span>
             </button>
 
-            {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
+            {/* 연간 마스터 다이어리 일괄 제작 원클릭 버튼 */}
             <button
-              onClick={() => setIsYearlyModalOpen(true)}
+              disabled={isYearlyGenerating}
+              onClick={handleDirectYearlyMaster}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300/90 border border-amber-500/30 hover:border-amber-400/50 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400/80" />
