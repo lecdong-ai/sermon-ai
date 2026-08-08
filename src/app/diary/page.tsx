@@ -84,8 +84,9 @@ import QtSoapJournalPortrait2 from '@/components/advanced/portrait/QtSoapJournal
 import QtFruitsTrackerPage from '@/components/advanced/QtFruitsTrackerPage'
 import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrackerPortrait'
 
-import { generateQtPdf } from '@/lib/qtPdfGen'
+import { generateQtPdf, generateYearlyChunkedPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
+import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/diary/YearlyBuilderModal'
 
 export interface ThemeItem {
   id: string
@@ -152,6 +153,16 @@ export default function DiaryPage() {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'general' | 'church' | 'basic'>('all')
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
+
+  // ★ 연간 마스터 다이어리 일괄 생성 모달 상태
+  const [isYearlyModalOpen, setIsYearlyModalOpen] = useState(false)
+  const [isYearlyGenerating, setIsYearlyGenerating] = useState(false)
+  const [yearlyProgress, setYearlyProgress] = useState({
+    currentStep: 0,
+    totalSteps: 0,
+    currentMonthName: '',
+    percentage: 0,
+  })
 
   // ★ PDF 제작 시 포함할 내지 선택 (맞춤형 제작 체계)
   const [selectedPages, setSelectedPages] = useState<Record<string, boolean>>({
@@ -327,6 +338,35 @@ export default function DiaryPage() {
       weekLabel: `${wIndex}주차`,
       dateRangeText,
       daysInWeek,
+    }
+  }
+
+  // 연간 마스터 다이어리 청크 일괄 생성 핸들러
+  const handleStartYearlyMaster = async (cfg: YearlyMasterConfig) => {
+    if (!pdfContainerRef.current) return
+    setIsYearlyGenerating(true)
+    setYearlyProgress({ currentStep: 0, totalSteps: 1, currentMonthName: '시작 중...', percentage: 0 })
+
+    try {
+      await generateYearlyChunkedPdf(
+        pdfContainerRef.current,
+        selectedSizeOption,
+        (step, total, monthName) => {
+          const pct = Math.round((step / total) * 100)
+          setYearlyProgress({
+            currentStep: step,
+            totalSteps: total,
+            currentMonthName: monthName,
+            percentage: pct,
+          })
+        }
+      )
+    } catch (e: any) {
+      console.error(e)
+      alert(`연간 마스터 PDF 생성 실패: ${e?.message || '알 수 없는 오류'}`)
+    } finally {
+      setIsYearlyGenerating(false)
+      setIsYearlyModalOpen(false)
     }
   }
 
@@ -657,6 +697,15 @@ export default function DiaryPage() {
             전체화면 팝업 뷰어
           </button>
 
+          {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
+          <button
+            onClick={() => setIsYearlyModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-400/40 text-xs font-extrabold transition-all shadow-lg shadow-amber-500/10 animate-pulse"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>✨ 연간 일괄 제작 (2026~2027)</span>
+          </button>
+
           {/* PDF 다운로드 버튼 */}
           <button
             onClick={handleDownloadFullPdf}
@@ -664,7 +713,7 @@ export default function DiaryPage() {
             className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] hover:bg-right transition-all duration-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 border border-indigo-300/30 disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
-            {isPdfGenerating ? 'PDF 제작 중...' : `맞춤 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}
+            {isPdfGenerating ? 'PDF 제작 중...' : `월간 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}
           </button>
         </div>
       </header>
@@ -1885,6 +1934,22 @@ export default function DiaryPage() {
           )}
         </div>
       )}
+
+      {/* 연간 마스터 다이어리 일괄 생성 마법사 모달 */}
+      <YearlyBuilderModal
+        isOpen={isYearlyModalOpen}
+        onClose={() => setIsYearlyModalOpen(false)}
+        startYear={2026}
+        startMonth={8}
+        endYear={2027}
+        endMonth={12}
+        selectedTheme={selectedTheme}
+        sizeOption={selectedSizeOption}
+        isEcoPrint={isEcoPrint}
+        onStartGenerate={handleStartYearlyMaster}
+        isGenerating={isYearlyGenerating}
+        progress={yearlyProgress}
+      />
     </div>
   )
 }
