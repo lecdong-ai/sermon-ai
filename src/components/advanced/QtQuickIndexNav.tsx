@@ -35,18 +35,19 @@ export default function QtQuickIndexNav({
 
   return (
     <div
-      className="absolute right-0.5 top-3 bottom-3 w-10 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
+      className="absolute right-0 top-3 bottom-3 w-12 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Core Section Tabs (YEAR, CAL, OVR - Refined Leather Tabs) */}
+      {/* 1. Core Section Tabs (YEAR, CAL, OVR - Active is Large & Protruded, Inactive is Small & Indented) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
+        {/* YEAR Tab */}
         <button
           type="button"
           data-nav-target="yearlygrid"
-          className={`h-6 rounded-l-md text-[8px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-6.5 rounded-l-lg text-[9px] font-black flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'yearlygrid'
-              ? 'w-10.5 text-white font-black shadow-md border-l-2 border-amber-300 scale-105'
-              : 'w-8 bg-slate-100/90 text-slate-500 hover:bg-slate-200 hover:text-slate-900 hover:w-9.5'
+              ? 'w-12 text-white font-black shadow-xl border-l-3 border-amber-300 -translate-x-1 z-20 scale-105'
+              : 'w-7 bg-slate-100/80 text-slate-400 opacity-70 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-10'
           }`}
           style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
           title="연간 마스터 캘린더"
@@ -54,13 +55,14 @@ export default function QtQuickIndexNav({
           YEAR
         </button>
 
+        {/* CAL Tab */}
         <button
           type="button"
           data-nav-target="calendar"
-          className={`h-6 rounded-l-md text-[8px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-6.5 rounded-l-lg text-[9px] font-black flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'calendar'
-              ? 'w-10.5 text-white font-black shadow-md border-l-2 border-amber-300 scale-105'
-              : 'w-8 bg-slate-100/90 text-slate-500 hover:bg-slate-200 hover:text-slate-900 hover:w-9.5'
+              ? 'w-12 text-white font-black shadow-xl border-l-3 border-amber-300 -translate-x-1 z-20 scale-105'
+              : 'w-7 bg-slate-100/80 text-slate-400 opacity-70 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-10'
           }`}
           style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
           title="월간 달력"
@@ -68,13 +70,14 @@ export default function QtQuickIndexNav({
           CAL
         </button>
 
+        {/* OVR Tab */}
         <button
           type="button"
           data-nav-target="overview"
-          className={`h-6 rounded-l-md text-[8px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-6.5 rounded-l-lg text-[9px] font-black flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'w-10.5 text-white font-black shadow-md border-l-2 border-amber-300 scale-105'
-              : 'w-8 bg-slate-100/90 text-slate-500 hover:bg-slate-200 hover:text-slate-900 hover:w-9.5'
+              ? 'w-12 text-white font-black shadow-xl border-l-3 border-amber-300 -translate-x-1 z-20 scale-105'
+              : 'w-7 bg-slate-100/80 text-slate-400 opacity-70 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-10'
           }`}
           style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
           title="월간 개요"
@@ -86,7 +89,7 @@ export default function QtQuickIndexNav({
       {/* Divider */}
       <div className="w-5 h-px bg-slate-200 my-0.5 self-center opacity-60" />
 
-      {/* 2. Seasonal 12-Month Palette Tabs (01 ~ 12 Muted Tabs) */}
+      {/* 2. Seasonal 12-Month Palette Tabs (Active Month Protrudes Outward) */}
       <div className="flex flex-col space-y-0.5 w-full items-end my-auto">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isCurrent = currentMonth === mNum
@@ -99,10 +102,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`month-${mNum}`}
               data-month={mNum}
-              className={`h-4 rounded-l-md text-[8px] font-bold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
+              className={`h-4.5 rounded-l-md text-[8.5px] font-black flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
                 isCurrent
-                  ? 'w-10.5 shadow-md scale-105 border-l-2 border-amber-300 z-10'
-                  : 'w-7.5 hover:w-9.5 opacity-80 hover:opacity-100'
+                  ? 'w-12 shadow-lg -translate-x-1 border-l-3 border-amber-300 z-20 scale-105 font-black'
+                  : 'w-7.5 opacity-65 hover:opacity-100 hover:w-10'
               }`}
               style={{
                 backgroundColor: colInfo.bg,
@@ -122,7 +125,7 @@ export default function QtQuickIndexNav({
       {/* Divider */}
       <div className="w-5 h-px bg-slate-200 my-0.5 self-center opacity-60" />
 
-      {/* 3. Week Direct Jumpers (W1 ~ W5 Minimal Pills) */}
+      {/* 3. Week Direct Jumpers (W1 ~ W5 - Active Week Protrudes Outward) */}
       <div className="flex flex-col space-y-0.5 w-full items-end">
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -132,10 +135,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`h-4 rounded-l-sm text-[7.5px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+              className={`h-4.5 rounded-l-sm text-[8px] font-extrabold flex items-center justify-center transition-all cursor-pointer ${
                 isCurrentW
-                  ? 'w-9 bg-slate-800 text-white font-black border-l-2 border-amber-400 scale-105 shadow-xs'
-                  : 'w-7 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-800 hover:w-8.5'
+                  ? 'w-10.5 bg-slate-900 text-white font-black border-l-3 border-amber-400 -translate-x-1 z-20 scale-105 shadow-md'
+                  : 'w-7 bg-slate-100/80 text-slate-400 opacity-65 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-9.5'
               }`}
               title={`${wNo}주차 주간 계획`}
             >
@@ -148,12 +151,12 @@ export default function QtQuickIndexNav({
       {/* Divider */}
       <div className="w-5 h-px bg-slate-200 my-0.5 self-center opacity-60" />
 
-      {/* 4. Smart Tracker Icon Circles (Habit, Gratitude, Cash, KPT) */}
-      <div className="flex flex-col space-y-1 w-full items-end">
+      {/* 4. Smart Tracker Icon Circles */}
+      <div className="flex flex-col space-y-1 w-full items-end pr-0.5">
         <button
           type="button"
           data-nav-target="habit"
-          className="w-6 h-6 rounded-full bg-emerald-500/90 text-white font-bold text-[9px] flex items-center justify-center shadow-2xs hover:scale-115 transition-transform cursor-pointer"
+          className="w-6.5 h-6.5 rounded-full bg-emerald-500/90 text-white font-bold text-[9.5px] flex items-center justify-center shadow-xs hover:scale-120 transition-transform cursor-pointer"
           title="습관 트래커"
         >
           🌱
@@ -161,7 +164,7 @@ export default function QtQuickIndexNav({
         <button
           type="button"
           data-nav-target="gratitude"
-          className="w-6 h-6 rounded-full bg-amber-500/90 text-white font-bold text-[9px] flex items-center justify-center shadow-2xs hover:scale-115 transition-transform cursor-pointer"
+          className="w-6.5 h-6.5 rounded-full bg-amber-500/90 text-white font-bold text-[9.5px] flex items-center justify-center shadow-xs hover:scale-120 transition-transform cursor-pointer"
           title="감사 일기"
         >
           ☀️
@@ -169,7 +172,7 @@ export default function QtQuickIndexNav({
         <button
           type="button"
           data-nav-target="budget"
-          className="w-6 h-6 rounded-full bg-teal-500/90 text-white font-bold text-[9px] flex items-center justify-center shadow-2xs hover:scale-115 transition-transform cursor-pointer"
+          className="w-6.5 h-6.5 rounded-full bg-teal-500/90 text-white font-bold text-[9.5px] flex items-center justify-center shadow-xs hover:scale-120 transition-transform cursor-pointer"
           title="가계부"
         >
           💰
@@ -177,7 +180,7 @@ export default function QtQuickIndexNav({
         <button
           type="button"
           data-nav-target="kpt"
-          className="w-6 h-6 rounded-full bg-indigo-500/90 text-white font-bold text-[9px] flex items-center justify-center shadow-2xs hover:scale-115 transition-transform cursor-pointer"
+          className="w-6.5 h-6.5 rounded-full bg-indigo-500/90 text-white font-bold text-[9.5px] flex items-center justify-center shadow-xs hover:scale-120 transition-transform cursor-pointer"
           title="KPT 회고"
         >
           🔄
