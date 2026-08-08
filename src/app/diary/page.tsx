@@ -252,6 +252,27 @@ export default function DiaryPage() {
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<1 | 2 | 3>(1)
   const [modalFullMaster, setModalFullMaster] = useState(false)
 
+  // ★ 사용자가 지정한 시작 연월 ~ 종료 연월의 전체 기간 월 목록 동적 계산 (예: 2026.08 ~ 2027.12 = 17개월 전체)
+  const activePeriodMonths = useMemo(() => {
+    const list: { year: number; month: number; label: string }[] = []
+    let currY = yearlyConfig.startYear
+    let currM = yearlyConfig.startMonth
+
+    while (currY < yearlyConfig.endYear || (currY === yearlyConfig.endYear && currM <= yearlyConfig.endMonth)) {
+      list.push({
+        year: currY,
+        month: currM,
+        label: `${currY}년 ${String(currM).padStart(2, '0')}월`
+      })
+      currM++
+      if (currM > 12) {
+        currM = 1
+        currY++
+      }
+    }
+    return list
+  }, [yearlyConfig.startYear, yearlyConfig.startMonth, yearlyConfig.endYear, yearlyConfig.endMonth])
+
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
   const [showPageCheckerFloating, setShowPageCheckerFloating] = useState(true)
@@ -1999,7 +2020,7 @@ export default function DiaryPage() {
 
             {/* Center Controls: Full Master Toggle + View Mode Switcher + Zoom Controls */}
             <div className="flex items-center gap-3">
-              {/* 12개월 풀 연간 뷰 토글 버튼 */}
+              {/* 사용자가 설정한 전체 기간 풀 마스터 뷰 토글 버튼 */}
               <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-amber-500/30">
                 <button
                   type="button"
@@ -2010,7 +2031,7 @@ export default function DiaryPage() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  🗓️ {selectedMonth}월 단일 뷰
+                  🗓️ {selectedYear}.{String(selectedMonth).padStart(2, '0')} 1개월 뷰
                 </button>
                 <button
                   type="button"
@@ -2020,11 +2041,11 @@ export default function DiaryPage() {
                   }}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     modalFullMaster
-                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md'
+                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md scale-[1.01]'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  ✨ 12개월 전체 연간 뷰 (1~12월)
+                  ✨ 설정 기간 마스터 뷰 ({activePeriodMonths.length}개월 전체)
                 </button>
               </div>
 
@@ -2234,20 +2255,20 @@ export default function DiaryPage() {
                   </div>
                 )}
 
-                {/* 2. 월간 달력 & 개요 파트 (12개월 풀 연간 마스터 뷰 지원) */}
+                {/* 2. 월간 달력 & 개요 파트 (사용자 지정 전체 기간 풀 마스터 뷰 지원) */}
                 {modalFullMaster ? (
-                  Array.from({ length: 12 }, (_, idx) => idx + 1).map((m) => {
-                    const mName = `${m}월`
+                  activePeriodMonths.map((mObj) => {
+                    const mName = `${mObj.month}월`
                     return (
-                      <React.Fragment key={`modal-full-master-month-${m}`}>
+                      <React.Fragment key={`modal-full-master-period-${mObj.year}-${mObj.month}`}>
                         {selectedPages.calendar && (
-                          <div id={`modal-page-calendar-m${m}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                            <CalendarComponent year={selectedYear} month={m} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                          <div id={`modal-page-calendar-m${mObj.year}-${mObj.month}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                            <CalendarComponent year={mObj.year} month={mObj.month} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
                           </div>
                         )}
                         {selectedPages.overview && (
-                          <div id={`modal-page-overview-m${m}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                            <OverviewComponent year={selectedYear} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                          <div id={`modal-page-overview-m${mObj.year}-${mObj.month}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                            <OverviewComponent year={mObj.year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
                           </div>
                         )}
                       </React.Fragment>
