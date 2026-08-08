@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtHabitTrackerPageProps {
   year?: number
@@ -8,6 +9,11 @@ interface QtHabitTrackerPageProps {
   themeColor?: string
   pageWidth?: number
   pageHeight?: number
+}
+
+const MONTH_MAP: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
 }
 
 const HABIT_CATEGORIES = [
@@ -40,19 +46,22 @@ export default function QtHabitTrackerPage({
   pageWidth = 1024,
   pageHeight = 768,
 }: QtHabitTrackerPageProps) {
+  const monthNum = MONTH_MAP[monthName] || 8
+
   return (
     <div
-      data-page-key="habit-tracker"
+      data-page-key="habit"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 32px',
+        padding: '20px 48px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNav currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} />
       {/* 1. Header Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
