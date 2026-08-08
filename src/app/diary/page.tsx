@@ -890,12 +890,12 @@ export default function DiaryPage() {
             </div>
           </div>
 
-          {/* Center-Gathered Luxury Action Buttons (Divine Studio Toolbar & UX Switcher) */}
+          {/* Center-Gathered Luxury Action Buttons (Divine Studio Toolbar & Muted UX Switcher) */}
           <div className="flex items-center justify-center flex-wrap gap-2 mx-auto lg:mx-0">
-            {/* 🎨 4가지 UX 레이아웃 스위처 */}
-            <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/15 text-xs font-bold gap-1 shadow-inner mr-1">
+            {/* 🎨 4가지 UX 레이아웃 스위처 (Calm Slate Muted Palette) */}
+            <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-white/10 text-xs font-bold gap-1 shadow-inner mr-1">
               <span className="text-[10px] text-slate-400 px-1.5 font-mono flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+                <Sparkles className="w-3 h-3 text-slate-400" />
                 UX모드:
               </span>
               <button
@@ -903,8 +903,8 @@ export default function DiaryPage() {
                 onClick={() => setLayoutMode('focus')}
                 className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'focus'
-                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/25 scale-[1.03]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
                 title="1. 황금비 Focus Studio 모드"
               >
@@ -915,8 +915,8 @@ export default function DiaryPage() {
                 onClick={() => setLayoutMode('split')}
                 className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'split'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black shadow-md shadow-indigo-500/25 scale-[1.03]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
                 title="2. 🗂️ 2-컬럼 대시보드 모드"
               >
@@ -927,8 +927,8 @@ export default function DiaryPage() {
                 onClick={() => setLayoutMode('cinema')}
                 className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'cinema'
-                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black shadow-md shadow-emerald-500/25 scale-[1.03]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
                 title="3. 🖼️ 시네마틱 캔버스 무대 모드"
               >
@@ -939,8 +939,8 @@ export default function DiaryPage() {
                 onClick={() => setLayoutMode('step')}
                 className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'step'
-                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black shadow-md shadow-pink-500/25 scale-[1.03]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
                 title="4. 📑 3단계 스텝 바이 스텝 모드"
               >
@@ -953,11 +953,11 @@ export default function DiaryPage() {
               onClick={() => setShowPreviewFloating(!showPreviewFloating)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border cursor-pointer ${
                 showPreviewFloating
-                  ? 'bg-indigo-600/90 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.02]'
-                  : 'bg-slate-900/90 text-slate-300 border-white/10 hover:border-indigo-400/50 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-slate-800/90 text-slate-100 border-slate-500 shadow-sm scale-[1.01]'
+                  : 'bg-slate-900/80 text-slate-400 border-white/10 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-200'
               }`}
             >
-              <Eye className="w-3.5 h-3.5 text-indigo-300" />
+              <Eye className="w-3.5 h-3.5 text-slate-400" />
               <span>미리보기 패널</span>
             </button>
 
@@ -966,29 +966,29 @@ export default function DiaryPage() {
               onClick={() => setShowPageCheckerFloating(!showPageCheckerFloating)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border cursor-pointer ${
                 showPageCheckerFloating
-                  ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[1.02]'
-                  : 'bg-slate-900/90 text-slate-300 border-white/10 hover:border-amber-400/50 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-slate-800/90 text-amber-300/90 border-slate-500 shadow-sm scale-[1.01]'
+                  : 'bg-slate-900/80 text-slate-400 border-white/10 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-200'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <Layers className="w-3.5 h-3.5 text-amber-400/80" />
               <span>내지 구성 ({activeSelectedCount}종)</span>
             </button>
 
             {/* 전체화면 팝업 뷰어 버튼 */}
             <button
               onClick={() => setIsFullscreenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-amber-500/10 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all duration-200 shadow-md hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:scale-[1.02] cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 text-xs font-semibold transition-all duration-200 shadow-sm hover:border-slate-500 hover:text-white cursor-pointer"
             >
-              <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+              <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
               <span>전체화면 팝업</span>
             </button>
 
             {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
             <button
               onClick={() => setIsYearlyModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-indigo-500/20 hover:from-amber-500/30 hover:to-indigo-500/30 text-amber-300 border border-amber-400/50 text-xs font-black transition-all duration-200 shadow-lg shadow-amber-500/15 hover:scale-[1.02] cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300/90 border border-amber-500/30 hover:border-amber-400/50 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400/80" />
               <span>✨ 연간 일괄 제작</span>
             </button>
 
@@ -996,9 +996,9 @@ export default function DiaryPage() {
             <button
               onClick={handleDownloadFullPdf}
               disabled={isPdfGenerating}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-indigo-600 hover:from-amber-300 hover:to-indigo-500 text-slate-950 font-black text-xs shadow-[0_0_25px_rgba(245,158,11,0.35)] border border-amber-200 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer ml-1"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs shadow-md border border-amber-500/40 hover:border-amber-400 transition-all duration-200 disabled:opacity-50 cursor-pointer ml-1"
             >
-              <Download className="w-4 h-4 text-slate-950" />
+              <Download className="w-4 h-4 text-amber-400" />
               <span>{isPdfGenerating ? 'PDF 제작 중...' : `월간 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}</span>
             </button>
           </div>
@@ -1008,18 +1008,18 @@ export default function DiaryPage() {
       {/* 2. Main Studio Professional Workspace Layout (Dynamic 4-Dimension UX Mode Switcher) */}
       <div className="flex-1 max-w-[1600px] mx-auto w-full p-6">
         
-        {/* ★ MODE 4: Step Workflow 1-2-3 Navigation Bar */}
+        {/* ★ MODE 4: Step Workflow 1-2-3 Navigation Bar (Muted Slate Tone) */}
         {layoutMode === 'step' && (
-          <div className="mb-6 bg-slate-900/90 border border-white/15 p-2 rounded-2xl shadow-2xl flex items-center justify-between gap-2 backdrop-blur-xl">
+          <div className="mb-6 bg-slate-900/90 border border-white/10 p-2 rounded-2xl shadow-xl flex items-center justify-between gap-2 backdrop-blur-xl">
             <button
               onClick={() => setActiveWorkflowStep(1)}
               className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
                 activeWorkflowStep === 1
-                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black border-amber-300 shadow-lg shadow-amber-500/20 scale-[1.01]'
-                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-white hover:bg-slate-800'
+                  ? 'bg-slate-800 text-slate-100 font-bold border-slate-500 shadow-sm scale-[1.01]'
+                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center text-[11px] font-extrabold">1</span>
+              <span className="w-5 h-5 rounded-full bg-slate-950/50 flex items-center justify-center text-[11px] font-extrabold text-slate-300">1</span>
               <span>📅 Step 1: 컨셉 & 발행 연월 설정</span>
             </button>
 
@@ -1027,11 +1027,11 @@ export default function DiaryPage() {
               onClick={() => setActiveWorkflowStep(2)}
               className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
                 activeWorkflowStep === 2
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black border-indigo-300 shadow-lg shadow-indigo-500/20 scale-[1.01]'
-                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-white hover:bg-slate-800'
+                  ? 'bg-slate-800 text-slate-100 font-bold border-slate-500 shadow-sm scale-[1.01]'
+                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center text-[11px] font-extrabold">2</span>
+              <span className="w-5 h-5 rounded-full bg-slate-950/50 flex items-center justify-center text-[11px] font-extrabold text-slate-300">2</span>
               <span>📑 Step 2: 내지 구성 선택 ({activeSelectedCount}종)</span>
             </button>
 
@@ -1039,11 +1039,11 @@ export default function DiaryPage() {
               onClick={() => setActiveWorkflowStep(3)}
               className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
                 activeWorkflowStep === 3
-                  ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black border-emerald-300 shadow-lg shadow-emerald-500/20 scale-[1.01]'
-                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-white hover:bg-slate-800'
+                  ? 'bg-slate-800 text-slate-100 font-bold border-slate-500 shadow-sm scale-[1.01]'
+                  : 'bg-slate-950/60 text-slate-400 border-white/10 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center text-[11px] font-extrabold">3</span>
+              <span className="w-5 h-5 rounded-full bg-slate-950/50 flex items-center justify-center text-[11px] font-extrabold text-slate-300">3</span>
               <span>🎨 Step 3: 라이브 캔버스 검수 & PDF 발행</span>
             </button>
           </div>
@@ -1410,8 +1410,8 @@ export default function DiaryPage() {
                                 onClick={() => setPreviewTab(chip.id as any)}
                                 className={`flex-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-0.5 border whitespace-nowrap shrink-0 ${
                                   isActive
-                                    ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
-                                    : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/30'
+                                    ? 'bg-slate-800 text-amber-200 font-bold border-slate-500 shadow-sm scale-[1.01] z-10'
+                                    : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/90 border-white/5'
                                 }`}
                                 title={`${chip.name} 미리보기`}
                               >
