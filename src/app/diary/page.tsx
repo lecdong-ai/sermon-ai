@@ -1105,318 +1105,326 @@ export default function DiaryPage() {
           </div>
         </div>
 
-        {/* Right Studio Live Canvas Panel (Wide 9 cols) */}
+        {/* Right Studio Live Canvas Panel (Centered Paper Alignment) */}
         <div className="col-span-12 lg:col-span-9 flex flex-col items-center justify-start">
-          {/* Top Canvas Toolbar with Quick Preview Navigator Chips */}
-          <div className="w-full space-y-2 mb-3 px-1 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  스튜디오 라이브 캔버스
-                </span>
-                <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                  {sizeLabel} ({pageWidth} × {pageHeight}px)
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {/* Eco print toggle button */}
-                <button
-                  onClick={() => setIsEcoPrint(!isEcoPrint)}
-                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1.5 ${
-                    isEcoPrint
-                      ? 'bg-emerald-600/20 border-emerald-400 text-emerald-300'
-                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <span>🌿 잉크 절약:</span>
-                  <span>{isEcoPrint ? 'ON (순백색)' : 'OFF (컬러)'}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setModalActiveTab(previewTab)
-                    setIsFullscreenModalOpen(true)
-                  }}
-                  className="text-amber-400 hover:text-amber-300 font-bold text-[11px] flex items-center gap-1 transition-all hover:underline"
-                >
-                  <Maximize2 className="w-3.5 h-3.5" />
-                  전체화면 팝업
-                </button>
-              </div>
-            </div>
-
-            {/* Compact 1-Row Gold Ribbon Controller with Full Original Titles (100% Fully Visible) */}
-            <div className="w-full bg-slate-950/95 border border-white/15 p-1.5 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md">
-              {(categoryFilter === 'church'
-                ? [
-                    { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
-                    { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
-                    { id: 'calendar', icon: '🗓️', name: '월간 달력' },
-                    { id: 'overview', icon: '📑', name: '월간 개요' },
-                    { id: 'soapjournal', icon: '📖', name: 'SOAP 묵상' },
-                    { id: 'intercessory', icon: '🙏', name: '중보 기도' },
-                    { id: 'sermon', icon: '🎤', name: '주일 설교' },
-                    { id: 'weekly', icon: '📋', name: '주간 계획' },
-                    { id: 'daily', icon: '📓', name: '일간 일기' },
-                  ]
-                : [
-                    { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
-                    { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
-                    { id: 'calendar', icon: '🗓️', name: '월간 달력' },
-                    { id: 'overview', icon: '📑', name: '월간 개요' },
-                    { id: 'habit', icon: '🌱', name: '습관 트래커' },
-                    { id: 'budget', icon: '💰', name: '지출 가계부' },
-                    { id: 'kpt', icon: '🔄', name: 'KPT 회고' },
-                    { id: 'weekly', icon: '📋', name: '주간 계획' },
-                    { id: 'daily', icon: '📓', name: '일간 일기' },
-                  ]
-              ).map((chip) => {
-                const isActive = previewTab === chip.id
-                return (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    onClick={() => setPreviewTab(chip.id as any)}
-                    className={`flex-1 py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 border whitespace-nowrap shrink-0 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
-                        : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/30'
-                    }`}
-                    title={`${chip.name} 미리보기`}
-                  >
-                    <span className="text-xs shrink-0">{chip.icon}</span>
-                    <span className="font-extrabold text-[10px] xl:text-[11px] tracking-tight whitespace-nowrap shrink-0">
-                      {chip.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Interactive Dot Grid Studio Canvas Frame */}
           {(() => {
             const canvasScale = isLandscape ? 0.72 : 0.58
             const canvasW = Math.round(pageWidth * canvasScale)
             const canvasH = Math.round(pageHeight * canvasScale)
-            // ★ 연간 그리드(2장) / 벽달력(2장) 미리보기는 세로 스택
             const previewStackFactor = previewTab === 'yearlygrid' || previewTab === 'wallcalendar' ? 2 : 1
+            // 캔버스 종이 박스와 100% 동일한 너비 (패딩 포함 canvasW + 32px)
+            const containerW = canvasW + 32
 
             return (
               <div
-                onClick={() => {
-                  setModalActiveTab(previewTab)
-                  setIsFullscreenModalOpen(true)
-                }}
-                className="w-fit max-w-full mx-auto bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
+                style={{ width: `${containerW}px`, maxWidth: '100%' }}
+                className="flex flex-col items-center mx-auto space-y-3"
               >
-                {/* Hover overlay hint */}
-                <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center z-20 pointer-events-none backdrop-blur-[1px]">
-                  <span className="px-5 py-2.5 rounded-xl bg-slate-950/90 border border-indigo-400/50 text-indigo-200 font-bold text-xs shadow-2xl flex items-center gap-2 tracking-wide">
-                    <Maximize2 className="w-4 h-4 text-amber-400 animate-bounce" />
-                    클릭하여 전체화면 스튜디오 모달 열기
-                  </span>
+                {/* Top Canvas Toolbar */}
+                <div className="w-full text-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-300 flex items-center gap-1.5 text-xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        스튜디오 라이브 캔버스
+                      </span>
+                      <span className="text-[10.5px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                        {sizeLabel} ({pageWidth} × {pageHeight}px)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Eco print toggle button */}
+                      <button
+                        onClick={() => setIsEcoPrint(!isEcoPrint)}
+                        className={`px-2 py-1 rounded-lg border text-[10.5px] font-bold transition-all flex items-center gap-1 ${
+                          isEcoPrint
+                            ? 'bg-emerald-600/20 border-emerald-400 text-emerald-300'
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span>🌿 잉크 절약:</span>
+                        <span>{isEcoPrint ? 'ON' : 'OFF'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setModalActiveTab(previewTab)
+                          setIsFullscreenModalOpen(true)
+                        }}
+                        className="text-amber-400 hover:text-amber-300 font-bold text-[10.5px] flex items-center gap-1 transition-all hover:underline"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        전체화면
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Compact 1-Row Gold Ribbon Controller with Full Original Titles */}
+                  <div className="w-full bg-slate-950/95 border border-white/15 p-1 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md">
+                    {(categoryFilter === 'church'
+                      ? [
+                          { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
+                          { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
+                          { id: 'calendar', icon: '🗓️', name: '월간 달력' },
+                          { id: 'overview', icon: '📑', name: '월간 개요' },
+                          { id: 'soapjournal', icon: '📖', name: 'SOAP 묵상' },
+                          { id: 'intercessory', icon: '🙏', name: '중보 기도' },
+                          { id: 'sermon', icon: '🎤', name: '주일 설교' },
+                          { id: 'weekly', icon: '📋', name: '주간 계획' },
+                          { id: 'daily', icon: '📓', name: '일간 일기' },
+                        ]
+                      : [
+                          { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
+                          { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
+                          { id: 'calendar', icon: '🗓️', name: '월간 달력' },
+                          { id: 'overview', icon: '📑', name: '월간 개요' },
+                          { id: 'habit', icon: '🌱', name: '습관 트래커' },
+                          { id: 'budget', icon: '💰', name: '지출 가계부' },
+                          { id: 'kpt', icon: '🔄', name: 'KPT 회고' },
+                          { id: 'weekly', icon: '📋', name: '주간 계획' },
+                          { id: 'daily', icon: '📓', name: '일간 일기' },
+                        ]
+                    ).map((chip) => {
+                      const isActive = previewTab === chip.id
+                      return (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          onClick={() => setPreviewTab(chip.id as any)}
+                          className={`flex-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-0.5 border whitespace-nowrap shrink-0 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
+                              : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/30'
+                          }`}
+                          title={`${chip.name} 미리보기`}
+                        >
+                          <span className="text-[10px] shrink-0">{chip.icon}</span>
+                          <span className="font-extrabold text-[9.5px] sm:text-[10.5px] tracking-tight whitespace-nowrap shrink-0">
+                            {chip.name}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
-                {/* Proportional Scaled Paper Wrapper */}
+                {/* Interactive Dot Grid Studio Canvas Frame */}
                 <div
-                  className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
-                  style={{
-                    width: `${canvasW}px`,
-                    height: `${canvasH * previewStackFactor}px`,
+                  onClick={() => {
+                    setModalActiveTab(previewTab)
+                    setIsFullscreenModalOpen(true)
                   }}
+                  className="w-full bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
                 >
+                  {/* Hover overlay hint */}
+                  <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center z-20 pointer-events-none backdrop-blur-[1px]">
+                    <span className="px-5 py-2.5 rounded-xl bg-slate-950/90 border border-indigo-400/50 text-indigo-200 font-bold text-xs shadow-2xl flex items-center gap-2 tracking-wide">
+                      <Maximize2 className="w-4 h-4 text-amber-400 animate-bounce" />
+                      클릭하여 전체화면 스튜디오 모달 열기
+                    </span>
+                  </div>
+
+                  {/* Proportional Scaled Paper Wrapper */}
                   <div
-                    className="origin-top-left absolute top-0 left-0 transition-transform duration-300"
+                    className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
                     style={{
-                      width: `${pageWidth}px`,
-                      height: `${pageHeight * previewStackFactor}px`,
-                      transform: `scale(${canvasScale})`,
+                      width: `${canvasW}px`,
+                      height: `${canvasH * previewStackFactor}px`,
                     }}
                   >
-                    {previewTab === 'yearlygrid' && (
-                      <div className="flex flex-col">
-                        {yearlyGridYears.map((gy) => (
-                          <YearlyGridComponent key={`preview-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                        ))}
-                      </div>
-                    )}
-                    {previewTab === 'wallcalendar' && (
-                      isLandscape ? (
+                    <div
+                      className="origin-top-left absolute top-0 left-0 transition-transform duration-300"
+                      style={{
+                        width: `${pageWidth}px`,
+                        height: `${pageHeight * previewStackFactor}px`,
+                        transform: `scale(${canvasScale})`,
+                      }}
+                    >
+                      {previewTab === 'yearlygrid' && (
                         <div className="flex flex-col">
-                          {wallPreviewChunks.map((chunk, ci) => (
-                            <QtYearlyWallCalendarPage key={`preview-wall-${ci}`} months={chunk} chunkIndex={ci + 1} chunkCount={wallPreviewChunks.length} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                          {yearlyGridYears.map((gy) => (
+                            <YearlyGridComponent key={`preview-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
                           ))}
                         </div>
-                      ) : (
-                        <div className="w-full h-full bg-white flex flex-col items-center justify-center gap-3 text-slate-500">
-                          <span className="text-3xl">🗓️</span>
-                          <p className="text-sm font-bold text-slate-700">연간 벽달력은 가로형 용지 전용입니다</p>
-                          <p className="text-xs text-slate-400">용지 규격을 가로형으로 변경해 주세요.</p>
-                        </div>
-                      )
-                    )}
-                    {previewTab === 'calendar' && (
-                      <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                    )}
-                    {previewTab === 'overview' && (
-                      <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                    )}
-                    {previewTab === 'habit' && (
-                      <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'habit2' && (
-                      <Habit2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'gratitude' && (
-                      <GratitudeComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'quote' && (
-                      <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'budget' && (
-                      <BudgetComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'budget2' && (
-                      <Budget2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'culture' && (
-                      <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'culture2' && (
-                      <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'kpt' && (
-                      <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'kpt2' && (
-                      <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'sundaygeneral' && (
-                      <SundayGeneralComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'buckettravel' && (
-                      <BucketTravelComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'wellnessmood' && (
-                      <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'hundredgoal' && (
-                      <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'hundredgoal2' && (
-                      <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'intercessory' && (
-                      <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'intercessory2' && (
-                      <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'soapjournal' && (
-                      <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'soapjournal2' && (
-                      <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'fruitstracker' && (
-                      <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'prayer' && (
-                      <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'prayer2' && (
-                      <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'scripture' && (
-                      <ScriptureArtComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'scripture2' && (
-                      <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'sermon' && (
-                      <SundaySermonComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'sermondeep' && (
-                      <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'biblemap' && (
-                      <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'biblemap2' && (
-                      <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'letter' && (
-                      <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'letter2' && (
-                      <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                    )}
-                    {previewTab === 'weekly' && (() => {
-                      const w1Data = getWeekData(1)
-                      return (
-                        <WeeklyComponent
-                          year={selectedYear}
-                          weekNum={w1Data.weekNum}
-                          weekLabel={w1Data.weekLabel}
-                          dateRangeText={w1Data.dateRangeText}
-                          daysInWeek={w1Data.daysInWeek}
-                          monthName={monthName}
-                          themeColor={activeColor}
-                          pageWidth={pageWidth}
-                          pageHeight={pageHeight}
-                          isGeneralMode={categoryFilter !== 'church'}
-                        />
-                      )
-                    })()}
-                    {previewTab === 'daily' && (() => {
-                      const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-                      const dateObj = new Date(selectedYear, selectedMonth - 1, activeDayNum)
-                      const realDayName = dayNamesShort[dateObj.getDay()]
-                      return (
-                        <DailyComponent
-                          dateLabel={`${String(activeDayNum).padStart(2, '0')} ${realDayName}`}
-                          dayNum={activeDayNum}
-                          dayName={realDayName}
-                          monthName={monthName}
-                          yearLabel={String(selectedYear)}
-                          themeColor={activeColor}
-                          pageWidth={pageWidth}
-                          pageHeight={pageHeight}
-                          activeWeek={`W${Math.floor((activeDayNum - 1) / 7) + 1}`}
-                          isChurchMode={categoryFilter === 'church'}
-                        />
-                      )
-                    })()}
+                      )}
+                      {previewTab === 'wallcalendar' && (
+                        isLandscape ? (
+                          <div className="flex flex-col">
+                            {wallPreviewChunks.map((chunk, ci) => (
+                              <QtYearlyWallCalendarPage key={`preview-wall-${ci}`} months={chunk} chunkIndex={ci + 1} chunkCount={wallPreviewChunks.length} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-white flex flex-col items-center justify-center gap-3 text-slate-500">
+                            <span className="text-3xl">🗓️</span>
+                            <p className="text-sm font-bold text-slate-700">연간 벽달력은 가로형 용지 전용입니다</p>
+                            <p className="text-xs text-slate-400">용지 규격을 가로형으로 변경해 주세요.</p>
+                          </div>
+                        )
+                      )}
+                      {previewTab === 'calendar' && (
+                        <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      )}
+                      {previewTab === 'overview' && (
+                        <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      )}
+                      {previewTab === 'habit' && (
+                        <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'habit2' && (
+                        <Habit2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'gratitude' && (
+                        <GratitudeComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'quote' && (
+                        <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'budget' && (
+                        <BudgetComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'budget2' && (
+                        <Budget2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'culture' && (
+                        <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'culture2' && (
+                        <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'kpt' && (
+                        <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'kpt2' && (
+                        <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'sundaygeneral' && (
+                        <SundayGeneralComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'buckettravel' && (
+                        <BucketTravelComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'wellnessmood' && (
+                        <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'hundredgoal' && (
+                        <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'hundredgoal2' && (
+                        <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'intercessory' && (
+                        <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'intercessory2' && (
+                        <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'soapjournal' && (
+                        <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'soapjournal2' && (
+                        <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'fruitstracker' && (
+                        <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'prayer' && (
+                        <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'prayer2' && (
+                        <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'scripture' && (
+                        <ScriptureArtComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'scripture2' && (
+                        <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'sermon' && (
+                        <SundaySermonComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'sermondeep' && (
+                        <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'biblemap' && (
+                        <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'biblemap2' && (
+                        <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'letter' && (
+                        <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'letter2' && (
+                        <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      )}
+                      {previewTab === 'weekly' && (() => {
+                        const w1Data = getWeekData(1)
+                        return (
+                          <WeeklyComponent
+                            year={selectedYear}
+                            weekNum={w1Data.weekNum}
+                            weekLabel={w1Data.weekLabel}
+                            dateRangeText={w1Data.dateRangeText}
+                            daysInWeek={w1Data.daysInWeek}
+                            monthName={monthName}
+                            themeColor={activeColor}
+                            pageWidth={pageWidth}
+                            pageHeight={pageHeight}
+                            isGeneralMode={categoryFilter !== 'church'}
+                          />
+                        )
+                      })()}
+                      {previewTab === 'daily' && (() => {
+                        const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                        const dateObj = new Date(selectedYear, selectedMonth - 1, activeDayNum)
+                        const realDayName = dayNamesShort[dateObj.getDay()]
+                        return (
+                          <DailyComponent
+                            dateLabel={`${String(activeDayNum).padStart(2, '0')} ${realDayName}`}
+                            dayNum={activeDayNum}
+                            dayName={realDayName}
+                            monthName={monthName}
+                            yearLabel={String(selectedYear)}
+                            themeColor={activeColor}
+                            pageWidth={pageWidth}
+                            pageHeight={pageHeight}
+                            activeWeek={`W${Math.floor((activeDayNum - 1) / 7) + 1}`}
+                            isChurchMode={categoryFilter === 'church'}
+                          />
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Canvas Master Info Toolbar (Exact Width Matched) */}
+                <div className="w-full p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 flex items-center justify-between gap-2 text-xs text-slate-400 backdrop-blur-md font-mono shadow-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-emerald-300 font-bold text-[11px]">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      300 DPI Print Ready
+                    </span>
+                    <span className="text-slate-700">|</span>
+                    <span className="text-indigo-300 font-semibold text-[11px] flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      2-Pass 3D Hyperlink
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-[10.5px]">
+                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300">
+                      📄 내지: <strong className="text-amber-300">{activeSelectedCount}종</strong>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300">
+                      🎨 테마: <strong className="text-indigo-300">{selectedTheme.name}</strong>
+                    </span>
                   </div>
                 </div>
               </div>
             )
           })()}
-          <div className="w-full mt-3 p-3 rounded-2xl bg-slate-950/80 border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 backdrop-blur-md font-mono shadow-xl">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                300 DPI Print Ready
-              </span>
-              <span className="text-slate-700">|</span>
-              <span className="text-indigo-300 font-semibold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                2-Pass 3D Hyperlink Engined
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
-                📄 렌더링 내지: <strong className="text-amber-300 font-bold">{activeSelectedCount}종</strong>
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
-                🎨 테마: <strong className="text-indigo-300 font-bold">{selectedTheme.name}</strong>
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
