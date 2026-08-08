@@ -252,15 +252,21 @@ export default function DiaryPage() {
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<1 | 2 | 3>(1)
   const [modalFullMaster, setModalFullMaster] = useState(false)
 
-  // ★ 17개월(2026.08 ~ 2027.12) 풀 기간 전체 월 목록 동적 계산 및 캔버스 연속 스트림 상태 변수
+  // ★ 자유 발행 기간 & 개월 수 제어 상태 변수 (시작연, 시작월, 개월수)
+  const [periodStartYear, setPeriodStartYear] = useState<number>(selectedYear)
+  const [periodStartMonth, setPeriodStartMonth] = useState<number>(selectedMonth)
+  const [periodDurationMonths, setPeriodDurationMonths] = useState<number>(17)
+
+  // ★ 17개월 풀 다이어리 캔버스 연속 스트림 상태 변수
   const [isStreamView, setIsStreamView] = useState(false)
 
+  // ★ 사용자가 지정한 자유 시작 연월부터 N개월 간의 전체 기간 월 목록 동적 계산
   const activePeriodMonths = useMemo(() => {
     const list: { year: number; month: number; label: string }[] = []
-    let currY = 2026
-    let currM = 8
+    let currY = periodStartYear
+    let currM = periodStartMonth
 
-    while (currY < 2027 || (currY === 2027 && currM <= 12)) {
+    for (let i = 0; i < periodDurationMonths; i++) {
       list.push({
         year: currY,
         month: currM,
@@ -273,7 +279,7 @@ export default function DiaryPage() {
       }
     }
     return list
-  }, [])
+  }, [periodStartYear, periodStartMonth, periodDurationMonths])
 
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
@@ -1379,13 +1385,49 @@ export default function DiaryPage() {
                     >
                       {/* Top Canvas Toolbar with Drag Grip Handle & 17-Month Period Timeline */}
                       <div className="w-full text-xs space-y-2">
-                        {/* 17개월 연간 실시간 타임라인 슬라이더 바 (2026.08 ~ 2027.12) */}
-                        <div className="w-full bg-slate-950/95 border border-amber-500/30 p-1.5 rounded-2xl shadow-xl flex items-center gap-1.5 overflow-x-auto custom-scrollbar backdrop-blur-md">
-                          <span className="text-[10px] text-amber-300 font-extrabold px-2 whitespace-nowrap shrink-0 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-400" />
-                            <span>17개월 타임라인:</span>
-                          </span>
+                        {/* 자유 발행 연월 & 개월 수 선택 및 실시간 타임라인 슬라이더 바 */}
+                        <div className="w-full bg-slate-950/95 border border-amber-500/30 p-1.5 rounded-2xl shadow-xl flex items-center gap-2 overflow-x-auto custom-scrollbar backdrop-blur-md">
+                          {/* 1. 시작 연월 선택 피커 */}
+                          <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
+                            <span className="text-[10px] text-amber-300">📅 시작:</span>
+                            <select
+                              value={`${periodStartYear}-${periodStartMonth}`}
+                              onChange={(e) => {
+                                const [y, m] = e.target.value.split('-').map(Number)
+                                setPeriodStartYear(y)
+                                setPeriodStartMonth(m)
+                                setSelectedYear(y)
+                                setSelectedMonth(m)
+                                setActiveDayNum(1)
+                              }}
+                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400"
+                            >
+                              <option value="2026-8">2026.08</option>
+                              <option value="2026-9">2026.09</option>
+                              <option value="2026-10">2026.10</option>
+                              <option value="2026-11">2026.11</option>
+                              <option value="2026-12">2026.12</option>
+                              <option value="2027-1">2027.01</option>
+                              <option value="2027-3">2027.03</option>
+                            </select>
+                          </div>
 
+                          {/* 2. 발행 기간 개월 수 피커 (6개월, 12개월, 17개월, 24개월) */}
+                          <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
+                            <span className="text-[10px] text-amber-300">⌛ 기간:</span>
+                            <select
+                              value={periodDurationMonths}
+                              onChange={(e) => setPeriodDurationMonths(Number(e.target.value))}
+                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-bold cursor-pointer focus:ring-amber-400"
+                            >
+                              <option value={6}>6개월 (반년치)</option>
+                              <option value={12}>12개월 (1년치)</option>
+                              <option value={17}>17개월 (마스터)</option>
+                              <option value={24}>24개월 (2년치)</option>
+                            </select>
+                          </div>
+
+                          {/* 3. 실시간 타임라인 월 칩 모음 */}
                           <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar flex-1 py-0.5">
                             {activePeriodMonths.map((mObj) => {
                               const isSel = selectedYear === mObj.year && selectedMonth === mObj.month
@@ -1398,7 +1440,7 @@ export default function DiaryPage() {
                                     setSelectedMonth(mObj.month)
                                     setActiveDayNum(1)
                                   }}
-                                  className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                                  className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer whitespace-nowrap ${
                                     isSel
                                       ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md scale-[1.03]'
                                       : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
@@ -1413,13 +1455,13 @@ export default function DiaryPage() {
                           <button
                             type="button"
                             onClick={() => setIsStreamView(!isStreamView)}
-                            className={`px-3 py-1 rounded-xl text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                            className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                               isStreamView
                                 ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-indigo-400 shadow-md scale-[1.02]'
                                 : 'bg-slate-900/90 text-slate-300 border-white/15 hover:border-indigo-400/50 hover:text-white'
                             }`}
                           >
-                            {isStreamView ? '📖 1개월 뷰 전환' : '✨ 17개월 풀 다이어리 뷰'}
+                            {isStreamView ? '📖 1개월 뷰 전환' : `✨ ${periodDurationMonths}개월 풀 뷰`}
                           </button>
                         </div>
 
