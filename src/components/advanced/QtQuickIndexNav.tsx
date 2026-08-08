@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useDiaryPeriod } from './diary/DiaryPeriodContext'
 
 interface QtQuickIndexNavProps {
   currentMonth?: number
@@ -35,6 +36,13 @@ const WEEK_PASTEL_COLORS: Record<number, { bg: string; activeBg: string; text: s
   5: { bg: '#EBE9F5', activeBg: '#8A83AB', text: '#3E375C', activeText: '#FFFFFF' }, // Week5 Soft Lavender
 }
 
+// YEAR / CAL / OVR 코어 탭 파스텔 톤 팔레트 (12개월 & 주차 색인과 통일된 감성)
+const CORE_TAB_PASTEL_COLORS: Record<'yearlygrid' | 'calendar' | 'overview', { bg: string; activeBg: string; text: string; activeText: string }> = {
+  yearlygrid: { bg: '#FFF3D6', activeBg: '#E0A94F', text: '#8A6420', activeText: '#FFFFFF' }, // YEAR Soft Gold
+  calendar: { bg: '#E4ECF4', activeBg: '#7A97B6', text: '#344E6B', activeText: '#FFFFFF' }, // CAL Slate Blue
+  overview: { bg: '#E4F1E9', activeBg: '#76A68D', text: '#2C5440', activeText: '#FFFFFF' }, // OVR Sage Mint
+}
+
 export default function QtQuickIndexNav({
   currentMonth = 8,
   currentWeek = 1,
@@ -43,86 +51,98 @@ export default function QtQuickIndexNav({
   isChristian = false,
 }: QtQuickIndexNavProps) {
   const todayMonth = 8
+  const period = useDiaryPeriod()
+
+  // ★ 연간 일괄 기간 컨텍스트가 있으면 실제 17개월(Aug'26~Dec'27) 전체 표시, 없으면 기존 12개월 폴백
+  const periodStartYear = period?.periodMonths[0]?.year ?? 2026
+  const monthItems: { year: number | null; month: number; isCurrent: boolean; isToday: boolean }[] = []
+  if (period) {
+    for (const m of period.periodMonths) {
+      monthItems.push({
+        year: m.year,
+        month: m.month,
+        isCurrent: period.currentYear === m.year && period.currentMonth === m.month,
+        isToday: todayMonth === m.month && m.year === periodStartYear,
+      })
+    }
+  } else {
+    for (let i = 1; i <= 12; i++) {
+      monthItems.push({ year: null, month: i, isCurrent: currentMonth === i, isToday: todayMonth === i })
+    }
+  }
 
   return (
     <div
       className="absolute right-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Main Core Tabs (YEAR, CAL, OVR) */}
+      {/* 1. Top Group: Main Core Tabs + 12-Month Palette + Week Jumpers (compact, weeks right under Dec) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
-        <button
-          type="button"
-          data-nav-target="yearlygrid"
-          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-            activeTab === 'yearlygrid'
-              ? 'w-10 text-white font-black bg-slate-800 border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5 opacity-70'
-          }`}
-          title="연간 캘린더"
-        >
-          YEAR
-        </button>
+        {/* 1a. Main Core Tabs (YEAR, CAL, OVR) */}
+        <div className="flex flex-col space-y-1.5 w-full items-end">
+          {(['yearlygrid', 'calendar', 'overview'] as const).map((coreKey) => {
+            const isActive = activeTab === coreKey
+            const cColor = CORE_TAB_PASTEL_COLORS[coreKey]
+            const label = coreKey === 'yearlygrid' ? 'YEAR' : coreKey === 'calendar' ? 'CAL' : 'OVR'
+            const title = coreKey === 'yearlygrid' ? '연간 캘린더' : coreKey === 'calendar' ? '월간 달력' : '월간 개요'
+            return (
+              <button
+                key={coreKey}
+                type="button"
+                data-nav-target={coreKey}
+                className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+                  isActive
+                    ? 'w-10 text-white font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
+                    : 'w-7 opacity-70 hover:opacity-100 hover:w-8.5'
+                }`}
+                style={{
+                  backgroundColor: isActive ? cColor.activeBg : cColor.bg,
+                  color: isActive ? cColor.activeText : cColor.text,
+                }}
+                title={title}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
 
-        <button
-          type="button"
-          data-nav-target="calendar"
-          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-            activeTab === 'calendar'
-              ? 'w-10 text-white font-black bg-slate-800 border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5 opacity-70'
-          }`}
-          title="월간 달력"
-        >
-          CAL
-        </button>
+        {/* Divider */}
+        <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-        <button
-          type="button"
-          data-nav-target="overview"
-          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-            activeTab === 'overview'
-              ? 'w-10 text-white font-black bg-slate-800 border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5 opacity-70'
-          }`}
-          title="월간 개요"
-        >
-          OVR
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
-
-      {/* 2. 12-Month Palette Tabs (Jan ~ Dec) */}
-      <div className="flex flex-col space-y-0.5 w-full items-end my-auto">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
-          const isCurrent = currentMonth === mNum
-          const isToday = todayMonth === mNum
-          const colInfo = SEASONAL_MONTH_COLORS[mNum]
+        {/* 2. Period Month Palette Tabs (17개월 전체: Aug'26 ~ Dec'27 / 연도 경계 구분선 포함) */}
+        <div className="flex flex-col space-y-0.5 w-full items-end">
+        {monthItems.map((item, idx) => {
+          const colInfo = SEASONAL_MONTH_COLORS[item.month]
+          const showYearDivider = item.year !== null && idx > 0 && monthItems[idx - 1].year !== item.year
+          const navTarget = item.year !== null ? `month-${item.year}-${item.month}` : `month-${item.month}`
 
           return (
-            <button
-              key={`m-${mNum}`}
-              type="button"
-              data-nav-target={`month-${mNum}`}
-              data-month={mNum}
-              className={`h-4.5 rounded-l-xs text-[7.5px] font-extrabold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
-                isCurrent
-                  ? 'w-10 text-white font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
-                  : 'w-7.5 opacity-60 hover:opacity-100 hover:w-9'
-              }`}
-              style={{
-                backgroundColor: colInfo.bg,
-                color: colInfo.text,
-              }}
-              title={`${mNum}월 (${colInfo.label}) 플래너로 이동`}
-            >
-              <span>{colInfo.label}</span>
-              {isToday && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
+            <React.Fragment key={`m-${item.year ?? 'y'}-${item.month}`}>
+              {showYearDivider && (
+                <div className="w-3.5 h-px bg-slate-300/80 my-1 self-center opacity-60" />
               )}
-            </button>
+              <button
+                type="button"
+                data-nav-target={navTarget}
+                data-month={item.month}
+                className={`h-3.5 rounded-l-xs text-[7.5px] font-extrabold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
+                  item.isCurrent
+                    ? 'w-10 text-white font-black border-l-2 border-amber-300 shadow-xs z-10 scale-105'
+                    : 'w-7.5 opacity-60 hover:opacity-100 hover:w-9'
+                }`}
+                style={{
+                  backgroundColor: colInfo.bg,
+                  color: colInfo.text,
+                }}
+                title={`${item.year !== null ? `${item.year}년 ` : ''}${item.month}월 (${colInfo.label}) 플래너로 이동`}
+              >
+                <span>{colInfo.label}</span>
+                {item.isToday && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
+                )}
+              </button>
+            </React.Fragment>
           )
         })}
       </div>
@@ -157,12 +177,13 @@ export default function QtQuickIndexNav({
           )
         })}
       </div>
+      </div>
 
-      {/* Divider */}
-      <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
+      {/* 4. Bottom Group: Divider + Sub-Tracker Index Tabs */}
+      <div className="flex flex-col space-y-1 w-full items-end">
+        <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 4. Sub-Tracker Index Tabs */}
-      <div className="flex flex-col space-y-0.5 w-full items-end pr-0.5">
+        <div className="flex flex-col space-y-0.5 w-full items-end pr-0.5">
         {isChristian ? (
           <>
             <button
@@ -250,6 +271,7 @@ export default function QtQuickIndexNav({
             </button>
           </>
         )}
+        </div>
       </div>
     </div>
   )

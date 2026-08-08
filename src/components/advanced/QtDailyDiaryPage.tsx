@@ -64,7 +64,7 @@ export default function QtDailyDiaryPage({
             {yearLabel} · {monthName.toUpperCase()} · DAY {paddedDay}
           </span>
           <span className="text-slate-400 font-semibold">
-            {activeWeek} Daily Record
+            Week{weekNum} Daily Record
           </span>
         </div>
 

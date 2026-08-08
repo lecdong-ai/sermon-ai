@@ -60,8 +60,8 @@ export default function QtBudgetTrackerPage({
       {/* 2. Page Title & 4 Summary Executive KPI Bar */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
-            <span>💰 {monthName} Financial & Asset Planning (월간 자산 & 예산 통합 대시보드)</span>
+          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+            <span className="whitespace-nowrap">💰 {monthName} Financial & Asset Planning (월간 자산 & 예산 통합 대시보드)</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5">
             수입, 자산 포트폴리오, 고정 지출, 카테고리 예산 배분을 한눈에 관리하는 진짜 월간 가계부입니다.

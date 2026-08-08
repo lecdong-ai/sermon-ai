@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useDiaryPeriod } from '../diary/DiaryPeriodContext'
 
 interface QtQuickIndexNavPortraitProps {
   currentMonth?: number
@@ -43,6 +44,25 @@ export default function QtQuickIndexNavPortrait({
   isChristian = false,
 }: QtQuickIndexNavPortraitProps) {
   const todayMonth = 8
+  const period = useDiaryPeriod()
+
+  // ★ 연간 일괄 기간 컨텍스트가 있으면 실제 17개월(Aug'26~Dec'27) 전체 표시, 없으면 기존 12개월 폴백
+  const periodStartYear = period?.periodMonths[0]?.year ?? 2026
+  const monthItems: { year: number | null; month: number; isCurrent: boolean; isToday: boolean }[] = []
+  if (period) {
+    for (const m of period.periodMonths) {
+      monthItems.push({
+        year: m.year,
+        month: m.month,
+        isCurrent: period.currentYear === m.year && period.currentMonth === m.month,
+        isToday: todayMonth === m.month && m.year === periodStartYear,
+      })
+    }
+  } else {
+    for (let i = 1; i <= 12; i++) {
+      monthItems.push({ year: null, month: i, isCurrent: currentMonth === i, isToday: todayMonth === i })
+    }
+  }
 
   return (
     <div
@@ -200,32 +220,35 @@ export default function QtQuickIndexNavPortrait({
         </div>
       </div>
 
-      {/* Lower Ribbon: Muted 12-Month Palette (Jan ~ Dec) */}
+      {/* Lower Ribbon: Period Month Palette (17개월 전체: Aug'26 ~ Dec'27 / 연도 경계 구분선 포함) */}
       <div className="flex items-center space-x-0.5 bg-white/95 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
-          const isSelectedM = currentMonth === mNum
-          const isTodayM = todayMonth === mNum
-          const palette = SEASONAL_MONTH_COLORS[mNum]
+        {monthItems.map((item, idx) => {
+          const palette = SEASONAL_MONTH_COLORS[item.month]
+          const showYearDivider = item.year !== null && idx > 0 && monthItems[idx - 1].year !== item.year
+          const navTarget = item.year !== null ? `month-${item.year}-${item.month}` : `month-${item.month}`
 
           return (
-            <button
-              key={`m-p-${mNum}`}
-              type="button"
-              data-nav-target={`month-${mNum}`}
-              className={`py-0.5 text-center transition-all relative cursor-pointer ${
-                isSelectedM
-                  ? 'w-5 text-[8px] text-white font-black shadow-2xs border-b border-amber-300 rounded scale-105 z-10'
-                  : 'w-4 text-[7px] text-slate-500 opacity-60 hover:opacity-100 hover:w-4.5'
-              }`}
-              style={{
-                backgroundColor: isSelectedM ? palette.bg : undefined,
-              }}
-            >
-              {palette.label}
-              {isTodayM && (
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
-              )}
-            </button>
+            <React.Fragment key={`m-p-${item.year ?? 'y'}-${item.month}`}>
+              {showYearDivider && <div className="w-px h-3 bg-slate-300/80 mx-0.5" />}
+              <button
+                type="button"
+                data-nav-target={navTarget}
+                className={`py-0.5 text-center transition-all relative cursor-pointer ${
+                  item.isCurrent
+                    ? 'w-4.5 text-[8px] text-white font-black shadow-2xs border-b border-amber-300 rounded scale-105 z-10'
+                    : 'w-3.5 text-[7px] text-slate-500 opacity-60 hover:opacity-100 hover:w-4'
+                }`}
+                style={{
+                  backgroundColor: item.isCurrent ? palette.bg : undefined,
+                }}
+                title={`${item.year !== null ? `${item.year}년 ` : ''}${item.month}월 (${palette.label}) 플래너로 이동`}
+              >
+                {palette.label}
+                {item.isToday && (
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
+                )}
+              </button>
+            </React.Fragment>
           )
         })}
       </div>

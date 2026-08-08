@@ -38,6 +38,7 @@ export interface YearlyMasterConfig {
   includeYearlyGoals: boolean
   includeReadingMap: boolean
   includeMonthlyDivider: boolean
+  includeWallCalendar: boolean
 }
 
 export default function YearlyBuilderModal({
@@ -60,12 +61,21 @@ export default function YearlyBuilderModal({
     includeYearlyGoals: true,
     includeReadingMap: true,
     includeMonthlyDivider: true,
+    includeWallCalendar: true,
   })
 
   if (!isOpen) return null
 
   // 총 개월 수 계산
-  const totalMonthsCount = (config.endYear - config.startYear) * 12 + (config.endMonth - config.startMonth + 1)
+  const totalMonthsCount = Math.max(1, (config.endYear - config.startYear) * 12 + (config.endMonth - config.startMonth + 1))
+
+  // ★ 예상 페이지 수 / 파일 크기 / 생성 시간 추정 (부록 조합 반영)
+  const PER_MONTH_PAGES: Record<string, number> = { essential: 38, spiritual: 54, life: 52 }
+  const perMonthPages = PER_MONTH_PAGES[config.packagePreset] || 38
+  const yearlyPages = 1 + (config.includeWallCalendar ? Math.ceil(totalMonthsCount / 6) : 0)
+  const totalPages = perMonthPages * totalMonthsCount + yearlyPages
+  const estSizeMB = Math.round(totalPages * 0.2)
+  const estMinutes = Math.max(1, Math.round((totalPages * 0.25 + totalMonthsCount * 0.35) / 60))
 
   const handleRun = () => {
     onStartGenerate(config)
@@ -276,6 +286,28 @@ export default function YearlyBuilderModal({
                     />
                     <span>월별 구분 인덱스 커버 (Monthly Divider)</span>
                   </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={config.includeWallCalendar}
+                      onChange={(e) => setConfig({ ...config, includeWallCalendar: e.target.checked })}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>연간 월력 벽달력 (Yearly Wall Calendar)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* 4. 예상 산출물 정보 */}
+              <div className="flex items-center justify-between bg-indigo-50/60 border border-indigo-100 rounded-2xl px-4 py-3">
+                <div className="flex items-center space-x-2 text-xs font-semibold text-indigo-800">
+                  <FileCheck className="w-4 h-4 text-indigo-600" />
+                  <span>예상 산출물</span>
+                </div>
+                <div className="text-xs text-slate-600 font-medium">
+                  약 <strong className="text-indigo-700">{totalPages.toLocaleString()}</strong> 페이지
+                  · 약 <strong className="text-indigo-700">{estSizeMB.toLocaleString()}MB</strong>
+                  · 생성 약 <strong className="text-indigo-700">{estMinutes}분</strong>
                 </div>
               </div>
             </>

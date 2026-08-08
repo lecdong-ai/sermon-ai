@@ -243,6 +243,17 @@ function addInteractiveLinks(
 /**
  * ⚡ 연간 마스터 다이어리 멀티 몬스(Multi-Month) 전용 2-Pass 스마트 하이퍼링크 캡처 엔진
  */
+export interface CapturedPdfLink {
+  relX: number
+  relY: number
+  relW: number
+  relH: number
+  navTarget: string | null
+  dayAttr: string | null
+  weekAttr: string | null
+  directTarget: string | null
+}
+
 export interface MasterPdfContext {
   pdf: jsPDF
   widthMm: number
@@ -251,11 +262,13 @@ export interface MasterPdfContext {
   pageTargetMap: Record<string, number>
   pendingLinks: {
     pdfPageIndex: number
-    pageEl: HTMLElement
+    links: CapturedPdfLink[]
     drawX: number
     drawY: number
     drawW: number
     drawH: number
+    scaleX: number
+    scaleY: number
     year: number
     month: number
   }[]
@@ -340,6 +353,31 @@ export async function appendContainerPagesToMasterPdf(
       ctx.pageTargetMap[`month-${year}-${month}`] = pageNum
     }
 
+    // 1-Pass: 캡처 직전(현재 월 실제 DOM 기준) 하이퍼링크 상대 좌표 캐시
+    // ★ 재렌더로 인한 DOM detach/내용 교체 후 rect 계산 불가 문제를 원천 차단
+    const pageRect = pageEl.getBoundingClientRect()
+    const baseW = pageEl.offsetWidth || pageRect.width || 1
+    const baseH = pageEl.offsetHeight || pageRect.height || 1
+    const clickableEls = pageEl.querySelectorAll<HTMLElement>(
+      '[data-nav-target], [data-day], [data-week], [data-target-page]'
+    )
+    const links: CapturedPdfLink[] = []
+    for (let li = 0; li < clickableEls.length; li++) {
+      const el = clickableEls[li]
+      const rect = el.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) continue
+      links.push({
+        relX: rect.left - pageRect.left,
+        relY: rect.top - pageRect.top,
+        relW: rect.width,
+        relH: rect.height,
+        navTarget: el.getAttribute('data-nav-target'),
+        dayAttr: el.getAttribute('data-day'),
+        weekAttr: el.getAttribute('data-week'),
+        directTarget: el.getAttribute('data-target-page'),
+      })
+    }
+
     try {
       const canvas = await toCanvas(pageEl, {
         pixelRatio: 1.5,
@@ -363,11 +401,13 @@ export async function appendContainerPagesToMasterPdf(
 
       ctx.pendingLinks.push({
         pdfPageIndex: pageNum,
-        pageEl,
+        links,
         drawX,
         drawY,
         drawW,
         drawH,
+        scaleX: drawW / baseW,
+        scaleY: drawH / baseH,
         year,
         month,
       })
@@ -381,26 +421,23 @@ export async function appendContainerPagesToMasterPdf(
 
 /**
  * ⚡ 2-Pass: 전체 17개월 페이지 번호 인덱스가 완료된 후 PDF 하이퍼링크 일괄 주입
+ * 1-Pass에서 캐시된 상대 좌표 + 속성값만 사용 (DOM 접근 없음)
  */
 export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
   const { pdf, pageTargetMap, pendingLinks } = ctx
 
   for (const item of pendingLinks) {
-    const { pdfPageIndex, pageEl, drawX, drawY, drawW, drawH, year, month } = item
-    const pageRect = pageEl.getBoundingClientRect()
-    const clickableElements = pageEl.querySelectorAll<HTMLElement>(
-      '[data-nav-target], [data-day], [data-week], [data-target-page]'
-    )
+    const { pdfPageIndex, links, drawX, drawY, drawW, drawH, scaleX, scaleY, year, month } = item
 
     pdf.setPage(pdfPageIndex)
 
-    for (const el of clickableElements) {
+    for (const link of links) {
       let targetPageNum: number | null = null
 
-      const navTarget = el.getAttribute('data-nav-target')
-      const dayAttr = el.getAttribute('data-day')
-      const weekAttr = el.getAttribute('data-week')
-      const directTarget = el.getAttribute('data-target-page')
+      const directTarget = link.directTarget
+      const navTarget = link.navTarget
+      const dayAttr = link.dayAttr
+      const weekAttr = link.weekAttr
 
       if (directTarget) {
         targetPageNum = parseInt(directTarget, 10)
@@ -423,24 +460,10 @@ export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
 
       if (!targetPageNum) continue
 
-      const rect = el.getBoundingClientRect()
-      if (rect.width === 0 || rect.height === 0) continue
-
-      const relX = rect.left - pageRect.left
-      const relY = rect.top - pageRect.top
-      const relW = rect.width
-      const relH = rect.height
-
-      const baseW = pageEl.offsetWidth || pageRect.width || 1
-      const baseH = pageEl.offsetHeight || pageRect.height || 1
-
-      const scaleX = drawW / baseW
-      const scaleY = drawH / baseH
-
-      const pdfX = drawX + relX * scaleX
-      const pdfY = drawY + relY * scaleY
-      const pdfW = relW * scaleX
-      const pdfH = relH * scaleY
+      const pdfX = drawX + link.relX * scaleX
+      const pdfY = drawY + link.relY * scaleY
+      const pdfW = link.relW * scaleX
+      const pdfH = link.relH * scaleY
 
       try {
         pdf.link(pdfX, pdfY, pdfW, pdfH, { pageNumber: targetPageNum })
