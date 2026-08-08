@@ -353,6 +353,13 @@ export async function appendContainerPagesToMasterPdf(
       ctx.pageTargetMap[`month-${year}-${month}`] = pageNum
     }
 
+    // 연간 마스터 그리드(2026/2027 2장)는 연도별 고유 키로 등록 — YEAR 탭이 정확한 연도 장으로 이동
+    const yearlyGridYear = pageEl.getAttribute('data-yearly-year')
+    if (yearlyGridYear) {
+      ctx.pageTargetMap[`yearlygrid-${yearlyGridYear}`] = pageNum
+      if (!ctx.pageTargetMap['yearlygrid']) ctx.pageTargetMap['yearlygrid'] = pageNum
+    }
+
     // 1-Pass: 캡처 직전(현재 월 실제 DOM 기준) 하이퍼링크 상대 좌표 캐시
     // ★ 재렌더로 인한 DOM detach/내용 교체 후 rect 계산 불가 문제를 원천 차단
     const pageRect = pageEl.getBoundingClientRect()
@@ -445,6 +452,9 @@ export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
         if (navTarget.startsWith('month-')) {
           const mNum = navTarget.replace('month-', '')
           targetPageNum = pageTargetMap[`month-${year}-${mNum}`] || pageTargetMap[`month-${mNum}`]
+        } else if (navTarget === 'yearlygrid' && pageTargetMap[`yearlygrid-${year}`]) {
+          // ★ 연간 그리드 2장(2026/2027): 현재 페이지의 연도와 일치하는 장으로 이동
+          targetPageNum = pageTargetMap[`yearlygrid-${year}`]
         } else if (pageTargetMap[`${year}-${month}-${navTarget}`]) {
           targetPageNum = pageTargetMap[`${year}-${month}-${navTarget}`]
         } else if (pageTargetMap[navTarget]) {

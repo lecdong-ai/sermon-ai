@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
 
 interface QtYearlyOverviewGridPortraitProps {
   startYear?: number
@@ -46,16 +45,16 @@ export default function QtYearlyOverviewGridPortrait({
     <div
       data-page-key="yearly-grid"
       data-page-type="full-bleed"
+      data-yearly-year={startYear}
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '20px 20px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      <QtQuickIndexNavPortrait currentMonth={startMonth} activeTab="yearlygrid" themeColor={themeColor} />
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
         <div className="flex items-center space-x-2 text-xs font-medium tracking-wider text-slate-400 font-mono">
@@ -103,7 +102,7 @@ export default function QtYearlyOverviewGridPortrait({
                 </span>
               </div>
 
-              <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] font-mono font-bold text-slate-400 mb-0.5">
+              <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-mono font-bold text-slate-400 mb-0.5">
                 <span className="text-red-400">S</span>
                 <span>M</span>
                 <span>T</span>
@@ -113,15 +112,15 @@ export default function QtYearlyOverviewGridPortrait({
                 <span className="text-blue-400">S</span>
               </div>
 
-              <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-mono leading-tight">
+              <div className="grid grid-cols-7 gap-0.5 text-center text-[11px] font-mono leading-tight">
                 {cells.map((dayVal, idx) => {
-                  if (dayVal === null) return <span key={idx} className="block h-3.5" />
+                  if (dayVal === null) return <span key={idx} className="block h-4" />
                   const isSun = idx % 7 === 0
                   const isSat = idx % 7 === 6
                   return (
                     <span
                       key={idx}
-                      className={`block h-3.5 leading-3.5 rounded-xs ${
+                      className={`block h-4 leading-4 rounded-xs ${
                         isSun
                           ? 'text-red-500 font-semibold'
                           : isSat

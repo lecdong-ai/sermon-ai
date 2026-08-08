@@ -72,7 +72,9 @@ export default function YearlyBuilderModal({
   // ★ 예상 페이지 수 / 파일 크기 / 생성 시간 추정 (부록 조합 반영)
   const PER_MONTH_PAGES: Record<string, number> = { essential: 38, spiritual: 54, life: 52 }
   const perMonthPages = PER_MONTH_PAGES[config.packagePreset] || 38
-  const yearlyPages = 1 + (config.includeWallCalendar ? Math.ceil(totalMonthsCount / 6) : 0)
+  const yearlyGridPageCount = Math.max(1, config.endYear - config.startYear + 1)
+  const wallCalendarPageCount = Math.ceil(12 / 6) * Math.max(1, config.endYear - config.startYear + 1)
+  const yearlyPages = yearlyGridPageCount + (config.includeWallCalendar ? wallCalendarPageCount : 0)
   const totalPages = perMonthPages * totalMonthsCount + yearlyPages
   const estSizeMB = Math.round(totalPages * 0.2)
   const estMinutes = Math.max(1, Math.round((totalPages * 0.25 + totalMonthsCount * 0.35) / 60))

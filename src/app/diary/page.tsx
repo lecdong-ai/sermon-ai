@@ -172,6 +172,13 @@ export default function DiaryPage() {
     }
     return months
   }, [yearlyPeriod])
+
+  // ★ 연간 마스터 그리드 2장(2026년 장 / 2027년 장) — 기간의 전체 달력 연도 목록
+  const yearlyGridYears = useMemo(() => {
+    const ys: number[] = []
+    for (let y = yearlyPeriod.startYear; y <= yearlyPeriod.endYear; y++) ys.push(y)
+    return ys
+  }, [yearlyPeriod])
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0])
   const [activeThemeCategory, setActiveThemeCategory] = useState<'watercolor' | 'modern'>('watercolor')
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
@@ -191,12 +198,12 @@ export default function DiaryPage() {
     percentage: 0,
   })
 
-  // ★ 연간 일괄 생성 시 12개월 청크 단위 월력(벽달력) 페이지 렌더 상태 (청크 시작 반복에서만 활성화)
-  const [activeWallChunk, setActiveWallChunk] = useState<{
+  // ★ 연간 일괄 생성 시 연도 정렬 월력(벽달력) 페이지 렌더 상태 (기간 시작 반복에서 2026 2장, 연도 경계에서 2027 2장)
+  const [activeWallChunks, setActiveWallChunks] = useState<{
     months: { year: number; month: number }[]
     index: number
     total: number
-  } | null>(null)
+  }[] | null>(null)
 
   // ★ 연간 일괄 생성 반복 인덱스 (첫 반복에서만 연간 그리드 1장 렌더 → 17장 중복 방지)
   const [yearlyBatchIndex, setYearlyBatchIndex] = useState(-1)
@@ -293,11 +300,16 @@ export default function DiaryPage() {
   const monthName = MONTH_NAMES[selectedMonth - 1] || 'August'
   const totalDays = new Date(selectedYear, selectedMonth, 0).getDate()
 
-  // ★ 벽달력 미리보기: 선택 연/월 기준 6개월 윈도우 (연도 넘어감 자동 처리)
-  const wallPreviewMonths = Array.from({ length: 6 }, (_, i) => {
-    const total = selectedMonth + i
-    return { year: selectedYear + Math.floor((total - 1) / 12), month: ((total - 1) % 12) + 1 }
-  })
+  // ★ 벽달력 미리보기: 선택 연도의 전체 12개월 → 6개월씩 2청크 (2026: JAN~JUN / JUL~DEC)
+  const wallPreviewChunks = useMemo(() => {
+    const chunks: { year: number; month: number }[][] = []
+    for (let s = 1; s <= 12; s += 6) {
+      const chunkMonths: { year: number; month: number }[] = []
+      for (let m = s; m <= s + 5; m++) chunkMonths.push({ year: selectedYear, month: m })
+      chunks.push(chunkMonths)
+    }
+    return chunks
+  }, [selectedYear])
 
   // 적용할 테마 색상 (에코 인쇄 모드 시 흑백/다크그레이 적용)
   const activeColor = isEcoPrint ? '#475569' : selectedTheme.color
@@ -399,6 +411,27 @@ export default function DiaryPage() {
       endMonth: cfg.endMonth,
     })
 
+    // 선택한 패키지 프리셋(갓생 라이너 / 크리스천 영성 / 에센셜 코어) 및 부록 옵션 동기화
+    if (cfg.packagePreset === 'life') {
+      applyPreset('general')
+    } else if (cfg.packagePreset === 'spiritual') {
+      applyPreset('church')
+    } else if (cfg.packagePreset === 'essential') {
+      applyPreset('basic')
+    }
+
+    // 부록 세부 체크박스 100% 동기화
+    setSelectedPages((prev) => ({
+      ...prev,
+      hundredgoal: cfg.includeYearlyGoals,
+      hundredgoal2: cfg.includeYearlyGoals,
+      biblemap: cfg.includeReadingMap,
+      biblemap2: cfg.includeReadingMap,
+    }))
+
+    // React State DOM 적용 대기
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
     // 시작 연월부터 종료 연월까지 17개 월 목록 구축
     const monthList: { year: number; month: number; label: string }[] = []
     let currY = cfg.startYear
@@ -419,10 +452,14 @@ export default function DiaryPage() {
 
     const totalSteps = monthList.length
 
-    // ★ 설정 기간을 6개월 단위 청크로 분할 (각 청크 = 벽달력 1페이지: 6개월 1행 + 할 일 글상자)
+    // ★ 연도 정렬 벽달력 청크: 각 연도 전체 12개월 → 6개월씩 2장 (2026: JAN~JUN, JUL~DEC / 2027: 동일)
     const wallChunks: { year: number; month: number }[][] = []
-    for (let c = 0; c < monthList.length; c += 6) {
-      wallChunks.push(monthList.slice(c, c + 6).map((m) => ({ year: m.year, month: m.month })))
+    for (let y = cfg.startYear; y <= cfg.endYear; y++) {
+      for (let s = 1; s <= 12; s += 6) {
+        const chunkMonths: { year: number; month: number }[] = []
+        for (let m = s; m <= s + 5; m++) chunkMonths.push({ year: y, month: m })
+        wallChunks.push(chunkMonths)
+      }
     }
 
     setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '연간 PDF & 하이퍼링크 엔진 가동 중...', percentage: 0 })
@@ -440,13 +477,24 @@ export default function DiaryPage() {
           percentage: pct,
         })
 
-        // ★ 청크 시작 인덱스에서만 벽달력 페이지 렌더 활성화 (6개월 단위 1페이지)
-        const chunkIdx = Math.floor(i / 6)
-        setActiveWallChunk(
-          i % 6 === 0 && cfg.includeWallCalendar
-            ? { months: wallChunks[chunkIdx], index: chunkIdx + 1, total: wallChunks.length }
-            : null
-        )
+        // ★ 벽달력 활성화: 청크의 첫 "기간 내" 월과 일치하는 반복에서 렌더 (기간 밖 청크 = 2026.1~6은 첫 반복에서)
+        let wallActive: { months: { year: number; month: number }[]; index: number; total: number }[] | null = null
+        if (cfg.includeWallCalendar) {
+          wallActive = wallChunks
+            .map((chunk, ci) => {
+              const firstInPeriod = chunk.find(
+                (m) => m.year > cfg.startYear || (m.year === cfg.startYear && m.month >= cfg.startMonth)
+              )
+              if (!firstInPeriod) return { months: chunk, index: ci + 1, total: wallChunks.length }
+              if (firstInPeriod.year === target.year && firstInPeriod.month === target.month) {
+                return { months: chunk, index: ci + 1, total: wallChunks.length }
+              }
+              return null
+            })
+            .filter((c): c is { months: { year: number; month: number }[]; index: number; total: number } => c !== null)
+          if (wallActive.length === 0) wallActive = null
+        }
+        setActiveWallChunks(wallActive)
 
         // 1. 상태(연도, 월) 변경하여 해당 월 DOM 새로 그리기
         setSelectedYear(target.year)
@@ -492,7 +540,7 @@ export default function DiaryPage() {
     } finally {
       setIsYearlyGenerating(false)
       setIsYearlyModalOpen(false)
-      setActiveWallChunk(null)
+      setActiveWallChunks(null)
       setYearlyBatchIndex(-1)
     }
   }
@@ -1113,6 +1161,8 @@ export default function DiaryPage() {
             const canvasScale = isLandscape ? 0.72 : 0.58
             const canvasW = Math.round(pageWidth * canvasScale)
             const canvasH = Math.round(pageHeight * canvasScale)
+            // ★ 연간 그리드(2장) / 벽달력(2장) 미리보기는 세로 스택
+            const previewStackFactor = previewTab === 'yearlygrid' || previewTab === 'wallcalendar' ? 2 : 1
 
             return (
               <div
@@ -1135,23 +1185,31 @@ export default function DiaryPage() {
                   className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
                   style={{
                     width: `${canvasW}px`,
-                    height: `${canvasH}px`,
+                    height: `${canvasH * previewStackFactor}px`,
                   }}
                 >
                   <div
                     className="origin-top-left absolute top-0 left-0 transition-transform duration-300"
                     style={{
                       width: `${pageWidth}px`,
-                      height: `${pageHeight}px`,
+                      height: `${pageHeight * previewStackFactor}px`,
                       transform: `scale(${canvasScale})`,
                     }}
                   >
                     {previewTab === 'yearlygrid' && (
-                      <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      <div className="flex flex-col">
+                        {yearlyGridYears.map((gy) => (
+                          <YearlyGridComponent key={`preview-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                        ))}
+                      </div>
                     )}
                     {previewTab === 'wallcalendar' && (
                       isLandscape ? (
-                        <QtYearlyWallCalendarPage months={wallPreviewMonths} chunkIndex={1} chunkCount={1} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                        <div className="flex flex-col">
+                          {wallPreviewChunks.map((chunk, ci) => (
+                            <QtYearlyWallCalendarPage key={`preview-wall-${ci}`} months={chunk} chunkIndex={ci + 1} chunkCount={wallPreviewChunks.length} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                          ))}
+                        </div>
                       ) : (
                         <div className="w-full h-full bg-white flex flex-col items-center justify-center gap-3 text-slate-500">
                           <span className="text-3xl">🗓️</span>
@@ -1389,13 +1447,23 @@ export default function DiaryPage() {
                   transform: `scale(${zoomScale})`,
                   transformOrigin: 'top center',
                   width: `${pageWidth}px`,
-                  height: `${pageHeight}px`,
+                  height: `${modalActiveTab === 'yearlygrid' || modalActiveTab === 'wallcalendar' ? pageHeight * 2 : pageHeight}px`,
                 }}
               >
-                {modalActiveTab === 'yearlygrid' && <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />}
+                {modalActiveTab === 'yearlygrid' && (
+                  <div className="flex flex-col">
+                    {yearlyGridYears.map((gy) => (
+                      <YearlyGridComponent key={`modal-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                    ))}
+                  </div>
+                )}
                 {modalActiveTab === 'wallcalendar' && (
                   isLandscape ? (
-                    <QtYearlyWallCalendarPage months={wallPreviewMonths} chunkIndex={1} chunkCount={1} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                    <div className="flex flex-col">
+                      {wallPreviewChunks.map((chunk, ci) => (
+                        <QtYearlyWallCalendarPage key={`modal-wall-${ci}`} months={chunk} chunkIndex={ci + 1} chunkCount={wallPreviewChunks.length} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                      ))}
+                    </div>
                   ) : (
                     <div className="w-full h-full bg-white flex flex-col items-center justify-center gap-3 text-slate-500">
                       <span className="text-3xl">🗓️</span>
@@ -1483,8 +1551,12 @@ export default function DiaryPage() {
                 }}
               >
                 {selectedPages.yearlygrid && (
-                  <div id="modal-page-yearlygrid" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                  <div id="modal-page-yearlygrid" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900">
+                    {yearlyGridYears.map((gy) => (
+                      <div key={`modal-page-yearlygrid-${gy}`} className="overflow-hidden" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                        <YearlyGridComponent startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      </div>
+                    ))}
                   </div>
                 )}
                 {selectedPages.calendar && (
@@ -1706,21 +1778,26 @@ export default function DiaryPage() {
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
         <div ref={pdfContainerRef}>
-          {/* 0.0 연간 월력 벽달력 (Yearly Wall Calendar, 12개월 청크 1페이지 / 연간 일괄 생성 전용) */}
-          {activeWallChunk && (
-            <QtYearlyWallCalendarPage
-              months={activeWallChunk.months}
-              chunkIndex={activeWallChunk.index}
-              chunkCount={activeWallChunk.total}
-              themeColor={activeColor}
-              pageWidth={pageWidth}
-              pageHeight={pageHeight}
-            />
+          {/* 0.0 연간 월력 벽달력 (Yearly Wall Calendar, 연도별 6개월씩 2장 / 연간 일괄 생성 전용) */}
+          {activeWallChunks && activeWallChunks.length > 0 && (
+            activeWallChunks.map((chunk) => (
+              <QtYearlyWallCalendarPage
+                key={`wall-${chunk.index}`}
+                months={chunk.months}
+                chunkIndex={chunk.index}
+                chunkCount={chunk.total}
+                themeColor={activeColor}
+                pageWidth={pageWidth}
+                pageHeight={pageHeight}
+              />
+            ))
           )}
 
-          {/* 0. 연간 마스터 12개월 달력 그리드 (Yearly 12-Month Master Grid) — 연간 일괄 시 첫 반복에서만 1장 렌더 */}
+          {/* 0. 연간 마스터 12개월 달력 그리드 2장 (2026년 장 / 2027년 장) — 연간 일괄 시 첫 반복에서만 렌더 */}
           {selectedPages.yearlygrid && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
-            <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+            yearlyGridYears.map((gy) => (
+              <YearlyGridComponent key={`pdf-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+            ))
           )}
 
           {/* 1. 월간 달력 (Monthly Calendar) */}
