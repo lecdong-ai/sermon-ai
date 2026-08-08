@@ -476,19 +476,19 @@ export default function DiaryPage() {
       applyPreset('basic')
     }
 
-    // 부록 및 커버 세부 체크박스 100% 동기화 (표지, 디바이더, 100일 목표, 성경맵 등)
+    // 부록 및 커버 세부 체크박스 100% 명확한 양방향 동기화 (표지, 디바이더, 100일 목표, 성경맵 등)
     setSelectedPages((prev) => ({
       ...prev,
-      yearlygrid: cfg.includeYearlyCover ? true : prev.yearlygrid,
-      overview: cfg.includeMonthlyDivider ? true : prev.overview,
-      hundredgoal: cfg.includeYearlyGoals ? true : prev.hundredgoal,
-      hundredgoal2: cfg.includeYearlyGoals ? true : prev.hundredgoal2,
-      biblemap: cfg.includeReadingMap ? true : prev.biblemap,
-      biblemap2: cfg.includeReadingMap ? true : prev.biblemap2,
+      yearlygrid: Boolean(cfg.includeYearlyCover),
+      overview: Boolean(cfg.includeMonthlyDivider),
+      hundredgoal: Boolean(cfg.includeYearlyGoals),
+      hundredgoal2: Boolean(cfg.includeYearlyGoals),
+      biblemap: Boolean(cfg.includeReadingMap),
+      biblemap2: Boolean(cfg.includeReadingMap),
     }))
 
-    // React State DOM 적용 대기
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    // React State DOM 적용 대기 (600ms 보장)
+    await new Promise((resolve) => setTimeout(resolve, 600))
 
     // 시작 연월부터 종료 연월까지 17개 월 목록 구축
     const monthList: { year: number; month: number; label: string }[] = []
@@ -559,8 +559,8 @@ export default function DiaryPage() {
         setSelectedMonth(target.month)
         setYearlyBatchIndex(i)
 
-        // 2. React DOM 렌더링 완성 대기 (350ms)
-        await new Promise((resolve) => setTimeout(resolve, 350))
+        // 2. React DOM 렌더링 완성 대기 (첫 0번 배치 시 부록 렌더링 포함되어 550ms 보장)
+        await new Promise((resolve) => setTimeout(resolve, i === 0 ? 550 : 350))
 
         // 3. 현재 월 DOM 페이지들을 Master Context에 순차 캡처 및 페이지 번호 인덱싱
         if (pdfContainerRef.current) {
