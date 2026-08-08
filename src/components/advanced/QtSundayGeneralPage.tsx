@@ -34,7 +34,7 @@ export default function QtSundayGeneralPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 56px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -52,7 +52,7 @@ export default function QtSundayGeneralPage({
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
           <span>SUNDAY RESET RITUAL</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs">
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs whitespace-nowrap">
             🌿 {sundayLabel}
           </span>
         </div>
@@ -61,7 +61,7 @@ export default function QtSundayGeneralPage({
       {/* 2. Page Title & Energy/Mindset Gauge */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌿 {monthName} Sunday Reset — {sundayLabel}</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5">
@@ -70,7 +70,7 @@ export default function QtSundayGeneralPage({
         </div>
 
         {/* Weekly Energy & Mindset Gauge */}
-        <div className="flex items-center gap-2 bg-emerald-50/80 border border-emerald-200 rounded-xl p-1.5 px-3 text-[9.5px]">
+        <div className="flex items-center gap-2 bg-emerald-50/80 border border-emerald-200 rounded-xl p-1.5 px-3 text-[9.5px] whitespace-nowrap">
           <span className="font-bold text-emerald-950">🔋 에너지 충전:</span>
           <div className="flex items-center gap-1 font-mono text-[8.5px]">
             <span className="px-1.5 py-0.5 rounded bg-white border border-emerald-300 text-emerald-700 font-bold">100% 충전 □</span>
@@ -87,11 +87,11 @@ export default function QtSundayGeneralPage({
           {/* Module A: 4 Sunday Reset Rituals Checklist */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 🧹 일요일 4대 리셋 루틴 (Sunday Reset Rituals)
               </span>
-              <span className="text-[8.5px] text-emerald-700 font-mono font-bold">Checklist</span>
+              <span className="text-[8.5px] text-emerald-700 font-mono font-bold whitespace-nowrap">Checklist</span>
             </h4>
             <div className="space-y-1 text-[9px]">
               {[
@@ -114,11 +114,11 @@ export default function QtSundayGeneralPage({
           {/* Module B: Weekly Highlight & Self-Care Note */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 ☀️ 이번 주 가장 행복했던 순간 & 셀프케어
               </span>
-              <span className="text-[8.5px] text-amber-700 font-mono font-bold">Weekly Highlight</span>
+              <span className="text-[8.5px] text-amber-700 font-mono font-bold whitespace-nowrap">Weekly Highlight</span>
             </h4>
 
             <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-200/60 space-y-1">
@@ -138,11 +138,11 @@ export default function QtSundayGeneralPage({
           {/* Module C: Next Week TOP 3 Priorities */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 🎯 다음 주 핵심 목표 TOP 3 (Next Week Priorities)
               </span>
-              <span className="text-[8.5px] text-indigo-700 font-mono font-bold">Top 3 Focus</span>
+              <span className="text-[8.5px] text-indigo-700 font-mono font-bold whitespace-nowrap">Top 3 Focus</span>
             </h4>
             <div className="space-y-1.5 text-[9px] flex-1 flex flex-col justify-around">
               {[

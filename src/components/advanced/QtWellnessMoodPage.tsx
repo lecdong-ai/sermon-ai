@@ -33,7 +33,7 @@ export default function QtWellnessMoodPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 56px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -51,7 +51,7 @@ export default function QtWellnessMoodPage({
 
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
           <span>MIND & BODY HEALTH</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-teal-600 text-white font-bold text-[10px] shadow-xs">
+          <span className="px-2.5 py-0.5 rounded-full bg-teal-600 text-white font-bold text-[10px] shadow-xs whitespace-nowrap">
             🥗 WELLNESS & MOOD TRACKER
           </span>
         </div>
@@ -60,14 +60,14 @@ export default function QtWellnessMoodPage({
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🥗 {monthName} Wellness & Mood Tracker</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
             한 달 동안의 감정 흐름, 수면 시간, 물 섭취량과 신체 밸런스를 사랑으로 돌보세요.
           </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-teal-950 bg-teal-50 border border-teal-200 shadow-xs">
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-teal-950 bg-teal-50 border border-teal-200 shadow-xs whitespace-nowrap">
           {year}년 웰니스 & 마인드 픽셀
         </div>
       </div>
@@ -77,11 +77,11 @@ export default function QtWellnessMoodPage({
         {/* Left: 31-Day Mood Pixels Grid */}
         <div className="col-span-6 border border-slate-200/90 rounded-2xl p-3 bg-slate-50/50 flex flex-col justify-between shadow-2xs space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap shrink-0">
               <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
               🎨 31일 감정 구슬 (Mood Pixels)
             </h4>
-            <span className="text-[9px] text-slate-400 font-mono">Daily Color Code</span>
+            <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">Daily Color Code</span>
           </div>
 
           {/* Color Legend */}
@@ -111,11 +111,11 @@ export default function QtWellnessMoodPage({
           {/* Top: Sleep Hours & Energy Level */}
           <div className="border border-slate-200/90 rounded-2xl p-3 bg-white space-y-1.5 shadow-2xs">
             <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 🌙 평균 수면 시간 & 컨디션 (Sleep & Energy)
               </span>
-              <span className="text-[9px] text-slate-400 font-mono">Target: 7~8 hrs</span>
+              <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">Target: 7~8 hrs</span>
             </h4>
             <div className="space-y-1 text-[9.5px]">
               {['주간 평균 수면', '주말 수면 충전', '하루 수분 섭취 (8잔 목표)'].map((item, idx) => (

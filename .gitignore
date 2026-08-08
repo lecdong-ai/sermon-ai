@@ -17,3 +17,4 @@ Thumbs.db
 *.tsbuildinfo
 .vercel
 .env*
+public/master.pdf
