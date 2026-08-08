@@ -1159,30 +1159,30 @@ export default function DiaryPage() {
               </div>
             </div>
 
-            {/* Compact Slim 1-Row Gold Ribbon Controller (100% Fully Visible Labels) */}
-            <div className="w-full bg-slate-950/95 border border-white/15 p-1 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md">
+            {/* Compact 1-Row Gold Ribbon Controller with Full Original Titles (100% Fully Visible) */}
+            <div className="w-full bg-slate-950/95 border border-white/15 p-1.5 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md">
               {(categoryFilter === 'church'
                 ? [
-                    { id: 'yearlygrid', icon: '📅', name: '연간' },
-                    { id: 'wallcalendar', icon: '🖼️', name: '벽달력' },
-                    { id: 'calendar', icon: '🗓️', name: '월달력' },
-                    { id: 'overview', icon: '📑', name: '개요' },
-                    { id: 'soapjournal', icon: '📖', name: '묵상' },
-                    { id: 'intercessory', icon: '🙏', name: '기도' },
-                    { id: 'sermon', icon: '🎤', name: '설교' },
-                    { id: 'weekly', icon: '📋', name: '주간' },
-                    { id: 'daily', icon: '📓', name: '일간' },
+                    { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
+                    { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
+                    { id: 'calendar', icon: '🗓️', name: '월간 달력' },
+                    { id: 'overview', icon: '📑', name: '월간 개요' },
+                    { id: 'soapjournal', icon: '📖', name: 'SOAP 묵상' },
+                    { id: 'intercessory', icon: '🙏', name: '중보 기도' },
+                    { id: 'sermon', icon: '🎤', name: '주일 설교' },
+                    { id: 'weekly', icon: '📋', name: '주간 계획' },
+                    { id: 'daily', icon: '📓', name: '일간 일기' },
                   ]
                 : [
-                    { id: 'yearlygrid', icon: '📅', name: '연간' },
-                    { id: 'wallcalendar', icon: '🖼️', name: '벽달력' },
-                    { id: 'calendar', icon: '🗓️', name: '월달력' },
-                    { id: 'overview', icon: '📑', name: '개요' },
-                    { id: 'habit', icon: '🌱', name: '습관' },
-                    { id: 'budget', icon: '💰', name: '가계부' },
-                    { id: 'kpt', icon: '🔄', name: '회고' },
-                    { id: 'weekly', icon: '📋', name: '주간' },
-                    { id: 'daily', icon: '📓', name: '일간' },
+                    { id: 'yearlygrid', icon: '📅', name: '연간 캘린더' },
+                    { id: 'wallcalendar', icon: '🖼️', name: '연간 벽달력' },
+                    { id: 'calendar', icon: '🗓️', name: '월간 달력' },
+                    { id: 'overview', icon: '📑', name: '월간 개요' },
+                    { id: 'habit', icon: '🌱', name: '습관 트래커' },
+                    { id: 'budget', icon: '💰', name: '지출 가계부' },
+                    { id: 'kpt', icon: '🔄', name: 'KPT 회고' },
+                    { id: 'weekly', icon: '📋', name: '주간 계획' },
+                    { id: 'daily', icon: '📓', name: '일간 일기' },
                   ]
               ).map((chip) => {
                 const isActive = previewTab === chip.id
@@ -1191,15 +1191,15 @@ export default function DiaryPage() {
                     key={chip.id}
                     type="button"
                     onClick={() => setPreviewTab(chip.id as any)}
-                    className={`flex-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-0.5 border whitespace-nowrap shrink-0 ${
+                    className={`flex-1 py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 border whitespace-nowrap shrink-0 ${
                       isActive
                         ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
                         : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/30'
                     }`}
                     title={`${chip.name} 미리보기`}
                   >
-                    <span className="text-[10px] sm:text-xs shrink-0">{chip.icon}</span>
-                    <span className="font-extrabold text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap shrink-0">
+                    <span className="text-xs shrink-0">{chip.icon}</span>
+                    <span className="font-extrabold text-[10px] xl:text-[11px] tracking-tight whitespace-nowrap shrink-0">
                       {chip.name}
                     </span>
                   </button>
