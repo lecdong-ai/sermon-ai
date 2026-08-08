@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
 
 interface QtMonthlyLetterPortraitProps {
   year?: number
@@ -10,6 +11,11 @@ interface QtMonthlyLetterPortraitProps {
   pageHeight?: number
 }
 
+const MONTH_MAP: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+}
+
 export default function QtMonthlyLetterPortrait({
   year = 2026,
   monthName = 'August',
@@ -17,19 +23,22 @@ export default function QtMonthlyLetterPortrait({
   pageWidth = 1024,
   pageHeight = 1448,
 }: QtMonthlyLetterPortraitProps) {
+  const monthNum = MONTH_MAP[monthName] || 8
+
   return (
     <div
-      data-page-key="monthly-letter-1-portrait"
+      data-page-key="tracker"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '36px 44px',
+        padding: '52px 20px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNavPortrait currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} />
       {/* 1. Header Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
         <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">

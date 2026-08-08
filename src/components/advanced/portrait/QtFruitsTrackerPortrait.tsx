@@ -55,17 +55,18 @@ export default function QtFruitsTrackerPortrait({
 
   return (
     <div
-      data-page-key="fruits-tracker-portrait"
+      data-page-key="tracker"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '36px 44px',
+        padding: '52px 20px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNavPortrait currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} />
       {/* 1. Header Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-3">
         <div className="flex items-center space-x-4 text-xs font-medium tracking-wider text-slate-400 font-mono">

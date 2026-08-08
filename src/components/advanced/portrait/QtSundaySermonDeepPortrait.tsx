@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
 
 interface QtSundaySermonDeepPortraitProps {
   year?: number
@@ -8,6 +9,7 @@ interface QtSundaySermonDeepPortraitProps {
   sundayNo?: number
   dayNum?: number
   dateStr?: string
+  sundayLabel?: string
   monthName?: string
   themeColor?: string
   pageWidth?: number
@@ -20,10 +22,11 @@ export default function QtSundaySermonDeepPortrait({
   sundayNo = 1,
   dayNum,
   dateStr = '08/02',
+  sundayLabel = '8월 1주차 주일예배 딥다이브',
   monthName = 'August',
   themeColor = '#B8C6D9',
-  pageWidth = 768,
-  pageHeight = 1024,
+  pageWidth = 1024,
+  pageHeight = 1448,
 }: QtSundaySermonDeepPortraitProps) {
   return (
     <div
@@ -35,11 +38,12 @@ export default function QtSundaySermonDeepPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '28px 24px',
+        padding: '52px 20px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNavPortrait currentMonth={month} activeTab="tracker" themeColor={themeColor} />
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-400 pb-2 mb-3">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400">
