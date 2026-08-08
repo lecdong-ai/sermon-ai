@@ -916,83 +916,71 @@ export default function DiaryPage() {
         </div>
       </header>
 
-      {/* 2. Main Studio Professional Workspace Layout (5:7 Grid Balance) */}
-      <div className="flex-1 grid grid-cols-12 gap-6 p-6 max-w-[1600px] mx-auto w-full">
-        {/* Left Options Control Studio (5 cols) */}
-        <div className="col-span-12 lg:col-span-5 space-y-4">
+      {/* 2. Main Studio Professional Workspace Layout (Slim 3:9 Grid Balance) */}
+      <div className="flex-1 grid grid-cols-12 gap-5 p-6 max-w-[1600px] mx-auto w-full">
+        {/* Left Options Control Studio (Slim 3 cols) */}
+        <div className="col-span-12 lg:col-span-3 space-y-3">
           
           {/* Module 1: 1-Click Presets */}
-          <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/10 space-y-2.5 backdrop-blur-md shadow-2xl">
+          <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-white/10 space-y-2 backdrop-blur-md shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 원클릭 구성 프리셋
               </h3>
-              <span className="text-[10px] font-medium text-slate-400">내지 세트 자동 설정</span>
+              <span className="text-[10px] font-medium text-slate-400">자동 설정</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="grid grid-cols-1 gap-1.5 text-xs">
               <button
                 onClick={() => applyPreset('general')}
-                className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold transition-all text-left flex flex-col gap-0.5 group"
+                className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold transition-all text-left flex items-center justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <span>🌿 일반인 갓생 팩</span>
-                  <span className="text-[9px] opacity-70">19종</span>
-                </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 일반인15종</span>
+                <span>🌿 일반인 갓생 팩 (19종)</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본+갓생</span>
               </button>
 
               <button
                 onClick={() => applyPreset('church')}
-                className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold transition-all text-left flex flex-col gap-0.5 group"
+                className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold transition-all text-left flex items-center justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <span>⛪ 크리스천 묵상 팩</span>
-                  <span className="text-[9px] opacity-70">19종</span>
-                </div>
-                <span className="text-[9.5px] font-normal text-slate-400">기본4종 + 크리스천15종</span>
+                <span>⛪ 크리스천 묵상 팩 (19종)</span>
+                <span className="text-[9.5px] font-normal text-slate-400">기본+영성</span>
               </button>
 
               <button
                 onClick={() => applyPreset('basic')}
-                className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 font-bold transition-all text-left flex flex-col gap-0.5 group"
+                className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 font-bold transition-all text-left flex items-center justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <span>📅 미니멀 기본 팩</span>
-                  <span className="text-[9px] opacity-70">4종</span>
-                </div>
-                <span className="text-[9.5px] font-normal text-slate-400">달력/개요/주간/데일리만</span>
+                <span>📅 미니멀 기본 팩 (4종)</span>
+                <span className="text-[9.5px] font-normal text-slate-400">핵심내지</span>
               </button>
 
               <button
                 onClick={() => applyPreset('all')}
-                className="p-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold transition-all text-left flex flex-col gap-0.5 group"
+                className="p-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold transition-all text-left flex items-center justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <span>✨ 전체 수집 팩</span>
-                  <span className="text-[9px] opacity-70">34종</span>
-                </div>
-                <span className="text-[9.5px] font-normal text-slate-400">스튜디오 전체 내지 포함</span>
+                <span>✨ 전체 수집 팩 (34종)</span>
+                <span className="text-[9.5px] font-normal text-slate-400">전체내지</span>
               </button>
             </div>
           </div>
 
           {/* Module 2: Year, Month, Theme & Paper Controls */}
-          <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/10 space-y-3.5 backdrop-blur-md shadow-2xl">
+          <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-white/10 space-y-3 backdrop-blur-md shadow-2xl">
             {/* Year & Month Picker */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                   <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
-                  발행 연월 ({selectedYear}년 {selectedMonth}월)
+                  발행 연월 ({selectedYear}.{String(selectedMonth).padStart(2, '0')})
                 </span>
-                <div className="flex items-center gap-1 text-[11px]">
+                <div className="flex items-center gap-0.5 text-[10.5px]">
                   {[2025, 2026, 2027, 2028].map((yr) => (
                     <button
                       key={yr}
                       onClick={() => setSelectedYear(yr)}
-                      className={`px-2 py-0.5 rounded-lg font-bold border transition-all ${
+                      className={`px-1.5 py-0.5 rounded-md font-bold border transition-all ${
                         selectedYear === yr
                           ? 'bg-indigo-600 border-indigo-400 text-white'
                           : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
@@ -1012,7 +1000,7 @@ export default function DiaryPage() {
                       setSelectedMonth(m)
                       setActiveDayNum(1)
                     }}
-                    className={`py-1 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1 rounded-md text-[11px] font-bold border transition-all ${
                       selectedMonth === m
                         ? 'bg-amber-500 border-amber-400 text-slate-950 shadow-md'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
@@ -1031,15 +1019,15 @@ export default function DiaryPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                   <Palette className="w-3.5 h-3.5 text-indigo-400" />
-                  스튜디오 컬러 테마
+                  컬러 테마
                 </span>
-                <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 truncate max-w-[110px]">
                   {selectedTheme.name}
                 </span>
               </div>
 
               {/* Theme Category Tabs */}
-              <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-xl border border-white/10 text-[10.5px] font-bold">
+              <div className="flex items-center gap-1 p-0.5 bg-slate-950/80 rounded-xl border border-white/10 text-[10px] font-bold">
                 {THEME_CATEGORIES.map(cat => (
                   <button
                     key={cat.id}
@@ -1056,22 +1044,22 @@ export default function DiaryPage() {
               </div>
 
               {/* Theme Grid */}
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-4 gap-1">
                 {THEMES.filter(t => t.category === activeThemeCategory).map((t) => {
                   const isSel = selectedTheme.id === t.id
                   return (
                     <button
                       key={t.id}
                       onClick={() => setSelectedTheme(t)}
-                      className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                      className={`p-1 rounded-lg border flex flex-col items-center gap-0.5 transition-all ${
                         isSel
-                          ? 'bg-indigo-600/30 border-indigo-400 ring-2 ring-indigo-400/40 shadow-sm'
+                          ? 'bg-indigo-600/30 border-indigo-400 ring-1 ring-indigo-400/40 shadow-sm'
                           : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                       title={t.name}
                     >
-                      <div className="w-4 h-4 rounded-full border border-white/30 shadow-xs" style={{ backgroundColor: t.color }} />
-                      <span className="text-[9.5px] font-medium text-slate-300 truncate w-full text-center">
+                      <div className="w-3.5 h-3.5 rounded-full border border-white/30 shadow-xs" style={{ backgroundColor: t.color }} />
+                      <span className="text-[9px] font-medium text-slate-300 truncate w-full text-center">
                         {t.name}
                       </span>
                     </button>
@@ -1084,7 +1072,7 @@ export default function DiaryPage() {
 
             {/* Paper Size Options */}
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-300 flex items-center gap-1.5">
+              <span className="font-bold text-slate-300 flex items-center gap-1.5 text-[11px]">
                 <FileText className="w-3.5 h-3.5 text-indigo-400" />
                 용지 규격:
               </span>
@@ -1093,7 +1081,7 @@ export default function DiaryPage() {
                   <button
                     key={sz}
                     onClick={() => setSelectedSizeOption(sz)}
-                    className={`px-2 py-1 rounded-lg font-bold border text-[11px] transition-all ${
+                    className={`px-2 py-0.5 rounded-md font-bold border text-[10.5px] transition-all ${
                       selectedSizeOption === sz
                         ? 'bg-indigo-600 border-indigo-400 text-white'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
@@ -1106,19 +1094,19 @@ export default function DiaryPage() {
             </div>
           </div>
           {/* Floating Control Windows Info Card in Sidebar */}
-          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2 backdrop-blur-md shadow-xl">
-            <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
-              <Move className="w-4 h-4 text-indigo-400 animate-pulse" />
-              <span>마우스 드래그 플로팅 패널</span>
+          <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-1.5 backdrop-blur-md shadow-xl">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
+              <Move className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+              <span>드래그 플로팅 패널</span>
             </div>
-            <p className="text-[10.5px] text-slate-400 leading-relaxed">
-              <strong className="text-indigo-300">[미리보기 패널]</strong> 및 <strong className="text-amber-300">[내지 구성 선택]</strong> 창은 마우스로 잡고 화면 어디든 자유롭게 드래그하여 배치하실 수 있습니다. (상단 바 버튼으로 ON/OFF 가능)
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              <strong className="text-indigo-300">[미리보기]</strong> &amp; <strong className="text-amber-300">[내지구성]</strong> 창은 마우스 드래그로 어디든 이동 가능합니다.
             </p>
           </div>
         </div>
 
-        {/* Right Studio Live Canvas Panel (7 cols) */}
-        <div className="col-span-12 lg:col-span-7 flex flex-col items-center justify-start">
+        {/* Right Studio Live Canvas Panel (Wide 9 cols) */}
+        <div className="col-span-12 lg:col-span-9 flex flex-col items-center justify-start">
           {/* Top Canvas Toolbar with Quick Preview Navigator Chips */}
           <div className="w-full space-y-2 mb-3 px-1 text-xs">
             <div className="flex items-center justify-between">
