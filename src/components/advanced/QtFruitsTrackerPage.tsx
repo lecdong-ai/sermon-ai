@@ -10,6 +10,11 @@ interface QtFruitsTrackerPageProps {
   pageHeight?: number
 }
 
+const MONTH_MAP: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+}
+
 export default function QtFruitsTrackerPage({
   year = 2026,
   monthName = 'August',
@@ -17,6 +22,7 @@ export default function QtFruitsTrackerPage({
   pageWidth = 1024,
   pageHeight = 768,
 }: QtFruitsTrackerPageProps) {
+  const monthNum = MONTH_MAP[monthName] || 8
   const fruitClusters = [
     {
       clusterName: '🙌 하나님과의 관계 (Godward)',
