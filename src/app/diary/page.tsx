@@ -250,6 +250,7 @@ export default function DiaryPage() {
   // ★ 신의 4가지 UX 스튜디오 모드 및 스텝 워크플로우 상태 변수
   const [layoutMode, setLayoutMode] = useState<'focus' | 'split' | 'cinema' | 'step'>('focus')
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<1 | 2 | 3>(1)
+  const [modalFullMaster, setModalFullMaster] = useState(false)
 
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
@@ -1996,14 +1997,43 @@ export default function DiaryPage() {
               </span>
             </div>
 
-            {/* Center Controls: View Mode Switcher + Zoom Controls */}
+            {/* Center Controls: Full Master Toggle + View Mode Switcher + Zoom Controls */}
             <div className="flex items-center gap-3">
+              {/* 12개월 풀 연간 뷰 토글 버튼 */}
+              <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-amber-500/30">
+                <button
+                  type="button"
+                  onClick={() => setModalFullMaster(false)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    !modalFullMaster
+                      ? 'bg-slate-800 text-amber-300 border border-slate-600 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🗓️ {selectedMonth}월 단일 뷰
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalFullMaster(true)
+                    setModalViewMode('continuous')
+                  }}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    modalFullMaster
+                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  ✨ 12개월 전체 연간 뷰 (1~12월)
+                </button>
+              </div>
+
               <div className="flex items-center bg-slate-950/80 p-1 rounded-xl border border-white/10">
                 <button
                   onClick={() => setModalViewMode('continuous')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                     modalViewMode === 'continuous'
-                      ? 'bg-indigo-600 text-white shadow-md'
+                      ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -2014,7 +2044,7 @@ export default function DiaryPage() {
                   onClick={() => setModalViewMode('single')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                     modalViewMode === 'single'
-                      ? 'bg-indigo-600 text-white shadow-md'
+                      ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -2204,16 +2234,38 @@ export default function DiaryPage() {
                   </div>
                 )}
 
-                {/* 2. 월간 달력 & 개요 파트 */}
-                {selectedPages.calendar && (
-                  <div id="modal-page-calendar" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                  </div>
-                )}
-                {selectedPages.overview && (
-                  <div id="modal-page-overview" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                  </div>
+                {/* 2. 월간 달력 & 개요 파트 (12개월 풀 연간 마스터 뷰 지원) */}
+                {modalFullMaster ? (
+                  Array.from({ length: 12 }, (_, idx) => idx + 1).map((m) => {
+                    const mName = `${m}월`
+                    return (
+                      <React.Fragment key={`modal-full-master-month-${m}`}>
+                        {selectedPages.calendar && (
+                          <div id={`modal-page-calendar-m${m}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                            <CalendarComponent year={selectedYear} month={m} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                          </div>
+                        )}
+                        {selectedPages.overview && (
+                          <div id={`modal-page-overview-m${m}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                            <OverviewComponent year={selectedYear} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    )
+                  })
+                ) : (
+                  <>
+                    {selectedPages.calendar && (
+                      <div id="modal-page-calendar" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                        <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      </div>
+                    )}
+                    {selectedPages.overview && (
+                      <div id="modal-page-overview" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                        <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* 3. 월간 4대 핵심 트래커 파트 (전진 배치) */}
