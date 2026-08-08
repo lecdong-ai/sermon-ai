@@ -3179,21 +3179,6 @@ export default function DiaryPage() {
         </div>
       )}
 
-      {/* 연간 마스터 다이어리 일괄 생성 마법사 모달 */}
-      <YearlyBuilderModal
-        isOpen={isYearlyModalOpen}
-        onClose={() => setIsYearlyModalOpen(false)}
-        startYear={2026}
-        startMonth={8}
-        endYear={2027}
-        endMonth={12}
-        selectedTheme={selectedTheme}
-        sizeOption={selectedSizeOption}
-        isEcoPrint={isEcoPrint}
-        onStartGenerate={handleStartYearlyMaster}
-        isGenerating={isYearlyGenerating}
-        progress={yearlyProgress}
-      />
       </div>
     </DiaryPeriodProvider>
   )
