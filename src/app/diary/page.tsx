@@ -1568,12 +1568,54 @@ export default function DiaryPage() {
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
         <div ref={pdfContainerRef}>
+          {/* 1. 월간 달력 (Monthly Calendar) */}
           {selectedPages.calendar && (
             <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
           )}
+
+          {/* 2. 월간 개요 & 목표 (Monthly Overview) */}
           {selectedPages.overview && (
             <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
           )}
+
+          {/* 3. 주차별 주간 계획 + 일일 다이어리 교대 배치 (Weekly Plan + 7-Day Daily Diaries for each week) */}
+          {selectedPages.weekly && selectedPages.daily && (
+            Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
+              const currentWeek = Math.floor((d - 1) / 7) + 1
+              const isWeekStart = (d - 1) % 7 === 0
+
+              return (
+                <React.Fragment key={d}>
+                  {isWeekStart && (
+                    <WeeklyComponent
+                      year={selectedYear}
+                      weekNum={currentWeek}
+                      weekLabel={`WEEK ${currentWeek}`}
+                      monthName={monthName}
+                      themeColor={activeColor}
+                      pageWidth={pageWidth}
+                      pageHeight={pageHeight}
+                      isGeneralMode={categoryFilter !== 'church'}
+                    />
+                  )}
+                  <DailyComponent
+                    dateLabel={`${String(d).padStart(2, '0')} DAY`}
+                    dayNum={d}
+                    dayName={d % 7 === 1 ? 'SUN' : d % 7 === 2 ? 'MON' : d % 7 === 3 ? 'TUE' : d % 7 === 4 ? 'WED' : d % 7 === 5 ? 'THU' : d % 7 === 6 ? 'FRI' : 'SAT'}
+                    monthName={monthName}
+                    yearLabel={String(selectedYear)}
+                    themeColor={activeColor}
+                    pageWidth={pageWidth}
+                    pageHeight={pageHeight}
+                    activeWeek={`W${currentWeek}`}
+                    isChurchMode={categoryFilter === 'church'}
+                  />
+                </React.Fragment>
+              )
+            })
+          )}
+
+          {/* 4. 월간 서브 노트 및 갓생/영성 트래커들 (Monthly Trackers & Special Notes) */}
           {selectedPages.habit && (
             <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
@@ -1621,21 +1663,6 @@ export default function DiaryPage() {
           {selectedPages.hundredgoal2 && (
             <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.intercessory && (
-            <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.intercessory2 && (
-            <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.soapjournal && (
-            <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.soapjournal2 && (
-            <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.fruitstracker && (
-            <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
           {selectedPages.prayer && (
             <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
@@ -1665,40 +1692,20 @@ export default function DiaryPage() {
           {selectedPages.letter2 && (
             <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.weekly && selectedPages.daily && (
-            Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
-              const currentWeek = Math.floor((d - 1) / 7) + 1
-              const isWeekStart = (d - 1) % 7 === 0
-
-              return (
-                <React.Fragment key={d}>
-                  {isWeekStart && (
-                    <WeeklyComponent
-                      year={selectedYear}
-                      weekNum={currentWeek}
-                      weekLabel={`WEEK ${31 + currentWeek}`}
-                      monthName={monthName}
-                      themeColor={activeColor}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      isGeneralMode={categoryFilter !== 'church'}
-                    />
-                  )}
-                  <DailyComponent
-                    dateLabel={`${String(d).padStart(2, '0')} DAY`}
-                    dayNum={d}
-                    dayName={d === 1 ? 'SAT' : (d % 7 === 1 ? 'SUN' : 'DAY')}
-                    monthName={monthName}
-                    yearLabel={String(selectedYear)}
-                    themeColor={activeColor}
-                    pageWidth={pageWidth}
-                    pageHeight={pageHeight}
-                    activeWeek={`W${currentWeek}`}
-                    isChurchMode={categoryFilter === 'church'}
-                  />
-                </React.Fragment>
-              )
-            })
+          {selectedPages.intercessory && (
+            <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.intercessory2 && (
+            <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.soapjournal && (
+            <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.soapjournal2 && (
+            <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.fruitstracker && (
+            <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
         </div>
       </div>
