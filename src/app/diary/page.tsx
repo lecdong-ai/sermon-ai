@@ -1391,7 +1391,7 @@ export default function DiaryPage() {
                           <div className="flex items-center gap-2 flex-wrap shrink-0">
                             {/* 1. 시작 연/월 럭셔리 알약 캡슐 */}
                             <div className="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70 text-xs font-bold text-slate-200 shadow-inner">
-                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
                               <span className="text-[11px] text-slate-400 font-medium">시작:</span>
                               
                               {/* 연도 드롭다운 */}
