@@ -420,13 +420,15 @@ export default function DiaryPage() {
       applyPreset('basic')
     }
 
-    // 부록 세부 체크박스 100% 동기화
+    // 부록 및 커버 세부 체크박스 100% 동기화 (표지, 디바이더, 100일 목표, 성경맵 등)
     setSelectedPages((prev) => ({
       ...prev,
-      hundredgoal: cfg.includeYearlyGoals,
-      hundredgoal2: cfg.includeYearlyGoals,
-      biblemap: cfg.includeReadingMap,
-      biblemap2: cfg.includeReadingMap,
+      yearlygrid: cfg.includeYearlyCover ? true : prev.yearlygrid,
+      overview: cfg.includeMonthlyDivider ? true : prev.overview,
+      hundredgoal: cfg.includeYearlyGoals ? true : prev.hundredgoal,
+      hundredgoal2: cfg.includeYearlyGoals ? true : prev.hundredgoal2,
+      biblemap: cfg.includeReadingMap ? true : prev.biblemap,
+      biblemap2: cfg.includeReadingMap ? true : prev.biblemap2,
     }))
 
     // React State DOM 적용 대기
