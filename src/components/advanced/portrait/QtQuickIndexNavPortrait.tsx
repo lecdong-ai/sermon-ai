@@ -22,51 +22,51 @@ export default function QtQuickIndexNavPortrait({
 }: QtQuickIndexNavPortraitProps) {
   return (
     <div
-      className="absolute top-2.5 left-5 right-5 flex flex-col space-y-1 z-30 select-none font-mono"
+      className="absolute top-3 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1단 Tier: Global Sections + Weeks */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 pb-1">
-        <div className="flex items-center space-x-1">
-          <button
-            type="button"
-            data-nav-target="yearlygrid"
-            className={`px-2 py-0.5 rounded text-[9px] font-extrabold transition-all ${
-              activeTab === 'yearlygrid'
-                ? 'text-white shadow-xs'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
-            style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
-          >
-            YEAR
-          </button>
+      {/* Upper Row: Global Sections + Weeks */}
+      <div className="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 shadow-2xs">
+        <button
+          type="button"
+          data-nav-target="yearlygrid"
+          className={`px-2 py-0.5 rounded text-[8.5px] font-extrabold transition-all ${
+            activeTab === 'yearlygrid'
+              ? 'text-white shadow-xs font-black'
+              : 'text-slate-500 hover:bg-slate-200'
+          }`}
+          style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
+        >
+          YEAR
+        </button>
 
-          <button
-            type="button"
-            data-nav-target="calendar"
-            className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${
-              activeTab === 'calendar'
-                ? 'text-white shadow-xs'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
-            style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
-          >
-            CALENDAR
-          </button>
+        <button
+          type="button"
+          data-nav-target="calendar"
+          className={`px-2 py-0.5 rounded text-[8.5px] font-bold transition-all ${
+            activeTab === 'calendar'
+              ? 'text-white shadow-xs font-black'
+              : 'text-slate-500 hover:bg-slate-200'
+          }`}
+          style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
+        >
+          CAL
+        </button>
 
-          <button
-            type="button"
-            data-nav-target="overview"
-            className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${
-              activeTab === 'overview'
-                ? 'text-white shadow-xs'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
-            style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
-          >
-            OVERVIEW
-          </button>
-        </div>
+        <button
+          type="button"
+          data-nav-target="overview"
+          className={`px-2 py-0.5 rounded text-[8.5px] font-bold transition-all ${
+            activeTab === 'overview'
+              ? 'text-white shadow-xs font-black'
+              : 'text-slate-500 hover:bg-slate-200'
+          }`}
+          style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
+        >
+          OVR
+        </button>
+
+        <div className="h-3 w-px bg-slate-300 mx-0.5" />
 
         <div className="flex items-center space-x-0.5">
           {[1, 2, 3, 4, 5].map((wNo) => {
@@ -79,8 +79,8 @@ export default function QtQuickIndexNavPortrait({
                 data-week={wNo}
                 className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all ${
                   isCurrentW
-                    ? 'bg-slate-800 text-white shadow-xs font-black'
-                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700'
+                    ? 'bg-slate-900 text-white font-black shadow-xs'
+                    : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'
                 }`}
               >
                 W{wNo}
@@ -90,8 +90,8 @@ export default function QtQuickIndexNavPortrait({
         </div>
       </div>
 
-      {/* 2단 Tier: 12-Month Fast Jump Pill Ribbons */}
-      <div className="flex items-center justify-between space-x-1">
+      {/* Lower Row: 12-Month Fast Jump Pill Ribbons */}
+      <div className="flex items-center space-x-0.5 bg-slate-100/90 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
         {MONTH_SHORT_LABELS.map((mStr, idx) => {
           const mNum = idx + 1
           const isSelectedM = currentMonth === mNum
@@ -100,10 +100,10 @@ export default function QtQuickIndexNavPortrait({
               key={`m-p-${mNum}`}
               type="button"
               data-nav-target={`month-${mNum}`}
-              className={`flex-1 py-0.5 rounded text-[8px] font-bold text-center transition-all ${
+              className={`w-4.5 py-0.5 rounded text-[7.5px] font-bold text-center transition-all ${
                 isSelectedM
-                  ? 'text-white font-extrabold shadow-xs scale-105 ring-1 ring-white/50'
-                  : 'bg-slate-100/70 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'
+                  ? 'text-white font-extrabold shadow-xs scale-105 ring-1 ring-white/60'
+                  : 'text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'
               }`}
               style={{ backgroundColor: isSelectedM ? themeColor : undefined }}
             >

@@ -74,32 +74,21 @@ export default function QtWeeklyPlanPage({
       }}
     >
       <QtQuickIndexNav currentMonth={monthNum} currentWeek={weekNum} activeTab="weekly" themeColor={themeColor} />
-      {/* 1. Header Navigation Bar */}
+      {/* 1. Clean Header Title Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-600">YEARLY</span>
-          <span>{year}</span>
-          <span data-nav-target="calendar" className="px-2 py-0.5 rounded text-white font-bold cursor-pointer" style={{ backgroundColor: themeColor }}>
-            {monthName.toUpperCase().slice(0, 3)}
+        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-500 font-mono">
+          <span className="px-2.5 py-0.5 rounded text-white font-bold tracking-widest" style={{ backgroundColor: themeColor }}>
+            {year} · {monthName.toUpperCase()} · WEEK {weekNum}
+          </span>
+          <span className="text-slate-400 font-semibold">
+            {dateRangeText}
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400 font-mono">
-          <span data-nav-target="calendar" className="hover:text-slate-600 cursor-pointer">MONTHLY</span>
-          <span data-nav-target="overview" className="hover:text-slate-600 cursor-pointer">OVERVIEW</span>
-          {['W1', 'W2', 'W3', 'W4', 'W5'].map((w, idx) => (
-            <span
-              key={w}
-              data-nav-target={`week-${idx + 1}`}
-              className={`cursor-pointer px-1.5 py-0.5 rounded ${
-                idx + 1 === weekNum
-                  ? 'bg-slate-800 text-white font-bold shadow-2xs'
-                  : 'hover:text-slate-600'
-              }`}
-            >
-              {w}
-            </span>
-          ))}
+        <div className="flex items-center space-x-2 text-[10.5px] font-mono text-slate-400">
+          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-bold">
+            Weekly Focus Strategy
+          </span>
         </div>
       </div>
 

@@ -57,40 +57,21 @@ export default function QtDailyDiaryPage({
       }}
     >
       <QtQuickIndexNav currentMonth={monthNum} currentWeek={weekNum} activeTab="daily" themeColor={themeColor} />
-      {/* 1. Top Navigation Bar (Ultra-Sleek High-End PDF Index Header) */}
+      {/* 1. Clean Header Title Bar */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-        {/* Left Nav */}
-        <div className="flex items-center space-x-3 text-[10.5px] font-medium tracking-widest text-slate-400 font-mono">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-800 font-bold transition-colors">YEARLY</span>
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-800 transition-colors">{yearLabel}</span>
-          <span data-nav-target="calendar" className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold cursor-pointer">{monthName.toUpperCase().slice(0, 3)}</span>
+        <div className="flex items-center space-x-3 text-[10.5px] font-medium tracking-widest text-slate-500 font-mono">
+          <span className="px-2.5 py-0.5 rounded text-white font-bold tracking-widest" style={{ backgroundColor: themeColor }}>
+            {yearLabel} · {monthName.toUpperCase()} · DAY {paddedDay}
+          </span>
+          <span className="text-slate-400 font-semibold">
+            {activeWeek} Daily Record
+          </span>
         </div>
 
-        {/* Right Nav: High-End Minimalist Monospace Index Links */}
-        <div className="flex items-center space-x-2 text-[9.5px] font-mono tracking-widest text-slate-400 font-medium uppercase">
-          <span data-nav-target="calendar" className="cursor-pointer hover:text-slate-900 transition-colors">cal</span>
-          <span className="text-slate-300">·</span>
-          <span data-nav-target="overview" className="cursor-pointer hover:text-slate-900 transition-colors">ovw</span>
-          <span className="text-slate-300">·</span>
-          <span data-nav-target="habit" className="cursor-pointer hover:text-emerald-700 transition-colors">hbt</span>
-          <span className="text-slate-300">·</span>
-          <span data-nav-target="budget" className="cursor-pointer hover:text-teal-700 transition-colors">bgt</span>
-          <span className="text-slate-300">·</span>
-          <span data-nav-target="culture" className="cursor-pointer hover:text-rose-700 transition-colors">clt</span>
-          <span className="text-slate-300">·</span>
-          <span data-nav-target="kpt" className="cursor-pointer hover:text-purple-700 transition-colors">kpt</span>
-          <span className="text-slate-300">|</span>
-          {['w1', 'w2', 'w3', 'w4', 'w5'].map((w, idx) => (
-            <span
-              key={w}
-              data-nav-target={`week-${idx + 1}`}
-              className={`cursor-pointer px-1 py-0.2 rounded transition-colors ${
-                activeWeek === w.toUpperCase() ? 'bg-slate-900 text-white font-bold' : 'hover:text-slate-800'
-              }`}
-            >
-              {w}
-            </span>
-          ))}
+        <div className="flex items-center space-x-2 text-[9.5px] font-mono text-slate-400">
+          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-bold">
+            {isChurchMode ? 'Christian Devotional Notes' : 'Daily Life Record'}
+          </span>
         </div>
       </div>
 

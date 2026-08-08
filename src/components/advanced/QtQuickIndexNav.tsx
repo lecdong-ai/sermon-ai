@@ -22,32 +22,34 @@ export default function QtQuickIndexNav({
 }: QtQuickIndexNavProps) {
   return (
     <div
-      className="absolute right-1.5 top-5 bottom-5 w-8 flex flex-col justify-between items-center py-1 z-30 select-none font-mono"
+      className="absolute right-0 top-4 bottom-4 w-9 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Main Nav Group */}
-      <div className="flex flex-col space-y-1 w-full items-center">
+      {/* Upper Main Section Tabs (3D Sticker Style) */}
+      <div className="flex flex-col space-y-1.5 w-full items-end">
+        {/* YR Tab */}
         <button
           type="button"
           data-nav-target="yearlygrid"
-          className={`w-7 h-6 rounded-r-md text-[8.5px] font-extrabold flex items-center justify-center transition-all shadow-2xs ${
+          className={`h-6 rounded-l-md text-[8.5px] font-extrabold flex items-center justify-center transition-all shadow-md ${
             activeTab === 'yearlygrid'
-              ? 'text-white shadow-xs scale-105'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
+              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
           }`}
           style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
-          title="연간 12개월 달력"
+          title="연간 12개월 캘린더"
         >
           YR
         </button>
 
+        {/* CAL Tab */}
         <button
           type="button"
           data-nav-target="calendar"
-          className={`w-7 h-5.5 rounded-r-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-2xs ${
+          className={`h-5.5 rounded-l-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-md ${
             activeTab === 'calendar'
-              ? 'text-white shadow-xs scale-105'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
+              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
           }`}
           style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
           title="월간 달력"
@@ -55,13 +57,14 @@ export default function QtQuickIndexNav({
           CAL
         </button>
 
+        {/* OVR Tab */}
         <button
           type="button"
           data-nav-target="overview"
-          className={`w-7 h-5.5 rounded-r-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-2xs ${
+          className={`h-5.5 rounded-l-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-md ${
             activeTab === 'overview'
-              ? 'text-white shadow-xs scale-105'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
+              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
           }`}
           style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
           title="월간 개요"
@@ -70,8 +73,8 @@ export default function QtQuickIndexNav({
         </button>
       </div>
 
-      {/* Middle Week Nav Group */}
-      <div className="flex flex-col space-y-0.5 w-full items-center my-1 border-y border-slate-200/60 py-1">
+      {/* Middle Week Tabs (W1 ~ W5) */}
+      <div className="flex flex-col space-y-1 w-full items-end my-1 border-y border-slate-200/80 py-1.5">
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
           return (
@@ -80,10 +83,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`w-6.5 h-4.5 rounded-r-sm text-[7.5px] font-bold flex items-center justify-center transition-all ${
+              className={`h-4.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs ${
                 isCurrentW
-                  ? 'bg-slate-800 text-white shadow-xs font-black'
-                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-700'
+                  ? 'w-8.5 bg-slate-900 text-white font-black shadow-md border-l-2 border-amber-400'
+                  : 'w-7 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8'
               }`}
               title={`${wNo}주차 계획`}
             >
@@ -93,8 +96,8 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Lower Month Jump Ribbons (01 ~ 12) */}
-      <div className="flex flex-col space-y-0.5 w-full items-center">
+      {/* Lower Month Ribbons (01 ~ 12) - Active Month 3D Highlight */}
+      <div className="flex flex-col space-y-0.5 w-full items-end">
         {MONTH_SHORT_LABELS.map((mStr, idx) => {
           const mNum = idx + 1
           const isSelectedM = currentMonth === mNum
@@ -103,10 +106,10 @@ export default function QtQuickIndexNav({
               key={`m-${mNum}`}
               type="button"
               data-nav-target={`month-${mNum}`}
-              className={`w-7 h-4.5 rounded-r-md text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs ${
+              className={`h-4.5 rounded-l-md text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs ${
                 isSelectedM
-                  ? 'text-white font-extrabold shadow-xs scale-105 ring-1 ring-white/50'
-                  : 'bg-slate-100/80 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'
+                  ? 'w-9 text-white font-black shadow-md ring-1 ring-white/60 border-l-2 border-white'
+                  : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-indigo-100 hover:text-indigo-700 hover:w-8.5'
               }`}
               style={{ backgroundColor: isSelectedM ? themeColor : undefined }}
               title={`${mNum}월 달력으로 이동`}
