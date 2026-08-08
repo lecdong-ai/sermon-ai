@@ -1552,6 +1552,7 @@ export default function DiaryPage() {
                   width: `${pageWidth}px`,
                 }}
               >
+                {/* 1. 연간 마스터 & 비전 부록 파트 */}
                 {selectedPages.yearlygrid && (
                   <div id="modal-page-yearlygrid" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900">
                     {yearlyGridYears.map((gy) => (
@@ -1561,6 +1562,28 @@ export default function DiaryPage() {
                     ))}
                   </div>
                 )}
+                {selectedPages.hundredgoal && (
+                  <div id="modal-page-hundredgoal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.hundredgoal2 && (
+                  <div id="modal-page-hundredgoal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.biblemap && (
+                  <div id="modal-page-biblemap" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.biblemap2 && (
+                  <div id="modal-page-biblemap2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+
+                {/* 2. 월간 달력 & 개요 파트 */}
                 {selectedPages.calendar && (
                   <div id="modal-page-calendar" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
@@ -1571,6 +1594,8 @@ export default function DiaryPage() {
                     <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
                   </div>
                 )}
+
+                {/* 3. 월간 4대 핵심 트래커 파트 (전진 배치) */}
                 {selectedPages.habit && (
                   <div id="modal-page-habit" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1586,11 +1611,6 @@ export default function DiaryPage() {
                     <GratitudeComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
-                {selectedPages.quote && (
-                  <div id="modal-page-quote" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
                 {selectedPages.budget && (
                   <div id="modal-page-budget" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <BudgetComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1601,16 +1621,6 @@ export default function DiaryPage() {
                     <Budget2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
-                {selectedPages.culture && (
-                  <div id="modal-page-culture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
-                {selectedPages.culture2 && (
-                  <div id="modal-page-culture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
                 {selectedPages.kpt && (
                   <div id="modal-page-kpt" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1619,6 +1629,21 @@ export default function DiaryPage() {
                 {selectedPages.kpt2 && (
                   <div id="modal-page-kpt2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.quote && (
+                  <div id="modal-page-quote" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.culture && (
+                  <div id="modal-page-culture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                  </div>
+                )}
+                {selectedPages.culture2 && (
+                  <div id="modal-page-culture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.sundaygeneral && (
@@ -1638,14 +1663,71 @@ export default function DiaryPage() {
                     <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
-                {selectedPages.hundredgoal && (
-                  <div id="modal-page-hundredgoal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+
+                {/* 4. 주차별 밀착 Interleaved Flow (Week 1 -> Day 1..7 -> Week 2 -> Day 8..14 ...) */}
+                {selectedPages.weekly && selectedPages.daily && (
+                  Array.from({ length: 5 }, (_, i) => i + 1).map((wNum) => {
+                    const wData = getWeekData(wNum)
+                    const startDay = (wNum - 1) * 7 + 1
+                    const endDay = Math.min(totalDays, wNum * 7)
+                    const dayList = []
+                    for (let d = startDay; d <= endDay; d++) dayList.push(d)
+
+                    return (
+                      <React.Fragment key={`modal-interleaved-week-${wNum}`}>
+                        {/* 해당 주차 주간 계획표 */}
+                        <div id={`modal-page-week-${wNum}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                          <WeeklyComponent
+                            year={selectedYear}
+                            weekNum={wNum}
+                            weekLabel={`${wNum}주차`}
+                            dateRangeText={wData.dateRangeText}
+                            daysInWeek={wData.daysInWeek}
+                            monthName={monthName}
+                            themeColor={activeColor}
+                            pageWidth={pageWidth}
+                            pageHeight={pageHeight}
+                            isGeneralMode={categoryFilter !== 'church'}
+                          />
+                        </div>
+
+                        {/* 해당 주차에 속한 7일간의 데일리 일기장 */}
+                        {dayList.map((d) => {
+                          const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                          const dateObj = new Date(selectedYear, selectedMonth - 1, d)
+                          const realDayName = dayNamesShort[dateObj.getDay()]
+
+                          return (
+                            <div key={`modal-day-${d}`} id={`modal-page-day-${d}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                              <DailyComponent
+                                dateLabel={`${String(d).padStart(2, '0')} ${realDayName}`}
+                                dayNum={d}
+                                dayName={realDayName}
+                                monthName={monthName}
+                                yearLabel={String(selectedYear)}
+                                themeColor={activeColor}
+                                pageWidth={pageWidth}
+                                pageHeight={pageHeight}
+                                activeWeek={`W${wNum}`}
+                                isChurchMode={categoryFilter === 'church'}
+                              />
+                            </div>
+                          )
+                        })}
+                      </React.Fragment>
+                    )
+                  })
+                )}
+
+                {/* 5. 크리스천 영성 팩 */}
+                {selectedPages.soapjournal && (
+                  <div id="modal-page-soapjournal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
-                {selectedPages.hundredgoal2 && (
-                  <div id="modal-page-hundredgoal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+                {selectedPages.soapjournal2 && (
+                  <div id="modal-page-soapjournal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.intercessory && (
@@ -1656,16 +1738,6 @@ export default function DiaryPage() {
                 {selectedPages.intercessory2 && (
                   <div id="modal-page-intercessory2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
-                {selectedPages.soapjournal && (
-                  <div id="modal-page-soapjournal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
-                {selectedPages.soapjournal2 && (
-                  <div id="modal-page-soapjournal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.fruitstracker && (
@@ -1705,16 +1777,6 @@ export default function DiaryPage() {
                     <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
-                {selectedPages.biblemap && (
-                  <div id="modal-page-biblemap" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
-                {selectedPages.biblemap2 && (
-                  <div id="modal-page-biblemap2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                    <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-                  </div>
-                )}
                 {selectedPages.letter && (
                   <div id="modal-page-letter" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
@@ -1724,52 +1786,6 @@ export default function DiaryPage() {
                   <div id="modal-page-letter2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
-                )}
-                {selectedPages.weekly && (
-                  Array.from({ length: 5 }, (_, i) => i + 1).map((wNum) => {
-                    const wData = getWeekData(wNum)
-                    return (
-                      <div key={`modal-week-${wNum}`} id={`modal-page-week-${wNum}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                        <WeeklyComponent
-                          year={selectedYear}
-                          weekNum={wNum}
-                          weekLabel={`${wNum}주차`}
-                          dateRangeText={wData.dateRangeText}
-                          daysInWeek={wData.daysInWeek}
-                          monthName={monthName}
-                          themeColor={activeColor}
-                          pageWidth={pageWidth}
-                          pageHeight={pageHeight}
-                          isGeneralMode={categoryFilter !== 'church'}
-                        />
-                      </div>
-                    )
-                  })
-                )}
-                {selectedPages.daily && (
-                  Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
-                    const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-                    const dateObj = new Date(selectedYear, selectedMonth - 1, d)
-                    const realDayName = dayNamesShort[dateObj.getDay()]
-                    const currentWeek = Math.floor((d - 1) / 7) + 1
-
-                    return (
-                      <div key={`modal-day-${d}`} id={`modal-page-day-${d}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                        <DailyComponent
-                          dateLabel={`${String(d).padStart(2, '0')} ${realDayName}`}
-                          dayNum={d}
-                          dayName={realDayName}
-                          monthName={monthName}
-                          yearLabel={String(selectedYear)}
-                          themeColor={activeColor}
-                          pageWidth={pageWidth}
-                          pageHeight={pageHeight}
-                          activeWeek={`W${currentWeek}`}
-                          isChurchMode={categoryFilter === 'church'}
-                        />
-                      </div>
-                    )
-                  })
                 )}
               </div>
             )}
@@ -1795,61 +1811,55 @@ export default function DiaryPage() {
             ))
           )}
 
-          {/* 0. 연간 마스터 12개월 달력 그리드 2장 (2026년 장 / 2027년 장) — 연간 일괄 시 첫 반복에서만 렌더 */}
+          {/* 0.0 연간 월력 벽달력 (Yearly Wall Calendar, 연도별 6개월씩 4장) */}
+          {activeWallChunks && activeWallChunks.length > 0 && (
+            activeWallChunks.map((chunk) => (
+              <QtYearlyWallCalendarPage
+                key={`wall-${chunk.index}`}
+                months={chunk.months}
+                chunkIndex={chunk.index}
+                chunkCount={chunk.total}
+                themeColor={activeColor}
+                pageWidth={pageWidth}
+                pageHeight={pageHeight}
+              />
+            ))
+          )}
+
+          {/* 0.1 연간 마스터 12개월 달력 그리드 2장 (연간 일괄 시 첫 반복에서만 렌더) */}
           {selectedPages.yearlygrid && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
             yearlyGridYears.map((gy) => (
               <YearlyGridComponent key={`pdf-yearlygrid-${gy}`} startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
             ))
           )}
 
-          {/* 1. 월간 달력 (Monthly Calendar) */}
+          {/* 0.2 100가지 비전 & 목표 2장 (연간 일괄 시 첫 반복에서만 렌더) */}
+          {selectedPages.hundredgoal && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
+            <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.hundredgoal2 && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
+            <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+
+          {/* 0.3 성경/독서 완독 맵 2장 (연간 일괄 시 첫 반복에서만 렌더) */}
+          {selectedPages.biblemap && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
+            <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.biblemap2 && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
+            <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+
+          {/* 1.0 월간 달력 (Monthly Calendar) */}
           {selectedPages.calendar && (
             <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
           )}
 
-          {/* 2. 월간 개요 & 목표 (Monthly Overview) */}
+          {/* 1.1 월간 개요 & 목표 (Monthly Overview) */}
           {selectedPages.overview && (
             <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
           )}
 
-          {/* 3. 주차별 주간 계획 + 일일 다이어리 교대 배치 (Weekly Plan + 7-Day Daily Diaries for each week) */}
-          {selectedPages.weekly && selectedPages.daily && (
-            Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
-              const currentWeek = Math.floor((d - 1) / 7) + 1
-              const isWeekStart = (d - 1) % 7 === 0
-
-              return (
-                <React.Fragment key={d}>
-                  {isWeekStart && (
-                    <WeeklyComponent
-                      year={selectedYear}
-                      weekNum={currentWeek}
-                      weekLabel={`WEEK ${currentWeek}`}
-                      monthName={monthName}
-                      themeColor={activeColor}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      isGeneralMode={categoryFilter !== 'church'}
-                    />
-                  )}
-                  <DailyComponent
-                    dateLabel={`${String(d).padStart(2, '0')} DAY`}
-                    dayNum={d}
-                    dayName={d % 7 === 1 ? 'SUN' : d % 7 === 2 ? 'MON' : d % 7 === 3 ? 'TUE' : d % 7 === 4 ? 'WED' : d % 7 === 5 ? 'THU' : d % 7 === 6 ? 'FRI' : 'SAT'}
-                    monthName={monthName}
-                    yearLabel={String(selectedYear)}
-                    themeColor={activeColor}
-                    pageWidth={pageWidth}
-                    pageHeight={pageHeight}
-                    activeWeek={`W${currentWeek}`}
-                    isChurchMode={categoryFilter === 'church'}
-                  />
-                </React.Fragment>
-              )
-            })
-          )}
-
-          {/* 4. 월간 서브 노트 및 갓생/영성 트래커들 (Monthly Trackers & Special Notes) */}
+          {/* 2.0 월간 4대 핵심 트래커 파트 (달력 직후 전진 배치!) */}
           {selectedPages.habit && (
             <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
@@ -1859,26 +1869,26 @@ export default function DiaryPage() {
           {selectedPages.gratitude && (
             <GratitudeComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.quote && (
-            <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
           {selectedPages.budget && (
             <BudgetComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.budget2 && (
             <Budget2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.culture && (
-            <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {selectedPages.culture2 && (
-            <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
           {selectedPages.kpt && (
             <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.kpt2 && (
             <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.quote && (
+            <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.culture && (
+            <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+          )}
+          {selectedPages.culture2 && (
+            <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
           {selectedPages.sundaygeneral && (
             Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
@@ -1891,15 +1901,77 @@ export default function DiaryPage() {
           {selectedPages.wellnessmood && (
             <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
           )}
-          {selectedPages.hundredgoal && (
-            <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+
+          {/* 3.0 주차별 밀착 Interleaved Flow (Weekly Plan + 7-Day Daily Diaries for each week) */}
+          {selectedPages.weekly && selectedPages.daily && (
+            Array.from({ length: 5 }, (_, i) => i + 1).map((wNum) => {
+              const wData = getWeekData(wNum)
+              const startDay = (wNum - 1) * 7 + 1
+              const endDay = Math.min(totalDays, wNum * 7)
+              const dayList = []
+              for (let d = startDay; d <= endDay; d++) dayList.push(d)
+
+              return (
+                <React.Fragment key={`pdf-interleaved-week-${wNum}`}>
+                  {/* 해당 주차 주간 계획표 */}
+                  <WeeklyComponent
+                    year={selectedYear}
+                    weekNum={wNum}
+                    weekLabel={`WEEK ${wNum}`}
+                    dateRangeText={wData.dateRangeText}
+                    daysInWeek={wData.daysInWeek}
+                    monthName={monthName}
+                    themeColor={activeColor}
+                    pageWidth={pageWidth}
+                    pageHeight={pageHeight}
+                    isGeneralMode={categoryFilter !== 'church'}
+                  />
+
+                  {/* 해당 주차에 속한 7일간의 데일리 일기장 */}
+                  {dayList.map((d) => {
+                    const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                    const dateObj = new Date(selectedYear, selectedMonth - 1, d)
+                    const realDayName = dayNamesShort[dateObj.getDay()]
+
+                    return (
+                      <DailyComponent
+                        key={`pdf-day-${d}`}
+                        dateLabel={`${String(d).padStart(2, '0')} DAY`}
+                        dayNum={d}
+                        dayName={realDayName}
+                        monthName={monthName}
+                        yearLabel={String(selectedYear)}
+                        themeColor={activeColor}
+                        pageWidth={pageWidth}
+                        pageHeight={pageHeight}
+                        activeWeek={`W${wNum}`}
+                        isChurchMode={categoryFilter === 'church'}
+                      />
+                    )
+                  })}
+                </React.Fragment>
+              )
+            })
           )}
-          {selectedPages.hundredgoal2 && (
-            <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-          )}
-          {/* 5. 크리스천 영성 전용 내지 15종 (일반인 갓생 팩 선택 시 PDF 렌더링 100% 원천 차단) */}
+
+          {/* 4.0 크리스천 영성 전용 내지 파트 */}
           {categoryFilter !== 'general' && (
             <>
+              {selectedPages.soapjournal && (
+                <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.soapjournal2 && (
+                <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.intercessory && (
+                <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.intercessory2 && (
+                <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
+              {selectedPages.fruitstracker && (
+                <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
+              )}
               {selectedPages.prayer && (
                 <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
               )}
@@ -1920,32 +1992,11 @@ export default function DiaryPage() {
               {selectedPages.sermondeep && (
                 <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
               )}
-              {selectedPages.biblemap && (
-                <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.biblemap2 && (
-                <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
               {selectedPages.letter && (
                 <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
               )}
               {selectedPages.letter2 && (
                 <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.intercessory && (
-                <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.intercessory2 && (
-                <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.soapjournal && (
-                <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.soapjournal2 && (
-                <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
-              )}
-              {selectedPages.fruitstracker && (
-                <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
               )}
             </>
           )}
