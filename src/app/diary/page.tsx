@@ -10,10 +10,12 @@ import {
 import Link from 'next/link'
 import QtMonthlyCalendarPage from '@/components/advanced/QtMonthlyCalendarPage'
 import QtMonthlyOverviewPage from '@/components/advanced/QtMonthlyOverviewPage'
+import QtYearlyOverviewGridPage from '@/components/advanced/QtYearlyOverviewGridPage'
 import QtWeeklyPlanPage from '@/components/advanced/QtWeeklyPlanPage'
 import QtDailyDiaryPage from '@/components/advanced/QtDailyDiaryPage'
 import QtMonthlyCalendarPortrait from '@/components/advanced/portrait/QtMonthlyCalendarPortrait'
 import QtMonthlyOverviewPortrait from '@/components/advanced/portrait/QtMonthlyOverviewPortrait'
+import QtYearlyOverviewGridPortrait from '@/components/advanced/portrait/QtYearlyOverviewGridPortrait'
 import QtWeeklyPlanPortrait from '@/components/advanced/portrait/QtWeeklyPlanPortrait'
 import QtDailyDiaryPortrait from '@/components/advanced/portrait/QtDailyDiaryPortrait'
 import QtPrayerAnswerPage from '@/components/advanced/QtPrayerAnswerPage'
@@ -136,7 +138,7 @@ const CATEGORY_COUNTS = {
 }
 
 export type PreviewTabType =
-  | 'calendar' | 'overview' | 'weekly' | 'daily'
+  | 'yearlygrid' | 'calendar' | 'overview' | 'weekly' | 'daily'
   | 'habit' | 'habit2' | 'gratitude' | 'quote' | 'budget' | 'budget2' | 'culture' | 'culture2' | 'kpt' | 'kpt2' | 'sundaygeneral'
   | 'buckettravel' | 'wellnessmood' | 'hundredgoal' | 'hundredgoal2'
   | 'prayer' | 'prayer2' | 'scripture' | 'scripture2' | 'sermon' | 'sermondeep' | 'biblemap' | 'biblemap2' | 'letter' | 'letter2'
@@ -166,6 +168,7 @@ export default function DiaryPage() {
 
   // ★ PDF 제작 시 포함할 내지 선택 (맞춤형 제작 체계)
   const [selectedPages, setSelectedPages] = useState<Record<string, boolean>>({
+    yearlygrid: true,
     calendar: true,
     overview: true,
     weekly: true,
@@ -274,6 +277,7 @@ export default function DiaryPage() {
   // ★ isLandscape 여부에 따른 가로/세로 전용 컴포넌트 자동 전환
   const CalendarComponent = isLandscape ? QtMonthlyCalendarPage : QtMonthlyCalendarPortrait
   const OverviewComponent = isLandscape ? QtMonthlyOverviewPage : QtMonthlyOverviewPortrait
+  const YearlyGridComponent = isLandscape ? QtYearlyOverviewGridPage : QtYearlyOverviewGridPortrait
   const PrayerComponent = isLandscape ? QtPrayerAnswerPage : QtPrayerAnswerPortrait
   const Prayer2Component = isLandscape ? QtPrayerAnswerPage2 : QtPrayerAnswerPortrait2
   const ScriptureArtComponent = isLandscape ? QtScriptureArtPage : QtScriptureArtPortrait
@@ -1054,6 +1058,9 @@ export default function DiaryPage() {
                       transform: `scale(${canvasScale})`,
                     }}
                   >
+                    {previewTab === 'yearlygrid' && (
+                      <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                    )}
                     {previewTab === 'calendar' && (
                       <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
                     )}
@@ -1583,6 +1590,11 @@ export default function DiaryPage() {
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
         <div ref={pdfContainerRef}>
+          {/* 0. 연간 마스터 12개월 달력 그리드 (Yearly 12-Month Master Grid) */}
+          {selectedPages.yearlygrid && (
+            <YearlyGridComponent startYear={selectedYear} startMonth={selectedMonth} endYear={selectedYear + 1} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+          )}
+
           {/* 1. 월간 달력 (Monthly Calendar) */}
           {selectedPages.calendar && (
             <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
