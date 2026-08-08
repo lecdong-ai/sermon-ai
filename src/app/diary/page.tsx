@@ -87,15 +87,39 @@ import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrac
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 
-const THEMES = [
-  { id: 'ocean-blue', name: '딥 오션 블루', color: '#4F7796' },
-  { id: 'emerald-sage', name: '에메랄드 세이지', color: '#3B7A57' },
-  { id: 'butter-gold', name: '버터 골드', color: '#D99B26' },
-  { id: 'royal-lavender', name: '로얄 라벤더', color: '#8E559E' },
-  { id: 'coral-rose', name: '코랄 로즈', color: '#E05A47' },
-  { id: 'sand-brown', name: '모카 샌드', color: '#9E6B4C' },
-  { id: 'teal-mint', name: '민트 틸', color: '#2A9D8F' },
-  { id: 'classic-charcoal', name: '클래식 차콜', color: '#334155' },
+export interface ThemeItem {
+  id: string
+  name: string
+  color: string
+  category: 'watercolor' | 'modern'
+  categoryName: string
+}
+
+const THEME_CATEGORIES = [
+  { id: 'watercolor', name: '🌸 파스텔 수채화' },
+  { id: 'modern', name: '✨ 모던 미니멀' },
+]
+
+const THEMES: ThemeItem[] = [
+  // 1. 파스텔 수채화 컬렉션 (Soft Pastel Watercolor)
+  { id: 'ocean-blue', name: '딥 오션 블루', color: '#4F7796', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'emerald-sage', name: '에메랄드 세이지', color: '#3B7A57', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'butter-gold', name: '버터 엠버', color: '#D99B26', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'royal-lavender', name: '로얄 라벤더', color: '#8E559E', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'coral-rose', name: '코랄 로즈', color: '#E05A47', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'sand-brown', name: '모카 샌드', color: '#9E6B4C', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'teal-mint', name: '민트 틸', color: '#2A9D8F', category: 'watercolor', categoryName: '파스텔 수채화' },
+  { id: 'classic-charcoal', name: '클래식 차콜', color: '#334155', category: 'watercolor', categoryName: '파스텔 수채화' },
+
+  // 2. 모던 미니멀 감성 컬렉션 (Modern Minimalist Luxury)
+  { id: 'midnight-navy', name: '미드나잇 네이비', color: '#1E293B', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'nordic-olive', name: '노르딕 올리브', color: '#4A5D4E', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'vintage-bordeaux', name: '빈티지 보르도', color: '#722F37', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'warm-taupe', name: '웜 토프 베이지', color: '#8C7A6B', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'neon-cyan', name: '사이언 럭스', color: '#0891B2', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'deep-plum', name: '디프 플럼 자수정', color: '#581C87', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'terracotta-clay', name: '테라코타 클레이', color: '#C86D51', category: 'modern', categoryName: '모던 미니멀' },
+  { id: 'forest-pine', name: '파인 딥 포레스트', color: '#1E4620', category: 'modern', categoryName: '모던 미니멀' },
 ]
 
 const MONTH_NAMES = [
@@ -121,6 +145,7 @@ export default function DiaryPage() {
   const [selectedYear, setSelectedYear] = useState(2026)
   const [selectedMonth, setSelectedMonth] = useState(8) // 기본 8월
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0])
+  const [activeThemeCategory, setActiveThemeCategory] = useState<'watercolor' | 'modern'>('watercolor')
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
   const [previewTab, setPreviewTab] = useState<PreviewTabType>('habit')
@@ -754,14 +779,38 @@ export default function DiaryPage() {
 
             <div className="h-px bg-white/10" />
 
-            {/* Pastel Palette Selector */}
-            <div>
-              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-2">
-                <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                파스텔 수채화 테마
-              </span>
-              <div className="grid grid-cols-4 gap-2">
-                {THEMES.map((t) => {
+            {/* Theme Collection Selector */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-indigo-400" />
+                  스튜디오 컬러 테마
+                </span>
+                <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  {selectedTheme.name}
+                </span>
+              </div>
+
+              {/* Theme Category Tabs */}
+              <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-xl border border-white/10 text-[10.5px] font-bold">
+                {THEME_CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveThemeCategory(cat.id as any)}
+                    className={`flex-1 py-1 rounded-lg transition-all ${
+                      activeThemeCategory === cat.id
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Theme Grid */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {THEMES.filter(t => t.category === activeThemeCategory).map((t) => {
                   const isSel = selectedTheme.id === t.id
                   return (
                     <button
@@ -769,14 +818,14 @@ export default function DiaryPage() {
                       onClick={() => setSelectedTheme(t)}
                       className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                         isSel
-                          ? 'bg-indigo-600/30 border-indigo-400 ring-2 ring-indigo-400/40'
+                          ? 'bg-indigo-600/30 border-indigo-400 ring-2 ring-indigo-400/40 shadow-sm'
                           : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                       title={t.name}
                     >
-                      <div className="w-4 h-4 rounded-full border border-white/30" style={{ backgroundColor: t.color }} />
-                      <span className="text-[9px] font-medium text-slate-300 truncate w-full text-center">
-                        {t.name.split(' ')[0]}
+                      <div className="w-4 h-4 rounded-full border border-white/30 shadow-xs" style={{ backgroundColor: t.color }} />
+                      <span className="text-[9.5px] font-medium text-slate-300 truncate w-full text-center">
+                        {t.name}
                       </span>
                     </button>
                   )
