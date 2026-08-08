@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { getHolidaysAndFestivals } from '@/lib/holidays'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtYearlyOverviewGridPageProps {
   startYear?: number
@@ -47,8 +48,7 @@ export default function QtYearlyOverviewGridPage({
     }
   }
 
-  // 표시할 월 수에 따라 그리드 컬럼 계산 (최대 12개 한 화면 3x4 또는 4x3)
-  const displayMonths = monthList.slice(0, 12) // 12개 우선 표시 (필요 시 분할)
+  const displayMonths = monthList.slice(0, 12)
 
   return (
     <div
@@ -58,11 +58,12 @@ export default function QtYearlyOverviewGridPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 32px',
+        padding: '20px 48px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNav currentMonth={startMonth} activeTab="yearlygrid" themeColor={themeColor} />
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">

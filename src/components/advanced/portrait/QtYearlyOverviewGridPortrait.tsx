@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
 
 interface QtYearlyOverviewGridPortraitProps {
   startYear?: number
@@ -49,11 +50,12 @@ export default function QtYearlyOverviewGridPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '28px 24px',
+        padding: '52px 20px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNavPortrait currentMonth={startMonth} activeTab="yearlygrid" themeColor={themeColor} />
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
         <div className="flex items-center space-x-2 text-xs font-medium tracking-wider text-slate-400 font-mono">

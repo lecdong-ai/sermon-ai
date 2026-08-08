@@ -3,6 +3,7 @@
 import React from 'react'
 import PerfectGridNote from './PerfectGridNote'
 import { getHolidaysAndFestivals } from '@/lib/holidays'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtWeeklyPlanPageProps {
   year?: number
@@ -67,11 +68,12 @@ export default function QtWeeklyPlanPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 32px',
+        padding: '20px 48px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNav currentMonth={monthNum} currentWeek={weekNum} activeTab="weekly" themeColor={themeColor} />
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">

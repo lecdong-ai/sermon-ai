@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PerfectGridNote from './PerfectGridNote'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtDailyDiaryPageProps {
   dateLabel: string   // 예: "01 SAT"
@@ -14,6 +15,11 @@ interface QtDailyDiaryPageProps {
   isChurchMode?: boolean // 교회 묵상용 모드 여부 (false일 경우 일반인 갓생 모드)
   pageWidth?: number
   pageHeight?: number
+}
+
+const MONTH_MAP: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
 }
 
 export default function QtDailyDiaryPage({
@@ -31,6 +37,8 @@ export default function QtDailyDiaryPage({
   const paddedDay = String(dayNum).padStart(2, '0')
   const isSunday = dayName === 'SUN'
   const isSaturday = dayName === 'SAT'
+  const monthNum = MONTH_MAP[monthName] || 8
+  const weekNum = parseInt(activeWeek.replace(/\D/g, ''), 10) || 1
 
   return (
     <div
@@ -43,11 +51,12 @@ export default function QtDailyDiaryPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '24px 32px',
+        padding: '20px 48px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNav currentMonth={monthNum} currentWeek={weekNum} activeTab="daily" themeColor={themeColor} />
       {/* 1. Top Navigation Bar (Ultra-Sleek High-End PDF Index Header) */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
         {/* Left Nav */}
