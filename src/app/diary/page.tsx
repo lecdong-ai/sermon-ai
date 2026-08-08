@@ -188,8 +188,7 @@ export default function DiaryPage() {
   const [activeDayNum, setActiveDayNum] = useState(1)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
 
-  // ★ 연간 마스터 다이어리 일괄 생성 모달 상태
-  const [isYearlyModalOpen, setIsYearlyModalOpen] = useState(false)
+  // ★ 연간 마스터 다이어리 직통 PDF 생성 상태
   const [isYearlyGenerating, setIsYearlyGenerating] = useState(false)
   const [yearlyProgress, setYearlyProgress] = useState({
     currentStep: 0,
@@ -454,48 +453,35 @@ export default function DiaryPage() {
     }
   }
 
-  // 연간 마스터 다이어리 청크 순차 일괄 생성 및 2-Pass 스마트 하이퍼링크 구축 핸들러
-  const handleStartYearlyMaster = async (cfg: YearlyMasterConfig) => {
+  // 🌟 Zero-Modal 직통 연간 마스터 PDF 다운로드 엔진 (상단 툴바 설정 100% 직통 즉시 가동)
+  const handleDirectYearlyMaster = async () => {
     if (!pdfContainerRef.current) return
     setIsYearlyGenerating(true)
 
-    // 연간 색인(17개월 칩)도 이 설정 기간으로 동기화
+    // 상단 툴바에서 설정한 시작 연월 및 총 기간 개월 수로 마스터 캘린더 계산
+    const endCalc = getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths)
+    const startY = periodStartYear
+    const startM = periodStartMonth
+    const endY = endCalc.year
+    const endM = endCalc.month
+
+    // 연간 색인(17개월/12개월 칩) 동기화
     setYearlyPeriod({
-      startYear: cfg.startYear,
-      startMonth: cfg.startMonth,
-      endYear: cfg.endYear,
-      endMonth: cfg.endMonth,
+      startYear: startY,
+      startMonth: startM,
+      endYear: endY,
+      endMonth: endM,
     })
 
-    // 선택한 패키지 프리셋(갓생 라이너 / 크리스천 영성 / 에센셜 코어) 및 부록 옵션 동기화
-    if (cfg.packagePreset === 'life') {
-      applyPreset('general')
-    } else if (cfg.packagePreset === 'spiritual') {
-      applyPreset('church')
-    } else if (cfg.packagePreset === 'essential') {
-      applyPreset('basic')
-    }
+    // React State DOM 적용 대기 (400ms 보장)
+    await new Promise((resolve) => setTimeout(resolve, 400))
 
-    // 부록 및 커버 세부 체크박스 100% 명확한 양방향 동기화 (표지, 디바이더, 100일 목표, 성경맵 등)
-    setSelectedPages((prev) => ({
-      ...prev,
-      yearlygrid: Boolean(cfg.includeYearlyCover),
-      overview: Boolean(cfg.includeMonthlyDivider),
-      hundredgoal: Boolean(cfg.includeYearlyGoals),
-      hundredgoal2: Boolean(cfg.includeYearlyGoals),
-      biblemap: Boolean(cfg.includeReadingMap),
-      biblemap2: Boolean(cfg.includeReadingMap),
-    }))
-
-    // React State DOM 적용 대기 (600ms 보장)
-    await new Promise((resolve) => setTimeout(resolve, 600))
-
-    // 시작 연월부터 종료 연월까지 17개 월 목록 구축
+    // 시작 연월부터 종료 연월까지 선택 기간의 월 목록 구축
     const monthList: { year: number; month: number; label: string }[] = []
-    let currY = cfg.startYear
-    let currM = cfg.startMonth
+    let currY = startY
+    let currM = startM
 
-    while (currY < cfg.endYear || (currY === cfg.endYear && currM <= cfg.endMonth)) {
+    while (currY < endY || (currY === endY && currM <= endM)) {
       monthList.push({
         year: currY,
         month: currM,
@@ -510,9 +496,9 @@ export default function DiaryPage() {
 
     const totalSteps = monthList.length
 
-    // ★ 연도 정렬 벽달력 청크: 각 연도 전체 12개월 → 6개월씩 2장 (2026: JAN~JUN, JUL~DEC / 2027: 동일)
+    // ★ 연도 정렬 벽달력 청크: 각 연도 전체 12개월 → 6개월씩 2장
     const wallChunks: { year: number; month: number }[][] = []
-    for (let y = cfg.startYear; y <= cfg.endYear; y++) {
+    for (let y = startY; y <= endY; y++) {
       for (let s = 1; s <= 12; s += 6) {
         const chunkMonths: { year: number; month: number }[] = []
         for (let m = s; m <= s + 5; m++) chunkMonths.push({ year: y, month: m })
@@ -535,13 +521,13 @@ export default function DiaryPage() {
           percentage: pct,
         })
 
-        // ★ 벽달력 활성화: 청크의 첫 "기간 내" 월과 일치하는 반복에서 렌더 (기간 밖 청크 = 2026.1~6은 첫 반복에서)
+        // ★ 벽달력 활성화: 청크의 첫 "기간 내" 월과 일치하는 반복에서 렌더
         let wallActive: { months: { year: number; month: number }[]; index: number; total: number }[] | null = null
-        if (cfg.includeWallCalendar) {
+        if (selectedPages.wallcalendar) {
           wallActive = wallChunks
             .map((chunk, ci) => {
               const firstInPeriod = chunk.find(
-                (m) => m.year > cfg.startYear || (m.year === cfg.startYear && m.month >= cfg.startMonth)
+                (m) => m.year > startY || (m.year === startY && m.month >= startM)
               )
               if (!firstInPeriod) return { months: chunk, index: ci + 1, total: wallChunks.length }
               if (firstInPeriod.year === target.year && firstInPeriod.month === target.month) {
@@ -1490,19 +1476,41 @@ export default function DiaryPage() {
                             </div>
                           </div>
 
-                          {/* Right Group: Full Stream View Toggle */}
-                          <button
-                            type="button"
-                            onClick={() => setIsStreamView(!isStreamView)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border flex items-center gap-1.5 shadow-md shrink-0 ${
-                              isStreamView
-                                ? 'bg-slate-800 text-slate-100 border-slate-600 scale-[1.01]'
-                                : 'bg-slate-900/90 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white'
-                            }`}
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{isStreamView ? '📖 1개월 단일 뷰' : `✨ ${periodDurationMonths}개월 전체 풀 스트림 뷰`}</span>
-                          </button>
+                          {/* Right Group: Full Stream View Toggle & Direct Zero-Modal Master PDF Download */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setIsStreamView(!isStreamView)}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border flex items-center gap-1.5 shadow-md ${
+                                isStreamView
+                                  ? 'bg-slate-800 text-slate-100 border-slate-600 scale-[1.01]'
+                                  : 'bg-slate-900/90 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white'
+                              }`}
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{isStreamView ? '📖 1개월 단일 뷰' : `✨ ${periodDurationMonths}개월 풀 스트림 뷰`}</span>
+                            </button>
+
+                            {/* 🌟 Zero-Modal 직통 연간 마스터 PDF 원클릭 구동 버튼 */}
+                            <button
+                              type="button"
+                              disabled={isYearlyGenerating}
+                              onClick={handleDirectYearlyMaster}
+                              className="px-4 py-1.5 rounded-xl text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 hover:from-amber-200 hover:to-amber-400 border border-amber-300/80 shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_25px_rgba(245,158,11,0.6)] active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                            >
+                              {isYearlyGenerating ? (
+                                <>
+                                  <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                                  <span>PDF 매핑 생성 중 ({yearlyProgress.percentage}%)...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
+                                  <span>✨ {periodDurationMonths}개월 마스터 PDF 다운로드</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {/* 3. 실시간 타임라인 월 칩 슬라이더 리본 */}
