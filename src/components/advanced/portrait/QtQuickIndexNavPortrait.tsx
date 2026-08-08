@@ -34,23 +34,23 @@ export default function QtQuickIndexNavPortrait({
 
   return (
     <div
-      className="absolute top-2 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
+      className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Upper Row: Main Section Tabs + Sub-Tracker Quick Pills + Week Jumpers */}
-      <div className="flex items-center space-x-1.5 bg-white/95 p-1 rounded-xl border border-slate-200/90 shadow-md backdrop-blur-xs">
+      {/* Upper Compact Control Ribbon */}
+      <div className="flex items-center space-x-1.5 bg-white/95 px-2 py-1 rounded-xl border border-slate-200/90 shadow-sm backdrop-blur-xs">
         {/* Main Section Buttons */}
         <div className="flex items-center space-x-1">
           <button
             type="button"
             data-nav-target="yearlygrid"
-            className={`px-2 py-0.5 rounded-md text-[8.5px] font-black transition-all border cursor-pointer ${
+            className={`px-2 py-0.5 rounded text-[8.5px] font-black transition-all cursor-pointer ${
               activeTab === 'yearlygrid'
-                ? 'text-white border-amber-300 shadow-xs scale-105'
-                : 'bg-slate-100/80 text-slate-600 border-slate-200 hover:bg-slate-200'
+                ? 'text-white shadow-2xs border-b border-amber-300'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
             }`}
             style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
-            title="연간 12개월 마스터 달력"
+            title="연간 캘린더"
           >
             YEAR
           </button>
@@ -58,10 +58,10 @@ export default function QtQuickIndexNavPortrait({
           <button
             type="button"
             data-nav-target="calendar"
-            className={`px-2 py-0.5 rounded-md text-[8.5px] font-black transition-all border cursor-pointer ${
+            className={`px-2 py-0.5 rounded text-[8.5px] font-black transition-all cursor-pointer ${
               activeTab === 'calendar'
-                ? 'text-white border-amber-300 shadow-xs scale-105'
-                : 'bg-slate-100/80 text-slate-600 border-slate-200 hover:bg-slate-200'
+                ? 'text-white shadow-2xs border-b border-amber-300'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
             }`}
             style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
             title="월간 달력"
@@ -72,59 +72,31 @@ export default function QtQuickIndexNavPortrait({
           <button
             type="button"
             data-nav-target="overview"
-            className={`px-2 py-0.5 rounded-md text-[8.5px] font-black transition-all border cursor-pointer ${
+            className={`px-2 py-0.5 rounded text-[8.5px] font-black transition-all cursor-pointer ${
               activeTab === 'overview'
-                ? 'text-white border-amber-300 shadow-xs scale-105'
-                : 'bg-slate-100/80 text-slate-600 border-slate-200 hover:bg-slate-200'
+                ? 'text-white shadow-2xs border-b border-amber-300'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
             }`}
             style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
-            title="월간 핵심 개요"
+            title="월간 개요"
           >
             OVR
           </button>
         </div>
 
-        <div className="h-3.5 w-px bg-slate-300/80" />
+        <div className="h-3 w-px bg-slate-200" />
 
-        {/* Smart Tracker Pills */}
-        <div className="flex items-center space-x-1">
-          <button
-            type="button"
-            data-nav-target="habit"
-            className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-black text-[7.5px] hover:scale-105 transition-all shadow-2xs border border-emerald-400 cursor-pointer"
-            title="습관 트래커"
-          >
-            🌱 HABIT
-          </button>
-          <button
-            type="button"
-            data-nav-target="gratitude"
-            className="px-1.5 py-0.5 rounded bg-amber-500 text-white font-black text-[7.5px] hover:scale-105 transition-all shadow-2xs border border-amber-300 cursor-pointer"
-            title="감사 일기 저널"
-          >
-            ☀️ GRAT
-          </button>
-          <button
-            type="button"
-            data-nav-target="budget"
-            className="px-1.5 py-0.5 rounded bg-teal-600 text-white font-black text-[7.5px] hover:scale-105 transition-all shadow-2xs border border-teal-400 cursor-pointer"
-            title="지출 가계부"
-          >
-            💰 CASH
-          </button>
-          <button
-            type="button"
-            data-nav-target="kpt"
-            className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-black text-[7.5px] hover:scale-105 transition-all shadow-2xs border border-indigo-400 cursor-pointer"
-            title="KPT 회고"
-          >
-            🔄 KPT
-          </button>
+        {/* Quick Tracker Circle Icons */}
+        <div className="flex items-center space-x-1 px-0.5">
+          <button type="button" data-nav-target="habit" className="text-[9.5px] hover:scale-125 transition-transform cursor-pointer" title="습관">🌱</button>
+          <button type="button" data-nav-target="gratitude" className="text-[9.5px] hover:scale-125 transition-transform cursor-pointer" title="감사">☀️</button>
+          <button type="button" data-nav-target="budget" className="text-[9.5px] hover:scale-125 transition-transform cursor-pointer" title="가계부">💰</button>
+          <button type="button" data-nav-target="kpt" className="text-[9.5px] hover:scale-125 transition-transform cursor-pointer" title="KPT">🔄</button>
         </div>
 
-        <div className="h-3.5 w-px bg-slate-300/80" />
+        <div className="h-3 w-px bg-slate-200" />
 
-        {/* 5-Week Jumpers */}
+        {/* Week Direct Jumpers */}
         <div className="flex items-center space-x-0.5">
           {[1, 2, 3, 4, 5].map((wNo) => {
             const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -134,12 +106,11 @@ export default function QtQuickIndexNavPortrait({
                 type="button"
                 data-nav-target={`week-${wNo}`}
                 data-week={wNo}
-                className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold transition-all border cursor-pointer ${
+                className={`px-1.5 py-0.5 rounded text-[7.5px] font-bold transition-all cursor-pointer ${
                   isCurrentW
-                    ? 'bg-slate-900 text-white font-black border-amber-400 shadow-xs scale-105'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
+                    ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-400'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
                 }`}
-                title={`${wNo}주차 주간 플랜 직행`}
               >
                 W{wNo}
               </button>
@@ -148,8 +119,8 @@ export default function QtQuickIndexNavPortrait({
         </div>
       </div>
 
-      {/* 2. Lower Row: Seasonal 12-Month Color-Coded Palette Ribbons + TODAY Pulse */}
-      <div className="flex items-center space-x-0.5 bg-white/95 p-1 rounded-lg border border-slate-200/90 shadow-xs">
+      {/* Lower Row: Muted 12-Month Palette Ribbons */}
+      <div className="flex items-center space-x-0.5 bg-white/95 p-0.5 rounded-lg border border-slate-200/90 shadow-2xs">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isSelectedM = currentMonth === mNum
           const isTodayM = todayMonth === mNum
@@ -160,15 +131,14 @@ export default function QtQuickIndexNavPortrait({
               key={`m-p-${mNum}`}
               type="button"
               data-nav-target={`month-${mNum}`}
-              className={`w-5 py-0.5 rounded text-[8px] font-black text-center transition-all relative cursor-pointer ${
+              className={`w-4.5 py-0.5 rounded text-[7.5px] font-extrabold text-center transition-all relative cursor-pointer ${
                 isSelectedM
-                  ? 'text-white font-black shadow-md scale-110 ring-2 ring-amber-400 ring-offset-1 z-10 border border-white'
-                  : 'text-slate-700 hover:bg-indigo-100 hover:text-indigo-800 opacity-90 hover:opacity-100'
+                  ? 'text-white font-black shadow-xs scale-105 border-b border-white'
+                  : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 opacity-80 hover:opacity-100'
               }`}
               style={{
                 backgroundColor: isSelectedM ? palette.bg : undefined,
               }}
-              title={`${mNum}월 달력으로 이동`}
             >
               {palette.label}
               {isTodayM && (
