@@ -33,7 +33,7 @@ export default function QtBudgetTrackerPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 56px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -68,23 +68,23 @@ export default function QtBudgetTrackerPage({
           </p>
         </div>
 
-        {/* Executive KPI Cards */}
+        {/* Executive KPI Cards (지우기 편하게 0원 텍스트 전면 제거) */}
         <div className="flex items-center gap-1.5 text-[9.5px]">
           <div className="px-2.5 py-1 rounded-xl border border-slate-200 bg-slate-50 text-right min-w-[78px]">
             <span className="text-[8px] text-slate-400 font-bold block">월 총 수입</span>
-            <span className="text-xs font-extrabold text-slate-700 font-mono">₩ 0</span>
+            <span className="text-xs font-extrabold text-slate-700 font-mono">₩ </span>
           </div>
           <div className="px-2.5 py-1 rounded-xl border border-indigo-200 bg-indigo-50/40 text-right min-w-[78px]">
             <span className="text-[8px] text-indigo-500 font-bold block">총 고정지출</span>
-            <span className="text-xs font-extrabold text-indigo-700 font-mono">₩ 0</span>
+            <span className="text-xs font-extrabold text-indigo-700 font-mono">₩ </span>
           </div>
           <div className="px-2.5 py-1 rounded-xl border border-rose-200 bg-rose-50/40 text-right min-w-[78px]">
             <span className="text-[8px] text-rose-500 font-bold block">변동 예산</span>
-            <span className="text-xs font-extrabold text-rose-600 font-mono">₩ 0</span>
+            <span className="text-xs font-extrabold text-rose-600 font-mono">₩ </span>
           </div>
           <div className="px-2.5 py-1 rounded-xl border border-emerald-200 bg-emerald-50/40 text-right min-w-[85px]">
             <span className="text-[8px] text-emerald-600 font-bold block">순저축/투자</span>
-            <span className="text-xs font-extrabold text-emerald-700 font-mono">₩ 0 (0%)</span>
+            <span className="text-xs font-extrabold text-emerald-700 font-mono">₩ </span>
           </div>
         </div>
       </div>
