@@ -64,7 +64,7 @@ function timeAgo(iso: string): string {
 
 export default function AdminMessagesPage() {
   const searchParams = useSearchParams()
-  const focusId = searchParams.get('focus')
+  const focusId = searchParams?.get('focus')
   const [messages, setMessages] = useState<Message[]>([])
   const [userMap, setUserMap] = useState<Record<string, { email: string }>>({})
   const [loading, setLoading] = useState(true)

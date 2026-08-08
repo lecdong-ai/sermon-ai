@@ -9,8 +9,8 @@ import { CheckCircle2, Download, Home, Share2, Copy } from 'lucide-react'
 export default function CompletePage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const token = params.token as string
-  const aid = searchParams.get('aid')
+  const token = params?.token as string
+  const aid = searchParams?.get('aid')
 
   const [event, setEvent] = useState<{ title: string; start_date: string | null } | null>(null)
   const [application, setApplication] = useState<{ student_name: string; grade: string; parent_name: string } | null>(null)

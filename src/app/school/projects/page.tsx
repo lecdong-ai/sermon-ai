@@ -283,7 +283,7 @@ function StatCard({ label, value, sub, color, icon: Icon }: { label: string; val
 function ProjectsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const searchQuery = searchParams.get('search') || ''
+  const searchQuery = searchParams?.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all')
   const { isLoggedIn, loading: authLoading } = useAuth()
   const { projects, stats, loading, error, deleteProject, refetch } = useProjects()

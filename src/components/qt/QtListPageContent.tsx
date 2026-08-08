@@ -29,7 +29,7 @@ export function QtListPageContent({
 
   const buildHref = useCallback(
     (updates: Partial<QtQueryParams>) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams?.toString() || '')
       Object.entries(updates).forEach(([key, value]) => {
         if (value === undefined || value === '' || value === null) {
           params.delete(key)

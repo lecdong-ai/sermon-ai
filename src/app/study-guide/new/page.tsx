@@ -39,7 +39,7 @@ const ATMOSPHERES = [
 function NewStudyGuideForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const sermonId = searchParams.get('sermonId')
+  const sermonId = searchParams?.get('sermonId')
 
   const [loading, setLoading] = useState(false)
   const [prefilling, setPrefilling] = useState(false)

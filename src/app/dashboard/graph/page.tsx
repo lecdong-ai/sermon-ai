@@ -21,7 +21,7 @@ function GraphContent() {
 
   useEffect(() => { setMounted(true) }, [])
 
-  const focusId = searchParams.get('focus') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('focus') : null)
+  const focusId = searchParams?.get('focus') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('focus') : null)
 
   const [viewMode, setViewMode] = useState<GraphViewMode>(focusId ? 'sermon-centric' : 'full')
   const [filterBook, setFilterBook] = useState('')

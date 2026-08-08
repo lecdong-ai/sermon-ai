@@ -31,7 +31,7 @@ export function ChipFilter({
 
   const buildHref = useCallback(
     (value?: string) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams?.toString() || '')
       if (value) {
         params.set(paramName, value)
       } else {

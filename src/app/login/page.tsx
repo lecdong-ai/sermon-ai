@@ -41,7 +41,7 @@ function LoginForm() {
   const [resetSent, setResetSent] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  const redirect = searchParams?.get('redirect') || '/'
   const [supabase] = useState(() => {
     if (!hasSupabaseClient()) return null as any
     return createClient()

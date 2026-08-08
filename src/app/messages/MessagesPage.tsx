@@ -39,7 +39,7 @@ function formatDate(iso: string): string {
 export default function MessagesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const focusId = searchParams.get('focus')
+  const focusId = searchParams?.get('focus')
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
 

@@ -36,16 +36,16 @@ export function useUsersListState() {
   const searchParams = useSearchParams()
 
   const state = useMemo<UsersListState>(() => ({
-    page: Math.max(1, parseInt(searchParams.get('page') || '1')),
-    limit: Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '50'))),
-    search: searchParams.get('search') || '',
-    filter: (['all', 'supporter', 'general'].includes(searchParams.get('filter') || '')
-      ? (searchParams.get('filter') as UserFilter)
+    page: Math.max(1, parseInt(searchParams?.get('page') || '1')),
+    limit: Math.min(200, Math.max(1, parseInt(searchParams?.get('limit') || '50'))),
+    search: searchParams?.get('search') || '',
+    filter: (['all', 'supporter', 'general'].includes(searchParams?.get('filter') || '')
+      ? (searchParams?.get('filter') as UserFilter)
       : 'all'),
-    sort: (['name', 'email', 'role', 'supporter_until', 'created_at', 'last_sign_in_at'].includes(searchParams.get('sort') || '')
-      ? (searchParams.get('sort') as UserSort)
+    sort: (['name', 'email', 'role', 'supporter_until', 'created_at', 'last_sign_in_at'].includes(searchParams?.get('sort') || '')
+      ? (searchParams?.get('sort') as UserSort)
       : 'created_at'),
-    order: (searchParams.get('order') === 'asc' ? 'asc' : 'desc') as UserOrder,
+    order: (searchParams?.get('order') === 'asc' ? 'asc' : 'desc') as UserOrder,
   }), [searchParams])
 
   const update = useCallback((patch: Partial<UsersListState>) => {

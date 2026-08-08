@@ -66,7 +66,7 @@ export default function ContiPageClient({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [defaultSelectedId, setDefaultSelectedId] = useState<string | null>(null)
-  const selectedId = searchParams.get('id') || defaultSelectedId || initialSelectedId
+  const selectedId = searchParams?.get('id') || defaultSelectedId || initialSelectedId
   const { loading: authLoading } = useAuth()
 
   const [contis, setContis] = useState<ContiSet[]>(initialContis)

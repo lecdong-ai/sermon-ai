@@ -31,8 +31,8 @@ function ProjectContent() {
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const currentTab = searchParams.get('tab') || 'overview'
-  const insightParam = searchParams.get('insight')
+  const currentTab = searchParams?.get('tab') || 'overview'
+  const insightParam = searchParams?.get('insight')
   const [showInsightBanner, setShowInsightBanner] = useState(!!insightParam)
   const [detectedStage, setDetectedStage] = useState<ProjectStatus | null>(null)
   const [syncing, setSyncing] = useState(false)

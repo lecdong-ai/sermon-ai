@@ -18,7 +18,7 @@ interface SermonListItem {
 function PageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialSermonId = searchParams.get('id')
+  const initialSermonId = searchParams?.get('id')
   const [sermonList, setSermonList] = useState<SermonListItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(initialSermonId)
   const [selectedSermon, setSelectedSermon] = useState<SermonListItem | null>(null)

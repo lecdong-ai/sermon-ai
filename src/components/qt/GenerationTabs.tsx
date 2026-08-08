@@ -13,7 +13,7 @@ const GEN_COLORS: Record<Generation, { active: string; hover: string; dot: strin
 export function GenerationTabs() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const activeGen = searchParams.get('generation') as Generation | null
+  const activeGen = searchParams?.get('generation') as Generation | null
 
   return (
     <div className="flex flex-wrap gap-2">

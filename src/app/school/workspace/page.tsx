@@ -59,7 +59,7 @@ export default function Page() {
 function WorkspacePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const sermonId = searchParams.get('id')
+  const sermonId = searchParams?.get('id')
 
   const [sermon, setSermon] = useState<SermonRecord | null>(null)
   const [loading, setLoading] = useState(true)

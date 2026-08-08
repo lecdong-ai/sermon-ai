@@ -15,7 +15,7 @@ function SermonsContent() {
   const searchParams = useSearchParams()
   const { sermons, themes, series, seminars } = state
 
-  const initialSearch = searchParams.get('search') || ''
+  const initialSearch = searchParams?.get('search') || ''
   const [viewMode, setViewMode] = useState<ViewMode>('table')
   const [searchText, setSearchText] = useState(initialSearch)
   const [filterBook, setFilterBook] = useState('')

@@ -57,9 +57,9 @@ function NewProjectPageContent() {
   // 초기값은 빈 상태로 시작 (hydration mismatch 방지)
   const [testament, setTestament] = useState<'OT' | 'NT'>('NT')
   const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null)
-  const [chapter, setChapter] = useState(searchParams.get('chapter') || '')
-  const [verseStart, setVerseStart] = useState(searchParams.get('vs') || '')
-  const [verseEnd, setVerseEnd] = useState(searchParams.get('ve') || '')
+  const [chapter, setChapter] = useState(searchParams?.get('chapter') || '')
+  const [verseStart, setVerseStart] = useState(searchParams?.get('vs') || '')
+  const [verseEnd, setVerseEnd] = useState(searchParams?.get('ve') || '')
 
   const [selectedPassages, setSelectedPassages] = useState<BiblePassage[]>([])
 
@@ -114,7 +114,7 @@ function NewProjectPageContent() {
   }, [])
 
   useEffect(() => {
-    const bookParam = searchParams.get('book')
+    const bookParam = searchParams?.get('book')
     if (bookParam) {
       const b = BIBLE_BOOKS.find(bb => bb.name === bookParam)
       if (b) {

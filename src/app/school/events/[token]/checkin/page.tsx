@@ -9,8 +9,8 @@ export default function CheckInPage() {
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const token = params.token as string
-  const aid = searchParams.get('aid')
+  const token = params?.token as string
+  const aid = searchParams?.get('aid')
 
   const [status, setStatus] = useState<'loading' | 'success' | 'already' | 'error' | 'unauthorized'>('loading')
   const [studentName, setStudentName] = useState('')

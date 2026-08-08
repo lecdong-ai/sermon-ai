@@ -33,7 +33,7 @@ export function SearchInput({
 
   const buildHref = useCallback(
     (term: string) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams?.toString() || '')
       if (term) {
         params.set(paramName, term)
       } else {
