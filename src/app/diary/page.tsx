@@ -1155,13 +1155,8 @@ export default function DiaryPage() {
           </div>
         </div>
 
-        {/* Right Studio Live Canvas Panel (Butter-Smooth 60fps Draggable) */}
-        <div
-          style={{ transform: `translate3d(${canvasPos.x}px, ${canvasPos.y}px, 0px)` }}
-          className={`col-span-12 lg:col-span-9 flex flex-col items-center justify-start transition-shadow duration-200 ${
-            activeDragTarget === 'canvas' ? 'z-50 shadow-[0_30px_70px_rgba(0,0,0,0.85)] scale-[1.005]' : ''
-          }`}
-        >
+        {/* Right Studio Live Canvas Panel (Fixed Frame Background) */}
+        <div className="col-span-12 lg:col-span-9 flex flex-col items-center justify-start">
           {(() => {
             const canvasScale = isLandscape ? 0.72 : 0.58
             const canvasW = Math.round(pageWidth * canvasScale)
@@ -1171,8 +1166,14 @@ export default function DiaryPage() {
 
             return (
               <div
-                style={{ width: `${containerW}px`, maxWidth: '100%' }}
-                className="flex flex-col items-center mx-auto space-y-3"
+                style={{
+                  width: `${containerW}px`,
+                  maxWidth: '100%',
+                  transform: `translate3d(${canvasPos.x}px, ${canvasPos.y}px, 0px)`,
+                }}
+                className={`flex flex-col items-center mx-auto space-y-3 transition-shadow duration-200 ${
+                  activeDragTarget === 'canvas' ? 'z-50 shadow-[0_30px_70px_rgba(0,0,0,0.85)] scale-[1.005]' : ''
+                }`}
               >
                 {/* Top Canvas Toolbar with Drag Grip Handle */}
                 <div className="w-full text-xs">
