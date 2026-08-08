@@ -1387,44 +1387,68 @@ export default function DiaryPage() {
                       <div className="w-full text-xs space-y-2">
                         {/* 자유 발행 연월 & 개월 수 선택 및 실시간 타임라인 슬라이더 바 */}
                         <div className="w-full bg-slate-950/95 border border-amber-500/30 p-1.5 rounded-2xl shadow-xl flex items-center gap-2 overflow-x-auto custom-scrollbar backdrop-blur-md">
-                          {/* 1. 시작 연월 선택 피커 */}
+                          {/* 1. 시작 연/월 분리 피커 (2025~2030년 / 1~12월 완전 유동) */}
                           <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
-                            <span className="text-[10px] text-amber-300">📅 시작:</span>
+                            <span className="text-[10px] text-amber-300 font-extrabold">📅 시작:</span>
                             <select
-                              value={`${periodStartYear}-${periodStartMonth}`}
+                              value={periodStartYear}
                               onChange={(e) => {
-                                const [y, m] = e.target.value.split('-').map(Number)
+                                const y = Number(e.target.value)
                                 setPeriodStartYear(y)
-                                setPeriodStartMonth(m)
                                 setSelectedYear(y)
+                              }}
+                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400 font-bold"
+                            >
+                              {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+                                <option key={y} value={y}>{y}년</option>
+                              ))}
+                            </select>
+                            <select
+                              value={periodStartMonth}
+                              onChange={(e) => {
+                                const m = Number(e.target.value)
+                                setPeriodStartMonth(m)
                                 setSelectedMonth(m)
                                 setActiveDayNum(1)
                               }}
-                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400"
+                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400 font-bold"
                             >
-                              <option value="2026-8">2026.08</option>
-                              <option value="2026-9">2026.09</option>
-                              <option value="2026-10">2026.10</option>
-                              <option value="2026-11">2026.11</option>
-                              <option value="2026-12">2026.12</option>
-                              <option value="2027-1">2027.01</option>
-                              <option value="2027-3">2027.03</option>
+                              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                                <option key={m} value={m}>{String(m).padStart(2, '0')}월</option>
+                              ))}
                             </select>
                           </div>
 
-                          {/* 2. 발행 기간 개월 수 피커 (6개월, 12개월, 17개월, 24개월) */}
-                          <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
-                            <span className="text-[10px] text-amber-300">⌛ 기간:</span>
-                            <select
-                              value={periodDurationMonths}
-                              onChange={(e) => setPeriodDurationMonths(Number(e.target.value))}
-                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-bold cursor-pointer focus:ring-amber-400"
-                            >
-                              <option value={6}>6개월 (반년치)</option>
-                              <option value={12}>12개월 (1년치)</option>
-                              <option value={17}>17개월 (마스터)</option>
-                              <option value={24}>24개월 (2년치)</option>
-                            </select>
+                          {/* 2. 유동 개월 수 (+/- 버튼 & 숫자 직접 입력 지원) */}
+                          <div className="flex items-center gap-1.5 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
+                            <span className="text-[10px] text-amber-300 font-extrabold">⌛ 기간:</span>
+                            <div className="flex items-center bg-slate-950 px-1 py-0.5 rounded border border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => setPeriodDurationMonths((m) => Math.max(1, m - 1))}
+                                className="px-1 text-slate-400 hover:text-amber-300 font-bold text-xs cursor-pointer"
+                                title="1개월 줄이기"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min={1}
+                                max={36}
+                                value={periodDurationMonths}
+                                onChange={(e) => setPeriodDurationMonths(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
+                                className="w-7 text-center bg-transparent text-amber-300 text-[10.5px] font-bold font-mono focus:outline-none"
+                              />
+                              <span className="text-[10px] text-slate-400 pr-1">개월</span>
+                              <button
+                                type="button"
+                                onClick={() => setPeriodDurationMonths((m) => Math.min(36, m + 1))}
+                                className="px-1 text-slate-400 hover:text-amber-300 font-bold text-xs cursor-pointer"
+                                title="1개월 늘리기"
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
 
                           {/* 3. 실시간 타임라인 월 칩 모음 */}
