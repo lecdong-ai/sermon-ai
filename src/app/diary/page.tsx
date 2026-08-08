@@ -1385,73 +1385,131 @@ export default function DiaryPage() {
                     >
                       {/* Top Canvas Toolbar with Drag Grip Handle & 17-Month Period Timeline */}
                       <div className="w-full text-xs space-y-2">
-                        {/* 자유 발행 연월 & 개월 수 선택 및 실시간 타임라인 슬라이더 바 */}
-                        <div className="w-full bg-slate-950/95 border border-amber-500/30 p-1.5 rounded-2xl shadow-xl flex items-center gap-2 overflow-x-auto custom-scrollbar backdrop-blur-md">
-                          {/* 1. 시작 연/월 분리 피커 (2025~2030년 / 1~12월 완전 유동) */}
-                          <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
-                            <span className="text-[10px] text-amber-300 font-extrabold">📅 시작:</span>
-                            <select
-                              value={periodStartYear}
-                              onChange={(e) => {
-                                const y = Number(e.target.value)
-                                setPeriodStartYear(y)
-                                setSelectedYear(y)
-                              }}
-                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400 font-bold"
-                            >
-                              {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
-                                <option key={y} value={y}>{y}년</option>
-                              ))}
-                            </select>
-                            <select
-                              value={periodStartMonth}
-                              onChange={(e) => {
-                                const m = Number(e.target.value)
-                                setPeriodStartMonth(m)
-                                setSelectedMonth(m)
-                                setActiveDayNum(1)
-                              }}
-                              className="bg-slate-950 text-amber-200 border border-white/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer focus:ring-amber-400 font-bold"
-                            >
-                              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                                <option key={m} value={m}>{String(m).padStart(2, '0')}월</option>
-                              ))}
-                            </select>
-                          </div>
+                        {/* 🌟 Divine Luxury Master Period Controller & Timeline Slider Toolbar */}
+                        <div className="w-full bg-slate-950/90 border border-slate-700/80 p-2 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.8)] flex flex-wrap items-center justify-between gap-2 backdrop-blur-xl">
+                          {/* Left Group: Premium Glass Period Selectors */}
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
+                            {/* 1. 시작 연/월 럭셔리 알약 캡슐 */}
+                            <div className="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70 text-xs font-bold text-slate-200 shadow-inner">
+                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <span className="text-[11px] text-slate-400 font-medium">시작:</span>
+                              
+                              {/* 연도 드롭다운 */}
+                              <div className="relative flex items-center">
+                                <select
+                                  value={periodStartYear}
+                                  onChange={(e) => {
+                                    const y = Number(e.target.value)
+                                    setPeriodStartYear(y)
+                                    setSelectedYear(y)
+                                  }}
+                                  className="appearance-none bg-slate-950 text-amber-300 border border-amber-500/30 hover:border-amber-400/60 rounded-lg pl-2 pr-5 py-0.5 text-xs font-mono font-bold cursor-pointer focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
+                                >
+                                  {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+                                    <option key={y} value={y} className="bg-slate-900 text-slate-100">{y}년</option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="w-3 h-3 text-amber-400 absolute right-1.5 pointer-events-none" />
+                              </div>
 
-                          {/* 2. 유동 개월 수 (+/- 버튼 & 숫자 직접 입력 지원) */}
-                          <div className="flex items-center gap-1.5 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/15 text-[10.5px] font-bold text-slate-200 shrink-0">
-                            <span className="text-[10px] text-amber-300 font-extrabold">⌛ 기간:</span>
-                            <div className="flex items-center bg-slate-950 px-1 py-0.5 rounded border border-white/10">
-                              <button
-                                type="button"
-                                onClick={() => setPeriodDurationMonths((m) => Math.max(1, m - 1))}
-                                className="px-1 text-slate-400 hover:text-amber-300 font-bold text-xs cursor-pointer"
-                                title="1개월 줄이기"
-                              >
-                                -
-                              </button>
-                              <input
-                                type="number"
-                                min={1}
-                                max={36}
-                                value={periodDurationMonths}
-                                onChange={(e) => setPeriodDurationMonths(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
-                                className="w-7 text-center bg-transparent text-amber-300 text-[10.5px] font-bold font-mono focus:outline-none"
-                              />
-                              <span className="text-[10px] text-slate-400 pr-1">개월</span>
-                              <button
-                                type="button"
-                                onClick={() => setPeriodDurationMonths((m) => Math.min(36, m + 1))}
-                                className="px-1 text-slate-400 hover:text-amber-300 font-bold text-xs cursor-pointer"
-                                title="1개월 늘리기"
-                              >
-                                +
-                              </button>
+                              {/* 월 드롭다운 */}
+                              <div className="relative flex items-center">
+                                <select
+                                  value={periodStartMonth}
+                                  onChange={(e) => {
+                                    const m = Number(e.target.value)
+                                    setPeriodStartMonth(m)
+                                    setSelectedMonth(m)
+                                    setActiveDayNum(1)
+                                  }}
+                                  className="appearance-none bg-slate-950 text-amber-300 border border-amber-500/30 hover:border-amber-400/60 rounded-lg pl-2 pr-5 py-0.5 text-xs font-mono font-bold cursor-pointer focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
+                                >
+                                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                                    <option key={m} value={m} className="bg-slate-900 text-slate-100">{String(m).padStart(2, '0')}월</option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="w-3 h-3 text-amber-400 absolute right-1.5 pointer-events-none" />
+                              </div>
+                            </div>
+
+                            {/* 2. 유동 개월 수 카운터 & 빠른 프리셋 칩 */}
+                            <div className="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70 text-xs font-bold text-slate-200 shadow-inner">
+                              <span className="text-[11px] text-slate-400 font-medium">기간:</span>
+                              
+                              {/* Step Counter */}
+                              <div className="flex items-center bg-slate-950 px-1.5 py-0.5 rounded-lg border border-amber-500/30">
+                                <button
+                                  type="button"
+                                  onClick={() => setPeriodDurationMonths((m) => Math.max(1, m - 1))}
+                                  className="w-5 h-5 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                                  title="1개월 줄이기"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={36}
+                                  value={periodDurationMonths}
+                                  onChange={(e) => setPeriodDurationMonths(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
+                                  className="w-7 text-center bg-transparent text-amber-300 text-xs font-extrabold font-mono focus:outline-none"
+                                />
+                                <span className="text-[10px] text-slate-400 font-normal pr-1">개월</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPeriodDurationMonths((m) => Math.min(36, m + 1))}
+                                  className="w-5 h-5 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                                  title="1개월 늘리기"
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              {/* Quick Preset Segmented Buttons */}
+                              <div className="flex items-center gap-1 ml-1 pl-1 border-l border-white/10">
+                                {[
+                                  { label: '6개월', months: 6 },
+                                  { label: '1년치(12m)', months: 12 },
+                                  { label: '마스터(17m)', months: 17 },
+                                  { label: '2년치(24m)', months: 24 },
+                                ].map((p) => (
+                                  <button
+                                    key={`preset-${p.months}`}
+                                    type="button"
+                                    onClick={() => setPeriodDurationMonths(p.months)}
+                                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                                      periodDurationMonths === p.months
+                                        ? 'bg-slate-800 text-amber-300 border border-slate-600 shadow-sm'
+                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                    }`}
+                                  >
+                                    {p.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </div>
 
-                          {/* 3. 실시간 타임라인 월 칩 모음 */}
+                          {/* Right Group: Full Stream View Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => setIsStreamView(!isStreamView)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border flex items-center gap-1.5 shadow-md shrink-0 ${
+                              isStreamView
+                                ? 'bg-slate-800 text-slate-100 border-slate-600 scale-[1.01]'
+                                : 'bg-slate-900/90 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white'
+                            }`}
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{isStreamView ? '📖 1개월 단일 뷰' : `✨ ${periodDurationMonths}개월 전체 풀 스트림 뷰`}</span>
+                          </button>
+                        </div>
+
+                        {/* 3. 실시간 타임라인 월 칩 슬라이더 리본 */}
+                        <div className="w-full bg-slate-950/80 border border-white/10 p-1 rounded-xl shadow-lg flex items-center gap-1 overflow-x-auto custom-scrollbar backdrop-blur-md">
+                          <span className="text-[10px] text-slate-400 font-mono font-semibold px-2 shrink-0 flex items-center gap-1">
+                            <span>타임라인:</span>
+                          </span>
                           <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar flex-1 py-0.5">
                             {activePeriodMonths.map((mObj) => {
                               const isSel = selectedYear === mObj.year && selectedMonth === mObj.month
@@ -1464,10 +1522,10 @@ export default function DiaryPage() {
                                     setSelectedMonth(mObj.month)
                                     setActiveDayNum(1)
                                   }}
-                                  className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                                  className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-bold border transition-all cursor-pointer whitespace-nowrap ${
                                     isSel
-                                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md scale-[1.03]'
-                                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                                      ? 'bg-slate-800 text-amber-200 border-slate-500 shadow-sm scale-[1.02]'
+                                      : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
                                   }`}
                                 >
                                   {mObj.label}
@@ -1475,18 +1533,6 @@ export default function DiaryPage() {
                               )
                             })}
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setIsStreamView(!isStreamView)}
-                            className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                              isStreamView
-                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-indigo-400 shadow-md scale-[1.02]'
-                                : 'bg-slate-900/90 text-slate-300 border-white/15 hover:border-indigo-400/50 hover:text-white'
-                            }`}
-                          >
-                            {isStreamView ? '📖 1개월 뷰 전환' : `✨ ${periodDurationMonths}개월 풀 뷰`}
-                          </button>
                         </div>
 
                         {/* Draggable Header */}
