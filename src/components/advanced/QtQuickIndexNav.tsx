@@ -9,87 +9,81 @@ interface QtQuickIndexNavProps {
   themeColor?: string
 }
 
-// 12개월 계절별 정통 파스텔 톤온톤 팔레트
+// 12개월 절제된 고급 파스텔 슬레이트/어스 톤 (Luxury Muted Earth & Pastel Palette)
 const SEASONAL_MONTH_COLORS: Record<number, { bg: string; text: string; label: string }> = {
-  1: { bg: '#8FA3C9', text: '#FFFFFF', label: '01' },
-  2: { bg: '#9DB2D4', text: '#FFFFFF', label: '02' },
-  3: { bg: '#E4A5B7', text: '#FFFFFF', label: '03' },
-  4: { bg: '#E09FAD', text: '#FFFFFF', label: '04' },
-  5: { bg: '#A3C9A8', text: '#FFFFFF', label: '05' },
-  6: { bg: '#88C0A9', text: '#FFFFFF', label: '06' },
-  7: { bg: '#7BB3C5', text: '#FFFFFF', label: '07' },
-  8: { bg: '#85A8D0', text: '#FFFFFF', label: '08' },
-  9: { bg: '#D4A373', text: '#FFFFFF', label: '09' },
-  10: { bg: '#C08552', text: '#FFFFFF', label: '10' },
-  11: { bg: '#9E7777', text: '#FFFFFF', label: '11' },
-  12: { bg: '#6F8AB7', text: '#FFFFFF', label: '12' },
+  1: { bg: '#8395A7', text: '#FFFFFF', label: '01' },
+  2: { bg: '#95A5A6', text: '#FFFFFF', label: '02' },
+  3: { bg: '#D4A5B7', text: '#FFFFFF', label: '03' },
+  4: { bg: '#C896A6', text: '#FFFFFF', label: '04' },
+  5: { bg: '#96B396', text: '#FFFFFF', label: '05' },
+  6: { bg: '#7BA493', text: '#FFFFFF', label: '06' },
+  7: { bg: '#6B9DB9', text: '#FFFFFF', label: '07' },
+  8: { bg: '#7895B2', text: '#FFFFFF', label: '08' },
+  9: { bg: '#BE9B7B', text: '#FFFFFF', label: '09' },
+  10: { bg: '#B07D62', text: '#FFFFFF', label: '10' },
+  11: { bg: '#8E6E6E', text: '#FFFFFF', label: '11' },
+  12: { bg: '#657786', text: '#FFFFFF', label: '12' },
 }
 
 export default function QtQuickIndexNav({
   currentMonth = 8,
   currentWeek = 1,
   activeTab = 'calendar',
-  themeColor = '#B8C6D9',
+  themeColor = '#7895B2',
 }: QtQuickIndexNavProps) {
   const todayMonth = 8
 
   return (
     <div
-      className="absolute right-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
+      className="absolute right-0 top-3 bottom-3 w-9 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Core Section Tabs (YEAR, CAL, OVR - Zero Overlap) */}
+      {/* 1. Main Core Tabs (YEAR, CAL, OVR - Elegant Neutral Leather Tabs) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
-        {/* YEAR Tab */}
         <button
           type="button"
           data-nav-target="yearlygrid"
-          className={`h-6 rounded-l-md text-[8.5px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'yearlygrid'
-              ? 'w-10 text-white shadow-md border-r-3 border-amber-300 ring-1 ring-amber-300/40 z-10'
-              : 'w-7.5 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-800 hover:w-9'
+              ? 'w-9 text-white font-black bg-slate-800 border-l-2 border-amber-300/90 shadow-xs z-10'
+              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5'
           }`}
-          style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
-          title="연간 마스터 캘린더"
+          title="연간 캘린더"
         >
           YEAR
         </button>
 
-        {/* CAL Tab */}
         <button
           type="button"
           data-nav-target="calendar"
-          className={`h-6 rounded-l-md text-[8.5px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'calendar'
-              ? 'w-10 text-white shadow-md border-r-3 border-amber-300 ring-1 ring-amber-300/40 z-10'
-              : 'w-7.5 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-800 hover:w-9'
+              ? 'w-9 text-white font-black bg-slate-800 border-l-2 border-amber-300/90 shadow-xs z-10'
+              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5'
           }`}
-          style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
           title="월간 달력"
         >
           CAL
         </button>
 
-        {/* OVR Tab */}
         <button
           type="button"
           data-nav-target="overview"
-          className={`h-6 rounded-l-md text-[8.5px] font-black flex items-center justify-center transition-all cursor-pointer ${
+          className={`h-5.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'w-10 text-white shadow-md border-r-3 border-amber-300 ring-1 ring-amber-300/40 z-10'
-              : 'w-7.5 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-800 hover:w-9'
+              ? 'w-9 text-white font-black bg-slate-800 border-l-2 border-amber-300/90 shadow-xs z-10'
+              : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8.5'
           }`}
-          style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
           title="월간 개요"
         >
           OVR
         </button>
       </div>
 
-      {/* Divider */}
-      <div className="w-4 h-px bg-slate-200 my-0.5 self-center opacity-60" />
+      {/* Subtle Divider Line */}
+      <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 2. Seasonal 12-Month Palette Tabs (01 ~ 12) */}
+      {/* 2. Muted 12-Month Palette Tabs (01 ~ 12 - Subtle Muted Tone) */}
       <div className="flex flex-col space-y-0.5 w-full items-end my-auto">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isCurrent = currentMonth === mNum
@@ -102,10 +96,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`month-${mNum}`}
               data-month={mNum}
-              className={`h-4 rounded-l-sm text-[8px] font-extrabold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
+              className={`h-4 rounded-l-2xs text-[7.5px] font-bold flex items-center justify-between px-1.5 transition-all relative cursor-pointer ${
                 isCurrent
-                  ? 'w-10 shadow-md border-r-3 border-amber-300 ring-1 ring-amber-300/30 z-10'
-                  : 'w-7.5 opacity-65 hover:opacity-100 hover:w-9'
+                  ? 'w-9 text-white font-black border-l-2 border-amber-300 shadow-2xs z-10'
+                  : 'w-6.5 opacity-55 hover:opacity-100 hover:w-8.5'
               }`}
               style={{
                 backgroundColor: colInfo.bg,
@@ -122,10 +116,10 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Divider */}
-      <div className="w-4 h-px bg-slate-200 my-0.5 self-center opacity-60" />
+      {/* Subtle Divider Line */}
+      <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 3. Week Direct Jumpers (W1 ~ W5) */}
+      {/* 3. Ultra-Slim Week Jumpers (W1 ~ W5 - Muted Slate Minimalist) */}
       <div className="flex flex-col space-y-0.5 w-full items-end">
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -135,10 +129,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`h-4 rounded-l-xs text-[7.5px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+              className={`h-3.5 rounded-l-2xs text-[7px] font-bold flex items-center justify-center transition-all cursor-pointer ${
                 isCurrentW
-                  ? 'w-9.5 bg-slate-900 text-white font-black border-r-3 border-amber-400 shadow-sm z-10'
-                  : 'w-7 bg-slate-100/90 text-slate-400 opacity-65 hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 hover:w-8.5'
+                  ? 'w-8.5 bg-slate-900 text-white font-black border-l-2 border-amber-400 shadow-2xs z-10'
+                  : 'w-6 bg-slate-100/70 text-slate-400 hover:bg-slate-200 hover:text-slate-800 hover:w-7.5'
               }`}
               title={`${wNo}주차 주간 계획`}
             >
@@ -148,15 +142,15 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Divider */}
-      <div className="w-4 h-px bg-slate-200 my-0.5 self-center opacity-60" />
+      {/* Subtle Divider Line */}
+      <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 4. Ultra-clean Simple English Tracker Tags (HABIT | THANKS | BUDGET | KPT) */}
+      {/* 4. Elegant Minimal Sub-Trackers (HABIT | GRAT | CASH | KPT - Muted Monochrome Elegance) */}
       <div className="flex flex-col space-y-1 w-full items-end pr-0.5">
         <button
           type="button"
           data-nav-target="habit"
-          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-emerald-300 border-r-2 border-emerald-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
           title="Habit Tracker"
         >
           HABIT
@@ -164,23 +158,23 @@ export default function QtQuickIndexNav({
         <button
           type="button"
           data-nav-target="gratitude"
-          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-amber-300 border-r-2 border-amber-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
           title="Gratitude Journal"
         >
-          THANKS
+          GRAT
         </button>
         <button
           type="button"
           data-nav-target="budget"
-          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-teal-300 border-r-2 border-teal-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
           title="Budget Tracker"
         >
-          BUDGET
+          CASH
         </button>
         <button
           type="button"
           data-nav-target="kpt"
-          className="h-4.5 px-1.5 rounded-l-md bg-slate-800 text-indigo-300 border-r-2 border-indigo-400 text-[7px] font-black tracking-wider shadow-2xs hover:w-9.5 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
           title="KPT Review"
         >
           KPT
