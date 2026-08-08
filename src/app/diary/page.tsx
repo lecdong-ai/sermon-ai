@@ -252,17 +252,19 @@ export default function DiaryPage() {
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<1 | 2 | 3>(1)
   const [modalFullMaster, setModalFullMaster] = useState(false)
 
-  // ★ 현재 선택된 연월(예: 2026.08)부터 12개월치 전체 연간 기간 월 목록 동적 계산
+  // ★ 17개월(2026.08 ~ 2027.12) 풀 기간 전체 월 목록 동적 계산 및 캔버스 연속 스트림 상태 변수
+  const [isStreamView, setIsStreamView] = useState(false)
+
   const activePeriodMonths = useMemo(() => {
     const list: { year: number; month: number; label: string }[] = []
-    let currY = selectedYear
-    let currM = selectedMonth
+    let currY = 2026
+    let currM = 8
 
-    for (let i = 0; i < 12; i++) {
+    while (currY < 2027 || (currY === 2027 && currM <= 12)) {
       list.push({
         year: currY,
         month: currM,
-        label: `${currY}년 ${String(currM).padStart(2, '0')}월`
+        label: `${String(currY).slice(2)}.${String(currM).padStart(2, '0')}`
       })
       currM++
       if (currM > 12) {
@@ -271,7 +273,7 @@ export default function DiaryPage() {
       }
     }
     return list
-  }, [selectedYear, selectedMonth])
+  }, [])
 
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
@@ -1375,20 +1377,65 @@ export default function DiaryPage() {
                         activeDragTarget === 'canvas' ? 'z-50 shadow-[0_30px_70px_rgba(0,0,0,0.85)] scale-[1.005]' : ''
                       }`}
                     >
-                      {/* Top Canvas Toolbar with Drag Grip Handle */}
-                      <div className="w-full text-xs">
+                      {/* Top Canvas Toolbar with Drag Grip Handle & 17-Month Period Timeline */}
+                      <div className="w-full text-xs space-y-2">
+                        {/* 17개월 연간 실시간 타임라인 슬라이더 바 (2026.08 ~ 2027.12) */}
+                        <div className="w-full bg-slate-950/95 border border-amber-500/30 p-1.5 rounded-2xl shadow-xl flex items-center gap-1.5 overflow-x-auto custom-scrollbar backdrop-blur-md">
+                          <span className="text-[10px] text-amber-300 font-extrabold px-2 whitespace-nowrap shrink-0 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            <span>17개월 타임라인:</span>
+                          </span>
+
+                          <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar flex-1 py-0.5">
+                            {activePeriodMonths.map((mObj) => {
+                              const isSel = selectedYear === mObj.year && selectedMonth === mObj.month
+                              return (
+                                <button
+                                  key={`timeline-${mObj.year}-${mObj.month}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedYear(mObj.year)
+                                    setSelectedMonth(mObj.month)
+                                    setActiveDayNum(1)
+                                  }}
+                                  className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                                    isSel
+                                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md scale-[1.03]'
+                                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                                  }`}
+                                >
+                                  {mObj.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setIsStreamView(!isStreamView)}
+                            className={`px-3 py-1 rounded-xl text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                              isStreamView
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-indigo-400 shadow-md scale-[1.02]'
+                                : 'bg-slate-900/90 text-slate-300 border-white/15 hover:border-indigo-400/50 hover:text-white'
+                            }`}
+                          >
+                            {isStreamView ? '📖 1개월 뷰 전환' : '✨ 17개월 풀 다이어리 뷰'}
+                          </button>
+                        </div>
+
+                        {/* Draggable Header */}
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'canvas')}
                           onPointerMove={handlePointerMove}
                           onPointerUp={handlePointerUp}
-                          className="flex items-center justify-between mb-2 p-1.5 bg-slate-900/90 rounded-xl border border-white/15 cursor-grab active:cursor-grabbing select-none shadow-lg group"
+                          className="flex items-center justify-between p-1.5 bg-slate-900/90 rounded-xl border border-white/15 cursor-grab active:cursor-grabbing select-none shadow-lg group"
                           title="마우스로 잡고 전체 캔버스 어디든 자유롭게 이동"
                         >
                           <div className="flex items-center gap-2">
                             <GripHorizontal className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
                             <span className="font-semibold text-slate-300 flex items-center gap-1.5 text-xs">
                               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                              스튜디오 라이브 캔버스
+                              스튜디오 라이브 캔버스 ({selectedYear}.{String(selectedMonth).padStart(2, '0')})
                             </span>
                             <span className="text-[10px] font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
                               🖱️ 캔버스 드래그
@@ -1474,27 +1521,65 @@ export default function DiaryPage() {
                       {/* Interactive Dot Grid Studio Canvas Frame */}
                       <div
                         onClick={() => {
-                          setModalActiveTab(previewTab)
-                          setIsFullscreenModalOpen(true)
+                          if (!isStreamView) {
+                            setModalActiveTab(previewTab)
+                            setIsFullscreenModalOpen(true)
+                          }
                         }}
-                        className="w-full bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
+                        className={`w-full bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px] ${
+                          isStreamView ? 'max-h-[680px] overflow-y-auto custom-scrollbar' : 'cursor-pointer'
+                        }`}
                       >
                         {/* Hover overlay hint */}
-                        <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center z-20 pointer-events-none backdrop-blur-[1px]">
-                          <span className="px-5 py-2.5 rounded-xl bg-slate-950/90 border border-indigo-400/50 text-indigo-200 font-bold text-xs shadow-2xl flex items-center gap-2 tracking-wide">
-                            <Maximize2 className="w-4 h-4 text-amber-400 animate-bounce" />
-                            클릭하여 전체화면 스튜디오 모달 열기
-                          </span>
-                        </div>
+                        {!isStreamView && (
+                          <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center z-20 pointer-events-none backdrop-blur-[1px]">
+                            <span className="px-5 py-2.5 rounded-xl bg-slate-950/90 border border-indigo-400/50 text-indigo-200 font-bold text-xs shadow-2xl flex items-center gap-2 tracking-wide">
+                              <Maximize2 className="w-4 h-4 text-amber-400 animate-bounce" />
+                              클릭하여 전체화면 스튜디오 모달 열기
+                            </span>
+                          </div>
+                        )}
 
                         {/* Proportional Scaled Paper Wrapper */}
-                        <div
-                          className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
-                          style={{
-                            width: `${canvasW}px`,
-                            height: `${canvasH * previewStackFactor}px`,
-                          }}
-                        >
+                        {isStreamView ? (
+                          /* ✨ 17개월 연속 풀 마스터 캔버스 스트림 (2026.08 ~ 2027.12) */
+                          <div className="flex flex-col items-center space-y-6 py-4 my-2">
+                            <div className="px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold">
+                              ✨ 17개월 풀 다이어리 캔버스 스트림 (2026.08 ~ 2027.12)
+                            </div>
+                            {activePeriodMonths.map((mObj) => {
+                              const mName = `${mObj.month}월`
+                              return (
+                                <div
+                                  key={`stream-canvas-month-${mObj.year}-${mObj.month}`}
+                                  className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden bg-slate-900 border border-white/10"
+                                  style={{
+                                    width: `${canvasW}px`,
+                                    height: `${canvasH}px`,
+                                  }}
+                                >
+                                  <div
+                                    className="origin-top-left absolute top-0 left-0"
+                                    style={{
+                                      width: `${pageWidth}px`,
+                                      height: `${pageHeight}px`,
+                                      transform: `scale(${canvasScale})`,
+                                    }}
+                                  >
+                                    <CalendarComponent year={mObj.year} month={mObj.month} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div
+                            className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
+                            style={{
+                              width: `${canvasW}px`,
+                              height: `${canvasH * previewStackFactor}px`,
+                            }}
+                          >
                           <div
                             className="origin-top-left absolute top-0 left-0 transition-transform duration-300"
                             style={{
@@ -1659,6 +1744,7 @@ export default function DiaryPage() {
                             })()}
                           </div>
                         </div>
+                        )}
                       </div>
 
                       {/* Canvas Master Info Toolbar */}
