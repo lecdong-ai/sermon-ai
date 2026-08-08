@@ -1210,7 +1210,7 @@ export default function DiaryPage() {
                   setModalActiveTab(previewTab)
                   setIsFullscreenModalOpen(true)
                 }}
-                className="w-full bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-6 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
+                className="w-fit max-w-full mx-auto bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
               >
                 {/* Hover overlay hint */}
                 <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center z-20 pointer-events-none backdrop-blur-[1px]">
