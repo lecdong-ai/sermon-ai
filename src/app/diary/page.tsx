@@ -5,7 +5,7 @@ import {
   Calendar as CalendarIcon, Download, Sparkles, BookOpen, Layers,
   ChevronLeft, ArrowLeft, RotateCcw, Check, FileText, Maximize2,
   X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp,
-  GripHorizontal, Move, Pin, Palette
+  GripHorizontal, Move, Pin, Palette, CheckSquare
 } from 'lucide-react'
 import Link from 'next/link'
 import QtMonthlyCalendarPage from '@/components/advanced/QtMonthlyCalendarPage'
