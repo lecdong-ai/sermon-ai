@@ -1243,26 +1243,48 @@ export default function DiaryPage() {
 
                   <div className="h-px bg-white/10" />
 
-                  {/* Paper Size Options */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-300 flex items-center gap-1.5 text-[11px]">
-                      <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                      용지 규격:
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {Object.keys(PAGE_SIZES).map((sz) => (
-                        <button
-                          key={sz}
-                          onClick={() => setSelectedSizeOption(sz)}
-                          className={`px-2 py-0.5 rounded-md font-bold border text-[10.5px] transition-all ${
-                            selectedSizeOption === sz
-                              ? 'bg-indigo-600 border-indigo-400 text-white'
-                              : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {PAGE_SIZES[sz]?.label?.split(' (')[0] || sz}
-                        </button>
-                      ))}
+                  {/* Paper Size Options (Neat 2-Line Stacked Display) */}
+                  <div className="space-y-2 text-xs pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-300 flex items-center gap-1.5 text-[11px]">
+                        <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                        용지 규격 선택
+                      </span>
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                        {sizeLabel}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {Object.keys(PAGE_SIZES).map((sz) => {
+                        const item = PAGE_SIZES[sz]
+                        const isSel = selectedSizeOption === sz
+                        const labelPart = item?.label?.split(' (')[0] || sz
+                        const dimPart = item?.label?.includes('(') ? item.label.split('(')[1].replace(')', '') : ''
+
+                        return (
+                          <button
+                            key={sz}
+                            type="button"
+                            onClick={() => setSelectedSizeOption(sz)}
+                            className={`p-2 rounded-xl border transition-all text-left flex flex-col justify-center gap-0.5 cursor-pointer ${
+                              isSel
+                                ? 'bg-slate-800 border-amber-400/80 text-amber-200 shadow-md ring-1 ring-amber-400/30'
+                                : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                            }`}
+                          >
+                            <span className="text-[11px] font-extrabold tracking-tight text-slate-100 flex items-center justify-between">
+                              <span>{labelPart}</span>
+                              {isSel && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
+                            </span>
+                            {dimPart && (
+                              <span className={`text-[9.5px] font-mono font-medium ${isSel ? 'text-amber-300/80' : 'text-slate-400'}`}>
+                                {dimPart}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
