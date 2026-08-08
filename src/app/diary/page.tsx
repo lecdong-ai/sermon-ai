@@ -1087,32 +1087,32 @@ export default function DiaryPage() {
                       onClick={() => applyPreset('general')}
                       className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold transition-all text-left flex items-center justify-between group"
                     >
-                      <span>🌿 일반인 갓생 팩 (19종)</span>
-                      <span className="text-[9.5px] font-normal text-slate-400">기본+갓생</span>
+                      <span>🌿 일반인 갓생 팩 (20종)</span>
+                      <span className="text-[9.5px] font-normal text-slate-400">기본5+갓생15</span>
                     </button>
 
                     <button
                       onClick={() => applyPreset('church')}
                       className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold transition-all text-left flex items-center justify-between group"
                     >
-                      <span>⛪ 크리스천 묵상 팩 (19종)</span>
-                      <span className="text-[9.5px] font-normal text-slate-400">기본+영성</span>
+                      <span>⛪ 크리스천 묵상 팩 (20종)</span>
+                      <span className="text-[9.5px] font-normal text-slate-400">기본5+영성15</span>
                     </button>
 
                     <button
                       onClick={() => applyPreset('basic')}
                       className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 font-bold transition-all text-left flex items-center justify-between group"
                     >
-                      <span>📅 미니멀 기본 팩 (4종)</span>
-                      <span className="text-[9.5px] font-normal text-slate-400">핵심내지</span>
+                      <span>📅 미니멀 기본 팩 (5종)</span>
+                      <span className="text-[9.5px] font-normal text-slate-400">핵심 5종</span>
                     </button>
 
                     <button
                       onClick={() => applyPreset('all')}
                       className="p-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold transition-all text-left flex items-center justify-between group"
                     >
-                      <span>✨ 전체 수집 팩 (34종)</span>
-                      <span className="text-[9.5px] font-normal text-slate-400">전체내지</span>
+                      <span>✨ 전체 수집 팩 (35종)</span>
+                      <span className="text-[9.5px] font-normal text-slate-400">전체 35종</span>
                     </button>
                   </div>
                 </div>
@@ -1917,7 +1917,7 @@ export default function DiaryPage() {
               <div>
                 <h3 className="text-sm font-extrabold text-indigo-300 flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-amber-400" />
-                  <span>Step 2: 전체 34종 내지 구성 선택 체크리스트</span>
+                  <span>Step 2: 전체 35종 내지 구성 선택 체크리스트</span>
                 </h3>
                 <p className="text-xs text-slate-400">발행할 다이어리에 포함하고 싶은 내지를 체크해 주세요.</p>
               </div>
