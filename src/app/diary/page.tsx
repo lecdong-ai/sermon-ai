@@ -1138,16 +1138,6 @@ export default function DiaryPage() {
               </div>
             </div>
           </div>
-          {/* Floating Control Windows Info Card in Sidebar */}
-          <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-1.5 backdrop-blur-md shadow-xl">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
-              <Move className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span>자율 드래그 3D 스튜디오</span>
-            </div>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              모든 모듈 카드와 라이브 캔버스는 <strong className="text-indigo-300">마우스 드래그</strong>로 원하는 위치 어디든 자유롭게 이동하실 수 있습니다.
-            </p>
-          </div>
         </div>
 
         {/* Right Studio Live Canvas Panel (Centered Paper Alignment, 3D Hover & Draggable) */}
