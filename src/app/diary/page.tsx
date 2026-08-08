@@ -255,35 +255,57 @@ export default function DiaryPage() {
 
   const [previewPos, setPreviewPos] = useState({ x: 30, y: 110 })
   const [pageCheckerPos, setPageCheckerPos] = useState({ x: 360, y: 110 })
+  const [presetPos, setPresetPos] = useState({ x: 0, y: 0 })
+  const [yearMonthPos, setYearMonthPos] = useState({ x: 0, y: 0 })
+  const [canvasPos, setCanvasPos] = useState({ x: 0, y: 0 })
 
-  const activeDragTarget = useRef<'preview' | 'checker' | null>(null)
+  const [activeDragTarget, setActiveDragTarget] = useState<'preview' | 'checker' | 'preset' | 'yearmonth' | 'canvas' | null>(null)
   const dragStartOffset = useRef({ x: 0, y: 0 })
 
-  const handlePointerDown = (e: React.PointerEvent, target: 'preview' | 'checker') => {
-    activeDragTarget.current = target
-    const currentPos = target === 'preview' ? previewPos : pageCheckerPos
+  const handlePointerDown = (e: React.PointerEvent, target: 'preview' | 'checker' | 'preset' | 'yearmonth' | 'canvas') => {
+    setActiveDragTarget(target)
+    let currentPos = { x: 0, y: 0 }
+    if (target === 'preview') currentPos = previewPos
+    else if (target === 'checker') currentPos = pageCheckerPos
+    else if (target === 'preset') currentPos = presetPos
+    else if (target === 'yearmonth') currentPos = yearMonthPos
+    else if (target === 'canvas') currentPos = canvasPos
+
     dragStartOffset.current = {
       x: e.clientX - currentPos.x,
       y: e.clientY - currentPos.y,
     }
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    const elem = e.currentTarget as HTMLElement
+    if (elem.setPointerCapture) {
+      try { elem.setPointerCapture(e.pointerId) } catch {}
+    }
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!activeDragTarget.current) return
-    const newX = Math.max(10, Math.min(window.innerWidth - 320, e.clientX - dragStartOffset.current.x))
-    const newY = Math.max(70, Math.min(window.innerHeight - 100, e.clientY - dragStartOffset.current.y))
+    if (!activeDragTarget) return
+    const newX = e.clientX - dragStartOffset.current.x
+    const newY = e.clientY - dragStartOffset.current.y
 
-    if (activeDragTarget.current === 'preview') {
-      setPreviewPos({ x: newX, y: newY })
-    } else {
-      setPageCheckerPos({ x: newX, y: newY })
+    if (activeDragTarget === 'preview') {
+      setPreviewPos({ x: Math.max(10, Math.min(window.innerWidth - 320, newX)), y: Math.max(70, Math.min(window.innerHeight - 100, newY)) })
+    } else if (activeDragTarget === 'checker') {
+      setPageCheckerPos({ x: Math.max(10, Math.min(window.innerWidth - 320, newX)), y: Math.max(70, Math.min(window.innerHeight - 100, newY)) })
+    } else if (activeDragTarget === 'preset') {
+      setPresetPos({ x: newX, y: newY })
+    } else if (activeDragTarget === 'yearmonth') {
+      setYearMonthPos({ x: newX, y: newY })
+    } else if (activeDragTarget === 'canvas') {
+      setCanvasPos({ x: newX, y: newY })
     }
   }
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (activeDragTarget.current) {
-      activeDragTarget.current = null
+    if (activeDragTarget) {
+      const elem = e.currentTarget as HTMLElement
+      if (elem.releasePointerCapture) {
+        try { elem.releasePointerCapture(e.pointerId) } catch {}
+      }
+      setActiveDragTarget(null)
     }
   }
 
@@ -921,15 +943,29 @@ export default function DiaryPage() {
         {/* Left Options Control Studio (Slim 3 cols) */}
         <div className="col-span-12 lg:col-span-3 space-y-3">
           
-          {/* Module 1: 1-Click Presets (Smooth 3D Hover Card) */}
-          <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-2 backdrop-blur-md shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(16,185,129,0.15)] hover:border-emerald-400/40 group">
-            <div className="flex items-center justify-between pb-1 border-b border-white/5">
+          {/* Module 1: 1-Click Presets (Butter-Smooth 60fps Draggable) */}
+          <div
+            style={{ transform: `translate3d(${presetPos.x}px, ${presetPos.y}px, 0px)` }}
+            className={`p-3.5 rounded-2xl bg-slate-900/85 border space-y-2 backdrop-blur-md transition-shadow duration-200 select-none ${
+              activeDragTarget === 'preset'
+                ? 'z-50 border-emerald-400 shadow-[0_30px_70px_rgba(0,0,0,0.85)] ring-2 ring-emerald-400/40 scale-[1.01]'
+                : 'border-white/10 shadow-2xl hover:border-emerald-400/50 hover:shadow-[0_20px_40px_rgba(16,185,129,0.15)]'
+            }`}
+          >
+            <div
+              onPointerDown={(e) => handlePointerDown(e, 'preset')}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="flex items-center justify-between cursor-grab active:cursor-grabbing select-none pb-1.5 border-b border-white/10 group"
+              title="마우스로 잡고 어디든 자유롭게 이동"
+            >
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <GripHorizontal className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 원클릭 구성 프리셋
               </h3>
-              <span className="text-[9.5px] font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                자동 설정
+              <span className="text-[9.5px] font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30 shadow-xs">
+                🖱️ 잡고 드래그
               </span>
             </div>
             
@@ -968,16 +1004,30 @@ export default function DiaryPage() {
             </div>
           </div>
 
-          {/* Module 2: Year, Month, Theme & Paper Controls (Smooth 3D Hover Card) */}
-          <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-3 backdrop-blur-md shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(99,102,241,0.15)] hover:border-indigo-400/40 group">
-            {/* Title Header */}
-            <div className="flex items-center justify-between pb-1 border-b border-white/5">
+          {/* Module 2: Year, Month, Theme & Paper Controls (Butter-Smooth 60fps Draggable) */}
+          <div
+            style={{ transform: `translate3d(${yearMonthPos.x}px, ${yearMonthPos.y}px, 0px)` }}
+            className={`p-3.5 rounded-2xl bg-slate-900/85 border space-y-3 backdrop-blur-md transition-shadow duration-200 select-none ${
+              activeDragTarget === 'yearmonth'
+                ? 'z-50 border-indigo-400 shadow-[0_30px_70px_rgba(0,0,0,0.85)] ring-2 ring-indigo-400/40 scale-[1.01]'
+                : 'border-white/10 shadow-2xl hover:border-indigo-400/50 hover:shadow-[0_20px_40px_rgba(99,102,241,0.15)]'
+            }`}
+          >
+            {/* Draggable Title Header */}
+            <div
+              onPointerDown={(e) => handlePointerDown(e, 'yearmonth')}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="flex items-center justify-between cursor-grab active:cursor-grabbing select-none pb-1.5 border-b border-white/10 group"
+              title="마우스로 잡고 어디든 자유롭게 이동"
+            >
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <GripHorizontal className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
                 <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
                 발행 연월 ({selectedYear}.{String(selectedMonth).padStart(2, '0')})
               </span>
-              <span className="text-[9.5px] font-mono text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">
-                실시간 적용
+              <span className="text-[9.5px] font-mono text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30 shadow-xs">
+                🖱️ 잡고 드래그
               </span>
             </div>
 
@@ -1105,8 +1155,13 @@ export default function DiaryPage() {
           </div>
         </div>
 
-        {/* Right Studio Live Canvas Panel (Centered Paper Alignment) */}
-        <div className="col-span-12 lg:col-span-9 flex flex-col items-center justify-start">
+        {/* Right Studio Live Canvas Panel (Butter-Smooth 60fps Draggable) */}
+        <div
+          style={{ transform: `translate3d(${canvasPos.x}px, ${canvasPos.y}px, 0px)` }}
+          className={`col-span-12 lg:col-span-9 flex flex-col items-center justify-start transition-shadow duration-200 ${
+            activeDragTarget === 'canvas' ? 'z-50 shadow-[0_30px_70px_rgba(0,0,0,0.85)] scale-[1.005]' : ''
+          }`}
+        >
           {(() => {
             const canvasScale = isLandscape ? 0.72 : 0.58
             const canvasW = Math.round(pageWidth * canvasScale)
@@ -1119,16 +1174,23 @@ export default function DiaryPage() {
                 style={{ width: `${containerW}px`, maxWidth: '100%' }}
                 className="flex flex-col items-center mx-auto space-y-3"
               >
-                {/* Top Canvas Toolbar */}
+                {/* Top Canvas Toolbar with Drag Grip Handle */}
                 <div className="w-full text-xs">
-                  <div className="flex items-center justify-between mb-2 p-1 bg-slate-900/60 rounded-xl border border-white/5">
+                  <div
+                    onPointerDown={(e) => handlePointerDown(e, 'canvas')}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    className="flex items-center justify-between mb-2 p-1.5 bg-slate-900/90 rounded-xl border border-white/15 cursor-grab active:cursor-grabbing select-none shadow-lg group"
+                    title="마우스로 잡고 전체 캔버스 어디든 자유롭게 이동"
+                  >
                     <div className="flex items-center gap-2">
+                      <GripHorizontal className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
                       <span className="font-semibold text-slate-300 flex items-center gap-1.5 text-xs">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         스튜디오 라이브 캔버스
                       </span>
-                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                        {sizeLabel} ({pageWidth} × {pageHeight}px)
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                        🖱️ 캔버스 드래그
                       </span>
                     </div>
 
