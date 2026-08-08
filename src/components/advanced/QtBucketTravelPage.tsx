@@ -33,7 +33,7 @@ export default function QtBucketTravelPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 56px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -60,14 +60,14 @@ export default function QtBucketTravelPage({
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>✈️ {monthName} Bucket List & Travel Vision</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
             인생에서 꼭 이루고 싶은 10가지 소망과 떠나고 싶은 꿈의 여행지를 자유롭게 그려보세요.
           </p>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-rose-950 bg-rose-50 border border-rose-200 shadow-xs">
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-rose-950 bg-rose-50 border border-rose-200 shadow-xs whitespace-nowrap">
           {year}년 버킷리스트 & 비전 맵
         </div>
       </div>
@@ -77,11 +77,11 @@ export default function QtBucketTravelPage({
         {/* Left: 10 Bucket List Cards */}
         <div className="col-span-6 border border-slate-200/90 rounded-2xl p-3 bg-slate-50/50 flex flex-col justify-between shadow-2xs space-y-1.5">
           <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
               <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
               🌟 내 삶의 버킷리스트 TOP 10 (Bucket List)
             </span>
-            <span className="text-[9px] text-slate-400 font-mono">Check</span>
+            <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">Check</span>
           </h4>
 
           <div className="space-y-1 flex-1 flex flex-col justify-around text-[9.5px]">
@@ -107,11 +107,11 @@ export default function QtBucketTravelPage({
           {/* Top Destination Cards */}
           <div className="border border-slate-200/90 rounded-2xl p-3 bg-white space-y-2 shadow-2xs flex-1 flex flex-col justify-between">
             <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 🗺️ 꿈꾸는 여행지 & 힐링 플레이스 (Travel Destination)
               </span>
-              <span className="text-[9px] text-slate-400 font-mono">4 Spots</span>
+              <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">4 Spots</span>
             </h4>
 
             <div className="grid grid-cols-2 gap-2 flex-1">
