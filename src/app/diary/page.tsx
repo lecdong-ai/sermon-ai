@@ -856,10 +856,10 @@ export default function DiaryPage() {
       <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       {/* 1. Divine Luxury Top Studio Bar (Centered Balance & State-of-the-Art Glassmorphism) */}
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/85 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-        <div className="max-w-[1600px] mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-[1650px] mx-auto px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
           
-          {/* Left Studio Title & Back Link */}
-          <div className="flex items-center space-x-3.5">
+          {/* Left: Studio Title & Back Link */}
+          <div className="flex items-center space-x-3 shrink-0">
             <Link
               href="/advanced/qt"
               className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition-all duration-200 flex items-center gap-1.5 text-xs font-semibold shadow-inner group hover:border-indigo-400/40"
@@ -890,18 +890,17 @@ export default function DiaryPage() {
             </div>
           </div>
 
-          {/* Center-Gathered Luxury Action Buttons (Divine Studio Toolbar & Muted UX Switcher) */}
-          <div className="flex items-center justify-center flex-wrap gap-2 mx-auto lg:mx-0">
-            {/* 🎨 4가지 UX 레이아웃 스위처 (Calm Slate Muted Palette) */}
-            <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-white/10 text-xs font-bold gap-1 shadow-inner mr-1">
-              <span className="text-[10px] text-slate-400 px-1.5 font-mono flex items-center gap-1">
+          {/* Center: 🎨 4가지 UX 레이아웃 스위처 (Perfect Center Symmetry) */}
+          <div className="flex items-center justify-center flex-1 mx-auto">
+            <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-white/15 text-xs font-bold gap-1 shadow-inner">
+              <span className="text-[10px] text-slate-400 px-2 font-mono flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-slate-400" />
                 UX모드:
               </span>
               <button
                 type="button"
                 onClick={() => setLayoutMode('focus')}
-                className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'focus'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -913,7 +912,7 @@ export default function DiaryPage() {
               <button
                 type="button"
                 onClick={() => setLayoutMode('split')}
-                className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'split'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -925,7 +924,7 @@ export default function DiaryPage() {
               <button
                 type="button"
                 onClick={() => setLayoutMode('cinema')}
-                className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'cinema'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -937,7 +936,7 @@ export default function DiaryPage() {
               <button
                 type="button"
                 onClick={() => setLayoutMode('step')}
-                className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'step'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -947,7 +946,10 @@ export default function DiaryPage() {
                 📑 스텝 탭
               </button>
             </div>
+          </div>
 
+          {/* Right: Studio Action Buttons */}
+          <div className="flex items-center justify-end flex-wrap gap-2 shrink-0">
             {/* 미리보기 패널 토글 버튼 */}
             <button
               onClick={() => setShowPreviewFloating(!showPreviewFloating)}
@@ -958,7 +960,7 @@ export default function DiaryPage() {
               }`}
             >
               <Eye className="w-3.5 h-3.5 text-slate-400" />
-              <span>미리보기 패널</span>
+              <span>미리보기</span>
             </button>
 
             {/* 내지 구성 선택 플로팅 창 토글 버튼 */}
@@ -977,19 +979,19 @@ export default function DiaryPage() {
             {/* 전체화면 팝업 뷰어 버튼 */}
             <button
               onClick={() => setIsFullscreenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 text-xs font-semibold transition-all duration-200 shadow-sm hover:border-slate-500 hover:text-white cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 text-xs font-semibold transition-all duration-200 shadow-sm hover:border-slate-500 hover:text-white cursor-pointer"
             >
               <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
-              <span>전체화면 팝업</span>
+              <span>전체화면</span>
             </button>
 
             {/* 연간 마스터 다이어리 일괄 제작 버튼 */}
             <button
               onClick={() => setIsYearlyModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300/90 border border-amber-500/30 hover:border-amber-400/50 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300/90 border border-amber-500/30 hover:border-amber-400/50 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400/80" />
-              <span>✨ 연간 일괄 제작</span>
+              <span>연간 제작</span>
             </button>
 
             {/* PDF 다운로드 메인 CTA 버튼 */}
@@ -999,7 +1001,7 @@ export default function DiaryPage() {
               className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs shadow-md border border-amber-500/40 hover:border-amber-400 transition-all duration-200 disabled:opacity-50 cursor-pointer ml-1"
             >
               <Download className="w-4 h-4 text-amber-400" />
-              <span>{isPdfGenerating ? 'PDF 제작 중...' : `월간 다이어리 PDF 다운로드 (${estimatedPdfPages}p)`}</span>
+              <span>{isPdfGenerating ? 'PDF 제작 중...' : `PDF 다운로드 (${estimatedPdfPages}p)`}</span>
             </button>
           </div>
         </div>
