@@ -1159,60 +1159,71 @@ export default function DiaryPage() {
               </div>
             </div>
 
-            {/* Luxury Zero-Scroll Studio Canvas Dock Controller Bar */}
-            <div className="w-full bg-slate-950/90 border border-white/15 p-1 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md font-mono">
-              {(categoryFilter === 'church'
-                ? [
-                    { id: 'yearlygrid', icon: '📅', code: 'YEAR', name: '연간' },
-                    { id: 'wallcalendar', icon: '🖼️', code: 'WALL', name: '벽달력' },
-                    { id: 'calendar', icon: '🗓️', code: 'CAL', name: '월달력' },
-                    { id: 'overview', icon: '📑', code: 'OVR', name: '개요' },
-                    { id: 'soapjournal', icon: '📖', code: 'SOAP', name: '묵상' },
-                    { id: 'intercessory', icon: '🙏', code: 'PRAY', name: '기도' },
-                    { id: 'sermon', icon: '🎤', code: 'SRMN', name: '설교' },
-                    { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간' },
-                    { id: 'daily', icon: '📓', code: 'DAY', name: '일간' },
-                  ]
-                : [
-                    { id: 'yearlygrid', icon: '📅', code: 'YEAR', name: '연간' },
-                    { id: 'wallcalendar', icon: '🖼️', code: 'WALL', name: '벽달력' },
-                    { id: 'calendar', icon: '🗓️', code: 'CAL', name: '월달력' },
-                    { id: 'overview', icon: '📑', code: 'OVR', name: '개요' },
-                    { id: 'habit', icon: '🌱', code: 'HABIT', name: '습관' },
-                    { id: 'budget', icon: '💰', code: 'CASH', name: '가계부' },
-                    { id: 'kpt', icon: '🔄', code: 'KPT', name: '회고' },
-                    { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간' },
-                    { id: 'daily', icon: '📓', code: 'DAY', name: '일간' },
-                  ]
-              ).map((chip) => {
-                const isActive = previewTab === chip.id
-                return (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    onClick={() => setPreviewTab(chip.id as any)}
-                    className={`flex-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-0.5 group relative ${
-                      isActive
-                        ? 'bg-gradient-to-b from-indigo-600 via-indigo-700 to-slate-900 text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/40 z-10 scale-105'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
-                    }`}
-                    title={`${chip.name} (${chip.code}) 캔버스 보기`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px]">{chip.icon}</span>
-                      <span className={`text-[10.5px] font-black tracking-tight ${isActive ? 'text-amber-300' : 'text-slate-300 group-hover:text-white'}`}>
-                        {chip.code}
-                      </span>
-                    </div>
-                    <span className={`text-[9px] font-semibold leading-none ${isActive ? 'text-indigo-100' : 'text-slate-500 group-hover:text-slate-400'}`}>
-                      {chip.name}
-                    </span>
-                    {isActive && (
-                      <span className="absolute -bottom-1 w-2.5 h-1 rounded-full bg-amber-400 shadow-xs" />
-                    )}
-                  </button>
-                )
-              })}
+            {/* High-End Studio Gold Ribbon Controller (Large Typography, Zero-Scroll 2-Row Layout) */}
+            <div className="w-full bg-slate-950/95 border border-white/15 p-2 rounded-2xl shadow-2xl space-y-1.5 backdrop-blur-md">
+              {/* Row 1: Core Calendar & Structure */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'yearlygrid', icon: '📅', code: 'YEAR', name: '연간 캘린더' },
+                  { id: 'wallcalendar', icon: '🖼️', code: 'WALL', name: '연간 벽달력' },
+                  { id: 'calendar', icon: '🗓️', code: 'CAL', name: '월간 달력' },
+                  { id: 'overview', icon: '📑', code: 'OVR', name: '월간 개요' },
+                ].map((chip) => {
+                  const isActive = previewTab === chip.id
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => setPreviewTab(chip.id as any)}
+                      className={`py-2 px-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 border text-xs ${
+                        isActive
+                          ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
+                          : 'bg-slate-900/90 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/40'
+                      }`}
+                    >
+                      <span className="text-sm">{chip.icon}</span>
+                      <span className="font-extrabold tracking-tight text-xs">{chip.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Row 2: Life Trackers & Plans */}
+              <div className="grid grid-cols-5 gap-1.5">
+                {(categoryFilter === 'church'
+                  ? [
+                      { id: 'soapjournal', icon: '📖', code: 'SOAP', name: 'SOAP 묵상' },
+                      { id: 'intercessory', icon: '🙏', code: 'PRAY', name: '중보 기도' },
+                      { id: 'sermon', icon: '🎤', code: 'SRMN', name: '주일 설교' },
+                      { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간 계획' },
+                      { id: 'daily', icon: '📓', code: 'DAY', name: '일간 일기' },
+                    ]
+                  : [
+                      { id: 'habit', icon: '🌱', code: 'HABIT', name: '습관 트래커' },
+                      { id: 'budget', icon: '💰', code: 'CASH', name: '지출 가계부' },
+                      { id: 'kpt', icon: '🔄', code: 'KPT', name: 'KPT 회고' },
+                      { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간 계획' },
+                      { id: 'daily', icon: '📓', code: 'DAY', name: '일간 일기' },
+                    ]
+                ).map((chip) => {
+                  const isActive = previewTab === chip.id
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => setPreviewTab(chip.id as any)}
+                      className={`py-2 px-1.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 border text-xs ${
+                        isActive
+                          ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/25 border-amber-200 scale-[1.02] z-10'
+                          : 'bg-slate-900/90 text-slate-300 hover:text-white hover:bg-slate-800/90 border-white/10 hover:border-amber-400/40'
+                      }`}
+                    >
+                      <span className="text-sm">{chip.icon}</span>
+                      <span className="font-extrabold tracking-tight text-xs">{chip.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
