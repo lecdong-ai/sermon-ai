@@ -33,7 +33,7 @@ export default function QtQuoteCopyingPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 56px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -58,10 +58,10 @@ export default function QtQuoteCopyingPage({
 
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+        <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
           <span>📖 {monthName} Inspired Quotes & Book Excerpts</span>
         </h1>
-        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>
+        <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs whitespace-nowrap" style={{ backgroundColor: themeColor }}>
           {year}년 {monthName} 명언 & 독서 필사 노트
         </div>
       </div>
@@ -71,22 +71,22 @@ export default function QtQuoteCopyingPage({
         {/* Quote Card 1 */}
         <div className="border border-slate-300 rounded-xl p-4 bg-slate-50/40 flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-400" />
+            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+              <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
               📜 이달의 영감 필사 #01
             </span>
-            <span className="text-[10px] text-slate-400">Book / Article / Speech</span>
+            <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">Book / Article / Speech</span>
           </div>
 
-          <div className="my-3 border-l-2 border-purple-400 pl-3 py-1 bg-white rounded-r-lg p-3 shadow-2xs">
-            <p className="text-xs font-serif text-slate-700 leading-relaxed italic">
+          <div className="my-3 border-l-2 border-purple-400 pl-3 py-1.5 bg-white rounded-r-lg p-3 shadow-2xs">
+            <p className="text-xs font-serif font-semibold text-slate-800 leading-relaxed italic tracking-tight">
               &quot;시작하는 방법은 말하기를 그만두고 실행하는 것이다.&quot;
             </p>
-            <p className="text-[10px] text-slate-400 text-right mt-1.5 font-sans">— 월트 디즈니 (Walt Disney)</p>
+            <p className="text-[10px] font-serif text-slate-500 text-right mt-1.5 font-medium">— 월트 디즈니 (Walt Disney)</p>
           </div>
 
           <div className="flex-1 border border-slate-200 bg-white rounded-lg p-3 flex flex-col justify-between">
-            <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 whitespace-nowrap">
               ✍️ 손글씨 필사 & 나의 생각 기록 (My Reflections)
             </h5>
             <div className="space-y-2 flex-1 pt-1">
@@ -100,18 +100,18 @@ export default function QtQuoteCopyingPage({
         {/* Quote Card 2 */}
         <div className="border border-slate-300 rounded-xl p-4 bg-slate-50/40 flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
+            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: themeColor }} />
               📜 이달의 영감 필사 #02
             </span>
-            <span className="text-[10px] text-slate-400">Book / Article / Speech</span>
+            <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">Book / Article / Speech</span>
           </div>
 
-          <div className="my-3 border-l-2 border-slate-400 pl-3 py-1 bg-white rounded-r-lg p-3 shadow-2xs">
-            <p className="text-xs font-serif text-slate-700 leading-relaxed italic">
+          <div className="my-3 border-l-2 border-slate-400 pl-3 py-1.5 bg-white rounded-r-lg p-3 shadow-2xs">
+            <p className="text-xs font-serif font-semibold text-slate-800 leading-relaxed italic tracking-tight">
               &quot;우리가 반복해서 하는 행동이 바로 우리다. 그러므로 탁월함은 행동이 아니라 습관이다.&quot;
             </p>
-            <p className="text-[10px] text-slate-400 text-right mt-1.5 font-sans">— 아리스토텔레스 (Aristotle)</p>
+            <p className="text-[10px] font-serif text-slate-500 text-right mt-1.5 font-medium">— 아리스토텔레스 (Aristotle)</p>
           </div>
 
           <div className="flex-1 border border-slate-200 bg-white rounded-lg p-3 flex flex-col justify-between">
