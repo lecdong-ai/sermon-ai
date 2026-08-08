@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtBibleReadingMapPageProps {
   year?: number
