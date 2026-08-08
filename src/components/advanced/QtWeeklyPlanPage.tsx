@@ -103,17 +103,17 @@ export default function QtWeeklyPlanPage({
 
       {/* 2. Page Title Header & Weekly Inspiration Banner */}
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div
-            className="px-3 py-1 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 font-mono"
-            style={{ backgroundColor: themeColor }}
-          >
-            WEEK {weekNum}
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="px-2.5 py-0.5 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 font-mono"
+              style={{ backgroundColor: themeColor }}
+            >
+              WEEK {weekNum}
+            </div>
+            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide leading-none">{monthName} Weekly Plan</h2>
           </div>
-          <div>
-            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide">{monthName} Weekly Plan</h2>
-            <div className="text-[10.5px] text-slate-400 font-mono font-medium">{dateRangeText}</div>
-          </div>
+          <div className="text-[10.5px] text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
 
         {/* Weekly Focus Banner (General vs Church) */}

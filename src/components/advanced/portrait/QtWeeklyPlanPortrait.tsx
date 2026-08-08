@@ -88,17 +88,17 @@ export default function QtWeeklyPlanPortrait({
 
       {/* 2. Page Title Header & Weekly Inspiration Banner */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div
-            className="px-3.5 py-1.5 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-xs shrink-0 font-mono"
-            style={{ backgroundColor: themeColor }}
-          >
-            W{weekNum}
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="px-3 py-1 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0 font-mono"
+              style={{ backgroundColor: themeColor }}
+            >
+              WEEK {weekNum}
+            </div>
+            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap leading-none">{monthName} Weekly Plan</h2>
           </div>
-          <div>
-            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap">{monthName} Weekly Plan</h2>
-            <div className="text-xs text-slate-400 font-mono font-medium">{dateRangeText}</div>
-          </div>
+          <div className="text-xs text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
 
         <div className={`border rounded-xl px-4 py-2 text-right shadow-xs ${
