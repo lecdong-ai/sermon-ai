@@ -1159,31 +1159,60 @@ export default function DiaryPage() {
               </div>
             </div>
 
-            {/* Quick Preview Switcher Chips */}
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none text-[11px] font-extrabold">
-              {[
-                { id: 'yearlygrid', label: '📅 연간 캘린더 (YEAR)' },
-                { id: 'wallcalendar', label: '🖼️ 연간 벽달력 (WALL)' },
-                { id: 'calendar', label: '🗓️ 월간 달력 (CAL)' },
-                { id: 'overview', label: '📑 월간 개요 (OVR)' },
-                { id: 'habit', label: '🌱 습관 (HABIT)' },
-                { id: 'budget', label: '💰 가계부 (CASH)' },
-                { id: 'kpt', label: '🔄 KPT (회고)' },
-                { id: 'weekly', label: '📋 주간 계획 (WEEK)' },
-                { id: 'daily', label: '📓 일간 일기 (DAY)' },
-              ].map((chip) => (
-                <button
-                  key={chip.id}
-                  onClick={() => setPreviewTab(chip.id as any)}
-                  className={`px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all cursor-pointer ${
-                    previewTab === chip.id
-                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-xs font-black scale-105'
-                      : 'bg-slate-900/80 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
+            {/* Luxury Zero-Scroll Studio Canvas Dock Controller Bar */}
+            <div className="w-full bg-slate-950/90 border border-white/15 p-1 rounded-2xl shadow-2xl flex items-center justify-between gap-1 backdrop-blur-md font-mono">
+              {(categoryFilter === 'church'
+                ? [
+                    { id: 'yearlygrid', icon: '📅', code: 'YEAR', name: '연간' },
+                    { id: 'wallcalendar', icon: '🖼️', code: 'WALL', name: '벽달력' },
+                    { id: 'calendar', icon: '🗓️', code: 'CAL', name: '월달력' },
+                    { id: 'overview', icon: '📑', code: 'OVR', name: '개요' },
+                    { id: 'soapjournal', icon: '📖', code: 'SOAP', name: '묵상' },
+                    { id: 'intercessory', icon: '🙏', code: 'PRAY', name: '기도' },
+                    { id: 'sermon', icon: '🎤', code: 'SRMN', name: '설교' },
+                    { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간' },
+                    { id: 'daily', icon: '📓', code: 'DAY', name: '일간' },
+                  ]
+                : [
+                    { id: 'yearlygrid', icon: '📅', code: 'YEAR', name: '연간' },
+                    { id: 'wallcalendar', icon: '🖼️', code: 'WALL', name: '벽달력' },
+                    { id: 'calendar', icon: '🗓️', code: 'CAL', name: '월달력' },
+                    { id: 'overview', icon: '📑', code: 'OVR', name: '개요' },
+                    { id: 'habit', icon: '🌱', code: 'HABIT', name: '습관' },
+                    { id: 'budget', icon: '💰', code: 'CASH', name: '가계부' },
+                    { id: 'kpt', icon: '🔄', code: 'KPT', name: '회고' },
+                    { id: 'weekly', icon: '📋', code: 'WEEK', name: '주간' },
+                    { id: 'daily', icon: '📓', code: 'DAY', name: '일간' },
+                  ]
+              ).map((chip) => {
+                const isActive = previewTab === chip.id
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => setPreviewTab(chip.id as any)}
+                    className={`flex-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-0.5 group relative ${
+                      isActive
+                        ? 'bg-gradient-to-b from-indigo-600 via-indigo-700 to-slate-900 text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/40 z-10 scale-105'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+                    }`}
+                    title={`${chip.name} (${chip.code}) 캔버스 보기`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px]">{chip.icon}</span>
+                      <span className={`text-[10.5px] font-black tracking-tight ${isActive ? 'text-amber-300' : 'text-slate-300 group-hover:text-white'}`}>
+                        {chip.code}
+                      </span>
+                    </div>
+                    <span className={`text-[9px] font-semibold leading-none ${isActive ? 'text-indigo-100' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                      {chip.name}
+                    </span>
+                    {isActive && (
+                      <span className="absolute -bottom-1 w-2.5 h-1 rounded-full bg-amber-400 shadow-xs" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
