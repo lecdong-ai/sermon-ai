@@ -22,34 +22,34 @@ export default function QtQuickIndexNav({
 }: QtQuickIndexNavProps) {
   return (
     <div
-      className="absolute right-0 top-4 bottom-4 w-9 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
+      className="absolute right-2 top-4 bottom-4 w-11 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Main Section Tabs (3D Sticker Style) */}
+      {/* Upper Main Section Tabs (YR, CAL, OVR - Shifted slightly left for easy tapping) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
-        {/* YR Tab */}
+        {/* YEAR Tab */}
         <button
           type="button"
           data-nav-target="yearlygrid"
-          className={`h-6 rounded-l-md text-[8.5px] font-extrabold flex items-center justify-center transition-all shadow-md ${
+          className={`h-6.5 rounded-l-lg text-[8.5px] font-black flex items-center justify-center transition-all shadow-md cursor-pointer ${
             activeTab === 'yearlygrid'
-              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
-              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
+              ? 'w-11 text-white font-black shadow-lg border-l-2 border-white ring-1 ring-white/60'
+              : 'w-9 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:w-10 hover:text-slate-900'
           }`}
           style={{ backgroundColor: activeTab === 'yearlygrid' ? themeColor : undefined }}
           title="연간 12개월 캘린더"
         >
-          YR
+          YEAR
         </button>
 
         {/* CAL Tab */}
         <button
           type="button"
           data-nav-target="calendar"
-          className={`h-5.5 rounded-l-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-md ${
+          className={`h-6 rounded-l-lg text-[9px] font-black flex items-center justify-center transition-all shadow-md cursor-pointer ${
             activeTab === 'calendar'
-              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
-              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
+              ? 'w-10 text-white font-black shadow-lg border-l-2 border-white ring-1 ring-white/60'
+              : 'w-8.5 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:w-9.5 hover:text-slate-900'
           }`}
           style={{ backgroundColor: activeTab === 'calendar' ? themeColor : undefined }}
           title="월간 달력"
@@ -61,10 +61,10 @@ export default function QtQuickIndexNav({
         <button
           type="button"
           data-nav-target="overview"
-          className={`h-5.5 rounded-l-md text-[8.5px] font-bold flex items-center justify-center transition-all shadow-md ${
+          className={`h-6 rounded-l-lg text-[9px] font-black flex items-center justify-center transition-all shadow-md cursor-pointer ${
             activeTab === 'overview'
-              ? 'w-9 text-white font-black translate-x-0 shadow-lg ring-1 ring-white/60'
-              : 'w-7.5 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:w-8.5'
+              ? 'w-10 text-white font-black shadow-lg border-l-2 border-white ring-1 ring-white/60'
+              : 'w-8.5 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:w-9.5 hover:text-slate-900'
           }`}
           style={{ backgroundColor: activeTab === 'overview' ? themeColor : undefined }}
           title="월간 개요"
@@ -83,10 +83,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`h-4.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs ${
+              className={`h-4.5 rounded-l-sm text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
                 isCurrentW
-                  ? 'w-8.5 bg-slate-900 text-white font-black shadow-md border-l-2 border-amber-400'
-                  : 'w-7 bg-slate-100/90 text-slate-400 hover:bg-slate-200 hover:text-slate-700 hover:w-8'
+                  ? 'w-9.5 bg-slate-900 text-white font-black shadow-md border-l-2 border-amber-400'
+                  : 'w-8 bg-slate-100/90 text-slate-500 hover:bg-slate-200 hover:text-slate-800 hover:w-9'
               }`}
               title={`${wNo}주차 계획`}
             >
@@ -96,7 +96,7 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Lower Month Ribbons (01 ~ 12) - Active Month 3D Highlight */}
+      {/* Lower Month Ribbons (01 ~ 12) - Active Month Highlight */}
       <div className="flex flex-col space-y-0.5 w-full items-end">
         {MONTH_SHORT_LABELS.map((mStr, idx) => {
           const mNum = idx + 1
@@ -106,10 +106,10 @@ export default function QtQuickIndexNav({
               key={`m-${mNum}`}
               type="button"
               data-nav-target={`month-${mNum}`}
-              className={`h-4.5 rounded-l-md text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs ${
+              className={`h-4.5 rounded-l-md text-[8px] font-bold flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
                 isSelectedM
-                  ? 'w-9 text-white font-black shadow-md ring-1 ring-white/60 border-l-2 border-white'
-                  : 'w-7 bg-slate-100/80 text-slate-400 hover:bg-indigo-100 hover:text-indigo-700 hover:w-8.5'
+                  ? 'w-10 text-white font-black shadow-md ring-1 ring-white/60 border-l-2 border-white'
+                  : 'w-8 bg-slate-100/80 text-slate-500 hover:bg-indigo-100 hover:text-indigo-700 hover:w-9.5'
               }`}
               style={{ backgroundColor: isSelectedM ? themeColor : undefined }}
               title={`${mNum}월 달력으로 이동`}
