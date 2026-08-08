@@ -7,6 +7,7 @@ interface QtQuickIndexNavPortraitProps {
   currentWeek?: number
   activeTab?: 'yearlygrid' | 'calendar' | 'overview' | 'weekly' | 'daily' | 'tracker'
   themeColor?: string
+  isChristian?: boolean // 일반인 / 크리스천 스마트 구분
 }
 
 const SEASONAL_MONTH_COLORS: Record<number, { bg: string; text: string; label: string }> = {
@@ -29,6 +30,7 @@ export default function QtQuickIndexNavPortrait({
   currentWeek = 1,
   activeTab = 'calendar',
   themeColor = '#7895B2',
+  isChristian = false,
 }: QtQuickIndexNavPortraitProps) {
   const todayMonth = 8
 
@@ -37,7 +39,7 @@ export default function QtQuickIndexNavPortrait({
       className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Ribbon: Main Section Buttons + Muted Trackers + Ultra-Slim Weeks */}
+      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Ultra-Slim Weeks */}
       <div className="flex items-center space-x-1 bg-white/95 px-1.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs backdrop-blur-xs">
         {/* Main Section Buttons */}
         <div className="flex items-center space-x-0.5">
@@ -83,40 +85,79 @@ export default function QtQuickIndexNavPortrait({
 
         <div className="h-3 w-px bg-slate-200" />
 
-        {/* Minimal Sub-Tracker English Tags: HABIT | GRAT | CASH | KPT */}
+        {/* Separated Sub-Tracker Tags for General Users vs Christian Users */}
         <div className="flex items-center space-x-0.5">
-          <button
-            type="button"
-            data-nav-target="habit"
-            className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-            title="Habit Tracker"
-          >
-            HABIT
-          </button>
-          <button
-            type="button"
-            data-nav-target="gratitude"
-            className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-            title="Gratitude Journal"
-          >
-            GRAT
-          </button>
-          <button
-            type="button"
-            data-nav-target="budget"
-            className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-            title="Budget Tracker"
-          >
-            CASH
-          </button>
-          <button
-            type="button"
-            data-nav-target="kpt"
-            className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-            title="KPT Review"
-          >
-            KPT
-          </button>
+          {isChristian ? (
+            <>
+              <button
+                type="button"
+                data-nav-target="soap"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="SOAP 묵상 저널"
+              >
+                SOAP
+              </button>
+              <button
+                type="button"
+                data-nav-target="prayer"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="중보기도 노트"
+              >
+                PRAY
+              </button>
+              <button
+                type="button"
+                data-nav-target="bible"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="성경 66권 읽기표"
+              >
+                BIBLE
+              </button>
+              <button
+                type="button"
+                data-nav-target="sermon"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="주일 설교 노트"
+              >
+                SRMN
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                data-nav-target="habit"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="Habit Tracker"
+              >
+                HABIT
+              </button>
+              <button
+                type="button"
+                data-nav-target="gratitude"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="Gratitude Journal"
+              >
+                GRAT
+              </button>
+              <button
+                type="button"
+                data-nav-target="budget"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="Budget Tracker"
+              >
+                CASH
+              </button>
+              <button
+                type="button"
+                data-nav-target="kpt"
+                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
+                title="KPT Review"
+              >
+                KPT
+              </button>
+            </>
+          )}
         </div>
 
         <div className="h-3 w-px bg-slate-200" />

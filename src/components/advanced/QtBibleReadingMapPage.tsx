@@ -189,7 +189,7 @@ export default function QtBibleReadingMapPage({
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      <QtQuickIndexNav currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} />
+      <QtQuickIndexNav currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} isChristian={true} />
       {/* 1. Header Bar */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">

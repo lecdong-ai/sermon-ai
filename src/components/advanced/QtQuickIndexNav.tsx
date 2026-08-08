@@ -7,6 +7,7 @@ interface QtQuickIndexNavProps {
   currentWeek?: number
   activeTab?: 'yearlygrid' | 'calendar' | 'overview' | 'weekly' | 'daily' | 'tracker'
   themeColor?: string
+  isChristian?: boolean // 일반인 / 크리스천 스마트 인덱스 구분
 }
 
 // 12개월 절제된 고급 파스텔 슬레이트/어스 톤 (Luxury Muted Earth & Pastel Palette)
@@ -30,6 +31,7 @@ export default function QtQuickIndexNav({
   currentWeek = 1,
   activeTab = 'calendar',
   themeColor = '#7895B2',
+  isChristian = false,
 }: QtQuickIndexNavProps) {
   const todayMonth = 8
 
@@ -38,7 +40,7 @@ export default function QtQuickIndexNav({
       className="absolute right-0 top-3 bottom-3 w-9 flex flex-col justify-between items-end py-1 z-30 select-none font-mono"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* 1. Main Core Tabs (YEAR, CAL, OVR - Elegant Neutral Leather Tabs) */}
+      {/* 1. Main Core Tabs (YEAR, CAL, OVR) */}
       <div className="flex flex-col space-y-1.5 w-full items-end">
         <button
           type="button"
@@ -80,10 +82,10 @@ export default function QtQuickIndexNav({
         </button>
       </div>
 
-      {/* Subtle Divider Line */}
+      {/* Divider */}
       <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 2. Muted 12-Month Palette Tabs (01 ~ 12 - Subtle Muted Tone) */}
+      {/* 2. Muted 12-Month Palette Tabs (01 ~ 12) */}
       <div className="flex flex-col space-y-0.5 w-full items-end my-auto">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mNum) => {
           const isCurrent = currentMonth === mNum
@@ -116,10 +118,10 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Subtle Divider Line */}
+      {/* Divider */}
       <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 3. Ultra-Slim Week Jumpers (W1 ~ W5 - Muted Slate Minimalist) */}
+      {/* 3. Ultra-Slim Week Direct Jumpers (W1 ~ W5) */}
       <div className="flex flex-col space-y-0.5 w-full items-end">
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
@@ -142,43 +144,100 @@ export default function QtQuickIndexNav({
         })}
       </div>
 
-      {/* Subtle Divider Line */}
+      {/* Divider */}
       <div className="w-3.5 h-px bg-slate-200/80 my-0.5 self-center opacity-50" />
 
-      {/* 4. Elegant Minimal Sub-Trackers (HABIT | GRAT | CASH | KPT - Muted Monochrome Elegance) */}
-      <div className="flex flex-col space-y-1 w-full items-end pr-0.5">
-        <button
-          type="button"
-          data-nav-target="habit"
-          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
-          title="Habit Tracker"
-        >
-          HABIT
-        </button>
-        <button
-          type="button"
-          data-nav-target="gratitude"
-          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
-          title="Gratitude Journal"
-        >
-          GRAT
-        </button>
-        <button
-          type="button"
-          data-nav-target="budget"
-          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
-          title="Budget Tracker"
-        >
-          CASH
-        </button>
-        <button
-          type="button"
-          data-nav-target="kpt"
-          className="h-4 px-1 rounded-l-xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer flex items-center justify-center border-r border-slate-300"
-          title="KPT Review"
-        >
-          KPT
-        </button>
+      {/* 4. Sub-Tracker Index Tabs (Separated for General Users vs Christian Users) */}
+      <div className="flex flex-col space-y-0.5 w-full items-end pr-0.5">
+        {isChristian ? (
+          <>
+            {/* Christian Spiritual Trackers */}
+            <button
+              type="button"
+              data-nav-target="soap"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="SOAP 성경묵상 저널"
+            >
+              SOAP
+            </button>
+            <button
+              type="button"
+              data-nav-target="prayer"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="중보기도 & 응답 기념관"
+            >
+              PRAY
+            </button>
+            <button
+              type="button"
+              data-nav-target="bible"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="성경 66권 로드맵"
+            >
+              BIBLE
+            </button>
+            <button
+              type="button"
+              data-nav-target="sermon"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="주일 설교 노트"
+            >
+              SRMN
+            </button>
+            <button
+              type="button"
+              data-nav-target="hundred"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="100일 챌린지"
+            >
+              100D
+            </button>
+          </>
+        ) : (
+          <>
+            {/* General Life Trackers */}
+            <button
+              type="button"
+              data-nav-target="habit"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="습관 트래커"
+            >
+              HABIT
+            </button>
+            <button
+              type="button"
+              data-nav-target="gratitude"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="감사 일기"
+            >
+              GRAT
+            </button>
+            <button
+              type="button"
+              data-nav-target="budget"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="지출 가계부"
+            >
+              CASH
+            </button>
+            <button
+              type="button"
+              data-nav-target="kpt"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="KPT 회고"
+            >
+              KPT
+            </button>
+            <button
+              type="button"
+              data-nav-target="culture"
+              className="h-3.5 px-1 rounded-l-2xs bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white text-[6.5px] font-bold tracking-wider transition-all cursor-pointer border-r border-slate-300"
+              title="문화 컬렉션"
+            >
+              CULT
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
