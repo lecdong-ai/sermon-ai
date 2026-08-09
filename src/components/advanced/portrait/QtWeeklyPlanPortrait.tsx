@@ -61,14 +61,14 @@ export default function QtWeeklyPlanPortrait({
 
   return (
     <div
-      data-page-key={`week-${weekNum}-portrait`}
+      data-page-key={`week-${weekNum}`}
       data-week={weekNum}
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
+      className="qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -91,14 +91,9 @@ export default function QtWeeklyPlanPortrait({
       {/* 2. Page Title Header & Weekly Inspiration Banner */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="px-3 py-1 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0 font-mono"
-              style={{ backgroundColor: themeColor }}
-            >
-              WEEK {weekNum}
-            </div>
-            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap leading-none">{monthName} Weekly Plan</h2>
+          <div className="flex items-end gap-2.5">
+            <h2 className="text-3xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
+            <span className="text-[11px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
           </div>
           <div className="text-xs text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
@@ -111,7 +106,7 @@ export default function QtWeeklyPlanPortrait({
           <span className={`text-[9px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}`}>
             {isGeneralMode ? 'WEEKLY FOCUS' : 'WEEKLY SCRIPTURE'}
           </span>
-          <span className="text-xs font-serif font-semibold text-slate-800">
+          <span className="text-xs font-sans font-semibold text-slate-800">
             {isGeneralMode
               ? '🎯 "이번 주 핵심 목표: 우선순위에 집중하고 흔들림 없이 성취하라"'
               : '📖 "내 발의 등등이요 내 길에 빛이니이다 (시편 119:105)"'
@@ -123,14 +118,14 @@ export default function QtWeeklyPlanPortrait({
       {/* 3. Top Master Control Box */}
       <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/60 mb-3 grid grid-cols-3 gap-3 text-xs shadow-xs">
         <div className="space-y-1">
-          <span className="font-bold text-slate-800 font-serif block text-xs">📌 이주의 3대 핵심 우선순위:</span>
-          <div className="bg-white p-2 rounded-lg border border-slate-200 space-y-1 text-xs font-serif">
+          <span className="font-bold text-slate-800 font-sans block text-xs">📌 이주의 3대 핵심 우선순위:</span>
+          <div className="bg-white p-2 rounded-lg border border-slate-200 space-y-1 text-xs font-sans">
             <div>1. ___________________</div>
             <div>2. ___________________</div>
           </div>
         </div>
 
-        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-serif space-y-1">
+        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-sans space-y-1">
           <span className="font-bold text-slate-700 block text-xs">{isGeneralMode ? '✨ 갓생 습관 7일 체크:' : '✨ 영적 수련 7일 체크:'}</span>
           <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
             <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
@@ -140,7 +135,7 @@ export default function QtWeeklyPlanPortrait({
           </div>
         </div>
 
-        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-serif text-slate-500">
+        <div className="bg-white p-2 rounded-lg border border-slate-200 text-xs font-sans text-slate-500">
           <span className="font-bold text-slate-700 block text-xs">💖 이주의 감사 & 성찰:</span>
           <div className="min-h-[20px]">_________________________</div>
         </div>
@@ -170,7 +165,7 @@ export default function QtWeeklyPlanPortrait({
                   <span
                     data-nav-target={`day-${d.dayNum}`}
                     data-jump-btn="true"
-                    className={`font-serif font-bold px-1.5 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
+                    className={`font-sans font-bold px-1.5 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
                       hasRedDay ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-800'
                     }`}
                   >
@@ -199,13 +194,13 @@ export default function QtWeeklyPlanPortrait({
                   )}
                 </div>
 
-                <div className="text-slate-400 text-xs font-serif">
+                <div className="text-slate-400 text-xs font-sans">
                   {isGeneralMode ? '📌 일정/목표: ___________________________' : '📖 묵상 본문: ___________________________'}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 flex-1 pt-1">
-                <div className="space-y-1 text-xs font-serif text-slate-600">
+                <div className="space-y-1 text-xs font-sans text-slate-600">
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 border border-slate-300 rounded-xs bg-white inline-block"></span>
                     <span>___________________________</span>

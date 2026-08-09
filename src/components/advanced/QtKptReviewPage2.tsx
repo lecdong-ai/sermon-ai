@@ -60,7 +60,7 @@ export default function QtKptReviewPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             ⚡ {monthName} 4-Week KPT Deep-Dive & Action Tracker
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -86,22 +86,22 @@ export default function QtKptReviewPage2({
             className={`border rounded-2xl p-2.5 ${w.color} flex flex-col justify-between shadow-2xs space-y-1`}
           >
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-slate-800 font-serif">📅 {w.week}</span>
+              <span className="font-bold text-slate-800 font-sans">📅 {w.week}</span>
               <span className="font-mono text-[8.5px] text-slate-400 font-bold">{w.label}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-1.5 flex-1 text-[8.5px]">
               <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-emerald-800 block border-b border-slate-100 pb-0.5">🟢 Keep</span>
-                <div className="text-slate-400 font-serif text-[8px] min-h-[24px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-[8px] min-h-[24px]">· ______________</div>
               </div>
               <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-rose-800 block border-b border-slate-100 pb-0.5">🔴 Problem</span>
-                <div className="text-slate-400 font-serif text-[8px] min-h-[24px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-[8px] min-h-[24px]">· ______________</div>
               </div>
               <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-indigo-800 block border-b border-slate-100 pb-0.5">🔵 Try</span>
-                <div className="text-slate-400 font-serif text-[8px] min-h-[24px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-[8px] min-h-[24px]">· ______________</div>
               </div>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function QtKptReviewPage2({
       {/* 4. Action Items & Execution Tracker Table (5 Rows) */}
       <div className="border border-indigo-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5">
         <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[10px]">
-          <span className="font-bold text-indigo-950 font-serif flex items-center gap-1.5">
+          <span className="font-bold text-indigo-950 font-sans flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
             ⚡ KPT 기반 핵심 실행 과제 & 달성 여부 (Action Items & Execution Checklist)
           </span>

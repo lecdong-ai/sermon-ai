@@ -33,7 +33,7 @@ export default function QtWellnessMoodPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtWellnessMoodPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🥗 {monthName} Wellness & Mood Tracker</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -71,7 +71,7 @@ export default function QtWellnessMoodPortrait({
       {/* 3. 31-Day Mood Pixels Grid Section */}
       <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 space-y-2 shadow-2xs mb-2">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 font-serif">
+          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 font-sans">
             <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
             🎨 31일 감정 구슬 (Mood Pixels)
           </h4>
@@ -102,7 +102,7 @@ export default function QtWellnessMoodPortrait({
 
       {/* 4. Sleep & Hydration Section */}
       <div className="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5 shadow-2xs mb-2">
-        <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-serif">
+        <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-sans">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
             🌙 수면 패턴 & 수분 섭취 (Sleep & Hydration)
@@ -123,13 +123,13 @@ export default function QtWellnessMoodPortrait({
 
       {/* 5. Mindful Self-Care Note */}
       <div className="flex-1 border border-slate-200 rounded-xl p-2.5 bg-teal-50/40 space-y-1 shadow-2xs mb-2 flex flex-col justify-between">
-        <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider border-b border-teal-200 pb-1 font-serif">
+        <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider border-b border-teal-200 pb-1 font-sans">
           💖 지친 나에게 전하는 따뜻한 응원의 한마디 (Self-Compassion Note)
         </h4>
         <div className="space-y-1 flex-1 flex flex-col justify-around my-1">
-          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-serif"></div>
-          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-serif"></div>
-          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-serif"></div>
+          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-sans"></div>
+          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-sans"></div>
+          <div className="border-b border-dashed border-teal-200 h-4 text-[10px] text-teal-800/60 font-sans"></div>
         </div>
       </div>
 

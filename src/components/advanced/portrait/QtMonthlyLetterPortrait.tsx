@@ -27,13 +27,13 @@ export default function QtMonthlyLetterPortrait({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="letter"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtMonthlyLetterPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>💌 {monthName} Letter to God</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -73,7 +73,7 @@ export default function QtMonthlyLetterPortrait({
         {/* Letter Box */}
         <div className="border-2 border-dashed border-rose-300 rounded-2xl p-5 bg-gradient-to-b from-rose-50/40 via-white to-amber-50/30 flex-1 flex flex-col justify-between shadow-xs relative">
           <div className="flex items-center justify-between border-b border-rose-200 pb-2 mb-3 text-xs">
-            <span className="text-lg font-serif font-extrabold text-rose-900 tracking-wider">
+            <span className="text-lg font-sans font-extrabold text-rose-900 tracking-wider">
               Dear My Heavenly Father,
             </span>
             <span className="text-slate-400 font-mono">
@@ -85,8 +85,8 @@ export default function QtMonthlyLetterPortrait({
           <div className="space-y-3 flex-1 flex flex-col justify-around py-2 text-xs">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((lineNo) => (
               <div key={lineNo} className="border-b border-rose-200/80 pb-1.5 flex items-center gap-3">
-                <span className="text-rose-300 font-serif font-bold w-4">{lineNo}.</span>
-                <div className="text-slate-700 font-serif flex-1 min-h-[18px]">
+                <span className="text-rose-300 font-sans font-bold w-4">{lineNo}.</span>
+                <div className="text-slate-700 font-sans flex-1 min-h-[18px]">
                   _______________________________________________________
                 </div>
               </div>
@@ -94,7 +94,7 @@ export default function QtMonthlyLetterPortrait({
           </div>
 
           {/* Signature */}
-          <div className="border-t border-rose-200 pt-2 flex items-center justify-between text-xs text-rose-900 font-serif font-bold">
+          <div className="border-t border-rose-200 pt-2 flex items-center justify-between text-xs text-rose-900 font-sans font-bold">
             <span>&quot;은혜 위에 은혜가 더했던 복된 한 달이었습니다.&quot;</span>
             <span className="italic">Yours faithfully, 주님의 자녀 드림 🕊️</span>
           </div>
@@ -104,26 +104,26 @@ export default function QtMonthlyLetterPortrait({
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="border border-rose-200 rounded-2xl p-3 bg-rose-50/20 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="flex items-center justify-between border-b border-rose-200 pb-1">
-              <span className="font-bold text-rose-950 font-serif">🎵 이달의 찬양 & 핵심 말씀</span>
+              <span className="font-bold text-rose-950 font-sans">🎵 이달의 찬양 & 핵심 말씀</span>
               <span className="font-mono text-[10px] text-rose-400">Song & Verse</span>
             </div>
             <div className="space-y-1.5 flex-1 flex flex-col justify-around text-xs">
               <div className="bg-white p-1.5 rounded-xl border border-rose-200/80">
                 <span className="font-bold text-rose-800 text-[10px] block">🎶 깊은 위로를 준 찬양:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[14px]">_____________________</div>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-rose-200/80">
                 <span className="font-bold text-rose-800 text-[10px] block">📖 한 달간 붙잡은 말씀:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[14px]">_____________________</div>
               </div>
             </div>
           </div>
 
           <div className="border border-amber-200 rounded-2xl p-3 bg-gradient-to-r from-amber-50/50 to-rose-50/50 flex flex-col items-center justify-center text-center shadow-xs space-y-1.5">
-            <div className="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-serif text-base font-bold shadow-xs">
+            <div className="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-sans text-base font-bold shadow-xs">
               SEAL
             </div>
-            <span className="font-serif font-bold text-xs text-amber-950">
+            <span className="font-sans font-bold text-xs text-amber-950">
               31일간의 여정을 주님께 드리며 👑
             </span>
             <span className="text-[10px] text-slate-400">

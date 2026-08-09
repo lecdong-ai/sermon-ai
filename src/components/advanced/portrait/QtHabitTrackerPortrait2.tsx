@@ -33,7 +33,7 @@ export default function QtHabitTrackerPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtHabitTrackerPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🔥 {monthName} Weekly Habit Review & Streak</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -81,18 +81,18 @@ export default function QtHabitTrackerPortrait2({
             className={`border rounded-2xl p-3.5 ${w.color} flex flex-col justify-between shadow-xs space-y-2 flex-1`}
           >
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
-              <span className="font-bold text-slate-800 font-serif">📅 {w.week}</span>
+              <span className="font-bold text-slate-800 font-sans">📅 {w.week}</span>
               <span className="font-mono text-xs text-slate-400 font-bold">{w.label}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs flex-1">
               <div className="bg-white/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-emerald-800 block text-[10px]">🎉 이번 주 가장 성공적인 습관:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[16px]">____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[16px]">____________________</div>
               </div>
               <div className="bg-white/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-rose-800 block text-[10px]">🚧 방해 요소 & 해결책:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[16px]">____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[16px]">____________________</div>
               </div>
             </div>
           </div>
@@ -108,11 +108,11 @@ export default function QtHabitTrackerPortrait2({
         <div className="grid grid-cols-12 gap-2 text-xs">
           <div className="col-span-7 bg-white/90 p-2 rounded-xl border border-emerald-200">
             <span className="text-[10px] font-bold text-emerald-800 block">👑 이달의 1등 습관 & 소감:</span>
-            <div className="text-slate-700 font-serif text-xs min-h-[16px]">________________________________</div>
+            <div className="text-slate-700 font-sans text-xs min-h-[16px]">________________________________</div>
           </div>
           <div className="col-span-5 bg-white/90 p-2 rounded-xl border border-indigo-200">
             <span className="text-[10px] font-bold text-indigo-800 block">🎁 셀프 선물:</span>
-            <div className="text-slate-700 font-serif text-xs min-h-[16px]">__________________</div>
+            <div className="text-slate-700 font-sans text-xs min-h-[16px]">__________________</div>
           </div>
         </div>
       </div>

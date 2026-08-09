@@ -178,7 +178,7 @@ export default function QtBibleReadingMapPage({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="bible"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -211,7 +211,7 @@ export default function QtBibleReadingMapPage({
       {/* 2. Page Title & Overall Gauge */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             🕊️ {monthName} Bible 66 Books Reading Progress Roadmap
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">

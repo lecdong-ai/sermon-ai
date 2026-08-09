@@ -27,13 +27,13 @@ export default function QtHundredGoalPortrait({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="hundred"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtHundredGoalPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🎯 {monthName} 100-Day Goal Challenge (Day 01 ~ 50)</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -73,7 +73,7 @@ export default function QtHundredGoalPortrait({
         <div className="grid grid-cols-12 gap-2 text-[10.5px]">
           <div className="col-span-6 bg-white p-2 rounded-lg border border-slate-200/80">
             <span className="text-[9.5px] font-bold text-indigo-800 block">📌 100일 목표 (GOAL):</span>
-            <div className="text-slate-800 font-bold font-serif text-[11px] min-h-[14px]">____________________________</div>
+            <div className="text-slate-800 font-bold font-sans text-[11px] min-h-[14px]">____________________________</div>
           </div>
           <div className="col-span-3 bg-white p-2 rounded-lg border border-slate-200/80">
             <span className="text-[9.5px] font-bold text-emerald-800 block">🎁 완주 시 보상:</span>
@@ -89,7 +89,7 @@ export default function QtHundredGoalPortrait({
       {/* 4. Day 01 ~ Day 50 Matrix (10 Cols x 5 Rows) */}
       <div className="border border-slate-200 rounded-xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
-          <span className="text-[11px] font-bold text-slate-800 font-serif">
+          <span className="text-[11px] font-bold text-slate-800 font-sans">
             📝 Day 01 ~ Day 50 매일 실행 기록 트래커 (Daily Micro Action)
           </span>
           <span className="text-[9.5px] text-amber-600 font-bold font-mono">★ Day 25 Milestone | ★ Day 50 Halfway</span>
@@ -111,7 +111,7 @@ export default function QtHundredGoalPortrait({
                   <span className={`font-mono font-extrabold text-[9.5px] ${isMilestone ? 'text-amber-900' : 'text-slate-600'}`}>D-{d}</span>
                   <span className="text-[9px] text-slate-300">□</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[9px] truncate py-0.5 text-center">______</div>
+                <div className="text-slate-400 font-sans text-[9px] truncate py-0.5 text-center">______</div>
               </div>
             )
           })}
@@ -122,11 +122,11 @@ export default function QtHundredGoalPortrait({
       <div className="grid grid-cols-2 gap-2 text-[10.5px] mb-1.5">
         <div className="bg-amber-50/60 border border-amber-200 p-2 rounded-lg space-y-0.5">
           <span className="font-bold text-amber-900 block text-[10px]">🎉 Day 25 첫 번째 고지 성찰:</span>
-          <div className="text-slate-700 font-serif text-[10px] min-h-[14px]">"첫 25일 달성! 내 삶에 일어난 변화: ________"</div>
+          <div className="text-slate-700 font-sans text-[10px] min-h-[14px]">"첫 25일 달성! 내 삶에 일어난 변화: ________"</div>
         </div>
         <div className="bg-indigo-50/60 border border-indigo-200 p-2 rounded-lg space-y-0.5">
           <span className="font-bold text-indigo-950 block text-[10px]">🏆 Day 50 반환점 돌파 성찰:</span>
-          <div className="text-slate-700 font-serif text-[10px] min-h-[14px]">"50% 완주 성공! 포기하지 않은 나에게 한 줄 칭찬: ________"</div>
+          <div className="text-slate-700 font-sans text-[10px] min-h-[14px]">"50% 완주 성공! 포기하지 않은 나에게 한 줄 칭찬: ________"</div>
         </div>
       </div>
 

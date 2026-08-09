@@ -33,7 +33,7 @@ export default function QtSoapJournalPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtSoapJournalPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌱 {monthName} SOAP Meditation: A & P</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -73,7 +73,7 @@ export default function QtSoapJournalPortrait2({
         {/* A: Application */}
         <div className="border border-emerald-200 rounded-2xl p-4 bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20 flex-1 flex flex-col justify-between shadow-xs space-y-2">
           <div className="flex items-center justify-between border-b border-emerald-200 pb-1.5 text-xs">
-            <span className="font-bold text-emerald-950 font-serif flex items-center gap-1.5">
+            <span className="font-bold text-emerald-950 font-sans flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-mono text-xs flex items-center justify-center font-bold">A</span>
               🌱 APPLICATION (삶의 3단계 순종 플래너)
             </span>
@@ -83,17 +83,17 @@ export default function QtSoapJournalPortrait2({
           <div className="space-y-2 flex-1 flex flex-col justify-around text-xs">
             <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80">
               <span className="font-bold text-emerald-900 text-xs block">☀️ 1. 오늘 바로 실천할 순종 (Today&apos;s Action):</span>
-              <div className="text-slate-400 font-serif text-xs min-h-[16px]">____________________________________________________________________</div>
+              <div className="text-slate-400 font-sans text-xs min-h-[16px]">____________________________________________________________________</div>
             </div>
 
             <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80">
               <span className="font-bold text-emerald-900 text-xs block">📅 2. 이번 주 바꿀 내 언어와 태도 (Weekly Behavior):</span>
-              <div className="text-slate-400 font-serif text-xs min-h-[16px]">____________________________________________________________________</div>
+              <div className="text-slate-400 font-sans text-xs min-h-[16px]">____________________________________________________________________</div>
             </div>
 
             <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80">
               <span className="font-bold text-emerald-900 text-xs block">⚓ 3. 내 삶에 붙잡을 영적 가치관 (Life Value):</span>
-              <div className="text-slate-400 font-serif text-xs min-h-[16px]">____________________________________________________________________</div>
+              <div className="text-slate-400 font-sans text-xs min-h-[16px]">____________________________________________________________________</div>
             </div>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function QtSoapJournalPortrait2({
         {/* P: Prayer */}
         <div className="border border-purple-200 rounded-2xl p-4 bg-gradient-to-b from-purple-50/40 via-white to-purple-50/20 flex-1 flex flex-col justify-between shadow-xs space-y-2">
           <div className="flex items-center justify-between border-b border-purple-200 pb-1.5 text-xs">
-            <span className="font-bold text-purple-950 font-serif flex items-center gap-1.5">
+            <span className="font-bold text-purple-950 font-sans flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-purple-600 text-white font-mono text-xs flex items-center justify-center font-bold">P</span>
               🙏 PRAYER (하나님께 드리는 결단 기도문)
             </span>
@@ -112,14 +112,14 @@ export default function QtSoapJournalPortrait2({
             <div className="border-b border-purple-100 pb-1 text-xs font-bold text-purple-900">
               &quot;말씀대로 살지 못했던 저를 용서하시고 성령님 도와주소서...&quot;
             </div>
-            <div className="space-y-1.5 flex-1 flex flex-col justify-around text-slate-400 font-serif text-xs py-1">
+            <div className="space-y-1.5 flex-1 flex flex-col justify-around text-slate-400 font-sans text-xs py-1">
               {[1, 2, 3, 4, 5].map((lNo) => (
                 <div key={lNo} className="border-b border-purple-100 pb-1">
                   {lNo}. ____________________________________________________________________
                 </div>
               ))}
             </div>
-            <div className="text-right text-xs text-purple-800 font-bold font-serif pt-1">
+            <div className="text-right text-xs text-purple-800 font-bold font-sans pt-1">
               예수님의 이름으로 기도합니다. 아멘 🕊️
             </div>
           </div>

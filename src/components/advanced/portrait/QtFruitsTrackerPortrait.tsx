@@ -62,13 +62,13 @@ export default function QtFruitsTrackerPortrait({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="fruits"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -91,7 +91,7 @@ export default function QtFruitsTrackerPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌱 {monthName} Fruit of the Spirit Growth</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -102,7 +102,7 @@ export default function QtFruitsTrackerPortrait({
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-4 py-2 flex items-center gap-3 shadow-xs">
           <div className="text-left">
             <span className="text-[10px] font-bold text-emerald-800 uppercase block font-mono">THIS MONTH FOCUS</span>
-            <span className="text-xs font-bold text-emerald-950 font-serif">🎯 이달의 핵심 성품 열매: ________</span>
+            <span className="text-xs font-bold text-emerald-950 font-sans">🎯 이달의 핵심 성품 열매: ________</span>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function QtFruitsTrackerPortrait({
           >
             <div className="border-b border-slate-200/80 pb-1.5 flex items-center justify-between text-xs">
               <div>
-                <h3 className="font-extrabold font-serif text-sm">{cluster.clusterName}</h3>
+                <h3 className="font-extrabold font-sans text-sm">{cluster.clusterName}</h3>
                 <p className="text-xs text-slate-400 font-normal">{cluster.clusterDesc}</p>
               </div>
               <span className={`w-3 h-3 rounded-full ${cluster.badgeColor}`}></span>
@@ -126,7 +126,7 @@ export default function QtFruitsTrackerPortrait({
               {cluster.items.map((item, iIdx) => (
                 <div key={iIdx} className="bg-white p-3 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-xs">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-800 font-serif text-xs">{item.name}</span>
+                    <span className="text-slate-800 font-sans text-xs">{item.name}</span>
                     <div className="flex items-center space-x-1 text-[9px] font-mono text-slate-300">
                       {[1, 2, 3, 4, 5].map((num) => (
                         <span key={num} className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center font-bold">
@@ -136,9 +136,9 @@ export default function QtFruitsTrackerPortrait({
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500 font-serif leading-tight">{item.desc}</p>
+                  <p className="text-xs text-slate-500 font-sans leading-tight">{item.desc}</p>
 
-                  <div className="border-t border-slate-100 pt-1 text-[10px] text-slate-400 font-serif">
+                  <div className="border-t border-slate-100 pt-1 text-[10px] text-slate-400 font-sans">
                     성찰: _____________________
                   </div>
                 </div>
@@ -150,7 +150,7 @@ export default function QtFruitsTrackerPortrait({
 
       {/* 4. Verse Banner */}
       <div className="border border-emerald-200/90 rounded-2xl p-3 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-emerald-50/70 shadow-xs flex items-center justify-between text-xs">
-        <div className="font-serif text-emerald-950 font-bold">
+        <div className="font-sans text-emerald-950 font-bold">
           📖 &quot;오직 성령의 열매는 사랑과 희락과 화평과 오래 참음과 자비와 양선과 충성과 온유와 절제니 이같은 것을 금지할 법이 없느니라 (갈라디아서 5:22-23)&quot;
         </div>
         <div className="text-xs font-mono font-bold text-emerald-700 whitespace-nowrap bg-white px-3 py-1 rounded-full border border-emerald-200">

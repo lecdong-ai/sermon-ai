@@ -86,7 +86,7 @@ export default function QtYearlyWallCalendarPage({
         <div className="flex-none flex flex-col p-1.5 pb-1">
           {/* Mini Header */}
           <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200">
-            <span className="text-[11px] font-serif font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+            <span className="text-[11px] font-sans font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
               {MONTH_NAMES_FULL[month - 1]}
             </span>
             <span className="text-[9px] font-mono font-semibold text-slate-400">

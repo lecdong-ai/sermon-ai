@@ -80,7 +80,7 @@ export default function QtYearlyOverviewGridPage({
       {/* 2. Main Title Banner */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide leading-none">
+          <h2 className="text-xl font-sans font-bold text-slate-900 tracking-wide leading-none">
             {startYear === endYear ? `${startYear} Annual Master Calendar` : `${startYear}-${endYear} Master Calendar`}
           </h2>
           <p className="text-[10.5px] text-slate-400 font-mono font-medium mt-1">
@@ -112,7 +112,7 @@ export default function QtYearlyOverviewGridPage({
             >
               {/* Mini Header */}
               <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-                <span className="text-[11px] font-serif font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                <span className="text-[11px] font-sans font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                   {MONTH_NAMES_SHORT[m - 1]}
                 </span>
                 <span className="text-[9px] font-mono text-slate-400">

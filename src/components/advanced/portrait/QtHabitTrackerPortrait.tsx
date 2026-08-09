@@ -56,7 +56,7 @@ export default function QtHabitTrackerPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -79,7 +79,7 @@ export default function QtHabitTrackerPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌱 {monthName} 30-Day Habit & Routine Master</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -94,7 +94,7 @@ export default function QtHabitTrackerPortrait({
       {/* 3. Habit Grid Table */}
       <div className="border border-slate-300 rounded-2xl overflow-hidden bg-white flex-1 flex flex-col justify-between shadow-xs mb-3">
         <div className="grid grid-cols-[180px_repeat(31,1fr)_55px] bg-slate-100 border-b border-slate-300 text-xs font-bold text-slate-700 text-center py-2">
-          <div className="text-left px-3 font-serif">🌱 카테고리 / 습관 목표</div>
+          <div className="text-left px-3 font-sans">🌱 카테고리 / 습관 목표</div>
           {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
             <div key={d} className="border-l border-slate-200/80 font-mono text-[10px]">{d}</div>
           ))}
@@ -145,7 +145,7 @@ export default function QtHabitTrackerPortrait({
         </div>
         <div className="col-span-4 bg-white border border-slate-200 p-3 rounded-xl space-y-1">
           <span className="text-[10px] font-bold text-slate-600 block">🏆 습관 80% 달성 시 보상:</span>
-          <div className="text-slate-800 font-serif text-xs min-h-[18px]">____________________</div>
+          <div className="text-slate-800 font-sans text-xs min-h-[18px]">____________________</div>
         </div>
       </div>
 

@@ -34,7 +34,7 @@ export default function QtSundayGeneralPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -57,7 +57,7 @@ export default function QtSundayGeneralPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌿 {monthName} Sunday Reset — {sundayLabel}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -86,7 +86,7 @@ export default function QtSundayGeneralPortrait({
         {/* Module A: 4 Sunday Reset Rituals Checklist */}
         <div className="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/60 shadow-xs space-y-2">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1.5">
-            <span className="flex items-center gap-2 font-serif">
+            <span className="flex items-center gap-2 font-sans">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
               🧹 일요일 4대 리셋 루틴 (Sunday Reset Rituals)
             </span>
@@ -113,7 +113,7 @@ export default function QtSundayGeneralPortrait({
         {/* Module B: Weekly Highlight & Self-Care */}
         <div className="border border-slate-200/90 rounded-2xl p-4 bg-white shadow-xs space-y-2">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1.5">
-            <span className="flex items-center gap-2 font-serif">
+            <span className="flex items-center gap-2 font-sans">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
               ☀️ 이번 주 가장 행복했던 순간 & 셀프케어
             </span>
@@ -121,18 +121,18 @@ export default function QtSundayGeneralPortrait({
           </h4>
           <div className="bg-amber-50/40 p-2.5 rounded-xl border border-amber-200/60 space-y-1">
             <span className="text-xs font-bold text-amber-900 block">🎉 이번 주 최고의 하이라이트 (Best Moment):</span>
-            <div className="text-slate-700 font-serif text-xs min-h-[18px]">__________________________________________________</div>
+            <div className="text-slate-700 font-sans text-xs min-h-[18px]">__________________________________________________</div>
           </div>
           <div className="bg-emerald-50/40 p-2.5 rounded-xl border border-emerald-200/60 space-y-1">
             <span className="text-xs font-bold text-emerald-900 block">☕ 주말 나를 위한 리프레시 & 칭찬 노트:</span>
-            <div className="text-slate-700 font-serif text-xs min-h-[18px]">__________________________________________________</div>
+            <div className="text-slate-700 font-sans text-xs min-h-[18px]">__________________________________________________</div>
           </div>
         </div>
 
         {/* Module C: Next Week TOP 3 Priorities */}
         <div className="border border-slate-200/90 rounded-2xl p-4 bg-white shadow-xs space-y-2 flex-1 flex flex-col justify-between">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1.5">
-            <span className="flex items-center gap-2 font-serif">
+            <span className="flex items-center gap-2 font-sans">
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
               🎯 다음 주 핵심 목표 TOP 3 (Next Week Priorities)
             </span>
@@ -152,7 +152,7 @@ export default function QtSundayGeneralPortrait({
                   </span>
                   <span className="text-xs text-slate-400 font-normal">{p.desc}</span>
                 </div>
-                <div className="text-slate-800 font-serif text-xs min-h-[16px]">__________________________________________________</div>
+                <div className="text-slate-800 font-sans text-xs min-h-[16px]">__________________________________________________</div>
               </div>
             ))}
           </div>
@@ -165,7 +165,7 @@ export default function QtSundayGeneralPortrait({
           <span>🌟 다음 주를 이끌 나만의 비전 선언문 (Weekly Vision Mantra)</span>
           <span className="text-emerald-700 font-mono">Monday Ready!</span>
         </div>
-        <div className="border-b border-dashed border-emerald-200 h-4 text-xs text-emerald-900/80 font-serif">"다음 주 나는 당당하고 지혜롭게 행동하며 내 목표를 자신 있게 달성합니다."</div>
+        <div className="border-b border-dashed border-emerald-200 h-4 text-xs text-emerald-900/80 font-sans">"다음 주 나는 당당하고 지혜롭게 행동하며 내 목표를 자신 있게 달성합니다."</div>
       </div>
 
       {/* 6. Footer */}

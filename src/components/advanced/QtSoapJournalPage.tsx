@@ -27,7 +27,7 @@ export default function QtSoapJournalPage({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="soap"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -60,7 +60,7 @@ export default function QtSoapJournalPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             📖 {monthName} SOAP Meditation: Scripture & Observation
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -78,7 +78,7 @@ export default function QtSoapJournalPage({
         {/* Left: S - Scripture Copying (6 cols) */}
         <div className="col-span-6 border border-amber-200 rounded-2xl p-3 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/20 flex flex-col justify-between shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between border-b border-amber-200 pb-1.5 text-[9.5px]">
-            <span className="font-bold text-amber-950 font-serif flex items-center gap-1.5">
+            <span className="font-bold text-amber-950 font-sans flex items-center gap-1.5">
               <span className="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[9px] flex items-center justify-center font-bold">S</span>
               📜 SCRIPTURE (성경 본문 구절 & 명품 필사)
             </span>
@@ -88,9 +88,9 @@ export default function QtSoapJournalPage({
           <div className="bg-white p-2 rounded-xl border border-amber-200/80 flex-1 flex flex-col justify-between space-y-1 text-[8.5px]">
             <div className="flex justify-between items-center border-b border-amber-100 pb-1 text-[8px]">
               <span className="font-bold text-amber-900">📖 본문 구절 (Passage):</span>
-              <span className="text-slate-400 font-serif">____________________</span>
+              <span className="text-slate-400 font-sans">____________________</span>
             </div>
-            <div className="space-y-1 flex-1 flex flex-col justify-around text-slate-400 font-serif text-[8.5px] py-1">
+            <div className="space-y-1 flex-1 flex flex-col justify-around text-slate-400 font-sans text-[8.5px] py-1">
               {[1, 2, 3, 4, 5].map((lNo) => (
                 <div key={lNo} className="border-b border-amber-100 pb-0.5">
                   {lNo}. __________________________________________________
@@ -103,7 +103,7 @@ export default function QtSoapJournalPage({
         {/* Right: O - Observation 3-Key Truths (6 cols) */}
         <div className="col-span-6 border border-blue-200 rounded-2xl p-3 bg-gradient-to-b from-blue-50/40 via-white to-blue-50/20 flex flex-col justify-between shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between border-b border-blue-200 pb-1.5 text-[9.5px]">
-            <span className="font-bold text-blue-950 font-serif flex items-center gap-1.5">
+            <span className="font-bold text-blue-950 font-sans flex items-center gap-1.5">
               <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-mono text-[9px] flex items-center justify-center font-bold">O</span>
               🔍 OBSERVATION (본문 정밀 관찰 & 영적 진리)
             </span>
@@ -114,19 +114,19 @@ export default function QtSoapJournalPage({
             {/* Truth 1: God's Character */}
             <div className="bg-white p-2 rounded-xl border border-blue-200/80">
               <span className="font-bold text-blue-900 text-[8px] block">👑 1. 하나님은 어떤 분이신가? (Character of God)</span>
-              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+              <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">__________________________________________________</div>
             </div>
 
             {/* Truth 2: Lessons & Commands */}
             <div className="bg-white p-2 rounded-xl border border-blue-200/80">
               <span className="font-bold text-blue-900 text-[8px] block">💡 2. 나에게 주시는 교훈 & 경고 (Lessons & Commands)</span>
-              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+              <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">__________________________________________________</div>
             </div>
 
             {/* Truth 3: Rhema Message */}
             <div className="bg-white p-2 rounded-xl border border-blue-200/80">
               <span className="font-bold text-blue-900 text-[8px] block">🕊️ 3. 본문 속 레마(Rhema)의 발견 (Rhema Message)</span>
-              <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">__________________________________________________</div>
+              <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">__________________________________________________</div>
             </div>
           </div>
         </div>

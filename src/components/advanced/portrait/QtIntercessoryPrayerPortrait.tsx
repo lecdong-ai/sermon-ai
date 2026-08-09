@@ -27,13 +27,13 @@ export default function QtIntercessoryPrayerPortrait({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="intercessory"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtIntercessoryPrayerPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>💖 {monthName} Family & Cell Community</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -75,17 +75,17 @@ export default function QtIntercessoryPrayerPortrait({
           {/* Family */}
           <div className="border border-rose-200 rounded-2xl p-3 bg-rose-50/20 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="flex items-center justify-between border-b border-rose-200 pb-1">
-              <span className="font-bold text-rose-950 font-serif">👨‍👩‍👧‍👦 01. 내 사랑하는 가정 & 가문</span>
+              <span className="font-bold text-rose-950 font-sans">👨‍👩‍👧‍👦 01. 내 사랑하는 가정 & 가문</span>
               <span className="font-mono text-[10px] text-rose-400">Family</span>
             </div>
             <div className="space-y-1.5 flex-1 flex flex-col justify-around text-xs">
               <div className="bg-white p-1.5 rounded-xl border border-rose-200/80">
                 <span className="font-bold text-rose-800 text-[10px] block">📌 가정 기도제목:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[14px]">_____________________</div>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-rose-200/80">
                 <span className="font-bold text-rose-800 text-[10px] block">📖 붙잡을 약속 말씀:</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[14px]">_____________________</div>
               </div>
             </div>
           </div>
@@ -93,19 +93,19 @@ export default function QtIntercessoryPrayerPortrait({
           {/* Leaders */}
           <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/20 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="flex items-center justify-between border-b border-indigo-200 pb-1">
-              <span className="font-bold text-indigo-950 font-serif">🛡️ 02. 목회자 & 영적 지도자</span>
+              <span className="font-bold text-indigo-950 font-sans">🛡️ 02. 목회자 & 영적 지도자</span>
               <span className="font-mono text-[10px] text-indigo-400">Pastors</span>
             </div>
             <div className="bg-white p-2 rounded-xl border border-indigo-200/80 flex-1 text-xs">
               <span className="font-bold text-indigo-800 text-[10px] block">📌 담임목사님 & 셀장 강건함 기도:</span>
-              <div className="text-slate-400 font-serif text-xs min-h-[30px]">_____________________</div>
+              <div className="text-slate-400 font-sans text-xs min-h-[30px]">_____________________</div>
             </div>
           </div>
         </div>
 
         {/* Cell 4 Members */}
         <div className="border border-amber-200 rounded-2xl p-3.5 bg-amber-50/20 flex-1 flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between border-b border-amber-200 pb-1 text-xs font-bold text-amber-950 font-serif">
+          <div className="flex items-center justify-between border-b border-amber-200 pb-1 text-xs font-bold text-amber-950 font-sans">
             <span>⛪ 03. 교우 / 순원 / 셀 공동체 4인 기도 카드</span>
             <span className="font-mono text-[10px] text-amber-700">Cell 4 Members</span>
           </div>
@@ -117,7 +117,7 @@ export default function QtIntercessoryPrayerPortrait({
                   <span className="font-bold text-amber-900">순원 {mNo}: ________</span>
                   <span className="text-slate-300">□ 응답</span>
                 </div>
-                <div className="text-slate-400 font-serif text-xs min-h-[28px] flex-1 flex flex-col justify-around">
+                <div className="text-slate-400 font-sans text-xs min-h-[28px] flex-1 flex flex-col justify-around">
                   <div>__________________________</div>
                   <div>__________________________</div>
                 </div>
@@ -125,7 +125,7 @@ export default function QtIntercessoryPrayerPortrait({
             ))}
           </div>
 
-          <div className="border-t border-amber-200 pt-1 text-xs text-amber-900 font-serif italic text-right">
+          <div className="border-t border-amber-200 pt-1 text-xs text-amber-900 font-sans italic text-right">
             "너희가 서로 짐을 지라 그리하여 그리스도의 법을 성취하라 (갈라디아서 6:2)"
           </div>
         </div>

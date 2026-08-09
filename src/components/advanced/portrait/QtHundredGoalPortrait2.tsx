@@ -33,7 +33,7 @@ export default function QtHundredGoalPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -57,7 +57,7 @@ export default function QtHundredGoalPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🏆 {monthName} 100-Day Challenge Victory (Day 51 ~ 100)</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -72,7 +72,7 @@ export default function QtHundredGoalPortrait2({
       {/* 3. Day 51 ~ Day 100 Matrix (10 Cols x 5 Rows) */}
       <div className="border border-slate-200 rounded-xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
-          <span className="text-[11px] font-bold text-slate-800 font-serif">
+          <span className="text-[11px] font-bold text-slate-800 font-sans">
             📝 Day 51 ~ Day 100 후반전 매일 실행 기록 트래커
           </span>
           <span className="text-[9.5px] text-rose-600 font-bold font-mono">★ Day 75 Focus | 🎉 Day 100 Victory</span>
@@ -94,7 +94,7 @@ export default function QtHundredGoalPortrait2({
                   <span className={`font-mono font-extrabold text-[9.5px] ${isMilestone ? 'text-rose-900' : 'text-slate-600'}`}>D-{d}</span>
                   <span className="text-[9px] text-slate-300">□</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[9px] truncate py-0.5 text-center">______</div>
+                <div className="text-slate-400 font-sans text-[9px] truncate py-0.5 text-center">______</div>
               </div>
             )
           })}
@@ -105,11 +105,11 @@ export default function QtHundredGoalPortrait2({
       <div className="grid grid-cols-12 gap-2 text-[10.5px] mb-1.5">
         <div className="col-span-5 bg-purple-50/60 border border-purple-200 p-2 rounded-lg space-y-0.5">
           <span className="font-bold text-purple-900 block text-[10px]">🚀 Day 75 고지전 점검:</span>
-          <div className="text-slate-700 font-serif text-[10px] min-h-[14px]">"75% 달성 완료! 마지막 몰입: ____"</div>
+          <div className="text-slate-700 font-sans text-[10px] min-h-[14px]">"75% 달성 완료! 마지막 몰입: ____"</div>
         </div>
         <div className="col-span-7 bg-gradient-to-r from-rose-500/10 to-amber-500/10 border border-rose-200 p-2 rounded-lg space-y-0.5">
           <span className="font-bold text-rose-950 block text-[10px]">👑 Day 100 최종 완주 성공 훈장 & 편지:</span>
-          <div className="text-slate-800 font-serif text-[10px] italic min-h-[14px]">"나와의 약속을 지켜낸 100일간의 여정에 박수를 보냅니다!"</div>
+          <div className="text-slate-800 font-sans text-[10px] italic min-h-[14px]">"나와의 약속을 지켜낸 100일간의 여정에 박수를 보냅니다!"</div>
         </div>
       </div>
 

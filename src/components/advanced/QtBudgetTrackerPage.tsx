@@ -60,7 +60,7 @@ export default function QtBudgetTrackerPage({
       {/* 2. Page Title & 4 Summary Executive KPI Bar */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span className="whitespace-nowrap">💰 {monthName} Financial & Asset Planning (월간 자산 & 예산 통합 대시보드)</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5">
@@ -96,7 +96,7 @@ export default function QtBudgetTrackerPage({
           {/* Module A: Monthly Income Breakdown (수입 세부 내역) */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-sans">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 💵 월간 수입 상세 내역 (Income Sources)
               </span>
@@ -123,7 +123,7 @@ export default function QtBudgetTrackerPage({
           {/* Module B: Asset Portfolio & Wealth Building (자산 포트폴리오 & 저축/투자) */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-sans">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 🏦 자산 포트폴리오 & 저축/투자 (Asset Portfolio)
               </span>
@@ -157,7 +157,7 @@ export default function QtBudgetTrackerPage({
           {/* Module C: Fixed Expenses & Subscriptions (고정 지출 & 정기 구독) */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-sans">
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
                 🔒 월간 고정 지출 & 정기 구독 (Fixed Expenses)
               </span>
@@ -183,7 +183,7 @@ export default function QtBudgetTrackerPage({
           {/* Module D: Variable Budget Allocation (변동 지출 카테고리 예산 배분) */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif">
+              <span className="flex items-center gap-1.5 font-sans">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 📊 변동 지출 카테고리 예산 수립 (Budget Plan vs Actual)
               </span>
@@ -218,7 +218,7 @@ export default function QtBudgetTrackerPage({
               <span>🎯 이번 달 재정 목표 & 자산 형성을 위한 결단</span>
               <span className="text-emerald-700 font-mono">Target Savings: ____%</span>
             </div>
-            <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-emerald-800/80 font-serif">나의 수입과 지출을 지혜롭게 관리하여 풍요로운 삶을 가꿉니다.</div>
+            <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-emerald-800/80 font-sans">나의 수입과 지출을 지혜롭게 관리하여 풍요로운 삶을 가꿉니다.</div>
           </div>
         </div>
       </div>

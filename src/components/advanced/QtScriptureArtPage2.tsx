@@ -60,7 +60,7 @@ export default function QtScriptureArtPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             📜 {monthName} Weekly 4 Verses & Spiritual Transformation Journal
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -107,14 +107,14 @@ export default function QtScriptureArtPage2({
           >
             {/* Card Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-slate-800 font-serif">{w.week}</span>
+              <span className="font-bold text-slate-800 font-sans">{w.week}</span>
               <span className="font-mono text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-indigo-800">
                 {w.theme}
               </span>
             </div>
 
             {/* Target Verse Text */}
-            <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/80 text-[8.5px] font-serif italic text-slate-700 leading-tight">
+            <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/80 text-[8.5px] font-sans italic text-slate-700 leading-tight">
               {w.verse}
             </div>
 
@@ -122,11 +122,11 @@ export default function QtScriptureArtPage2({
             <div className="space-y-1 flex-1 flex flex-col justify-around text-[8.5px]">
               <div className="bg-white/80 p-1.5 rounded-xl border border-slate-200/80">
                 <span className="font-bold text-indigo-800 text-[8px] block">✍️ 내 손글씨 필사 (Penmanship):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[12px]">_____________________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[12px]">_____________________________________________</div>
               </div>
               <div className="bg-white/80 p-1.5 rounded-xl border border-slate-200/80">
                 <span className="font-bold text-emerald-800 text-[8px] block">🌱 내 삶의 적용 한 줄 (Action):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[12px]">_____________________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[12px]">_____________________________________________</div>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function QtScriptureArtPage2({
           <span className="text-indigo-700 font-mono">Spiritual Transformation Journal</span>
         </div>
         <div className="bg-white p-2 rounded-xl border border-indigo-200 text-[8.5px]">
-          <div className="text-slate-400 font-serif min-h-[14px]">_________________________________________________________________________________________</div>
+          <div className="text-slate-400 font-sans min-h-[14px]">_________________________________________________________________________________________</div>
         </div>
       </div>
 

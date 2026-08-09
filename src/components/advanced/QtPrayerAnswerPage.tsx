@@ -27,7 +27,7 @@ export default function QtPrayerAnswerPage({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="prayer"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -60,7 +60,7 @@ export default function QtPrayerAnswerPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🙏 {monthName} Personal Prayer & Grace Answer Journal</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -87,7 +87,7 @@ export default function QtPrayerAnswerPage({
           >
             {/* Card Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-slate-800 font-serif flex items-center gap-1">
+              <span className="font-bold text-slate-800 font-sans flex items-center gap-1">
                 {card.title}
               </span>
               <span className="font-mono text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
@@ -111,11 +111,11 @@ export default function QtPrayerAnswerPage({
             <div className="space-y-1 flex-1 bg-white p-2 rounded-xl border border-slate-200/80 text-[8.5px]">
               <div>
                 <span className="font-bold text-slate-700 text-[8px] block">📌 핵심 기도 제목 (Prayer Topic):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">_____________________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">_____________________________________________</div>
               </div>
               <div>
                 <span className="font-bold text-indigo-800 text-[8px] block">📖 붙잡을 말씀 & 묵상 구절 (Scripture):</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">_____________________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">_____________________________________________</div>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function QtPrayerAnswerPage({
           <span>💡 하나님의 때에 가장 선한 방법으로 응답하실 주님을 신뢰합니다</span>
           <span className="text-amber-700 font-mono">Faith & Prayer</span>
         </div>
-        <div className="border-b border-dashed border-amber-200 h-3 text-[8.5px] text-amber-900/80 font-serif">"아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로, 너희 구할 것을 감사함으로 하나님께 아뢰라 (빌 4:6)"</div>
+        <div className="border-b border-dashed border-amber-200 h-3 text-[8.5px] text-amber-900/80 font-sans">"아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로, 너희 구할 것을 감사함으로 하나님께 아뢰라 (빌 4:6)"</div>
       </div>
 
       {/* 5. Footer */}

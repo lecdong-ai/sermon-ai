@@ -36,6 +36,13 @@ const WEEK_PASTEL_COLORS: Record<number, { bg: string; activeBg: string; text: s
   5: { bg: '#EBE9F5', activeBg: '#8A83AB', text: '#3E375C', activeText: '#FFFFFF' }, // Week5 Soft Lavender
 }
 
+// YEAR / CAL / OVR 코어 탭 파스텔 톤 팔레트
+const CORE_TAB_PASTEL_COLORS: Record<'yearlygrid' | 'calendar' | 'overview', { bg: string; activeBg: string; text: string; activeText: string }> = {
+  yearlygrid: { bg: '#FFF3D6', activeBg: '#E0A94F', text: '#8A6420', activeText: '#FFFFFF' }, // YEAR Soft Gold
+  calendar: { bg: '#E4ECF4', activeBg: '#7A97B6', text: '#344E6B', activeText: '#FFFFFF' }, // CAL Slate Blue
+  overview: { bg: '#E4F1E9', activeBg: '#76A68D', text: '#2C5440', activeText: '#FFFFFF' }, // OVR Sage Mint
+}
+
 export default function QtQuickIndexNavPortrait({
   currentMonth = 8,
   currentWeek = 1,
@@ -66,162 +73,96 @@ export default function QtQuickIndexNavPortrait({
 
   return (
     <div
-      className="absolute top-2.5 right-4 flex flex-col items-end space-y-1 z-30 select-none font-mono"
+      className="absolute right-2 top-14 bottom-8 w-14 flex flex-col justify-between items-start gap-2 p-1 z-30 select-none font-mono rounded-l-2xl bg-white/85 border border-slate-200/90 shadow-[0_8px_24px_rgba(71,85,105,0.18)] backdrop-blur-sm"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Upper Ribbon: Main Section Buttons + Separated Trackers + Pastel Week Jumpers (Week1 ~ Week5) */}
-      <div className="flex items-center space-x-1 bg-white/95 px-1.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs backdrop-blur-xs">
-        {/* Main Section Buttons */}
-        <div className="flex items-center space-x-0.5">
-          <button
-            type="button"
-            data-nav-target="yearlygrid"
-            className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
-              activeTab === 'yearlygrid'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
-                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
-            }`}
-            title="연간 캘린더"
-          >
-            YEAR
-          </button>
+      <div className="w-full px-1 text-[7px] font-black tracking-[0.22em] text-slate-500 text-center">INDEX</div>
 
-          <button
-            type="button"
-            data-nav-target="calendar"
-            className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
-              activeTab === 'calendar'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
-                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
-            }`}
-            title="월간 달력"
-          >
-            CAL
-          </button>
+      {/* 1. Core Pages & Sub-Trackers Top Stack */}
+      <div className="flex flex-col space-y-1.5 w-full items-start">
+        {/* Core Tabs: YEAR, CAL, OVR */}
+        {(['yearlygrid', 'calendar', 'overview'] as const).map((coreKey) => {
+          const isActive = activeTab === coreKey
+          const cColor = CORE_TAB_PASTEL_COLORS[coreKey]
+          const label = coreKey === 'yearlygrid' ? 'YEAR' : coreKey === 'calendar' ? 'CAL' : 'OVR'
+          const title = coreKey === 'yearlygrid' ? '연간 캘린더' : coreKey === 'calendar' ? '월간 달력' : '월간 개요'
+          return (
+            <button
+              key={coreKey}
+              type="button"
+              data-nav-target={coreKey}
+                className={`relative h-6 w-full rounded-r-lg text-[9.5px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border-y border-r border-slate-400/80 shadow-md ${
+                  isActive
+                    ? 'text-white shadow-lg border-amber-300 z-20 ring-1 ring-amber-300/70'
+                    : 'opacity-90 hover:opacity-100 hover:shadow-lg'
+                }`}
+              style={{
+                backgroundColor: isActive ? cColor.activeBg : cColor.bg,
+                color: isActive ? cColor.activeText : cColor.text,
+              }}
+              title={title}
+            >
+              {isActive && <span className="absolute left-1 w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(253,230,138,0.9)]" />}
+              {label}
+            </button>
+          )
+        })}
 
-          <button
-            type="button"
-            data-nav-target="overview"
-            className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all cursor-pointer ${
-              activeTab === 'overview'
-                ? 'bg-slate-800 text-white font-black shadow-2xs border-b border-amber-300 scale-105'
-                : 'text-slate-500 opacity-70 hover:bg-slate-100 hover:text-slate-800'
-            }`}
-            title="월간 개요"
-          >
-            OVR
-          </button>
-        </div>
+        <div className="w-full h-px bg-slate-300/80 my-0.5" />
 
-        <div className="h-3 w-px bg-slate-200" />
-
-        {/* Separated Sub-Tracker Tags */}
-        <div className="flex items-center space-x-0.5">
+        {/* Sub-Trackers */}
+        <div className="flex flex-col space-y-1 pt-0.5 items-start">
           {isChristian ? (
             <>
-              <button
-                type="button"
-                data-nav-target="soap"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="SOAP 묵상 저널"
-              >
-                SOAP
-              </button>
-              <button
-                type="button"
-                data-nav-target="prayer"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="중보기도 노트"
-              >
-                PRAY
-              </button>
-              <button
-                type="button"
-                data-nav-target="bible"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="성경 66권 읽기표"
-              >
-                BIBLE
-              </button>
-              <button
-                type="button"
-                data-nav-target="sermon"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="주일 설교 노트"
-              >
-                SRMN
-              </button>
+              <button type="button" data-nav-target="soap" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="SOAP 묵상 저널">SOAP</button>
+              <button type="button" data-nav-target="prayer" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="중보기도 노트">PRAY</button>
+              <button type="button" data-nav-target="bible" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="성경 66권 읽기표">BIBLE</button>
+              <button type="button" data-nav-target="sermon" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="주일 설교 노트">SRMN</button>
             </>
           ) : (
             <>
-              <button
-                type="button"
-                data-nav-target="habit"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="Habit Tracker"
-              >
-                HABIT
-              </button>
-              <button
-                type="button"
-                data-nav-target="gratitude"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="Gratitude Journal"
-              >
-                GRAT
-              </button>
-              <button
-                type="button"
-                data-nav-target="budget"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="Budget Tracker"
-              >
-                CASH
-              </button>
-              <button
-                type="button"
-                data-nav-target="kpt"
-                className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white font-bold text-[6.5px] transition-colors cursor-pointer"
-                title="KPT Review"
-              >
-                KPT
-              </button>
+              <button type="button" data-nav-target="habit" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="Habit Tracker">HABIT</button>
+              <button type="button" data-nav-target="gratitude" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="Gratitude Journal">GRAT</button>
+              <button type="button" data-nav-target="budget" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="Budget Tracker">CASH</button>
+              <button type="button" data-nav-target="kpt" className="h-5 w-full rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:shadow-md cursor-pointer flex items-center justify-center" title="KPT Review">KPT</button>
             </>
           )}
         </div>
-
-        <div className="h-3 w-px bg-slate-200" />
-
-        {/* Week Direct Jumpers with Pastel Colors (Week1 ~ Week5) */}
-        <div className="flex items-center space-x-0.5">
-          {[1, 2, 3, 4, 5].map((wNo) => {
-            const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
-            const wColor = WEEK_PASTEL_COLORS[wNo]
-            return (
-              <button
-                key={`w-p-${wNo}`}
-                type="button"
-                data-nav-target={`week-${wNo}`}
-                data-week={wNo}
-                className={`px-1.5 py-0.5 rounded text-[7.5px] font-black transition-all cursor-pointer ${
-                  isCurrentW
-                    ? 'shadow-md border-b-2 border-amber-300 scale-110 z-10'
-                    : 'opacity-80 hover:opacity-100 font-bold'
-                }`}
-                style={{
-                  backgroundColor: isCurrentW ? wColor.activeBg : wColor.bg,
-                  color: isCurrentW ? wColor.activeText : wColor.text,
-                }}
-              >
-                Week{wNo}
-              </button>
-            )
-          })}
-        </div>
       </div>
 
-      {/* Lower Ribbon: Period Month Palette (17개월 전체: Aug'26 ~ Dec'27 / 연도 경계 구분선 포함) */}
-      <div className="flex items-center space-x-0.5 bg-white/95 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
+      {/* 2. Middle Group: Week Jumpers (W1 ~ W5) */}
+      <div className="flex flex-col space-y-1 w-full items-start my-auto">
+        <div className="w-full h-px bg-slate-300/80 my-0.5" />
+        {[1, 2, 3, 4, 5].map((wNo) => {
+          const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
+          const wColor = WEEK_PASTEL_COLORS[wNo]
+          return (
+            <button
+              key={`w-p-${wNo}`}
+              type="button"
+              data-nav-target={`week-${wNo}`}
+              data-week={wNo}
+              className={`relative h-5 w-full rounded-r-lg text-[8.5px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border-y border-r border-slate-400/80 shadow-md ${
+                isCurrentW
+                  ? 'text-white shadow-lg border-amber-300 z-20 ring-1 ring-amber-300/70'
+                  : 'opacity-90 hover:opacity-100 hover:shadow-lg font-extrabold'
+              }`}
+              style={{
+                backgroundColor: isCurrentW ? wColor.activeBg : wColor.bg,
+                color: isCurrentW ? wColor.activeText : wColor.text,
+              }}
+              title={`${wNo}주차 주간 계획`}
+            >
+              {isCurrentW && <span className="absolute left-1 w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(253,230,138,0.9)]" />}
+              W{wNo}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 3. Bottom Group: Month Tabs (Jan ~ Dec) */}
+      <div className="flex flex-col space-y-1 w-full items-start">
+        <div className="w-full h-px bg-slate-300/80 my-0.5" />
         {monthItems.map((item, idx) => {
           const palette = SEASONAL_MONTH_COLORS[item.month]
           const showYearDivider = item.year !== null && idx > 0 && monthItems[idx - 1].year !== item.year
@@ -229,23 +170,27 @@ export default function QtQuickIndexNavPortrait({
 
           return (
             <React.Fragment key={`m-p-${item.year ?? 'y'}-${item.month}`}>
-              {showYearDivider && <div className="w-px h-3 bg-slate-300/80 mx-0.5" />}
+              {showYearDivider && <div className="h-px w-full bg-slate-300/80 my-0.5" />}
               <button
                 type="button"
                 data-nav-target={navTarget}
-                className={`py-0.5 text-center transition-all relative cursor-pointer ${
+                className={`h-4 w-full rounded-r-md text-[7.5px] font-extrabold flex items-center justify-between px-1.5 transition-all duration-200 relative cursor-pointer border-y border-r border-slate-400/70 shadow-xs ${
                   item.isCurrent
-                    ? 'w-4.5 text-[8px] text-white font-black shadow-2xs border-b border-amber-300 rounded scale-105 z-10'
-                    : 'w-3.5 text-[7px] text-slate-500 opacity-60 hover:opacity-100 hover:w-4'
+                    ? 'text-white font-black shadow-lg border-amber-300 z-20 ring-1 ring-amber-300/70'
+                    : 'text-slate-800 opacity-90 hover:opacity-100 hover:shadow-md'
                 }`}
                 style={{
-                  backgroundColor: item.isCurrent ? palette.bg : undefined,
-                }}
-                title={`${item.year !== null ? `${item.year}년 ` : ''}${item.month}월 (${palette.label}) 플래너로 이동`}
-              >
-                {palette.label}
+                  backgroundColor: palette.bg,
+                  color: palette.text,
+              }}
+              title={`${item.year !== null ? `${item.year}년 ` : ''}${item.month}월 (${palette.label}) 플래너`}
+            >
+                <span className="flex items-center gap-1">
+                  {item.isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(253,230,138,0.9)]" />}
+                  {palette.label}
+                </span>
                 {item.isToday && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
                 )}
               </button>
             </React.Fragment>

@@ -60,7 +60,7 @@ export default function QtIntercessoryPrayerPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             💌 {monthName} Healing, World Missions & Answered Prayer Memorial
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -80,17 +80,17 @@ export default function QtIntercessoryPrayerPage2({
           {/* Healing */}
           <div className="border border-amber-200 rounded-2xl p-2.5 bg-amber-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
             <div className="flex items-center justify-between border-b border-amber-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-amber-950 font-serif">🏥 01. 환우 / 치유 & 영육 회복 중보</span>
+              <span className="font-bold text-amber-950 font-sans">🏥 01. 환우 / 치유 & 영육 회복 중보</span>
               <span className="font-mono text-[8px] text-amber-700">Healing & Deliverance</span>
             </div>
             <div className="space-y-1 flex-1 flex flex-col justify-around text-[8.5px]">
               <div className="bg-white p-1.5 rounded-xl border border-amber-200/80">
                 <span className="font-bold text-amber-800 text-[8px] block">📌 치유 대상자 & 기도제목:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">___________________________________</div>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-amber-200/80">
                 <span className="font-bold text-amber-800 text-[8px] block">📖 신유의 약속 말씀:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">___________________________________</div>
               </div>
             </div>
           </div>
@@ -98,13 +98,13 @@ export default function QtIntercessoryPrayerPage2({
           {/* Missions & Evangelism */}
           <div className="border border-emerald-200 rounded-2xl p-2.5 bg-emerald-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
             <div className="flex items-center justify-between border-b border-emerald-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-emerald-950 font-serif">🌏 02. 열방 / 선교사 & 태신자(영혼구원)</span>
+              <span className="font-bold text-emerald-950 font-sans">🌏 02. 열방 / 선교사 & 태신자(영혼구원)</span>
               <span className="font-mono text-[8px] text-emerald-700">Missions & Evangelism</span>
             </div>
             <div className="space-y-1 flex-1 flex flex-col justify-around text-[8.5px]">
               <div className="bg-white p-1.5 rounded-xl border border-emerald-200/80">
                 <span className="font-bold text-emerald-800 text-[8px] block">📌 선교지 기도 & 전도 대상자 이름:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">___________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">___________________________________</div>
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function QtIntercessoryPrayerPage2({
 
         {/* Right: Answered Prayer Memorial (6 cols) */}
         <div className="col-span-6 border border-indigo-200 rounded-2xl p-2.5 bg-indigo-50/20 flex flex-col justify-between shadow-2xs">
-          <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[9.5px] font-bold text-indigo-950 font-serif">
+          <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[9.5px] font-bold text-indigo-950 font-sans">
             <span>🎉 03. 이번 달 공동체 기도 응답 기념비 (Answered Prayer Memorial)</span>
             <span className="font-mono text-[8px] text-indigo-400">Answered Stories</span>
           </div>
@@ -124,14 +124,14 @@ export default function QtIntercessoryPrayerPage2({
                   <span className="font-bold text-indigo-900">응답 사건 {aNo}:</span>
                   <span className="font-mono text-slate-300">Answered!</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[8px] min-h-[16px]">
+                <div className="text-slate-400 font-sans text-[8px] min-h-[16px]">
                   _______________________________________________________
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-indigo-200 pt-1 text-[8px] text-indigo-900 font-serif italic text-right">
+          <div className="border-t border-indigo-200 pt-1 text-[8px] text-indigo-900 font-sans italic text-right">
             "여호와께서 우리를 위하여 큰 일을 행하셨으니 우리는 기쁘도다 (시편 126:3)"
           </div>
         </div>

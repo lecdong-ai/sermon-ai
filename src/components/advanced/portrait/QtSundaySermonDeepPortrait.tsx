@@ -38,7 +38,7 @@ export default function QtSundaySermonDeepPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -78,7 +78,7 @@ export default function QtSundaySermonDeepPortrait({
         <div className="space-y-1 text-xs">
           <div className="p-1.5 rounded-xl bg-white border border-slate-200 flex items-center">
             <span className="text-[10px] font-bold text-slate-400 mr-2 shrink-0 whitespace-nowrap">📌 설교 대제목:</span>
-            <span className="text-slate-700 font-serif text-xs flex-1 min-h-[18px] truncate"></span>
+            <span className="text-slate-700 font-sans text-xs flex-1 min-h-[18px] truncate"></span>
           </div>
           <div className="p-1.5 rounded-xl bg-white border border-slate-200 flex items-center">
             <span className="text-[10px] font-bold text-slate-400 mr-2 shrink-0 whitespace-nowrap">📖 본문 구절:</span>

@@ -33,7 +33,7 @@ export default function QtGratitudeJournalPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -53,7 +53,7 @@ export default function QtGratitudeJournalPortrait({
 
       {/* Title */}
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide">
+        <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide">
           ☀️ {monthName} Gratitude & Affirmation
         </h1>
         <div className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>

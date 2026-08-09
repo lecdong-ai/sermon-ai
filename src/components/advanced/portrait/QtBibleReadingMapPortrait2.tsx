@@ -33,7 +33,7 @@ export default function QtBibleReadingMapPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtBibleReadingMapPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+          <h1 className="text-2xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2">
             <span>📖 {monthName} Daily Bible Reading Plan</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -72,7 +72,7 @@ export default function QtBibleReadingMapPortrait2({
       <div className="space-y-3 flex-1 flex flex-col justify-between mb-2.5 min-h-0">
         {/* 31-Day Execution Table */}
         <div className="border border-slate-200 rounded-2xl p-3 bg-slate-50/20 flex-1 flex flex-col justify-between shadow-xs min-h-0">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs font-bold text-slate-800 font-serif mb-1">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs font-bold text-slate-800 font-sans mb-1">
             <span>📅 31일 데일리 성경 통독 실행표 (Daily Reading Schedule)</span>
             <span className="font-mono text-xs text-slate-400">Date · Passage · Check · Time</span>
           </div>
@@ -83,7 +83,7 @@ export default function QtBibleReadingMapPortrait2({
               {Array.from({ length: 16 }, (_, i) => i + 1).map((d) => (
                 <div key={d} className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-slate-200/80 leading-none">
                   <span className="font-mono font-bold text-indigo-700 w-6 text-xs">Day {String(d).padStart(2, '0')}</span>
-                  <div className="flex-1 text-slate-300 font-serif text-xs truncate">_______________________</div>
+                  <div className="flex-1 text-slate-300 font-sans text-xs truncate">_______________________</div>
                   <span className="w-3.5 h-3.5 rounded border border-slate-300 bg-slate-50 flex items-center justify-center text-[8px] text-slate-300">✓</span>
                 </div>
               ))}
@@ -94,13 +94,13 @@ export default function QtBibleReadingMapPortrait2({
               {Array.from({ length: 15 }, (_, i) => i + 17).map((d) => (
                 <div key={d} className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-slate-200/80 leading-none">
                   <span className="font-mono font-bold text-indigo-700 w-6 text-xs">Day {String(d).padStart(2, '0')}</span>
-                  <div className="flex-1 text-slate-300 font-serif text-xs truncate">_______________________</div>
+                  <div className="flex-1 text-slate-300 font-sans text-xs truncate">_______________________</div>
                   <span className="w-3.5 h-3.5 rounded border border-slate-300 bg-slate-50 flex items-center justify-center text-[8px] text-slate-300">✓</span>
                 </div>
               ))}
               <div className="flex items-center gap-2 bg-indigo-50/70 px-2 py-0.5 rounded border border-indigo-200 leading-none">
                 <span className="font-bold text-indigo-900 text-xs">월간완주</span>
-                <div className="flex-1 text-indigo-700 font-serif text-xs font-bold truncate">성경 통독 목표 완료!</div>
+                <div className="flex-1 text-indigo-700 font-sans text-xs font-bold truncate">성경 통독 목표 완료!</div>
                 <span className="w-3.5 h-3.5 rounded bg-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">★</span>
               </div>
             </div>
@@ -111,14 +111,14 @@ export default function QtBibleReadingMapPortrait2({
         <div className="grid grid-cols-2 gap-3 text-xs min-h-0">
           <div className="border border-indigo-200/90 rounded-2xl p-2.5 bg-indigo-50/20 flex flex-col justify-between shadow-xs space-y-1 min-h-0">
             <div className="flex items-center justify-between border-b border-indigo-200 pb-0.5">
-              <span className="font-bold text-indigo-950 font-serif">💎 이달의 레마 말씀 3선</span>
+              <span className="font-bold text-indigo-950 font-sans">💎 이달의 레마 말씀 3선</span>
               <span className="font-mono text-[10px] text-indigo-400">Top 3 Passages</span>
             </div>
             <div className="space-y-1 flex-1 flex flex-col justify-around text-xs">
               {[1, 2, 3].map((rNo) => (
                 <div key={rNo} className="bg-white p-1 rounded-xl border border-indigo-200/80">
                   <span className="font-bold text-indigo-800 text-[10px] block">구절 {rNo}:</span>
-                  <div className="text-slate-300 font-serif text-xs min-h-[12px]">______________________</div>
+                  <div className="text-slate-300 font-sans text-xs min-h-[12px]">______________________</div>
                 </div>
               ))}
             </div>
@@ -126,11 +126,11 @@ export default function QtBibleReadingMapPortrait2({
 
           <div className="border border-emerald-200/90 rounded-2xl p-2.5 bg-emerald-50/20 flex flex-col justify-between shadow-xs space-y-1 min-h-0">
             <div className="flex items-center justify-between border-b border-emerald-200 pb-0.5">
-              <span className="font-bold text-emerald-950 font-serif">🕊️ 영적 깨달음 & 삶의 변화</span>
+              <span className="font-bold text-emerald-950 font-sans">🕊️ 영적 깨달음 & 삶의 변화</span>
               <span className="text-emerald-700 font-mono text-[10px]">Insight Note</span>
             </div>
             <div className="bg-white p-1.5 rounded-xl border border-emerald-200/80 flex-1 text-xs">
-              <div className="text-slate-400 font-serif italic min-h-[32px]">"성경을 읽으며 새로 알게 된 하나님의 성품과 내 삶의 순종 결단을 적습니다..."</div>
+              <div className="text-slate-400 font-sans italic min-h-[32px]">"성경을 읽으며 새로 알게 된 하나님의 성품과 내 삶의 순종 결단을 적습니다..."</div>
             </div>
           </div>
         </div>

@@ -58,7 +58,7 @@ export default function QtGratitudeJournalPage({
 
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2">
+        <h1 className="text-2xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2">
           <span>☀️ {monthName} Daily Gratitude & Affirmation</span>
         </h1>
         <div className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs" style={{ backgroundColor: themeColor }}>

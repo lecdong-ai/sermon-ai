@@ -81,7 +81,7 @@ export default function QtSundaySermonDeepPage({
         <div className="grid grid-cols-12 gap-2 text-xs">
           <div className="col-span-8 p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 block shrink-0 mr-2 whitespace-nowrap">📌 설교 대제목 (SERMON TITLE):</span>
-            <span className="text-slate-700 font-serif flex-1 text-sm min-h-[20px] truncate"></span>
+            <span className="text-slate-700 font-sans flex-1 text-sm min-h-[20px] truncate"></span>
           </div>
           <div className="col-span-4 p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 block shrink-0 mr-2 whitespace-nowrap">📖 본문 (PASSAGE):</span>
@@ -109,7 +109,7 @@ export default function QtSundaySermonDeepPage({
                   <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                     {pt}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-700 font-serif whitespace-nowrap">제 {pt}대지</span>
+                  <span className="text-[11px] font-bold text-slate-700 font-sans whitespace-nowrap">제 {pt}대지</span>
                 </div>
                 {/* Dot Grid Lines */}
                 <div className="space-y-1 py-1 flex-1 flex flex-col justify-around">
@@ -139,7 +139,7 @@ export default function QtSundaySermonDeepPage({
               <div className="border-b border-dashed border-amber-200/40 h-5" />
             </div>
 
-            <div className="text-[10px] text-slate-500 font-serif italic text-right border-t border-amber-200 pt-1 mt-1 whitespace-nowrap">
+            <div className="text-[10px] text-slate-500 font-sans italic text-right border-t border-amber-200 pt-1 mt-1 whitespace-nowrap">
               &quot;주의 말씀은 내 발에 등이요 내 길에 빛이니이다&quot;
             </div>
           </div>

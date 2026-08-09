@@ -60,7 +60,7 @@ export default function QtBucketTravelPage({
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-2xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>✈️ {monthName} Bucket List & Travel Vision</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -91,7 +91,7 @@ export default function QtBucketTravelPage({
                   <span className="w-4 h-4 rounded-full bg-rose-100 text-rose-700 font-mono font-bold text-[9px] flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
-                  <span className="text-slate-300 font-serif flex-1">소망 또는 목표를 작성하세요...</span>
+                  <span className="text-slate-300 font-sans flex-1">소망 또는 목표를 작성하세요...</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[8.5px]">
                   <span>달성일: ____/__/__</span>

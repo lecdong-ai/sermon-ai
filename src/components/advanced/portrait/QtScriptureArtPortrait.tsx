@@ -27,13 +27,13 @@ export default function QtScriptureArtPortrait({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="scripture"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtScriptureArtPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>📜 {monthName} Signature Scripture Art</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -72,7 +72,7 @@ export default function QtScriptureArtPortrait({
       <div className="space-y-4 flex-1 flex flex-col justify-between mb-3">
         {/* Verse Frame */}
         <div className="border-2 border-dashed border-purple-300/80 rounded-2xl p-6 bg-gradient-to-b from-amber-50/40 via-white to-purple-50/40 flex flex-col justify-between shadow-xs relative flex-1">
-          <div className="flex justify-between items-center text-xs font-bold text-purple-800 font-serif border-b border-purple-100 pb-2">
+          <div className="flex justify-between items-center text-xs font-bold text-purple-800 font-sans border-b border-purple-100 pb-2">
             <span>👑 VERSE OF THE MONTH</span>
             <span>NIV / KJV PARALLEL</span>
           </div>
@@ -81,13 +81,13 @@ export default function QtScriptureArtPortrait({
             <span className="text-xs font-bold uppercase tracking-widest text-purple-700 bg-purple-100/80 px-4 py-1 rounded-full">
               이달의 핵심 대표 암송 구절
             </span>
-            <blockquote className="text-2xl font-serif font-extrabold text-slate-800 leading-relaxed tracking-wide italic">
+            <blockquote className="text-2xl font-sans font-extrabold text-slate-800 leading-relaxed tracking-wide italic">
               &quot;여호와는 나의 목자시니 내게 부족함이 없으리로다. 그가 나를 푸른 풀밭에 누이시며 쉬만 한 물 가로 인도하시는도다.&quot;
             </blockquote>
             <div className="text-sm font-bold text-purple-900 font-sans tracking-wider">
               — 시편 23편 1-2절 (Psalm 23:1-2) —
             </div>
-            <div className="text-xs font-serif text-slate-500 italic pt-2 border-t border-purple-100">
+            <div className="text-xs font-sans text-slate-500 italic pt-2 border-t border-purple-100">
               "The LORD is my shepherd, I lack nothing. He makes me lie down in green pastures, he leads me beside quiet waters."
             </div>
           </div>
@@ -100,14 +100,14 @@ export default function QtScriptureArtPortrait({
         {/* Handwriting practice */}
         <div className="border border-purple-200/90 rounded-2xl p-4 bg-purple-50/20 flex flex-col justify-between shadow-xs flex-1">
           <div className="flex items-center justify-between border-b border-purple-200 pb-1 text-xs">
-            <span className="font-bold text-purple-950 font-serif">✍️ 손글씨 정결 필사 (Handwriting Practice)</span>
+            <span className="font-bold text-purple-950 font-sans">✍️ 손글씨 정결 필사 (Handwriting Practice)</span>
             <span className="font-mono text-xs text-slate-400">Pencil & Pen</span>
           </div>
           <div className="space-y-3 flex-1 flex flex-col justify-around py-2">
             {[1, 2, 3, 4, 5, 6].map((lNo) => (
               <div key={lNo} className="border-b border-slate-300/80 pb-1 flex items-center gap-3">
                 <span className="text-xs text-purple-400 font-mono">{lNo}.</span>
-                <div className="text-xs text-slate-400 font-serif flex-1 min-h-[18px]">
+                <div className="text-xs text-slate-400 font-sans flex-1 min-h-[18px]">
                   ________________________________________________________
                 </div>
               </div>

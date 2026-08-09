@@ -83,7 +83,7 @@ export default function QtHabitTrackerPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌱 {monthName} 30-Day Habit & Routine Master</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -100,7 +100,7 @@ export default function QtHabitTrackerPage({
       <div className="border border-slate-300 rounded-2xl overflow-hidden bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
         {/* Table Header */}
         <div className="grid grid-cols-[200px_repeat(31,1fr)_55px] bg-slate-100 border-b border-slate-300 text-[9.5px] font-bold text-slate-700 text-center py-1.5">
-          <div className="text-left px-3 font-serif">🌱 카테고리 / 습관 목표</div>
+          <div className="text-left px-3 font-sans">🌱 카테고리 / 습관 목표</div>
           {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
             <div key={d} className="border-l border-slate-200/80 font-mono text-[8.5px]">{d}</div>
           ))}
@@ -154,7 +154,7 @@ export default function QtHabitTrackerPage({
         </div>
         <div className="col-span-4 bg-white border border-slate-200 p-2 rounded-xl space-y-0.5">
           <span className="text-[8px] font-bold text-slate-600 block">🏆 습관 80% 달성 시 스스로에게 줄 보상:</span>
-          <div className="text-slate-800 font-serif text-[8.5px] min-h-[14px]">____________________________________</div>
+          <div className="text-slate-800 font-sans text-[8.5px] min-h-[14px]">____________________________________</div>
         </div>
       </div>
 

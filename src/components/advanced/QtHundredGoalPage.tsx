@@ -27,7 +27,7 @@ export default function QtHundredGoalPage({
 
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="hundred"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -60,7 +60,7 @@ export default function QtHundredGoalPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             🎯 {monthName} 100-Day Challenge Roadmap (Day 01 ~ 50)
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -78,7 +78,7 @@ export default function QtHundredGoalPage({
         <div className="grid grid-cols-12 gap-2 text-[9.5px]">
           <div className="col-span-6 bg-white p-1.5 rounded-xl border border-slate-200/80">
             <span className="text-[8.5px] font-bold text-indigo-800 block">📌 100일 동안 달성할 핵심 목표 (GOAL):</span>
-            <div className="text-slate-800 font-bold font-serif text-[9px] min-h-[14px]">________________________________________</div>
+            <div className="text-slate-800 font-bold font-sans text-[9px] min-h-[14px]">________________________________________</div>
           </div>
           <div className="col-span-3 bg-white p-1.5 rounded-xl border border-slate-200/80">
             <span className="text-[8.5px] font-bold text-emerald-800 block">🎁 완주 시 나에게 줄 보상 (REWARD):</span>
@@ -94,7 +94,7 @@ export default function QtHundredGoalPage({
       {/* 4. Day 01 ~ Day 50 Matrix (5 rows x 10 cols) */}
       <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-          <span className="text-[10px] font-bold text-slate-800 font-serif">
+          <span className="text-[10px] font-bold text-slate-800 font-sans">
             📝 Day 01 ~ Day 50 매일 실행 기록 트래커 (Daily Micro Action)
           </span>
           <span className="text-[8.5px] text-amber-600 font-bold font-mono">★ Day 25 Milestone | ★ Day 50 Halfway</span>
@@ -116,7 +116,7 @@ export default function QtHundredGoalPage({
                   <span className={`font-mono font-extrabold ${isMilestone ? 'text-amber-900' : 'text-slate-600'}`}>D-{d}</span>
                   <span className="text-[7.5px] text-slate-300">□</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[7.5px] truncate py-0.5">____</div>
+                <div className="text-slate-400 font-sans text-[7.5px] truncate py-0.5">____</div>
               </div>
             )
           })}
@@ -127,11 +127,11 @@ export default function QtHundredGoalPage({
       <div className="grid grid-cols-2 gap-2 text-[9px]">
         <div className="bg-amber-50/60 border border-amber-200 p-1.5 rounded-xl space-y-0.5">
           <span className="font-bold text-amber-900 block">🎉 Day 25 첫 번째 고지 성찰:</span>
-          <div className="text-slate-700 font-serif text-[8.5px] min-h-[12px]">"초반 25일 달성! 내 삶에 일어난 가장 큰 습관 변화: ____________"</div>
+          <div className="text-slate-700 font-sans text-[8.5px] min-h-[12px]">"초반 25일 달성! 내 삶에 일어난 가장 큰 습관 변화: ____________"</div>
         </div>
         <div className="bg-indigo-50/60 border border-indigo-200 p-1.5 rounded-xl space-y-0.5">
           <span className="font-bold text-indigo-950 block">🏆 Day 50 반환점 돌파 성찰:</span>
-          <div className="text-slate-700 font-serif text-[8.5px] min-h-[12px]">"50% 완주 성공! 포기하지 않은 나 자신에게 한 줄 칭찬: ____________"</div>
+          <div className="text-slate-700 font-sans text-[8.5px] min-h-[12px]">"50% 완주 성공! 포기하지 않은 나 자신에게 한 줄 칭찬: ____________"</div>
         </div>
       </div>
 

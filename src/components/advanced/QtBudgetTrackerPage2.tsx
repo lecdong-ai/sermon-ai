@@ -60,7 +60,7 @@ export default function QtBudgetTrackerPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             💳 {monthName} 31-Day Daily Expense & Money Mindset
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -96,7 +96,7 @@ export default function QtBudgetTrackerPage2({
         {/* Left Column Table: Day 01 ~ Day 16 (6 cols) */}
         <div className="col-span-6 border border-slate-200/90 rounded-2xl p-2.5 bg-white flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-            <span className="text-[10.5px] font-bold text-slate-800 font-serif flex items-center gap-1.5">
+            <span className="text-[10.5px] font-bold text-slate-800 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               📅 상반월 지출 기록 (Day 01 ~ Day 16)
             </span>
@@ -137,7 +137,7 @@ export default function QtBudgetTrackerPage2({
           {/* Table Day 17 ~ Day 31 */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-              <span className="text-[10.5px] font-bold text-slate-800 font-serif flex items-center gap-1.5">
+              <span className="text-[10.5px] font-bold text-slate-800 font-sans flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 📅 하반월 지출 기록 (Day 17 ~ Day 31)
               </span>
@@ -181,11 +181,11 @@ export default function QtBudgetTrackerPage2({
             <div className="grid grid-cols-2 gap-2 text-[8.5px] text-slate-600">
               <div>
                 <span className="font-bold text-emerald-800">🎉 최고의 지출 (Best):</span>
-                <span className="text-slate-400 block font-serif">___________________________</span>
+                <span className="text-slate-400 block font-sans">___________________________</span>
               </div>
               <div>
                 <span className="font-bold text-rose-800">😅 아쉬운 지출 (Regret W):</span>
-                <span className="text-slate-400 block font-serif">___________________________</span>
+                <span className="text-slate-400 block font-sans">___________________________</span>
               </div>
             </div>
           </div>

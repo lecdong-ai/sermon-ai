@@ -64,11 +64,11 @@ export default function QtWeeklyPlanPage({
       data-page-key={`week-${weekNum}`}
       data-week={weekNum}
       data-page-type="full-bleed"
-      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
+      className="qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 36px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -95,14 +95,9 @@ export default function QtWeeklyPlanPage({
       {/* 2. Page Title Header & Weekly Inspiration Banner */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="px-2.5 py-0.5 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 font-mono"
-              style={{ backgroundColor: themeColor }}
-            >
-              WEEK {weekNum}
-            </div>
-            <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide leading-none">{monthName} Weekly Plan</h2>
+          <div className="flex items-end gap-2.5">
+            <h2 className="text-2xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
+            <span className="text-[10px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
           </div>
           <div className="text-[10.5px] text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
@@ -116,7 +111,7 @@ export default function QtWeeklyPlanPage({
           <span className={`text-[8px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}`}>
             {isGeneralMode ? 'WEEKLY FOCUS & COMPASS' : 'WEEKLY SCRIPTURE & PRAYER'}
           </span>
-          <span className="text-[10px] font-serif font-semibold text-slate-800">
+          <span className="text-[10px] font-sans font-semibold text-slate-800">
             {isGeneralMode
               ? '🎯 "이번 주 핵심 목표: 우선순위에 집중하고 흔들림 없이 성취하라"'
               : '📖 "내 발의 등등이요 내 길에 빛이니이다 (시편 119:105)"'
@@ -130,12 +125,12 @@ export default function QtWeeklyPlanPage({
         {/* Box 1: WEEKLY MASTER CONTROL */}
         <div className="border border-slate-300 rounded-xl p-2.5 bg-slate-50/60 flex flex-col justify-between shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between border-b border-slate-300 pb-1 text-[9.5px]">
-            <span className="font-bold text-slate-800 font-serif">🎯 WEEKLY CONTROL</span>
+            <span className="font-bold text-slate-800 font-sans">🎯 WEEKLY CONTROL</span>
             <span className="font-mono text-[8px] text-slate-400">Master</span>
           </div>
 
           {/* Top 3 Weekly Priorities */}
-          <div className="space-y-1 text-[8.5px] font-serif text-slate-600">
+          <div className="space-y-1 text-[8.5px] font-sans text-slate-600">
             <span className="font-bold text-slate-800 text-[8px] block">📌 이주의 3대 핵심 우선순위:</span>
             <div className="bg-white p-1 rounded-lg border border-slate-200 space-y-0.5">
               <div className="flex items-center gap-1">
@@ -154,7 +149,7 @@ export default function QtWeeklyPlanPage({
           </div>
 
           {/* Habit Dots Bar */}
-          <div className="bg-white p-1.5 rounded-lg border border-slate-200 text-[8px] font-serif space-y-1">
+          <div className="bg-white p-1.5 rounded-lg border border-slate-200 text-[8px] font-sans space-y-1">
             <span className="font-bold text-slate-700 text-[7.5px] block">{isGeneralMode ? '✨ 갓생 습관 7일 체크:' : '✨ 영적 수련 7일 체크:'}</span>
             <div className="flex justify-between items-center text-[7.5px] font-mono text-slate-400 px-1">
               <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
@@ -165,7 +160,7 @@ export default function QtWeeklyPlanPage({
           </div>
 
           {/* Weekly Reflection Line */}
-          <div className="bg-white p-1.5 rounded-lg border border-slate-200 text-[8px] font-serif text-slate-500">
+          <div className="bg-white p-1.5 rounded-lg border border-slate-200 text-[8px] font-sans text-slate-500">
             <span className="font-bold text-slate-700 text-[7.5px] block">💖 이주의 감사 & 성찰:</span>
             <div className="min-h-[14px]">______________________</div>
           </div>
@@ -195,7 +190,7 @@ export default function QtWeeklyPlanPage({
                   <span
                     data-nav-target={`day-${d.dayNum}`}
                     data-jump-btn="true"
-                    className={`text-[11px] font-serif font-bold px-1.5 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
+                    className={`text-[11px] font-sans font-bold px-1.5 py-0.2 rounded hover:bg-slate-100 cursor-pointer transition-colors ${
                       hasRedDay ? 'text-rose-600' : isSat ? 'text-blue-600' : 'text-slate-800'
                     }`}
                   >
@@ -229,7 +224,7 @@ export default function QtWeeklyPlanPage({
               </div>
 
               {/* Day Key Schedule / Scripture */}
-              <div className="bg-slate-50 p-1 rounded-lg border border-slate-200 mb-1 text-[8px] font-serif">
+              <div className="bg-slate-50 p-1 rounded-lg border border-slate-200 mb-1 text-[8px] font-sans">
                 <span className="font-bold text-slate-600 text-[7.5px] block">
                   {isGeneralMode ? '📌 주요 일정:' : '📖 묵상 본문:'}
                 </span>
@@ -237,7 +232,7 @@ export default function QtWeeklyPlanPage({
               </div>
 
               {/* 3 Day Tasks */}
-              <div className="space-y-0.5 mb-1 text-[8px] font-serif">
+              <div className="space-y-0.5 mb-1 text-[8px] font-sans">
                 {[1, 2, 3].map((tNo) => (
                   <div key={tNo} className="flex items-center">
                     <div className="w-2.5 h-2.5 border border-slate-300 rounded-xs bg-white mr-1 flex-shrink-0" />

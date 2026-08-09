@@ -61,7 +61,7 @@ export default function QtSundayGeneralPage({
       {/* 2. Page Title & Energy/Mindset Gauge */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🌿 {monthName} Sunday Reset — {sundayLabel}</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5">
@@ -87,7 +87,7 @@ export default function QtSundayGeneralPage({
           {/* Module A: 4 Sunday Reset Rituals Checklist */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
+              <span className="flex items-center gap-1.5 font-sans whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 🧹 일요일 4대 리셋 루틴 (Sunday Reset Rituals)
               </span>
@@ -114,7 +114,7 @@ export default function QtSundayGeneralPage({
           {/* Module B: Weekly Highlight & Self-Care Note */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
+              <span className="flex items-center gap-1.5 font-sans whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 ☀️ 이번 주 가장 행복했던 순간 & 셀프케어
               </span>
@@ -123,12 +123,12 @@ export default function QtSundayGeneralPage({
 
             <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-200/60 space-y-1">
               <span className="text-[9px] font-bold text-amber-900 block">🎉 이번 주 최고의 하이라이트 (Best Moment):</span>
-              <div className="text-slate-700 font-serif text-[9px] min-h-[16px]">______________________________________________________</div>
+              <div className="text-slate-700 font-sans text-[9px] min-h-[16px]">______________________________________________________</div>
             </div>
 
             <div className="bg-emerald-50/40 p-2 rounded-xl border border-emerald-200/60 space-y-1 flex-1 flex flex-col justify-around">
               <span className="text-[9px] font-bold text-emerald-900 block">☕ 주말 나를 위한 리프레시 & 칭찬 노트:</span>
-              <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-slate-400 font-serif" />
+              <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-slate-400 font-sans" />
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function QtSundayGeneralPage({
           {/* Module C: Next Week TOP 3 Priorities */}
           <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white shadow-2xs space-y-1.5 flex-1 flex flex-col justify-between">
             <h4 className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1">
-              <span className="flex items-center gap-1.5 font-serif whitespace-nowrap shrink-0">
+              <span className="flex items-center gap-1.5 font-sans whitespace-nowrap shrink-0">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 🎯 다음 주 핵심 목표 TOP 3 (Next Week Priorities)
               </span>
@@ -158,7 +158,7 @@ export default function QtSundayGeneralPage({
                     </span>
                     <span className="text-[8px] text-slate-400 font-normal">{p.desc}</span>
                   </div>
-                  <div className="text-slate-800 font-serif text-[9px] min-h-[14px]">______________________________________________________</div>
+                  <div className="text-slate-800 font-sans text-[9px] min-h-[14px]">______________________________________________________</div>
                 </div>
               ))}
             </div>
@@ -169,7 +169,7 @@ export default function QtSundayGeneralPage({
             <span className="text-[9.5px] font-bold text-rose-900 flex items-center gap-1">
               <span>🛡️ 다음 주 예상 장애물 & 사전 대비책 (Obstacle Protection):</span>
             </span>
-            <div className="text-slate-600 font-serif text-[8.5px] min-h-[14px]">장애요소: ____________________ ➔ 대비책: ____________________</div>
+            <div className="text-slate-600 font-sans text-[8.5px] min-h-[14px]">장애요소: ____________________ ➔ 대비책: ____________________</div>
           </div>
 
           {/* Module E: Weekly Vision Mantra */}
@@ -178,7 +178,7 @@ export default function QtSundayGeneralPage({
               <span>🌟 다음 주를 이끌 나만의 비전 선언문 (Weekly Vision Mantra)</span>
               <span className="text-emerald-700 font-mono">Monday Ready!</span>
             </div>
-            <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-emerald-900/80 font-serif">"다음 주 나는 당당하고 지혜롭게 행동하며 내 목표를 자신 있게 달성합니다."</div>
+            <div className="border-b border-dashed border-emerald-200 h-3 text-[8.5px] text-emerald-900/80 font-sans">"다음 주 나는 당당하고 지혜롭게 행동하며 내 목표를 자신 있게 달성합니다."</div>
           </div>
         </div>
       </div>

@@ -19,6 +19,14 @@ import QtYearlyOverviewGridPortrait from '@/components/advanced/portrait/QtYearl
 import QtWeeklyPlanPortrait from '@/components/advanced/portrait/QtWeeklyPlanPortrait'
 import QtDailyDiaryPortrait from '@/components/advanced/portrait/QtDailyDiaryPortrait'
 import QtPrayerAnswerPage from '@/components/advanced/QtPrayerAnswerPage'
+
+function getEndYearMonth(startYear: number, startMonth: number, durationMonths: number) {
+  const total = startYear * 12 + (startMonth - 1) + durationMonths - 1
+  return {
+    year: Math.floor(total / 12),
+    month: (total % 12) + 1,
+  }
+}
 import QtPrayerAnswerPortrait from '@/components/advanced/portrait/QtPrayerAnswerPortrait'
 import QtPrayerAnswerPage2 from '@/components/advanced/QtPrayerAnswerPage2'
 import QtPrayerAnswerPortrait2 from '@/components/advanced/portrait/QtPrayerAnswerPortrait2'
@@ -91,6 +99,8 @@ import { generateQtPdf, createMasterPdfContext, appendContainerPagesToMasterPdf,
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/diary/YearlyBuilderModal'
 import { DiaryPeriodProvider } from '@/components/advanced/diary/DiaryPeriodContext'
+import QtDiaryCoverPage from '@/components/advanced/diary/QtDiaryCoverPage'
+import QtMonthlyDividerPage from '@/components/advanced/diary/QtMonthlyDividerPage'
 
 export interface ThemeItem {
   id: string
@@ -104,6 +114,47 @@ const THEME_CATEGORIES = [
   { id: 'watercolor', name: '🌸 파스텔 수채화' },
   { id: 'modern', name: '✨ 모던 미니멀' },
 ]
+
+const PAGE_LABELS: Record<string, string> = {
+  yearlygrid: '연간 달력 그리드',
+  calendar: '월간 달력',
+  overview: '월간 개요',
+  weekly: '주간 계획',
+  daily: '데일리 일기',
+  habit: '해빗 트래커',
+  habit2: '해빗 트래커 2',
+  gratitude: '감사 일기',
+  quote: '필사 노트',
+  budget: '가계부',
+  budget2: '가계부 2',
+  culture: '컬처 로그',
+  culture2: '컬처 로그 2',
+  kpt: 'KPT 회고',
+  kpt2: 'KPT 회고 2',
+  sundaygeneral: '선데이 리셋',
+  buckettravel: '버킷 리스트',
+  wellnessmood: '웰니스 무드',
+  hundredgoal: '100가지 목표',
+  hundredgoal2: '100가지 목표 2',
+  prayer: '기도 응답',
+  prayer2: '기도 응답 2',
+  scripture: '성경 필사',
+  scripture2: '성경 필사 2',
+  sermon: '주일 설교 노트',
+  sermondeep: '설교 딥 다이빙',
+  biblemap: '성경 완독 맵',
+  biblemap2: '독서 완독 맵',
+  letter: '월간 편지',
+  letter2: '월간 편지 2',
+  intercessory: '중보기도',
+  intercessory2: '중보기도 2',
+  soapjournal: 'SOAP 저널',
+  soapjournal2: 'SOAP 저널 2',
+  fruitstracker: '성령의 열매',
+  cover: '📕 타이틀 표지',
+  monthlydivider: '📑 월별 구분',
+  wallcalendar: '🖼️ 연간 벽달력',
+}
 
 const THEMES: ThemeItem[] = [
   // 1. 파스텔 수채화 컬렉션 (Soft Pastel Watercolor)
@@ -234,7 +285,7 @@ export default function DiaryPage() {
     scripture: true,
     scripture2: true,
     sermon: true,
-    sermondeep: false,
+    sermondeep: true,
     biblemap: true,
     biblemap2: true,
     letter: true,
@@ -244,6 +295,9 @@ export default function DiaryPage() {
     soapjournal: true,
     soapjournal2: true,
     fruitstracker: true,
+    cover: true,
+    monthlydivider: true,
+    wallcalendar: true,
   })
 
   // ★ 신의 4가지 UX 스튜디오 모드 및 스텝 워크플로우 상태 변수
@@ -258,6 +312,8 @@ export default function DiaryPage() {
 
   // ★ 17개월 풀 다이어리 캔버스 연속 스트림 상태 변수
   const [isStreamView, setIsStreamView] = useState(false)
+  const [streamRenderedMonths, setStreamRenderedMonths] = useState(0)
+  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ★ 사용자가 지정한 자유 시작 연월부터 N개월 간의 전체 기간 월 목록 동적 계산
   const activePeriodMonths = useMemo(() => {
@@ -280,16 +336,81 @@ export default function DiaryPage() {
     return list
   }, [periodStartYear, periodStartMonth, periodDurationMonths])
 
+  // ★ 스트림 뷰 활성 시 월별 순차 렌더링 체인 (화면 멈춤 방지)
+  useEffect(() => {
+    if (!isStreamView) return
+    setStreamRenderedMonths(0)
+    let cancelled = false
+    let n = 0
+    const tick = () => {
+      if (cancelled) return
+      n += 1
+      setStreamRenderedMonths(n)
+      if (n < activePeriodMonths.length) {
+        streamTimerRef.current = setTimeout(tick, 110)
+      }
+    }
+    streamTimerRef.current = setTimeout(tick, 60)
+    return () => {
+      cancelled = true
+      if (streamTimerRef.current) clearTimeout(streamTimerRef.current)
+    }
+  }, [isStreamView, activePeriodMonths.length])
+
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
   const [showPageCheckerFloating, setShowPageCheckerFloating] = useState(true)
   const [isPageCheckerOpen, setIsPageCheckerOpen] = useState(true)
   const [isPreviewSelectorOpen, setIsPreviewSelectorOpen] = useState(true)
 
-  const [previewPos, setPreviewPos] = useState({ x: 30, y: 110 })
-  const [pageCheckerPos, setPageCheckerPos] = useState({ x: 360, y: 110 })
-  const [presetPos, setPresetPos] = useState({ x: 0, y: 0 })
-  const [yearMonthPos, setYearMonthPos] = useState({ x: 0, y: 0 })
+  const [previewPos, setPreviewPos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('diary-preview-pos')
+        if (saved) {
+          const p = JSON.parse(saved)
+          if (typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y }
+        }
+      } catch {}
+    }
+    return { x: 30, y: 110 }
+  })
+  const [pageCheckerPos, setPageCheckerPos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('diary-checker-pos')
+        if (saved) {
+          const p = JSON.parse(saved)
+          if (typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y }
+        }
+      } catch {}
+    }
+    return { x: typeof window !== 'undefined' ? Math.max(360, Math.round(window.innerWidth * 0.382)) : 360, y: 110 }
+  })
+  const [presetPos, setPresetPos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('diary-preset-pos')
+        if (saved) {
+          const p = JSON.parse(saved)
+          if (typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y }
+        }
+      } catch {}
+    }
+    return { x: 0, y: 0 }
+  })
+  const [yearMonthPos, setYearMonthPos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('diary-yearmonth-pos')
+        if (saved) {
+          const p = JSON.parse(saved)
+          if (typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y }
+        }
+      } catch {}
+    }
+    return { x: 0, y: 0 }
+  })
   const [canvasPos, setCanvasPos] = useState({ x: 0, y: 0 })
 
   const [activeDragTarget, setActiveDragTarget] = useState<'preview' | 'checker' | 'preset' | 'yearmonth' | 'canvas' | null>(null)
@@ -338,6 +459,15 @@ export default function DiaryPage() {
       if (elem.releasePointerCapture) {
         try { elem.releasePointerCapture(e.pointerId) } catch {}
       }
+      if (activeDragTarget === 'preview') {
+        try { localStorage.setItem('diary-preview-pos', JSON.stringify(previewPos)) } catch {}
+      } else if (activeDragTarget === 'checker') {
+        try { localStorage.setItem('diary-checker-pos', JSON.stringify(pageCheckerPos)) } catch {}
+      } else if (activeDragTarget === 'preset') {
+        try { localStorage.setItem('diary-preset-pos', JSON.stringify(presetPos)) } catch {}
+      } else if (activeDragTarget === 'yearmonth') {
+        try { localStorage.setItem('diary-yearmonth-pos', JSON.stringify(yearMonthPos)) } catch {}
+      }
       setActiveDragTarget(null)
     }
   }
@@ -346,7 +476,7 @@ export default function DiaryPage() {
   const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
   const [modalViewMode, setModalViewMode] = useState<'single' | 'continuous'>('continuous')
   const [zoomScale, setZoomScale] = useState(1.0)
-  const [modalActiveTab, setModalActiveTab] = useState<PreviewTabType>('calendar')
+  const [modalActiveTab, setModalActiveTab] = useState<PreviewTabType | null>('calendar')
   const [modalDayNum, setModalDayNum] = useState(1)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null)
@@ -453,6 +583,200 @@ export default function DiaryPage() {
     }
   }
 
+  // ★ 스트림 뷰용: 특정 연/월 기준 주차 데이터 계산 (선택 월과 무관)
+  const getWeekDataFor = (year: number, month: number, wIndex: number) => {
+    const totalDaysCount = new Date(year, month, 0).getDate()
+    const startDay = (wIndex - 1) * 7 + 1
+    const endDay = Math.min(totalDaysCount, wIndex * 7)
+
+    const dateRangeText = `${String(month).padStart(2, '0')}/${String(startDay).padStart(2, '0')} - ${String(month).padStart(2, '0')}/${String(endDay).padStart(2, '0')}`
+
+    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    const daysInWeek = Array.from({ length: 7 }, (_, i) => {
+      const dayNum = (wIndex - 1) * 7 + i + 1
+      const isValid = dayNum <= totalDaysCount
+      const d = isValid ? new Date(year, month - 1, dayNum) : null
+      const dayName = d ? dayNames[d.getDay()] : dayNames[i]
+      const dateStr = isValid ? `${String(month).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}` : '-'
+      return {
+        dayNum: isValid ? dayNum : 0,
+        dayName,
+        dateStr,
+      }
+    })
+
+    return {
+      weekNum: wIndex,
+      weekLabel: `${wIndex}주차`,
+      dateRangeText,
+      daysInWeek,
+    }
+  }
+
+  // ★ 풀 스트림 뷰 헬퍼: 단일 페이지를 스케일 페이퍼로 감싸기
+  const streamScale = isLandscape ? 0.72 : 0.58
+  const streamPageW = Math.round(pageWidth * streamScale)
+  const streamPageH = Math.round(pageHeight * streamScale)
+
+  type MasterPageMeta = { year?: number; month?: number; pageType?: string }
+
+  const renderStreamPage = (key: string, node: React.ReactNode, _meta?: MasterPageMeta) => (
+    <div
+      key={key}
+      className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-visible bg-slate-900 border border-white/10"
+      style={{ width: `${streamPageW}px`, height: `${streamPageH}px` }}
+    >
+      <div
+        className="origin-top-left absolute top-0 left-0"
+        style={{ width: `${pageWidth}px`, height: `${pageHeight}px`, transform: `scale(${streamScale})` }}
+      >
+        {node}
+      </div>
+    </div>
+  )
+
+  // ★ 전체화면 마스터 뷰용: 원본 페이지 크기로 렌더
+  const renderModalPage = (key: string, node: React.ReactNode, meta?: MasterPageMeta) => (
+    <div
+      key={key}
+      id={key}
+      data-master-anchor={key}
+      data-master-year={meta?.year}
+      data-master-month={meta?.month}
+      data-master-page={meta?.pageType || key}
+      className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900 border border-white/10"
+      style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}
+    >
+      {typeof meta?.year === 'number' && typeof meta?.month === 'number' ? (
+        <DiaryPeriodProvider
+          periodMonths={activePeriodMonths}
+          currentYear={meta.year}
+          currentMonth={meta.month}
+        >
+          {node}
+        </DiaryPeriodProvider>
+      ) : node}
+    </div>
+  )
+
+  // ★ 해당 연/월의 전체 선택 내지를 PDF 순서대로 렌더
+  const renderMonthPageSet = (
+    year: number,
+    month: number,
+    seq: number,
+    prefix: string,
+    pageRenderer: (key: string, node: React.ReactNode, meta?: MasterPageMeta) => React.ReactNode = renderStreamPage,
+  ) => {
+    const mName = MONTH_NAMES[month - 1] || 'August'
+    const pages: React.ReactNode[] = []
+    const push = (key: string, node: React.ReactNode) => pages.push(pageRenderer(`${prefix}-${key}`, node, { year, month, pageType: key }))
+
+    if (selectedPages.monthlydivider) {
+      push('divider', <QtMonthlyDividerPage year={year} month={month} seqIndex={seq} totalMonths={activePeriodMonths.length} variant={categoryFilter} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    }
+    if (selectedPages.calendar) {
+      push('calendar', <CalendarComponent year={year} month={month} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />)
+    }
+    if (selectedPages.overview) {
+      push('overview', <OverviewComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />)
+    }
+    if (selectedPages.habit) push('habit', <HabitComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.habit2) push('habit2', <Habit2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.gratitude) push('gratitude', <GratitudeComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.budget) push('budget', <BudgetComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.budget2) push('budget2', <Budget2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.kpt) push('kpt', <KptComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.kpt2) push('kpt2', <Kpt2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.quote) push('quote', <QuoteComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.culture) push('culture', <CultureComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.culture2) push('culture2', <Culture2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.sundaygeneral) {
+      Array.from({ length: 4 }, (_, i) => i + 1).forEach((sNo) => {
+        push(`sunday-${sNo}`, <SundayGeneralComponent year={year} month={month} sundayNo={sNo} sundayLabel={`${month}월 ${sNo}주차 선데이 리셋`} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      })
+    }
+    if (selectedPages.buckettravel) push('buckettravel', <BucketTravelComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.wellnessmood) push('wellnessmood', <WellnessMoodComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+
+    // 주차별 밀착 인터리브 (주간 계획 + 7일 데일리) — 해당 월 기준
+    if (selectedPages.weekly && selectedPages.daily) {
+      const monthTotalDays = new Date(year, month, 0).getDate()
+      for (let wNum = 1; wNum <= 5; wNum++) {
+        const wData = getWeekDataFor(year, month, wNum)
+        const startDay = (wNum - 1) * 7 + 1
+        const endDay = Math.min(monthTotalDays, wNum * 7)
+        push(`weekly-${wNum}`, <WeeklyComponent year={year} weekNum={wNum} weekLabel={`WEEK ${wNum}`} dateRangeText={wData.dateRangeText} daysInWeek={wData.daysInWeek} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />)
+        const dayNamesShort = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+        for (let d = startDay; d <= endDay; d++) {
+          const dateObj = new Date(year, month - 1, d)
+          const realDayName = dayNamesShort[dateObj.getDay()]
+          push(`day-${wNum}-${d}`, <DailyComponent dateLabel={`${String(d).padStart(2, '0')} DAY`} dayNum={d} dayName={realDayName} monthName={mName} yearLabel={String(year)} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} activeWeek={`W${wNum}`} isChurchMode={categoryFilter === 'church'} />)
+        }
+      }
+    }
+
+    // 크리스천 영성 전용 내지 파트
+    if (categoryFilter !== 'general') {
+      if (selectedPages.soapjournal) push('soapjournal', <SoapJournalComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.soapjournal2) push('soapjournal2', <SoapJournal2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.intercessory) push('intercessory', <IntercessoryComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.intercessory2) push('intercessory2', <Intercessory2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.fruitstracker) push('fruitstracker', <FruitsTrackerComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.prayer) push('prayer', <PrayerComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.prayer2) push('prayer2', <Prayer2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.scripture) push('scripture', <ScriptureArtComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.scripture2) push('scripture2', <ScriptureArt2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.sermon) {
+        Array.from({ length: 4 }, (_, i) => i + 1).forEach((sNo) => {
+          push(`sermon-${sNo}`, <SundaySermonComponent year={year} month={month} sundayNo={sNo} sundayLabel={`${month}월 ${sNo}주차 주일예배`} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+        })
+      }
+      if (selectedPages.sermondeep) push('sermondeep', <SundaySermonDeepComponent year={year} month={month} sundayNo={1} dateStr="08/02" monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.letter) push('letter', <MonthlyLetterComponent year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      if (selectedPages.letter2) push('letter2', <MonthlyLetter2Component year={year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    }
+
+    return pages
+  }
+
+  // ★ 풀 스트림 뷰 연간 부록 (표지/벽달력/그리드/목표/성경맵) 1회 렌더
+  const renderStreamAnnexes = (
+    pageRenderer: (key: string, node: React.ReactNode, meta?: MasterPageMeta) => React.ReactNode = renderStreamPage,
+  ) => {
+    const pages: React.ReactNode[] = []
+    const push = (key: string, node: React.ReactNode) => pages.push(pageRenderer(key, node, { pageType: key }))
+    const endCalc = getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths)
+
+    if (selectedPages.cover) {
+      push('cover', <QtDiaryCoverPage startYear={periodStartYear} startMonth={periodStartMonth} endYear={endCalc.year} endMonth={endCalc.month} durationMonths={periodDurationMonths} variant={categoryFilter} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    }
+    if (selectedPages.wallcalendar) {
+      const chunks: { year: number; month: number }[][] = []
+      for (let y = periodStartYear; y <= endCalc.year; y++) {
+        for (let s = 1; s <= 12; s += 6) {
+          const chunk: { year: number; month: number }[] = []
+          for (let m = s; m <= s + 5; m++) chunk.push({ year: y, month: m })
+          chunks.push(chunk)
+        }
+      }
+      chunks.forEach((chunk, ci) => {
+        push(`wall-${ci}`, <QtYearlyWallCalendarPage months={chunk} chunkIndex={ci + 1} chunkCount={chunks.length} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+      })
+    }
+    if (selectedPages.yearlygrid) {
+      yearlyGridYears.forEach((gy) => {
+        push(`yearlygrid-${gy}`, <YearlyGridComponent startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />)
+      })
+    }
+    const startMonthName = MONTH_NAMES[periodStartMonth - 1] || 'August'
+    if (selectedPages.hundredgoal) push('hundredgoal', <HundredGoalComponent year={periodStartYear} monthName={startMonthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.hundredgoal2) push('hundredgoal2', <HundredGoal2Component year={periodStartYear} monthName={startMonthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.biblemap) push('biblemap', <BibleMapComponent year={periodStartYear} monthName={startMonthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+    if (selectedPages.biblemap2) push('biblemap2', <BibleMap2Component year={periodStartYear} monthName={startMonthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />)
+
+    return pages
+  }
+
   // 🌟 Zero-Modal 직통 연간 마스터 PDF 다운로드 엔진 (상단 툴바 설정 100% 직통 즉시 가동)
   const handleDirectYearlyMaster = async () => {
     if (!pdfContainerRef.current) return
@@ -529,7 +853,7 @@ export default function DiaryPage() {
               const firstInPeriod = chunk.find(
                 (m) => m.year > startY || (m.year === startY && m.month >= startM)
               )
-              if (!firstInPeriod) return { months: chunk, index: ci + 1, total: wallChunks.length }
+              if (!firstInPeriod) return null
               if (firstInPeriod.year === target.year && firstInPeriod.month === target.month) {
                 return { months: chunk, index: ci + 1, total: wallChunks.length }
               }
@@ -573,7 +897,7 @@ export default function DiaryPage() {
       if (masterCtx.hasContent) {
         saveMasterPdf(
           masterCtx.pdf,
-          `Master_Diary_${cfg.startYear}.${String(cfg.startMonth).padStart(2, '0')}-${cfg.endYear}.${String(cfg.endMonth).padStart(2, '0')}.pdf`
+          `Master_Diary_${startY}.${String(startM).padStart(2, '0')}-${endY}.${String(endM).padStart(2, '0')}.pdf`
         )
       } else {
         alert('렌더링할 다이어리 페이지가 없습니다.')
@@ -627,6 +951,70 @@ export default function DiaryPage() {
     }
   }
 
+  // ★ 마스터 뷰 내부 링크: 현재 문서 안에서 같은 월/페이지 앵커로 이동
+  const scrollToMasterPage = (navTarget: string | null, dayAttr: string | null, source: HTMLElement) => {
+    const container = modalScrollRef.current
+    if (!container) return false
+
+    const sourcePage = source.closest('[data-master-anchor]') as HTMLElement | null
+    let year = Number(sourcePage?.dataset.masterYear) || selectedYear
+    let month = Number(sourcePage?.dataset.masterMonth) || selectedMonth
+    let pageType = navTarget || ''
+
+    if (navTarget === 'yearlygrid') {
+      const yearlyPage = container.querySelector('[data-master-page^="yearlygrid-"]')
+      if (!(yearlyPage instanceof HTMLElement)) return false
+      yearlyPage.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return true
+    }
+
+    if (navTarget?.startsWith('month-')) {
+      const parts = navTarget.replace('month-', '').split('-')
+      const monthValue = Number(parts[parts.length - 1])
+      if (!Number.isInteger(monthValue) || monthValue < 1 || monthValue > 12) return false
+      month = monthValue
+      if (parts.length === 2) {
+        const yearValue = Number(parts[0])
+        if (Number.isInteger(yearValue)) year = yearValue
+      }
+      pageType = 'calendar'
+    } else if (navTarget?.startsWith('week-')) {
+      pageType = `weekly-${navTarget.replace('week-', '')}`
+    } else if (navTarget?.startsWith('day-')) {
+      pageType = `day-${navTarget.replace('day-', '')}`
+    } else if (dayAttr) {
+      pageType = `day-${dayAttr}`
+    }
+
+    if (!pageType) return false
+
+    const anchor = `modal-master-${year}-${month}-${pageType}`
+    const page = container.querySelector(`[data-master-anchor="${anchor}"]`)
+    if (!(page instanceof HTMLElement)) return false
+
+    page.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return true
+  }
+
+  const scrollToMasterType = (tab: PreviewTabType) => {
+    const container = modalScrollRef.current
+    if (!container) return false
+    const prefix = tab === 'weekly'
+      ? 'weekly-'
+      : tab === 'daily'
+        ? 'day-'
+        : tab === 'wallcalendar'
+          ? 'wall-'
+          : tab === 'yearlygrid'
+            ? 'yearlygrid-'
+            : tab
+    const page = Array.from(container.querySelectorAll<HTMLElement>('[data-master-page]'))
+      .find((candidate) => candidate.dataset.masterPage === tab || candidate.dataset.masterPage?.startsWith(prefix))
+    if (!page) return false
+    page.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return true
+  }
+
   // ★ 팝업 뷰어 캔버스 내부 클릭 시 링크 이벤트 처리 (날짜, 주차, 헤더 탭 클릭 시 부드럽게 자동 이동)
   const handleModalCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement
@@ -636,6 +1024,10 @@ export default function DiaryPage() {
 
     const navTarget = navTargetEl.getAttribute('data-nav-target')
     const dayAttr = navTargetEl.getAttribute('data-day')
+
+    if (modalFullMaster && modalViewMode === 'continuous' && scrollToMasterPage(navTarget, dayAttr, navTargetEl)) {
+      return
+    }
 
     if (navTarget) {
       if (navTarget === 'calendar') {
@@ -679,7 +1071,7 @@ export default function DiaryPage() {
         }
       } else {
         if (modalViewMode === 'single') {
-          setModalActiveTab(navTarget)
+          setModalActiveTab(navTarget as PreviewTabType)
         } else {
           scrollToPageElement(`modal-page-${navTarget}`)
         }
@@ -737,6 +1129,9 @@ export default function DiaryPage() {
         soapjournal: false,
         soapjournal2: false,
         fruitstracker: false,
+        cover: true,
+        monthlydivider: true,
+        wallcalendar: true,
       })
       setCategoryFilter('general')
       setPreviewTab('yearlygrid')
@@ -777,6 +1172,9 @@ export default function DiaryPage() {
         soapjournal: true,
         soapjournal2: true,
         fruitstracker: true,
+        cover: true,
+        monthlydivider: true,
+        wallcalendar: true,
       })
       setCategoryFilter('church')
       setPreviewTab('yearlygrid')
@@ -817,8 +1215,11 @@ export default function DiaryPage() {
         soapjournal: false,
         soapjournal2: false,
         fruitstracker: false,
+        cover: true,
+        monthlydivider: true,
+        wallcalendar: true,
       })
-      setCategoryFilter('basic')
+      setCategoryFilter('all')
       setPreviewTab('yearlygrid')
     } else {
       setSelectedPages({
@@ -857,11 +1258,18 @@ export default function DiaryPage() {
         soapjournal: true,
         soapjournal2: true,
         fruitstracker: true,
+        cover: true,
+        monthlydivider: true,
+        wallcalendar: true,
       })
       setCategoryFilter('all')
       setPreviewTab('buckettravel')
     }
   }
+
+  const modalTabOptions = Object.keys(PAGE_LABELS).filter(
+    (tab) => tab !== 'cover' && tab !== 'monthlydivider' && selectedPages[tab],
+  ) as PreviewTabType[]
 
   const activeSelectedCount = Object.values(selectedPages).filter(Boolean).length
   const estimatedPdfPages = (selectedPages.weekly && selectedPages.daily ? totalDays + 5 : 0) + activeSelectedCount - (selectedPages.weekly && selectedPages.daily ? 2 : 0)
@@ -994,20 +1402,10 @@ export default function DiaryPage() {
             {/* 전체화면 팝업 뷰어 버튼 */}
             <button
               onClick={() => setIsFullscreenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 text-xs font-semibold transition-all duration-200 shadow-sm hover:border-slate-500 hover:text-white cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border border-slate-500 bg-slate-800/90 text-slate-100 shadow-sm hover:bg-slate-700/90 hover:text-white cursor-pointer"
             >
               <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
               <span>전체화면</span>
-            </button>
-
-            {/* 연간 마스터 다이어리 일괄 제작 원클릭 버튼 */}
-            <button
-              disabled={isYearlyGenerating}
-              onClick={handleDirectYearlyMaster}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300/90 border border-amber-500/30 hover:border-amber-400/50 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400/80" />
-              <span>연간 제작</span>
             </button>
 
             {/* PDF 다운로드 메인 CTA 버튼 */}
@@ -1332,7 +1730,7 @@ export default function DiaryPage() {
                                 : 'bg-white/5 border-white/5 text-slate-400 hover:text-slate-200'
                             }`}
                           >
-                            <span className="truncate pr-2 font-medium">{pk} 내지</span>
+                            <span className="truncate pr-2 font-medium">{PAGE_LABELS[pk] || `${pk} 내지`}</span>
                             <input
                               type="checkbox"
                               checked={isChecked}
@@ -1662,39 +2060,30 @@ export default function DiaryPage() {
 
                         {/* Proportional Scaled Paper Wrapper */}
                         {isStreamView ? (
-                          /* ✨ 17개월 연속 풀 마스터 캔버스 스트림 (2026.08 ~ 2027.12) */
+                          /* ✨ 전체 기간 풀 마스터 캔버스 스트림 (연간 부록 + 월별 전체 내지) */
                           <div className="flex flex-col items-center space-y-6 py-4 my-2">
                             <div className="px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold">
-                              ✨ 17개월 풀 다이어리 캔버스 스트림 (2026.08 ~ 2027.12)
+                              ✨ {activePeriodMonths.length}개월 풀 마스터 캔버스 스트림 ({periodStartYear}.{String(periodStartMonth).padStart(2, '0')} ~ {getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).year}.{String(getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).month).padStart(2, '0')})
                             </div>
-                            {activePeriodMonths.map((mObj) => {
-                              const mName = `${mObj.month}월`
-                              return (
-                                <div
-                                  key={`stream-canvas-month-${mObj.year}-${mObj.month}`}
-                                  className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden bg-slate-900 border border-white/10"
-                                  style={{
-                                    width: `${canvasW}px`,
-                                    height: `${canvasH}px`,
-                                  }}
-                                >
-                                  <div
-                                    className="origin-top-left absolute top-0 left-0"
-                                    style={{
-                                      width: `${pageWidth}px`,
-                                      height: `${pageHeight}px`,
-                                      transform: `scale(${canvasScale})`,
-                                    }}
-                                  >
-                                    <CalendarComponent year={mObj.year} month={mObj.month} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                                  </div>
+                            {streamRenderedMonths < activePeriodMonths.length && (
+                              <div className="flex items-center gap-2 text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-amber-500/30 px-3 py-1.5 rounded-full">
+                                <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                월별 내지 순차 렌더링 중... {streamRenderedMonths}/{activePeriodMonths.length}개월
+                              </div>
+                            )}
+                            {renderStreamAnnexes()}
+                            {activePeriodMonths.slice(0, streamRenderedMonths).map((mObj, mi) => (
+                              <div key={`stream-month-${mObj.year}-${mObj.month}`} className="w-full flex flex-col items-center space-y-4">
+                                <div className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[10px] font-mono font-bold">
+                                  📅 MONTH {mi + 1} / {activePeriodMonths.length} — {mObj.year}년 {mObj.month}월
                                 </div>
-                              )
-                            })}
+                                {renderMonthPageSet(mObj.year, mObj.month, mi + 1, `m${mObj.year}-${mObj.month}`)}
+                              </div>
+                            ))}
                           </div>
                         ) : (
                           <div
-                            className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
+                            className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-visible bg-slate-900 my-2"
                             style={{
                               width: `${canvasW}px`,
                               height: `${canvasH * previewStackFactor}px`,
@@ -1985,7 +2374,7 @@ export default function DiaryPage() {
                     className="w-full bg-[#070b19] border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
                   >
                     <div
-                      className="relative shrink-0 shadow-[0_30px_80px_-15px_rgba(0,0,0,0.9)] rounded-xl overflow-hidden pointer-events-none bg-slate-900 my-2"
+                      className="relative shrink-0 shadow-[0_30px_80px_-15px_rgba(0,0,0,0.9)] rounded-xl overflow-visible bg-slate-900 my-2"
                       style={{
                         width: `${canvasW}px`,
                         height: `${canvasH * previewStackFactor}px`,
@@ -2193,7 +2582,7 @@ export default function DiaryPage() {
                         : 'bg-white/5 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                     }`}
                   >
-                    <span className="truncate pr-2">{pk}</span>
+                    <span className="truncate pr-2">{PAGE_LABELS[pk] || pk}</span>
                     <input
                       type="checkbox"
                       checked={isChecked}
@@ -2217,7 +2606,11 @@ export default function DiaryPage() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
                 <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>{selectedYear}년 {selectedMonth}월 맞춤형 다이어리 100% 실물 전체화면 뷰어</span>
+                <span>
+                  {modalFullMaster
+                    ? `설정 기간 마스터 뷰 (${activePeriodMonths.length}개월 전체) · ${periodStartYear}.${String(periodStartMonth).padStart(2, '0')} ~ ${getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).year}.${String(getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).month).padStart(2, '0')}`
+                    : `${selectedYear}년 ${selectedMonth}월 맞춤형 다이어리 100% 실물 전체화면 뷰어`}
+                </span>
               </div>
               <span className="text-xs text-slate-400 font-medium hidden md:inline-block">
                 · 테마: <strong className="text-slate-200">{selectedTheme.name}</strong>
@@ -2306,6 +2699,16 @@ export default function DiaryPage() {
               </div>
             </div>
 
+            {modalViewMode === 'single' && modalActiveTab && (
+              <button
+                type="button"
+                onClick={() => setModalActiveTab(null)}
+                className="shrink-0 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/30 text-rose-300 text-[10px] font-bold transition-all cursor-pointer"
+              >
+                ✕ 선택 해제
+              </button>
+            )}
+
             <button
               onClick={() => setIsFullscreenModalOpen(false)}
               className="p-2 rounded-xl bg-white/10 hover:bg-rose-600 text-slate-300 hover:text-white transition-all border border-white/10"
@@ -2313,6 +2716,35 @@ export default function DiaryPage() {
               <X className="w-5 h-5" />
             </button>
           </header>
+
+          {/* Modal page tab navigation */}
+          <nav className="shrink-0 border-b border-white/10 bg-[#070b19]/95 px-6 py-2 backdrop-blur-md">
+            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
+              <span className="shrink-0 mr-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">내지 탭</span>
+              {modalTabOptions.map((tab) => (
+                <button
+                  key={`modal-tab-${tab}`}
+                  type="button"
+                  onClick={() => {
+                    if (modalFullMaster && modalViewMode === 'continuous') {
+                      scrollToMasterType(tab)
+                      return
+                    }
+                    const shouldClear = modalViewMode === 'single' && modalActiveTab === tab
+                    setModalActiveTab(shouldClear ? null : tab)
+                    if (!shouldClear) setModalViewMode('single')
+                  }}
+                  className={`shrink-0 px-2.5 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    modalViewMode === 'single' && modalActiveTab === tab
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
+                      : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10 hover:text-white hover:border-amber-400/40'
+                  }`}
+                >
+                  {PAGE_LABELS[tab]}
+                </button>
+              ))}
+            </div>
+          </nav>
 
           {/* Modal Main View */}
           <div
@@ -2322,7 +2754,7 @@ export default function DiaryPage() {
           >
             {modalViewMode === 'single' ? (
               <div
-                className="transition-transform duration-200 origin-top my-4 shadow-2xl rounded-xl overflow-hidden shrink-0"
+                className="transition-transform duration-200 origin-top my-4 shadow-2xl rounded-xl overflow-visible shrink-0"
                 style={{
                   transform: `scale(${zoomScale})`,
                   transformOrigin: 'top center',
@@ -2330,6 +2762,13 @@ export default function DiaryPage() {
                   height: `${modalActiveTab === 'yearlygrid' || modalActiveTab === 'wallcalendar' ? pageHeight * 2 : pageHeight}px`,
                 }}
               >
+                {!modalActiveTab && (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-slate-900 text-slate-400">
+                    <Eye className="w-8 h-8 text-slate-600" />
+                    <p className="text-sm font-bold">내지 탭을 선택해 미리보세요</p>
+                    <p className="text-xs text-slate-500">선택 해제 상태입니다.</p>
+                  </div>
+                )}
                 {modalActiveTab === 'yearlygrid' && (
                   <div className="flex flex-col">
                     {yearlyGridYears.map((gy) => (
@@ -2430,9 +2869,23 @@ export default function DiaryPage() {
                   width: `${pageWidth}px`,
                 }}
               >
+                {modalFullMaster ? (
+                  <>
+                    {renderStreamAnnexes(renderModalPage)}
+                    {activePeriodMonths.map((mObj, mi) => (
+                      <React.Fragment key={`modal-full-master-month-${mObj.year}-${mObj.month}`}>
+                        <div className="px-4 py-2 rounded-xl bg-indigo-500/15 border border-indigo-500/40 text-indigo-300 text-xs font-mono font-bold text-center">
+                          📅 MONTH {mi + 1} / {activePeriodMonths.length} · {mObj.year}년 {mObj.month}월
+                        </div>
+                        {renderMonthPageSet(mObj.year, mObj.month, mi + 1, `modal-master-${mObj.year}-${mObj.month}`, renderModalPage)}
+                      </React.Fragment>
+                    ))}
+                  </>
+                ) : (
+                  <>
                 {/* 1. 연간 마스터 & 비전 부록 파트 */}
                 {selectedPages.yearlygrid && (
-                  <div id="modal-page-yearlygrid" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900">
+                  <div id="modal-page-yearlygrid" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900">
                     {yearlyGridYears.map((gy) => (
                       <div key={`modal-page-yearlygrid-${gy}`} className="overflow-hidden" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                         <YearlyGridComponent startYear={gy} startMonth={1} endYear={gy} endMonth={12} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
@@ -2441,125 +2894,103 @@ export default function DiaryPage() {
                   </div>
                 )}
                 {selectedPages.hundredgoal && (
-                  <div id="modal-page-hundredgoal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-hundredgoal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <HundredGoalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.hundredgoal2 && (
-                  <div id="modal-page-hundredgoal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-hundredgoal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <HundredGoal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.biblemap && (
-                  <div id="modal-page-biblemap" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-biblemap" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <BibleMapComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.biblemap2 && (
-                  <div id="modal-page-biblemap2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-biblemap2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <BibleMap2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
 
-                {/* 2. 월간 달력 & 개요 파트 (사용자 지정 전체 기간 풀 마스터 뷰 지원) */}
-                {modalFullMaster ? (
-                  activePeriodMonths.map((mObj) => {
-                    const mName = `${mObj.month}월`
-                    return (
-                      <React.Fragment key={`modal-full-master-period-${mObj.year}-${mObj.month}`}>
-                        {selectedPages.calendar && (
-                          <div id={`modal-page-calendar-m${mObj.year}-${mObj.month}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                            <CalendarComponent year={mObj.year} month={mObj.month} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                          </div>
-                        )}
-                        {selectedPages.overview && (
-                          <div id={`modal-page-overview-m${mObj.year}-${mObj.month}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                            <OverviewComponent year={mObj.year} monthName={mName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                          </div>
-                        )}
-                      </React.Fragment>
-                    )
-                  })
-                ) : (
-                  <>
-                    {selectedPages.calendar && (
-                      <div id="modal-page-calendar" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                        <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                      </div>
-                    )}
-                    {selectedPages.overview && (
-                      <div id="modal-page-overview" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
-                        <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
-                      </div>
-                    )}
-                  </>
+                {/* 2. 월간 달력 & 개요 파트 */}
+                {selectedPages.calendar && (
+                  <div id="modal-page-calendar" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <CalendarComponent year={selectedYear} month={selectedMonth} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                  </div>
+                )}
+                {selectedPages.overview && (
+                  <div id="modal-page-overview" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <OverviewComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} isGeneralMode={categoryFilter !== 'church'} />
+                  </div>
                 )}
 
                 {/* 3. 월간 4대 핵심 트래커 파트 (전진 배치) */}
                 {selectedPages.habit && (
-                  <div id="modal-page-habit" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-habit" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <HabitComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.habit2 && (
-                  <div id="modal-page-habit2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-habit2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Habit2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.gratitude && (
-                  <div id="modal-page-gratitude" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-gratitude" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <GratitudeComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.budget && (
-                  <div id="modal-page-budget" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-budget" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <BudgetComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.budget2 && (
-                  <div id="modal-page-budget2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-budget2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Budget2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.kpt && (
-                  <div id="modal-page-kpt" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-kpt" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <KptComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.kpt2 && (
-                  <div id="modal-page-kpt2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-kpt2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Kpt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.quote && (
-                  <div id="modal-page-quote" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-quote" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <QuoteComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.culture && (
-                  <div id="modal-page-culture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-culture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <CultureComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.culture2 && (
-                  <div id="modal-page-culture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-culture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Culture2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.sundaygeneral && (
                   Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
-                    <div key={`modal-sundaygeneral-${sNo}`} id={`modal-page-sundaygeneral-${sNo}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <div key={`modal-sundaygeneral-${sNo}`} id={`modal-page-sundaygeneral-${sNo}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                       <SundayGeneralComponent year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 선데이 리셋`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     </div>
                   ))
                 )}
                 {selectedPages.buckettravel && (
-                  <div id="modal-page-buckettravel" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-buckettravel" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <BucketTravelComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.wellnessmood && (
-                  <div id="modal-page-wellnessmood" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-wellnessmood" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <WellnessMoodComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
@@ -2576,7 +3007,7 @@ export default function DiaryPage() {
                     return (
                       <React.Fragment key={`modal-interleaved-week-${wNum}`}>
                         {/* 해당 주차 주간 계획표 */}
-                        <div id={`modal-page-week-${wNum}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                        <div id={`modal-page-week-${wNum}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                           <WeeklyComponent
                             year={selectedYear}
                             weekNum={wNum}
@@ -2598,7 +3029,7 @@ export default function DiaryPage() {
                           const realDayName = dayNamesShort[dateObj.getDay()]
 
                           return (
-                            <div key={`modal-day-${d}`} id={`modal-page-day-${d}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                            <div key={`modal-day-${d}`} id={`modal-page-day-${d}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                               <DailyComponent
                                 dateLabel={`${String(d).padStart(2, '0')} ${realDayName}`}
                                 dayNum={d}
@@ -2621,71 +3052,73 @@ export default function DiaryPage() {
 
                 {/* 5. 크리스천 영성 팩 */}
                 {selectedPages.soapjournal && (
-                  <div id="modal-page-soapjournal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-soapjournal" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <SoapJournalComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.soapjournal2 && (
-                  <div id="modal-page-soapjournal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-soapjournal2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <SoapJournal2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.intercessory && (
-                  <div id="modal-page-intercessory" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-intercessory" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <IntercessoryComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.intercessory2 && (
-                  <div id="modal-page-intercessory2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-intercessory2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Intercessory2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.fruitstracker && (
-                  <div id="modal-page-fruitstracker" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-fruitstracker" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <FruitsTrackerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.prayer && (
-                  <div id="modal-page-prayer" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-prayer" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <PrayerComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.prayer2 && (
-                  <div id="modal-page-prayer2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-prayer2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <Prayer2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.scripture && (
-                  <div id="modal-page-scripture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-scripture" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <ScriptureArtComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.scripture2 && (
-                  <div id="modal-page-scripture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-scripture2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <ScriptureArt2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.sermon && (
                   Array.from({ length: 4 }, (_, i) => i + 1).map((sNo) => (
-                    <div key={`modal-sermon-${sNo}`} id={`modal-page-sermon-${sNo}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                    <div key={`modal-sermon-${sNo}`} id={`modal-page-sermon-${sNo}`} className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                       <SundaySermonComponent year={selectedYear} month={selectedMonth} sundayNo={sNo} sundayLabel={`${selectedMonth}월 ${sNo}주차 주일예배`} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                     </div>
                   ))
                 )}
                 {selectedPages.sermondeep && (
-                  <div id="modal-page-sermondeep" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-sermondeep" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <SundaySermonDeepComponent year={selectedYear} month={selectedMonth} sundayNo={1} dateStr="08/02" monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.letter && (
-                  <div id="modal-page-letter" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-letter" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <MonthlyLetterComponent year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
                 )}
                 {selectedPages.letter2 && (
-                  <div id="modal-page-letter2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
+                  <div id="modal-page-letter2" className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-visible shrink-0 bg-slate-900" style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}>
                     <MonthlyLetter2Component year={selectedYear} monthName={monthName} themeColor={activeColor} pageWidth={pageWidth} pageHeight={pageHeight} />
                   </div>
+                )}
+                  </>
                 )}
               </div>
             )}
@@ -2696,7 +3129,22 @@ export default function DiaryPage() {
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
         <div ref={pdfContainerRef}>
-          {/* 0.0 연간 월력 벽달력 (Yearly Wall Calendar, 연도별 6개월씩 2장 / 연간 일괄 생성 전용) */}
+          {/* 0.0 연간 타이틀 표지 (마스터 PDF 최상단 1장, 연간 일괄 시 첫 반복에서만 렌더) */}
+          {selectedPages.cover && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
+            <QtDiaryCoverPage
+              startYear={periodStartYear}
+              startMonth={periodStartMonth}
+              endYear={getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).year}
+              endMonth={getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths).month}
+              durationMonths={periodDurationMonths}
+              variant={categoryFilter}
+              themeColor={activeColor}
+              pageWidth={pageWidth}
+              pageHeight={pageHeight}
+            />
+          )}
+
+          {/* 0.0b 연간 월력 벽달력 (Yearly Wall Calendar, 연도별 6개월씩 / 청크 시작 월 배치에서 렌더) */}
           {activeWallChunks && activeWallChunks.length > 0 && (
             activeWallChunks.map((chunk) => (
               <QtYearlyWallCalendarPage
@@ -2711,20 +3159,22 @@ export default function DiaryPage() {
             ))
           )}
 
-          {/* 0.0 연간 월력 벽달력 (Yearly Wall Calendar, 연도별 6개월씩 4장) */}
-          {activeWallChunks && activeWallChunks.length > 0 && (
-            activeWallChunks.map((chunk) => (
-              <QtYearlyWallCalendarPage
-                key={`wall-${chunk.index}`}
-                months={chunk.months}
-                chunkIndex={chunk.index}
-                chunkCount={chunk.total}
+          {/* 0.0c 월별 구분 인덱스 커버 (매월 반복마다 렌더) */}
+          {selectedPages.monthlydivider && (() => {
+            const seq = activePeriodMonths.findIndex((m) => m.year === selectedYear && m.month === selectedMonth) + 1
+            return (
+              <QtMonthlyDividerPage
+                year={selectedYear}
+                month={selectedMonth}
+                seqIndex={seq > 0 ? seq : 1}
+                totalMonths={activePeriodMonths.length}
+                variant={categoryFilter}
                 themeColor={activeColor}
                 pageWidth={pageWidth}
                 pageHeight={pageHeight}
               />
-            ))
-          )}
+            )
+          })()}
 
           {/* 0.1 연간 마스터 12개월 달력 그리드 2장 (연간 일괄 시 첫 반복에서만 렌더) */}
           {selectedPages.yearlygrid && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
@@ -2917,9 +3367,9 @@ export default function DiaryPage() {
           >
             <div className="flex items-center gap-2">
               <GripHorizontal className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
                 미리보기 패널
-                <span className="text-[9px] font-mono text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                <span className="text-[9.5px] font-mono font-semibold text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded-full border border-indigo-500/30 shadow-xs">
                   드래그 가능
                 </span>
               </h3>
@@ -3044,7 +3494,7 @@ export default function DiaryPage() {
       {showPageCheckerFloating && (
         <div
           style={{ left: `${pageCheckerPos.x}px`, top: `${pageCheckerPos.y}px`, touchAction: 'none' }}
-          className="fixed z-50 w-84 rounded-2xl bg-slate-950/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(8,145,178,0.2)] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-cyan-400/60 select-none"
+          className="fixed z-50 w-[21rem] rounded-2xl bg-slate-950/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(8,145,178,0.2)] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-cyan-400/60 select-none"
         >
           {/* Title Bar Handle */}
           <div
@@ -3107,6 +3557,66 @@ export default function DiaryPage() {
                 >
                   ✕ 해제
                 </button>
+              </div>
+
+              {/* 럭셔리 부록 토글 타일 */}
+              <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-b from-slate-900/80 to-slate-950/60 p-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+                    <span className="text-[11px]">✨</span>
+                    럭셔리 부록
+                  </span>
+                  <span className="text-[9px] font-mono font-semibold text-cyan-300/80 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">
+                    {['cover', 'monthlydivider', 'hundredgoal', 'biblemap', 'wallcalendar'].filter((k) => selectedPages[k]).length}/5 적용
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { key: 'cover', icon: '📕', label: '표지', desc: '첫 장 · 타이틀' },
+                    { key: 'monthlydivider', icon: '📑', label: '월별 구분', desc: '매월 1장 커버' },
+                    { key: 'hundredgoal', icon: '🎯', label: '100목표', desc: '전반전 2장' },
+                    { key: 'biblemap', icon: '📖', label: '성경맵', desc: '완독 진도 2장' },
+                    { key: 'wallcalendar', icon: '🖼️', label: '벽달력', desc: '연간 6개월×2장' },
+                  ].map((a) => {
+                    const isOn = !!selectedPages[a.key]
+                    return (
+                      <button
+                        key={`appendix-${a.key}`}
+                        type="button"
+                        onClick={() => setSelectedPages({ ...selectedPages, [a.key]: !isOn })}
+                        title={`${a.label} ${isOn ? '끄기' : '켜기'}`}
+                        className={`group flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                          isOn
+                            ? 'border-cyan-500/40 bg-gradient-to-r from-cyan-950/50 to-indigo-950/50 shadow-sm shadow-cyan-950/50'
+                            : 'border-white/5 bg-slate-900/40 hover:bg-white/5 hover:border-white/15'
+                        }`}
+                      >
+                        <span className={`w-7 h-7 rounded-lg border flex items-center justify-center text-[13px] shrink-0 transition-all ${
+                          isOn
+                            ? 'border-cyan-400/40 bg-cyan-500/15 shadow-inner'
+                            : 'border-white/10 bg-white/5 group-hover:bg-white/10'
+                        }`}>
+                          {a.icon}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className={`block text-[10.5px] font-bold leading-tight ${isOn ? 'text-cyan-200' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                            {a.label}
+                          </span>
+                          <span className={`block text-[8.5px] font-medium leading-tight truncate ${isOn ? 'text-cyan-400/70' : 'text-slate-600'}`}>
+                            {a.desc}
+                          </span>
+                        </span>
+                        <span className={`relative w-7 h-3.5 rounded-full transition-all shrink-0 ${isOn ? 'bg-cyan-500/80' : 'bg-white/10'}`}>
+                          <span className={`absolute top-0.5 w-2.5 h-2.5 rounded-full transition-all ${
+                            isOn
+                              ? 'left-[16px] bg-white shadow-[0_0_6px_rgba(103,232,249,0.9)]'
+                              : 'left-0.5 bg-slate-400'
+                          }`} />
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Grid Page Checklist */}

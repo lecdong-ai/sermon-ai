@@ -60,7 +60,7 @@ export default function QtCultureLogPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             🎞️ {monthName} Culture Collection (추가 8작품 컬렉션)
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -98,7 +98,7 @@ export default function QtCultureLogPage2({
             {/* Title & Details */}
             <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/70 space-y-1">
               <span className="text-[7.5px] font-bold text-slate-400 block">작품 제목 (Title):</span>
-              <div className="text-slate-800 font-bold font-serif text-[9px] min-h-[12px] truncate">_________________</div>
+              <div className="text-slate-800 font-bold font-sans text-[9px] min-h-[12px] truncate">_________________</div>
               <div className="flex justify-between text-[8px] text-slate-400 font-mono">
                 <span>____.__.__</span>
                 <span>추천: 100%</span>
@@ -108,7 +108,7 @@ export default function QtCultureLogPage2({
             {/* Short Impression Quote */}
             <div className="bg-white/90 p-1.5 rounded-xl border border-slate-200/70 flex-1 flex flex-col justify-between">
               <span className="text-[7.5px] font-bold text-slate-500 block">💬 한 줄 평 & 명대사:</span>
-              <div className="border-b border-dashed border-slate-200 h-3 text-[8px] text-slate-400 font-serif" />
+              <div className="border-b border-dashed border-slate-200 h-3 text-[8px] text-slate-400 font-sans" />
             </div>
           </div>
         ))}
@@ -118,7 +118,7 @@ export default function QtCultureLogPage2({
       <div className="bg-rose-50/60 border border-rose-200 p-2 rounded-2xl flex items-center justify-between text-[9.5px] shadow-2xs">
         <span className="text-rose-950 font-bold flex items-center gap-1.5">
           <span>💖 한 달 문화 충전 지수: 100% 달성</span>
-          <span className="text-rose-700 font-normal font-serif">| 풍요로운 예술과 명작이 삶을 깊게 채웠습니다.</span>
+          <span className="text-rose-700 font-normal font-sans">| 풍요로운 예술과 명작이 삶을 깊게 채웠습니다.</span>
         </span>
         <span className="text-rose-800 font-mono font-bold">Total 12 Works Collected</span>
       </div>

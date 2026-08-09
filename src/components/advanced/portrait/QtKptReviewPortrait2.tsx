@@ -33,7 +33,7 @@ export default function QtKptReviewPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtKptReviewPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>⚡ {monthName} 4-Week KPT & Action Tracker</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -81,22 +81,22 @@ export default function QtKptReviewPortrait2({
             className={`border rounded-2xl p-3 ${w.color} flex flex-col justify-between shadow-xs space-y-1.5 flex-1`}
           >
             <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
-              <span className="font-bold text-slate-800 font-serif">📅 {w.week}</span>
+              <span className="font-bold text-slate-800 font-sans">📅 {w.week}</span>
               <span className="font-mono text-xs text-slate-400 font-bold">{w.label}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 flex-1 text-xs">
               <div className="bg-white/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-emerald-800 block border-b border-slate-100 pb-0.5">🟢 Keep</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[28px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[28px]">· ______________</div>
               </div>
               <div className="bg-white/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-rose-800 block border-b border-slate-100 pb-0.5">🔴 Problem</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[28px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[28px]">· ______________</div>
               </div>
               <div className="bg-white/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between">
                 <span className="font-bold text-indigo-800 block border-b border-slate-100 pb-0.5">🔵 Try</span>
-                <div className="text-slate-400 font-serif text-xs min-h-[28px]">· ______________</div>
+                <div className="text-slate-400 font-sans text-xs min-h-[28px]">· ______________</div>
               </div>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function QtKptReviewPortrait2({
       {/* 4. Action Items Checklist Table */}
       <div className="border border-indigo-200/90 rounded-2xl p-3 bg-white shadow-xs space-y-2 mb-2">
         <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-xs">
-          <span className="font-bold text-indigo-950 font-serif flex items-center gap-2">
+          <span className="font-bold text-indigo-950 font-sans flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />
             ⚡ KPT 기반 핵심 실행 과제 & 달성 여부 (Action Items & Checklist)
           </span>

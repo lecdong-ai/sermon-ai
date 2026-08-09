@@ -2,6 +2,7 @@
 
 import React from 'react'
 import QtQuickIndexNavPortrait from './QtQuickIndexNavPortrait'
+import { getQuotePair } from '@/lib/monthlyQuotes'
 
 interface QtQuoteCopyingPortraitProps {
   year?: number
@@ -24,6 +25,7 @@ export default function QtQuoteCopyingPortrait({
   pageHeight = 1448,
 }: QtQuoteCopyingPortraitProps) {
   const monthNum = MONTH_MAP[monthName] || 8
+  const [quote1, quote2] = getQuotePair(year, monthNum)
 
   return (
     <div
@@ -33,7 +35,7 @@ export default function QtQuoteCopyingPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 48px 20px 24px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -53,7 +55,7 @@ export default function QtQuoteCopyingPortrait({
 
       {/* Title */}
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+        <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
           📖 {monthName} Book Excerpts & Quotes
         </h1>
         <div className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white shadow-xs whitespace-nowrap" style={{ backgroundColor: themeColor }}>
@@ -69,9 +71,9 @@ export default function QtQuoteCopyingPortrait({
         </div>
         <div className="border-l-2 border-purple-400 pl-3 py-2 bg-white rounded-r-lg shadow-2xs">
           <p className="text-xs font-serif font-semibold text-slate-800 leading-relaxed italic tracking-tight">
-            &quot;시작하는 방법은 말하기를 그만두고 실행하는 것이다.&quot;
+            &quot;{quote1.quote}&quot;
           </p>
-          <p className="text-[10px] font-serif text-slate-500 text-right mt-1 font-medium">— 월트 디즈니 (Walt Disney)</p>
+          <p className="text-[10px] font-serif text-slate-500 text-right mt-1 font-medium">— {quote1.author}</p>
         </div>
         <div className="space-y-2 pt-1">
           <div className="border-b border-dashed border-slate-200 h-5" />
@@ -87,9 +89,9 @@ export default function QtQuoteCopyingPortrait({
         </div>
         <div className="border-l-2 border-slate-400 pl-3 py-2 bg-white rounded-r-lg my-2 shadow-2xs">
           <p className="text-xs font-serif font-semibold text-slate-800 leading-relaxed italic tracking-tight">
-            &quot;우리가 반복해서 하는 행동이 바로 우리다. 그러므로 탁월함은 행동이 아니라 습관이다.&quot;
+            &quot;{quote2.quote}&quot;
           </p>
-          <p className="text-[10px] font-serif text-slate-500 text-right mt-1 font-medium">— 아리스토텔레스 (Aristotle)</p>
+          <p className="text-[10px] font-serif text-slate-500 text-right mt-1 font-medium">— {quote2.author}</p>
         </div>
         <div className="flex-1 space-y-2 pt-1">
           <div className="border-b border-dashed border-slate-200 h-6" />

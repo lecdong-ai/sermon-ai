@@ -50,7 +50,7 @@ export default function QtYearlyOverviewGridPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -68,7 +68,7 @@ export default function QtYearlyOverviewGridPortrait({
 
       {/* 2. Main Title */}
       <div className="mb-3">
-        <h2 className="text-xl font-serif font-bold text-slate-900 tracking-wide leading-none">
+        <h2 className="text-xl font-sans font-bold text-slate-900 tracking-wide leading-none">
           {startYear === endYear ? `${startYear} Annual Master Calendar` : `${startYear}-${endYear} Master Calendar`}
         </h2>
         <p className="text-xs text-slate-400 font-mono font-medium mt-1">
@@ -94,7 +94,7 @@ export default function QtYearlyOverviewGridPortrait({
               className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-indigo-50/30 hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group shadow-2xs"
             >
               <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-                <span className="text-xs font-serif font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                <span className="text-xs font-sans font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                   {MONTH_NAMES_SHORT[m - 1]}
                 </span>
                 <span className="text-[10px] font-mono text-slate-400">

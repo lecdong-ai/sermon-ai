@@ -33,7 +33,7 @@ export default function QtBudgetTrackerPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 48px 20px 24px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtBudgetTrackerPortrait({
       {/* 2. Page Title Header */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-900 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-900 tracking-wide whitespace-nowrap">
             💰 {monthName} Financial & Asset Planning
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -92,7 +92,7 @@ export default function QtBudgetTrackerPortrait({
       <div className="space-y-2.5 flex-1 flex flex-col justify-between mb-2">
         {/* Module A: Monthly Income Sources */}
         <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-serif">
+          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-sans">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               💵 월간 수입 상세 내역 (Income Sources)
@@ -116,7 +116,7 @@ export default function QtBudgetTrackerPortrait({
 
         {/* Module B: Asset Portfolio & Investments */}
         <div className="border border-slate-200 rounded-xl p-2.5 bg-white shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-serif">
+          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-sans">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
               🏦 자산 포트폴리오 & 저축/투자 현황 (Portfolio)
@@ -143,7 +143,7 @@ export default function QtBudgetTrackerPortrait({
 
         {/* Module C: Fixed Expenses & Subscriptions */}
         <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/60 shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-serif">
+          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-sans">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
               🔒 월간 고정 지출 & 정기 구독 (Fixed Expenses)
@@ -169,7 +169,7 @@ export default function QtBudgetTrackerPortrait({
 
         {/* Module D: Variable Budget Allocation */}
         <div className="border border-slate-200 rounded-xl p-2.5 bg-white shadow-2xs space-y-1.5">
-          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-serif">
+          <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-1 font-sans">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
               📊 변동 지출 예산 배분 (Budget Allocation)
@@ -202,11 +202,11 @@ export default function QtBudgetTrackerPortrait({
 
       {/* 5. Financial Mindset Goal Banner */}
       <div className="border border-slate-200 rounded-xl p-2 bg-emerald-50/60 shadow-2xs mb-1.5 space-y-0.5">
-        <div className="flex items-center justify-between text-[10.5px] font-bold text-emerald-950 font-serif">
+        <div className="flex items-center justify-between text-[10.5px] font-bold text-emerald-950 font-sans">
           <span>🎯 이달의 재정 목표 & 결단</span>
           <span className="text-emerald-700 font-mono text-[9.5px]">Target Savings: ____%</span>
         </div>
-        <div className="border-b border-dashed border-emerald-200 h-3.5 text-[10px] text-emerald-800/80 font-serif">나의 수입과 지출을 지혜롭게 관리하여 건강하고 풍요로운 삶을 가꿉니다.</div>
+        <div className="border-b border-dashed border-emerald-200 h-3.5 text-[10px] text-emerald-800/80 font-sans">나의 수입과 지출을 지혜롭게 관리하여 건강하고 풍요로운 삶을 가꿉니다.</div>
       </div>
 
       {/* 6. Footer */}

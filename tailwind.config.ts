@@ -216,6 +216,7 @@ const config: Config = {
          outfit: ['var(--font-outfit)', 'sans-serif'],
          serif: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
          greek: ['var(--font-noto-serif-kr)', 'Georgia', 'serif'],
+         script: ['var(--font-great-vibes)', 'cursive'],
        },
        maxWidth: {
          content: '680px',

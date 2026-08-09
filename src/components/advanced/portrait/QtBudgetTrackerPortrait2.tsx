@@ -33,7 +33,7 @@ export default function QtBudgetTrackerPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 48px 20px 24px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtBudgetTrackerPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-1.5">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>💳 {monthName} 31-Day Daily Expense Log</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5">
@@ -70,7 +70,7 @@ export default function QtBudgetTrackerPortrait2({
 
       {/* 3. 31-Day No-Spend Stamp Section */}
       <div className="border border-slate-200 rounded-xl p-2 bg-emerald-50/40 space-y-1 shadow-2xs mb-1.5">
-        <h4 className="text-[10px] font-bold text-emerald-950 uppercase tracking-wider flex items-center justify-between border-b border-emerald-200 pb-0.5 font-serif">
+        <h4 className="text-[10px] font-bold text-emerald-950 uppercase tracking-wider flex items-center justify-between border-b border-emerald-200 pb-0.5 font-sans">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
             🌱 31일 무지출 스탬프 챌린지 (No-Spend Day Stamps)
@@ -92,7 +92,7 @@ export default function QtBudgetTrackerPortrait2({
       {/* 4. Full 31-Day Expense Table Section (2 Parallel Columns: 1~16 & 17~31) */}
       <div className="border border-slate-200 rounded-xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs mb-1.5">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-          <span className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-serif">
+          <span className="text-[10.5px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-sans">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
             📝 31일 전일 세부 지출 기록란 (2-Column Master Layout)
           </span>
@@ -154,18 +154,18 @@ export default function QtBudgetTrackerPortrait2({
 
       {/* 5. Financial Mindset Reflection Box */}
       <div className="border border-slate-200 rounded-xl p-2 bg-slate-50/60 shadow-2xs mb-1.5 space-y-1">
-        <div className="flex items-center justify-between text-[10px] font-bold text-slate-800 border-b border-slate-200 pb-0.5 font-serif">
+        <div className="flex items-center justify-between text-[10px] font-bold text-slate-800 border-b border-slate-200 pb-0.5 font-sans">
           <span>💡 머니 마인드셋 & 소비 회고 노트</span>
           <span className="text-emerald-700 font-mono text-[9px]">Savings Target</span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-[9.5px] text-slate-600">
           <div>
             <span className="font-bold text-emerald-800">🎉 최고의 지출 (Best):</span>
-            <span className="text-slate-400 block font-serif">___________________________</span>
+            <span className="text-slate-400 block font-sans">___________________________</span>
           </div>
           <div>
             <span className="font-bold text-rose-800">😅 아쉬운 지출 (Regret W):</span>
-            <span className="text-slate-400 block font-serif">___________________________</span>
+            <span className="text-slate-400 block font-sans">___________________________</span>
           </div>
         </div>
       </div>

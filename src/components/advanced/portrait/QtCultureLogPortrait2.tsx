@@ -33,7 +33,7 @@ export default function QtCultureLogPortrait2({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtCultureLogPortrait2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🎞️ {monthName} Culture Collection</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -93,7 +93,7 @@ export default function QtCultureLogPortrait2({
             {/* Title & Details */}
             <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200/70 space-y-0.5">
               <span className="text-[9px] font-bold text-slate-400 block">작품 제목 (Title):</span>
-              <div className="text-slate-800 font-bold font-serif text-[10.5px] min-h-[14px] truncate">______________________</div>
+              <div className="text-slate-800 font-bold font-sans text-[10.5px] min-h-[14px] truncate">______________________</div>
               <div className="flex justify-between text-[9px] text-slate-400 font-mono">
                 <span>____.__.__</span>
                 <span>추천: 100%</span>
@@ -103,7 +103,7 @@ export default function QtCultureLogPortrait2({
             {/* Quote Line */}
             <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200/70 flex-1 flex flex-col justify-between">
               <span className="text-[9.5px] font-bold text-slate-500 block">💬 한 줄 평 & 명대사:</span>
-              <div className="border-b border-dashed border-slate-200 h-3.5 text-[9.5px] text-slate-400 font-serif" />
+              <div className="border-b border-dashed border-slate-200 h-3.5 text-[9.5px] text-slate-400 font-sans" />
             </div>
           </div>
         ))}
@@ -113,7 +113,7 @@ export default function QtCultureLogPortrait2({
       <div className="bg-rose-50/60 border border-rose-200 p-2 rounded-xl flex items-center justify-between text-[11px] mb-2 shadow-2xs">
         <span className="text-rose-950 font-bold flex items-center gap-2">
           <span>💖 한 달 문화 충전 지수: 100% 달성</span>
-          <span className="text-rose-700 font-normal font-serif">| 풍요로운 예술이 내 삶을 아름답게 채웠습니다.</span>
+          <span className="text-rose-700 font-normal font-sans">| 풍요로운 예술이 내 삶을 아름답게 채웠습니다.</span>
         </span>
       </div>
 

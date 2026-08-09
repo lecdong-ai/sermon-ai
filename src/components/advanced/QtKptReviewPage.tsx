@@ -60,7 +60,7 @@ export default function QtKptReviewPage({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             🔄 {monthName} Monthly KPT Retrospective Master
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -76,7 +76,7 @@ export default function QtKptReviewPage({
       {/* 3. Top Banner: Monthly Big Win & Growth Scorecard */}
       <div className="bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-amber-500/10 border border-indigo-200/80 rounded-2xl p-2.5 mb-2 shadow-2xs">
         <div className="flex items-center justify-between border-b border-indigo-200/60 pb-1 mb-1">
-          <span className="text-[10.5px] font-bold text-indigo-950 font-serif flex items-center gap-1.5">
+          <span className="text-[10.5px] font-bold text-indigo-950 font-sans flex items-center gap-1.5">
             <span>🏆 MONTHLY BIG WIN & SCORECARD (이번 달 가장 빛났던 순간 & 점수판)</span>
           </span>
           <span className="text-[9px] font-bold text-indigo-700 font-mono">RETROSPECTIVE SCORE</span>
@@ -85,7 +85,7 @@ export default function QtKptReviewPage({
         <div className="grid grid-cols-12 gap-2 text-[9px]">
           <div className="col-span-7 bg-white/80 p-1.5 rounded-xl border border-indigo-200/60">
             <span className="text-[8px] font-bold text-emerald-800 block">🏆 이번 달 최고 성과 & 빛난 순간:</span>
-            <div className="text-slate-800 font-bold font-serif min-h-[14px]">______________________________________________________</div>
+            <div className="text-slate-800 font-bold font-sans min-h-[14px]">______________________________________________________</div>
           </div>
           <div className="col-span-5 bg-white/80 p-1.5 rounded-xl border border-indigo-200/60 flex items-center justify-around font-mono text-[8.5px] font-bold">
             <div className="text-center">
@@ -109,7 +109,7 @@ export default function QtKptReviewPage({
         {/* Keep Column */}
         <div className="border border-emerald-300/80 rounded-2xl p-2.5 bg-emerald-50/30 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between border-b border-emerald-200 pb-1 mb-1">
-            <span className="text-[10.5px] font-bold text-emerald-900 font-serif flex items-center gap-1.5">
+            <span className="text-[10.5px] font-bold text-emerald-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               🟢 Keep (성공 요인 & 지속할 점)
             </span>
@@ -119,7 +119,7 @@ export default function QtKptReviewPage({
             {[1, 2, 3, 4].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-xl border border-emerald-100/80">
                 <span className="text-[8px] font-bold text-emerald-700 block">Keep #{n}:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">________________________________</div>
               </div>
             ))}
           </div>
@@ -128,7 +128,7 @@ export default function QtKptReviewPage({
         {/* Problem Column */}
         <div className="border border-rose-300/80 rounded-2xl p-2.5 bg-rose-50/30 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between border-b border-rose-200 pb-1 mb-1">
-            <span className="text-[10.5px] font-bold text-rose-900 font-serif flex items-center gap-1.5">
+            <span className="text-[10.5px] font-bold text-rose-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
               🔴 Problem (병목 원인 & 아쉬운 점)
             </span>
@@ -138,7 +138,7 @@ export default function QtKptReviewPage({
             {[1, 2, 3, 4].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-xl border border-rose-100/80">
                 <span className="text-[8px] font-bold text-rose-700 block">Problem #{n}:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">________________________________</div>
               </div>
             ))}
           </div>
@@ -147,7 +147,7 @@ export default function QtKptReviewPage({
         {/* Try Column */}
         <div className="border border-indigo-300/80 rounded-2xl p-2.5 bg-indigo-50/30 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between border-b border-indigo-200 pb-1 mb-1">
-            <span className="text-[10.5px] font-bold text-indigo-900 font-serif flex items-center gap-1.5">
+            <span className="text-[10.5px] font-bold text-indigo-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
               🔵 Try (새로운 시도 & 개선 아이디어)
             </span>
@@ -157,7 +157,7 @@ export default function QtKptReviewPage({
             {[1, 2, 3, 4].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-xl border border-indigo-100/80">
                 <span className="text-[8px] font-bold text-indigo-700 block">Try #{n}:</span>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[14px]">________________________________</div>
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[14px]">________________________________</div>
               </div>
             ))}
           </div>
@@ -170,7 +170,7 @@ export default function QtKptReviewPage({
           <span>💡 이번 달 KPT 회고를 통해 깨달은 핵심 레슨 & 나 자신에게 전하는 격려</span>
           <span className="text-indigo-700 font-mono">Key Growth Insight</span>
         </div>
-        <div className="border-b border-dashed border-indigo-200 h-3 text-[8.5px] text-indigo-900/80 font-serif">깨달은 점: ____________________________________________________________________________________</div>
+        <div className="border-b border-dashed border-indigo-200 h-3 text-[8.5px] text-indigo-900/80 font-sans">깨달은 점: ____________________________________________________________________________________</div>
       </div>
 
       {/* 6. Footer */}

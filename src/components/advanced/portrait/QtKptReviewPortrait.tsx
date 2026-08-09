@@ -33,7 +33,7 @@ export default function QtKptReviewPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtKptReviewPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🔄 {monthName} Monthly KPT Master</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -71,7 +71,7 @@ export default function QtKptReviewPortrait({
       {/* 3. Top Banner: Monthly Big Win & Scorecard */}
       <div className="bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-amber-500/10 border border-indigo-200 rounded-xl p-2 mb-2 shadow-2xs space-y-1">
         <div className="flex items-center justify-between border-b border-indigo-200/60 pb-0.5">
-          <span className="text-[11px] font-bold text-indigo-950 font-serif flex items-center gap-1.5">
+          <span className="text-[11px] font-bold text-indigo-950 font-sans flex items-center gap-1.5">
             <span>🏆 MONTHLY BIG WIN & SCORECARD (빛났던 순간 & 점수판)</span>
           </span>
           <span className="text-[10px] font-bold text-indigo-700 font-mono">SCORE</span>
@@ -80,7 +80,7 @@ export default function QtKptReviewPortrait({
         <div className="grid grid-cols-12 gap-2 text-[10.5px]">
           <div className="col-span-7 bg-white/80 p-1.5 rounded-lg border border-indigo-200/60">
             <span className="text-[9.5px] font-bold text-emerald-800 block">🏆 이달의 최고 성과 & 빛난 순간:</span>
-            <div className="text-slate-800 font-bold font-serif min-h-[16px]">__________________________________________</div>
+            <div className="text-slate-800 font-bold font-sans min-h-[16px]">__________________________________________</div>
           </div>
           <div className="col-span-5 bg-white/80 p-1.5 rounded-lg border border-indigo-200/60 flex items-center justify-around font-mono text-[10px] font-bold">
             <div className="text-center">
@@ -104,7 +104,7 @@ export default function QtKptReviewPortrait({
         {/* Keep Box */}
         <div className="border border-emerald-200 rounded-xl p-2.5 bg-emerald-50/30 flex flex-col justify-between shadow-2xs flex-1">
           <div className="flex items-center justify-between border-b border-emerald-200 pb-1 mb-1">
-            <span className="text-[11px] font-bold text-emerald-900 font-serif flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-emerald-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               🟢 Keep (지속할 성과 & 성공 습관)
             </span>
@@ -114,7 +114,7 @@ export default function QtKptReviewPortrait({
             {[1, 2, 3].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-lg border border-emerald-100/80">
                 <span className="text-[9px] font-bold text-emerald-700 block">Keep #{n}:</span>
-                <div className="text-slate-400 font-serif text-[10px] min-h-[14px]">__________________________________________</div>
+                <div className="text-slate-400 font-sans text-[10px] min-h-[14px]">__________________________________________</div>
               </div>
             ))}
           </div>
@@ -123,7 +123,7 @@ export default function QtKptReviewPortrait({
         {/* Problem Box */}
         <div className="border border-rose-200 rounded-xl p-2.5 bg-rose-50/30 flex flex-col justify-between shadow-2xs flex-1">
           <div className="flex items-center justify-between border-b border-rose-200 pb-1 mb-1">
-            <span className="text-[11px] font-bold text-rose-900 font-serif flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-rose-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
               🔴 Problem (개선할 병목 원인)
             </span>
@@ -133,7 +133,7 @@ export default function QtKptReviewPortrait({
             {[1, 2, 3].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-lg border border-rose-100/80">
                 <span className="text-[9px] font-bold text-rose-700 block">Problem #{n}:</span>
-                <div className="text-slate-400 font-serif text-[10px] min-h-[14px]">__________________________________________</div>
+                <div className="text-slate-400 font-sans text-[10px] min-h-[14px]">__________________________________________</div>
               </div>
             ))}
           </div>
@@ -142,7 +142,7 @@ export default function QtKptReviewPortrait({
         {/* Try Box */}
         <div className="border border-indigo-200 rounded-xl p-2.5 bg-indigo-50/30 flex flex-col justify-between shadow-2xs flex-1">
           <div className="flex items-center justify-between border-b border-indigo-200 pb-1 mb-1">
-            <span className="text-[11px] font-bold text-indigo-900 font-serif flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-indigo-900 font-sans flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
               🔵 Try (새롭게 시도할 실행 전략)
             </span>
@@ -152,7 +152,7 @@ export default function QtKptReviewPortrait({
             {[1, 2, 3].map((n) => (
               <div key={n} className="bg-white p-1.5 rounded-lg border border-indigo-100/80">
                 <span className="text-[9px] font-bold text-indigo-700 block">Try #{n}:</span>
-                <div className="text-slate-400 font-serif text-[10px] min-h-[14px]">__________________________________________</div>
+                <div className="text-slate-400 font-sans text-[10px] min-h-[14px]">__________________________________________</div>
               </div>
             ))}
           </div>
@@ -161,11 +161,11 @@ export default function QtKptReviewPortrait({
 
       {/* 5. Bottom Banner */}
       <div className="border border-indigo-200 rounded-xl p-2 bg-indigo-50/60 shadow-2xs mb-1.5 space-y-0.5">
-        <div className="flex items-center justify-between text-[10.5px] font-bold text-indigo-950 font-serif">
+        <div className="flex items-center justify-between text-[10.5px] font-bold text-indigo-950 font-sans">
           <span>💡 이번 달 KPT 회고를 통해 깨달은 핵심 레슨</span>
           <span className="text-indigo-700 font-mono text-[9px]">Growth Insight</span>
         </div>
-        <div className="border-b border-dashed border-indigo-200 h-3.5 text-[10px] text-indigo-900/80 font-serif">깨달은 점: ____________________________________________________________________</div>
+        <div className="border-b border-dashed border-indigo-200 h-3.5 text-[10px] text-indigo-900/80 font-sans">깨달은 점: ____________________________________________________________________</div>
       </div>
 
       {/* 6. Footer */}

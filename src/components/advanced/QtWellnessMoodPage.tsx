@@ -60,7 +60,7 @@ export default function QtWellnessMoodPage({
       {/* 2. Title */}
       <div className="flex items-center justify-between mb-2.5">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-2xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🥗 {monthName} Wellness & Mood Tracker</span>
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -133,9 +133,9 @@ export default function QtWellnessMoodPage({
               <span>💖 지친 나에게 전하는 따뜻한 응원의 한마디</span>
             </h4>
             <div className="space-y-1 flex-1 flex flex-col justify-around py-1">
-              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-serif"></div>
-              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-serif"></div>
-              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-serif"></div>
+              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-sans"></div>
+              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-sans"></div>
+              <div className="border-b border-dashed border-teal-200 h-4 text-[9px] text-teal-800/60 font-sans"></div>
             </div>
           </div>
         </div>

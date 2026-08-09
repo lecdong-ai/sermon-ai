@@ -28,13 +28,13 @@ export default function QtSundaySermonPortrait({
 }: QtSundaySermonPortraitProps) {
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="sermon"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 20px 20px 20px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -57,7 +57,7 @@ export default function QtSundaySermonPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>🏛️ {monthName} Sunday Worship & Sermon (Vol. 1)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -87,11 +87,11 @@ export default function QtSundaySermonPortrait({
         <div className="grid grid-cols-12 gap-2 text-xs">
           <div className="col-span-8 bg-white/90 p-2 rounded-xl border border-amber-200 flex items-center justify-between">
             <span className="font-bold text-amber-800 shrink-0 mr-2">📌 설교 제목 (Title):</span>
-            <div className="text-slate-400 font-serif text-xs flex-1 min-h-[16px]">____________________________________</div>
+            <div className="text-slate-400 font-sans text-xs flex-1 min-h-[16px]">____________________________________</div>
           </div>
           <div className="col-span-4 bg-white/90 p-2 rounded-xl border border-amber-200 flex items-center justify-between">
             <span className="font-bold text-amber-800 shrink-0 mr-2">📖 성경 본문:</span>
-            <div className="text-slate-400 font-serif text-xs flex-1 min-h-[16px]">__________________</div>
+            <div className="text-slate-400 font-sans text-xs flex-1 min-h-[16px]">__________________</div>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function QtSundaySermonPortrait({
         {/* 3 Key Points Outline */}
         <div className="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/30 flex-1 flex flex-col justify-between shadow-xs space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-xs">
-            <span className="font-bold text-slate-800 font-serif">💡 설교 3대 대지 요약 & 말씀 필기 (Outline)</span>
+            <span className="font-bold text-slate-800 font-sans">💡 설교 3대 대지 요약 & 말씀 필기 (Outline)</span>
             <span className="font-mono text-xs text-slate-400">3 Key Points</span>
           </div>
 
@@ -116,7 +116,7 @@ export default function QtSundaySermonPortrait({
                   <span className="font-bold text-amber-800">{p.pt}</span>
                   <span className="font-mono text-slate-300 text-xs">{p.label}</span>
                 </div>
-                <div className="text-slate-400 font-serif text-xs min-h-[28px] flex-1 flex flex-col justify-around">
+                <div className="text-slate-400 font-sans text-xs min-h-[28px] flex-1 flex flex-col justify-around">
                   <div>________________________________________________________</div>
                   <div>________________________________________________________</div>
                 </div>
@@ -130,28 +130,28 @@ export default function QtSundaySermonPortrait({
           {/* Rhema */}
           <div className="border border-indigo-200/90 rounded-2xl p-3 bg-indigo-50/20 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="flex items-center justify-between border-b border-indigo-200 pb-1">
-              <span className="font-bold text-indigo-950 font-serif">🕊️ 내게 주신 레마(Rhema)의 말씀</span>
+              <span className="font-bold text-indigo-950 font-sans">🕊️ 내게 주신 레마(Rhema)의 말씀</span>
               <span className="font-mono text-[10px] text-indigo-400">Personal Word</span>
             </div>
             <div className="bg-white p-2.5 rounded-xl border border-indigo-200/80 text-xs">
-              <div className="text-slate-400 font-serif italic min-h-[40px]">"하나님께서 오늘 나에게 선포하신 약속의 말씀..."</div>
+              <div className="text-slate-400 font-sans italic min-h-[40px]">"하나님께서 오늘 나에게 선포하신 약속의 말씀..."</div>
             </div>
           </div>
 
           {/* Action */}
           <div className="border border-emerald-200/90 rounded-2xl p-3 bg-emerald-50/20 flex flex-col justify-between shadow-xs space-y-1.5">
             <div className="flex items-center justify-between border-b border-emerald-200 pb-1">
-              <span className="font-bold text-emerald-950 font-serif">🌱 이번 주 순종 결단 (Action Plan)</span>
+              <span className="font-bold text-emerald-950 font-sans">🌱 이번 주 순종 결단 (Action Plan)</span>
               <span className="text-emerald-700 font-mono text-[10px]">Obedience Note</span>
             </div>
             <div className="space-y-1.5 text-xs bg-white p-2 rounded-xl border border-emerald-200/80">
               <div>
                 <span className="font-bold text-emerald-800 text-[10px]">📌 실천 1:</span>
-                <div className="text-slate-400 font-serif min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans min-h-[14px]">_____________________</div>
               </div>
               <div>
                 <span className="font-bold text-emerald-800 text-[10px]">📌 실천 2:</span>
-                <div className="text-slate-400 font-serif min-h-[14px]">_____________________</div>
+                <div className="text-slate-400 font-sans min-h-[14px]">_____________________</div>
               </div>
             </div>
           </div>

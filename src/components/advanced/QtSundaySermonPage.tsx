@@ -28,7 +28,7 @@ export default function QtSundaySermonPage({
 }: QtSundaySermonPageProps) {
   return (
     <div
-      data-page-key="tracker"
+      data-page-key="sermon"
       data-page-type="full-bleed"
       className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-hidden shadow-md mx-auto"
       style={{
@@ -76,11 +76,11 @@ export default function QtSundaySermonPage({
         <div className="grid grid-cols-12 gap-2 text-[9px]">
           <div className="col-span-8 bg-white/90 p-1.5 rounded-xl border border-amber-200 flex items-center justify-between">
             <span className="font-bold text-amber-800 shrink-0 mr-2">📌 설교 제목 (Title):</span>
-            <div className="text-slate-400 font-serif text-[9px] flex-1 min-h-[14px]">__________________________________________</div>
+            <div className="text-slate-400 font-sans text-[9px] flex-1 min-h-[14px]">__________________________________________</div>
           </div>
           <div className="col-span-4 bg-white/90 p-1.5 rounded-xl border border-amber-200 flex items-center justify-between">
             <span className="font-bold text-amber-800 shrink-0 mr-2">📖 성경 본문:</span>
-            <div className="text-slate-400 font-serif text-[9px] flex-1 min-h-[14px]">__________________</div>
+            <div className="text-slate-400 font-sans text-[9px] flex-1 min-h-[14px]">__________________</div>
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function QtSundaySermonPage({
         {/* Left Column: 3 Key Sermon Outline Notes (7 cols) */}
         <div className="col-span-7 border border-slate-200 rounded-2xl p-2.5 bg-slate-50/30 flex flex-col justify-between shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between border-b border-slate-200 pb-1 text-[9.5px]">
-            <span className="font-bold text-slate-800 font-serif">💡 설교 3대 대지 요약 & 말씀 필기 (Outline)</span>
+            <span className="font-bold text-slate-800 font-sans">💡 설교 3대 대지 요약 & 말씀 필기 (Outline)</span>
             <span className="font-mono text-[8px] text-slate-400">3 Key Points</span>
           </div>
 
@@ -105,7 +105,7 @@ export default function QtSundaySermonPage({
                   <span className="font-bold text-amber-800">{p.pt}</span>
                   <span className="font-mono text-slate-300 text-[8px]">{p.label}</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[8.5px] min-h-[22px] flex-1 flex flex-col justify-around">
+                <div className="text-slate-400 font-sans text-[8.5px] min-h-[22px] flex-1 flex flex-col justify-around">
                   <div>__________________________________________________</div>
                   <div>__________________________________________________</div>
                 </div>
@@ -119,28 +119,28 @@ export default function QtSundaySermonPage({
           {/* Rhema Word */}
           <div className="border border-indigo-200/90 rounded-2xl p-2.5 bg-indigo-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
             <div className="flex items-center justify-between border-b border-indigo-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-indigo-950 font-serif">🕊️ 내게 주신 레마(Rhema)의 한 문장</span>
+              <span className="font-bold text-indigo-950 font-sans">🕊️ 내게 주신 레마(Rhema)의 한 문장</span>
               <span className="font-mono text-[8px] text-indigo-400">Personal Word</span>
             </div>
             <div className="bg-white p-2 rounded-xl border border-indigo-200/80 flex-1 text-[8.5px]">
-              <div className="text-slate-400 font-serif italic min-h-[36px]">"하나님께서 오늘 나에게 개인적으로 선포하신 약속과 결단의 한 마디를 적습니다..."</div>
+              <div className="text-slate-400 font-sans italic min-h-[36px]">"하나님께서 오늘 나에게 개인적으로 선포하신 약속과 결단의 한 마디를 적습니다..."</div>
             </div>
           </div>
 
           {/* Weekly Obedience Action Plan */}
           <div className="border border-emerald-200/90 rounded-2xl p-2.5 bg-emerald-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1">
             <div className="flex items-center justify-between border-b border-emerald-200 pb-1 text-[9.5px]">
-              <span className="font-bold text-emerald-950 font-serif">🌱 이번 주 구체적 순종 결단 (Action Plan)</span>
+              <span className="font-bold text-emerald-950 font-sans">🌱 이번 주 구체적 순종 결단 (Action Plan)</span>
               <span className="text-emerald-700 font-mono text-[8px]">Obedience Note</span>
             </div>
             <div className="space-y-1 text-[8.5px] bg-white p-2 rounded-xl border border-emerald-200/80 flex-1 flex flex-col justify-around">
               <div>
                 <span className="font-bold text-emerald-800 text-[8px]">📌 실천 행동 1:</span>
-                <div className="text-slate-400 font-serif min-h-[12px]">_________________________________</div>
+                <div className="text-slate-400 font-sans min-h-[12px]">_________________________________</div>
               </div>
               <div>
                 <span className="font-bold text-emerald-800 text-[8px]">📌 실천 행동 2:</span>
-                <div className="text-slate-400 font-serif min-h-[12px]">_________________________________</div>
+                <div className="text-slate-400 font-sans min-h-[12px]">_________________________________</div>
               </div>
             </div>
           </div>

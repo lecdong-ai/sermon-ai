@@ -60,7 +60,7 @@ export default function QtHundredGoalPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             🏆 {monthName} 100-Day Challenge Victory (Day 51 ~ 100)
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -76,7 +76,7 @@ export default function QtHundredGoalPage2({
       {/* 3. Day 51 ~ Day 100 Matrix (5 rows x 10 cols) */}
       <div className="border border-slate-200/90 rounded-2xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs mb-2">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
-          <span className="text-[10px] font-bold text-slate-800 font-serif">
+          <span className="text-[10px] font-bold text-slate-800 font-sans">
             📝 Day 51 ~ Day 100 후반전 매일 실행 기록 트래커
           </span>
           <span className="text-[8.5px] text-rose-600 font-bold font-mono">★ Day 75 Focus | 🎉 Day 100 Victory</span>
@@ -98,7 +98,7 @@ export default function QtHundredGoalPage2({
                   <span className={`font-mono font-extrabold ${isMilestone ? 'text-rose-900' : 'text-slate-600'}`}>D-{d}</span>
                   <span className="text-[7.5px] text-slate-300">□</span>
                 </div>
-                <div className="text-slate-400 font-serif text-[7.5px] truncate py-0.5">____</div>
+                <div className="text-slate-400 font-sans text-[7.5px] truncate py-0.5">____</div>
               </div>
             )
           })}
@@ -109,11 +109,11 @@ export default function QtHundredGoalPage2({
       <div className="grid grid-cols-12 gap-2 text-[9px]">
         <div className="col-span-5 bg-purple-50/60 border border-purple-200 p-2 rounded-xl space-y-0.5">
           <span className="font-bold text-purple-900 block">🚀 Day 75 고지전 점검:</span>
-          <div className="text-slate-700 font-serif text-[8.5px] min-h-[14px]">"75% 달성 완료! 흔들리지 않는 마지막 몰입 다짐: ________"</div>
+          <div className="text-slate-700 font-sans text-[8.5px] min-h-[14px]">"75% 달성 완료! 흔들리지 않는 마지막 몰입 다짐: ________"</div>
         </div>
         <div className="col-span-7 bg-gradient-to-r from-rose-500/10 to-amber-500/10 border border-rose-200 p-2 rounded-xl space-y-0.5">
           <span className="font-bold text-rose-950 block">👑 Day 100 최종 완주 성공 훈장 & 나에게 띄우는 편지:</span>
-          <div className="text-slate-800 font-serif text-[8.5px] italic min-h-[14px]">"나와의 약속을 멋지게 지켜낸 100일간의 여정에 진심으로 감사와 박수를 보냅니다!"</div>
+          <div className="text-slate-800 font-sans text-[8.5px] italic min-h-[14px]">"나와의 약속을 멋지게 지켜낸 100일간의 여정에 진심으로 감사와 박수를 보냅니다!"</div>
         </div>
       </div>
 

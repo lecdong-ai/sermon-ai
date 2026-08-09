@@ -72,7 +72,7 @@ export default function QtMonthlyOverviewPage({
       {/* 2. Month Title Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-900 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-900 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>📊 {monthName} 5-Week Strategy Master Overview</span>
           </h1>
           <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -91,11 +91,11 @@ export default function QtMonthlyOverviewPage({
         <div className="col-span-3 flex flex-col justify-between space-y-2 pr-1 border-r border-slate-200">
           {/* Key Schedules & Milestones */}
           <div className="border border-slate-200 rounded-xl p-2 bg-slate-50/50 flex-1 flex flex-col justify-between">
-            <h4 className="text-[9.5px] font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-0.5 font-serif flex items-center justify-between">
+            <h4 className="text-[9.5px] font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-0.5 font-sans flex items-center justify-between">
               <span>📅 핵심 일정 & 디데이</span>
               <span className="font-mono text-[7.5px] text-slate-400">Milestones</span>
             </h4>
-            <div className="space-y-1 text-[8.5px] text-slate-500 font-serif pt-1 flex-1 flex flex-col justify-around">
+            <div className="space-y-1 text-[8.5px] text-slate-500 font-sans pt-1 flex-1 flex flex-col justify-around">
               <div>• ______________________</div>
               <div>• ______________________</div>
               <div>• ______________________</div>
@@ -104,11 +104,11 @@ export default function QtMonthlyOverviewPage({
 
           {/* Top 5 Priorities */}
           <div className="border border-slate-200 rounded-xl p-2 bg-slate-50/50 flex-1 flex flex-col justify-between">
-            <h4 className="text-[9.5px] font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-0.5 font-serif flex items-center justify-between">
+            <h4 className="text-[9.5px] font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-0.5 font-sans flex items-center justify-between">
               <span>✅ 이달의 5대 핵심 과제</span>
               <span className="font-mono text-[7.5px] text-slate-400">Top 5</span>
             </h4>
-            <div className="space-y-0.5 text-[8px] text-slate-600 font-serif pt-1 flex-1 flex flex-col justify-around">
+            <div className="space-y-0.5 text-[8px] text-slate-600 font-sans pt-1 flex-1 flex flex-col justify-around">
               {[1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="flex items-center gap-1">
                   <span className="w-2.5 h-2.5 rounded border border-slate-400 inline-block text-[7px] text-center leading-tight">{num}</span>
@@ -120,11 +120,11 @@ export default function QtMonthlyOverviewPage({
 
           {/* Monthly Reflection & Achievements */}
           <div className="border border-indigo-100 rounded-xl p-2 bg-indigo-50/20 flex-1 flex flex-col justify-between">
-            <h4 className="text-[9.5px] font-bold text-indigo-950 uppercase tracking-wider border-b border-indigo-200 pb-0.5 font-serif flex items-center justify-between">
+            <h4 className="text-[9.5px] font-bold text-indigo-950 uppercase tracking-wider border-b border-indigo-200 pb-0.5 font-sans flex items-center justify-between">
               <span>🏆 성과 & 감사 피드백</span>
               <span className="font-mono text-[7.5px] text-indigo-600">Reflection</span>
             </h4>
-            <div className="space-y-1 text-[8.5px] text-slate-600 font-serif pt-1 flex-1 flex flex-col justify-around">
+            <div className="space-y-1 text-[8.5px] text-slate-600 font-sans pt-1 flex-1 flex flex-col justify-around">
               <div>💡 ______________________</div>
               <div>💖 ______________________</div>
             </div>
@@ -144,7 +144,7 @@ export default function QtMonthlyOverviewPage({
                   <span
                     data-nav-target={`week-${wIdx + 1}`}
                     data-jump-btn="true"
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9.5px] font-bold font-serif cursor-pointer hover:scale-110 transition-transform shadow-2xs"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9.5px] font-bold font-sans cursor-pointer hover:scale-110 transition-transform shadow-2xs"
                     style={{ backgroundColor: themeColor }}
                   >
                     {w.weekLabel}
@@ -155,17 +155,17 @@ export default function QtMonthlyOverviewPage({
 
               {/* Weekly Focus */}
               <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200 mb-1.5 text-[8px]">
-                <span className="font-bold text-slate-700 block font-serif">📌 주차 핵심 비전:</span>
-                <div className="text-slate-400 font-serif text-[8px] min-h-[10px]">__________________</div>
+                <span className="font-bold text-slate-700 block font-sans">📌 주차 핵심 비전:</span>
+                <div className="text-slate-400 font-sans text-[8px] min-h-[10px]">__________________</div>
               </div>
 
               {/* 4 Weekly Checklists */}
               <div className="space-y-1 mb-1.5 flex-1 flex flex-col justify-around text-[8px]">
-                <span className="font-bold text-slate-600 font-serif text-[7.5px] border-b border-slate-100 pb-0.5">☑️ 주차별 4대 과제:</span>
+                <span className="font-bold text-slate-600 font-sans text-[7.5px] border-b border-slate-100 pb-0.5">☑️ 주차별 4대 과제:</span>
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="flex items-center">
                     <div className="w-2.5 h-2.5 border border-slate-400 rounded-xs bg-white mr-1 flex-shrink-0" />
-                    <div className="flex-1 border-b border-slate-200 h-2.5 text-slate-400 font-serif">___________</div>
+                    <div className="flex-1 border-b border-slate-200 h-2.5 text-slate-400 font-sans">___________</div>
                   </div>
                 ))}
               </div>

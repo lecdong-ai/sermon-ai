@@ -33,7 +33,7 @@ export default function QtBucketTravelPortrait({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '52px 48px 20px 24px',
+        padding: '24px 56px 20px 20px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -56,7 +56,7 @@ export default function QtBucketTravelPortrait({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-serif font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
+          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide flex items-center gap-2 whitespace-nowrap">
             <span>✈️ {monthName} Bucket List & Travel Vision</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -85,7 +85,7 @@ export default function QtBucketTravelPortrait({
                 <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
                   {i + 1}
                 </span>
-                <span className="text-slate-300 font-serif flex-1">소망 또는 달성 목표를 기록하세요...</span>
+                <span className="text-slate-300 font-sans flex-1">소망 또는 달성 목표를 기록하세요...</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400 font-mono text-xs">
                 <span>달성일: ____/__/__</span>

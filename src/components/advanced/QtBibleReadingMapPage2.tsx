@@ -60,7 +60,7 @@ export default function QtBibleReadingMapPage2({
       {/* 2. Page Title */}
       <div className="flex items-center justify-between mb-1.5">
         <div>
-          <h1 className="text-lg font-serif font-bold text-slate-800 tracking-wide whitespace-nowrap">
+          <h1 className="text-lg font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
             📖 {monthName} Daily Bible Reading Plan & Rhema Journal
           </h1>
           <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -77,7 +77,7 @@ export default function QtBibleReadingMapPage2({
       <div className="grid grid-cols-12 gap-2.5 flex-1 mb-1.5 min-h-0">
         {/* Left: 31-Day Execution Table (8 cols, 2 sub-columns of 16 days each) */}
         <div className="col-span-8 border border-slate-200 rounded-xl p-2 bg-slate-50/20 flex flex-col justify-between shadow-2xs min-h-0">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 text-[9px] font-bold text-slate-800 font-serif mb-1">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 text-[9px] font-bold text-slate-800 font-sans mb-1">
             <span>📅 31일 데일리 성경 통독 실행표 (Daily Reading Schedule)</span>
             <span className="font-mono text-[7.5px] text-slate-400">Date · Passage · Check · Time</span>
           </div>
@@ -88,7 +88,7 @@ export default function QtBibleReadingMapPage2({
               {Array.from({ length: 16 }, (_, i) => i + 1).map((d) => (
                 <div key={d} className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 leading-none">
                   <span className="font-mono font-bold text-indigo-700 w-5 shrink-0 text-[7.5px]">Day {String(d).padStart(2, '0')}</span>
-                  <div className="flex-1 text-slate-300 font-serif text-[7.5px] truncate">____________________</div>
+                  <div className="flex-1 text-slate-300 font-sans text-[7.5px] truncate">____________________</div>
                   <span className="w-3 h-3 rounded border border-slate-300 bg-slate-50 flex items-center justify-center text-[6.5px] text-slate-300 shrink-0">✓</span>
                 </div>
               ))}
@@ -99,14 +99,14 @@ export default function QtBibleReadingMapPage2({
               {Array.from({ length: 15 }, (_, i) => i + 17).map((d) => (
                 <div key={d} className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 leading-none">
                   <span className="font-mono font-bold text-indigo-700 w-5 shrink-0 text-[7.5px]">Day {String(d).padStart(2, '0')}</span>
-                  <div className="flex-1 text-slate-300 font-serif text-[7.5px] truncate">____________________</div>
+                  <div className="flex-1 text-slate-300 font-sans text-[7.5px] truncate">____________________</div>
                   <span className="w-3 h-3 rounded border border-slate-300 bg-slate-50 flex items-center justify-center text-[6.5px] text-slate-300 shrink-0">✓</span>
                 </div>
               ))}
               {/* Extra Goal slot */}
               <div className="flex items-center gap-1 bg-indigo-50/70 px-1.5 py-0.5 rounded border border-indigo-200 leading-none">
                 <span className="font-bold text-indigo-900 text-[7.5px] shrink-0">월간완주</span>
-                <div className="flex-1 text-indigo-700 font-serif text-[7.5px] font-bold truncate">성경 통독 목표 완료!</div>
+                <div className="flex-1 text-indigo-700 font-sans text-[7.5px] font-bold truncate">성경 통독 목표 완료!</div>
                 <span className="w-3 h-3 rounded bg-indigo-600 text-white flex items-center justify-center text-[7px] font-bold shrink-0">★</span>
               </div>
             </div>
@@ -118,14 +118,14 @@ export default function QtBibleReadingMapPage2({
           {/* Top 3 Rhema */}
           <div className="border border-indigo-200/90 rounded-xl p-2 bg-indigo-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1 min-h-0">
             <div className="flex items-center justify-between border-b border-indigo-200 pb-0.5 text-[9px]">
-              <span className="font-bold text-indigo-950 font-serif">💎 이달의 레마(Rhema) 말씀 3선</span>
+              <span className="font-bold text-indigo-950 font-sans">💎 이달의 레마(Rhema) 말씀 3선</span>
               <span className="font-mono text-[7.5px] text-indigo-400">Top 3 Passages</span>
             </div>
             <div className="space-y-1 flex-1 flex flex-col justify-around text-[8px]">
               {[1, 2, 3].map((rNo) => (
                 <div key={rNo} className="bg-white p-1 rounded-lg border border-indigo-200/80">
                   <span className="font-bold text-indigo-800 text-[7.5px] block">구절 {rNo}:</span>
-                  <div className="text-slate-300 font-serif text-[7.5px] min-h-[10px]">___________________________</div>
+                  <div className="text-slate-300 font-sans text-[7.5px] min-h-[10px]">___________________________</div>
                 </div>
               ))}
             </div>
@@ -134,11 +134,11 @@ export default function QtBibleReadingMapPage2({
           {/* Insights Note */}
           <div className="border border-emerald-200/90 rounded-xl p-2 bg-emerald-50/20 flex-1 flex flex-col justify-between shadow-2xs space-y-1 min-h-0">
             <div className="flex items-center justify-between border-b border-emerald-200 pb-0.5 text-[9px]">
-              <span className="font-bold text-emerald-950 font-serif">🕊️ 말씀이 준 영적 깨달음</span>
+              <span className="font-bold text-emerald-950 font-sans">🕊️ 말씀이 준 영적 깨달음</span>
               <span className="text-emerald-700 font-mono text-[7.5px]">Insight Note</span>
             </div>
             <div className="bg-white p-1.5 rounded-lg border border-emerald-200/80 flex-1 text-[8px]">
-              <div className="text-slate-400 font-serif italic min-h-[30px]">"성경을 읽으며 새로 알게 된 하나님의 성품과 나에게 주신 은혜를 기록합니다..."</div>
+              <div className="text-slate-400 font-sans italic min-h-[30px]">"성경을 읽으며 새로 알게 된 하나님의 성품과 나에게 주신 은혜를 기록합니다..."</div>
             </div>
           </div>
         </div>
