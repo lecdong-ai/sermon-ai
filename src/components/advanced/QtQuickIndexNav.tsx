@@ -11,20 +11,20 @@ interface QtQuickIndexNavProps {
   isChristian?: boolean
 }
 
-// 12개월 영문 3글자 약자 (Jan ~ Dec)
+// 12개월 파스텔 계절 팔레트 (진한 글자로 가독성 확보)
 const SEASONAL_MONTH_COLORS: Record<number, { bg: string; text: string; label: string }> = {
-  1: { bg: '#8395A7', text: '#FFFFFF', label: 'Jan' },
-  2: { bg: '#95A5A6', text: '#FFFFFF', label: 'Feb' },
-  3: { bg: '#D4A5B7', text: '#FFFFFF', label: 'Mar' },
-  4: { bg: '#C896A6', text: '#FFFFFF', label: 'Apr' },
-  5: { bg: '#96B396', text: '#FFFFFF', label: 'May' },
-  6: { bg: '#7BA493', text: '#FFFFFF', label: 'Jun' },
-  7: { bg: '#6B9DB9', text: '#FFFFFF', label: 'Jul' },
-  8: { bg: '#7895B2', text: '#FFFFFF', label: 'Aug' },
-  9: { bg: '#BE9B7B', text: '#FFFFFF', label: 'Sep' },
-  10: { bg: '#B07D62', text: '#FFFFFF', label: 'Oct' },
-  11: { bg: '#8E6E6E', text: '#FFFFFF', label: 'Nov' },
-  12: { bg: '#657786', text: '#FFFFFF', label: 'Dec' },
+  1: { bg: '#DBEAFE', text: '#1E40AF', label: 'Jan' }, // 1월: 파스텔 아이스 블루
+  2: { bg: '#FCE7F3', text: '#BE185D', label: 'Feb' }, // 2월: 파스텔 핑크
+  3: { bg: '#D1FAE5', text: '#047857', label: 'Mar' }, // 3월: 파스텔 민트 그린
+  4: { bg: '#FFE4E6', text: '#BE123C', label: 'Apr' }, // 4월: 파스텔 로즈
+  5: { bg: '#FEF3C7', text: '#B45309', label: 'May' }, // 5월: 크림 엠버
+  6: { bg: '#CFFAFE', text: '#0E7490', label: 'Jun' }, // 6월: 파스텔 아쿠아
+  7: { bg: '#E0E7FF', text: '#4338CA', label: 'Jul' }, // 7월: 파스텔 페리윙클 블루
+  8: { bg: '#FFEDD5', text: '#C2410C', label: 'Aug' }, // 8월: 파스텔 피치 오렌지
+  9: { bg: '#FEF9C3', text: '#A16207', label: 'Sep' }, // 9월: 연옐로우
+  10: { bg: '#FAE8FF', text: '#A21CAF', label: 'Oct' }, // 10월: 파스텔 오키드
+  11: { bg: '#EDE9FE', text: '#6D28D9', label: 'Nov' }, // 11월: 라벤더
+  12: { bg: '#FEE2E2', text: '#B91C1C', label: 'Dec' }, // 12월: 파스텔 레드
 }
 
 // 1주차~5주차 정교한 파스텔 톤 팔레트
@@ -50,7 +50,7 @@ export default function QtQuickIndexNav({
   themeColor = '#7895B2',
   isChristian = false,
 }: QtQuickIndexNavProps) {
-  const todayMonth = 8
+  const todayMonth = new Date().getMonth() + 1
   const period = useDiaryPeriod()
 
   // ★ 연간 일괄 기간 컨텍스트가 있으면 실제 17개월(Aug'26~Dec'27) 전체 표시, 없으면 기존 12개월 폴백
@@ -73,11 +73,13 @@ export default function QtQuickIndexNav({
 
   return (
     <div
-      className="absolute -right-5 top-5 bottom-5 w-11 flex flex-col justify-between items-start py-1 z-30 select-none font-mono"
+      className="absolute -right-[2mm] top-12 bottom-6 w-14 flex flex-col justify-between items-start gap-1.5 pt-1 pr-2 pb-1 pl-0 z-30 select-none font-mono rounded-l-2xl bg-[#F1F5F9]/98 border-y border-l border-slate-300 shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-md"
       style={{ pointerEvents: 'auto' }}
     >
+      <div className="w-full px-1 text-[7.5px] font-black tracking-[0.25em] text-slate-500 text-center uppercase">INDEX</div>
+
       {/* 1. Core Pages & Sub-Trackers Top Stack */}
-      <div className="flex flex-col space-y-1.5 w-full items-start">
+      <div className="flex flex-col space-y-0.5 w-full items-start">
         {/* Core Tabs: YEAR, CAL, OVR */}
         {(['yearlygrid', 'calendar', 'overview'] as const).map((coreKey) => {
           const isActive = activeTab === coreKey
@@ -89,10 +91,10 @@ export default function QtQuickIndexNav({
               key={coreKey}
               type="button"
               data-nav-target={coreKey}
-              className={`h-6 rounded-r-lg text-[9.5px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border-y border-r border-slate-400/80 shadow-md ${
+              className={`relative h-5 w-full rounded-r-lg text-[9px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border shadow-md ${
                 isActive
-                  ? 'w-13 text-white shadow-xl border-amber-300 z-20 translate-x-2.5 font-black scale-105 ring-1 ring-amber-300/70'
-                  : 'w-10.5 opacity-90 hover:opacity-100 hover:w-12 hover:translate-x-1.5'
+                  ? 'text-white shadow-xl border-2 border-white ring-2 ring-amber-400 z-20 scale-[1.08] font-black'
+                  : 'opacity-90 hover:opacity-100 hover:scale-105 border-slate-300'
               }`}
               style={{
                 backgroundColor: isActive ? cColor.activeBg : cColor.bg,
@@ -100,33 +102,37 @@ export default function QtQuickIndexNav({
               }}
               title={title}
             >
+              {isActive && <span className="absolute left-1 w-1.5 h-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" />}
               {label}
             </button>
           )
         })}
 
+        <div className="w-full h-px bg-slate-300 my-0.5" />
+
         {/* Sub-Trackers */}
-        <div className="flex flex-col space-y-1 pt-0.5 items-start">
+        <div className="flex flex-col space-y-0.5 items-start w-full">
           {isChristian ? (
             <>
-              <button type="button" data-nav-target="soap" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="SOAP 묵상 저널">SOAP</button>
-              <button type="button" data-nav-target="prayer" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="중보기도 노트">PRAY</button>
-              <button type="button" data-nav-target="bible" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="성경 66권 읽기표">BIBLE</button>
-              <button type="button" data-nav-target="sermon" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-emerald-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="주일 설교 노트">SRMN</button>
+              <button type="button" data-nav-target="soap" className="h-5 w-full rounded-r-lg bg-[#D1FAE5] text-[#047857] hover:bg-emerald-100 border border-emerald-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="SOAP 묵상 저널">SOAP</button>
+              <button type="button" data-nav-target="prayer" className="h-5 w-full rounded-r-lg bg-[#CCFBF1] text-[#0F766E] hover:bg-teal-100 border border-teal-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="중보기도 노트">PRAY</button>
+              <button type="button" data-nav-target="bible" className="h-5 w-full rounded-r-lg bg-[#E0E7FF] text-[#4338CA] hover:bg-indigo-100 border border-indigo-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="성경 66권 읽기표">BIBLE</button>
+              <button type="button" data-nav-target="sermon" className="h-5 w-full rounded-r-lg bg-[#EDE9FE] text-[#6D28D9] hover:bg-purple-100 border border-purple-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="주일 설교 노트">SRMN</button>
             </>
           ) : (
             <>
-              <button type="button" data-nav-target="habit" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="Habit Tracker">HABIT</button>
-              <button type="button" data-nav-target="gratitude" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="Gratitude Journal">GRAT</button>
-              <button type="button" data-nav-target="budget" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="Budget Tracker">CASH</button>
-              <button type="button" data-nav-target="kpt" className="h-5 w-9.5 rounded-r-md bg-slate-800 text-white hover:bg-indigo-600 border-y border-r border-slate-300 shadow-xs text-[8px] font-extrabold transition-all hover:w-11.5 hover:translate-x-1.5 cursor-pointer flex items-center justify-center" title="KPT Review">KPT</button>
+              <button type="button" data-nav-target="habit" className="h-5 w-full rounded-r-lg bg-[#DBEAFE] text-[#1D4ED8] hover:bg-blue-100 border border-blue-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="Habit Tracker">HABIT</button>
+              <button type="button" data-nav-target="gratitude" className="h-5 w-full rounded-r-lg bg-[#FCE7F3] text-[#BE185D] hover:bg-pink-100 border border-pink-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="Gratitude Journal">GRAT</button>
+              <button type="button" data-nav-target="budget" className="h-5 w-full rounded-r-lg bg-[#FEF3C7] text-[#B45309] hover:bg-amber-100 border border-amber-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="Budget Tracker">CASH</button>
+              <button type="button" data-nav-target="kpt" className="h-5 w-full rounded-r-lg bg-[#CFFAFE] text-[#0E7490] hover:bg-cyan-100 border border-cyan-200 shadow-md text-[9px] font-black tracking-wide transition-all hover:scale-105 cursor-pointer flex items-center justify-center" title="KPT Review">KPT</button>
             </>
           )}
         </div>
       </div>
 
       {/* 2. Middle Group: Week Jumpers (W1 ~ W5) */}
-      <div className="flex flex-col space-y-1 w-full items-start my-auto">
+      <div className="flex flex-col space-y-0.8 w-full items-start my-auto">
+        <div className="w-full h-px bg-slate-300 my-0.5" />
         {[1, 2, 3, 4, 5].map((wNo) => {
           const isCurrentW = activeTab === 'weekly' && currentWeek === wNo
           const wColor = WEEK_PASTEL_COLORS[wNo]
@@ -136,10 +142,10 @@ export default function QtQuickIndexNav({
               type="button"
               data-nav-target={`week-${wNo}`}
               data-week={wNo}
-              className={`h-5 rounded-r-lg text-[8.5px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border-y border-r border-slate-400/80 shadow-md ${
+              className={`relative h-5 w-full rounded-r-lg text-[8.5px] font-black flex items-center justify-center transition-all duration-200 cursor-pointer border shadow-sm ${
                 isCurrentW
-                  ? 'w-12.5 text-white shadow-xl border-amber-300 z-20 translate-x-2.5 scale-105 ring-1 ring-amber-300/70'
-                  : 'w-9.5 opacity-90 hover:opacity-100 hover:w-11 hover:translate-x-1.5 font-extrabold'
+                  ? 'text-white shadow-xl border-2 border-white ring-2 ring-amber-400 z-20 scale-[1.08]'
+                  : 'opacity-90 hover:opacity-100 hover:scale-105 border-slate-300 font-extrabold'
               }`}
               style={{
                 backgroundColor: isCurrentW ? wColor.activeBg : wColor.bg,
@@ -147,14 +153,16 @@ export default function QtQuickIndexNav({
               }}
               title={`${wNo}주차 주간 계획`}
             >
-              W{wNo}
+              {isCurrentW && <span className="absolute left-1 w-1.5 h-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" />}
+              Week{wNo}
             </button>
           )
         })}
       </div>
 
       {/* 3. Bottom Group: Month Tabs (Jan ~ Dec) */}
-      <div className="flex flex-col space-y-0.8 w-full items-start">
+      <div className="flex flex-col space-y-0.5 w-full items-start mb-1.5">
+        <div className="w-full h-px bg-slate-300 my-0.5" />
         {monthItems.map((item, idx) => {
           const palette = SEASONAL_MONTH_COLORS[item.month]
           const showYearDivider = item.year !== null && idx > 0 && monthItems[idx - 1].year !== item.year
@@ -162,25 +170,33 @@ export default function QtQuickIndexNav({
 
           return (
             <React.Fragment key={`m-p-${item.year ?? 'y'}-${item.month}`}>
-              {showYearDivider && <div className="h-px w-6 bg-slate-300/80 my-0.5" />}
+              {showYearDivider && <div className="h-px w-full bg-slate-300 my-0.5" />}
               <button
                 type="button"
                 data-nav-target={navTarget}
-                className={`h-4.2 rounded-r-md text-[7.5px] font-extrabold flex items-center justify-between px-1.5 transition-all duration-200 relative cursor-pointer border-y border-r border-slate-400/70 shadow-xs ${
+                className={`w-full rounded-r-lg flex items-center justify-between px-1 text-white font-black transition-all duration-200 relative cursor-pointer border shadow-sm ${
                   item.isCurrent
-                    ? 'w-12.5 text-white font-black shadow-xl border-amber-300 z-20 translate-x-2.5 scale-105 ring-1 ring-amber-300/70'
-                    : 'w-9.5 text-slate-800 opacity-90 hover:opacity-100 hover:w-11 hover:translate-x-1.5'
+                    ? 'h-[21px] bg-[#0F172A] text-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.25)] border-2 border-white ring-2 ring-amber-400 z-20'
+                    : 'h-[17px] text-[8.5px] opacity-95 hover:opacity-100 hover:h-[19px] border-slate-300/80'
                 }`}
                 style={{
-                  backgroundColor: palette.bg,
-                  color: palette.text,
+                  backgroundColor: item.isCurrent ? '#0F172A' : palette.bg,
+                  color: item.isCurrent ? '#FFFFFF' : palette.text,
                 }}
                 title={`${item.year !== null ? `${item.year}년 ` : ''}${item.month}월 (${palette.label}) 플래너`}
               >
-                <span>{palette.label}</span>
-                {item.isToday && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-300 border border-white animate-pulse" title="TODAY" />
+                {/* 수직 골드 리본 인디케이터 (노란 동그라미 대신 적용) */}
+                {item.isCurrent && (
+                  <span className="absolute left-0 top-0.5 bottom-0.5 w-1.2 rounded-r-full bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.9)]" />
                 )}
+                <span className="flex items-center gap-0.5 font-mono tracking-widest pl-0">
+                  {palette.label}
+                </span>
+                {item.isToday ? (
+                  <span className="text-[7px] px-0.5 py-0.2 rounded bg-amber-400 text-slate-900 font-black animate-pulse" title="TODAY">NOW</span>
+                ) : item.isCurrent ? (
+                  <span className="text-[9px] text-amber-300 font-black">▶</span>
+                ) : null}
               </button>
             </React.Fragment>
           )

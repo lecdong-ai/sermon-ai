@@ -34,7 +34,7 @@ export default function QtSundaySermonPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 58px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}

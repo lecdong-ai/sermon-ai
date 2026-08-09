@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { 
   BookOpen, Sparkles, Loader2, Copy, Check, ChevronDown, ChevronRight, 
   Settings2, Eye, FileText, Layout, RotateCcw, AlertCircle, FileDown, ArrowRight,
-  History, Trash2, Plus, Bookmark, Edit3, Save, Download, Globe, Calendar as CalendarIcon
+  History, Trash2, Plus, Bookmark, Edit3, Save, Download, Globe, Calendar as CalendarIcon, Wand2, X
 } from 'lucide-react'
 import QtReader from './QtReader'
 import QtPdfLayout from './QtPdfLayout'
+import QtDiaryPackViewer from './QtDiaryPackViewer'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { QT_TEMPLATES } from '@/lib/qtTemplates'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
@@ -21,7 +22,10 @@ import {
   getMondayOfWeek,
   formatDateRangeLabel,
   getNextStartPassage,
+  getWeekdayDateLabels,
 } from '@/lib/qtDates'
+import { parseDays } from '@/lib/qtDayParser'
+import QtDayCard from './QtDayCard'
 import { findAllSectionTitles as lookupSectionTitles } from '@/lib/bible/sections'
 import { getNextBookInOrder, isLastBookInOrder, getFirstBookInOrder } from '@/lib/bible/readingOrder'
 import { getVersesInChapter } from '@/lib/bible/verseCounts'
@@ -169,6 +173,35 @@ export function parseEntryTargetMonth(entry: QtHistoryEntry): { year: number; mo
 export function cleanSeriesName(seriesName?: string): string {
   if (!seriesName) return ''
   return seriesName.replace(/\s*\|\|TARGET:[^|]+\|\|/g, '').trim()
+}
+
+// 월별 주차 시작일 계산 헬퍼 (Week 1은 1일, Week 2부터는 두 번째 월요일부터 시작하여 날짜 유실 방지)
+export function getMonthlyWeekStartDates(year: number, month: number, weekCount: number): string[] {
+  const dates: string[] = []
+  dates.push(`${year}-${String(month).padStart(2, '0')}-01`)
+
+  const d1 = new Date(year, month - 1, 1)
+  const dow1 = d1.getDay() // 0: Sun, 1: Mon, ..., 6: Sat
+  const daysToSecondWeekMonday = dow1 === 1 ? 7 : (8 - dow1) % 7 || 7
+
+  const week2Monday = new Date(year, month - 1, 1 + daysToSecondWeekMonday)
+
+  for (let i = 1; i < weekCount; i++) {
+    const wDate = new Date(week2Monday)
+    wDate.setDate(week2Monday.getDate() + (i - 1) * 7)
+    const y = wDate.getFullYear()
+    const m = String(wDate.getMonth() + 1).padStart(2, '0')
+    const d = String(wDate.getDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${d}`)
+  }
+
+  return dates
+}
+
+// 주차 번호(weekNumber) 및 사용 월에 따른 정확한 시작 날짜 자동 산출 헬퍼
+export function computeStartDateForWeek(year: number, month: number, weekNumber: number): string {
+  const dates = getMonthlyWeekStartDates(year, month, Math.max(weekNumber, 6))
+  return dates[weekNumber - 1] || dates[0]
 }
 
 // 마크다운 테이블 파싱 헬퍼
@@ -493,8 +526,15 @@ export default function QtGenerator() {
   // 최종 결과 (QtReader 연동용)
   const [finalManuscript, setFinalManuscript] = useState('')
   const [includeDiaryPage, setIncludeDiaryPage] = useState(true)
+  const [includeMeditationPack, setIncludeMeditationPack] = useState(true)
   // 일자별 성경 소제목 (PDF 표시용)
   const [daySectionTitles, setDaySectionTitles] = useState<Record<number, string[]>>({})
+
+  // 월간 다이어리 팩 (/diary 디자인) 뷰어 모드 상태
+  const [diaryPackMode, setDiaryPackMode] = useState(false)
+  const [diaryPackYear, setDiaryPackYear] = useState(new Date().getFullYear())
+  const [diaryPackMonth, setDiaryPackMonth] = useState(new Date().getMonth() + 1)
+  const [diaryPackMeditation, setDiaryPackMeditation] = useState(true)
 
   // 스튜디오 탭 상태 ('weekly' | 'monthly_wizard' | 'monthly_library')
   const [activeStudioTab, setActiveStudioTab] = useState<'weekly' | 'monthly_wizard' | 'monthly_library'>('weekly')
@@ -524,6 +564,22 @@ export default function QtGenerator() {
   const [editContent, setEditContent] = useState('')
   const [historyError, setHistoryError] = useState('')
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set())
+
+  // 히스토리 항목 개별 메타(주차, 사용 예정 월) 수정 상태
+  const [editingMetaId, setEditingMetaId] = useState<string | null>(null)
+  const [editTargetYear, setEditTargetYear] = useState<number>(2026)
+  const [editTargetMonth, setEditTargetMonth] = useState<number>(9)
+  const [editWeekNumber, setEditWeekNumber] = useState<number>(1)
+  const [savingMetaId, setSavingMetaId] = useState<string | null>(null)
+
+  // 일자별 AI 재작성 및 세부 편집 스튜디오 (Daily QT Studio) 상태
+  const [dailyStudioEntry, setDailyStudioEntry] = useState<QtHistoryEntry | null>(null)
+  const [dailyStudioDayIndex, setDailyStudioDayIndex] = useState<number>(0)
+  const [singleDayRegenerating, setSingleDayRegenerating] = useState<number | null>(null)
+  const [dailyTone, setDailyTone] = useState<string>('기본')
+  const [dailyDayContent, setDailyDayContent] = useState<string>('')
+  const [savingDailyDay, setSavingDailyDay] = useState<boolean>(false)
+
   const [monthlyStrip, setMonthlyStrip] = useState<{
     month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[]
   } | undefined>(undefined)
@@ -909,8 +965,9 @@ export default function QtGenerator() {
 
   // 월간 PDF: 선택한 history entries를 주차별로 fetch → combine
   const [monthlyLoading, setMonthlyLoading] = useState(false)
-  const handleMonthlyPdf = async (withDiary: boolean = true) => {
+  const handleMonthlyPdf = async (withDiary: boolean = true, withMeditationPack: boolean = false) => {
     setIncludeDiaryPage(withDiary)
+    setIncludeMeditationPack(withMeditationPack)
     const entries = historyEntries
       .filter(e => selectedHistoryIds.has(e.id))
       .sort((a, b) => (a.start_date || a.created_at).localeCompare(b.start_date || b.created_at))
@@ -962,26 +1019,21 @@ export default function QtGenerator() {
         return
       }
 
-      // ── 핵심 수정: start_date가 없거나 중복이면 7일 간격으로 자동 재배치 ──
-      // DB에 start_date가 저장 안 되어있으면 모든 주차가 "이번 주 월요일"로 잡혀서
-      // 7월 5일 vs 8월 1일 → 7월이 메인 달로 잘못 선택되는 버그 방지
-      const startDateSet = new Set(weeks.map(w => w.form.startDate))
-      if (startDateSet.size < weeks.length) {
-        // 중복 발견 → 첫 주차를 기준으로 7일 간격 재배치
-        const baseDate = new Date(weeks[0].form.startDate)
-        for (let i = 0; i < weeks.length; i++) {
-          const d = new Date(baseDate)
-          d.setDate(baseDate.getDate() + i * 7)
-          const y = d.getFullYear()
-          const m = String(d.getMonth() + 1).padStart(2, '0')
-          const dd = String(d.getDate()).padStart(2, '0')
-          weeks[i].form.startDate = `${y}-${m}-${dd}`
-        }
-      }
+      // ── 1. 선택된 히스토리 항목(또는 폼)의 targetYear & targetMonth 정밀 파싱 ──
+      const firstEntryTarget = entries[0] ? parseEntryTargetMonth(entries[0]) : null
+      const targetYear = firstEntryTarget ? firstEntryTarget.year : (form.targetYear || 2026)
+      const targetMonth = firstEntryTarget ? firstEntryTarget.month : (form.targetMonth || 9)
+      const targetMonthKey = `${targetYear}-${targetMonth}`
 
-      // 주차들의 날짜 중 가장 비중이 높은 메인 달(예: 8월 - 26일치)을 자동으로 잡음 (7월 5일치는 자동 버림)
-      const available = getAvailableMonthsInWeeks(weeks)
-      const targetMonthKey = available.length > 0 ? available[0].key : undefined
+      // ── 2. 주차별 startDate 및 targetMonth/targetYear 일괄 자동 동기화 ──
+      // Week 1은 1일, Week 2부터는 두 번째 월요일부터 시작하여 날짜(예: 9월 7일 월요일) 유실 방지
+      const weekStartDates = getMonthlyWeekStartDates(targetYear, targetMonth, weeks.length)
+
+      for (let i = 0; i < weeks.length; i++) {
+        weeks[i].form.startDate = weekStartDates[i] || weekStartDates[0]
+        weeks[i].form.targetYear = targetYear
+        weeks[i].form.targetMonth = targetMonth
+      }
 
       const combinedManuscript = combineMonthlyManuscript(weeks, targetMonthKey)
       const combinedStrip = combineMonthlyCalendarStrip(weeks, targetMonthKey)
@@ -994,17 +1046,17 @@ export default function QtGenerator() {
 
       setFinalManuscript(combinedManuscript)
       setMonthlyStrip(combinedStrip || undefined)
+      setDiaryPackYear(targetYear)
+      setDiaryPackMonth(targetMonth)
+      setDiaryPackMeditation(withMeditationPack)
 
       const firstEntry = entries[0]
       if (firstEntry) {
-        const createdDate = firstEntry.created_at ? firstEntry.created_at.split('T')[0] : getTodayDateString()
-        let sd = firstEntry.start_date || getMondayOfWeek(createdDate)
-        if (targetMonthKey) {
-          const [ty, tm] = targetMonthKey.split('-')
-          sd = `${ty}-${String(tm).padStart(2, '0')}-01`
-        }
+        const sd = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`
         updateForm({
           startDate: sd,
+          targetYear: targetYear,
+          targetMonth: targetMonth,
           bibleBook: firstEntry.bible_book,
           seriesName: firstEntry.series_name || form.seriesName,
         })
@@ -1012,15 +1064,16 @@ export default function QtGenerator() {
         // 완성된 월간 큐티를 내 서재(Monthly Library)에 영구 보관
         const createdBook: MonthlyQtBook = {
           id: `monthly_${Date.now()}`,
-          year: parseInt(targetMonthKey ? targetMonthKey.split('-')[0] : '2025', 10),
-          month: parseInt(targetMonthKey ? targetMonthKey.split('-')[1] : '8', 10),
-          title: `${targetMonthKey ? targetMonthKey.replace('-', '년 ') + '월' : '월간'} ${firstEntry?.bible_book || form.bibleBook} 큐티 다이어리`,
+          year: targetYear,
+          month: targetMonth,
+          title: `${targetYear}년 ${targetMonth}월 ${firstEntry?.bible_book || form.bibleBook} 큐티 다이어리`,
           bibleBook: firstEntry?.bible_book || form.bibleBook,
           fullManuscript: combinedManuscript,
           created_at: new Date().toISOString(),
           sizeOption: form.sizeOption,
           templateId: form.designTemplate,
           includeDiaryPage: withDiary,
+          includeMeditationPack: withMeditationPack,
           monthCalendarStrip: combinedStrip,
         }
         setMonthlyLibrary(saveMonthlyBook(createdBook))
@@ -1086,12 +1139,18 @@ export default function QtGenerator() {
         sizeOption: form.sizeOption,
         templateId: form.designTemplate,
         includeDiaryPage: true,
+        includeMeditationPack: true,
       }
 
       const updatedLib = saveMonthlyBook(newBook)
       setMonthlyLibrary(updatedLib)
       setFinalManuscript(fullManuscript)
       setIncludeDiaryPage(true)
+      setIncludeMeditationPack(true)
+      setDiaryPackMode(true)
+      setDiaryPackYear(wizardYear)
+      setDiaryPackMonth(wizardMonth)
+      setDiaryPackMeditation(true)
       setActiveStudioTab('monthly_library')
     } catch (e: any) {
       console.error('Wizard error:', e)
@@ -1208,6 +1267,8 @@ export default function QtGenerator() {
   const handleViewHistory = async (entry: QtHistoryEntry) => {
     const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
     if (full?.full_manuscript) {
+      const { year, month } = parseEntryTargetMonth(full)
+      const correctStartDate = computeStartDateForWeek(year, month, full.week_number)
       updateForm({
         bibleBook: full.bible_book,
         weekNumber: full.week_number,
@@ -1217,6 +1278,9 @@ export default function QtGenerator() {
         seriesName: full.series_name,
         sizeOption: full.size_option,
         designTemplate: full.design_template,
+        startDate: correctStartDate,
+        targetYear: year,
+        targetMonth: month,
       })
       setFinalManuscript(full.full_manuscript)
       setShowHistory(false)
@@ -1225,6 +1289,8 @@ export default function QtGenerator() {
 
   // 히스토리 재생성 (동일 설정으로 step 1)
   const handleRegenerateHistory = (entry: QtHistoryEntry) => {
+    const { year, month } = parseEntryTargetMonth(entry)
+    const correctStartDate = computeStartDateForWeek(year, month, entry.week_number)
     updateForm({
       bibleBook: entry.bible_book,
       weekNumber: entry.week_number,
@@ -1234,6 +1300,9 @@ export default function QtGenerator() {
       seriesName: entry.series_name,
       sizeOption: entry.size_option,
       designTemplate: entry.design_template,
+      startDate: correctStartDate,
+      targetYear: year,
+      targetMonth: month,
     })
     if (entry.start_passage) setStartPassage(entry.start_passage)
     if (entry.end_passage) setEndPassage(entry.end_passage)
@@ -1241,24 +1310,195 @@ export default function QtGenerator() {
     setShowHistory(false)
   }
 
+  // 히스토리 항목 정보(주차, 사용 예정 월) 수정 시작
+  const handleStartEditMeta = (entry: QtHistoryEntry) => {
+    const { year, month } = parseEntryTargetMonth(entry)
+    setEditingMetaId(entry.id)
+    setEditTargetYear(year)
+    setEditTargetMonth(month)
+    setEditWeekNumber(entry.week_number || 1)
+  }
+
+  // 히스토리 항목 정보(주차, 사용 예정 월) 저장
+  const handleSaveEntryMeta = async (id: string) => {
+    setSavingMetaId(id)
+    try {
+      const entry = historyEntries.find(e => e.id === id)
+      if (entry) {
+        const cleanName = cleanSeriesName(entry.series_name)
+        const targetTag = `||TARGET:${editTargetYear}-${String(editTargetMonth).padStart(2, '0')}||`
+        const taggedSeriesName = `${cleanName} ${targetTag}`.trim()
+        const newStartDate = computeStartDateForWeek(editTargetYear, editTargetMonth, editWeekNumber)
+
+        await fetch(`/api/advanced/qt/history/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            week_number: editWeekNumber,
+            target_year: editTargetYear,
+            target_month: editTargetMonth,
+            start_date: newStartDate,
+            series_name: taggedSeriesName,
+          })
+        })
+      }
+      setEditingMetaId(null)
+      loadHistory()
+    } catch (e) {
+      console.error('기록 메타데이터 저장 오류:', e)
+    }
+    setSavingMetaId(null)
+  }
+
+  // 일자별 AI 재작성 및 세부 편집 스튜디오 열기
+  const handleOpenDailyStudio = async (entry: QtHistoryEntry) => {
+    const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
+    if (full?.full_manuscript) {
+      setDailyStudioEntry(full)
+      setDailyStudioDayIndex(0)
+      const { rawSections } = parseDays(full.full_manuscript)
+      setDailyDayContent(rawSections[0] || '')
+    }
+  }
+
+  // 일자별 스튜디오 탭 선택
+  const handleSelectDailyStudioDay = (dayIdx: number) => {
+    setDailyStudioDayIndex(dayIdx)
+    if (dailyStudioEntry?.full_manuscript) {
+      const { rawSections } = parseDays(dailyStudioEntry.full_manuscript)
+      setDailyDayContent(rawSections[dayIdx] || '')
+    }
+  }
+
+  // 일자별 마크다운 세부 수정 내용 저장
+  const handleSaveDailyStudioDay = async () => {
+    if (!dailyStudioEntry || !dailyStudioEntry.full_manuscript) return
+    setSavingDailyDay(true)
+    try {
+      const { rawSections } = parseDays(dailyStudioEntry.full_manuscript)
+      rawSections[dailyStudioDayIndex] = dailyDayContent
+      const newFullManuscript = rawSections.join('\n\n')
+
+      await fetch(`/api/advanced/qt/history/${dailyStudioEntry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_manuscript: newFullManuscript }),
+      })
+
+      const updated = { ...dailyStudioEntry, full_manuscript: newFullManuscript }
+      setDailyStudioEntry(updated)
+      if (editingEntry?.id === dailyStudioEntry.id) {
+        setEditContent(newFullManuscript)
+      }
+      loadHistory()
+    } catch (e: any) {
+      alert('일자별 내용 저장 실패: ' + e.message)
+    } finally {
+      setSavingDailyDay(false)
+    }
+  }
+
+  // 선택한 단일 일차만 AI로 다시 집필하기 (1-day single AI regeneration or auto-fill)
+  const handleRegenerateSingleDay = async (dayIdx: number, isAutoFillOnly = false) => {
+    if (!dailyStudioEntry || !dailyStudioEntry.full_manuscript) return
+    setSingleDayRegenerating(dayIdx)
+    try {
+      const { days, rawSections } = parseDays(dailyStudioEntry.full_manuscript)
+      const targetDay = days[dayIdx]
+      const dateList = getWeekdayDateLabels(dailyStudioEntry.start_date || '2026-09-01')
+      const dayDateLabel = dateList[dayIdx] || `${dayIdx + 1}일차`
+
+      const payloadType = isAutoFillOnly ? 'qt-autofill-day' : 'qt-draft'
+      const payloadData = isAutoFillOnly
+        ? {
+            bibleBook: dailyStudioEntry.bible_book,
+            currentContent: dailyDayContent || rawSections[dayIdx] || '',
+            customTone: dailyTone || dailyStudioEntry.tone || '',
+          }
+        : {
+            bibleBook: dailyStudioEntry.bible_book,
+            dayNumber: dayIdx + 1,
+            dayDate: dayDateLabel,
+            passage: targetDay?.passage || dailyStudioEntry.bible_book,
+            title: targetDay?.title || `${dailyStudioEntry.bible_book} 묵상`,
+            focus: targetDay?.observation || targetDay?.reflection || '',
+            audience: dailyStudioEntry.audience || '장년부',
+            level: dailyStudioEntry.level || '중',
+            customTone: dailyTone || dailyStudioEntry.tone || '',
+          }
+
+      const res = await fetch('/api/advanced/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: payloadType,
+          data: payloadData,
+        })
+      })
+
+      const json = await res.json()
+      if (!json.success || !json.data?.output) {
+        throw new Error(json.error || 'AI 일자별 원고 작성 실패')
+      }
+
+      const newDayContent = json.data.output as string
+      rawSections[dayIdx] = newDayContent
+      const newFullManuscript = rawSections.join('\n\n')
+
+      await fetch(`/api/advanced/qt/history/${dailyStudioEntry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_manuscript: newFullManuscript }),
+      })
+
+      const updated = { ...dailyStudioEntry, full_manuscript: newFullManuscript }
+      setDailyStudioEntry(updated)
+      setDailyDayContent(newDayContent)
+      if (editingEntry?.id === dailyStudioEntry.id) {
+        setEditContent(newFullManuscript)
+      }
+      loadHistory()
+    } catch (e: any) {
+      alert(e.message || '일자별 AI 재생성 실패')
+    } finally {
+      setSingleDayRegenerating(null)
+    }
+  }
+
   // 히스토리 편집 모드
   const handleEditHistory = async (entry: QtHistoryEntry) => {
     const full = entry.full_manuscript ? entry : await fetchHistoryEntry(entry.id)
     if (full?.full_manuscript) {
+      const { year, month } = parseEntryTargetMonth(full)
       setEditingEntry(full)
       setEditContent(full.full_manuscript)
+      setEditTargetYear(year)
+      setEditTargetMonth(month)
+      setEditWeekNumber(full.week_number || 1)
     }
   }
 
-  // 편집 저장
+  // 편집 저장 (원고 내용 + 주차/월 메타데이터 통합 저장)
   const handleSaveEdit = async () => {
     if (!editingEntry) return
     setSavingHistory(true)
     try {
+      const cleanName = cleanSeriesName(editingEntry.series_name)
+      const targetTag = `||TARGET:${editTargetYear}-${String(editTargetMonth).padStart(2, '0')}||`
+      const taggedSeriesName = `${cleanName} ${targetTag}`.trim()
+      const newStartDate = computeStartDateForWeek(editTargetYear, editTargetMonth, editWeekNumber)
+
       await fetch(`/api/advanced/qt/history/${editingEntry.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_manuscript: editContent }),
+        body: JSON.stringify({
+          full_manuscript: editContent,
+          week_number: editWeekNumber,
+          target_year: editTargetYear,
+          target_month: editTargetMonth,
+          start_date: newStartDate,
+          series_name: taggedSeriesName,
+        }),
       })
       setEditingEntry(null)
       setEditContent('')
@@ -1450,29 +1690,29 @@ export default function QtGenerator() {
 
   // 2단계: 하루치 QT 단일 호출 생성 + 섹션 검증 자동 재시도
   // (qt-draft + 본문 자동 주입, maxTokens 6000+ 동적, refine 단계 제거로 잘림 증폭 차단)
-  const REQUIRED_SECTIONS = [
-    '## 기본 정보',
-    '## 오늘의 본문',
-    '## 본문 한눈에 보기',
-    '## 천천히 읽기',
-    '## 본문 관찰하기',
-    '## 원어 핵심단어',
-    '## 영어 핵심단어',
-    '## 말씀 이해하기',
-    '## 복음으로 보기',
-    '## 나를 비추어 보기',
-    '## 오늘의 적용',
-    '## 영어로 붙드는 말씀',
-    '## 공동체 연결',
-    '## 오늘의 기도',
-    '## 한 줄 기록',
-    '## 인도자 메모',
+  const REQUIRED_SECTION_PATTERNS: { name: string; pattern: RegExp }[] = [
+    { name: '## 기본 정보', pattern: /기본\s*정보/i },
+    { name: '## 오늘의 본문', pattern: /오늘의\s*본문/i },
+    { name: '## 본문 한눈에 보기', pattern: /본문\s*한눈에\s*보기/i },
+    { name: '## 천천히 읽기', pattern: /천천히\s*읽기/i },
+    { name: '## 본문 관찰하기', pattern: /본문\s*관찰하기/i },
+    { name: '## 원어 핵심단어', pattern: /원어\s*핵심단어/i },
+    { name: '## 영어 핵심단어', pattern: /영어\s*핵심단어/i },
+    { name: '## 말씀 이해하기', pattern: /말씀\s*이해하기/i },
+    { name: '## 복음으로 보기', pattern: /복음으로\s*보기/i },
+    { name: '## 나를 비추어 보기', pattern: /나를\s*비추어\s*보기/i },
+    { name: '## 오늘의 적용', pattern: /오늘의\s*적용/i },
+    { name: '## 영어로 붙드는 말씀', pattern: /영어로\s*붙드는\s*말씀/i },
+    { name: '## 공동체 연결', pattern: /공동체\s*연결/i },
+    { name: '## 오늘의 기도', pattern: /오늘의\s*기도/i },
+    { name: '## 한 줄 기록', pattern: /한\s*줄\s*기록|한줄기록|한줄\s*기록/i },
+    { name: '## 인도자 메모', pattern: /인도자\s*메모/i },
   ]
 
   function validateFinalContent(content: string): { valid: boolean; missing: string[] } {
     const missing: string[] = []
-    for (const sec of REQUIRED_SECTIONS) {
-      if (!content.includes(sec)) missing.push(sec)
+    for (const sec of REQUIRED_SECTION_PATTERNS) {
+      if (!sec.pattern.test(content)) missing.push(sec.name)
     }
     return { valid: missing.length === 0, missing }
   }
@@ -1562,6 +1802,18 @@ export default function QtGenerator() {
         }
       }
 
+      // missing 섹션 자동 보강 (## 한 줄 기록, ## 인도자 메모 등은 헤더가 빠져있으면 자동 삽입)
+      const AUTO_APPEND_SECTIONS: Record<string, string> = {
+        '## 한 줄 기록': '\n\n## 한 줄 기록\n',
+        '## 인도자 메모': '\n\n## 인도자 메모\n',
+      }
+
+      for (const m of lastMissing) {
+        if (AUTO_APPEND_SECTIONS[m] && !finalContent.includes(m)) {
+          finalContent += AUTO_APPEND_SECTIONS[m]
+        }
+      }
+
       setDayManuscripts((prev) => ({
         ...prev,
         [dayName]: {
@@ -1573,10 +1825,11 @@ export default function QtGenerator() {
         },
       }))
 
-      if (lastMissing.length > 0) {
-        console.warn(`[qt] ${dayName} 생성 완료 (${lastMissing.length}개 섹션 누락 가능):`, lastMissing)
+      const criticalMissing = lastMissing.filter(m => m !== '## 한 줄 기록' && m !== '## 인도자 메모')
+      if (criticalMissing.length > 0) {
+        console.warn(`[qt] ${dayName} 생성 완료 (${criticalMissing.length}개 핵심 섹션 누락):`, criticalMissing)
         setError(
-          `${formatDayLabel(dayName)} 원고가 생성되었으나 일부 섹션이 누락되었을 수 있습니다: ${lastMissing.join(', ')}. 우측 편집기에서 직접 보완해 주세요.`,
+          `${formatDayLabel(dayName)} 원고가 생성되었으나 일부 섹션이 누락되었을 수 있습니다: ${criticalMissing.join(', ')}. 우측 편집기에서 직접 보완해 주세요.`,
         )
       }
     } catch (e: any) {
@@ -1875,6 +2128,32 @@ export default function QtGenerator() {
 
   // 최종 뷰어 모드 실행
   if (finalManuscript) {
+    if (diaryPackMode) {
+      const packSizeInfo = PAGE_SIZES[form.sizeOption] || PAGE_SIZES['A4Landscape']
+      const packIsLandscape = packSizeInfo.widthMm >= packSizeInfo.heightMm
+      const packPageWidth = packIsLandscape
+        ? 1024
+        : Math.round(1024 * (packSizeInfo.widthMm / packSizeInfo.heightMm))
+      const packPageHeight = packIsLandscape
+        ? Math.round(1024 * (packSizeInfo.heightMm / packSizeInfo.widthMm))
+        : 1024
+      return (
+        <QtDiaryPackViewer
+          year={diaryPackYear}
+          month={diaryPackMonth}
+          bibleBook={form.bibleBook}
+          themeColor="#4F7796"
+          manuscript={finalManuscript}
+          includeMeditation={diaryPackMeditation}
+          pageWidth={packPageWidth}
+          pageHeight={packPageHeight}
+          onBack={() => {
+            setFinalManuscript('')
+            setDiaryPackMode(false)
+          }}
+        />
+      )
+    }
     return (
       <>
         {savingHistory && (
@@ -1894,10 +2173,19 @@ export default function QtGenerator() {
           daySectionTitles={daySectionTitles}
           monthCalendarStrip={monthlyStrip}
           initialIncludeDiaryPage={includeDiaryPage}
+          initialIncludeMeditationPack={includeMeditationPack}
           onBack={() => {
             setFinalManuscript('')
             setDaySectionTitles({})
             setRecommendInfo(null)
+          }}
+          onNewQt={() => {
+            setFinalManuscript('')
+            setDaySectionTitles({})
+            setRecommendInfo(null)
+            const nextWeek = Math.min((form.weekNumber || 1) + 1, 5)
+            updateForm({ weekNumber: nextWeek })
+            setStep(1)
           }}
         />
       </>
@@ -1917,38 +2205,38 @@ export default function QtGenerator() {
               <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-indigo-500/20 to-emerald-500/20 border border-white/20 shadow-inner">
                 <BookOpen className="w-6 h-6 text-amber-300" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
                 말씀 연구실 Q.T 스튜디오
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 shadow-md">
+                <span className="text-[10px] font-semibold tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   Studio Edition
                 </span>
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
-              주간 본문 정밀 분할부터 AI 전세대 맞춤 집필, 그리고 <strong className="text-amber-300 font-bold">1개월 월간 큐티 소책자 + 수채화 다이어리 자동 통합 출판</strong>까지 한곳에서 관리하세요.
+            <p className="text-xs text-slate-400 font-normal max-w-2xl leading-relaxed">
+              주간 본문 정밀 분할부터 AI 전세대 맞춤 집필, 그리고 <span className="text-amber-400/90 font-medium">1개월 월간 큐티 소책자 + 수채화 다이어리 자동 통합 출판</span>까지 한곳에서 관리하세요.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <Link
               href="/diary"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-300 transition-all shadow-md backdrop-blur-md hover:scale-[1.02]"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-900/80 hover:bg-slate-800 border border-amber-500/20 text-amber-400 transition-all shadow-xs"
             >
-              <BookOpen className="w-4 h-4 text-amber-400" />
-              <span>📓 수채화 다이어리 제작소</span>
+              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+              <span>수채화 다이어리 제작소</span>
             </Link>
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border shadow-md backdrop-blur-md hover:scale-[1.02] ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all border shadow-xs ${
                 showHistory
-                  ? 'bg-indigo-600/30 border-indigo-400/50 text-indigo-200'
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-indigo-950/60 border-indigo-500/40 text-indigo-200'
+                  : 'bg-slate-900/80 border-white/10 text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <History className="w-4 h-4 text-indigo-400" />
-              <span>{showHistory ? '새로 작성' : '큐티 생성 기록'}</span>
+              <History className="w-3.5 h-3.5 text-indigo-400" />
+              <span>{showHistory ? '새로 작성' : '생성 기록'}</span>
               {historyEntries.length > 0 && !showHistory && (
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 text-[10px] font-extrabold border border-indigo-400/30">
+                <span className="px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold border border-indigo-500/30">
                   {historyEntries.length}
                 </span>
               )}
@@ -1957,43 +2245,43 @@ export default function QtGenerator() {
         </div>
 
         {/* Studio Mode Navigation Segmented Control */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-white/10">
+        <div className="bg-slate-950/80 p-1.5 rounded-2xl border border-white/10 flex items-center gap-1.5 backdrop-blur-md">
           <button
             onClick={() => { setActiveStudioTab('weekly'); setShowHistory(false) }}
-            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-medium transition-all ${
               activeStudioTab === 'weekly' && !showHistory
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400/50 shadow-lg shadow-indigo-600/30 ring-1 ring-white/20'
-                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-slate-800 text-slate-100 border border-white/10 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
-            <BookOpen className="w-4 h-4 text-emerald-400" />
-            <span>⚡ 1주일 큐티 스튜디오</span>
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <span>1주일 큐티 스튜디오</span>
           </button>
 
           <button
             onClick={() => { setActiveStudioTab('monthly_wizard'); setShowHistory(false) }}
-            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-medium transition-all ${
               activeStudioTab === 'monthly_wizard' && !showHistory
-                ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white border-amber-400/50 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300/30'
-                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-slate-800 text-amber-300 border border-amber-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-            <span>📅 1개월 월간 큐티 다이어리 마법사</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>월간 다이어리 마법사</span>
           </button>
 
           <button
             onClick={() => { setActiveStudioTab('monthly_library'); setShowHistory(false) }}
-            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl text-xs font-extrabold transition-all border ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-medium transition-all ${
               activeStudioTab === 'monthly_library' && !showHistory
-                ? 'bg-gradient-to-r from-emerald-600 to-indigo-600 text-white border-emerald-400/50 shadow-lg shadow-emerald-500/20 ring-1 ring-white/20'
-                : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-slate-800 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
-            <Bookmark className="w-4 h-4 text-indigo-300" />
-            <span>📚 내 월간 큐티 서재</span>
+            <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
+            <span>내 월간 서재</span>
             {monthlyLibrary.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] shadow-sm">
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
                 {monthlyLibrary.length}
               </span>
             )}
@@ -2123,20 +2411,21 @@ export default function QtGenerator() {
                         ))}
                       </div>
 
-                      {/* 제작 실행 버튼 2가지 */}
-                      <div className="grid grid-cols-2 gap-2.5 pt-2">
+                      {/* 제작 실행 버튼 3가지 */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
                         <button
                           onClick={() => {
                             const newSet = new Set<string>()
                             group.entries.forEach(e => newSet.add(e.id))
                             setSelectedHistoryIds(newSet)
+                            setDiaryPackMode(false)
                             handleMonthlyPdf(false)
                           }}
                           disabled={monthlyLoading}
-                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-indigo-600/40 text-slate-200 text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-1.5 disabled:opacity-40"
+                          className="py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all border border-white/10 flex items-center justify-center gap-1.5 disabled:opacity-40"
                         >
-                          <FileText className="w-4 h-4 text-indigo-400" />
-                          📖 {group.month}월 큐티만
+                          <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>{group.month}월 큐티만</span>
                         </button>
 
                         <button
@@ -2144,13 +2433,29 @@ export default function QtGenerator() {
                             const newSet = new Set<string>()
                             group.entries.forEach(e => newSet.add(e.id))
                             setSelectedHistoryIds(newSet)
-                            handleMonthlyPdf(true)
+                            setDiaryPackMode(true)
+                            handleMonthlyPdf(true, false)
                           }}
                           disabled={monthlyLoading}
-                          className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md border border-amber-300/30 flex items-center justify-center gap-1.5 disabled:opacity-40"
+                          className="py-2 px-3 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-500/30 hover:border-indigo-400/50 text-xs font-medium transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
                         >
-                          <Sparkles className="w-4 h-4 text-amber-300" />
-                          📖+📝 큐티 + 다이어리
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>큐티 + 다이어리</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const newSet = new Set<string>()
+                            group.entries.forEach(e => newSet.add(e.id))
+                            setSelectedHistoryIds(newSet)
+                            setDiaryPackMode(true)
+                            handleMonthlyPdf(true, true)
+                          }}
+                          disabled={monthlyLoading}
+                          className="py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/50 text-xs font-medium transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                          <span>큐티 + 묵상 팩</span>
                         </button>
                       </div>
                     </div>
@@ -2231,11 +2536,13 @@ export default function QtGenerator() {
 
                   {/* Actions */}
                   <div className="space-y-2 pt-1">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5">
                       <button
                         onClick={() => {
                           setIncludeDiaryPage(false)
+                          setIncludeMeditationPack(false)
                           setMonthlyStrip(book.monthCalendarStrip)
+                          setDiaryPackMode(false)
                           setFinalManuscript(book.fullManuscript)
                           updateForm({
                             bibleBook: book.bibleBook,
@@ -2243,16 +2550,21 @@ export default function QtGenerator() {
                             startDate: `${book.year}-${String(book.month).padStart(2, '0')}-01`,
                           })
                         }}
-                        className="py-2 px-2.5 rounded-xl bg-white/10 hover:bg-indigo-600/40 text-slate-200 text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-1"
+                        className="py-1.5 px-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white text-[11px] font-medium transition-all border border-white/10 flex items-center justify-center gap-1"
                       >
-                        <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                        월간 큐티만
+                        <FileText className="w-3 h-3 text-indigo-400" />
+                        큐티만
                       </button>
 
                       <button
                         onClick={() => {
                           setIncludeDiaryPage(true)
+                          setIncludeMeditationPack(false)
                           setMonthlyStrip(book.monthCalendarStrip)
+                          setDiaryPackMode(true)
+                          setDiaryPackYear(book.year)
+                          setDiaryPackMonth(book.month)
+                          setDiaryPackMeditation(false)
                           setFinalManuscript(book.fullManuscript)
                           updateForm({
                             bibleBook: book.bibleBook,
@@ -2260,10 +2572,32 @@ export default function QtGenerator() {
                             startDate: `${book.year}-${String(book.month).padStart(2, '0')}-01`,
                           })
                         }}
-                        className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1"
+                        className="py-1.5 px-2 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 text-[11px] font-medium transition-all border border-indigo-500/30 flex items-center justify-center gap-1"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        큐티+다이어리
+                        <Sparkles className="w-3 h-3 text-indigo-300" />
+                        +다이어리
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIncludeDiaryPage(true)
+                          setIncludeMeditationPack(true)
+                          setMonthlyStrip(book.monthCalendarStrip)
+                          setDiaryPackMode(true)
+                          setDiaryPackYear(book.year)
+                          setDiaryPackMonth(book.month)
+                          setDiaryPackMeditation(true)
+                          setFinalManuscript(book.fullManuscript)
+                          updateForm({
+                            bibleBook: book.bibleBook,
+                            sizeOption: book.sizeOption || 'A4Landscape',
+                            startDate: `${book.year}-${String(book.month).padStart(2, '0')}-01`,
+                          })
+                        }}
+                        className="py-1.5 px-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-bold transition-all border border-amber-500/30 flex items-center justify-center gap-1 shadow-sm"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        +묵상팩
                       </button>
                     </div>
 
@@ -2453,22 +2787,102 @@ export default function QtGenerator() {
                               />
                             </div>
                             <div className="flex-1 min-w-0 space-y-1">
-                              <div className="flex items-center justify-between gap-2 w-full">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-bold shrink-0 border border-amber-400/20">📂 {group.month}월</span>
+                              {editingMetaId === entry.id ? (
+                                <div className="flex items-center gap-2 flex-wrap bg-slate-950/90 border border-indigo-400/40 p-2.5 rounded-xl text-xs font-bold animate-fadeIn my-1 shadow-lg">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-slate-400 text-[11px]">사용 월:</span>
+                                    <select
+                                      value={editTargetYear}
+                                      onChange={e => setEditTargetYear(Number(e.target.value))}
+                                      className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-slate-100 text-xs font-bold outline-none cursor-pointer"
+                                    >
+                                      {[2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                                        <option key={y} value={y}>{y}년</option>
+                                      ))}
+                                    </select>
+                                    <select
+                                      value={editTargetMonth}
+                                      onChange={e => setEditTargetMonth(Number(e.target.value))}
+                                      className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-amber-300 text-xs font-bold outline-none cursor-pointer"
+                                    >
+                                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                        <option key={m} value={m}>{m}월</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  <div className="w-px h-4 bg-white/15" />
+
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-slate-400 text-[11px]">주차:</span>
+                                    <select
+                                      value={editWeekNumber}
+                                      onChange={e => setEditWeekNumber(Number(e.target.value))}
+                                      className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-indigo-300 text-xs font-bold outline-none cursor-pointer"
+                                    >
+                                      {[1, 2, 3, 4, 5].map(w => (
+                                        <option key={w} value={w}>{w}주차</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 ml-auto">
+                                    <button
+                                      onClick={() => handleSaveEntryMeta(entry.id)}
+                                      disabled={savingMetaId === entry.id}
+                                      className="flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-40"
+                                    >
+                                      {savingMetaId === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
+                                      <span>저장</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingMetaId(null)}
+                                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="보기"><Eye className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="편집"><Edit3 className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                              ) : (
+                                <div className="flex items-center justify-between gap-2 w-full">
+                                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                    <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
+                                    <button
+                                      onClick={() => handleStartEditMeta(entry)}
+                                      className="group flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 font-bold shrink-0 border border-indigo-400/25 transition-all"
+                                      title="클릭하여 주차 및 사용 월 수정"
+                                    >
+                                      <span>{entry.week_number}주차</span>
+                                      <Edit3 className="w-2.5 h-2.5 text-indigo-400 opacity-60 group-hover:opacity-100" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleStartEditMeta(entry)}
+                                      className="group flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-amber-400/15 hover:bg-amber-400/30 text-amber-300 font-bold shrink-0 border border-amber-400/20 transition-all"
+                                      title="클릭하여 주차 및 사용 월 수정"
+                                    >
+                                      <span>📂 {group.month}월</span>
+                                      <Edit3 className="w-2.5 h-2.5 text-amber-400 opacity-60 group-hover:opacity-100" />
+                                    </button>
+                                  </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <button onClick={() => handleOpenDailyStudio(entry)} className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/30 transition-all flex items-center gap-1 text-[10px] font-extrabold shadow-sm active:scale-95" title="일자별 AI 재작성 및 세부 편집 스튜디오 열기">
+                                        <Wand2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                                        <span>일자별 AI재생성/수정</span>
+                                      </button>
+                                      <button onClick={() => handleStartEditMeta(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold" title="주차 및 월 수정">
+                                        <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
+                                        <span>주차/월 변경</span>
+                                      </button>
+                                      <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="뷰어로 열기"><Eye className="w-3.5 h-3.5" /></button>
+                                      <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                      <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="원고 전체 편집"><Edit3 className="w-3.5 h-3.5" /></button>
+                                      <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
                                 </div>
-                              </div>
+                              )}
                               {(entry.series_name || entry.subtitle) && (
                                 <div className="text-[10px] text-slate-400">
-                                  {entry.series_name && <span>시리즈: {entry.series_name}</span>}
+                                  {entry.series_name && <span>시리즈: {cleanSeriesName(entry.series_name)}</span>}
                                   {entry.series_name && entry.subtitle && <span> · </span>}
                                   {entry.subtitle && <span>부제: {entry.subtitle}</span>}
                                 </div>
@@ -2514,21 +2928,102 @@ export default function QtGenerator() {
                             />
                           </div>
                           <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center justify-between gap-2 w-full">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-bold shrink-0">{entry.week_number}주차</span>
+                            {editingMetaId === entry.id ? (
+                              <div className="flex items-center gap-2 flex-wrap bg-slate-950/90 border border-indigo-400/40 p-2.5 rounded-xl text-xs font-bold animate-fadeIn my-1 shadow-lg">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-slate-400 text-[11px]">사용 월:</span>
+                                  <select
+                                    value={editTargetYear}
+                                    onChange={e => setEditTargetYear(Number(e.target.value))}
+                                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-slate-100 text-xs font-bold outline-none cursor-pointer"
+                                  >
+                                    {[2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                                      <option key={y} value={y}>{y}년</option>
+                                    ))}
+                                  </select>
+                                  <select
+                                    value={editTargetMonth}
+                                    onChange={e => setEditTargetMonth(Number(e.target.value))}
+                                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-amber-300 text-xs font-bold outline-none cursor-pointer"
+                                  >
+                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                      <option key={m} value={m}>{m}월</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="w-px h-4 bg-white/15" />
+
+                                <div className="flex items-center gap-1">
+                                  <span className="text-slate-400 text-[11px]">주차:</span>
+                                  <select
+                                    value={editWeekNumber}
+                                    onChange={e => setEditWeekNumber(Number(e.target.value))}
+                                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-1 text-indigo-300 text-xs font-bold outline-none cursor-pointer"
+                                  >
+                                    {[1, 2, 3, 4, 5].map(w => (
+                                      <option key={w} value={w}>{w}주차</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="flex items-center gap-1 ml-auto">
+                                  <button
+                                    onClick={() => handleSaveEntryMeta(entry.id)}
+                                    disabled={savingMetaId === entry.id}
+                                    className="flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-40"
+                                  >
+                                    {savingMetaId === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
+                                    <span>저장</span>
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingMetaId(null)}
+                                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                                  >
+                                    취소
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="보기"><Eye className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="편집"><Edit3 className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                            ) : (
+                              <div className="flex items-center justify-between gap-2 w-full">
+                                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                  <span className="text-[13px] font-bold text-slate-100 truncate">{entry.start_passage}{entry.end_passage ? ` ~ ${entry.end_passage}` : ''}</span>
+                                  <button
+                                    onClick={() => handleStartEditMeta(entry)}
+                                    className="group flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 font-bold shrink-0 border border-indigo-400/25 transition-all"
+                                    title="클릭하여 주차 및 사용 월 수정"
+                                  >
+                                    <span>{entry.week_number}주차</span>
+                                    <Edit3 className="w-2.5 h-2.5 text-indigo-400 opacity-60 group-hover:opacity-100" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleStartEditMeta(entry)}
+                                    className="group flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-amber-400/15 hover:bg-amber-400/30 text-amber-300 font-bold shrink-0 border border-amber-400/20 transition-all"
+                                    title="클릭하여 주차 및 사용 월 수정"
+                                  >
+                                    <span>📂 월 미지정 (수정)</span>
+                                    <Edit3 className="w-2.5 h-2.5 text-amber-400 opacity-60 group-hover:opacity-100" />
+                                  </button>
+                                </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button onClick={() => handleOpenDailyStudio(entry)} className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/30 transition-all flex items-center gap-1 text-[10px] font-extrabold shadow-sm active:scale-95" title="일자별 AI 재작성 및 세부 편집 스튜디오 열기">
+                                      <Wand2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                                      <span>일자별 AI재생성/수정</span>
+                                    </button>
+                                    <button onClick={() => handleStartEditMeta(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold" title="주차 및 월 수정">
+                                      <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>주차/월 변경</span>
+                                    </button>
+                                    <button onClick={() => handleViewHistory(entry)} className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 transition-colors" title="뷰어로 열기"><Eye className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleRegenerateHistory(entry)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-colors" title="재생성"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleEditHistory(entry)} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors" title="원고 전체 편집"><Edit3 className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleDeleteHistory(entry.id)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                                  </div>
                               </div>
-                            </div>
+                            )}
                             {(entry.series_name || entry.subtitle) && (
                               <div className="text-[10px] text-slate-400">
-                                {entry.series_name && <span>시리즈: {entry.series_name}</span>}
+                                {entry.series_name && <span>시리즈: {cleanSeriesName(entry.series_name)}</span>}
                                 {entry.series_name && entry.subtitle && <span> · </span>}
                                 {entry.subtitle && <span>부제: {entry.subtitle}</span>}
                               </div>
@@ -2559,11 +3054,46 @@ export default function QtGenerator() {
       {showHistory && !finalManuscript && editingEntry && (
         <div className="animate-fadeIn">
           <div className="glass-dark rounded-2xl border border-white/5 p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <h4 className="text-[13px] font-bold text-slate-300 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-amber-400" />
-                원고 편집 — {editingEntry.bible_book} {editingEntry.week_number}주차
-              </h4>
+            <div className="flex items-center justify-between border-b border-white/5 pb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h4 className="text-[13px] font-bold text-slate-300 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-amber-400" />
+                  원고 편집 — {editingEntry.bible_book}
+                </h4>
+
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/80 border border-white/10 text-xs">
+                  <span className="text-slate-400 text-[11px] font-bold pl-1">사용 월:</span>
+                  <select
+                    value={editTargetYear}
+                    onChange={e => setEditTargetYear(Number(e.target.value))}
+                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-0.5 text-slate-100 font-bold outline-none cursor-pointer"
+                  >
+                    {[2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                      <option key={y} value={y}>{y}년</option>
+                    ))}
+                  </select>
+                  <select
+                    value={editTargetMonth}
+                    onChange={e => setEditTargetMonth(Number(e.target.value))}
+                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-0.5 text-amber-300 font-bold outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                      <option key={m} value={m}>{m}월</option>
+                    ))}
+                  </select>
+                  <span className="text-slate-400 text-[11px] font-bold pl-1">주차:</span>
+                  <select
+                    value={editWeekNumber}
+                    onChange={e => setEditWeekNumber(Number(e.target.value))}
+                    className="bg-slate-900 border border-white/15 rounded-lg px-2 py-0.5 text-indigo-300 font-bold outline-none cursor-pointer"
+                  >
+                    {[1, 2, 3, 4, 5].map(w => (
+                      <option key={w} value={w}>{w}주차</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setEditingEntry(null); setEditContent('') }}
@@ -2574,10 +3104,10 @@ export default function QtGenerator() {
                 <button
                   onClick={handleSaveEdit}
                   disabled={savingHistory}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold transition-all disabled:opacity-40 shadow-sm"
                 >
-                  {savingHistory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  {savingHistory ? '저장 중...' : '저장'}
+                  {savingHistory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
+                  {savingHistory ? '저장 중...' : '원고 및 설정 저장'}
                 </button>
                 <button
                   onClick={() => { handleViewHistory(editingEntry); setEditingEntry(null); setEditContent('') }}
@@ -2769,7 +3299,11 @@ export default function QtGenerator() {
                 <input
                   type="number" min={1} max={200}
                   value={form.weekNumber}
-                  onChange={e => updateForm({ weekNumber: Math.max(1, parseInt(e.target.value) || 1) })}
+                  onChange={e => {
+                    const w = Math.max(1, parseInt(e.target.value) || 1)
+                    const newSd = computeStartDateForWeek(form.targetYear, form.targetMonth, w)
+                    updateForm({ weekNumber: w, startDate: newSd })
+                  }}
                   className="w-full bg-[#060a16] border border-white/5 rounded-xl px-4 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
                 />
               </div>
@@ -2814,7 +3348,8 @@ export default function QtGenerator() {
                     onChange={e => {
                       const y = parseInt(e.target.value, 10)
                       const m = form.targetMonth
-                      const newStartDate = `${y}-${String(m).padStart(2, '0')}-01`
+                      const w = form.weekNumber || 1
+                      const newStartDate = computeStartDateForWeek(y, m, w)
                       updateForm({ targetYear: y, startDate: newStartDate })
                     }}
                     className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-slate-100 outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
@@ -2828,7 +3363,8 @@ export default function QtGenerator() {
                     onChange={e => {
                       const m = parseInt(e.target.value, 10)
                       const y = form.targetYear
-                      const newStartDate = `${y}-${String(m).padStart(2, '0')}-01`
+                      const w = form.weekNumber || 1
+                      const newStartDate = computeStartDateForWeek(y, m, w)
                       updateForm({ targetMonth: m, startDate: newStartDate })
                     }}
                     className="w-full bg-[#060a16] border border-white/5 rounded-xl px-3 h-10 text-[13px] text-amber-300 font-bold outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 [color-scheme:dark]"
@@ -3575,10 +4111,9 @@ export default function QtGenerator() {
               최종 큐티 뷰어 & PDF 인쇄 페이지 열기
             </button>
           </div>
-          </div>
         </div>
+      </div>
       )}
-
       </>
       )}
 
@@ -3626,6 +4161,25 @@ export default function QtGenerator() {
             </div>
 
             <div className="space-y-2.5">
+              <button
+                onClick={() => {
+                  setPoolError(null)
+                  setError(null)
+                  extendingPoolRef.current = true
+                  handleGenerateSplit()
+                }}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/30 via-indigo-600/30 to-purple-600/30 border border-amber-400/40 hover:from-amber-500/40 hover:to-purple-600/40 text-left transition-all group shadow-md"
+              >
+                <div>
+                  <div className="text-[13px] font-extrabold text-amber-200 group-hover:text-white flex items-center gap-1.5">
+                    <span>⚡ 선택한 본문으로 계속 생성하기</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">권장</span>
+                  </div>
+                  <div className="text-[10px] text-slate-300 mt-0.5">범위 검증을 건너뛰고 선택하신 본문 그대로 큐티를 집필합니다</div>
+                </div>
+                <span className="text-amber-400 text-lg shrink-0">→</span>
+              </button>
+
               <button
                 onClick={() => {
                   setPoolError(null)
@@ -3715,6 +4269,246 @@ export default function QtGenerator() {
             })()}
             monthCalendarStrip={monthCalendarStrip}
           />
+        </div>
+      )}
+      {/* ===== 일자별 큐티 재구성 및 AI 재작성 스튜디오 모달 ===== */}
+      {dailyStudioEntry && (
+        <div className="fixed inset-0 z-[100] bg-[#020512]/95 backdrop-blur-2xl flex flex-col font-sans text-slate-100 animate-in fade-in duration-200 select-none">
+          {/* Header */}
+          <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#070b1e]/90 backdrop-blur-xl shrink-0 shadow-lg gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-600 to-amber-500 p-0.5 shadow-lg">
+                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                  <Wand2 className="w-4.5 h-4.5 text-amber-300 animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-extrabold text-white">일자별 AI 재작성 및 세부 편집 스튜디오</h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                    {dailyStudioEntry.bible_book} {dailyStudioEntry.week_number}주차
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  원하는 날짜만 선택하여 AI로 다시 집필하거나 본문 문구를 직접 정밀 수정할 수 있습니다.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  handleViewHistory(dailyStudioEntry)
+                  setDailyStudioEntry(null)
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+              >
+                <Eye className="w-4 h-4 text-white" />
+                <span>📖 전체 뷰어로 보기</span>
+              </button>
+              <button
+                onClick={() => setDailyStudioEntry(null)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white border border-white/10 transition-colors"
+                title="닫기 (Esc)"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+          </header>
+
+          {/* Main Body */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Day Tabs Bar */}
+            <div className="flex items-center gap-2 px-6 py-2.5 border-b border-white/10 bg-[#050817] shrink-0 overflow-x-auto scrollbar-thin">
+              {(() => {
+                const { days } = parseDays(dailyStudioEntry.full_manuscript || '')
+                const dateList = getWeekdayDateLabels(dailyStudioEntry.start_date || '2026-09-01')
+                return days.map((_, idx) => {
+                  const isSelected = dailyStudioDayIndex === idx
+                  const isRegenerating = singleDayRegenerating === idx
+                  const label = dateList[idx] || `${idx + 1}일차`
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelectDailyStudioDay(idx)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all whitespace-nowrap ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30 font-extrabold scale-105'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/20 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {isRegenerating ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                      ) : (
+                        <Sparkles className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-slate-500'}`} />
+                      )}
+                      <span>Day {idx + 1} ({label})</span>
+                    </button>
+                  )
+                })
+              })()}
+            </div>
+
+            {/* Content Split Pane */}
+            <div className="flex-1 flex min-h-0 overflow-hidden">
+              {/* Left Panel: AI Regeneration & Raw Text Editor */}
+              <div className="w-1/2 border-r border-white/10 p-6 overflow-y-auto space-y-5 bg-[#040714]">
+                {/* AI Single-Day Generator Box */}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-amber-500/10 border border-indigo-400/30 shadow-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold text-indigo-200 flex items-center gap-1.5">
+                      <Wand2 className="w-4 h-4 text-amber-400" />
+                      <span>Day {dailyStudioDayIndex + 1} AI 단일 일차 맞춤 재작성</span>
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                      원클릭 이 일차만 갱신
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+                    원하는 집필 톤을 선택하신 후 버튼을 누르시면, 선택하신 <strong className="text-indigo-300">Day {dailyStudioDayIndex + 1}</strong>의 원고만 AI가 즉시 새로 생성하여 교체합니다.
+                  </p>
+
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    <span className="text-[11px] font-bold text-slate-400">집필 톤/스타일:</span>
+                    {[
+                      { k: '표준 강해', v: '기본' },
+                      { k: '묵상/적용 강화', v: '묵상적용강화' },
+                      { k: '청소년/새신자', v: '청소년쉬운해설' },
+                      { k: '리더/설교가이드', v: '리더가이드강화' }
+                    ].map(t => (
+                      <button
+                        key={t.v}
+                        onClick={() => setDailyTone(t.v)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                          dailyTone === t.v
+                            ? 'bg-indigo-600 border-indigo-400 text-white shadow-sm font-extrabold'
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {t.k}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    <button
+                      onClick={() => handleRegenerateSingleDay(dailyStudioDayIndex, false)}
+                      disabled={singleDayRegenerating !== null}
+                      className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-xs font-extrabold transition-all shadow-lg shadow-indigo-600/30 border border-amber-300/40 disabled:opacity-40 active:scale-95"
+                    >
+                      {singleDayRegenerating === dailyStudioDayIndex ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                          <span>작성 중...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-4 h-4 text-amber-300" />
+                          <span>⚡ Day {dailyStudioDayIndex + 1} 전체 다시 집필</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => handleRegenerateSingleDay(dailyStudioDayIndex, true)}
+                      disabled={singleDayRegenerating !== null}
+                      className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-200 border border-emerald-500/40 text-xs font-extrabold transition-all shadow-md disabled:opacity-40 active:scale-95"
+                      title="원문에 빈 항목이나 서식이 있을 때 AI가 내용을 자동으로 완성해줍니다"
+                    >
+                      {singleDayRegenerating === dailyStudioDayIndex ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-emerald-300" />
+                          <span>완성 중...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+                          <span>✨ 빈 항목 AI 자동 완성</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section Direct Text Editor */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5">
+                      <Edit3 className="w-4 h-4 text-amber-400" />
+                      <span>Day {dailyStudioDayIndex + 1} 마크다운 원문 세부 수정</span>
+                    </label>
+                    <button
+                      onClick={handleSaveDailyStudioDay}
+                      disabled={savingDailyDay}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition-all shadow-sm disabled:opacity-40 active:scale-95"
+                    >
+                      {savingDailyDay ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
+                      <span>이 일차 수정 저장</span>
+                    </button>
+                  </div>
+                  <textarea
+                    value={dailyDayContent}
+                    onChange={e => setDailyDayContent(e.target.value)}
+                    rows={18}
+                    className="w-full bg-slate-950/80 border border-white/10 rounded-2xl p-4 text-xs leading-relaxed text-slate-200 font-mono outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 scrollbar-thin shadow-inner"
+                    placeholder="Day 마크다운 원고 내용..."
+                  />
+                </div>
+              </div>
+
+              {/* Right Panel: Live Single-Day Card Render Stage */}
+              <div className="w-1/2 p-6 overflow-y-auto bg-gradient-to-b from-[#020512] via-[#070b1e] to-[#020512] flex flex-col items-center justify-start relative">
+                <div className="w-full max-w-xl space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5">
+                      <Eye className="w-4 h-4 text-indigo-400" />
+                      <span>Day {dailyStudioDayIndex + 1} 종이 실물 인쇄 미리보기</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">실시간 체인지</span>
+                  </div>
+
+                  {(() => {
+                    const { days } = parseDays(dailyStudioEntry.full_manuscript || '')
+                    const currentDay = days[dailyStudioDayIndex]
+                    const dateList = getWeekdayDateLabels(dailyStudioEntry.start_date || '2026-09-01')
+                    const activeTmpl = QT_TEMPLATES.find(t => t.id === (dailyStudioEntry.design_template || 'publication-2a')) || QT_TEMPLATES[0]
+
+                    if (!currentDay) {
+                      return (
+                        <div className="p-8 text-center text-slate-500 text-xs font-mono">
+                          해당 일자의 본문 데이터를 해석하는 중...
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div
+                        className="rounded-2xl p-6 border shadow-[0_20px_60px_rgba(0,0,0,0.7)] transition-all duration-300 w-full"
+                        style={{
+                          background: activeTmpl.pageBg,
+                          color: activeTmpl.textColor,
+                          borderColor: activeTmpl.border,
+                        }}
+                      >
+                        <QtDayCard
+                          day={currentDay}
+                          dayNumber={dailyStudioDayIndex + 1}
+                          dateLabel={dateList[dailyStudioDayIndex] || ''}
+                          variant="pdf"
+                          template={activeTmpl}
+                          isBilingualSideBySide={false}
+                          editMode={false}
+                          edits={{}}
+                          hiddenSections={[]}
+                        />
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </section>

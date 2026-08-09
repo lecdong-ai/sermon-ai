@@ -68,11 +68,13 @@ function getWeekDays(startDateStr: string): Date[] {
   const days: Date[] = []
   let currDate = new Date(weekStart)
 
-  for (let i = 0; i < 14; i++) {
-    if (currDate.getDay() !== 0) {
-      days.push(new Date(currDate))
-      if (days.length >= 6) break
+  for (let i = 0; i < 7; i++) {
+    if (currDate.getDay() === 0) {
+      // 주일(일요일)을 만나면 해당 주차 날짜 수집을 종료 (다음 주의 월요일을 넘어가서 낚아채지 않도록 함)
+      break
     }
+    days.push(new Date(currDate))
+    if (days.length >= 6) break
     currDate.setDate(currDate.getDate() + 1)
   }
   return days
@@ -142,7 +144,7 @@ function getTargetMonthEntries(weeks: MonthlyWeekEntry[], targetYearMonth?: stri
   const targetYear = parseInt(targetYearStr, 10)
   const targetMonth = parseInt(targetMonthStr, 10)
 
-  // Target Month에 속하는 날짜만 남기고 이전 달(7월)이나 다음 달(9월) 날짜는 완전히 버림
+  // Target Month에 속하는 날짜만 남기고 이전 달이나 다음 달 날짜는 완전히 버림
   const collected = allEntries.filter(
     d => d.date.getFullYear() === targetYear && d.date.getMonth() + 1 === targetMonth
   )
@@ -150,16 +152,19 @@ function getTargetMonthEntries(weeks: MonthlyWeekEntry[], targetYearMonth?: stri
   // 날짜 오름차순 정렬 (8월 1일, 8월 3일 ... 8월 31일)
   collected.sort((a, b) => a.date.getTime() - b.date.getTime())
 
-  // 동일한 날짜(YYYY-MM-DD) 중복 제거 (첫 번째 항목 유지)
-  const uniqueCollected: DayDateEntry[] = []
-  const seenDates = new Set<string>()
+  // 동일한 날짜(YYYY-MM-DD) 중복 제거 (실제 본문 내용이 존재하는 항목 최우선 유지)
+  const seenDateMap = new Map<string, DayDateEntry>()
   for (const item of collected) {
     const dateKey = `${item.date.getFullYear()}-${item.date.getMonth() + 1}-${item.date.getDate()}`
-    if (!seenDates.has(dateKey)) {
-      seenDates.add(dateKey)
-      uniqueCollected.push(item)
+    const existing = seenDateMap.get(dateKey)
+    if (!existing) {
+      seenDateMap.set(dateKey, item)
+    } else if (!existing.rawContent.trim() && item.rawContent.trim()) {
+      seenDateMap.set(dateKey, item)
     }
   }
+
+  const uniqueCollected = Array.from(seenDateMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime())
 
   return { targetYear, targetMonth, collected: uniqueCollected }
 }

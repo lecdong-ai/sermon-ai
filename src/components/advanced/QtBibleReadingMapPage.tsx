@@ -21,7 +21,7 @@ interface BibleCategory {
 const OT_CATEGORIES: BibleCategory[] = [
   {
     label: '율법서', en: 'PENTATEUCH', emoji: '📜',
-    color: '#B45309', tint: '#FFFBEB', border: '#FDE68A',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '창', ch: 50 }, { name: '출', ch: 40 }, { name: '레', ch: 27 },
       { name: '민', ch: 36 }, { name: '신', ch: 34 },
@@ -29,7 +29,7 @@ const OT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '역사서', en: 'HISTORY', emoji: '📖',
-    color: '#0F766E', tint: '#F0FDFA', border: '#99F6E4',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '수', ch: 24 }, { name: '삿', ch: 21 }, { name: '룻', ch: 4 },
       { name: '삼상', ch: 31 }, { name: '삼하', ch: 24 }, { name: '왕상', ch: 22 },
@@ -39,7 +39,7 @@ const OT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '시가서', en: 'POETRY & WISDOM', emoji: '🎵',
-    color: '#7C3AED', tint: '#F5F3FF', border: '#DDD6FE',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '욥', ch: 42 }, { name: '시', ch: 150 }, { name: '잠', ch: 31 },
       { name: '전', ch: 12 }, { name: '아', ch: 8 },
@@ -47,7 +47,7 @@ const OT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '대선지서', en: 'MAJOR PROPHETS', emoji: '🔥',
-    color: '#BE123C', tint: '#FFF1F2', border: '#FECDD3',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '사', ch: 66 }, { name: '렘', ch: 52 }, { name: '애', ch: 5 },
       { name: '겔', ch: 48 }, { name: '단', ch: 12 },
@@ -55,7 +55,7 @@ const OT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '소선지서', en: 'MINOR PROPHETS', emoji: '🕊️',
-    color: '#0369A1', tint: '#F0F9FF', border: '#BAE6FD',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '호', ch: 14 }, { name: '욜', ch: 3 }, { name: '암', ch: 9 },
       { name: '옵', ch: 1 }, { name: '욘', ch: 4 }, { name: '미', ch: 7 },
@@ -68,7 +68,7 @@ const OT_CATEGORIES: BibleCategory[] = [
 const NT_CATEGORIES: BibleCategory[] = [
   {
     label: '복음서·역사', en: 'GOSPELS & ACTS', emoji: '✝️',
-    color: '#4338CA', tint: '#EEF2FF', border: '#C7D2FE',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '마', ch: 28 }, { name: '막', ch: 16 }, { name: '눅', ch: 24 },
       { name: '요', ch: 21 }, { name: '행', ch: 28 },
@@ -76,7 +76,7 @@ const NT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '서신서', en: 'EPISTLES', emoji: '📬',
-    color: '#475569', tint: '#F8FAFC', border: '#CBD5E1',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '롬', ch: 16 }, { name: '고전', ch: 16 }, { name: '고후', ch: 13 },
       { name: '갈', ch: 6 }, { name: '엡', ch: 6 }, { name: '빌', ch: 4 },
@@ -89,11 +89,18 @@ const NT_CATEGORIES: BibleCategory[] = [
   },
   {
     label: '예언서', en: 'REVELATION', emoji: '🌟',
-    color: '#C2410C', tint: '#FFF7ED', border: '#FED7AA',
+    color: '#64748B', tint: '#F8FAFC', border: '#E2E8F0',
     books: [
       { name: '계', ch: 22 },
     ],
   },
+]
+
+const MILESTONES = [
+  { q: 'Q1', emoji: '📜', target: '율법·역사서' },
+  { q: 'Q2', emoji: '🎵', target: '시가·선지서' },
+  { q: 'Q3', emoji: '✝️', target: '복음·서신서' },
+  { q: 'Q4', emoji: '🏆', target: '1통독 완주' },
 ]
 
 function BookCheckCard({ name, ch, color, tint, border }: {
@@ -102,32 +109,31 @@ function BookCheckCard({ name, ch, color, tint, border }: {
   return (
     <div
       style={{
-        width: '42px',
-        padding: '2px 2px',
+        width: '40px',
+        padding: '3px 3px 2px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        borderRadius: '5px',
-        backgroundColor: tint,
+        borderRadius: '6px',
+        backgroundColor: 'white',
         border: `1px solid ${border}`,
-        borderTop: `2.5px solid ${color}`,
         flexShrink: 0,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2px' }}>
-        <span style={{ fontSize: '9px', fontWeight: 800, color: '#1E293B' }}>{name}</span>
-        <span style={{ fontSize: '7px', color, fontWeight: 700 }}>{ch}장</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 1px' }}>
+        <span style={{ fontSize: '8.5px', fontWeight: 800, color: '#0F172A' }}>{name}</span>
+        <span style={{ fontSize: '6.5px', color, fontWeight: 800 }}>{ch}</span>
       </div>
-      <div style={{ display: 'flex', gap: '1px', marginTop: '2px' }}>
+      <div style={{ display: 'flex', gap: '1.5px', marginTop: '2px' }}>
         {[1, 2, 3, 4].map(boxNo => (
           <div
             key={boxNo}
             style={{
-              width: '7px',
-              height: '7px',
+              width: '6.5px',
+              height: '6.5px',
               border: `1px solid ${border}`,
               backgroundColor: 'white',
-              borderRadius: '1px',
+              borderRadius: '2px',
             }}
           />
         ))}
@@ -137,23 +143,28 @@ function BookCheckCard({ name, ch, color, tint, border }: {
 }
 
 function CategoryCheckStrip({ cat }: { cat: BibleCategory }) {
+  const totalCh = cat.books.reduce((acc, b) => acc + b.ch, 0)
   return (
-    <div style={{ marginBottom: '3px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
         <span
           style={{
-            padding: '1px 6px', borderRadius: '3px',
-            backgroundColor: cat.color, color: 'white',
-            fontSize: '8px', fontWeight: 700,
+            padding: '1.5px 8px',
+            borderRadius: '999px',
+            backgroundColor: 'white',
+            border: `1px solid ${cat.border}`,
+            color: cat.color,
+            fontSize: '8px',
+            fontWeight: 800,
           }}
         >
           {cat.emoji} {cat.label}
         </span>
-        <span style={{ fontSize: '7.5px', color: '#64748B', fontWeight: 600 }}>
-          {cat.books.length}권
+        <span style={{ fontSize: '7px', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em' }}>
+          {cat.books.length}권 · {totalCh.toLocaleString()}장
         </span>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2.5px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px' }}>
         {cat.books.map((b, i) => (
           <BookCheckCard key={i} name={b.name} ch={b.ch} color={cat.color} tint={cat.tint} border={cat.border} />
         ))}
@@ -184,54 +195,83 @@ export default function QtBibleReadingMapPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 48px 20px 24px',
+        padding: '20px 58px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
       <QtQuickIndexNav currentMonth={monthNum} activeTab="tracker" themeColor={themeColor} isChristian={true} />
+
       {/* 1. Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
-        <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">
-          <span>YEARLY</span>
-          <span>{year}</span>
-          <span className="px-2 py-0.5 rounded text-white font-bold" style={{ backgroundColor: themeColor }}>
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+        <div className="flex items-center space-x-3 text-[10.5px] font-medium tracking-widest text-slate-400 font-mono">
+          <span className="text-slate-700 font-bold">{year}</span>
+          <span className="w-px h-3 bg-slate-300" />
+          <span>YEARLY BIBLE READING</span>
+          <span className="px-2 py-0.5 rounded-md text-white font-bold tracking-widest" style={{ backgroundColor: themeColor }}>
             {monthName.toUpperCase().slice(0, 3)}
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-400">
-          <span>66 BIBLE READING ROADMAP & CHECKLIST (VOL. 1)</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shadow-xs">
-            🕊️ 통독① 66권 완독 맵 & 진도율 (VOL. 1)
+        <div className="flex items-center space-x-3 text-[10.5px] font-mono text-slate-400">
+          <span className="tracking-[0.2em] font-bold text-slate-500">66 BOOKS ROADMAP</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[9.5px] shadow-2xs tracking-wide">
+            🕊️ 통독 ① VOL. 1
           </span>
         </div>
       </div>
 
-      {/* 2. Page Title & Overall Gauge */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-xl font-sans font-bold text-slate-800 tracking-wide whitespace-nowrap">
-            🕊️ {monthName} Bible 66 Books Reading Progress Roadmap
-          </h1>
-          <p className="text-[10.5px] text-slate-500 mt-0.5 whitespace-nowrap">
-            구약 39권(929장) + 신약 27권(260장) = 총 1,189장 완독 진도율을 색칠하며 1년 1통독을 완주합니다.
-          </p>
+      {/* 2. Page Title & Progress Gauge */}
+      <div className="mb-2">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-[8.5px] font-mono font-bold tracking-[0.3em] text-slate-400 mb-1">MONTHLY BIBLE READING PROGRESS</div>
+            <h1 className="text-[22px] leading-none font-sans font-extrabold text-slate-800 tracking-wide whitespace-nowrap">
+              🕊️ {monthName} Bible 66 Books Reading Progress Roadmap
+            </h1>
+            <p className="text-[10px] text-slate-500 mt-1.5 whitespace-nowrap">
+              구약 39권(929장) + 신약 27권(260장) = 총 1,189장 — 한 장씩 체크하며 1년 1통독을 완주합니다.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 mb-0.5">
+            <div className="text-center px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="font-mono text-[8px] text-slate-400 font-bold">OT</div>
+              <div className="text-[11px] font-black text-slate-700">39권</div>
+            </div>
+            <div className="text-center px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="font-mono text-[8px] text-slate-400 font-bold">NT</div>
+              <div className="text-[11px] font-black text-slate-700">27권</div>
+            </div>
+            <div className="text-center px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="font-mono text-[8px] text-slate-400 font-bold">1 DAY</div>
+              <div className="text-[11px] font-black text-slate-700">약 3.3장</div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold text-emerald-950 shadow-2xs">
-          <span>총 1,189장 중</span>
-          <span className="font-mono text-emerald-700">____ / 1,189장 (___%)</span>
+        {/* Gauge */}
+        <div className="flex items-center gap-3 mt-2">
+          <div className="flex-1 relative h-4 rounded-full bg-white border border-dashed border-slate-300 shadow-inner">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="font-mono text-[9px] font-bold text-slate-400 tracking-[0.2em]">
+                ______ / 1,189장 (______%)
+              </span>
+            </div>
+          </div>
+          <span className="text-[9.5px] font-bold text-slate-500 whitespace-nowrap font-sans">
+            1년 1통독 완주 목표
+          </span>
         </div>
       </div>
 
       {/* 3. Main Grid (Left 7 Cols OT / Right 5 Cols NT & Milestones) */}
       <div className="grid grid-cols-12 gap-3 flex-1 mb-2">
         {/* Left: OT 39 Books (7 cols) */}
-        <div className="col-span-7 border border-emerald-200 rounded-2xl p-2.5 bg-emerald-50/10 flex flex-col justify-between shadow-2xs">
-          <div className="flex items-center justify-between bg-emerald-700 text-white px-2.5 py-1 rounded-xl text-[9.5px] font-bold mb-1.5">
+        <div className="col-span-7 border border-slate-200 rounded-2xl p-2.5 bg-white flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-xl text-[9.5px] font-bold mb-1.5">
             <span>📜 구약 39권 완독 체크 그리드 (OLD TESTAMENT)</span>
-            <span className="font-mono text-[8.5px]">39 Books · 929 Chapters</span>
+            <span className="font-mono text-[8.5px] text-slate-400">39 Books · 929 Chapters</span>
           </div>
           <div className="space-y-1 flex-1 flex flex-col justify-around">
             {OT_CATEGORIES.map((cat, idx) => (
@@ -243,10 +283,10 @@ export default function QtBibleReadingMapPage({
         {/* Right: NT 27 Books & 4-Quarter Milestones (5 cols) */}
         <div className="col-span-5 flex flex-col justify-between space-y-2">
           {/* NT Box */}
-          <div className="border border-indigo-200 rounded-2xl p-2.5 bg-indigo-50/10 flex-1 flex flex-col justify-between shadow-2xs">
-            <div className="flex items-center justify-between bg-indigo-700 text-white px-2.5 py-1 rounded-xl text-[9.5px] font-bold mb-1.5">
+          <div className="border border-slate-200 rounded-2xl p-2.5 bg-white flex-1 flex flex-col justify-between shadow-2xs">
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-xl text-[9.5px] font-bold mb-1.5">
               <span>✝️ 신약 27권 완독 체크 그리드 (NEW TESTAMENT)</span>
-              <span className="font-mono text-[8.5px]">27 Books · 260 Chapters</span>
+              <span className="font-mono text-[8.5px] text-slate-400">27 Books · 260 Chapters</span>
             </div>
             <div className="space-y-1 flex-1 flex flex-col justify-around">
               {NT_CATEGORIES.map((cat, idx) => (
@@ -256,21 +296,21 @@ export default function QtBibleReadingMapPage({
           </div>
 
           {/* 4 Quarters Milestone Stamps */}
-          <div className="border border-amber-200 rounded-2xl p-2 bg-amber-50/40 shadow-2xs space-y-1">
-            <div className="flex items-center justify-between text-[9px] font-bold text-amber-950">
-              <span>🏆 1년 1통독 4분기 완주 마일스톤 도장</span>
-              <span className="font-mono text-[8px] text-amber-700">1,189 Chapters Completed</span>
+          <div className="border border-slate-200 rounded-2xl p-2 bg-slate-50/50 shadow-2xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] font-black text-slate-700">🏆 4분기 완주 마일스톤 도장</span>
+              <span className="font-mono text-[7.5px] text-slate-400 font-bold">1,189 Chapters</span>
             </div>
-            <div className="grid grid-cols-4 gap-1 text-center">
-              {[
-                { q: '1분기 (Q1)', target: '율법·역사서' },
-                { q: '2분기 (Q2)', target: '시가·선지서' },
-                { q: '3분기 (Q3)', target: '복음·서신서' },
-                { q: '4분기 (Q4)', target: '성경 1통독 완주' },
-              ].map((m, mIdx) => (
-                <div key={mIdx} className="bg-white p-1 rounded-xl border border-amber-200 text-[8px]">
-                  <span className="font-bold text-amber-800 block text-[7.5px]">{m.q}</span>
-                  <span className="text-slate-400 text-[7px]">{m.target}</span>
+            <div className="grid grid-cols-4 gap-2 items-center">
+              {MILESTONES.map((m, mIdx) => (
+                <div key={mIdx} className="flex flex-col items-center">
+                  <div
+                    className="w-13 h-13 rounded-full border border-slate-300 bg-white flex flex-col items-center justify-center shadow-2xs"
+                  >
+                    <span className="text-[9px] font-black text-slate-700 leading-none">{m.q}</span>
+                    <span className="text-[11px] leading-none my-0.5">{m.emoji}</span>
+                    <span className="text-[6px] font-bold text-slate-500 leading-none">{m.target}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -279,7 +319,7 @@ export default function QtBibleReadingMapPage({
       </div>
 
       {/* 4. Footer */}
-      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 mt-1.5">
+      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-200">
         <span>PREMIUM DIARY STUDIO — BIBLE 66 READING ROADMAP (VOL. 1)</span>
         <span>{year} {monthName} Edition</span>
       </div>

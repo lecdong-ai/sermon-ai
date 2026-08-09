@@ -1,0 +1,56 @@
+/* Preview/PDF-only dark paper treatment. The studio chrome stays independent. */
+.qt-dark-pdf .qt-page {
+  background-color: #dde0e3 !important;
+  color: #111827 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="bg-white"] {
+  background-color: #eef0f2 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="bg-slate-50"] {
+  background-color: #e2e5e8 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="bg-slate-100"] {
+  background-color: #cdd2d7 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="text-slate-900"],
+.qt-dark-pdf .qt-page [class*="text-slate-800"],
+.qt-dark-pdf .qt-page [class*="text-slate-700"] {
+  color: #111827 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="text-slate-600"],
+.qt-dark-pdf .qt-page [class*="text-slate-500"] {
+  color: #374151 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="text-slate-400"] {
+  color: #4b5563 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="text-amber-950"],
+.qt-dark-pdf .qt-page [class*="text-emerald-950"],
+.qt-dark-pdf .qt-page [class*="text-indigo-950"],
+.qt-dark-pdf .qt-page [class*="text-purple-950"],
+.qt-dark-pdf .qt-page [class*="text-rose-950"] {
+  color: #1f2937 !important;
+}
+
+.qt-dark-pdf .qt-page [class*="border-slate-200"],
+.qt-dark-pdf .qt-page [class*="border-slate-300"] {
+  border-color: #9ca3af !important;
+}
+
+.qt-dark-pdf .qt-page [class*="border-slate-100"] {
+  border-color: #b6bdc5 !important;
+}
+
+.qt-dark-pdf .qt-page input,
+.qt-dark-pdf .qt-page textarea {
+  background-color: #eef0f2 !important;
+  color: #111827 !important;
+  border-color: #9ca3af !important;
+}

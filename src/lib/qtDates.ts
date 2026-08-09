@@ -10,6 +10,35 @@ export function getTodayDateString(): string {
   return `${year}-${month}-${date}`
 }
 
+// 월별 주차 시작일 계산 헬퍼 (Week 1은 1일, Week 2부터는 두 번째 월요일부터 시작하여 날짜 유실 방지)
+export function getMonthlyWeekStartDates(year: number, month: number, weekCount: number): string[] {
+  const dates: string[] = []
+  dates.push(`${year}-${String(month).padStart(2, '0')}-01`)
+
+  const d1 = new Date(year, month - 1, 1)
+  const dow1 = d1.getDay() // 0: Sun, 1: Mon, ..., 6: Sat
+  const daysToSecondWeekMonday = dow1 === 1 ? 7 : (8 - dow1) % 7 || 7
+
+  const week2Monday = new Date(year, month - 1, 1 + daysToSecondWeekMonday)
+
+  for (let i = 1; i < weekCount; i++) {
+    const wDate = new Date(week2Monday)
+    wDate.setDate(week2Monday.getDate() + (i - 1) * 7)
+    const y = wDate.getFullYear()
+    const m = String(wDate.getMonth() + 1).padStart(2, '0')
+    const d = String(wDate.getDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${d}`)
+  }
+
+  return dates
+}
+
+// 주차 번호(weekNumber) 및 사용 월에 따른 정확한 시작 날짜 자동 산출 헬퍼
+export function computeStartDateForWeek(year: number, month: number, weekNumber: number): string {
+  const dates = getMonthlyWeekStartDates(year, month, Math.max(weekNumber, 6))
+  return dates[weekNumber - 1] || dates[0]
+}
+
 // 다음 달 1일을 YYYY-MM-01 로 반환
 export function getNextMonthFirstDay(): string {
   const d = new Date()

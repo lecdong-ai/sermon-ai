@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QtQuickIndexNav from './QtQuickIndexNav'
 
 interface QtYearlyWallCalendarPageProps {
   months: { year: number; month: number }[]
@@ -185,11 +186,12 @@ export default function QtYearlyWallCalendarPage({
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '16px 40px 14px 34px',
+        padding: '16px 58px 14px 34px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
+      <QtQuickIndexNav currentMonth={first.month} activeTab="yearlygrid" themeColor={themeColor} />
       {/* 1. Header Strip: YEARLY Badge + Period + Month Chips */}
       <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-2">
         <div className="flex items-center space-x-3 text-[11px] font-medium tracking-wider text-slate-400 font-mono">

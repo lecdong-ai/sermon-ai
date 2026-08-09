@@ -1,4 +1,5 @@
 import { Great_Vibes, Noto_Serif_KR } from 'next/font/google'
+import './diary-dark.css'
 
 const notoSerif = Noto_Serif_KR({
   subsets: ['latin'],

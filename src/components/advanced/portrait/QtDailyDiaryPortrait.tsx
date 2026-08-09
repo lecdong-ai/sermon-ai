@@ -27,6 +27,28 @@ const ENGLISH_MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+const GENERAL_QUOTES: { l1: string; l2: string }[] = [
+  { l1: '오늘 하루를 가치 있게 채운 찰나의', l2: '순간들이 나를 지지하는 든든한 자산이 됩니다' },
+  { l1: '작은 습관 하나가 쌓여', l2: '인생의 방향을 바꾼다' },
+  { l1: '오늘의 선택이', l2: '내일의 나를 만들어 간다' },
+  { l1: '느려도 괜찮다, 멈추지 않는 한', l2: '언젠가는 도착한다' },
+  { l1: '하루의 시작을 감사로 열면', l2: '하루의 끝은 기쁨으로 닫힌다' },
+  { l1: '나를 위한 시간, 오늘', l2: '가장 소중한 투자를 한다' },
+  { l1: '완벽한 하루보다', l2: '꾸준한 하루가 더 강하다' },
+  { l1: '지금 이 순간의 집중이', l2: '미래의 나를 만든다' },
+]
+
+const CHURCH_QUOTES: { l1: string; l2: string }[] = [
+  { l1: '오늘도 나를 향한 주님의 은혜와 사랑을', l2: '기억하며 하루를 감사함으로 봉헌합니다' },
+  { l1: '주님과 함께하는 하루,', l2: '두려움 없이 걷습니다' },
+  { l1: '말씀을 묵상하는 아침은', l2: '하루의 방향을 바꿉니다' },
+  { l1: '은혜로 시작하는 하루는', l2: '은혜로 마무리됩니다' },
+  { l1: '나의 힘으로가 아니라', l2: '주님의 인도하심으로 걷습니다' },
+  { l1: '감사할 일을 찾는 눈은', l2: '세상을 변화시킵니다' },
+  { l1: '주님의 사랑을 전하는', l2: '오늘이 되게 하소서' },
+  { l1: '쉬는 것도 은혜, 일하는 것도', l2: '주님과 함께라면' },
+]
+
 function getPureEnglishMonth(mName?: string): string {
   if (!mName) return 'August'
   if (MONTH_MAP[mName]) return mName
@@ -56,14 +78,15 @@ export default function QtDailyDiaryPortrait({
   const englishMonth = getPureEnglishMonth(monthName)
   const monthNum = MONTH_MAP[englishMonth] || 8
   const weekNum = parseInt(activeWeek.replace(/\D/g, ''), 10) || 1
+  const quote = (isChurchMode ? CHURCH_QUOTES : GENERAL_QUOTES)[(dayNum - 1) % 8]
 
   return (
     <div
       data-page-key={`day-${dayNum}`}
       data-day={dayNum}
       data-page-type="full-bleed"
-      className={`qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto transition-all ${
-        isSunday ? 'border-2 border-emerald-400/80 bg-gradient-to-b from-emerald-50/30 via-[#FAF7F2] to-slate-50/20' : ''
+      className={`qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto transition-all ${
+        isSunday ? 'border-2 border-emerald-400/80 bg-gradient-to-b from-emerald-50/30 via-white to-slate-50/20' : ''
       }`}
       style={{
         width: `${pageWidth}px`,
@@ -104,16 +127,16 @@ export default function QtDailyDiaryPortrait({
           <div>
             <div className="flex items-center gap-3 whitespace-nowrap">
               <h2 className="text-4xl font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap" style={{ fontFamily: "'Great Vibes', 'Alex Brush', 'Dancing Script', cursive" }}>{englishMonth} {paddedDay}</h2>
-              {isSunday && (
-                <span className={`px-3 py-0.5 rounded-full text-xs font-bold border shadow-xs whitespace-nowrap inline-block ${
-                  isChurchMode
-                    ? 'bg-amber-100 text-amber-900 border-amber-300'
-                    : 'bg-emerald-100 text-emerald-950 border-emerald-300'
-                }`}>
-                  {isChurchMode ? "🕊️ LORD'S DAY (주일 예배 & 안식)" : "☀️ SUNDAY RESET (주말 휴식 & 리프레시)"}
-                </span>
-              )}
             </div>
+            {isSunday && (
+              <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-[9.5px] font-bold border shadow-xs whitespace-nowrap ${
+                isChurchMode
+                  ? 'bg-amber-100 text-amber-900 border-amber-300'
+                  : 'bg-emerald-100 text-emerald-950 border-emerald-300'
+              }`}>
+                {isChurchMode ? "🕊️ LORD'S DAY · 주일 예배 & 안식" : "☀️ SUNDAY RESET · 주말 휴식 & 리프레시"}
+              </span>
+            )}
           </div>
         </div>
 
@@ -125,11 +148,10 @@ export default function QtDailyDiaryPortrait({
           <span className={`text-[9px] font-mono font-bold uppercase block ${isChurchMode ? 'text-amber-800' : 'text-emerald-800'}`}>
             {isChurchMode ? 'DAILY GRACE & REFLECTION' : 'DAILY MINDSET & VISION'}
           </span>
-          <span className="text-xs font-sans font-semibold text-slate-800">
-            {isChurchMode
-              ? '오늘도 나를 향한 주님의 은혜와 사랑을 기억하며 하루를 감사함으로 봉헌합니다'
-              : '오늘 하루를 가치 있게 채운 찰나의 순간들이 나를 지지하는 든든한 자산이 됩니다'
-            }
+          <span className="text-[10.5px] font-serif font-medium text-slate-800 leading-[1.1] block">
+            {quote.l1}
+            <br />
+            {quote.l2}
           </span>
         </div>
       </div>
@@ -159,9 +181,15 @@ export default function QtDailyDiaryPortrait({
             <span>{isChurchMode ? '🙏 오늘의 기도제목 & 은혜 묵상' : '💡 오늘의 다짐 & 마인드셋'}</span>
             <span className="font-mono text-[10px] text-slate-400">{isChurchMode ? 'Prayer' : 'Mindset'}</span>
           </div>
-          <div className="space-y-1 text-xs font-sans text-slate-600">
-            <div>① {isChurchMode ? '하나님을 향한 감사:' : '긍정 확언 (Daily Affirmation):'} ___________________</div>
-            <div>② {isChurchMode ? '간절한 중보 기도제목:' : '나를 성장시킬 핵심 태도:'} ___________________</div>
+          <div className="space-y-1 text-[10.5px] font-sans text-slate-600">
+            <div className="flex items-end gap-1">
+              <span className="whitespace-nowrap">① {isChurchMode ? '하나님을 향한 감사:' : '긍정 확언 (Daily Affirmation):'}</span>
+              <div className="flex-1 border-b border-slate-300 h-[12px] mb-[1px]" />
+            </div>
+            <div className="flex items-end gap-1">
+              <span className="whitespace-nowrap">② {isChurchMode ? '간절한 중보 기도제목:' : '나를 성장시킬 핵심 태도:'}</span>
+              <div className="flex-1 border-b border-slate-300 h-[12px] mb-[1px]" />
+            </div>
           </div>
         </div>
       </div>
@@ -194,11 +222,17 @@ export default function QtDailyDiaryPortrait({
             </div>
           </div>
 
-          <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/40 text-xs font-sans space-y-1">
-            <span className="font-bold text-slate-700 block">🌿 웰니스 & 라이프 루틴:</span>
-            <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600">
-              <div className="bg-white p-1 rounded border border-slate-200">감정: 😊 맑음 / 😐 보통 / 🌧️ 지침</div>
-              <div className="bg-white p-1 rounded border border-slate-200">운동 & 수분: ___분 / 물 2L 💧</div>
+          <div className="border border-slate-200 rounded-xl px-1 py-1.5 bg-slate-50/40 text-xs font-sans">
+            <span className="font-bold text-slate-700 block whitespace-nowrap">🌿 웰니스 & 라이프 루틴:</span>
+            <div className="flex items-center justify-between gap-px text-[10px] text-slate-600 pt-1 whitespace-nowrap">
+              <div className="bg-white px-px py-0.5 rounded-md">
+                <span className="font-bold text-slate-600">감정:</span>
+                <span className="text-slate-400">😊맑음/😐보통/🌧️지침</span>
+              </div>
+              <div className="bg-white px-px py-0.5 rounded-md">
+                <span className="font-bold text-slate-600">운동:</span>
+                <span className="text-slate-400">___분/물2L💧</span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,9 +248,8 @@ export default function QtDailyDiaryPortrait({
             <div className="flex-1">
               <PerfectGridNote step={15} />
             </div>
-            <div className="border-t border-dashed border-slate-200 pt-1.5 mt-1.5 text-xs font-sans text-slate-600">
-              <span className="font-bold text-slate-800 block">💖 오늘 가장 소중했던 순간 1가지:</span>
-              <div className="text-slate-400 min-h-[14px]">__________________________________________________</div>
+            <div className="border-t border-dashed border-slate-200 pt-1.5 mt-1.5 text-xs font-sans text-slate-600 pb-10">
+              <span className="font-bold text-slate-800 block mt-1">💖 오늘 가장 소중했던 순간 1가지:</span>
             </div>
           </div>
         </div>

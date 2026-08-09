@@ -48,7 +48,7 @@ export async function PUT(
 
   const { id } = await params
   const body = await request.json()
-  const { full_manuscript, day_data, series_name, size_option, design_template, subtitle, target_year, target_month, start_date } = body
+  const { full_manuscript, day_data, series_name, size_option, design_template, subtitle, target_year, target_month, start_date, week_number } = body
 
   const updateData: Record<string, any> = {}
   if (full_manuscript !== undefined) updateData.full_manuscript = full_manuscript
@@ -60,6 +60,7 @@ export async function PUT(
   if (target_year !== undefined) updateData.target_year = target_year
   if (target_month !== undefined) updateData.target_month = target_month
   if (start_date !== undefined) updateData.start_date = start_date
+  if (week_number !== undefined) updateData.week_number = week_number
 
   let { data, error } = await supabaseAdmin
     .from('qt_history')

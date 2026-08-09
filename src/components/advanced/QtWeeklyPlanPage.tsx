@@ -64,11 +64,11 @@ export default function QtWeeklyPlanPage({
       data-page-key={`week-${weekNum}`}
       data-week={weekNum}
       data-page-type="full-bleed"
-      className="qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 36px 20px 24px',
+        padding: '20px 58px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
@@ -96,8 +96,8 @@ export default function QtWeeklyPlanPage({
       <div className="flex items-center justify-between mb-2">
         <div>
           <div className="flex items-end gap-2.5">
-            <h2 className="text-2xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
-            <span className="text-[10px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
+            <h2 className="text-5xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
+            <span className="text-[14px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
           </div>
           <div className="text-[10.5px] text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
@@ -108,14 +108,13 @@ export default function QtWeeklyPlanPage({
             ? 'bg-gradient-to-r from-emerald-50/80 via-teal-50/40 to-emerald-50/80 border-emerald-200'
             : 'bg-gradient-to-r from-indigo-50/80 via-purple-50/40 to-indigo-50/80 border-indigo-200'
         }`}>
-          <span className={`text-[8px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}`}>
+          <span className="text-[8px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}">
             {isGeneralMode ? 'WEEKLY FOCUS & COMPASS' : 'WEEKLY SCRIPTURE & PRAYER'}
           </span>
-          <span className="text-[10px] font-sans font-semibold text-slate-800">
-            {isGeneralMode
-              ? '🎯 "이번 주 핵심 목표: 우선순위에 집중하고 흔들림 없이 성취하라"'
-              : '📖 "내 발의 등등이요 내 길에 빛이니이다 (시편 119:105)"'
-            }
+          <span className="text-[10px] font-sans font-semibold text-slate-800 leading-[1.2] block">
+            {isGeneralMode ? '🎯 "이번 주 핵심 목표:' : '📖 "내 발의 등등이요'}
+            <br />
+            {isGeneralMode ? '우선순위에 집중하고 흔들림 없이 성취하라"' : '내 길에 빛이니이다 (시편 119:105)"'}
           </span>
         </div>
       </div>

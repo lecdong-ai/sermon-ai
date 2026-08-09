@@ -64,7 +64,7 @@ export default function QtWeeklyPlanPortrait({
       data-page-key={`week-${weekNum}`}
       data-week={weekNum}
       data-page-type="full-bleed"
-      className="qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
@@ -92,8 +92,8 @@ export default function QtWeeklyPlanPortrait({
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="flex items-end gap-2.5">
-            <h2 className="text-3xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
-            <span className="text-[11px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
+            <h2 className="text-6xl font-script font-normal text-slate-900 tracking-wide leading-none whitespace-nowrap">{monthName}</h2>
+            <span className="text-[15px] font-sans font-extrabold tracking-[0.2em] text-slate-700 pb-0.5 whitespace-nowrap">WEEKLY PLAN</span>
           </div>
           <div className="text-xs text-slate-400 font-mono font-medium mt-1">{dateRangeText}</div>
         </div>
@@ -106,11 +106,10 @@ export default function QtWeeklyPlanPortrait({
           <span className={`text-[9px] font-bold uppercase block font-mono ${isGeneralMode ? 'text-emerald-800' : 'text-indigo-800'}`}>
             {isGeneralMode ? 'WEEKLY FOCUS' : 'WEEKLY SCRIPTURE'}
           </span>
-          <span className="text-xs font-sans font-semibold text-slate-800">
-            {isGeneralMode
-              ? '🎯 "이번 주 핵심 목표: 우선순위에 집중하고 흔들림 없이 성취하라"'
-              : '📖 "내 발의 등등이요 내 길에 빛이니이다 (시편 119:105)"'
-            }
+          <span className="text-xs font-sans font-semibold text-slate-800 leading-[1.2] block">
+            {isGeneralMode ? '🎯 "이번 주 핵심 목표:' : '📖 "내 발의 등등이요'}
+            <br />
+            {isGeneralMode ? '우선순위에 집중하고 흔들림 없이 성취하라"' : '내 길에 빛이니이다 (시편 119:105)"'}
           </span>
         </div>
       </div>

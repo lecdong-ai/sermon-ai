@@ -41,16 +41,22 @@
 - **build**: 성공 ✅ | 커밋: `96cf9b3` (fix(qt): add nowrap to pdf header badges & add community connection line rule)
 - **Tailwind 동적 클래스 수정**: `${color}` 템플릿 리터럴 → 정적 className 객체로 변경 (JIT 인식 문제 해결)
 
+## Phase 4 — QT 묵상 팩 = /diary 크리스천 묵상 팩 일치화
+- **공유 프리셋**: `src/lib/diaryPresets.ts` 신규 — `CHURCH_PRESET_PAGES` 상수 (church 프리셋 38개 페이지 플래그)
+- **`/diary` page.tsx**: `applyPreset('church')`의 하드코딩 객체 → `{ ...CHURCH_PRESET_PAGES }`로 교체 (진실 공급원 통합)
+- **`QtDiaryPackViewer.tsx`**: 하드코딩 페이지 목록 → 프리셋 기반 렌더. 부록 순서 `/diary`와 동일화 (표지→벽달력→연간그리드→100소원→성경맵). 100가지 소원은 프리셋 false라 자동 제외됨
+- **자동 반영**: 개별 페이지 컴포넌트 디자인 변경 + 팩 구성(포함/제외/순서) 변경 모두 양쪽 자동 반영. 미동기화 유일 지점 = themeColor (wizard는 `#4F7796` 고정, /diary는 수채화 테마 선택)
+- **build**: 성공 ✅ | 아직 커밋 안 됨
+
 ## Active / Blocked
-- **Active**: Vercel auto-deploy (GitHub main `96cf9b3` push 완료 → `bunker.ai.kr` 배포 중)
+- **Active**: QtDiaryPackViewer 프리셋 리팩터 (빌드 성공, 미커밋)
 - **Blocked**: 없음
 
-## Next Steps (After Deploy Verify)
-1. `bunker.ai.kr/shop` → 쇼핑 페이지 정상 작동 확인
-2. `bunker.ai.kr/qt` → QT 아카이브 정상 작동 확인
-3. `bunker.ai.kr/school` → 교회학교 정상 작동 확인
-4. church-school + qt-archive Vercel 프로젝트 삭제
-5. `qt.bunker.ai.kr` 도메인 DNS 정리 (카페24)
+## Next Steps
+1. `bunker.ai.kr/advanced/qt` → 큐티 + 묵상 팩 미리보기로 100소원 제거·순서 확인 (로컬 검증 완료, 배포 대기)
+2. (선택) themeColor 동기화: wizard에서 /diary 수채화 테마 연동 or 테마 선택 UI
+3. 레거시 "큐티만" 경로 `coverMainTitle`이 "September Bunker 목양 월간 Q.T"로 바뀜 (기존 한글) — 한글 유지 원하면 coverMainTitle만 한글 monthName 별도 처리
+4. 커밋 + push → Vercel auto-deploy
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)

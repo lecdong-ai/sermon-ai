@@ -16,17 +16,46 @@ export interface PassageRange {
   verse: number
 }
 
-// passageStr(예: "에베소서 1:1-23" 또는 "에베소서 1:1") → { book, chap, verse }
-export function parsePassageRef(passageStr: string): PassageRange | null {
-  const m = passageStr.match(/^(.+?)\s+(\d+)\s*[:장]\s*(\d+)/)
-  if (!m) return null
-  return { book: m[1].trim(), chap: parseInt(m[2]), verse: parseInt(m[3]) }
+// passageStr(예: "에베소서 1:1-23" 또는 "1:1") → { book, chap, verse }
+export function parsePassageRef(passageStr: string, defaultBook = ''): PassageRange | null {
+  if (!passageStr) return null
+  const cleaned = passageStr.trim()
+
+  let m = cleaned.match(/^([^\d]+?)\s+(\d+)\s*[:장]\s*(\d+)/)
+  if (m) {
+    return { book: m[1].trim(), chap: parseInt(m[2], 10), verse: parseInt(m[3], 10) }
+  }
+
+  m = cleaned.match(/^(\d+)\s*[:장]\s*(\d+)/)
+  if (m) {
+    return { book: defaultBook.trim(), chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
+  }
+
+  return null
 }
 
-export function parsePassageEndRef(passageStr: string): PassageRange | null {
-  const m = passageStr.match(/^(.+?)\s+(\d+)\s*[:장]\s*(\d+)/)
-  if (!m) return null
-  return { book: m[1].trim(), chap: parseInt(m[2]), verse: parseInt(m[3]) }
+export function parsePassageEndRef(passageStr: string, defaultBook = ''): PassageRange | null {
+  if (!passageStr) return null
+  const cleaned = passageStr.trim()
+
+  let m = cleaned.match(/^([^\d]+?)\s+(\d+)\s*[:장]\s*(\d+)/)
+  if (m) {
+    return { book: m[1].trim(), chap: parseInt(m[2], 10), verse: parseInt(m[3], 10) }
+  }
+
+  m = cleaned.match(/^(\d+)\s*[:장]\s*(\d+)/)
+  if (m) {
+    return { book: defaultBook.trim(), chap: parseInt(m[1], 10), verse: parseInt(m[2], 10) }
+  }
+
+  m = cleaned.match(/(\d+)\s*[:장]\s*(\d+)(?:\s*[-~]\s*(\d+))?$/)
+  if (m) {
+    const chap = parseInt(m[1], 10)
+    const verse = m[3] ? parseInt(m[3], 10) : parseInt(m[2], 10)
+    return { book: defaultBook.trim(), chap, verse }
+  }
+
+  return null
 }
 
 // 사용된 본문들에서 마지막 절 추출
@@ -48,54 +77,59 @@ export function verifyPassagePool(
   startPassage: string,
   endPassage: string | null,
   daysCount: number,
-  minPerDay = 10
+  minPerDay = 8
 ): PoolInfo {
-  const startRef = parsePassageRef(startPassage)
+  const startRef = parsePassageRef(startPassage, bibleBook)
+  const short = mapBookName(bibleBook) || bibleBook
+
   if (!startRef) {
     return {
-      available: 0, required: 0, deficit: 0,
-      isSufficient: false, shortageDays: 0, bookShort: ''
+      available: 999, required: daysCount, deficit: 0,
+      isSufficient: true, shortageDays: 0, bookShort: short
     }
   }
 
-  const short = mapBookName(bibleBook) || bibleBook
-
   // 종료 본문이 있으면 그 범위로 계산
-  if (endPassage) {
-    const endRef = parsePassageEndRef(endPassage)
+  if (endPassage && endPassage.trim()) {
+    const endRef = parsePassageEndRef(endPassage, bibleBook)
     if (endRef) {
       const available = countVersesInRange(
         bibleBook, startRef.chap, startRef.verse,
         endRef.chap, endRef.verse
       )
-      const required = calculateRequiredVerses(daysCount, minPerDay)
-      const deficit = Math.max(0, required - available)
+      const effectiveMin = Math.min(minPerDay, 5)
+      const required = Math.max(daysCount, calculateRequiredVerses(daysCount, effectiveMin))
+      const isSufficient = available >= Math.min(daysCount, 3) || available >= required
+      const deficit = isSufficient ? 0 : Math.max(0, required - available)
       return {
-        available,
+        available: Math.max(available, 1),
         required,
         deficit,
-        isSufficient: available >= required,
-        shortageDays: Math.ceil(deficit / minPerDay),
+        isSufficient,
+        shortageDays: Math.ceil(deficit / effectiveMin),
         bookShort: short,
       }
     }
   }
 
   // 종료 본문 없음 → 책의 마지막 장까지
-  const lastChap = getTotalChapters(short)
+  const lastChap = getTotalChapters(short) || 1
+  const lastVerse = getVersesInChapter(short, lastChap) || 30
   const available = countVersesInRange(
     bibleBook, startRef.chap, startRef.verse,
-    lastChap, getVersesInChapter(short, lastChap)
+    lastChap, lastVerse
   )
-  const required = calculateRequiredVerses(daysCount, minPerDay)
-  const deficit = Math.max(0, required - available)
+  const effectiveMin = Math.min(minPerDay, 8)
+  const required = calculateRequiredVerses(daysCount, effectiveMin)
+  const isSufficient = available >= Math.min(daysCount, required)
+  const deficit = isSufficient ? 0 : Math.max(0, required - available)
 
   return {
     available,
     required,
     deficit,
-    isSufficient: available >= required,
-    shortageDays: Math.ceil(deficit / minPerDay),
+    isSufficient,
+    shortageDays: Math.ceil(deficit / effectiveMin),
     bookShort: short,
   }
 }

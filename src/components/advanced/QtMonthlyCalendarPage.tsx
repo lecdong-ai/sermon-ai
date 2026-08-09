@@ -65,11 +65,11 @@ export default function QtMonthlyCalendarPage({
     <div
       data-page-key="calendar"
       data-page-type="full-bleed"
-      className="qt-page relative bg-[#FAF7F2] text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
+      className="qt-page relative bg-white text-slate-800 flex flex-col justify-between overflow-visible shadow-[0_20px_60px_rgba(0,0,0,0.35)] rounded-xl border border-[#E6E0D4] mx-auto"
       style={{
         width: `${pageWidth}px`,
         height: `${pageHeight}px`,
-        padding: '20px 36px 20px 24px',
+        padding: '20px 58px 20px 24px',
         boxSizing: 'border-box',
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}

@@ -32,7 +32,7 @@ import { parseDays } from '@/lib/qtDayParser'
 import { getTemplate, QT_TEMPLATES } from '@/lib/qtTemplates'
 import { generateQtPdf } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
-import { getFormattedDateList, getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
+import { getFormattedDateList, getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth, computeStartDateForWeek } from '@/lib/qtDates'
 import type { QTFormData } from './QtGenerator'
 import { saveWeeklyToMonthly, getMonthlyWeeks, clearMonthlyWeeks, getMonthlyWeekCount, combineMonthlyManuscript, combineMonthlyUserMemos, combineMonthlyCalendarStrip } from '@/lib/monthlyQtStorage'
 
@@ -54,10 +54,12 @@ interface QtReaderProps {
   daySectionTitles?: Record<number, string[]>
   monthCalendarStrip?: { month: string; daysInMonth: number; activeDays: number[]; dayHasContent: boolean[] }
   initialIncludeDiaryPage?: boolean
+  initialIncludeMeditationPack?: boolean
   onBack: () => void
+  onNewQt?: () => void
 }
 
-export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, initialIncludeDiaryPage, onBack }: QtReaderProps) {
+export default function QtReader({ form, accumulatedManuscript, templateId: initialTemplateId, startPassage, endPassage, selectedInfo, daySectionTitles, monthCalendarStrip: externalStrip, initialIncludeDiaryPage, initialIncludeMeditationPack, onBack, onNewQt }: QtReaderProps) {
   const generationKey = form.audience || 'default'
 
   // ★ 주간 vs 월간 큐티 판별: externalStrip이 있거나 parsedDays > 7이면 월간
@@ -82,6 +84,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
     }
   }, [initialIncludeDiaryPage])
   const [includeMonthlyPlanner, setIncludeMonthlyPlanner] = useState(isMonthlyMode)
+  const [includeMeditationPack, setIncludeMeditationPack] = useState(initialIncludeMeditationPack ?? isMonthlyMode)
+
+  useEffect(() => {
+    if (initialIncludeMeditationPack !== undefined) {
+      setIncludeMeditationPack(initialIncludeMeditationPack)
+    }
+  }, [initialIncludeMeditationPack])
   const [userMemos, setUserMemos] = useState<Record<number, string>>(() => {
     try {
       const saved = localStorage.getItem(`qt_memos_${form.bibleBook}_w${form.weekNumber}_gen${generationKey}`)
@@ -165,20 +174,33 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
     const dayNumStr = cleanKey.replace('day-', '')
 
-    // 작은 캘린더 스트립 버튼이 아닌, 실제 페이지 컨테이너(.qt-page) 요소만 정밀 타겟팅!
-    const targetEl = document.querySelector<HTMLElement>(`.qt-page#qt-page-${cleanKey}`) ||
-      document.querySelector<HTMLElement>(`.qt-page[data-page-key="${cleanKey}"]`) ||
-      document.querySelector<HTMLElement>(`.qt-page[data-day="${dayNumStr}"]`) ||
-      document.querySelector<HTMLElement>(`.qt-page[data-week="${cleanKey.replace('week-', '')}"]`) ||
-      document.getElementById(`qt-page-${cleanKey}`)
+    const aliasMap: Record<string, string[]> = {
+      yearlygrid: ['yearlygrid', 'yearly-grid'],
+      'yearly-grid': ['yearly-grid', 'yearlygrid'],
+      prayer: ['prayer', 'intercessory'],
+      intercessory: ['intercessory', 'prayer'],
+      bible: ['bible', 'biblemap', 'tracker'],
+      sermon: ['sermon', 'sermondeep'],
+    }
+
+    const candidateKeys = aliasMap[cleanKey] || [cleanKey]
+    let targetEl: HTMLElement | null = null
+
+    for (const key of candidateKeys) {
+      targetEl = document.querySelector<HTMLElement>(`.qt-page#qt-page-${key}`) ||
+        document.querySelector<HTMLElement>(`.qt-page[data-page-key="${key}"]`) ||
+        document.querySelector<HTMLElement>(`.qt-page[data-day="${dayNumStr}"]`) ||
+        document.querySelector<HTMLElement>(`.qt-page[data-week="${key.replace('week-', '')}"]`) ||
+        document.getElementById(`qt-page-${key}`)
+      if (targetEl) break
+    }
 
     if (targetEl) {
       const containerRect = scrollContainer.getBoundingClientRect()
       const targetRect = targetEl.getBoundingClientRect()
-      const scale = zoomScale || 1.0
-      const relativeTop = (targetRect.top - containerRect.top) / scale + scrollContainer.scrollTop
+      const targetScrollTop = scrollContainer.scrollTop + (targetRect.top - containerRect.top) - 16
       scrollContainer.scrollTo({
-        top: Math.max(0, relativeTop - 16),
+        top: Math.max(0, targetScrollTop),
         behavior: 'smooth',
       })
     }
@@ -187,10 +209,22 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   // PDF 캘린더 스트립 (A4 가로 / iPad Pro 12.9 / Tablet에서만)
   const monthCalendarStrip = useMemo(() => {
     if (externalStrip) return externalStrip
-    if (!form.startDate) return undefined
     const allowedSizes = new Set(['A4Landscape', 'A4Portrait', 'iPad Pro 12.9', 'iPad Pro 12.9 Landscape', 'Tablet (iPad 4:3)'])
     if (!allowedSizes.has(sizeOption)) return undefined
-    const parts = form.startDate.split('-')
+
+    const y = form.targetYear || (form.startDate ? parseInt(form.startDate.split('-')[0], 10) : 2026) || 2026
+    const m = form.targetMonth || (form.startDate ? parseInt(form.startDate.split('-')[1], 10) : 9) || 9
+    const w = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
+
+    const startStr = (() => {
+      if (form.startDate) {
+        const p = form.startDate.split('-')
+        if (p.length === 3 && parseInt(p[2], 10) > 1) return form.startDate
+      }
+      if (w > 1) return computeStartDateForWeek(y, m, w)
+      return form.startDate || `${y}-${String(m).padStart(2, '0')}-01`
+    })()
+    const parts = startStr.split('-')
     if (parts.length !== 3) return undefined
     const year = parseInt(parts[0], 10)
     const monthNum = parseInt(parts[1], 10)
@@ -231,8 +265,9 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
       daysInMonth,
       activeDays,
       dayHasContent,
+      isMonthlyBook: isMonthlyAnchor,
     }
-  }, [externalStrip, form.startDate, sizeOption, days.length])
+  }, [externalStrip, form.startDate, form.targetYear, form.targetMonth, form.weekNumber, sizeOption, days.length])
 
   // 현재 보고 있는 day 계산
   const currentActiveDay = useMemo(() => {
@@ -406,36 +441,68 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
   ]
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 h-full bg-[#050814] text-slate-100">
-      {/* ===== Top Bar ===== */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0f24]/90 backdrop-blur-md shrink-0 shadow-lg z-10 w-full gap-4">
-        {/* Left: Back Button */}
-        <div className="flex items-center gap-3 shrink-0">
+    <div className="flex flex-col min-h-0 flex-1 h-full bg-[#030611] text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
+      {/* ===== Top Bar: Ultra-Luxury Glassmorphic Header ===== */}
+      <header className="flex items-center justify-between px-5 py-2.5 border-b border-white/10 bg-[#070b1e]/90 backdrop-blur-xl shrink-0 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-30 w-full gap-3">
+        {/* Left: Back & New QT Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10 whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/15 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-white/10 hover:border-white/20 whitespace-nowrap shrink-0 shadow-sm active:scale-95"
+            title="현재 큐티 수정/편집으로 돌아가기"
           >
             <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
-            양식 수정
+            <span>원고/설정 수정</span>
           </button>
+
+          {onNewQt && (
+            <button
+              onClick={onNewQt}
+              className="relative group flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/10 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 hover:text-emerald-100 text-xs font-bold transition-all border border-emerald-400/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] whitespace-nowrap shrink-0 active:scale-95"
+              title="다음 주차/새 큐티 만들기"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <Plus className="w-3.5 h-3.5 text-emerald-400" />
+              <span>새 큐티 만들기</span>
+            </button>
+          )}
         </div>
 
-        {/* Center: Cover Tab + Dropdown Mini Calendar Picker (No Scroll) */}
-        <div className="flex items-center gap-2.5 justify-center flex-1 relative">
-          <button
-            onClick={() => {
-              setViewMode('cover')
-              setIsDatePickerOpen(false)
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-              viewMode === 'cover'
-                ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/30'
-                : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            표지 미리보기
-          </button>
+        {/* Center: View Mode Segmented Pill + Date Navigation */}
+        <div className="flex items-center gap-2 justify-center flex-1 relative">
+          <div className="flex items-center p-1 bg-slate-950/80 rounded-2xl border border-white/10 shadow-inner">
+            <button
+              onClick={() => {
+                setViewMode('cover')
+                setIsDatePickerOpen(false)
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                viewMode === 'cover'
+                  ? 'bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/30 font-extrabold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>표지 미리보기</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setViewMode('day')
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                viewMode === 'day'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-white/30 font-extrabold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
+              <span>일별 큐티 보기</span>
+            </button>
+          </div>
 
           <div className="w-px h-4 bg-white/10 mx-0.5 shrink-0" />
 
@@ -447,7 +514,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 setDayIndex(Math.max(0, dayIndex - 1))
               }}
               disabled={viewMode === 'day' && dayIndex === 0}
-              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0"
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0 active:scale-95"
               title="이전 날짜 큐티"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -459,7 +526,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 if (viewMode !== 'day') setViewMode('day')
                 setIsDatePickerOpen(!isDatePickerOpen)
               }}
-              className={`flex items-center gap-2 px-3.5 py-1 rounded-xl text-xs font-bold transition-all border shadow-sm ${
+              className={`flex items-center gap-2 px-3 py-1 rounded-xl text-xs font-bold transition-all border shadow-sm ${
                 viewMode === 'day'
                   ? 'bg-indigo-600/90 text-white border-indigo-400/50 shadow-indigo-600/30'
                   : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
@@ -467,7 +534,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             >
               <CalendarIcon className="w-3.5 h-3.5 text-indigo-300" />
               <span>{weekdays[dayIndex] || `${dayIndex + 1}일차`}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/15 text-indigo-100 font-mono">
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/15 text-indigo-100 font-mono font-bold">
                 {dayIndex + 1}/{days.length}일
               </span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isDatePickerOpen ? 'rotate-180 text-amber-400' : 'text-slate-400'}`} />
@@ -479,7 +546,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 setDayIndex(Math.min(days.length - 1, dayIndex + 1))
               }}
               disabled={viewMode === 'day' && dayIndex >= days.length - 1}
-              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0"
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 shrink-0 active:scale-95"
               title="다음 날짜 큐티"
             >
               <ChevronRight className="w-4 h-4" />
@@ -488,22 +555,22 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           {/* 📅 미니 달력 드롭다운 컴팩트 팝업 모달 */}
           {isDatePickerOpen && (
-            <div className="absolute top-14 mt-1 left-1/2 -translate-x-1/2 z-50 bg-[#0a0f24]/95 border border-white/15 rounded-2xl shadow-2xl p-3 w-[270px] backdrop-blur-xl animate-in zoom-in-95 duration-150 text-left ring-1 ring-black/50">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                  <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>큐티 날짜 이동</span>
+            <div className="absolute top-14 mt-1 left-1/2 -translate-x-1/2 z-50 bg-[#070b1e]/98 border border-white/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] p-3.5 w-[280px] backdrop-blur-2xl animate-in zoom-in-95 duration-150 text-left ring-1 ring-indigo-500/30">
+              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/10">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-100">
+                  <CalendarIcon className="w-4 h-4 text-indigo-400" />
+                  <span>큐티 날짜 바로가기</span>
                 </div>
                 <button
                   onClick={() => setIsDatePickerOpen(false)}
-                  className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white transition-colors"
                   title="닫기"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* 컴팩트 4열 그리드 버튼 (1일차, 2일차... 만 깔끔하게 표시) */}
+              {/* 컴팩트 4열 그리드 버튼 */}
               <div className="grid grid-cols-4 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
                 {days.map((_, idx) => {
                   const isSelected = viewMode === 'day' && dayIndex === idx
@@ -515,10 +582,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                         setViewMode('day')
                         setIsDatePickerOpen(false)
                       }}
-                      className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold text-center transition-all ${
+                      className={`py-2 px-2 rounded-xl border text-[11px] font-bold text-center transition-all ${
                         isSelected
-                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-md font-extrabold'
-                          : 'bg-white/[0.03] hover:bg-white/10 border-white/5 text-slate-300 hover:text-white'
+                          ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md shadow-indigo-600/40 font-extrabold scale-105'
+                          : 'bg-white/[0.04] hover:bg-white/10 border-white/10 text-slate-300 hover:text-white'
                       }`}
                     >
                       {idx + 1}일차
@@ -528,18 +595,18 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </div>
 
               {/* 하단 미니 오버뷰 */}
-              <div className="pt-2 mt-2 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-400">
+              <div className="pt-2.5 mt-2.5 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-400">
                 <button
                   onClick={() => {
                     setDayIndex(0)
                     setViewMode('day')
                     setIsDatePickerOpen(false)
                   }}
-                  className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                  className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors flex items-center gap-1"
                 >
-                  1일차로 이동
+                  <span>1일차부터 시작</span>
                 </button>
-                <span>총 {days.length}일치 분량</span>
+                <span className="font-mono text-slate-400">총 {days.length}일 분량</span>
               </div>
             </div>
           )}
@@ -548,12 +615,12 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
         {/* Right: Fullscreen PDF Inspector & Download Buttons */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {/* ★ 에디션 모드 선택 토글 (성도용 vs 리더용) */}
-          <div className="flex items-center p-0.5 bg-white/10 rounded-xl border border-white/10 text-xs font-bold shrink-0">
+          <div className="flex items-center p-0.5 bg-slate-950/80 rounded-xl border border-white/10 text-xs font-bold shrink-0">
             <button
               onClick={() => handleEditionChange('member')}
               className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
                 editionMode === 'member'
-                  ? 'bg-indigo-600 text-white shadow-xs font-extrabold'
+                  ? 'bg-indigo-600 text-white shadow-md font-extrabold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
               title="성도용 교재: 인도자 해설을 제외하고 본문/적용 공간을 여유롭게 확대합니다."
@@ -564,7 +631,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               onClick={() => handleEditionChange('leader')}
               className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
                 editionMode === 'leader'
-                  ? 'bg-amber-600 text-white shadow-xs font-extrabold'
+                  ? 'bg-amber-600 text-white shadow-md font-extrabold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
               title="리더용 교재: 하단에 인도자 해설(본문 핵심, 나눔 유의점 팁)이 포함됩니다."
@@ -572,27 +639,55 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               <span>👑 리더용</span>
             </button>
           </div>
+
+          {/* 📐 용지 & 🎨 테마 바로 변경 셀렉터 */}
+          <div className="hidden xl:flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/80 border border-white/10 text-xs font-bold shrink-0">
+            <span className="text-slate-400 text-[11px] font-bold pl-1.5">📐 용지:</span>
+            <select
+              value={sizeOption}
+              onChange={e => setSizeOption(e.target.value)}
+              className="bg-slate-900 border border-white/15 rounded-lg px-2 py-0.5 text-slate-100 font-bold outline-none cursor-pointer hover:border-indigo-400 transition-colors"
+            >
+              {Object.keys(PAGE_SIZES).map(sz => (
+                <option key={sz} value={sz}>{PAGE_SIZES[sz]?.label?.split(' (')[0] || sz}</option>
+              ))}
+            </select>
+
+            <span className="text-slate-500 font-normal">|</span>
+
+            <span className="text-slate-400 text-[11px] font-bold">🎨 테마:</span>
+            <select
+              value={templateId}
+              onChange={e => setTemplateId(e.target.value)}
+              className="bg-slate-900 border border-white/15 rounded-lg px-2 py-0.5 text-amber-300 font-bold outline-none cursor-pointer hover:border-amber-400 transition-colors"
+            >
+              {QT_TEMPLATES.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
           {/* 전체화면 PDF 미리보기 팝업 버튼 */}
           <button
             onClick={() => setIsPdfFullscreenModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/30 transition-all shadow-md whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/30 transition-all shadow-md shadow-amber-500/10 whitespace-nowrap shrink-0 active:scale-95"
             title="모니터 전체 화면 팝업으로 PDF 종이 실물 미리보기"
           >
             <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
-            🔍 전체화면 PDF 미리보기
+            <span>🔍 전체화면</span>
           </button>
 
           {viewMode === 'day' && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDayPdfDownload(dayIndex) }}
               disabled={dayPdfLoading === dayIndex || days.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-white/10 disabled:opacity-30 whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-white/10 disabled:opacity-30 whitespace-nowrap shrink-0 active:scale-95"
               title="현재 일자만 단일 PDF 다운로드"
             >
               {dayPdfLoading === dayIndex
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <Download className="w-3.5 h-3.5" />}
-              일일 PDF
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                : <Download className="w-3.5 h-3.5 text-indigo-400" />}
+              <span>일일 PDF</span>
             </button>
           )}
 
@@ -600,155 +695,244 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           <button
             onClick={() => handlePdfDownload(false)}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-indigo-500/20 text-slate-300 hover:text-white text-xs font-bold transition-all border border-white/10 disabled:opacity-40 whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-indigo-600/30 text-slate-200 hover:text-white text-xs font-bold transition-all border border-white/15 disabled:opacity-40 whitespace-nowrap shrink-0 active:scale-95"
             title="큐티 강해 본문 + 월간/주간 플래너만 구성된 PDF 저장"
           >
             {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-400" />}
-            📖 월간 큐티만 저장
+            <span>📖 큐티만 저장</span>
           </button>
 
           {/* 2. 월간 큐티 + 다이어리 저장 버튼 */}
           <button
             onClick={() => handlePdfDownload(true)}
             disabled={pdfLoading || days.length === 0}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 border border-amber-300/30 disabled:opacity-40 whitespace-nowrap shrink-0"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white text-xs font-extrabold transition-all shadow-lg shadow-indigo-600/30 border border-amber-300/40 disabled:opacity-40 whitespace-nowrap shrink-0 active:scale-95"
             title="큐티 강해 본문 + 날짜별 수채화 다이어리가 모두 결합된 PDF 저장"
           >
-            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
-            📖+📝 월간 큐티 + 다이어리 저장
+            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin text-amber-300" /> : <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />}
+            <span>📖+📝 큐티+다이어리 PDF</span>
           </button>
         </div>
       </header>
 
-      {/* ===== Main Body: Smart Canvas Preview ===== */}
-      <div className="flex flex-1 min-h-0">
-        {/* Left: QT Canvas Preview Area */}
-        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start bg-gradient-to-b from-[#050814] via-[#090e24] to-[#050814]">
-          {viewMode === 'cover' ? (
-            /* ★ 표지 COVER 전용 단일 실물 미리보기 (창 크기에 100% Fit) */
-            <div className="w-full flex flex-col items-center justify-center py-2 min-h-[72vh]">
-              <div
-                className="rounded-2xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 bg-slate-950/60 p-1 flex items-center justify-center max-h-[75vh]"
-                style={{
-                  width: '100%',
-                  maxWidth: sizeOption.includes('Landscape') ? '880px' : '580px',
-                }}
-              >
-                <div className="w-full h-full flex items-center justify-center overflow-hidden scale-[0.85] sm:scale-[0.95] lg:scale-100 origin-center">
-                  <QtPdfLayout
-                    form={form}
-                    result={{ fullManuscript: accumulatedManuscript }}
-                    sizeOption={sizeOption}
-                    templateId={activeTmpl.id}
-                    onlyCover={true}
-                    startPassage={startPassage}
-                    endPassage={endPassage}
-                    selectedInfo={selectedInfo}
-                    monthCalendarStrip={monthCalendarStrip}
-                    layoutSettings={layoutSettings}
-                    includeDiaryPage={includeDiaryPage}
-                    includeMonthlyPlanner={includeMonthlyPlanner}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-3 font-medium">✦ 완벽한 비율로 맞춤 조정된 표지 미리보기입니다.</p>
-            </div>
-          ) : (
-            /* ★ 일자별 큐티 스마트 카드 (DAY CARD) */
-            <div className="w-full max-w-5xl mx-auto space-y-6">
-              {selectedInfo?.isRecommended && (
-                <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <Sparkles className="w-4.5 h-4.5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">AI 추천</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">오늘의 큐티</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-100 leading-snug">
-                        {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
-                      </div>
-                      {selectedInfo.coreMessage && (
-                        <div className="text-xs text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+      {/* ===== Main Body: Smart Canvas Stage & Floating Controls ===== */}
+      <div className="flex flex-1 min-h-0 relative overflow-hidden">
+        {/* Left: QT Stage Preview Area with Ambient Backlight Glow */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-between items-center bg-gradient-to-b from-[#030611] via-[#080d24] to-[#030611] relative">
+          
+          {/* Ambient Backlight Glow matching template accent color */}
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-[140px] opacity-15 pointer-events-none transition-all duration-700"
+            style={{ background: activeTmpl.accent || '#6366f1' }}
+          />
 
-              {currentDay ? (
+          <div className="w-full flex-1 flex justify-center items-start">
+            {viewMode === 'cover' ? (
+              /* ★ 표지 COVER 전용 단일 실물 미리보기 (창 크기에 100% Fit) */
+              <div className="w-full flex flex-col items-center justify-center py-2 min-h-[72vh]">
                 <div
-                  className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_12px_40px_rgba(0,0,0,0.2)] transition-all duration-300 flex flex-col"
+                  className="rounded-2xl border border-white/20 shadow-[0_30px_100px_rgba(0,0,0,0.7)] overflow-hidden transition-all duration-300 bg-slate-950/80 p-1 flex items-center justify-center max-h-[75vh] backdrop-blur-sm ring-1 ring-white/10"
                   style={{
-                    background: activeTmpl.pageBg,
-                    color: activeTmpl.textColor,
-                    borderColor: activeTmpl.border,
                     width: '100%',
-                    maxWidth: sizeOption.includes('Landscape') ? '920px' : '680px',
+                    maxWidth: sizeOption.includes('Landscape') ? '880px' : '580px',
+                    transform: `scale(${zoomScale})`,
+                    transformOrigin: 'top center',
                   }}
                 >
-                  <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
-                    <QtDayCard
-                      day={currentDay}
-                      dayNumber={dayIndex + 1}
-                      dateLabel={weekdays[dayIndex] || ''}
-                      variant="pdf"
-                      template={activeTmpl}
-                      isBilingualSideBySide={isBilingualSideBySide}
-                      editMode={isEditing}
-                      edits={editedContent[dayIndex] || {}}
-                      onSectionEdit={(sectionKey, value) => handleSectionEdit(dayIndex, sectionKey, value)}
-                      hiddenSections={layoutSettings.hiddenSections}
+                  <div className="w-full h-full flex items-center justify-center overflow-hidden scale-[0.85] sm:scale-[0.95] lg:scale-100 origin-center">
+                    <QtPdfLayout
+                      form={form}
+                      result={{ fullManuscript: accumulatedManuscript }}
+                      sizeOption={sizeOption}
+                      templateId={activeTmpl.id}
+                      onlyCover={true}
+                      startPassage={startPassage}
+                      endPassage={endPassage}
+                      selectedInfo={selectedInfo}
+                      monthCalendarStrip={monthCalendarStrip}
+                      layoutSettings={layoutSettings}
+                      includeDiaryPage={includeDiaryPage}
+                      includeMonthlyPlanner={includeMonthlyPlanner}
+                      includeMeditationPack={includeMeditationPack}
                     />
                   </div>
                 </div>
-              ) : (
-                <div
-                  className="rounded-2xl p-8 border overflow-y-auto scrollbar-thin"
-                  style={{
-                    background: activeTmpl.pageBg,
-                    color: activeTmpl.textColor,
-                    borderColor: activeTmpl.border,
-                  }}
-                >
-                  <div className="text-xs leading-relaxed whitespace-pre-wrap font-mono opacity-80">
-                    {accumulatedManuscript || '생성된 내용이 없습니다.'}
+                <p className="text-[11px] text-slate-400 mt-4 font-medium flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>완벽한 비율로 맞춤 조정된 표지 미리보기입니다.</span>
+                </p>
+              </div>
+            ) : (
+              /* ★ 일자별 큐티 스마트 카드 (DAY CARD) */
+              <div 
+                className="w-full max-w-5xl mx-auto space-y-6 transition-all duration-300"
+                style={{
+                  transform: `scale(${zoomScale})`,
+                  transformOrigin: 'top center',
+                }}
+              >
+                {selectedInfo?.isRecommended && (
+                  <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-fuchsia-500/10 p-4 shadow-xl backdrop-blur-md">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                        <Sparkles className="w-4.5 h-4.5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 tracking-wider">AI 추천</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200">오늘의 큐티</span>
+                        </div>
+                        <div className="text-sm font-bold text-slate-100 leading-snug">
+                          {selectedInfo.book} <span className="text-indigo-300">{selectedInfo.passage}</span>
+                        </div>
+                        {selectedInfo.coreMessage && (
+                          <div className="text-xs text-slate-300 mt-1 italic">&ldquo;{selectedInfo.coreMessage}&rdquo;</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+
+                {currentDay ? (
+                  <div
+                    className="rounded-2xl p-6 sm:p-8 border mx-auto shadow-[0_25px_80px_rgba(0,0,0,0.6)] transition-all duration-300 flex flex-col ring-1 ring-white/10"
+                    style={{
+                      background: activeTmpl.pageBg,
+                      color: activeTmpl.textColor,
+                      borderColor: activeTmpl.border,
+                      width: '100%',
+                      maxWidth: sizeOption.includes('Landscape') ? '920px' : '680px',
+                    }}
+                  >
+                    <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
+                      <QtDayCard
+                        day={currentDay}
+                        dayNumber={dayIndex + 1}
+                        dateLabel={weekdays[dayIndex] || ''}
+                        variant="pdf"
+                        template={activeTmpl}
+                        isBilingualSideBySide={isBilingualSideBySide}
+                        editMode={isEditing}
+                        edits={editedContent[dayIndex] || {}}
+                        onSectionEdit={(sectionKey, value) => handleSectionEdit(dayIndex, sectionKey, value)}
+                        hiddenSections={layoutSettings.hiddenSections}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-2xl p-8 border overflow-y-auto scrollbar-thin shadow-2xl"
+                    style={{
+                      background: activeTmpl.pageBg,
+                      color: activeTmpl.textColor,
+                      borderColor: activeTmpl.border,
+                    }}
+                  >
+                    <div className="text-xs leading-relaxed whitespace-pre-wrap font-mono opacity-80">
+                      {accumulatedManuscript || '생성된 내용이 없습니다.'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ===== Floating Bottom Dock Toolbar ===== */}
+          <div className="sticky bottom-3 z-30 mt-4 flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#090e26]/90 border border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl ring-1 ring-white/10">
+            {/* Day Switcher */}
+            <button
+              onClick={() => { setViewMode('day'); setDayIndex(Math.max(0, dayIndex - 1)) }}
+              disabled={dayIndex === 0}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 active:scale-95"
+              title="이전 날짜"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            <span className="text-xs font-bold text-slate-200 font-mono">
+              Day <span className="text-indigo-400 font-extrabold">{dayIndex + 1}</span> / {days.length}
+            </span>
+
+            <button
+              onClick={() => { setViewMode('day'); setDayIndex(Math.min(days.length - 1, dayIndex + 1)) }}
+              disabled={dayIndex >= days.length - 1}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all disabled:opacity-20 active:scale-95"
+              title="다음 날짜"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-4 bg-white/15 mx-1" />
+
+            {/* Zoom Controls */}
+            <button
+              onClick={() => setZoomScale(prev => Math.max(0.7, prev - 0.1))}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all active:scale-95"
+              title="축소"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setZoomScale(1.0)}
+              className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/15 text-[11px] font-mono font-bold text-slate-300 hover:text-white transition-all"
+              title="100% 확대율 복원"
+            >
+              {Math.round(zoomScale * 100)}%
+            </button>
+
+            <button
+              onClick={() => setZoomScale(prev => Math.min(1.4, prev + 0.1))}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all active:scale-95"
+              title="확대"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-px h-4 bg-white/15 mx-1" />
+
+            {/* Edit Mode Toggle */}
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
+                isEditing
+                  ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-md shadow-amber-500/20'
+                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isEditing ? '편집중' : '편집하기'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Right: Modern Sidebar Controls */}
-        <aside className="w-[300px] shrink-0 border-l border-white/10 bg-[#080d1e]/95 overflow-y-auto p-4 flex flex-col gap-5 shadow-2xl backdrop-blur-md">
+        {/* Right: Studio Control Sidebar */}
+        <aside className="w-[310px] shrink-0 border-l border-white/10 bg-[#060a1c]/95 overflow-y-auto p-4 flex flex-col gap-5 shadow-2xl backdrop-blur-2xl">
           {/* 1. 디자인 템플릿 쇼룸 */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-                템플릿 테마 ({QT_TEMPLATES.length})
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-200 tracking-wider">
+                <LayoutGrid className="w-4 h-4 text-indigo-400" />
+                <span>템플릿 테마 ({QT_TEMPLATES.length})</span>
               </div>
-              <span className="text-[10px] text-slate-500 font-medium">클릭 시 즉시 반영</span>
+              <span className="text-[10px] text-indigo-300 font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30">실시간 체인지</span>
             </div>
 
-            {/* 현재 선택된 테마의 실시간 특징 브리핑 바 */}
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-400/25 mb-3 shadow-inner">
+            {/* 현재 선택된 테마 브리핑 카드 */}
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent border border-indigo-400/30 mb-3 shadow-lg">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-indigo-200 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
-                  {tmpl.name}
+                <span className="text-xs font-extrabold text-indigo-200 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                  {activeTmpl.name}
                 </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                  {tmpl.nameEn}
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  {activeTmpl.nameEn}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">{tmpl.description}</p>
+              <p className="text-[11px] text-slate-300 leading-relaxed font-medium">{activeTmpl.description}</p>
             </div>
 
-            {/* 템플릿 테마 카드 리스트 (이름 + 설명 + 실물 색상 칩) */}
+            {/* 템플릿 테마 카드 리스트 */}
             <div className="grid grid-cols-1 gap-2 max-h-[260px] overflow-y-auto p-1 scrollbar-thin">
               {QT_TEMPLATES.map(t => {
                 const isSelected = templateId === t.id
@@ -758,8 +942,8 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     onClick={() => setTemplateId(t.id)}
                     className={`flex items-start justify-between p-2.5 rounded-xl border text-left transition-all ${
                       isSelected
-                        ? 'bg-indigo-600/20 border-indigo-400 ring-1 ring-inset ring-indigo-400/40 shadow-md'
-                        : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
+                        ? 'bg-gradient-to-r from-indigo-600/25 to-purple-600/20 border-indigo-400 ring-1 ring-inset ring-indigo-400/40 shadow-lg'
+                        : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.07]'
                     }`}
                   >
                     <div className="flex-1 min-w-0 pr-2">
@@ -768,7 +952,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                           {t.name}
                         </span>
                         {isSelected && (
-                          <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-500 text-white">
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-500 text-white shadow-xs">
                             적용중
                           </span>
                         )}
@@ -779,14 +963,14 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                     </div>
 
                     {/* 실물 색상 듀얼 톤 프리뷰 칩 */}
-                    <div className="flex items-center gap-1 shrink-0 mt-0.5 p-1 rounded-lg bg-slate-950/60 border border-white/10">
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5 p-1 rounded-lg bg-slate-950/80 border border-white/10 shadow-inner">
                       <div
-                        className="w-3.5 h-5 rounded-sm border border-black/20 shadow-inner"
+                        className="w-3.5 h-5 rounded-sm border border-black/30 shadow-sm"
                         style={{ background: t.pageBg }}
                         title={`종이 배경: ${t.pageBg}`}
                       />
                       <div
-                        className="w-3.5 h-5 rounded-sm border border-black/20"
+                        className="w-3.5 h-5 rounded-sm border border-black/30 shadow-sm"
                         style={{ background: t.accent }}
                         title={`포인트 색상: ${t.accent}`}
                       />
@@ -801,18 +985,18 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           {/* 2. 용지 규격 */}
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-              <FileText className="w-3.5 h-3.5 text-indigo-400" />
-              용지 규격
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-300 tracking-wider mb-2.5">
+              <FileText className="w-4 h-4 text-indigo-400" />
+              <span>용지 규격</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Object.keys(PAGE_SIZES).map(sz => (
                 <button
                   key={sz}
                   onClick={() => setSizeOption(sz)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
                     sizeOption === sz
-                      ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold shadow-sm'
+                      ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-extrabold shadow-md shadow-indigo-600/20'
                       : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                   }`}
                 >
@@ -826,75 +1010,75 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           {/* 3. 옵션 도구 */}
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-              출력 옵션
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-300 tracking-wider mb-2.5">
+              <Sliders className="w-4 h-4 text-indigo-400" />
+              <span>출력 옵션</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setIsBilingualSideBySide(!isBilingualSideBySide)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                   isBilingualSideBySide
-                    ? 'bg-blue-600/20 border-blue-400 text-blue-200 font-bold'
+                    ? 'bg-blue-600/30 border-blue-400 text-blue-200 shadow-md shadow-blue-600/20'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
               >
                 <Globe className="w-3.5 h-3.5 text-blue-400" />
-                한영대조
+                <span>한영대조</span>
               </button>
-              {/* ★ 다이어리 & 플래너 옵션: 월간 큐티 모드에서만 표시 */}
+              {/* ★ 다이어리 & 플래너 옵션 */}
               {isMonthlyMode && (
                 <>
                   <button
                     onClick={() => setIncludeDiaryPage(!includeDiaryPage)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                       includeDiaryPage
-                        ? 'bg-amber-600/20 border-amber-400 text-amber-200 font-bold'
+                        ? 'bg-amber-600/30 border-amber-400 text-amber-200 shadow-md shadow-amber-600/20'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                     }`}
                     title="diary.pdf 21쪽 양식 기반 데일리 다이어리 및 기도제목 포함"
                   >
                     <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                    데일리 다이어리 (Page B)
+                    <span>데일리 다이어리 (Page B)</span>
                   </button>
 
                   <button
                     onClick={() => setIncludeMonthlyPlanner(!includeMonthlyPlanner)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                       includeMonthlyPlanner
-                        ? 'bg-purple-600/20 border-purple-400 text-purple-200 font-bold'
+                        ? 'bg-purple-600/30 border-purple-400 text-purple-200 shadow-md shadow-purple-600/20'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                     }`}
                     title="diary.pdf 18/20쪽 양식 기반 월간달력 및 주간계획 포함"
                   >
                     <CalendarIcon className="w-3.5 h-3.5 text-purple-400" />
-                    월간/주간 플래너
+                    <span>월간/주간 플래너</span>
                   </button>
                 </>
               )}
 
               <button
                 onClick={() => setIsEcoPrint(!isEcoPrint)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                   isEcoPrint
-                    ? 'bg-emerald-600/20 border-emerald-400 text-emerald-200 font-bold'
+                    ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200 shadow-md shadow-emerald-600/20'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
               >
                 <Leaf className="w-3.5 h-3.5 text-emerald-400" />
-                에코 절약
+                <span>에코 절약</span>
               </button>
 
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                   isEditing
-                    ? 'bg-amber-600/20 border-amber-400 text-amber-200 font-bold'
+                    ? 'bg-amber-600/30 border-amber-400 text-amber-200 shadow-md shadow-amber-600/20'
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                 }`}
               >
                 <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-                실시간 편집
+                <span>실시간 편집</span>
               </button>
             </div>
           </div>
@@ -903,44 +1087,44 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
 
           {/* 4. 레이아웃 세부 설정 */}
           <details className="group">
-            <summary className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer select-none flex items-center justify-between">
+            <summary className="text-xs font-extrabold text-slate-300 tracking-wider cursor-pointer select-none flex items-center justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 transition-all">
               <span className="flex items-center gap-1.5">
-                <Type className="w-3.5 h-3.5 text-indigo-400" />
-                폰트 및 디스플레이
+                <Type className="w-4 h-4 text-indigo-400" />
+                <span>폰트 및 디스플레이 스튜디오</span>
               </span>
-              <span className="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+              <ChevronDown className="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" />
             </summary>
-            <div className="mt-3 space-y-3.5 pt-1">
+            <div className="mt-3 space-y-3.5 pt-1 px-1">
               <div className="flex items-center gap-2 pb-1 border-b border-white/5">
-                <span className="text-xs text-slate-400 w-12 shrink-0">에디션</span>
+                <span className="text-xs text-slate-400 w-12 shrink-0 font-bold">에디션</span>
                 <div className="flex gap-1">
                   <button
                     onClick={() => handleEditionChange('member')}
-                    className={`px-2.5 py-0.5 rounded-md text-xs border transition-all ${
+                    className={`px-2.5 py-0.5 rounded-lg text-xs border transition-all ${
                       editionMode === 'member'
                         ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-bold'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                     }`}
-                  >📖 성도용 (해설제외)</button>
+                  >📖 성도용</button>
                   <button
                     onClick={() => handleEditionChange('leader')}
-                    className={`px-2.5 py-0.5 rounded-md text-xs border transition-all ${
+                    className={`px-2.5 py-0.5 rounded-lg text-xs border transition-all ${
                       editionMode === 'leader'
                         ? 'bg-amber-600/40 border-amber-400 text-amber-200 font-bold'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                     }`}
-                  >👑 리더용 (해설포함)</button>
+                  >👑 리더용</button>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 w-12 shrink-0">줄간격</span>
+                <span className="text-xs text-slate-400 w-12 shrink-0 font-bold">줄간격</span>
                 <div className="flex flex-wrap gap-1">
                   {['1.1', '1.2', '1.3', '1.5', '1.8', '2.0'].map(v => (
                     <button key={v} onClick={() => updateLayoutSettings({ lineSpacing: v })}
-                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                      className={`px-2 py-0.5 rounded-lg text-xs border transition-all ${
                         layoutSettings.lineSpacing === v
-                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-bold'
                           : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                       }`}>{v}</button>
                   ))}
@@ -948,13 +1132,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 w-12 shrink-0">글자크기</span>
+                <span className="text-xs text-slate-400 w-12 shrink-0 font-bold">글자크기</span>
                 <div className="flex flex-wrap gap-1">
                   {[{k:'더작게',v:'xsmall'},{k:'작게',v:'small'},{k:'보통',v:'medium'},{k:'크게',v:'large'}].map(({k,v}) => (
                     <button key={v} onClick={() => updateLayoutSettings({ fontSize: v })}
-                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                      className={`px-2 py-0.5 rounded-lg text-xs border transition-all ${
                         layoutSettings.fontSize === v
-                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-bold'
                           : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                       }`}>{k}</button>
                   ))}
@@ -962,13 +1146,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 w-12 shrink-0">서체</span>
+                <span className="text-xs text-slate-400 w-12 shrink-0 font-bold">서체</span>
                 <div className="flex flex-wrap gap-1">
                   {[{k:'고딕',v:'gothic'},{k:'명조',v:'myeongjo'},{k:'SUIT',v:'suit'},{k:'리디바탕',v:'ridi'},{k:'영문',v:'english'}].map(({k,v}) => (
                     <button key={v} onClick={() => updateLayoutSettings({ fontFamily: v })}
-                      className={`px-2 py-0.5 rounded-md text-xs border transition-all ${
+                      className={`px-2 py-0.5 rounded-lg text-xs border transition-all ${
                         layoutSettings.fontFamily === v
-                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 font-bold'
+                          ? 'bg-indigo-600/40 border-indigo-400 text-indigo-200 font-bold'
                           : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
                       }`}>{k}</button>
                   ))}
@@ -976,7 +1160,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
               </div>
 
               <div>
-                <span className="text-xs text-slate-400 block mb-1.5">표시 섹션 숨기기/보이기</span>
+                <span className="text-xs text-slate-400 block mb-1.5 font-bold">표시 섹션 숨기기/보이기</span>
                 <div className="flex flex-wrap gap-1">
                   {layoutSections.map(({k,v}) => {
                     const isHidden = layoutSettings.hiddenSections.includes(v)
@@ -987,10 +1171,10 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                           : [...layoutSettings.hiddenSections, v]
                         updateLayoutSettings({ hiddenSections: next })
                       }}
-                        className={`px-1.5 py-0.5 rounded text-[10px] border transition-all ${
+                        className={`px-2 py-0.5 rounded-lg text-[10px] border transition-all ${
                           isHidden
                             ? 'bg-white/5 border-white/10 text-slate-600 line-through'
-                            : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-300 font-semibold'
+                            : 'bg-indigo-600/30 border-indigo-500/40 text-indigo-200 font-bold'
                         }`}>{k}</button>
                     )
                   })}
@@ -1004,13 +1188,13 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           {/* 5. 캘린더 스트립 (달력) */}
           {monthCalendarStrip && (
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
-                {monthCalendarStrip.month}
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-300 tracking-wider mb-2.5">
+                <CalendarIcon className="w-4 h-4 text-indigo-400" />
+                <span>{monthCalendarStrip.month} 달력</span>
               </div>
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-1 p-2 rounded-2xl bg-slate-950/60 border border-white/10 shadow-inner">
                 {['일','월','화','수','목','금','토'].map(dayName => (
-                  <div key={dayName} className="text-[10px] text-slate-500 font-bold text-center">{dayName}</div>
+                  <div key={dayName} className="text-[10px] text-slate-400 font-extrabold text-center py-0.5">{dayName}</div>
                 ))}
                 {Array.from({ length: new Date(
                   parseInt(form.startDate!.split('-')[0]),
@@ -1040,14 +1224,14 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                       }}
                       disabled={isEmpty}
                       title={isSunday ? `${d}일 (일요일 - 주일 설교 노트)` : isEmpty ? `${d}일 (큐티 없음)` : `${d}일 큐티로 이동`}
-                      className={`w-full aspect-square rounded-md text-[10px] font-bold border transition-all ${
+                      className={`w-full aspect-square rounded-lg text-[10px] font-extrabold border transition-all flex items-center justify-center ${
                         isActive
-                          ? 'bg-indigo-600 border-indigo-400 text-white shadow-md'
+                          ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md shadow-indigo-600/40 scale-105'
                           : isSunday
                           ? 'bg-rose-500/10 border-rose-500/20 text-rose-400/50 cursor-not-allowed'
                           : isEmpty
                           ? 'bg-transparent border-white/5 text-slate-700 cursor-not-allowed'
-                          : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-200'
+                          : 'bg-white/[0.04] border-white/10 text-slate-300 hover:border-indigo-400/50 hover:text-indigo-200'
                       }`}
                     >
                       {d}
@@ -1063,15 +1247,9 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           {/* 6. 월간 QT 자동 통합 패널 */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                <Package className="w-3.5 h-3.5 text-indigo-400" />
-                월간 QT 통합
-              </div>
-              {monthlyCount > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  {monthlyCount}주 모임
-                </span>
-              )}
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                {monthlyCount}주 모임
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1150,6 +1328,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
           editedContent={editedContent}
           includeDiaryPage={includeDiaryPage}
           includeMonthlyPlanner={includeMonthlyPlanner}
+          includeMeditationPack={includeMeditationPack}
         />
       </div>
 
@@ -1170,6 +1349,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
             layoutSettings={layoutSettings}
             includeDiaryPage={includeDiaryPage}
             includeMonthlyPlanner={includeMonthlyPlanner}
+            includeMeditationPack={includeMeditationPack}
           />
         </div>
       )}
@@ -1184,12 +1364,32 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                 <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" />
                 <span>전체화면 PDF 실물 뷰어</span>
               </div>
-              <span className="text-xs text-slate-300 font-medium hidden md:inline-flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
-                용지: <strong className="text-white font-bold px-1.5 py-0.5 rounded bg-white/10">{sizeOption}</strong>
-                <span className="text-slate-500">|</span>
-                테마: <strong className="text-white font-bold px-1.5 py-0.5 rounded bg-white/10">{tmpl.name}</strong>
-              </span>
+                <span className="text-slate-400 font-bold">📐 용지:</span>
+                <select
+                  value={sizeOption}
+                  onChange={e => setSizeOption(e.target.value)}
+                  className="bg-slate-900 border border-white/20 rounded-xl px-2.5 py-1 text-slate-100 font-extrabold text-xs outline-none cursor-pointer hover:border-indigo-400 transition-all"
+                >
+                  {Object.keys(PAGE_SIZES).map(sz => (
+                    <option key={sz} value={sz}>{PAGE_SIZES[sz]?.label || sz}</option>
+                  ))}
+                </select>
+
+                <span className="text-slate-500 font-normal">|</span>
+
+                <span className="text-slate-400 font-bold">🎨 테마:</span>
+                <select
+                  value={templateId}
+                  onChange={e => setTemplateId(e.target.value)}
+                  className="bg-slate-900 border border-white/20 rounded-xl px-2.5 py-1 text-amber-300 font-extrabold text-xs outline-none cursor-pointer hover:border-amber-400 transition-all"
+                >
+                  {QT_TEMPLATES.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Center: Zoom Controls */}
@@ -1442,6 +1642,7 @@ export default function QtReader({ form, accumulatedManuscript, templateId: init
                   editedContent={editedContent}
                   includeDiaryPage={includeDiaryPage}
                   includeMonthlyPlanner={includeMonthlyPlanner}
+                  includeMeditationPack={includeMeditationPack}
                 />
               </div>
             </div>

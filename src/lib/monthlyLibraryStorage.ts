@@ -10,6 +10,7 @@ export interface MonthlyQtBook {
   templateId?: string
   pageCount?: number
   includeDiaryPage?: boolean
+  includeMeditationPack?: boolean
   seriesName?: string
   audience?: string
   level?: number

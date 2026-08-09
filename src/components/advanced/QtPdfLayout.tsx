@@ -3,7 +3,7 @@ import React from 'react'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import { getTemplate } from '@/lib/qtTemplates'
 import { parseDays } from '@/lib/qtDayParser'
-import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth } from '@/lib/qtDates'
+import { getFormattedDateListWeekdays, getWeekdayDateLabels, getWeekdayCountInMonth, computeStartDateForWeek, getTodayDateString } from '@/lib/qtDates'
 import { renderSmartLine, preprocessSmartText } from '@/lib/qtSmartLine'
 import type { QTFormData, QTResult } from './QtGenerator'
 import QtDailyDiaryPage from './QtDailyDiaryPage'
@@ -16,6 +16,14 @@ import QtSundaySermonPage from './QtSundaySermonPage'
 import QtSundaySermonDeepPage from './QtSundaySermonDeepPage'
 import QtBibleReadingMapPage from './QtBibleReadingMapPage'
 import QtMonthlyLetterPage from './QtMonthlyLetterPage'
+import QtSoapJournalPage from './QtSoapJournalPage'
+import QtIntercessoryPrayerPage from './QtIntercessoryPrayerPage'
+import QtHabitTrackerPage from './QtHabitTrackerPage'
+import QtGratitudeJournalPage from './QtGratitudeJournalPage'
+import QtFruitsTrackerPage from './QtFruitsTrackerPage'
+import QtKptReviewPage from './QtKptReviewPage'
+import QtBudgetTrackerPage from './QtBudgetTrackerPage'
+import QtHundredGoalPage from './QtHundredGoalPage'
 
 import QtDailyDiaryPortrait from './portrait/QtDailyDiaryPortrait'
 import QtMonthlyCalendarPortrait from './portrait/QtMonthlyCalendarPortrait'
@@ -27,6 +35,14 @@ import QtSundaySermonPortrait from './portrait/QtSundaySermonPortrait'
 import QtSundaySermonDeepPortrait from './portrait/QtSundaySermonDeepPortrait'
 import QtBibleReadingMapPortrait from './portrait/QtBibleReadingMapPortrait'
 import QtMonthlyLetterPortrait from './portrait/QtMonthlyLetterPortrait'
+import QtSoapJournalPortrait from './portrait/QtSoapJournalPortrait'
+import QtIntercessoryPrayerPortrait from './portrait/QtIntercessoryPrayerPortrait'
+import QtHabitTrackerPortrait from './portrait/QtHabitTrackerPortrait'
+import QtGratitudeJournalPortrait from './portrait/QtGratitudeJournalPortrait'
+import QtFruitsTrackerPortrait from './portrait/QtFruitsTrackerPortrait'
+import QtKptReviewPortrait from './portrait/QtKptReviewPortrait'
+import QtBudgetTrackerPortrait from './portrait/QtBudgetTrackerPortrait'
+import QtHundredGoalPortrait from './portrait/QtHundredGoalPortrait'
 
 interface QtSelectedInfo {
   book: string
@@ -250,6 +266,7 @@ interface QtPdfLayoutProps {
   editedContent?: Record<number, Record<string, string>>
   includeDiaryPage?: boolean
   includeMonthlyPlanner?: boolean
+  includeMeditationPack?: boolean
 }
 
 // 캘린더 스트립을 표시할 sizeOption 화이트리스트
@@ -302,7 +319,7 @@ function parseBibleVerses(passageText: string) {
   return { korVerse, engVerse, passageRange, readingGuide }
 }
 
-function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent, includeDiaryPage, includeMonthlyPlanner }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
+function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', onlyCover = false, startPassage, endPassage, userMemos = {}, isBilingualSideBySide = false, selectedInfo, daySectionTitles, monthCalendarStrip, layoutSettings, editedContent, includeDiaryPage, includeMonthlyPlanner, includeMeditationPack }: QtPdfLayoutProps, ref: React.Ref<HTMLDivElement>) {
   const ls = layoutSettings || {}
   const fontScale = ls.fontSize === 'xsmall' ? 0.82 : ls.fontSize === 'small' ? 0.9 : ls.fontSize === 'large' ? 1.15 : 1.0
   const marginScale = ls.margin === 'narrow' ? 0.7 : ls.margin === 'wide' ? 1.15 : 1.0
@@ -318,24 +335,52 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
   }, [ls.hiddenSections, isLeaderEdition])
 
   const yearNum = useMemo(() => {
+    if (form.targetYear) return form.targetYear
     if (form.startDate) {
       const parts = form.startDate.split('-')
       if (parts.length >= 1) return parseInt(parts[0], 10) || 2026
     }
     return 2026
-  }, [form.startDate])
+  }, [form.targetYear, form.startDate])
 
   const monthNum = useMemo(() => {
     if (monthCalendarStrip?.month) {
       const m = monthCalendarStrip.month.match(/(\d+)월/)
       if (m) return parseInt(m[1], 10)
     }
+    if (form.targetMonth) return form.targetMonth
     if (form.startDate) {
       const parts = form.startDate.split('-')
       if (parts.length >= 2) return parseInt(parts[1], 10)
     }
     return 8
-  }, [monthCalendarStrip, form.startDate])
+  }, [monthCalendarStrip, form.targetMonth, form.startDate])
+
+  const effectiveStartDate = useMemo(() => {
+    const y = yearNum
+    const m = monthNum
+    const w = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
+
+    // 1) form.startDate가 1일이 아닌 구체적인 주간 시작일(예: 2026-09-07)인 경우 그 시작일 사용
+    if (form.startDate) {
+      const parts = form.startDate.split('-')
+      if (parts.length === 3) {
+        const d = parseInt(parts[2], 10)
+        if (d > 1) return form.startDate
+      }
+    }
+
+    // 2) form.weekNumber가 2 이상이면(예: 2주차), 해당 월의 N주차 월요일을 자동 계산
+    if (w > 1) {
+      return computeStartDateForWeek(y, m, w)
+    }
+
+    // 3) form.startDate가 있으면 사용
+    if (form.startDate) return form.startDate
+
+    // 4) 기본값: 해당 월의 1일
+    return `${y}-${String(m).padStart(2, '0')}-01`
+  }, [yearNum, monthNum, form.weekNumber, form.startDate])
 
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   // 스케일: 짧은 변(210mm) 기준 1.0
@@ -375,9 +420,12 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
     }
   }, [fullManuscript, editedContent, hiddenSet])
 
+  // 월간 vs 주간 구분 및 성경책 자동 감지 헬퍼
+  const isMonthly = !!(monthCalendarStrip as any)?.isMonthlyBook || parsedDays.length > 7
+
   const weekdays = useMemo(() => {
     const dayCount = Math.max(parsedDays.length, 1)
-    if (monthCalendarStrip) {
+    if (monthCalendarStrip && isMonthly) {
       const m = monthCalendarStrip.month.match(/(\d+)년\s*(\d+)월/)
       if (m) {
         const year = parseInt(m[1], 10), month = parseInt(m[2], 10)
@@ -389,37 +437,137 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         })
       }
     }
-    if (!form.startDate) {
-      const today = new Date()
-      const dayNames = ['일', '월', '화', '수', '목', '금', '토']
-      const mon = new Date(today); mon.setDate(mon.getDate() - mon.getDay() + 1)
-      return Array.from({ length: Math.max(dayCount, 6) }, (_, i) => {
-        const d = new Date(mon); d.setDate(mon.getDate() + i)
-        return { date: d, label: `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})` }
+
+    const startStr = effectiveStartDate || getTodayDateString()
+    const sp = startStr.split('-')
+    const start = sp.length === 3 ? new Date(parseInt(sp[0], 10), parseInt(sp[1], 10) - 1, parseInt(sp[2], 10)) : new Date()
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+    const result: { date: Date; label: string }[] = []
+
+    let cur = new Date(start)
+    while (result.length < Math.max(dayCount, 6)) {
+      if (cur.getDay() !== 0) {
+        const m = cur.getMonth() + 1
+        const d = cur.getDate()
+        const label = `${m}/${d} (${dayNames[cur.getDay()]})`
+        result.push({ date: new Date(cur), label })
+      }
+      cur.setDate(cur.getDate() + 1)
+    }
+
+    return result
+  }, [effectiveStartDate, parsedDays.length, monthCalendarStrip, isMonthly])
+
+  // ── 정밀 주간 펼침(6일 그리드): [월, 화, 수, 목, 금, 토] 요일 고정 및 월초 빈 공란 자동 슬롯 ──
+  const monthlyWeekSlots = useMemo(() => {
+    const totalDays = new Date(yearNum, monthNum, 0).getDate()
+    const dayNames: ('MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT')[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    const dayKrNames = ['월', '화', '수', '목', '금', '토']
+    
+    const weeks: {
+      weekNum: number
+      slots: {
+        dayNum: number | null
+        dateLabel: string
+        dayName: 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT'
+        dayKr: string
+        qtDay: any | null
+        dayIdx: number | null
+      }[]
+    }[] = []
+
+    let currentSlots = dayNames.map((name, i) => ({
+      dayNum: null,
+      dateLabel: `${monthNum}/-- (${dayKrNames[i]})`,
+      dayName: name,
+      dayKr: dayKrNames[i],
+      qtDay: null,
+      dayIdx: null,
+    }))
+
+    // 날짜(dayNum) -> { qtDay, dayIdx } 맵 구성
+    const dayToQtMap = new Map<number, { qtDay: any; dayIdx: number }>()
+
+    if (isMonthly) {
+      // 월간 책 모드: 평일 순서대로 1:1 매핑
+      let qtIdx = 0
+      for (let d = 1; d <= totalDays; d++) {
+        const dt = new Date(yearNum, monthNum - 1, d)
+        if (dt.getDay() !== 0) {
+          if (parsedDays[qtIdx]) {
+            dayToQtMap.set(d, { qtDay: parsedDays[qtIdx], dayIdx: qtIdx })
+            qtIdx++
+          }
+        }
+      }
+    } else {
+      // 단일 주간 큐티 모드: weekdays의 실제 날짜(date.getDate())와 parsedDays 매핑
+      weekdays.forEach((wd, idx) => {
+        if (wd?.date && parsedDays[idx]) {
+          const dNum = wd.date.getDate()
+          dayToQtMap.set(dNum, { qtDay: parsedDays[idx], dayIdx: idx })
+        }
       })
     }
-    if (dayCount === getWeekdayCountInMonth(form.startDate)) {
-      const labels = getWeekdayDateLabels(form.startDate)
-      return labels.map(label => ({ date: new Date(), label }))
-    }
-    const list = getFormattedDateListWeekdays(form.startDate, dayCount)
-    if (list.length > 0) return list.map(label => ({ date: new Date(), label }))
-    return []
-  }, [form.startDate, parsedDays.length, monthCalendarStrip])
 
-  // 월간 vs 주간 구분 및 성경책 자동 감지 헬퍼
-  const isMonthly = !!monthCalendarStrip || parsedDays.length > 7
+    let weekCount = 1
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dt = new Date(yearNum, monthNum - 1, d)
+      const dow = dt.getDay() // 0: Sun, 1: Mon, ..., 6: Sat
+
+      if (dow === 0) {
+        if (currentSlots.some(s => s.dayNum !== null)) {
+          weeks.push({ weekNum: weekCount++, slots: currentSlots })
+          currentSlots = dayNames.map((name, i) => ({
+            dayNum: null,
+            dateLabel: `${monthNum}/-- (${dayKrNames[i]})`,
+            dayName: name,
+            dayKr: dayKrNames[i],
+            qtDay: null,
+            dayIdx: null,
+          }))
+        }
+        continue
+      }
+
+      const colIdx = dow - 1 // 0 (MON) ~ 5 (SAT)
+      const qtInfo = dayToQtMap.get(d) || null
+      const qtDay = qtInfo ? qtInfo.qtDay : null
+      const dayIdxVal = qtInfo ? qtInfo.dayIdx : null
+
+      const paddedDay = String(d).padStart(2, '0')
+      const dateLabel = `${monthNum}/${paddedDay} (${dayKrNames[colIdx]})`
+
+      currentSlots[colIdx] = {
+        dayNum: d,
+        dateLabel,
+        dayName: dayNames[colIdx],
+        dayKr: dayKrNames[colIdx],
+        qtDay,
+        dayIdx: dayIdxVal,
+      }
+    }
+
+    if (currentSlots.some(s => s.dayNum !== null)) {
+      weeks.push({ weekNum: weekCount++, slots: currentSlots })
+    }
+
+    return weeks
+  }, [yearNum, monthNum, parsedDays, weekdays, isMonthly])
 
   const monthName = useMemo(() => {
+    let monthNum = new Date().getMonth() + 1
     if (monthCalendarStrip?.month) {
       const m = monthCalendarStrip.month.match(/(\d+)월/)
-      if (m) return `${m[1]}월`
-    }
-    if (form.startDate) {
+      if (m) monthNum = parseInt(m[1], 10)
+    } else if (form.startDate) {
       const parts = form.startDate.split('-')
-      if (parts.length >= 2) return `${parseInt(parts[1], 10)}월`
+      if (parts.length >= 2) monthNum = parseInt(parts[1], 10)
     }
-    return `${new Date().getMonth() + 1}월`
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : 1
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    return monthNames[validMonth - 1]
   }, [monthCalendarStrip, form.startDate])
 
   // 원고 전체 텍스트 기반 멀티 스테이지 성경구절 스캔
@@ -751,7 +899,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   // ============= A안: 가로 2페이지 (1일 2페이지, 2-A 디자인) =============
   const renderDailyLandscape = (day: any, dayIdx: number, dayNum?: number) => {
-    const targetDayNum = dayNum || (dayIdx + 1)
+    const targetDayNum = dayNum || weekdays[dayIdx]?.date?.getDate() || (dayIdx + 1)
     const verses = parseBibleVerses(day.passage || '')
     const firstSentence = (() => {
       if (day.passageOverview) {
@@ -875,27 +1023,22 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
       </div>
     )
 
-    // 주차 및 날짜 범위 계산 (월간 큐티 호환)
+    // 정밀 주간 펼침 (6일 그리드): [월, 화, 수, 목, 금, 토] 요일 고정 및 슬롯 정렬
     const baseWeekNum = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
     const weekOffset = Math.floor(dayIdx / 6)
-    const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
-    const weekStartIndex = weekOffset * 6
 
-    // 해당 주차의 6일 데이터 및 날짜 라벨 구하기
-    let currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
-    if (currentWeekDaysData.length < 6) {
-      const needed = 6 - currentWeekDaysData.length
-      const extra = Array.from({ length: needed }, (_, idx) => {
-        const actualIdx = weekStartIndex + currentWeekDaysData.length + idx
-        return parsedDays[actualIdx] || { title: `Day ${actualIdx + 1}`, passage: '' }
-      })
-      currentWeekDaysData = [...currentWeekDaysData, ...extra]
-    }
+    const weekObj = monthlyWeekSlots.find(w => w.slots.some(s => s.dayNum === targetDayNum)) ||
+                    monthlyWeekSlots[weekOffset] ||
+                    monthlyWeekSlots[0]
 
-    const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
-    const weekStartLabel = currentWeekDatesData[0]?.label || ''
-    const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
-    const dayInWeekIdx = dayIdx % 6
+    const currentWeekNum = isMonthly
+      ? (weekObj ? weekObj.weekNum : (isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset))
+      : (isNaN(baseWeekNum) ? 1 : baseWeekNum + weekOffset)
+    const currentWeekSlots = weekObj ? weekObj.slots : []
+
+    const filledSlots = currentWeekSlots.filter(s => s.dayNum !== null)
+    const weekStartLabel = filledSlots[0]?.dateLabel || ''
+    const weekEndLabel = filledSlots[filledSlots.length - 1]?.dateLabel || ''
 
     return (
       <div key={dayIdx}>
@@ -939,7 +1082,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: `${0.5 * scale}px`,
                   marginTop: `${1 * scale}px`,
                 }}>
-                  {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
+                  {weekStartLabel} ~ {weekEndLabel} · {filledSlots.length}일
                 </div>
               </div>
 
@@ -948,13 +1091,45 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 gridTemplateColumns: 'repeat(6, 1fr)',
                 gap: `${0.5 * scale}px`,
               }}>
-                {currentWeekDaysData.map((d, i) => {
-                  const actualDayNum = weekStartIndex + i + 1
+                {currentWeekSlots.map((slot, i) => {
+                  if (!slot.dayNum || !slot.qtDay) {
+                    // 월요일 등 날짜가 없는 날은 깔끔한 빈 공란 슬롯 렌더링
+                    return (
+                      <div key={i} style={{
+                        display: 'flex', flexDirection: 'column',
+                        padding: `${1.5 * scale}px ${1.5 * scale}px`,
+                        background: 'rgba(0,0,0,0.02)',
+                        color: t.textMuted,
+                        borderTop: `0.5px solid ${t.borderLight}`,
+                        minHeight: `${70 * scale}px`,
+                        opacity: 0.4,
+                      }}>
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${11 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textMuted,
+                          textAlign: 'center',
+                          letterSpacing: `${0.5 * scale}px`,
+                        }}>
+                          {slot.dayKr}요일
+                        </div>
+                        <div style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: `${10 * scale}px`, fontStyle: 'italic', textAlign: 'center', marginTop: `${10 * scale}px`,
+                        }}>
+                          -
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const d = slot.qtDay
+                  const isCurrent = slot.dayNum === targetDayNum
                   const dv = parseBibleVerses(d?.passage || '')
-                  const isCurrent = i === dayInWeekIdx
                   const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
-                  const dayLabel = currentWeekDatesData[i]?.label || `Day ${actualDayNum}`
-                  const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+                  const dayLabel = slot.dateLabel
+                  const displayTitle = (d?.title && d.title !== `Day ${slot.dayNum}`) ? d.title : `Day ${slot.dayNum}`
 
                   return (
                     <div key={i} style={{
@@ -1223,7 +1398,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
             {renderCalendarStrip(targetDayNum)}
-            {landscapeHeader(`QT · ${form.bibleBook} · ${form.weekNumber}주 · 묵상`)}
+            {landscapeHeader(`QT · ${form.bibleBook} · ${currentWeekNum}주 · 묵상`)}
 
             {/* 2열: 관찰 | 이해 */}
             <div style={{
@@ -1620,31 +1795,26 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   // ============= A안: 세로 2면 (1일 2페이지, 2-A 디자인 유지) =============
   const renderDailyPortrait = (day: any, dayIdx: number, dayNum?: number) => {
-    const targetDayNum = dayNum || (dayIdx + 1)
+    const targetDayNum = dayNum || weekdays[dayIdx]?.date?.getDate() || (dayIdx + 1)
     const verses = parseBibleVerses(day.passage || '')
     pageCounter = 1 + dayIdx * 3 + 1
 
-    // 주차 및 날짜 범위 계산 (월간 큐티 호환)
+    // 정밀 주간 펼침 (6일 그리드): [월, 화, 수, 목, 금, 토] 요일 고정 및 슬롯 정렬
     const baseWeekNum = form.weekNumber ? parseInt(String(form.weekNumber), 10) : 1
     const weekOffset = Math.floor(dayIdx / 6)
-    const currentWeekNum = isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset
-    const weekStartIndex = weekOffset * 6
 
-    // 해당 주차의 6일 데이터 및 날짜 라벨 구하기
-    let currentWeekDaysData = parsedDays.slice(weekStartIndex, weekStartIndex + 6)
-    if (currentWeekDaysData.length < 6) {
-      const needed = 6 - currentWeekDaysData.length
-      const extra = Array.from({ length: needed }, (_, idx) => {
-        const actualIdx = weekStartIndex + currentWeekDaysData.length + idx
-        return parsedDays[actualIdx] || { title: `Day ${actualIdx + 1}`, passage: '' }
-      })
-      currentWeekDaysData = [...currentWeekDaysData, ...extra]
-    }
+    const weekObj = monthlyWeekSlots.find(w => w.slots.some(s => s.dayNum === targetDayNum)) ||
+                    monthlyWeekSlots[weekOffset] ||
+                    monthlyWeekSlots[0]
 
-    const currentWeekDatesData = weekdays.slice(weekStartIndex, weekStartIndex + 6)
-    const weekStartLabel = currentWeekDatesData[0]?.label || ''
-    const weekEndLabel = currentWeekDatesData[currentWeekDatesData.length - 1]?.label || ''
-    const dayInWeekIdx = dayIdx % 6
+    const currentWeekNum = isMonthly
+      ? (weekObj ? weekObj.weekNum : (isNaN(baseWeekNum) ? weekOffset + 1 : baseWeekNum + weekOffset))
+      : (isNaN(baseWeekNum) ? 1 : baseWeekNum + weekOffset)
+    const currentWeekSlots = weekObj ? weekObj.slots : []
+
+    const filledSlots = currentWeekSlots.filter(s => s.dayNum !== null)
+    const weekStartLabel = filledSlots[0]?.dateLabel || ''
+    const weekEndLabel = filledSlots[filledSlots.length - 1]?.dateLabel || ''
 
     // Overflow detection (shared with landscape)
     const reflectP = (key: string): string => trunc((day as any)[key] || '', key)
@@ -1746,7 +1916,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   color: t.textMuted,
                   marginTop: `${1 * scale}px`,
                 }}>
-                  {weekStartLabel} ~ {weekEndLabel} · {currentWeekDaysData.length}일
+                  {weekStartLabel} ~ {weekEndLabel} · {filledSlots.length}일
                 </span>
               </div>
               <div style={{
@@ -1754,13 +1924,45 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                 gridTemplateColumns: 'repeat(6, 1fr)',
                 gap: `${0.5 * scale}px`,
               }}>
-                {currentWeekDaysData.map((d, i) => {
-                  const actualDayNum = weekStartIndex + i + 1
+                {currentWeekSlots.map((slot, i) => {
+                  if (!slot.dayNum || !slot.qtDay) {
+                    // 월요일 등 날짜가 없는 날은 깔끔한 빈 공란 슬롯 렌더링
+                    return (
+                      <div key={i} style={{
+                        display: 'flex', flexDirection: 'column',
+                        padding: `${1.5 * scale}px ${1 * scale}px`,
+                        background: 'rgba(0,0,0,0.02)',
+                        color: t.textMuted,
+                        borderTop: `0.5px solid ${t.borderLight}`,
+                        minHeight: `${85 * scale}px`,
+                        opacity: 0.4,
+                      }}>
+                        <div style={{
+                          fontFamily: t.fontHeading,
+                          fontSize: `${10 * scale}px`,
+                          fontWeight: 700,
+                          color: t.textMuted,
+                          textAlign: 'center',
+                          letterSpacing: `${0.3 * scale}px`,
+                        }}>
+                          {slot.dayKr}요일
+                        </div>
+                        <div style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: `${9 * scale}px`, fontStyle: 'italic', textAlign: 'center', marginTop: `${10 * scale}px`,
+                        }}>
+                          -
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const d = slot.qtDay
+                  const isCurrent = slot.dayNum === targetDayNum
                   const dv = parseBibleVerses(d?.passage || '')
-                  const isCurrent = i === dayInWeekIdx
                   const passageShort = (dv.passageRange || d?.passage || '').split(' ').pop() || ''
-                  const dayLabel = (currentWeekDatesData[i]?.label?.split('(')[0] || `Day ${actualDayNum}`)
-                  const displayTitle = (d?.title && d.title !== `Day ${i + 1}`) ? d.title : `Day ${actualDayNum}`
+                  const dayLabel = (slot.dateLabel.split('(')[0] || `Day ${slot.dayNum}`)
+                  const displayTitle = (d?.title && d.title !== `Day ${slot.dayNum}`) ? d.title : `Day ${slot.dayNum}`
 
                   return (
                     <div key={i} style={{
@@ -1983,7 +2185,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {/* Page 2: 관찰/묵상/적용 — full width, 가독성 우선 */}
         <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
           <div style={pageContentStyle}>
-            {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+            {renderCalendarStrip(targetDayNum)}
             <div style={{
               marginBottom: `${4 * scale}px`,
               paddingBottom: `${2 * scale}px`,
@@ -2011,7 +2213,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                   letterSpacing: `${1.5 * scale}px`,
                   opacity: 0.85,
                 }}>
-                  {selectedInfo?.isRecommended ? `독자적 묵상 · ${form.bibleBook}` : `QT · ${form.bibleBook} · ${form.weekNumber}주`}
+                  {selectedInfo?.isRecommended ? `독자적 묵상 · ${form.bibleBook}` : `QT · ${form.bibleBook} · ${currentWeekNum}주`}
                 </div>
               </div>
               <div style={{
@@ -2335,7 +2537,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
         {hasOverflowP && (
           <div className="qt-page" data-day={targetDayNum} style={pageStyle}>
             <div style={pageContentStyle}>
-              {renderCalendarStrip(monthCalendarStrip?.activeDays[dayIdx] ?? 0)}
+              {renderCalendarStrip(targetDayNum)}
               <div style={{
                 fontFamily: t.fontHeading,
                 fontSize: `${8 * scale}px`,
@@ -2575,6 +2777,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
 
   const isDiaryEnabled = includeDiaryPage ?? isMonthly
   const isPlannerEnabled = includeMonthlyPlanner ?? isMonthly
+  const isMeditationPackEnabled = includeMeditationPack ?? isMonthly
 
   const themeColor = t.accent || '#B8C6D9'
 
@@ -2724,6 +2927,163 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           )
         )}
 
+        {/* 3-6. Christian Meditation Pack Pages */}
+        {isMeditationPackEnabled && (
+          <>
+            {/* SOAP Bible Meditation Journal */}
+            {isLandscape ? (
+              <QtSoapJournalPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtSoapJournalPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* Intercessory Prayer & Answer Log */}
+            {isLandscape ? (
+              <QtIntercessoryPrayerPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtIntercessoryPrayerPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* Spiritual Habit Tracker */}
+            {isLandscape ? (
+              <QtHabitTrackerPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtHabitTrackerPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* Fruits of the Spirit Tracker */}
+            {isLandscape ? (
+              <QtFruitsTrackerPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtFruitsTrackerPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* Gratitude Journal */}
+            {isLandscape ? (
+              <QtGratitudeJournalPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtGratitudeJournalPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* 100-Day Vision Goal Tracker */}
+            {isLandscape ? (
+              <QtHundredGoalPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtHundredGoalPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* Stewardship / Budget Tracker */}
+            {isLandscape ? (
+              <QtBudgetTrackerPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtBudgetTrackerPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+
+            {/* KPT Review Page */}
+            {isLandscape ? (
+              <QtKptReviewPage
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            ) : (
+              <QtKptReviewPortrait
+                year={yearNum}
+                monthName={monthName}
+                themeColor={themeColor}
+                pageWidth={mmToPx(size.widthMm)}
+                pageHeight={mmToPx(size.heightMm)}
+              />
+            )}
+          </>
+        )}
+
         {/* 4. 1일부터 31일까지 월간 달력 일자별 렌더링 (평일: 큐티원고+데일리저널 / 일요일: 주일심층설교노트+주일데일리저널) */}
         {(() => {
           const totalDaysInMonth = new Date(yearNum, monthNum, 0).getDate()
@@ -2733,34 +3093,55 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
           let sundayCounter = 0
 
           const items = []
-          for (let d = 1; d <= totalDaysInMonth; d++) {
-            const dt = new Date(yearNum, monthNum - 1, d)
-            const dayName = dayNamesShort[dt.getDay()]
-            const paddedDay = String(d).padStart(2, '0')
-            const dateLabel = `${paddedDay} ${dayName}`
+          if (isMonthly) {
+            let qtIndex = 0
+            let sundayCounter = 0
+            for (let d = 1; d <= totalDaysInMonth; d++) {
+              const dt = new Date(yearNum, monthNum - 1, d)
+              const dayName = dayNamesShort[dt.getDay()]
+              const paddedDay = String(d).padStart(2, '0')
+              const dateLabel = `${paddedDay} ${dayName}`
 
-            if (dayName === 'SUN') {
-              sundayCounter++
-              items.push({
-                type: 'sunday' as const,
-                dayNum: d,
-                dayName: 'SUN',
-                dateLabel,
-                sundayNo: sundayCounter,
-                dateStr: `${String(monthNum).padStart(2, '0')}/${paddedDay}`,
-              })
-            } else {
-              const qtDay = parsedDays[qtIndex] || null
-              if (qtDay) qtIndex++
+              if (dayName === 'SUN') {
+                sundayCounter++
+                items.push({
+                  type: 'sunday' as const,
+                  dayNum: d,
+                  dayName: 'SUN',
+                  dateLabel,
+                  sundayNo: sundayCounter,
+                  dateStr: `${String(monthNum).padStart(2, '0')}/${paddedDay}`,
+                })
+              } else {
+                const qtDay = parsedDays[qtIndex] || null
+                if (qtDay) qtIndex++
+                items.push({
+                  type: 'qt' as const,
+                  dayNum: d,
+                  dayName,
+                  dateLabel,
+                  qtDay,
+                  dayIdx: qtIndex - 1,
+                })
+              }
+            }
+          } else {
+            // 단일 주간 큐티 모드: weekdays의 실제 날짜(weekdays[idx].date)와 parsedDays를 1:1 매치
+            parsedDays.forEach((qtDay, idx) => {
+              const wd = weekdays[idx]
+              const dNum = wd?.date ? wd.date.getDate() : (idx + 1)
+              const dow = wd?.date ? wd.date.getDay() : (idx + 1)
+              const dayName = dayNamesShort[dow] || 'MON'
+              const paddedDay = String(dNum).padStart(2, '0')
               items.push({
                 type: 'qt' as const,
-                dayNum: d,
+                dayNum: dNum,
                 dayName,
-                dateLabel,
+                dateLabel: `${paddedDay} ${dayName}`,
                 qtDay,
-                dayIdx: qtIndex - 1,
+                dayIdx: idx,
               })
-            }
+            })
           }
 
           return items.map((item, idx) => {
@@ -2835,6 +3216,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           yearLabel={String(yearNum)}
                           themeColor={themeColor}
                           activeWeek={`W${currentWeekNum}`}
+                          isChurchMode={isMeditationPackEnabled}
                           pageWidth={mmToPx(size.widthMm)}
                           pageHeight={mmToPx(size.heightMm)}
                         />
@@ -2847,6 +3229,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           yearLabel={String(yearNum)}
                           themeColor={themeColor}
                           activeWeek={`W${currentWeekNum}`}
+                          isChurchMode={isMeditationPackEnabled}
                           pageWidth={mmToPx(size.widthMm)}
                           pageHeight={mmToPx(size.heightMm)}
                         />
@@ -2874,6 +3257,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           yearLabel={String(yearNum)}
                           themeColor={themeColor}
                           activeWeek={`W${currentWeekNum}`}
+                          isChurchMode={isMeditationPackEnabled}
                           pageWidth={mmToPx(size.widthMm)}
                           pageHeight={mmToPx(size.heightMm)}
                         />
@@ -2886,6 +3270,7 @@ function QtPdfLayout({ form, result, sizeOption, templateId = 'publication-2a', 
                           yearLabel={String(yearNum)}
                           themeColor={themeColor}
                           activeWeek={`W${currentWeekNum}`}
+                          isChurchMode={isMeditationPackEnabled}
                           pageWidth={mmToPx(size.widthMm)}
                           pageHeight={mmToPx(size.heightMm)}
                         />

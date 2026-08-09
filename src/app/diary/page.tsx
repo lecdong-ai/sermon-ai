@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import {
   Calendar as CalendarIcon, Download, Sparkles, BookOpen, Layers,
   ChevronLeft, ArrowLeft, RotateCcw, Check, FileText, Maximize2,
-  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp,
+  X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp, Moon,
   GripHorizontal, Move, Pin, Palette, CheckSquare
 } from 'lucide-react'
 import Link from 'next/link'
@@ -101,6 +101,7 @@ import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/di
 import { DiaryPeriodProvider } from '@/components/advanced/diary/DiaryPeriodContext'
 import QtDiaryCoverPage from '@/components/advanced/diary/QtDiaryCoverPage'
 import QtMonthlyDividerPage from '@/components/advanced/diary/QtMonthlyDividerPage'
+import { CHURCH_PRESET_PAGES } from '@/lib/diaryPresets'
 
 export interface ThemeItem {
   id: string
@@ -234,6 +235,7 @@ export default function DiaryPage() {
   const [activeThemeCategory, setActiveThemeCategory] = useState<'watercolor' | 'modern'>('watercolor')
   const [selectedSizeOption, setSelectedSizeOption] = useState('A4Landscape')
   const [isEcoPrint, setIsEcoPrint] = useState(false)
+  const [isDarkPdfMode, setIsDarkPdfMode] = useState(true)
   const [previewTab, setPreviewTab] = useState<PreviewTabType>('yearlygrid')
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'general' | 'church' | 'basic'>('all')
   const [activeDayNum, setActiveDayNum] = useState(1)
@@ -623,7 +625,7 @@ export default function DiaryPage() {
   const renderStreamPage = (key: string, node: React.ReactNode, _meta?: MasterPageMeta) => (
     <div
       key={key}
-      className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-visible bg-slate-900 border border-white/10"
+      className="relative shrink-0 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] rounded-xl overflow-visible bg-slate-800 border border-white/10"
       style={{ width: `${streamPageW}px`, height: `${streamPageH}px` }}
     >
       <div
@@ -1136,46 +1138,7 @@ export default function DiaryPage() {
       setCategoryFilter('general')
       setPreviewTab('yearlygrid')
     } else if (presetType === 'church') {
-      setSelectedPages({
-        yearlygrid: true,
-        calendar: true,
-        overview: true,
-        weekly: true,
-        daily: true,
-        habit: false,
-        habit2: false,
-        gratitude: false,
-        quote: false,
-        budget: false,
-        budget2: false,
-        culture: false,
-        culture2: false,
-        kpt: false,
-        kpt2: false,
-        sundaygeneral: false,
-        buckettravel: false,
-        wellnessmood: false,
-        hundredgoal: false,
-        hundredgoal2: false,
-        prayer: true,
-        prayer2: true,
-        scripture: true,
-        scripture2: true,
-        sermon: true,
-        sermondeep: true,
-        biblemap: true,
-        biblemap2: true,
-        letter: true,
-        letter2: true,
-        intercessory: true,
-        intercessory2: true,
-        soapjournal: true,
-        soapjournal2: true,
-        fruitstracker: true,
-        cover: true,
-        monthlydivider: true,
-        wallcalendar: true,
-      })
+      setSelectedPages({ ...CHURCH_PRESET_PAGES })
       setCategoryFilter('church')
       setPreviewTab('yearlygrid')
     } else if (presetType === 'basic') {
@@ -1276,7 +1239,7 @@ export default function DiaryPage() {
 
   return (
     <DiaryPeriodProvider periodMonths={diaryPeriodMonths} currentYear={selectedYear} currentMonth={selectedMonth}>
-      <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       {/* 1. Divine Luxury Top Studio Bar (Centered Balance & State-of-the-Art Glassmorphism) */}
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/85 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
         <div className="max-w-[1650px] mx-auto px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
@@ -1326,8 +1289,8 @@ export default function DiaryPage() {
                 className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'focus'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
+                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                 }`}
                 title="1. 황금비 Focus Studio 모드"
               >
                 🌟 황금비
@@ -1338,8 +1301,8 @@ export default function DiaryPage() {
                 className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                   layoutMode === 'split'
                     ? 'bg-slate-800 text-slate-100 font-bold border border-slate-600 shadow-sm scale-[1.02]'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
+                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                 }`}
                 title="2. 🗂️ 2-컬럼 대시보드 모드"
               >
                 🗂️ 2-컬럼
@@ -1975,6 +1938,19 @@ export default function DiaryPage() {
                             </button>
 
                             <button
+                              onClick={() => setIsDarkPdfMode(!isDarkPdfMode)}
+                              className={`px-2 py-1 rounded-lg border text-[10.5px] font-bold transition-all flex items-center gap-1 ${
+                                isDarkPdfMode
+                                  ? 'bg-slate-800 border-slate-500 text-slate-100 shadow-sm'
+                                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              <Moon className="w-3 h-3" />
+                              <span>다크 PDF:</span>
+                              <span>{isDarkPdfMode ? 'ON' : 'OFF'}</span>
+                            </button>
+
+                            <button
                               onClick={() => {
                                 setModalActiveTab(previewTab)
                                 setIsFullscreenModalOpen(true)
@@ -2029,8 +2005,9 @@ export default function DiaryPage() {
                                 <span className="text-[10px] shrink-0">{chip.icon}</span>
                                 <span className="font-extrabold text-[9.5px] sm:text-[10.5px] tracking-tight whitespace-nowrap shrink-0">
                                   {chip.name}
-                                </span>
-                              </button>
+                              </span>
+                            </button>
+
                             )
                           })}
                         </div>
@@ -2044,9 +2021,9 @@ export default function DiaryPage() {
                             setIsFullscreenModalOpen(true)
                           }
                         }}
-                        className={`w-full bg-[#070b19] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px] ${
-                          isStreamView ? 'max-h-[680px] overflow-y-auto custom-scrollbar' : 'cursor-pointer'
-                        }`}
+                           className={`w-full bg-[#171b21] border border-white/10 hover:border-indigo-500/50 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden group relative transition-all duration-300 bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:16px_16px] ${
+                           isStreamView ? 'max-h-[680px] overflow-y-auto custom-scrollbar' : 'cursor-pointer'
+                         } ${isDarkPdfMode ? 'qt-dark-pdf' : ''}`}
                       >
                         {/* Hover overlay hint */}
                         {!isStreamView && (
@@ -2371,7 +2348,7 @@ export default function DiaryPage() {
                       setModalActiveTab(previewTab)
                       setIsFullscreenModalOpen(true)
                     }}
-                    className="w-full bg-[#070b19] border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]"
+                     className="w-full bg-[#171b21] border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer group relative transition-all duration-300 bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:16px_16px]"
                   >
                     <div
                       className="relative shrink-0 shadow-[0_30px_80px_-15px_rgba(0,0,0,0.9)] rounded-xl overflow-visible bg-slate-900 my-2"
@@ -2600,7 +2577,7 @@ export default function DiaryPage() {
 
       {/* ★ ===== [전체화면 풀스크린 팝업창 모달] ===== */}
       {isFullscreenModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-[#030612]/98 backdrop-blur-2xl flex flex-col min-h-screen min-w-full animate-in fade-in duration-200">
+        <div className={`fixed inset-0 z-[100] bg-[#030612]/98 backdrop-blur-2xl flex flex-col min-h-screen min-w-full animate-in fade-in duration-200 ${isDarkPdfMode ? 'qt-dark-pdf' : ''}`}>
           {/* Modal Header Bar */}
           <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#090e24]/95 backdrop-blur-md shrink-0 shadow-2xl z-20 gap-4">
             <div className="flex items-center gap-3">
@@ -3128,7 +3105,7 @@ export default function DiaryPage() {
 
       {/* Hidden Full PDF Assembly Render Container for Custom PDF Download */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
-        <div ref={pdfContainerRef}>
+        <div ref={pdfContainerRef} className={isDarkPdfMode ? 'qt-dark-pdf' : undefined}>
           {/* 0.0 연간 타이틀 표지 (마스터 PDF 최상단 1장, 연간 일괄 시 첫 반복에서만 렌더) */}
           {selectedPages.cover && (!isYearlyGenerating || yearlyBatchIndex === 0) && (
             <QtDiaryCoverPage

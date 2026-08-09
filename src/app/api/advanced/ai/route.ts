@@ -1290,14 +1290,14 @@ ${sectionsText ? `- 본문 영역의 성경 소제목: 아래 시스템 프롬�
           startPassage || '',
           (hasEndPassage ? endPassage : null) as string | null,
           limit,
-          20
+          8
         )
         if (!poolResult.isSufficient) {
           return NextResponse.json({
             success: false,
             error: 'POOL_INSUFFICIENT',
             poolInfo: poolResult,
-            message: `"${bibleBook}"의 선택한 범위는 ${poolResult.available}절로, ${limit}일 × 20절 = ${poolResult.required}절이 부족합니다. (${poolResult.deficit}절 부족, 약 ${poolResult.shortageDays}일분 부족)`,
+            message: `"${bibleBook}"의 선택한 범위는 ${poolResult.available}절로, ${limit}일 분량으로 구성하기에 일부 절이 부족할 수 있습니다.`,
           })
         }
       }
@@ -1478,6 +1478,21 @@ ${draftContent || ''}`
 ${(days || []).map((d: any) => `### 요일: ${d.dayName}\n${d.content}`).join('\n\n===\n\n')}`
       maxTokens = 4000
       temperature = 0.5
+    } else if (type === 'qt-autofill-day') {
+      const { bibleBook, currentContent, customTone } = data
+      userText = `## 빈 항목 자동 완성 요청
+- 성경권: ${bibleBook || ''}
+- 톤/스타일: ${customTone || '복음 중심 개혁주의'}
+
+## 현재 일차 원고 (빈 항목이나 빈 서식 포함):
+${currentContent || ''}
+
+## 지침:
+1. 위 원고의 16개 섹션 구조와 제목 헤더(## 제목명)를 그대로 유지하십시오.
+2. 비어 있거나 빈 양식(예: "- 하나님: ", "- 인간: ", "{회개와 은혜...}", "의미:", "예문:")으로 남아 있는 모든 항목을 깊이 있고 풍성한 성경 묵상 문구로 완벽하게 채워 넣으십시오.
+3. 절대로 "내용이 없어" 또는 빈 칸으로 남겨두지 마십시오. 모든 소항목을 완성된 문장으로 완성하여 출력하십시오.`
+      maxTokens = 4000
+      temperature = 0.6
     } else {
       const s = data.sermon
       userText = `설교 제목: ${s?.title || ''}\n본문: ${s?.passage || ''}\n핵심 메시지: ${s?.coreMessage || ''}\n도입: ${s?.introduction || ''}\n대지: ${(s?.outlineTitles || []).join(', ')}\n결론: ${s?.conclusion || ''}\n설교자: ${s?.preacher || ''}\n회중: ${(s?.audience || []).join(', ')}\n주제: ${(s?.themeNames || []).join(', ')}`

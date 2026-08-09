@@ -203,8 +203,18 @@ function addInteractiveLinks(
 
     if (directTarget) {
       targetPageNum = parseInt(directTarget, 10)
-    } else if (navTarget && pageTargetMap[navTarget]) {
-      targetPageNum = pageTargetMap[navTarget]
+    } else if (navTarget) {
+      const candidates = navTarget === 'prayer' ? ['prayer', 'intercessory'] :
+                         navTarget === 'intercessory' ? ['intercessory', 'prayer'] :
+                         navTarget === 'yearlygrid' ? ['yearlygrid', 'yearly-grid'] :
+                         navTarget === 'yearly-grid' ? ['yearly-grid', 'yearlygrid'] :
+                         [navTarget]
+      for (const k of candidates) {
+        if (pageTargetMap[k]) {
+          targetPageNum = pageTargetMap[k]
+          break
+        }
+      }
     } else if (dayAttr && pageTargetMap[`day-${dayAttr}`]) {
       targetPageNum = pageTargetMap[`day-${dayAttr}`]
     } else if (weekAttr && pageTargetMap[`week-${weekAttr}`]) {
@@ -452,13 +462,18 @@ export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
         if (navTarget.startsWith('month-')) {
           const mNum = navTarget.replace('month-', '')
           targetPageNum = pageTargetMap[`month-${year}-${mNum}`] || pageTargetMap[`month-${mNum}`]
-        } else if (navTarget === 'yearlygrid' && pageTargetMap[`yearlygrid-${year}`]) {
-          // ★ 연간 그리드 2장(2026/2027): 현재 페이지의 연도와 일치하는 장으로 이동
+        } else if ((navTarget === 'yearlygrid' || navTarget === 'yearly-grid') && pageTargetMap[`yearlygrid-${year}`]) {
           targetPageNum = pageTargetMap[`yearlygrid-${year}`]
-        } else if (pageTargetMap[`${year}-${month}-${navTarget}`]) {
-          targetPageNum = pageTargetMap[`${year}-${month}-${navTarget}`]
-        } else if (pageTargetMap[navTarget]) {
-          targetPageNum = pageTargetMap[navTarget]
+        } else {
+          const candidateNavs = navTarget === 'prayer' ? ['prayer', 'intercessory'] :
+                                navTarget === 'intercessory' ? ['intercessory', 'prayer'] :
+                                navTarget === 'yearlygrid' ? ['yearlygrid', 'yearly-grid'] :
+                                navTarget === 'yearly-grid' ? ['yearly-grid', 'yearlygrid'] :
+                                [navTarget]
+          for (const key of candidateNavs) {
+            targetPageNum = pageTargetMap[`${year}-${month}-${key}`] || pageTargetMap[key]
+            if (targetPageNum) break
+          }
         }
       } else if (dayAttr) {
         targetPageNum =

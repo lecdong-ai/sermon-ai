@@ -1,6 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Caveat:wght@600&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Marck+Script&family=Nanum+Pen+Script&family=Pinyon+Script&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .font-script {
+    font-family: 'Great Vibes', 'Alex Brush', 'Dancing Script', 'Pinyon Script', 'Marck Script', cursive;
+  }
+  .font-script-kr {
+    font-family: 'Nanum Pen Script', 'Caveat', cursive;
+  }
+}
 
 /* Fonts loaded via next/font in layout.tsx */
 
