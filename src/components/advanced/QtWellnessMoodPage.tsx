@@ -85,12 +85,12 @@ export default function QtWellnessMoodPage({
           </div>
 
           {/* Color Legend */}
-          <div className="flex items-center justify-around bg-white p-1.5 rounded-xl border border-slate-200/80 text-[9px] text-slate-600">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> 😊 기쁨</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> 🌿 평온</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> ☕ 피곤</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> 🌧️ 우울</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block" /> 🔥 스트레스</span>
+          <div className="flex flex-nowrap items-center justify-around bg-white p-1.5 rounded-xl border border-slate-200/80 text-[9px] text-slate-600">
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> 😊 기쁨</span>
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> 🌿 평온</span>
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> ☕ 피곤</span>
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> 🌧️ 우울</span>
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block" /> 🔥 스트레스</span>
           </div>
 
           {/* 31 Pixels Grid */}
@@ -129,7 +129,7 @@ export default function QtWellnessMoodPage({
 
           {/* Bottom: Mindful Reflection & Gentle Note */}
           <div className="border border-slate-200/90 rounded-2xl p-3 bg-teal-50/40 space-y-1.5 shadow-2xs flex-1 flex flex-col justify-between">
-            <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-teal-200 pb-1">
+            <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-teal-200 pb-1 whitespace-nowrap">
               <span>💖 지친 나에게 전하는 따뜻한 응원의 한마디</span>
             </h4>
             <div className="space-y-1 flex-1 flex flex-col justify-around py-1">

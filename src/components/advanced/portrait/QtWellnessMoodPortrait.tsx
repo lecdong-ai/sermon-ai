@@ -80,11 +80,11 @@ export default function QtWellnessMoodPortrait({
 
         {/* Color Legend */}
         <div className="flex items-center justify-around bg-white p-1.5 rounded-lg border border-slate-200/80 text-[10px] text-slate-600">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> 😊 기쁨</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> 🌿 평온</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> ☕ 피곤</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> 🌧️ 우울</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block" /> 🔥 스트레스</span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> 😊 기쁨</span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> 🌿 평온</span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> ☕ 피곤</span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> 🌧️ 우울</span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block" /> 🔥 스트레스</span>
         </div>
 
         {/* 31 Pixels */}
@@ -123,7 +123,7 @@ export default function QtWellnessMoodPortrait({
 
       {/* 5. Mindful Self-Care Note */}
       <div className="flex-1 border border-slate-200 rounded-xl p-2.5 bg-teal-50/40 space-y-1 shadow-2xs mb-2 flex flex-col justify-between">
-        <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider border-b border-teal-200 pb-1 font-sans">
+          <h4 className="text-[11px] font-bold text-teal-900 uppercase tracking-wider border-b border-teal-200 pb-1 font-sans whitespace-nowrap">
           💖 지친 나에게 전하는 따뜻한 응원의 한마디 (Self-Compassion Note)
         </h4>
         <div className="space-y-1 flex-1 flex flex-col justify-around my-1">

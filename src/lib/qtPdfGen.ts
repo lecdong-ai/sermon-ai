@@ -1,6 +1,6 @@
 import { toCanvas } from 'html-to-image'
 import jsPDF from 'jspdf'
-import { PAGE_SIZES } from './qtPdfSizes'
+import { getPdfRenderProfile, PAGE_SIZES } from './qtPdfSizes'
 import { getTemplate } from './qtTemplates'
 import type { QTFormData, QTResult } from '@/components/advanced/QtGenerator'
 
@@ -47,6 +47,7 @@ export async function generateQtPdf(
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
   const tmpl = getTemplate(templateId)
+  const renderProfile = getPdfRenderProfile(sizeOption)
 
   const allChildren = container.children as HTMLCollectionOf<HTMLElement>
   const pages: HTMLElement[] = []
@@ -91,6 +92,7 @@ export async function generateQtPdf(
     orientation: widthMm > heightMm ? 'landscape' : 'portrait',
     unit: 'mm',
     format: [widthMm, heightMm],
+    compress: true,
   })
 
   await document.fonts.ready
@@ -133,16 +135,16 @@ export async function generateQtPdf(
 
   for (let i = 0; i < targetPages.length; i++) {
     const pageEl = targetPages[i]
+    let canvas: HTMLCanvasElement | null = null
 
     try {
-      const canvas = await toCanvas(pageEl, {
-        pixelRatio: 2,
+      canvas = await toCanvas(pageEl, {
+        pixelRatio: renderProfile.pixelRatio,
         backgroundColor: tmpl.pageBg,
-        cacheBust: true,
         skipAutoScale: true,
       })
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+      const imgData = await canvasToJpegBytes(canvas, renderProfile.jpegQuality)
 
       const isCoverPage = (i === 0 && dayIndex === undefined)
       const isFullBleedPage = isCoverPage || pageEl.getAttribute('data-page-type') === 'full-bleed'
@@ -162,6 +164,11 @@ export async function generateQtPdf(
       addInteractiveLinks(pdf, pageTargetMap, pageEl, drawX, drawY, drawW, drawH)
     } catch (e: any) {
       console.warn(`[QtPdfGen] page ${i} failed:`, e?.message || e)
+    } finally {
+      if (canvas) {
+        canvas.width = 0
+        canvas.height = 0
+      }
     }
   }
 
@@ -270,19 +277,84 @@ export interface MasterPdfContext {
   heightMm: number
   currentPageIndex: number
   pageTargetMap: Record<string, number>
-  pendingLinks: {
-    pdfPageIndex: number
-    links: CapturedPdfLink[]
-    drawX: number
-    drawY: number
-    drawW: number
-    drawH: number
-    scaleX: number
-    scaleY: number
-    year: number
-    month: number
-  }[]
+  pendingLinks: PendingLinkSnapshot[]
   hasContent: boolean
+}
+
+export interface PendingLinkSnapshot {
+  pdfPageIndex: number
+  links: CapturedPdfLink[]
+  drawX: number
+  drawY: number
+  drawW: number
+  drawH: number
+  scaleX: number
+  scaleY: number
+  year: number
+  month: number
+}
+
+/** Resolve a captured navigation target against either a local or global page map. */
+export function resolveMasterLinkTarget(
+  pageTargetMap: Record<string, number>,
+  link: CapturedPdfLink,
+  year: number,
+  month: number,
+): number | null {
+  const directTarget = link.directTarget
+  const navTarget = link.navTarget
+
+  if (directTarget) {
+    const page = parseInt(directTarget, 10)
+    return Number.isFinite(page) && page > 0 ? page : null
+  }
+
+  if (navTarget) {
+    if (navTarget.startsWith('month-')) {
+      const monthTarget = navTarget.slice('month-'.length)
+      // Annual indexes use month-YYYY-M while monthly controls may use month-M.
+      if (/^\d{4}-\d{1,2}$/.test(monthTarget)) {
+        return pageTargetMap[`month-${monthTarget}`] || null
+      }
+      return pageTargetMap[`month-${year}-${monthTarget}`] || pageTargetMap[`month-${monthTarget}`] || null
+    }
+
+    const candidates = navTarget === 'prayer' ? ['prayer', 'intercessory'] :
+      navTarget === 'intercessory' ? ['intercessory', 'prayer'] :
+      navTarget === 'yearlygrid' ? ['yearlygrid', 'yearly-grid'] :
+      navTarget === 'yearly-grid' ? ['yearly-grid', 'yearlygrid'] :
+      [navTarget]
+
+    for (const key of candidates) {
+      const page = pageTargetMap[`${year}-${month}-${key}`] || pageTargetMap[key]
+      if (page) return page
+    }
+  }
+
+  if (link.dayAttr) {
+    return pageTargetMap[`${year}-${month}-day-${link.dayAttr}`] || pageTargetMap[`day-${link.dayAttr}`] || null
+  }
+  if (link.weekAttr) {
+    return pageTargetMap[`${year}-${month}-week-${link.weekAttr}`] || pageTargetMap[`week-${link.weekAttr}`] || null
+  }
+
+  return null
+}
+
+function canvasToJpegBytes(canvas: HTMLCanvasElement, quality: number): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('페이지 이미지 변환에 실패했습니다.'))
+        return
+      }
+
+      blob.arrayBuffer().then(
+        (buffer) => resolve(new Uint8Array(buffer)),
+        reject,
+      )
+    }, 'image/jpeg', quality)
+  })
 }
 
 export function createMasterPdfContext(sizeOption: string): MasterPdfContext {
@@ -292,6 +364,7 @@ export function createMasterPdfContext(sizeOption: string): MasterPdfContext {
     orientation: widthMm > heightMm ? 'landscape' : 'portrait',
     unit: 'mm',
     format: [widthMm, heightMm],
+    compress: true,
   })
   return {
     pdf,
@@ -309,10 +382,12 @@ export async function appendContainerPagesToMasterPdf(
   container: HTMLDivElement,
   sizeOption: string,
   year: number,
-  month: number
+  month: number,
+  onPageProgress?: (done: number, total: number, failed: number) => void
 ) {
   const size = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const { widthMm, heightMm } = size
+  const renderProfile = getPdfRenderProfile(sizeOption)
 
   const pages: HTMLElement[] = []
   function collectPages(element: HTMLElement) {
@@ -334,47 +409,24 @@ export async function appendContainerPagesToMasterPdf(
 
   await document.fonts.ready
 
+  let failedPages = 0
+
   for (let i = 0; i < pages.length; i++) {
     const pageEl = pages[i]
-    ctx.currentPageIndex += 1
-    const pageNum = ctx.currentPageIndex
+    const pageNum = ctx.currentPageIndex + 1
+    let canvas: HTMLCanvasElement | null = null
+    let addedPdfPage = false
 
-    // 1-Pass: 고유 Page Target Key 수집 & 인덱싱
     const pageKey = pageEl.getAttribute('data-page-key')
     const dayKey = pageEl.getAttribute('data-day')
     const weekKey = pageEl.getAttribute('data-week')
 
-    if (pageKey) {
-      ctx.pageTargetMap[`${year}-${month}-${pageKey}`] = pageNum
-      if (!ctx.pageTargetMap[pageKey]) ctx.pageTargetMap[pageKey] = pageNum
-    }
-    if (dayKey) {
-      ctx.pageTargetMap[`${year}-${month}-day-${dayKey}`] = pageNum
-      if (!ctx.pageTargetMap[`day-${dayKey}`]) ctx.pageTargetMap[`day-${dayKey}`] = pageNum
-    }
-    if (weekKey) {
-      ctx.pageTargetMap[`${year}-${month}-week-${weekKey}`] = pageNum
-      if (!ctx.pageTargetMap[`week-${weekKey}`]) ctx.pageTargetMap[`week-${weekKey}`] = pageNum
-    }
-
-    // 월별 달력 첫 페이지를 대표 월 인덱스로 등록
-    if (pageKey === 'calendar') {
-      ctx.pageTargetMap[`month-${month}`] = pageNum
-      ctx.pageTargetMap[`month-${year}-${month}`] = pageNum
-    }
-
-    // 연간 마스터 그리드(2026/2027 2장)는 연도별 고유 키로 등록 — YEAR 탭이 정확한 연도 장으로 이동
-    const yearlyGridYear = pageEl.getAttribute('data-yearly-year')
-    if (yearlyGridYear) {
-      ctx.pageTargetMap[`yearlygrid-${yearlyGridYear}`] = pageNum
-      if (!ctx.pageTargetMap['yearlygrid']) ctx.pageTargetMap['yearlygrid'] = pageNum
-    }
-
     // 1-Pass: 캡처 직전(현재 월 실제 DOM 기준) 하이퍼링크 상대 좌표 캐시
     // ★ 재렌더로 인한 DOM detach/내용 교체 후 rect 계산 불가 문제를 원천 차단
     const pageRect = pageEl.getBoundingClientRect()
-    const baseW = pageEl.offsetWidth || pageRect.width || 1
-    const baseH = pageEl.offsetHeight || pageRect.height || 1
+    // 연간 부록은 화면 미리보기용 scale 래퍼 안에서 캡처되므로 실제 표시 크기를 사용한다.
+    const baseW = pageRect.width || pageEl.offsetWidth || 1
+    const baseH = pageRect.height || pageEl.offsetHeight || 1
     const clickableEls = pageEl.querySelectorAll<HTMLElement>(
       '[data-nav-target], [data-day], [data-week], [data-target-page]'
     )
@@ -396,12 +448,11 @@ export async function appendContainerPagesToMasterPdf(
     }
 
     try {
-      const canvas = await toCanvas(pageEl, {
-        pixelRatio: 1.5,
-        cacheBust: true,
+      canvas = await toCanvas(pageEl, {
+        pixelRatio: renderProfile.pixelRatio,
       })
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.88)
+      const imgData = await canvasToJpegBytes(canvas, renderProfile.jpegQuality)
       const isFullBleedPage = pageEl.getAttribute('data-page-type') === 'full-bleed'
       const marginSide = isFullBleedPage ? 0 : 14
       const marginTop = isFullBleedPage ? 0 : 8
@@ -412,26 +463,71 @@ export async function appendContainerPagesToMasterPdf(
 
       if (ctx.hasContent) {
         ctx.pdf.addPage([widthMm, heightMm])
+        addedPdfPage = true
       }
       ctx.pdf.addImage(imgData, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST')
       ctx.hasContent = true
+      ctx.currentPageIndex = pageNum
 
-      ctx.pendingLinks.push({
-        pdfPageIndex: pageNum,
-        links,
-        drawX,
-        drawY,
-        drawW,
-        drawH,
-        scaleX: drawW / baseW,
-        scaleY: drawH / baseH,
-        year,
-        month,
-      })
+      if (pageKey) {
+        ctx.pageTargetMap[`${year}-${month}-${pageKey}`] = pageNum
+        if (!ctx.pageTargetMap[pageKey]) ctx.pageTargetMap[pageKey] = pageNum
+      }
+      if (dayKey) {
+        ctx.pageTargetMap[`${year}-${month}-day-${dayKey}`] = pageNum
+        if (!ctx.pageTargetMap[`day-${dayKey}`]) ctx.pageTargetMap[`day-${dayKey}`] = pageNum
+      }
+      if (weekKey) {
+        ctx.pageTargetMap[`${year}-${month}-week-${weekKey}`] = pageNum
+        if (!ctx.pageTargetMap[`week-${weekKey}`]) ctx.pageTargetMap[`week-${weekKey}`] = pageNum
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 35))
+      // 월별 달력 첫 페이지를 대표 월 인덱스로 등록
+      if (pageKey === 'calendar') {
+        ctx.pageTargetMap[`month-${month}`] = pageNum
+        ctx.pageTargetMap[`month-${year}-${month}`] = pageNum
+      }
+
+      // 연간 마스터 그리드는 연도별 고유 키로 등록
+      const yearlyGridYear = pageEl.getAttribute('data-yearly-year')
+      if (yearlyGridYear) {
+        ctx.pageTargetMap[`yearlygrid-${yearlyGridYear}`] = pageNum
+        if (!ctx.pageTargetMap['yearlygrid']) ctx.pageTargetMap['yearlygrid'] = pageNum
+      }
+
+      if (links.length > 0) {
+        ctx.pendingLinks.push({
+          pdfPageIndex: pageNum,
+          links,
+          drawX,
+          drawY,
+          drawW,
+          drawH,
+          scaleX: drawW / baseW,
+          scaleY: drawH / baseH,
+          year,
+          month,
+        })
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 24))
     } catch (e: any) {
+      if (addedPdfPage) {
+        try {
+          ctx.pdf.deletePage(pageNum)
+        } catch {
+          // 페이지 정리 실패는 원래 캡처 오류를 가리지 않도록 무시한다.
+        }
+      }
+      failedPages += 1
       console.warn(`[MasterPdfGen] page append failed:`, e?.message || e)
+    } finally {
+      // html-to-image가 만든 캔버스의 백킹 스토어를 다음 페이지 전에 해제한다.
+      if (canvas) {
+        canvas.width = 0
+        canvas.height = 0
+      }
+      onPageProgress?.(i + 1, pages.length, failedPages)
     }
   }
 }
@@ -440,10 +536,14 @@ export async function appendContainerPagesToMasterPdf(
  * ⚡ 2-Pass: 전체 17개월 페이지 번호 인덱스가 완료된 후 PDF 하이퍼링크 일괄 주입
  * 1-Pass에서 캐시된 상대 좌표 + 속성값만 사용 (DOM 접근 없음)
  */
-export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
+export async function finalizeMasterPdfLinks(
+  ctx: MasterPdfContext,
+  onProgress?: (done: number, total: number) => void,
+) {
   const { pdf, pageTargetMap, pendingLinks } = ctx
 
-  for (const item of pendingLinks) {
+  for (let itemIndex = 0; itemIndex < pendingLinks.length; itemIndex++) {
+    const item = pendingLinks[itemIndex]
     const { pdfPageIndex, links, drawX, drawY, drawW, drawH, scaleX, scaleY, year, month } = item
 
     pdf.setPage(pdfPageIndex)
@@ -451,37 +551,7 @@ export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
     for (const link of links) {
       let targetPageNum: number | null = null
 
-      const directTarget = link.directTarget
-      const navTarget = link.navTarget
-      const dayAttr = link.dayAttr
-      const weekAttr = link.weekAttr
-
-      if (directTarget) {
-        targetPageNum = parseInt(directTarget, 10)
-      } else if (navTarget) {
-        if (navTarget.startsWith('month-')) {
-          const mNum = navTarget.replace('month-', '')
-          targetPageNum = pageTargetMap[`month-${year}-${mNum}`] || pageTargetMap[`month-${mNum}`]
-        } else if ((navTarget === 'yearlygrid' || navTarget === 'yearly-grid') && pageTargetMap[`yearlygrid-${year}`]) {
-          targetPageNum = pageTargetMap[`yearlygrid-${year}`]
-        } else {
-          const candidateNavs = navTarget === 'prayer' ? ['prayer', 'intercessory'] :
-                                navTarget === 'intercessory' ? ['intercessory', 'prayer'] :
-                                navTarget === 'yearlygrid' ? ['yearlygrid', 'yearly-grid'] :
-                                navTarget === 'yearly-grid' ? ['yearly-grid', 'yearlygrid'] :
-                                [navTarget]
-          for (const key of candidateNavs) {
-            targetPageNum = pageTargetMap[`${year}-${month}-${key}`] || pageTargetMap[key]
-            if (targetPageNum) break
-          }
-        }
-      } else if (dayAttr) {
-        targetPageNum =
-          pageTargetMap[`${year}-${month}-day-${dayAttr}`] || pageTargetMap[`day-${dayAttr}`]
-      } else if (weekAttr) {
-        targetPageNum =
-          pageTargetMap[`${year}-${month}-week-${weekAttr}`] || pageTargetMap[`week-${weekAttr}`]
-      }
+      targetPageNum = resolveMasterLinkTarget(pageTargetMap, link, year, month)
 
       if (!targetPageNum) continue
 
@@ -496,6 +566,11 @@ export function finalizeMasterPdfLinks(ctx: MasterPdfContext) {
         // ignore single link failure
       }
     }
+
+    onProgress?.(itemIndex + 1, pendingLinks.length)
+    if (itemIndex % 10 === 9) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
   }
 }
 
@@ -503,5 +578,7 @@ export function saveMasterPdf(pdf: jsPDF, filename: string) {
   pdf.save(filename)
 }
 
-
-
+export function masterPdfBytes(ctx: MasterPdfContext): Uint8Array {
+  const output = ctx.pdf.output('arraybuffer')
+  return new Uint8Array(output)
+}

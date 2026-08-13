@@ -9,6 +9,31 @@ export const PAGE_SIZES: Record<string, { widthMm: number; heightMm: number; lab
   'Tablet (iPad 4:3)': { widthMm: 195, heightMm: 260, label: 'iPad / Tablet (195×260mm)', orientation: 'portrait' },
 }
 
+export interface PdfRenderProfile {
+  pixelRatio: number
+  jpegQuality: number
+}
+
+const IPAD_SIZE_OPTIONS = new Set([
+  'iPad Pro 12.9 Landscape',
+  'Tablet (iPad 4:3)',
+])
+
+export function getPdfRenderProfile(sizeOption: string): PdfRenderProfile {
+  if (IPAD_SIZE_OPTIONS.has(sizeOption)) {
+    return {
+      // 1.5x keeps text and ruled lines sharp on-screen without the cost of print DPI.
+      pixelRatio: 1.5,
+      jpegQuality: 0.86,
+    }
+  }
+
+  return {
+    pixelRatio: 2,
+    jpegQuality: 0.92,
+  }
+}
+
 export function getPageSizePx(sizeOption: string): { width: number; height: number } {
   const s = PAGE_SIZES[sizeOption] || PAGE_SIZES['A4Landscape']
   const dpi = 2

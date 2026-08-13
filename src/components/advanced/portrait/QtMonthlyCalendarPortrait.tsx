@@ -171,7 +171,9 @@ export default function QtMonthlyCalendarPortrait({
             const colIdx = idx % 7
             const isSun = colIdx === 0
             const isSat = colIdx === 6
-            const holidays = dayNum ? getHolidaysAndFestivals(year, month, dayNum) : []
+            const holidays = dayNum
+              ? getHolidaysAndFestivals(year, month, dayNum).filter((h) => !isGeneralMode || h.type !== 'christian')
+              : []
             const hasRedDay = isSun || holidays.some((h) => h.isRedDay)
 
             return (

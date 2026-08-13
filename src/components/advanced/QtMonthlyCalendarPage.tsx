@@ -201,7 +201,9 @@ export default function QtMonthlyCalendarPage({
               const colIdx = idx % 7
               const isSun = colIdx === 0
               const isSat = colIdx === 6
-              const holidays = dayNum ? getHolidaysAndFestivals(year, month, dayNum) : []
+              const holidays = dayNum
+                ? getHolidaysAndFestivals(year, month, dayNum).filter((h) => !isGeneralMode || h.type !== 'christian')
+                : []
               const hasRedDay = isSun || holidays.some((h) => h.isRedDay)
 
               return (
@@ -242,7 +244,6 @@ export default function QtMonthlyCalendarPage({
                       {holidays.length > 0 && (
                         <div className="flex flex-col gap-0.5 mt-0.5">
                           {holidays.map((h, hIdx) => {
-                            // 일반인 모드에서는 christian 타입도 깔끔한 파스텔 라벨로 표시
                             const isChristianTag = !isGeneralMode && h.type === 'christian'
                             return (
                               <div

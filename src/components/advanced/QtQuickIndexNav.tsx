@@ -73,7 +73,7 @@ export default function QtQuickIndexNav({
 
   return (
     <div
-      className="absolute -right-[2mm] top-12 bottom-6 w-14 flex flex-col justify-between items-start gap-1.5 pt-1 pr-2 pb-1 pl-0 z-30 select-none font-mono rounded-l-2xl bg-[#F1F5F9]/98 border-y border-l border-slate-300 shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-md"
+      className="absolute -right-[2mm] top-12 bottom-6 w-14 flex flex-col justify-between items-start gap-1.5 pt-1 pr-2 pb-1 pl-0 z-30 select-none font-mono rounded-l-2xl bg-[#F1F5F9] border-y border-l border-slate-300 shadow-sm"
       style={{ pointerEvents: 'auto' }}
     >
       <div className="w-full px-1 text-[7.5px] font-black tracking-[0.25em] text-slate-500 text-center uppercase">INDEX</div>

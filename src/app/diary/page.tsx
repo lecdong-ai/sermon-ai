@@ -5,7 +5,7 @@ import {
   Calendar as CalendarIcon, Download, Sparkles, BookOpen, Layers,
   ChevronLeft, ArrowLeft, RotateCcw, Check, FileText, Maximize2,
   X, ZoomIn, ZoomOut, Eye, Sliders, ArrowUp, List, ChevronDown, ChevronUp, Moon,
-  GripHorizontal, Move, Pin, Palette, CheckSquare
+  GripHorizontal, Move, Pin, Palette, CheckSquare, History, Trash2, Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import QtMonthlyCalendarPage from '@/components/advanced/QtMonthlyCalendarPage'
@@ -95,13 +95,26 @@ import QtFruitsTrackerPage from '@/components/advanced/QtFruitsTrackerPage'
 import QtFruitsTrackerPortrait from '@/components/advanced/portrait/QtFruitsTrackerPortrait'
 import QtYearlyWallCalendarPage from '@/components/advanced/QtYearlyWallCalendarPage'
 
-import { generateQtPdf, createMasterPdfContext, appendContainerPagesToMasterPdf, finalizeMasterPdfLinks, saveMasterPdf } from '@/lib/qtPdfGen'
+import { generateQtPdf, createMasterPdfContext, appendContainerPagesToMasterPdf, masterPdfBytes } from '@/lib/qtPdfGen'
 import { PAGE_SIZES } from '@/lib/qtPdfSizes'
 import YearlyBuilderModal, { YearlyMasterConfig } from '@/components/advanced/diary/YearlyBuilderModal'
 import { DiaryPeriodProvider } from '@/components/advanced/diary/DiaryPeriodContext'
 import QtDiaryCoverPage from '@/components/advanced/diary/QtDiaryCoverPage'
 import QtMonthlyDividerPage from '@/components/advanced/diary/QtMonthlyDividerPage'
 import { CHURCH_PRESET_PAGES } from '@/lib/diaryPresets'
+import {
+  clearMonthlyDiaries,
+  deleteMonthlyDiary,
+  listMonthlyDiaryMeta,
+  loadMonthlyDiary,
+  makeDiarySettingsKey,
+  monthRecordId,
+  saveDiaryJobMeta,
+  saveMonthlyDiary,
+  type MonthlyDiaryMeta,
+  type MonthlyDiaryRecord,
+} from '@/lib/diaryStorage'
+import { mergeMonthlyDiaries } from '@/lib/pdfMerge'
 
 export interface ThemeItem {
   id: string
@@ -249,6 +262,13 @@ export default function DiaryPage() {
     currentMonthName: '',
     percentage: 0,
   })
+  const [diaryHistory, setDiaryHistory] = useState<MonthlyDiaryMeta[]>([])
+  const [selectedDiaryIds, setSelectedDiaryIds] = useState<Set<string>>(new Set())
+  const [showDiaryHistory, setShowDiaryHistory] = useState(false)
+  const [diaryHistoryLoading, setDiaryHistoryLoading] = useState(false)
+  const [isDiaryAssembling, setIsDiaryAssembling] = useState(false)
+  const [diaryAssemblyProgress, setDiaryAssemblyProgress] = useState({ phase: '', done: 0, total: 0 })
+  const [isAnnexGenerating, setIsAnnexGenerating] = useState(false)
 
   // ★ 연간 일괄 생성 시 연도 정렬 월력(벽달력) 페이지 렌더 상태 (기간 시작 반복에서 2026 2장, 연도 경계에서 2027 2장)
   const [activeWallChunks, setActiveWallChunks] = useState<{
@@ -358,6 +378,22 @@ export default function DiaryPage() {
       if (streamTimerRef.current) clearTimeout(streamTimerRef.current)
     }
   }, [isStreamView, activePeriodMonths.length])
+
+  useEffect(() => {
+    let cancelled = false
+    setDiaryHistoryLoading(true)
+    listMonthlyDiaryMeta()
+      .then((records) => {
+        if (!cancelled) setDiaryHistory(records)
+      })
+      .catch((error) => {
+        console.warn('[DiaryHistory] load failed:', error)
+      })
+      .finally(() => {
+        if (!cancelled) setDiaryHistoryLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   // ★ 플로팅 마우스 드래그 가능한 스마트 제어 패널 상태 변수
   const [showPreviewFloating, setShowPreviewFloating] = useState(true)
@@ -482,6 +518,7 @@ export default function DiaryPage() {
   const [modalDayNum, setModalDayNum] = useState(1)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null)
+  const annexContainerRef = useRef<HTMLDivElement>(null)
   const modalScrollRef = useRef<HTMLDivElement>(null)
 
   const monthName = MONTH_NAMES[selectedMonth - 1] || 'August'
@@ -564,16 +601,13 @@ export default function DiaryPage() {
     const dateRangeText = `${String(selectedMonth).padStart(2, '0')}/${String(startDay).padStart(2, '0')} - ${String(selectedMonth).padStart(2, '0')}/${String(endDay).padStart(2, '0')}`
 
     const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-    const daysInWeek = Array.from({ length: 7 }, (_, i) => {
+    const daysInWeek = Array.from({ length: Math.max(0, endDay - startDay + 1) }, (_, i) => {
       const dayNum = (wIndex - 1) * 7 + i + 1
-      const isValid = dayNum <= totalDaysCount
-      const d = isValid ? new Date(selectedYear, selectedMonth - 1, dayNum) : null
-      const dayName = d ? dayNames[d.getDay()] : dayNames[i]
-      const dateStr = isValid ? `${String(selectedMonth).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}` : '-'
+      const d = new Date(selectedYear, selectedMonth - 1, dayNum)
       return {
-        dayNum: isValid ? dayNum : 0,
-        dayName,
-        dateStr,
+        dayNum,
+        dayName: dayNames[d.getDay()],
+        dateStr: `${String(selectedMonth).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}`,
       }
     })
 
@@ -594,16 +628,13 @@ export default function DiaryPage() {
     const dateRangeText = `${String(month).padStart(2, '0')}/${String(startDay).padStart(2, '0')} - ${String(month).padStart(2, '0')}/${String(endDay).padStart(2, '0')}`
 
     const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-    const daysInWeek = Array.from({ length: 7 }, (_, i) => {
+    const daysInWeek = Array.from({ length: Math.max(0, endDay - startDay + 1) }, (_, i) => {
       const dayNum = (wIndex - 1) * 7 + i + 1
-      const isValid = dayNum <= totalDaysCount
-      const d = isValid ? new Date(year, month - 1, dayNum) : null
-      const dayName = d ? dayNames[d.getDay()] : dayNames[i]
-      const dateStr = isValid ? `${String(month).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}` : '-'
+      const d = new Date(year, month - 1, dayNum)
       return {
-        dayNum: isValid ? dayNum : 0,
-        dayName,
-        dateStr,
+        dayNum,
+        dayName: dayNames[d.getDay()],
+        dateStr: `${String(month).padStart(2, '0')}/${String(dayNum).padStart(2, '0')}`,
       }
     })
 
@@ -779,139 +810,199 @@ export default function DiaryPage() {
     return pages
   }
 
-  // 🌟 Zero-Modal 직통 연간 마스터 PDF 다운로드 엔진 (상단 툴바 설정 100% 직통 즉시 가동)
+  const currentDiarySettingsKey = () => makeDiarySettingsKey({
+    sizeOption: selectedSizeOption,
+    selectedPages,
+    categoryFilter,
+    themeId: selectedTheme.id,
+  })
+
   const handleDirectYearlyMaster = async () => {
     if (!pdfContainerRef.current) return
-    setIsYearlyGenerating(true)
-
-    // 상단 툴바에서 설정한 시작 연월 및 총 기간 개월 수로 마스터 캘린더 계산
-    const endCalc = getEndYearMonth(periodStartYear, periodStartMonth, periodDurationMonths)
-    const startY = periodStartYear
-    const startM = periodStartMonth
-    const endY = endCalc.year
-    const endM = endCalc.month
-
-    // 연간 색인(17개월/12개월 칩) 동기화
-    setYearlyPeriod({
-      startYear: startY,
-      startMonth: startM,
-      endYear: endY,
-      endMonth: endM,
-    })
-
-    // React State DOM 적용 대기 (400ms 보장)
-    await new Promise((resolve) => setTimeout(resolve, 400))
-
-    // 시작 연월부터 종료 연월까지 선택 기간의 월 목록 구축
-    const monthList: { year: number; month: number; label: string }[] = []
-    let currY = startY
-    let currM = startM
-
-    while (currY < endY || (currY === endY && currM <= endM)) {
-      monthList.push({
-        year: currY,
-        month: currM,
-        label: `${currY}년 ${currM}월`
-      })
-      currM++
-      if (currM > 12) {
-        currM = 1
-        currY++
-      }
-    }
-
+    const monthList = activePeriodMonths.map(({ year, month, label }) => ({ year, month, label: `${year}년 ${month}월` }))
     const totalSteps = monthList.length
+    const settingsKey = currentDiarySettingsKey()
+    const incompatible = diaryHistory.some((record) => record.settingsKey !== settingsKey)
 
-    // ★ 연도 정렬 벽달력 청크: 각 연도 전체 12개월 → 6개월씩 2장
-    const wallChunks: { year: number; month: number }[][] = []
-    for (let y = startY; y <= endY; y++) {
-      for (let s = 1; s <= 12; s += 6) {
-        const chunkMonths: { year: number; month: number }[] = []
-        for (let m = s; m <= s + 5; m++) chunkMonths.push({ year: y, month: m })
-        wallChunks.push(chunkMonths)
-      }
+    if (incompatible && diaryHistory.length > 0) {
+      const confirmed = window.confirm('현재 다이어리 설정이 기존 생성 기록과 다릅니다. 기존 기록을 지우고 새 설정으로 생성할까요?')
+      if (!confirmed) return
+      await clearMonthlyDiaries()
+      setDiaryHistory([])
+      setSelectedDiaryIds(new Set())
     }
 
-    setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '연간 PDF & 하이퍼링크 엔진 가동 중...', percentage: 0 })
+    setIsYearlyGenerating(true)
+    setYearlyBatchIndex(-1)
+    setActiveWallChunks(null)
+    setYearlyProgress({ currentStep: 0, totalSteps, currentMonthName: '월별 다이어리 생성 기록 준비 중...', percentage: 0 })
 
+    let completedMonths = 0
     try {
-      const masterCtx = createMasterPdfContext(selectedSizeOption)
+      await saveDiaryJobMeta({
+        id: 'job',
+        settingsKey,
+        sizeOption: selectedSizeOption,
+        selectedPages,
+        categoryFilter,
+        themeId: selectedTheme.id,
+        updatedAt: new Date().toISOString(),
+      })
 
+      const existing = new Map((await listMonthlyDiaryMeta()).map((record) => [record.id, record]))
       for (let i = 0; i < monthList.length; i++) {
         const target = monthList[i]
-        const pct = Math.round(((i + 1) / totalSteps) * 90)
-        setYearlyProgress({
-          currentStep: i + 1,
-          totalSteps,
-          currentMonthName: `${target.label} 다이어리 렌더링 & 페이지 인덱싱 중...`,
-          percentage: pct,
-        })
-
-        // ★ 벽달력 활성화: 청크의 첫 "기간 내" 월과 일치하는 반복에서 렌더
-        let wallActive: { months: { year: number; month: number }[]; index: number; total: number }[] | null = null
-        if (selectedPages.wallcalendar) {
-          wallActive = wallChunks
-            .map((chunk, ci) => {
-              const firstInPeriod = chunk.find(
-                (m) => m.year > startY || (m.year === startY && m.month >= startM)
-              )
-              if (!firstInPeriod) return null
-              if (firstInPeriod.year === target.year && firstInPeriod.month === target.month) {
-                return { months: chunk, index: ci + 1, total: wallChunks.length }
-              }
-              return null
-            })
-            .filter((c): c is { months: { year: number; month: number }[]; index: number; total: number } => c !== null)
-          if (wallActive.length === 0) wallActive = null
+        const id = monthRecordId(target.year, target.month)
+        if (existing.get(id)?.settingsKey === settingsKey) {
+          completedMonths = i + 1
+          setYearlyProgress({ currentStep: i + 1, totalSteps, currentMonthName: `${target.label} 기존 기록 사용`, percentage: Math.round(((i + 1) / totalSteps) * 100) })
+          continue
         }
-        setActiveWallChunks(wallActive)
 
-        // 1. 상태(연도, 월) 변경하여 해당 월 DOM 새로 그리기
         setSelectedYear(target.year)
         setSelectedMonth(target.month)
-        setYearlyBatchIndex(i)
-
-        // 2. React DOM 렌더링 완성 대기 (첫 0번 배치 시 부록 렌더링 포함되어 550ms 보장)
+        setYearlyProgress({ currentStep: i + 1, totalSteps, currentMonthName: `${target.label} 렌더링 준비 중...`, percentage: Math.round((i / totalSteps) * 90) })
         await new Promise((resolve) => setTimeout(resolve, i === 0 ? 550 : 350))
 
-        // 3. 현재 월 DOM 페이지들을 Master Context에 순차 캡처 및 페이지 번호 인덱싱
-        if (pdfContainerRef.current) {
-          await appendContainerPagesToMasterPdf(masterCtx, pdfContainerRef.current, selectedSizeOption, target.year, target.month)
-        }
-      }
-
-      // 4. 2-Pass: 모든 17개월 페이지 번호 매핑 완성 후 PDF 인터랙티브 하이퍼링크 일괄 주입
-      setYearlyProgress({
-        currentStep: totalSteps,
-        totalSteps,
-        currentMonthName: '✨ 17개월 스마트 하이퍼링크(월/날짜/주차) 100% 매핑 주입 중...',
-        percentage: 95,
-      })
-      finalizeMasterPdfLinks(masterCtx)
-
-      setYearlyProgress({
-        currentStep: totalSteps,
-        totalSteps,
-        currentMonthName: '🎉 마스터 다이어리 생성 완료!',
-        percentage: 100,
-      })
-
-      if (masterCtx.hasContent) {
-        saveMasterPdf(
-          masterCtx.pdf,
-          `Master_Diary_${startY}.${String(startM).padStart(2, '0')}-${endY}.${String(endM).padStart(2, '0')}.pdf`
+        const monthlyCtx = createMasterPdfContext(selectedSizeOption)
+        let lastPercent = -1
+        await appendContainerPagesToMasterPdf(
+          monthlyCtx,
+          pdfContainerRef.current,
+          selectedSizeOption,
+          target.year,
+          target.month,
+          (done, total, failed) => {
+            const percentage = Math.min(90, Math.round((i * 90) / totalSteps + (done / Math.max(1, total)) * (90 / totalSteps)))
+            if (percentage === lastPercent && done !== total && done % 5 !== 0) return
+            lastPercent = percentage
+            setYearlyProgress({ currentStep: i + 1, totalSteps, currentMonthName: `${target.label} 렌더링 중... (${done}/${total} 페이지${failed ? ` · 실패 ${failed}` : ''})`, percentage })
+          },
         )
-      } else {
-        alert('렌더링할 다이어리 페이지가 없습니다.')
+
+        if (!monthlyCtx.hasContent) throw new Error(`${target.label} 페이지를 생성하지 못했습니다.`)
+        const record: MonthlyDiaryRecord = {
+          id,
+          year: target.year,
+          month: target.month,
+          pdfBlob: new Blob([masterPdfBytes(monthlyCtx).buffer as ArrayBuffer], { type: 'application/pdf' }),
+          pageCount: monthlyCtx.currentPageIndex,
+          pageTargetMap: monthlyCtx.pageTargetMap,
+          pendingLinks: monthlyCtx.pendingLinks,
+          createdAt: new Date().toISOString(),
+          settingsKey,
+        }
+        await saveMonthlyDiary(record)
+        const { pdfBlob: _discardedBlob, ...metaRecord } = record
+        existing.set(id, metaRecord)
+        completedMonths = i + 1
+        setDiaryHistory(Array.from(existing.values()).sort((a, b) => a.year - b.year || a.month - b.month))
+        await new Promise((resolve) => setTimeout(resolve, 80))
       }
+
+      setYearlyProgress({ currentStep: totalSteps, totalSteps, currentMonthName: `🎉 ${totalSteps}개월 월별 생성 기록 저장 완료`, percentage: 100 })
+      setShowDiaryHistory(true)
     } catch (e: any) {
       console.error(e)
-      alert(`연간 마스터 PDF 생성 실패: ${e?.message || '알 수 없는 오류'}`)
+      alert(`월별 다이어리 생성 실패: ${e?.message || '알 수 없는 오류'}\n진행 완료: ${completedMonths}/${totalSteps}개월`)
     } finally {
       setIsYearlyGenerating(false)
       setActiveWallChunks(null)
       setYearlyBatchIndex(-1)
     }
+  }
+
+  const downloadDiaryBytes = (bytes: Uint8Array, filename: string) => {
+    const url = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = filename
+    anchor.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const handleDownloadMonthlyRecord = async (record: MonthlyDiaryMeta) => {
+    try {
+      const full = await loadMonthlyDiary(record.id)
+      if (!full) throw new Error('저장된 월별 PDF를 찾을 수 없습니다.')
+      const bytes = await mergeMonthlyDiaries([full])
+      downloadDiaryBytes(bytes, `Diary_${record.year}.${String(record.month).padStart(2, '0')}.pdf`)
+    } catch (error: any) {
+      alert(`월별 PDF 다운로드 실패: ${error?.message || '알 수 없는 오류'}`)
+    }
+  }
+
+  const loadFullRecords = async (metas: MonthlyDiaryMeta[]): Promise<MonthlyDiaryRecord[]> => {
+    const full: MonthlyDiaryRecord[] = []
+    for (const meta of metas) {
+      const record = await loadMonthlyDiary(meta.id)
+      if (record) full.push(record)
+    }
+    return full
+  }
+
+  const handleAssembleSelectedDiaries = async () => {
+    const selected = diaryHistory.filter((record) => selectedDiaryIds.has(record.id))
+    if (selected.length === 0) return
+    const settingsKey = currentDiarySettingsKey()
+    if (selected.some((record) => record.settingsKey !== settingsKey)) {
+      alert('선택한 기록 중 현재 설정과 다른 월이 있습니다. 현재 설정으로 해당 월을 다시 생성해 주세요.')
+      return
+    }
+    setIsDiaryAssembling(true)
+    setDiaryAssemblyProgress({ phase: '연간 부록 준비', done: 0, total: selected.length })
+    try {
+      const first = selected[0]
+      const last = selected[selected.length - 1]
+      const span = (last.year - first.year) * 12 + last.month - first.month + 1
+      const end = getEndYearMonth(first.year, first.month, span)
+
+      // 선택된 기간에 맞는 연간 부록을 월별 PDF와 분리해 새로 만든다.
+      setPeriodStartYear(first.year)
+      setPeriodStartMonth(first.month)
+      setPeriodDurationMonths(span)
+      setYearlyPeriod({ startYear: first.year, startMonth: first.month, endYear: end.year, endMonth: end.month })
+      setIsAnnexGenerating(true)
+      await new Promise((resolve) => setTimeout(resolve, 550))
+
+      const annexCtx = createMasterPdfContext(selectedSizeOption)
+      if (annexContainerRef.current) {
+        await appendContainerPagesToMasterPdf(annexCtx, annexContainerRef.current, selectedSizeOption, first.year, first.month)
+      }
+      const annexRecord: MonthlyDiaryRecord | null = annexCtx.hasContent ? {
+        id: 'selected-annex',
+        year: 0,
+        month: 0,
+        pdfBlob: new Blob([masterPdfBytes(annexCtx).buffer as ArrayBuffer], { type: 'application/pdf' }),
+        pageCount: annexCtx.currentPageIndex,
+        pageTargetMap: annexCtx.pageTargetMap,
+        pendingLinks: annexCtx.pendingLinks,
+        createdAt: new Date().toISOString(),
+        settingsKey: currentDiarySettingsKey(),
+      } : null
+
+      const selectedFull = await loadFullRecords(selected)
+      const recordsToMerge = annexRecord ? [annexRecord, ...selectedFull] : selectedFull
+      const bytes = await mergeMonthlyDiaries(recordsToMerge, (progress) => {
+        setDiaryAssemblyProgress({ phase: progress.phase === 'links' ? '전체 링크 재주입' : progress.phase === 'saving' ? '파일 저장' : '월별 PDF 병합', done: progress.done, total: progress.total })
+      })
+      downloadDiaryBytes(bytes, `Diary_${first.year}.${String(first.month).padStart(2, '0')}-${last.year}.${String(last.month).padStart(2, '0')}_${selected.length}months.pdf`)
+    } catch (error: any) {
+      alert(`다이어리 조립 실패: ${error?.message || '알 수 없는 오류'}`)
+    } finally {
+      setIsDiaryAssembling(false)
+      setIsAnnexGenerating(false)
+    }
+  }
+
+  const handleDeleteMonthlyRecord = async (id: string) => {
+    await deleteMonthlyDiary(id)
+    setDiaryHistory((records) => records.filter((record) => record.id !== id))
+    setSelectedDiaryIds((current) => {
+      const next = new Set(current)
+      next.delete(id)
+      return next
+    })
   }
 
   // PDF 다운로드 핸들러
@@ -1852,11 +1943,11 @@ export default function DiaryPage() {
                               <span>{isStreamView ? '📖 1개월 단일 뷰' : `✨ ${periodDurationMonths}개월 풀 스트림 뷰`}</span>
                             </button>
 
-                            {/* 🌟 Zero-Modal 직통 연간 마스터 PDF 원클릭 구동 버튼 */}
-                            <button
-                              type="button"
-                              disabled={isYearlyGenerating}
-                              onClick={handleDirectYearlyMaster}
+                           {/* 🌟 선택 가능한 월별 생성 기록 만들기 */}
+                           <button
+                             type="button"
+                             disabled={isYearlyGenerating}
+                             onClick={handleDirectYearlyMaster}
                               className="px-4 py-1.5 rounded-xl text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 hover:from-amber-200 hover:to-amber-400 border border-amber-300/80 shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_25px_rgba(245,158,11,0.6)] active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
                             >
                               {isYearlyGenerating ? (
@@ -1864,15 +1955,130 @@ export default function DiaryPage() {
                                   <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
                                   <span>PDF 매핑 생성 중 ({yearlyProgress.percentage}%)...</span>
                                 </>
-                              ) : (
-                                <>
-                                  <Download className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
-                                  <span>✨ {periodDurationMonths}개월 마스터 PDF 다운로드</span>
-                                </>
+                               ) : (
+                                 <>
+                                   <Layers className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
+                                   <span>⚡ {periodDurationMonths}개월 월별 생성</span>
+                                 </>
+                               )}
+                           </button>
+                           <button
+                             type="button"
+                             onClick={() => setShowDiaryHistory((value) => !value)}
+                             className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer flex items-center gap-1.5 ${showDiaryHistory ? 'bg-indigo-500/30 text-indigo-100 border-indigo-300/60' : 'bg-slate-900/90 text-slate-300 border-slate-700 hover:border-indigo-400/60'}`}
+                           >
+                             <History className="w-3.5 h-3.5 text-indigo-300" />
+                             <span>생성 기록 ({diaryHistory.length})</span>
+                           </button>
+                         </div>
+                       </div>
+
+                        {showDiaryHistory && (
+                          <div className="w-full rounded-2xl border border-indigo-400/20 bg-slate-950/80 p-4 shadow-xl space-y-3">
+                            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                              <div className="flex items-center gap-2">
+                                <History className="w-4 h-4 text-indigo-300" />
+                                <div>
+                                  <h3 className="text-xs font-bold text-slate-100">월간 다이어리 생성 기록</h3>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">원하는 월을 선택해 1년, 17개월 또는 자유 조합으로 조립하세요.</p>
+                                </div>
+                              </div>
+                              {diaryHistory.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!window.confirm('모든 월간 생성 기록을 삭제할까요?')) return
+                                    await clearMonthlyDiaries()
+                                    setDiaryHistory([])
+                                    setSelectedDiaryIds(new Set())
+                                  }}
+                                  className="text-[10px] text-rose-300 hover:text-rose-200 flex items-center gap-1"
+                                >
+                                  <Trash2 className="w-3 h-3" /> 전체 삭제
+                                </button>
                               )}
-                            </button>
+                            </div>
+
+                            {diaryHistoryLoading ? (
+                              <div className="py-8 text-center text-xs text-slate-500 flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> 기록 로딩 중...</div>
+                            ) : diaryHistory.length === 0 ? (
+                              <div className="py-8 text-center text-xs text-slate-500">아직 저장된 월간 다이어리가 없습니다. 위의 월별 생성 버튼을 눌러 시작하세요.</div>
+                            ) : (
+                              <div className="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar">
+                                {(() => {
+                                  const groups: Record<string, MonthlyDiaryMeta[]> = {}
+                                  diaryHistory.forEach((record) => {
+                                    const key = String(record.year)
+                                    if (!groups[key]) groups[key] = []
+                                    groups[key].push(record)
+                                  })
+                                  return Object.keys(groups).sort().map((year) => {
+                                    const records = groups[year]
+                                    const allSelected = records.every((record) => selectedDiaryIds.has(record.id))
+                                    return (
+                                      <div key={year} className="space-y-1.5">
+                                        <div className="flex items-center justify-between rounded-lg bg-indigo-500/10 border border-indigo-400/20 px-2.5 py-1.5">
+                                          <span className="text-[11px] font-bold text-indigo-200">{year}년 <span className="text-[10px] text-slate-400">{records.length}개월 저장됨</span></span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const next = new Set(selectedDiaryIds)
+                                              records.forEach((record) => allSelected ? next.delete(record.id) : next.add(record.id))
+                                              setSelectedDiaryIds(next)
+                                            }}
+                                            className="text-[10px] font-bold text-indigo-200 hover:text-white"
+                                          >
+                                            {allSelected ? '✓ 연도 선택 해제' : '이 연도 전체 선택'}
+                                          </button>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                          {records.map((record) => {
+                                            const selected = selectedDiaryIds.has(record.id)
+                                            return (
+                                              <div key={record.id} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 ${selected ? 'bg-amber-400/10 border-amber-300/50' : 'bg-white/[0.02] border-white/10'}`}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setSelectedDiaryIds((current) => {
+                                                    const next = new Set(current)
+                                                    if (next.has(record.id)) next.delete(record.id)
+                                                    else next.add(record.id)
+                                                    return next
+                                                  })}
+                                                  className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${selected ? 'bg-amber-400 border-amber-300 text-slate-950' : 'border-slate-600 text-transparent'}`}
+                                                  aria-label={`${record.year}년 ${record.month}월 선택`}
+                                                >
+                                                  <Check className="w-3 h-3 stroke-[3]" />
+                                                </button>
+                                                <span className="text-[11px] font-bold text-slate-200 flex-1">{record.year}년 {record.month}월 <span className="text-[9px] text-slate-500">{record.pageCount}p</span></span>
+                                                <button type="button" onClick={() => handleDownloadMonthlyRecord(record)} className="p-1 text-slate-400 hover:text-indigo-200" title="월별 PDF 다운로드"><Download className="w-3.5 h-3.5" /></button>
+                                                <button type="button" onClick={() => handleDeleteMonthlyRecord(record.id)} className="p-1 text-slate-500 hover:text-rose-300" title="기록 삭제"><Trash2 className="w-3.5 h-3.5" /></button>
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
+                                    )
+                                  })
+                                })()}
+                              </div>
+                            )}
+
+                            {selectedDiaryIds.size > 0 && (
+                              <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-3 flex-wrap">
+                                <span className="text-[11px] font-bold text-amber-200">선택한 {selectedDiaryIds.size}개월</span>
+                                <button
+                                  type="button"
+                                  disabled={isDiaryAssembling}
+                                  onClick={handleAssembleSelectedDiaries}
+                                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-bold border border-indigo-300/40 disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                  {isDiaryAssembling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Layers className="w-3 h-3" />}
+                                  {isDiaryAssembling ? `조립 중 ${diaryAssemblyProgress.done}/${diaryAssemblyProgress.total}` : `📚 선택한 ${selectedDiaryIds.size}개월 ➜ 다이어리 조립`}
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        )}
 
                         {/* 3. 실시간 타임라인 월 칩 슬라이더 리본 */}
                         <div className="w-full bg-slate-950/80 border border-white/10 p-1 rounded-xl shadow-lg flex items-center gap-1 overflow-x-auto custom-scrollbar backdrop-blur-md">
@@ -3099,6 +3305,16 @@ export default function DiaryPage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 선택 기간에 맞춘 연간 부록 전용 캡처 컨테이너 */}
+      {isAnnexGenerating && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 1, zIndex: -1 }}>
+          <div ref={annexContainerRef} className={isDarkPdfMode ? 'qt-dark-pdf' : undefined}>
+            {/* PDF 부록은 화면 축소 래퍼 없이 원본 크기로 캡처해 링크 좌표를 보존한다. */}
+            {renderStreamAnnexes(renderModalPage)}
           </div>
         </div>
       )}

@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { DiaryCoverVariant } from './QtDiaryCoverPage'
-import QtQuickIndexNav from '../QtQuickIndexNav'
-import QtQuickIndexNavPortrait from '../portrait/QtQuickIndexNavPortrait'
 
 interface QtMonthlyDividerPageProps {
   year?: number
@@ -51,7 +49,6 @@ export default function QtMonthlyDividerPage({
 }: QtMonthlyDividerPageProps) {
   const meta = VARIANT_LABEL[variant]
   const isLandscape = pageWidth > pageHeight
-  const IndexComponent = isLandscape ? QtQuickIndexNav : QtQuickIndexNavPortrait
   const monthNames = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
 
   return (
@@ -68,7 +65,6 @@ export default function QtMonthlyDividerPage({
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      <IndexComponent activeTab="tracker" themeColor={themeColor} />
       {/* 풀배경: 테마 컬러 기반 딥 톤 */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(150deg, #0f172a 0%, #1e293b 60%, ${themeColor}33 100%)` }} />
 

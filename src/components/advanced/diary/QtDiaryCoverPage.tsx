@@ -1,8 +1,6 @@
 'use client'
 
 import React from 'react'
-import QtQuickIndexNav from '../QtQuickIndexNav'
-import QtQuickIndexNavPortrait from '../portrait/QtQuickIndexNavPortrait'
 
 export type DiaryCoverVariant = 'all' | 'general' | 'church' | 'basic'
 
@@ -79,7 +77,6 @@ export default function QtDiaryCoverPage({
   const meta = VARIANT_META[variant]
   const periodLabel = `${String(startYear).padStart(4, '0')}.${String(startMonth).padStart(2, '0')} - ${String(endYear).padStart(4, '0')}.${String(endMonth).padStart(2, '0')}`
   const isLandscape = pageWidth > pageHeight
-  const IndexComponent = isLandscape ? QtQuickIndexNav : QtQuickIndexNavPortrait
 
   return (
     <div
@@ -95,9 +92,7 @@ export default function QtDiaryCoverPage({
         fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif",
       }}
     >
-      <IndexComponent activeTab="tracker" themeColor={themeColor} />
-      {/* 풀배경 그라데이션 */}
-      <div
+      {/* 풀배경 그라데이션 */}      <div
         className="absolute inset-0"
         style={{ background: meta.gradient }}
       />

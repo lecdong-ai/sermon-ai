@@ -37,7 +37,7 @@ export default function QtWeeklyPlanPage({
 }: QtWeeklyPlanPageProps) {
   const monthNum = MONTH_MAP[monthName] || 8
 
-  const defaultDays = daysInWeek || [
+  const defaultDays = (daysInWeek || [
     { dayNum: 3, dayName: 'SUN', dateStr: '08/03' },
     { dayNum: 4, dayName: 'MON', dateStr: '08/04' },
     { dayNum: 5, dayName: 'TUE', dateStr: '08/05' },
@@ -45,7 +45,7 @@ export default function QtWeeklyPlanPage({
     { dayNum: 7, dayName: 'THU', dateStr: '08/07' },
     { dayNum: 8, dayName: 'FRI', dateStr: '08/08' },
     { dayNum: 9, dayName: 'SAT', dateStr: '08/09' },
-  ]
+  ]).filter((day) => day.dayNum > 0)
 
   const parseMonthDay = (dateStr?: string, defaultMonth: number = 8, dayNum: number = 1) => {
     if (dateStr) {
@@ -170,7 +170,7 @@ export default function QtWeeklyPlanPage({
           const isSun = d.dayName === 'SUN'
           const isSat = d.dayName === 'SAT'
           const { m, d: parsedDay } = parseMonthDay(d.dateStr, monthNum, d.dayNum)
-          const holidays = getHolidaysAndFestivals(year, m, parsedDay)
+          const holidays = getHolidaysAndFestivals(year, m, parsedDay).filter((h) => !isGeneralMode || h.type !== 'christian')
           const hasRedDay = isSun || holidays.some((h) => h.isRedDay)
 
           return (
