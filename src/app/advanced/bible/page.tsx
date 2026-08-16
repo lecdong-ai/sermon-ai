@@ -7,6 +7,8 @@ import type { BibleStudyData, WordDetail, CommentaryItem, VerseParallel } from '
 import { BIBLE_BOOKS } from '@/lib/advanced/bibleBooks'
 import { getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage'
 import SavedNotesModal from '@/components/advanced/bible/SavedNotesModal'
+import DraggableWordModal from '@/components/common/DraggableWordModal'
+import WordHoverCard, { HoverWordInfo } from '@/components/common/WordHoverCard'
 
 type DetailView = 'word' | 'verse' | 'theme' | 'none'
 
@@ -133,6 +135,8 @@ export default function BiblePage() {
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
+  const [isFloatingModal, setIsFloatingModal] = useState(true)
+  const [hoverInfo, setHoverInfo] = useState<HoverWordInfo | null>(null)
 
   const [wordLookup, setWordLookup] = useState<Record<string, WordDetail>>({})
   const [lookupLoading, setLookupLoading] = useState(false)
@@ -793,7 +797,7 @@ export default function BiblePage() {
                   </div>
                   <div className="divide-y divide-white/5">
                     {filteredVerses.map(v => (
-                      <VerseRow
+                      <VerseCard
                         key={v.verse}
                         verse={v}
                         words={allWords}
@@ -802,6 +806,7 @@ export default function BiblePage() {
                         selectedVerse={selectedVerse}
                         onWordClick={handleWordClick}
                         onVerseClick={handleVerseClick}
+                        onWordHover={setHoverInfo}
                       />
                     ))}
                   </div>
@@ -888,7 +893,42 @@ export default function BiblePage() {
         </div>
       </div>
 
-      {data && detailView !== 'none' && (
+      {/* ─── Instant Word Hover Preview ─── */}
+      <WordHoverCard info={hoverInfo} />
+
+      {/* ─── Draggable Floating Word Detail Modal ─── */}
+      <DraggableWordModal
+        isOpen={Boolean(selectedWordId || selectedFallbackWord || selectedEnglishWord)}
+        isFloating={isFloatingModal}
+        onToggleFloating={() => setIsFloatingModal((f) => !f)}
+        onClose={handleCloseDetail}
+        title={
+          selectedEnglishWord
+            ? `영어 단어 (${selectedEnglishWord.verse}절, ${selectedEnglishWord.version})`
+            : undefined
+        }
+        wordData={
+          selectedWordId
+            ? (allWords[selectedWordId] || (data?.words ? data.words[selectedWordId] : null))
+            : null
+        }
+        englishData={
+          selectedEnglishWord
+            ? englishLookup[`_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`] || null
+            : null
+        }
+        fallbackWord={selectedFallbackWord}
+        isLoading={
+          lookupLoading ||
+          (englishLookupLoading &&
+            Boolean(
+              selectedEnglishWord &&
+                !englishLookup[`_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`]
+            ))
+        }
+      />
+
+      {data && detailView !== 'none' && !isFloatingModal && (
         <DetailPanel
           data={data}
           detailView={detailView}
@@ -1066,31 +1106,11 @@ function BibleSidebar({
   )
 }
 
-/* ─── Context Info ─── */
+/* ─── Verse Card ─── */
 
-function ContextInfoCard({ before, after }: { before: string; after: string }) {
-  return (
-    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-5">
-      <div className="flex gap-4 text-xs text-slate-400 leading-relaxed">
-        <div className="flex-1">
-          <span className="font-extrabold text-indigo-300 block mb-1.5 text-[10px] uppercase tracking-wider">◀ 앞 문맥</span>
-          <p className="text-slate-300 font-medium">{before}</p>
-        </div>
-        <div className="w-px bg-indigo-500/20" />
-        <div className="flex-1">
-          <span className="font-extrabold text-indigo-300 block mb-1.5 text-[10px] uppercase tracking-wider">뒤 문맥 ▶</span>
-          <p className="text-slate-300 font-medium">{after}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─── Verse Row ─── */
-
-function VerseRow({
-  verse, words, showTranslations,
-  selectedWordId, selectedVerse, onWordClick, onVerseClick,
+function VerseCard({
+  verse, words, showTranslations, selectedWordId, selectedVerse,
+  onWordClick, onVerseClick, onWordHover,
 }: {
   verse: VerseParallel
   words: BibleStudyData['words']
@@ -1099,6 +1119,7 @@ function VerseRow({
   selectedVerse: number | null
   onWordClick: (wordId: string, verse: number, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => void
   onVerseClick: (verse: number) => void
+  onWordHover?: (info: HoverWordInfo | null) => void
 }) {
   const isSelected = selectedVerse === verse.verse
 
@@ -1116,7 +1137,31 @@ function VerseRow({
       return (
         <span key={i} className="inline">
           <button
-            onClick={() => onWordClick(wordId, verse.verse, { word, clean, verse: verse.verse, version })}
+            onClick={() => {
+              onWordHover?.(null)
+              onWordClick(wordId, verse.verse, { word, clean, verse: verse.verse, version })
+            }}
+            onMouseEnter={(e) => {
+              onWordHover?.({
+                word,
+                verse: verse.verse,
+                version,
+                basicMeaning: `${version} 영어 단어`,
+                x: e.clientX,
+                y: e.clientY,
+              })
+            }}
+            onMouseMove={(e) => {
+              onWordHover?.({
+                word,
+                verse: verse.verse,
+                version,
+                basicMeaning: `${version} 영어 단어`,
+                x: e.clientX,
+                y: e.clientY,
+              })
+            }}
+            onMouseLeave={() => onWordHover?.(null)}
             className={`transition-colors cursor-pointer ${
               isSel ? 'text-indigo-400 bg-indigo-500/10 rounded px-0.5' : 'hover:text-white/70'
             }`}
@@ -1156,10 +1201,47 @@ function VerseRow({
                   )
                   if (matchedEntry) {
                     const isSel = selectedWordId === matchedEntry[0]
+                    const wd = matchedEntry[1]
                     return (
                       <span key={i} className="inline">
                         <button
-                          onClick={() => onWordClick(matchedEntry[0], verse.verse)}
+                          onClick={() => {
+                            onWordHover?.(null)
+                            onWordClick(matchedEntry[0], verse.verse)
+                          }}
+                          onMouseEnter={(e) => {
+                            onWordHover?.({
+                              word,
+                              lemma: wd.lemmaGreek,
+                              strong: wd.strong,
+                              partOfSpeech: wd.partOfSpeech,
+                              basicMeaning: wd.basicMeaning,
+                              contextualMeaning: wd.contextualMeaning,
+                              simpleExplanation: wd.simpleExplanation,
+                              transliteration: wd.transliteration,
+                              pronunciation: wd.pronunciation,
+                              verse: verse.verse,
+                              x: e.clientX,
+                              y: e.clientY,
+                            })
+                          }}
+                          onMouseMove={(e) => {
+                            onWordHover?.({
+                              word,
+                              lemma: wd.lemmaGreek,
+                              strong: wd.strong,
+                              partOfSpeech: wd.partOfSpeech,
+                              basicMeaning: wd.basicMeaning,
+                              contextualMeaning: wd.contextualMeaning,
+                              simpleExplanation: wd.simpleExplanation,
+                              transliteration: wd.transliteration,
+                              pronunciation: wd.pronunciation,
+                              verse: verse.verse,
+                              x: e.clientX,
+                              y: e.clientY,
+                            })
+                          }}
+                          onMouseLeave={() => onWordHover?.(null)}
                           className={`transition-colors cursor-pointer border-b border-dotted ${
                             isSel
                               ? 'text-indigo-300 border-indigo-400 bg-indigo-500/10 rounded px-0.5'
