@@ -36,7 +36,9 @@ const STUDY_DATA_REGISTRY: Record<string, {
 function getStudyData(book: string, chapter: number) {
   const key = `${book}_${chapter}`
   return STUDY_DATA_REGISTRY[key] || null
-}interface Props { project: ProjectDetail; passages?: BiblePassage[] }
+}import DraggableWordModal from '@/components/common/DraggableWordModal'
+
+interface Props { project: ProjectDetail; passages?: BiblePassage[] }
 
 type ViewMode = 'parallel' | 'focused' | 'compare'
 
@@ -67,6 +69,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedEnglishWord, setSelectedEnglishWord] = useState<{ word: string; clean: string; verse: number; version: string } | null>(null)
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
+  const [isFloatingModal, setIsFloatingModal] = useState(true)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const scrollPosRef = useRef(0)
   const prevViewKeyRef = useRef('')
@@ -1327,6 +1330,34 @@ export default function BibleStudyTab({ project, passages }: Props) {
         <div className="h-8" />
       </div>
 
+      {/* ─── Draggable Floating Word Detail Modal ─── */}
+      <DraggableWordModal
+        isOpen={Boolean(selectedWordId || selectedFallbackWord || selectedEnglishWord)}
+        isFloating={isFloatingModal}
+        onToggleFloating={() => setIsFloatingModal((f) => !f)}
+        onClose={handleCloseDetail}
+        title={
+          selectedEnglishWord
+            ? `영어 단어 (${selectedEnglishWord.verse}절, ${selectedEnglishWord.version})`
+            : undefined
+        }
+        wordData={selectedWordId ? allWords[selectedWordId] : null}
+        englishData={
+          selectedEnglishWord
+            ? englishLookup[`_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`] || null
+            : null
+        }
+        fallbackWord={selectedFallbackWord}
+        isLoading={
+          lookupLoading ||
+          (englishLookupLoading &&
+            Boolean(
+              selectedEnglishWord &&
+                !englishLookup[`_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`]
+            ))
+        }
+      />
+
       {/* ─── Right Panel ─── */}
       <div ref={rightPanelRef} onScroll={(e) => { scrollPosRef.current = e.currentTarget.scrollTop }} className="w-80 shrink-0 border-l border-white/5 bg-[#04060f]/60 overflow-y-auto scrollbar-thin">
         <RightPanel
@@ -1339,6 +1370,8 @@ export default function BibleStudyTab({ project, passages }: Props) {
           englishLookupLoading={englishLookupLoading}
           selectedVerse={selectedVerse}
           selectedTheme={selectedTheme}
+          isFloating={isFloatingModal}
+          onToggleFloating={() => setIsFloatingModal((f) => !f)}
           onCloseDetail={handleCloseDetail}
           onSendToPrep={handleSendToPrep}
           memosByPassage={memosByPassage}
@@ -2637,7 +2670,7 @@ function ResearchNotesEditor({
 function RightPanel({
   words, selectedWordId, selectedFallbackWord, lookupLoading, selectedEnglishWord, englishLookup, englishLookupLoading, selectedVerse, selectedTheme, onCloseDetail,
   onSendToPrep, memosByPassage, currentMemoLabel, passages, commentaries, verses, themes,
-  onCopyResults, onViewFullChapter,
+  onCopyResults, onViewFullChapter, isFloating, onToggleFloating,
 }: {
   words: Record<string, JohnWordDetail>
   selectedWordId: string | null
@@ -2658,6 +2691,8 @@ function RightPanel({
   themes: any[]
   onCopyResults?: () => void
   onViewFullChapter?: () => void
+  isFloating?: boolean
+  onToggleFloating?: () => void
 }) {
   const typeLabel: Record<string, string> = {
     exegetical: '본문',
@@ -2672,107 +2707,224 @@ function RightPanel({
     pastoral: 'bg-indigo-500/10 text-indigo-300',
   }
 
-  // Word Detail - Fallback (unmatched word, loading or pending)
-  if (selectedFallbackWord) {
-    return (
-      <div>
-        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 ({selectedFallbackWord.verse}절)</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="p-5 space-y-4">
-          <div className="text-center py-6 bg-white/5 rounded-xl">
-            <p className="text-2xl font-greek text-white">{selectedFallbackWord.word}</p>
-            <p className="text-sm text-slate-400 mt-1">{selectedFallbackWord.clean}</p>
-          </div>
-          {lookupLoading ? (
-            <div className="flex flex-col items-center py-6 space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-              <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
-            </div>
-          ) : (
-            <div className="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20">
-              <p className="text-xs text-indigo-200 text-center">이 단어를 클릭하면 AI가 분석합니다</p>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
+  const hasWordSelection = Boolean(selectedFallbackWord || selectedEnglishWord || (selectedWordId && words[selectedWordId]))
 
-  // English Word Detail
-  if (selectedEnglishWord) {
-    const cacheKey = `_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`
-    const wordData = englishLookup[cacheKey]
-    if (englishLookupLoading && !wordData) {
+  // If floating is active, we don't block RightPanel with Word Details; instead we show docked view or banner
+  if (!isFloating) {
+    // Word Detail - Fallback (unmatched word, loading or pending)
+    if (selectedFallbackWord) {
+      return (
+        <div>
+          <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 ({selectedFallbackWord.verse}절)</h3>
+              <div className="flex items-center gap-1">
+                {onToggleFloating && (
+                  <button onClick={onToggleFloating} title="플로팅 창으로 분리" className="text-slate-400 hover:text-indigo-300 p-1 rounded hover:bg-white/5">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="text-center py-6 bg-white/5 rounded-xl">
+              <p className="text-2xl font-greek text-white">{selectedFallbackWord.word}</p>
+              <p className="text-sm text-slate-400 mt-1">{selectedFallbackWord.clean}</p>
+            </div>
+            {lookupLoading ? (
+              <div className="flex flex-col items-center py-6 space-y-3">
+                <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+              </div>
+            ) : (
+              <div className="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20">
+                <p className="text-xs text-indigo-200 text-center">이 단어를 클릭하면 AI가 분석합니다</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // English Word Detail
+    if (selectedEnglishWord) {
+      const cacheKey = `_englk_${selectedEnglishWord.verse}_${selectedEnglishWord.version}_${selectedEnglishWord.clean}`
+      const wordData = englishLookup[cacheKey]
+      if (englishLookupLoading && !wordData) {
+        return (
+          <div>
+            <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
+                <div className="flex items-center gap-1">
+                  {onToggleFloating && (
+                    <button onClick={onToggleFloating} title="플로팅 창으로 분리" className="text-slate-400 hover:text-indigo-300 p-1 rounded hover:bg-white/5">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="flex flex-col items-center py-10 space-y-3">
+                <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+              </div>
+            </div>
+          </div>
+        )
+      }
+      if (wordData) {
+        return (
+          <div>
+            <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
+                <div className="flex items-center gap-1">
+                  {onToggleFloating && (
+                    <button onClick={onToggleFloating} title="플로팅 창으로 분리" className="text-slate-400 hover:text-indigo-300 p-1 rounded hover:bg-white/5">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="text-center py-4 bg-white/5 rounded-xl">
+                <p className="text-2xl font-bold text-white font-serif">{wordData.word}</p>
+                <p className="text-sm text-slate-400 mt-1">{wordData.pronunciation}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 text-xs">
+                <InfoBox label="품사" value={wordData.partOfSpeech} />
+              </div>
+              <SectionBox title="기본 의미" className="bg-white/5">
+                {wordData.basicMeaning}
+              </SectionBox>
+              <SectionBox title="문맥상 의미" className="bg-indigo-500/10 border border-indigo-500/20">
+                {wordData.contextualMeaning}
+              </SectionBox>
+              <div className="bg-amber-500/10 rounded-xl p-3 border border-amber-500/20">
+                <h4 className="text-[10px] font-semibold text-amber-300 mb-1">쉽게 설명하면</h4>
+                <p className="text-xs text-amber-200 leading-relaxed">{wordData.simpleExplanation}</p>
+              </div>
+              {wordData.sermonNote && (
+                <SectionBox title="설교적 의미" className="bg-white/5 border-l-2 border-indigo-500">
+                  {wordData.sermonNote}
+                </SectionBox>
+              )}
+              {wordData.usage && wordData.usage.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">성경 용례</h4>
+                  <div className="space-y-1">
+                    {wordData.usage.map((u, i) => (
+                      <div key={i} className="text-[11px] text-slate-200 bg-white/5 rounded-xl p-2">
+                        <span className="font-medium text-slate-100">{u.ref}: </span>
+                        {u.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
       return (
         <div>
           <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
             <div className="flex items-center justify-between px-5 py-4">
               <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-              <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                {onToggleFloating && (
+                  <button onClick={onToggleFloating} title="플로팅 창으로 분리" className="text-slate-400 hover:text-indigo-300 p-1 rounded hover:bg-white/5">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           <div className="p-5">
-            <div className="flex flex-col items-center py-10 space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-              <p className="text-xs text-slate-400">AI가 이 단어를 분석하고 있습니다...</p>
+            <div className="text-center py-8">
+              <p className="text-2xl font-bold text-white font-serif">{selectedEnglishWord.word}</p>
+              <p className="text-xs text-slate-500 mt-2">분석 정보를 불러오는 중입니다...</p>
             </div>
           </div>
         </div>
       )
     }
-    if (wordData) {
+
+    // Word Detail
+    if (selectedWordId && words[selectedWordId]) {
+      const word = words[selectedWordId]
       return (
         <div>
           <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
             <div className="flex items-center justify-between px-5 py-4">
-              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-              <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 분석</h3>
+              <div className="flex items-center gap-1">
+                {onToggleFloating && (
+                  <button onClick={onToggleFloating} title="플로팅 창으로 분리" className="text-slate-400 hover:text-indigo-300 p-1 rounded hover:bg-white/5">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           <div className="p-5 space-y-4">
             <div className="text-center py-4 bg-white/5 rounded-xl">
-              <p className="text-2xl font-bold text-white font-serif">{wordData.word}</p>
-              <p className="text-sm text-slate-400 mt-1">{wordData.pronunciation}</p>
+              <p className="text-2xl font-greek text-white">{word.lemmaGreek}</p>
+              <p className="text-sm text-slate-400 mt-1">{word.transliteration}</p>
             </div>
-            <div className="grid grid-cols-1 gap-2 text-xs">
-              <InfoBox label="품사" value={wordData.partOfSpeech} />
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <InfoBox label="Strong" value={word.strong} />
+              <InfoBox label="품사" value={word.partOfSpeech} />
+              <InfoBox label="발음" value={word.pronunciation} />
+              <InfoBox label="형태" value={word.morphology} />
             </div>
             <SectionBox title="기본 의미" className="bg-white/5">
-              {wordData.basicMeaning}
+              {word.basicMeaning}
             </SectionBox>
             <SectionBox title="문맥상 의미" className="bg-indigo-500/10 border border-indigo-500/20">
-              {wordData.contextualMeaning}
+              {word.contextualMeaning}
             </SectionBox>
             <div className="bg-amber-500/10 rounded-xl p-3 border border-amber-500/20">
               <h4 className="text-[10px] font-semibold text-amber-300 mb-1">쉽게 설명하면</h4>
-              <p className="text-xs text-amber-200 leading-relaxed">{wordData.simpleExplanation}</p>
+              <p className="text-xs text-amber-200 leading-relaxed">{word.simpleExplanation}</p>
             </div>
-            {wordData.sermonNote && (
-              <SectionBox title="설교적 의미" className="bg-white/5 border-l-2 border-indigo-500">
-                {wordData.sermonNote}
-              </SectionBox>
-            )}
-            {wordData.usage && wordData.usage.length > 0 && (
+            <SectionBox title="설교적 의미" className="bg-white/5 border-l-2 border-indigo-500">
+              {word.sermonNote}
+            </SectionBox>
+            {word.usage.length > 0 && (
               <div>
                 <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">성경 용례</h4>
                 <div className="space-y-1">
-                  {wordData.usage.map((u, i) => (
+                  {word.usage.map((u, i) => (
                     <div key={i} className="text-[11px] text-slate-200 bg-white/5 rounded-xl p-2">
                       <span className="font-medium text-slate-100">{u.ref}: </span>
                       {u.text}
@@ -2781,98 +2933,38 @@ function RightPanel({
                 </div>
               </div>
             )}
+            {word.relatedWords.length > 0 && (
+              <div>
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">관련 원어</h4>
+                <div className="flex flex-wrap gap-1">
+                  {word.relatedWords.map(r => (
+                    <span key={r} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-200 font-mono">{r}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )
     }
-    return (
-      <div>
-        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">영어 단어 ({selectedEnglishWord.verse}절, {selectedEnglishWord.version})</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="p-5">
-          <div className="text-center py-8">
-            <p className="text-2xl font-bold text-white font-serif">{selectedEnglishWord.word}</p>
-            <p className="text-xs text-slate-500 mt-2">분석 정보를 불러오는 중입니다...</p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
-  // Word Detail
-  if (selectedWordId && words[selectedWordId]) {
-    const word = words[selectedWordId]
-    return (
-      <div>
-        <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">원어 단어 분석</h3>
-            <button onClick={onCloseDetail} className="text-slate-500 hover:text-slate-200 p-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="p-5 space-y-4">
-          <div className="text-center py-4 bg-white/5 rounded-xl">
-            <p className="text-2xl font-greek text-white">{word.lemmaGreek}</p>
-            <p className="text-sm text-slate-400 mt-1">{word.transliteration}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <InfoBox label="Strong" value={word.strong} />
-            <InfoBox label="품사" value={word.partOfSpeech} />
-            <InfoBox label="발음" value={word.pronunciation} />
-            <InfoBox label="형태" value={word.morphology} />
-          </div>
-          <SectionBox title="기본 의미" className="bg-white/5">
-            {word.basicMeaning}
-          </SectionBox>
-          <SectionBox title="문맥상 의미" className="bg-indigo-500/10 border border-indigo-500/20">
-            {word.contextualMeaning}
-          </SectionBox>
-          <div className="bg-amber-500/10 rounded-xl p-3 border border-amber-500/20">
-            <h4 className="text-[10px] font-semibold text-amber-300 mb-1">쉽게 설명하면</h4>
-            <p className="text-xs text-amber-200 leading-relaxed">{word.simpleExplanation}</p>
-          </div>
-          <SectionBox title="설교적 의미" className="bg-white/5 border-l-2 border-indigo-500">
-            {word.sermonNote}
-          </SectionBox>
-          {word.usage.length > 0 && (
-            <div>
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">성경 용례</h4>
-              <div className="space-y-1">
-                {word.usage.map((u, i) => (
-                  <div key={i} className="text-[11px] text-slate-200 bg-white/5 rounded-xl p-2">
-                    <span className="font-medium text-slate-100">{u.ref}: </span>
-                    {u.text}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {word.relatedWords.length > 0 && (
-            <div>
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">관련 원어</h4>
-              <div className="flex flex-wrap gap-1">
-                {word.relatedWords.map(r => (
-                  <span key={r} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-200 font-mono">{r}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+  const floatingBanner = isFloating && hasWordSelection && (
+    <div className="bg-indigo-500/10 border-b border-indigo-500/20 px-4 py-2.5 flex items-center justify-between">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+        <span className="text-[11px] text-indigo-200 font-medium truncate">단어 분석 창 플로팅 중</span>
       </div>
-    )
-  }
+      {onToggleFloating && (
+        <button
+          onClick={onToggleFloating}
+          className="text-[10px] text-indigo-300 hover:text-white px-2 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 transition-colors font-medium shrink-0 ml-2"
+        >
+          패널로 고정
+        </button>
+      )}
+    </div>
+  )
 
   // Verse Commentary
   if (selectedVerse) {
@@ -2880,6 +2972,7 @@ function RightPanel({
     const verseData = (verses || []).find((v: any) => v.verse === selectedVerse)
     return (
       <div>
+        {floatingBanner}
         <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
           <div className="flex items-center justify-between px-5 py-4">
             <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{selectedVerse}절 주석</h3>
@@ -2925,6 +3018,7 @@ function RightPanel({
     if (themeData) {
       return (
         <div>
+          {floatingBanner}
           <div className="sticky top-0 z-10 bg-[#04060f]/95 backdrop-blur-sm border-b border-white/5">
             <div className="flex items-center justify-between px-5 py-4">
               <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">주제 연결</h3>
@@ -2957,7 +3051,9 @@ function RightPanel({
 
   // Default: Quick Actions + Recent Notes
   return (
-    <div className="p-5 space-y-5">
+    <div>
+      {floatingBanner}
+      <div className="p-5 space-y-5">
       {/* Quick Actions */}
       <div>
         <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">작업</h3>
@@ -3026,6 +3122,7 @@ function RightPanel({
           <p className="font-medium text-slate-200 mb-1">주제 연결</p>
           <p>주제를 클릭하면 연결된 설교와 자료를 탐색할 수 있습니다.</p>
         </div>
+      </div>
       </div>
     </div>
   )
