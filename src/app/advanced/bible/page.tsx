@@ -1127,6 +1127,55 @@ function VerseCard({
     return s.normalize('NFD').replace(/[\u0300-\u036f\u0313\u0314\u0342\u0345]/g, '').toLowerCase()
   }
 
+  function renderKoreanText(text: string) {
+    if (!text) return null
+    const words_arr = text.split(' ')
+    return words_arr.map((word, i) => {
+      const clean = word.replace(/[.,;:'"!?()\[\]{}…·]/g, '')
+      const wordId = `_kr_${verse.verse}_${i}`
+      const isSel = selectedWordId === wordId
+      return (
+        <span key={i} className="inline">
+          <button
+            onClick={() => {
+              onWordHover?.(null)
+              onWordClick(wordId, verse.verse, { word, clean, verse: verse.verse, version: '개역개정' })
+            }}
+            onMouseEnter={(e) => {
+              onWordHover?.({
+                word,
+                verse: verse.verse,
+                version: '개역개정',
+                basicMeaning: `${clean} (클릭 시 AI 단어 분석)`,
+                x: e.clientX,
+                y: e.clientY,
+              })
+            }}
+            onMouseMove={(e) => {
+              onWordHover?.({
+                word,
+                verse: verse.verse,
+                version: '개역개정',
+                basicMeaning: `${clean} (클릭 시 AI 단어 분석)`,
+                x: e.clientX,
+                y: e.clientY,
+              })
+            }}
+            onMouseLeave={() => onWordHover?.(null)}
+            className={`transition-colors cursor-pointer rounded px-0.5 ${
+              isSel
+                ? 'text-indigo-300 bg-indigo-500/20 underline decoration-indigo-400'
+                : 'hover:text-indigo-300 hover:bg-white/5'
+            }`}
+          >
+            {word}
+          </button>
+          {i < words_arr.length - 1 && <span className="text-inherit"> </span>}
+        </span>
+      )
+    })
+  }
+
   function renderAlignedText(text: string, version: string) {
     if (!text) return null
     const words_arr = text.split(' ')
@@ -1281,7 +1330,7 @@ function VerseCard({
           {showTranslations.krv && (
             <div className="flex items-start gap-2">
               <span className="text-[9px] font-extrabold text-slate-500 w-8 shrink-0 mt-0.5">KRV</span>
-              <p className="text-sm text-slate-300 leading-relaxed font-medium">{verse.korean}</p>
+              <span className="text-sm text-slate-300 leading-relaxed font-medium">{renderKoreanText(verse.korean)}</span>
             </div>
           )}
           {showTranslations.niv && (

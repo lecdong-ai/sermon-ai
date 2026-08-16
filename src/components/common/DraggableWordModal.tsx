@@ -9,10 +9,8 @@ import {
   Minus,
   Maximize2,
   Pin,
-  ExternalLink,
   Sparkles,
   Loader2,
-  BookOpen,
 } from 'lucide-react'
 
 export interface WordDetailData {
@@ -39,19 +37,6 @@ export interface EnglishWordDetailData {
   simpleExplanation?: string
   sermonNote?: string
   usage?: { ref: string; text: string }[]
-}
-
-export interface HoverWordInfo {
-  word: string
-  lemma?: string
-  strong?: string
-  partOfSpeech?: string
-  basicMeaning?: string
-  contextualMeaning?: string
-  simpleExplanation?: string
-  pronunciation?: string
-  verse?: number
-  version?: string
 }
 
 interface DraggableWordModalProps {
@@ -84,12 +69,12 @@ export default function DraggableWordModal({
   initialPosition,
 }: DraggableWordModalProps) {
   const [mounted, setMounted] = useState(false)
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 200, y: 150 })
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 100, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
 
-  const dragOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 })
-  const modalRef = useRef<HTMLDivElement>(null)
+  const posRef = useRef<{ x: number; y: number }>({ x: 100, y: 100 })
+  posRef.current = position
 
   useEffect(() => {
     setMounted(true)
@@ -97,46 +82,72 @@ export default function DraggableWordModal({
       const modalWidth = 380
       const defaultX = initialPosition?.x ?? Math.max(20, window.innerWidth - modalWidth - 360)
       const defaultY = initialPosition?.y ?? Math.min(130, Math.max(80, window.innerHeight * 0.12))
-      setPosition({ x: defaultX, y: defaultY })
+      const pos = { x: defaultX, y: defaultY }
+      setPosition(pos)
+      posRef.current = pos
     }
   }, [initialPosition])
 
-  // Modern Pointer Events for 100% Reliable Dragging across any browser/OS
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button')) return
-
-    const target = e.currentTarget
-    target.setPointerCapture(e.pointerId)
+  // Bulletproof Drag Engine using global Mouse & Touch listeners
+  const startDrag = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true)
+    const startMouseX = clientX
+    const startMouseY = clientY
+    const startX = posRef.current.x
+    const startY = posRef.current.y
 
-    dragOffsetRef.current = {
-      offsetX: e.clientX - position.x,
-      offsetY: e.clientY - position.y,
+    document.body.style.userSelect = 'none'
+
+    const onMove = (moveEvent: MouseEvent) => {
+      const dx = moveEvent.clientX - startMouseX
+      const dy = moveEvent.clientY - startMouseY
+      const newX = Math.max(10, Math.min(window.innerWidth - 360, startX + dx))
+      const newY = Math.max(10, Math.min(window.innerHeight - 60, startY + dy))
+      const nextPos = { x: newX, y: newY }
+      setPosition(nextPos)
+      posRef.current = nextPos
     }
-    e.preventDefault()
-  }, [position.x, position.y])
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return
+    const onTouchMove = (touchEvent: TouchEvent) => {
+      if (touchEvent.touches.length > 0) {
+        const touch = touchEvent.touches[0]
+        const dx = touch.clientX - startMouseX
+        const dy = touch.clientY - startMouseY
+        const newX = Math.max(10, Math.min(window.innerWidth - 360, startX + dx))
+        const newY = Math.max(10, Math.min(window.innerHeight - 60, startY + dy))
+        const nextPos = { x: newX, y: newY }
+        setPosition(nextPos)
+        posRef.current = nextPos
+      }
+    }
 
-    const modalWidth = modalRef.current?.offsetWidth || 380
-    const rawX = e.clientX - dragOffsetRef.current.offsetX
-    const rawY = e.clientY - dragOffsetRef.current.offsetY
-
-    const newX = Math.max(10, Math.min(window.innerWidth - modalWidth - 10, rawX))
-    const newY = Math.max(10, Math.min(window.innerHeight - 60, rawY))
-
-    setPosition({ x: newX, y: newY })
-  }, [isDragging])
-
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDragging) {
+    const onEnd = () => {
       setIsDragging(false)
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId)
-      } catch {}
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onEnd)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onEnd)
     }
-  }, [isDragging])
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onEnd)
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchend', onEnd)
+  }, [])
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    e.preventDefault()
+    startDrag(e.clientX, e.clientY)
+  }
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    if (e.touches.length > 0) {
+      startDrag(e.touches[0].clientX, e.touches[0].clientY)
+    }
+  }
 
   if (!mounted || !isOpen || !isFloating) return null
 
@@ -150,27 +161,24 @@ export default function DraggableWordModal({
 
   const modalContent = (
     <div
-      ref={modalRef}
       style={{
         position: 'fixed',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: 9999,
+        zIndex: 99999,
       }}
-      className={`w-[380px] max-w-[calc(100vw-24px)] bg-[#070b19]/95 backdrop-blur-2xl border border-indigo-500/40 rounded-2xl shadow-2xl shadow-black/90 ring-1 ring-white/15 transition-shadow ${
-        isDragging ? 'shadow-indigo-500/40 ring-indigo-400/60 scale-[1.01]' : 'shadow-black/80'
+      className={`w-[380px] max-w-[calc(100vw-24px)] bg-[#070b19]/95 backdrop-blur-2xl border border-indigo-500/50 rounded-2xl shadow-2xl shadow-black/95 ring-1 ring-white/20 transition-shadow ${
+        isDragging ? 'shadow-indigo-500/50 ring-indigo-400 scale-[1.01] cursor-grabbing' : 'shadow-black/90'
       }`}
     >
       {/* ─── Draggable Header Bar ─── */}
       <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-950/90 via-purple-950/70 to-slate-950/90 rounded-t-2xl cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-purple-950/80 to-slate-950 rounded-t-2xl cursor-grab active:cursor-grabbing select-none"
       >
         <div className="flex items-center gap-2 overflow-hidden pointer-events-none">
-          <Move className="w-3.5 h-3.5 text-indigo-300 shrink-0 animate-pulse" />
+          <Move className="w-4 h-4 text-indigo-300 shrink-0 animate-pulse" />
           <div className="flex items-center gap-1.5 truncate">
             <span className="text-[11px] font-bold text-indigo-200 tracking-wider uppercase truncate">
               {displayTitle}

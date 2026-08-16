@@ -2180,6 +2180,57 @@ function ParallelPassagePanel({
     return m
   }, [wordAlignments])
 
+  function renderKoreanText(text: string, verse: number) {
+    if (!text) return null
+    const words_arr = text.split(' ')
+    return words_arr.map((word, i) => {
+      const clean = word.replace(/[.,;:'"!?()\[\]{}…·]/g, '')
+      const wordId = `_kr_${verse}_${i}`
+      const isSelected = selectedWordId === wordId
+      return (
+        <Fragment key={i}>
+          <span className="inline">
+            <button
+              onClick={() => {
+                onWordHover?.(null)
+                onWordClick(wordId, { word, clean, verse, version: '개역개정' })
+              }}
+              onMouseEnter={(e) => {
+                onWordHover?.({
+                  word,
+                  verse,
+                  version: '개역개정',
+                  basicMeaning: `${clean} (클릭 시 AI 단어 분석)`,
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }}
+              onMouseMove={(e) => {
+                onWordHover?.({
+                  word,
+                  verse,
+                  version: '개역개정',
+                  basicMeaning: `${clean} (클릭 시 AI 단어 분석)`,
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }}
+              onMouseLeave={() => onWordHover?.(null)}
+              className={`transition-colors cursor-pointer rounded px-0.5 ${
+                isSelected
+                  ? 'text-indigo-300 bg-indigo-500/20 underline decoration-indigo-400'
+                  : 'hover:text-indigo-300 hover:bg-white/5'
+              }`}
+            >
+              {word}
+            </button>
+          </span>
+          {i < words_arr.length - 1 && <span className="text-inherit"> </span>}
+        </Fragment>
+      )
+    })
+  }
+
   function renderAlignedText(text: string, verse: number, version: string) {
     if (!text) return null
     const words_arr = text.split(' ')
@@ -2442,7 +2493,7 @@ function ParallelPassagePanel({
                 {showTranslations.korean && (
                   <div className="flex items-start gap-2">
                     <span className="text-[10px] text-slate-500 w-10 shrink-0 mt-0.5 font-medium">개역</span>
-                    <p className="text-sm text-slate-100 leading-relaxed">{v.korean}</p>
+                    <span className="text-sm text-slate-100 leading-relaxed">{renderKoreanText(v.korean, v.verse)}</span>
                   </div>
                 )}
                 {/* NIV */}
