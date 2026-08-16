@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   GripHorizontal,
@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Sparkles,
   Loader2,
+  BookOpen,
 } from 'lucide-react'
 
 export interface WordDetailData {
@@ -40,6 +41,19 @@ export interface EnglishWordDetailData {
   usage?: { ref: string; text: string }[]
 }
 
+export interface HoverWordInfo {
+  word: string
+  lemma?: string
+  strong?: string
+  partOfSpeech?: string
+  basicMeaning?: string
+  contextualMeaning?: string
+  simpleExplanation?: string
+  pronunciation?: string
+  verse?: number
+  version?: string
+}
+
 interface DraggableWordModalProps {
   isOpen: boolean
   onClose: () => void
@@ -52,6 +66,7 @@ interface DraggableWordModalProps {
   fallbackWord?: { word: string; clean: string; verse: number } | null
   isLoading?: boolean
   loadingText?: string
+  initialPosition?: { x: number; y: number }
 }
 
 export default function DraggableWordModal({
@@ -66,103 +81,60 @@ export default function DraggableWordModal({
   fallbackWord,
   isLoading = false,
   loadingText = 'AI가 이 단어를 정밀 분석하고 있습니다...',
+  initialPosition,
 }: DraggableWordModalProps) {
   const [mounted, setMounted] = useState(false)
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 100, y: 100 })
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 200, y: 150 })
   const [isDragging, setIsDragging] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
 
-  const posRef = useRef<{ x: number; y: number }>({ x: 100, y: 100 })
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number; elemX: number; elemY: number }>({
-    mouseX: 0,
-    mouseY: 0,
-    elemX: 100,
-    elemY: 100,
-  })
-
+  const dragOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 })
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
     if (typeof window !== 'undefined') {
       const modalWidth = 380
-      const defaultX = Math.max(20, window.innerWidth - modalWidth - 360)
-      const defaultY = Math.min(130, Math.max(70, window.innerHeight * 0.12))
+      const defaultX = initialPosition?.x ?? Math.max(20, window.innerWidth - modalWidth - 360)
+      const defaultY = initialPosition?.y ?? Math.min(130, Math.max(80, window.innerHeight * 0.12))
       setPosition({ x: defaultX, y: defaultY })
-      posRef.current = { x: defaultX, y: defaultY }
     }
-  }, [])
+  }, [initialPosition])
 
-  // Mouse Drag Handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // 버튼 클릭 시 드래그 방지
+  // Modern Pointer Events for 100% Reliable Dragging across any browser/OS
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return
 
+    const target = e.currentTarget
+    target.setPointerCapture(e.pointerId)
     setIsDragging(true)
-    dragStartRef.current = {
-      mouseX: e.clientX,
-      mouseY: e.clientY,
-      elemX: posRef.current.x,
-      elemY: posRef.current.y,
+
+    dragOffsetRef.current = {
+      offsetX: e.clientX - position.x,
+      offsetY: e.clientY - position.y,
     }
     e.preventDefault()
-  }
+  }, [position.x, position.y])
 
-  // Touch Drag Handlers (Tablet / Mobile)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    if (e.touches.length === 1) {
-      setIsDragging(true)
-      dragStartRef.current = {
-        mouseX: e.touches[0].clientX,
-        mouseY: e.touches[0].clientY,
-        elemX: posRef.current.x,
-        elemY: posRef.current.y,
-      }
-    }
-  }
-
-  useEffect(() => {
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging) return
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragStartRef.current.mouseX
-      const dy = e.clientY - dragStartRef.current.mouseY
-      const modalWidth = modalRef.current?.offsetWidth || 380
-      const newX = Math.max(10, Math.min(window.innerWidth - modalWidth - 10, dragStartRef.current.elemX + dx))
-      const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.elemY + dy))
+    const modalWidth = modalRef.current?.offsetWidth || 380
+    const rawX = e.clientX - dragOffsetRef.current.offsetX
+    const rawY = e.clientY - dragOffsetRef.current.offsetY
 
-      posRef.current = { x: newX, y: newY }
-      setPosition({ x: newX, y: newY })
-    }
+    const newX = Math.max(10, Math.min(window.innerWidth - modalWidth - 10, rawX))
+    const newY = Math.max(10, Math.min(window.innerHeight - 60, rawY))
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        const dx = e.touches[0].clientX - dragStartRef.current.mouseX
-        const dy = e.touches[0].clientY - dragStartRef.current.mouseY
-        const modalWidth = modalRef.current?.offsetWidth || 380
-        const newX = Math.max(10, Math.min(window.innerWidth - modalWidth - 10, dragStartRef.current.elemX + dx))
-        const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.elemY + dy))
+    setPosition({ x: newX, y: newY })
+  }, [isDragging])
 
-        posRef.current = { x: newX, y: newY }
-        setPosition({ x: newX, y: newY })
-      }
-    }
-
-    const handleDragEnd = () => {
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
       setIsDragging(false)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleDragEnd)
-    window.addEventListener('touchmove', handleTouchMove)
-    window.addEventListener('touchend', handleDragEnd)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleDragEnd)
-      window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleDragEnd)
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      } catch {}
     }
   }, [isDragging])
 
@@ -184,17 +156,18 @@ export default function DraggableWordModal({
         left: `${position.x}px`,
         top: `${position.y}px`,
         zIndex: 9999,
-        touchAction: 'none',
       }}
-      className={`w-[380px] max-w-[calc(100vw-24px)] bg-[#070b19]/95 backdrop-blur-2xl border border-indigo-500/40 rounded-2xl shadow-2xl shadow-black/90 ring-1 ring-white/15 transition-shadow select-none ${
-        isDragging ? 'shadow-indigo-500/30 ring-indigo-400/50 cursor-grabbing opacity-95 scale-[1.01]' : 'shadow-black/80'
+      className={`w-[380px] max-w-[calc(100vw-24px)] bg-[#070b19]/95 backdrop-blur-2xl border border-indigo-500/40 rounded-2xl shadow-2xl shadow-black/90 ring-1 ring-white/15 transition-shadow ${
+        isDragging ? 'shadow-indigo-500/40 ring-indigo-400/60 scale-[1.01]' : 'shadow-black/80'
       }`}
     >
       {/* ─── Draggable Header Bar ─── */}
       <div
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-950/80 via-purple-950/60 to-slate-950/80 rounded-t-2xl cursor-grab active:cursor-grabbing select-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-950/90 via-purple-950/70 to-slate-950/90 rounded-t-2xl cursor-grab active:cursor-grabbing select-none"
       >
         <div className="flex items-center gap-2 overflow-hidden pointer-events-none">
           <Move className="w-3.5 h-3.5 text-indigo-300 shrink-0 animate-pulse" />
@@ -217,7 +190,7 @@ export default function DraggableWordModal({
             <button
               onClick={onToggleFloating}
               title="우측 사이드바로 고정"
-              className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
             >
               <Pin className="w-3.5 h-3.5" />
             </button>
@@ -227,7 +200,7 @@ export default function DraggableWordModal({
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             title={isMinimized ? '펼치기' : '최소화'}
-            className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
           >
             {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
           </button>
@@ -236,7 +209,7 @@ export default function DraggableWordModal({
           <button
             onClick={onClose}
             title="닫기"
-            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

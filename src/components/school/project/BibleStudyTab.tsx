@@ -38,6 +38,7 @@ function getStudyData(book: string, chapter: number) {
   const key = `${book}_${chapter}`
   return STUDY_DATA_REGISTRY[key] || null
 }import DraggableWordModal from '@/components/common/DraggableWordModal'
+import WordHoverCard, { HoverWordInfo } from '@/components/common/WordHoverCard'
 
 interface Props { project: ProjectDetail; passages?: BiblePassage[] }
 
@@ -71,6 +72,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [isFloatingModal, setIsFloatingModal] = useState(true)
+  const [hoverInfo, setHoverInfo] = useState<HoverWordInfo | null>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const scrollPosRef = useRef(0)
   const prevViewKeyRef = useRef('')
@@ -1213,6 +1215,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
                 selectedVerse={selectedVerse}
                 onWordClick={handleWordClick}
                 onVerseClick={handleVerseClick}
+                onWordHover={setHoverInfo}
                 translationLoading={translationLoading[passageKey] || {}}
                 diffVerses={diffVerses}
               />
@@ -1230,6 +1233,7 @@ export default function BibleStudyTab({ project, passages }: Props) {
                   selectedVerse={selectedVerse}
                   onWordClick={handleWordClick}
                   onVerseClick={handleVerseClick}
+                  onWordHover={setHoverInfo}
                   translationLoading={translationLoading[passageKey] || {}}
                   diffVerses={diffVerses}
                 />
@@ -1333,6 +1337,9 @@ export default function BibleStudyTab({ project, passages }: Props) {
         {/* Bottom spacer */}
         <div className="h-8" />
       </div>
+
+      {/* ─── Instant Word Hover Preview ─── */}
+      <WordHoverCard info={hoverInfo} />
 
       {/* ─── Draggable Floating Word Detail Modal ─── */}
       <DraggableWordModal
@@ -2154,7 +2161,7 @@ function TranslationDiffSummary({
 
 function ParallelPassagePanel({
   verses, words, wordAlignments, showTranslations, selectedWordId, selectedVerse,
-  onWordClick, onVerseClick, translationLoading, diffVerses,
+  onWordClick, onVerseClick, onWordHover, translationLoading, diffVerses,
 }: {
   verses: typeof JOHN_VERSES
   words: Record<string, JohnWordDetail>
@@ -2164,6 +2171,7 @@ function ParallelPassagePanel({
   selectedVerse: number | null
   onWordClick: (id: string, fallbackWord?: { word: string; clean: string; verse: number; version?: string } | null) => void
   onVerseClick: (v: number) => void
+  onWordHover?: (info: HoverWordInfo | null) => void
   translationLoading?: Record<string, boolean>
   diffVerses?: Set<number>  // 번역 차이가 있는 절 번호들
 }) {
@@ -2185,17 +2193,55 @@ function ParallelPassagePanel({
       const greekWordId = alignmentMap.get(alignmentKey)
       if (greekWordId && words[greekWordId]) {
         const isSelected = selectedWordId === greekWordId
+        const wd = words[greekWordId]
         return (
-            <Fragment key={i}>
+          <Fragment key={i}>
             <span className="inline">
               <button
-                onClick={() => onWordClick(greekWordId)}
+                onClick={() => {
+                  onWordHover?.(null)
+                  onWordClick(greekWordId)
+                }}
+                onMouseEnter={(e) => {
+                  onWordHover?.({
+                    word,
+                    lemma: wd.lemmaGreek,
+                    strong: wd.strong,
+                    partOfSpeech: wd.partOfSpeech,
+                    basicMeaning: wd.basicMeaning,
+                    contextualMeaning: wd.contextualMeaning,
+                    simpleExplanation: wd.simpleExplanation,
+                    transliteration: wd.transliteration,
+                    pronunciation: wd.pronunciation,
+                    verse,
+                    version,
+                    x: e.clientX,
+                    y: e.clientY,
+                  })
+                }}
+                onMouseMove={(e) => {
+                  onWordHover?.({
+                    word,
+                    lemma: wd.lemmaGreek,
+                    strong: wd.strong,
+                    partOfSpeech: wd.partOfSpeech,
+                    basicMeaning: wd.basicMeaning,
+                    contextualMeaning: wd.contextualMeaning,
+                    simpleExplanation: wd.simpleExplanation,
+                    transliteration: wd.transliteration,
+                    pronunciation: wd.pronunciation,
+                    verse,
+                    version,
+                    x: e.clientX,
+                    y: e.clientY,
+                  })
+                }}
+                onMouseLeave={() => onWordHover?.(null)}
                 className={`transition-colors cursor-pointer border-b border-dotted ${
                   isSelected
                     ? 'text-indigo-400 border-indigo-500 bg-indigo-500/10 rounded px-0.5'
                     : 'border-white/5 hover:border-indigo-500/30 hover:text-indigo-400'
                 }`}
-                title={words[greekWordId].basicMeaning}
               >
                 {word}
               </button>
@@ -2210,11 +2256,34 @@ function ParallelPassagePanel({
         <Fragment key={i}>
           <span className="inline">
             <button
-              onClick={() => onWordClick(wordId, { word, clean, verse, version })}
+              onClick={() => {
+                onWordHover?.(null)
+                onWordClick(wordId, { word, clean, verse, version })
+              }}
+              onMouseEnter={(e) => {
+                onWordHover?.({
+                  word,
+                  verse,
+                  version,
+                  basicMeaning: `${version} 영어 단어`,
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }}
+              onMouseMove={(e) => {
+                onWordHover?.({
+                  word,
+                  verse,
+                  version,
+                  basicMeaning: `${version} 영어 단어`,
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }}
+              onMouseLeave={() => onWordHover?.(null)}
               className={`transition-colors cursor-pointer ${
                 isSelected ? 'text-indigo-400 bg-indigo-500/10 rounded px-0.5' : 'hover:text-white/70'
               }`}
-              title={`${version}: ${clean}`}
             >
               {word}
             </button>
@@ -2242,7 +2311,7 @@ function ParallelPassagePanel({
             </span>
           )}
         </div>
-        <span className="text-[10px] text-slate-500">단어를 클릭하면 상세 분석을 볼 수 있습니다</span>
+        <span className="text-[10px] text-slate-500">단어에 마우스를 올리면 빠른 뜻이 표시되며, 클릭하면 이동 가능한 분석창이 열립니다</span>
       </div>
       <div className="divide-y divide-white/5">
         {verses.map(v => (
@@ -2291,10 +2360,67 @@ function ParallelPassagePanel({
                         )
                         const wordId = matchedEntry ? matchedEntry[0] : `_noword_${v.verse}_${i}`
                         const isSelected = selectedWordId === wordId
+                        const wd = matchedEntry ? matchedEntry[1] : null
                         return (
                           <Fragment key={i}>
                             <button
-                              onClick={() => onWordClick(wordId, matchedEntry ? null : { word, clean, verse: v.verse })}
+                              onClick={() => {
+                                onWordHover?.(null)
+                                onWordClick(wordId, matchedEntry ? null : { word, clean, verse: v.verse })
+                              }}
+                              onMouseEnter={(e) => {
+                                if (wd) {
+                                  onWordHover?.({
+                                    word,
+                                    lemma: wd.lemmaGreek,
+                                    strong: wd.strong,
+                                    partOfSpeech: wd.partOfSpeech,
+                                    basicMeaning: wd.basicMeaning,
+                                    contextualMeaning: wd.contextualMeaning,
+                                    simpleExplanation: wd.simpleExplanation,
+                                    transliteration: wd.transliteration,
+                                    pronunciation: wd.pronunciation,
+                                    verse: v.verse,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  })
+                                } else {
+                                  onWordHover?.({
+                                    word,
+                                    verse: v.verse,
+                                    basicMeaning: '원어 단어 (클릭 시 AI 분석)',
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  })
+                                }
+                              }}
+                              onMouseMove={(e) => {
+                                if (wd) {
+                                  onWordHover?.({
+                                    word,
+                                    lemma: wd.lemmaGreek,
+                                    strong: wd.strong,
+                                    partOfSpeech: wd.partOfSpeech,
+                                    basicMeaning: wd.basicMeaning,
+                                    contextualMeaning: wd.contextualMeaning,
+                                    simpleExplanation: wd.simpleExplanation,
+                                    transliteration: wd.transliteration,
+                                    pronunciation: wd.pronunciation,
+                                    verse: v.verse,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  })
+                                } else {
+                                  onWordHover?.({
+                                    word,
+                                    verse: v.verse,
+                                    basicMeaning: '원어 단어 (클릭 시 AI 분석)',
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  })
+                                }
+                              }}
+                              onMouseLeave={() => onWordHover?.(null)}
                               className={`transition-colors cursor-pointer ${
                                 isSelected
                                   ? 'text-indigo-400 bg-indigo-500/10 rounded px-0.5'
@@ -2302,7 +2428,6 @@ function ParallelPassagePanel({
                                     ? 'hover:text-indigo-400 border-b border-dotted border-white/5 hover:border-indigo-500/30'
                                     : 'hover:text-white/70'
                               }`}
-                              title={matchedEntry ? matchedEntry[1].basicMeaning : clean}
                             >
                               {word}
                             </button>
