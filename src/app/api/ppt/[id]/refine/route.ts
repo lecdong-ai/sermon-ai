@@ -109,7 +109,7 @@ export async function POST(
     ].filter(Boolean).join('\n')
 
     const res = await getOpenAI().chat.completions.create({
-      model: 'gpt-5.4-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: REFINE_SYSTEM_PROMPT },
         { role: 'user', content: userMessage },

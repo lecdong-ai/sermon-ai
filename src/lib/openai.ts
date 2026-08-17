@@ -22,7 +22,7 @@ import * as StudyGuidePrompt from './prompts/studyGuide'
 import * as PptStructuredPrompt from './prompts/pptStructured'
 import { STUDY_GUIDE_SCHEMA, StudyGuideInput, StudyGuideOutput } from '@/types'
 
-const SLIDE_MODEL = 'gpt-5.4-mini'
+const SLIDE_MODEL = 'gpt-4o-mini'
 
 let _openai: OpenAI | null = null
 
@@ -48,7 +48,7 @@ async function callAI<T>(
   temperature = 0.3,
 ): Promise<T> {
   const res = await getOpenAI().chat.completions.create({
-    model: 'gpt-5.4-mini',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `다음 설교 원고를 바탕으로 작업해주세요:\n\n${truncate(userText)}` },

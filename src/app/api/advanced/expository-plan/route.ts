@@ -98,7 +98,7 @@ async function enrichPlan(book: BibleBook, units: ExpositoryUnit[]): Promise<Pic
   }))
 
   const response = await getOpenai().chat.completions.create({
-    model: 'gpt-5.4-mini',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {

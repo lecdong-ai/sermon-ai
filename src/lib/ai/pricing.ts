@@ -2,7 +2,7 @@
 // OpenAI 공식 가격표 기준 — 가격 변동 시 여기만 업데이트
 export const PRICING = {
   'gpt-4o-mini':  { input: 0.15, output: 0.60 },
-  'gpt-5.4-mini': { input: 0.25, output: 2.00 },
+  'gpt-4o-mini': { input: 0.25, output: 2.00 },
 } as const
 
 export type ModelKey = keyof typeof PRICING

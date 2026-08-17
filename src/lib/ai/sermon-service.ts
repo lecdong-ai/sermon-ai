@@ -211,7 +211,7 @@ const DRAFT_SCHEMA = {
 
 async function callAI<T>(systemPrompt: string, userText: string, schema: any, maxTokens = 4000): Promise<T> {
   const res = await getOpenai().chat.completions.create({
-    model: 'gpt-5.4-mini',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userText },
@@ -327,7 +327,7 @@ export async function generateAdvancedDraft(input: DraftInput): Promise<string> 
   ].join('\n')
 
   const res = await getOpenai().chat.completions.create({
-    model: 'gpt-5.4-mini',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: AdvancedDraftPrompt.SYSTEM_PROMPT },
       { role: 'user', content: userText },
