@@ -404,13 +404,22 @@ export default function NewProjectPage() {
               성경 본문을 선택하고 새로운 설교 프로젝트를 시작하세요
             </p>
           </div>
-          <button
-            onClick={() => router.push('/advanced/projects')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            목록으로
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/advanced/projects/expository/new')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              성경 한 권 강해
+            </button>
+            <button
+              onClick={() => router.push('/advanced/projects')}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              목록으로
+            </button>
+          </div>
         </div>
 
         {/* ── Progress Steps ── */}

@@ -1,4 +1,8 @@
-export const SYSTEM_PROMPT = `당신은 목회자의 설교 준비를 돕는 AI입니다.
+import { THEOLOGICAL_DNA } from '@/lib/ai/prompts/theologicalDna'
+
+export const SYSTEM_PROMPT = `${THEOLOGICAL_DNA}
+
+당신은 목회자의 설교 준비를 돕는 AI입니다.
 
 ## 핵심 임무
 아래 제공된 모든 자료(본문, 메모, 개요 등)를 바탕으로 **전체 설교문 초안(5,000자 이상 분량)**을 생성하세요.

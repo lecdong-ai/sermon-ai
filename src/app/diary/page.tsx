@@ -2132,6 +2132,7 @@ export default function DiaryPage() {
                           <div className="flex items-center gap-2">
                             {/* Eco print toggle button */}
                             <button
+                              onPointerDown={(e) => e.stopPropagation()}
                               onClick={() => setIsEcoPrint(!isEcoPrint)}
                               className={`px-2 py-1 rounded-lg border text-[10.5px] font-bold transition-all flex items-center gap-1 ${
                                 isEcoPrint
@@ -2144,6 +2145,7 @@ export default function DiaryPage() {
                             </button>
 
                             <button
+                              onPointerDown={(e) => e.stopPropagation()}
                               onClick={() => setIsDarkPdfMode(!isDarkPdfMode)}
                               className={`px-2 py-1 rounded-lg border text-[10.5px] font-bold transition-all flex items-center gap-1 ${
                                 isDarkPdfMode
@@ -2157,6 +2159,7 @@ export default function DiaryPage() {
                             </button>
 
                             <button
+                              onPointerDown={(e) => e.stopPropagation()}
                               onClick={() => {
                                 setModalActiveTab(previewTab)
                                 setIsFullscreenModalOpen(true)
@@ -3569,6 +3572,7 @@ export default function DiaryPage() {
             </div>
             <div className="flex items-center gap-1">
               <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setIsPreviewSelectorOpen(!isPreviewSelectorOpen)}
                 className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                 title={isPreviewSelectorOpen ? '접기' : '펼치기'}
@@ -3576,6 +3580,7 @@ export default function DiaryPage() {
                 {isPreviewSelectorOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
               <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setShowPreviewFloating(false)}
                 className="p-1 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
                 title="닫기"
@@ -3707,6 +3712,7 @@ export default function DiaryPage() {
             </div>
             <div className="flex items-center gap-1">
               <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setIsPageCheckerOpen(!isPageCheckerOpen)}
                 className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                 title={isPageCheckerOpen ? '접기' : '펼치기'}
@@ -3714,6 +3720,7 @@ export default function DiaryPage() {
                 {isPageCheckerOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
               <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setShowPageCheckerFloating(false)}
                 className="p-1 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
                 title="닫기"

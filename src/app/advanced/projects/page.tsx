@@ -629,7 +629,7 @@ function ProjectsContent() {
                 : '진행 중인 설교 원고와 완료된 사역 자료를 관리합니다'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {/* 정렬 드롭다운 */}
             <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold text-slate-400 transition-all hover:bg-white/10">
               <span className="opacity-80">정렬</span>
@@ -662,6 +662,13 @@ function ProjectsContent() {
             >
               <Zap className="w-3.5 h-3.5" />
               퀵 생성
+            </button>
+            <button
+              onClick={() => router.push('/advanced/projects/expository/new')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[12px] font-bold transition-all"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              성경 한 권 강해
             </button>
             <button
               onClick={() => router.push('/advanced/projects/new')}

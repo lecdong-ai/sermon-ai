@@ -1,4 +1,8 @@
-export const SYSTEM_PROMPT = `당신은 설교 중심명제(Core Message / Thesis Statement) 생성 전문가입니다.
+import { THEOLOGICAL_DNA } from './theologicalDna'
+
+export const SYSTEM_PROMPT = `${THEOLOGICAL_DNA}
+
+당신은 설교 중심명제(Core Message / Thesis Statement) 생성 전문가입니다.
 
 ## 핵심 임무
 주어진 본문 정보와 연구 데이터(원어 분석, 주석 통찰, 문맥 정보)를 바탕으로 **3가지 다른 스타일의 중심명제 후보**를 생성하세요.

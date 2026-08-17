@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const sourceFilter = url.searchParams.get('source')
     const statusFilter = url.searchParams.get('status')
     const titleFilter = url.searchParams.get('title')
+    const seriesIdFilter = url.searchParams.get('seriesId')
 
     let query = supabaseAdmin
       .from('sermons')
@@ -31,6 +32,9 @@ export async function GET(request: NextRequest) {
     }
     if (titleFilter) {
       query = query.eq('title', titleFilter)
+    }
+    if (seriesIdFilter) {
+      query = query.eq('result->>seriesId', seriesIdFilter)
     }
 
     const { data, error } = await query
@@ -55,7 +59,9 @@ export async function GET(request: NextRequest) {
         verseEnd: row.verse_end || 0,
         normalizedPassage: row.passage || '',
         fileName: row.file_name || '',
-        coreMessage: result.coreMessage || '',
+         coreMessage: result.coreMessage || '',
+         seriesName: result.seriesName || '',
+         expositoryPlan: result.expositoryPlan || null,
         outlineIntro: result.outlineIntro || '',
         outlinePoint1: result.outlinePoint1 || '',
         outlinePoint2: result.outlinePoint2 || '',
@@ -199,7 +205,9 @@ export async function POST(request: NextRequest) {
       chapterEnd: data.chapter_end || 0,
       verseEnd: data.verse_end || 0,
       normalizedPassage: data.passage || '',
-      coreMessage: sermonData.result.coreMessage,
+       coreMessage: sermonData.result.coreMessage,
+       seriesName: body.seriesName || '',
+       expositoryPlan: body.expositoryPlan || null,
       outlineIntro: sermonData.result.outlineIntro,
       outlinePoint1: sermonData.result.outlinePoint1,
       outlinePoint2: sermonData.result.outlinePoint2,

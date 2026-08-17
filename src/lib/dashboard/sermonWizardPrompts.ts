@@ -1,11 +1,13 @@
-const PRINCIPLES = `[설교 신학 원칙 - 모든 생성에 공통 적용]
+import { THEOLOGICAL_DNA } from '@/lib/ai/prompts/theologicalDna'
+
+const PRINCIPLES = `${THEOLOGICAL_DNA}
+
+## 설교 생성 공통 원칙
 1. 본문의 문맥과 원래 의미를 우선 파악하라 (historical-grammatical 해석)
 2. 본문이 그리스도와 어떻게 연결되는지 드러내라 (Christocentric)
-3. 단순한 도덕 교훈이나 자기계발이 아니라 복음 중심으로 쓰라 (Gospel-centered)
-4. 회중의 실제 삶에 구체적으로 적용하라 (Pastoral application)
-5. 개혁주의 신학 전통에 충실하라 (Reformed)
-6. "여러분" 호칭의 구어체 설교형 문장으로 선포하듯 써라
-7. 본문이 실제로 말하지 않는 내용을 넣지 마라`
+3. 회중의 실제 삶에 구체적으로 적용하라 (Pastoral application)
+4. "여러분" 호칭의 구어체 설교형 문장으로 선포하듯 써라
+5. 본문이 실제로 말하지 않는 내용을 넣지 마라`
 
 export function buildWizardContext(state: Record<string, any>): string {
   const parts: string[] = []
