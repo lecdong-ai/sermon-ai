@@ -181,10 +181,52 @@ export default function QtShopPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {/* 벙커 목양 (homeggmi) */}
+            <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+              <div className="aspect-[4/3] overflow-hidden bg-indigo-50">
+                <img
+                  src="https://shop-phinf.pstatic.net/20260411_223/1775881239679sDjsp_JPEG/110014173773828944_267216174.jpg?type=o1000"
+                  alt="벙커 목양 공식 스마트스토어"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-navy-900">벙커 목양</h3>
+                    <p className="text-xs text-navy-600">AI 목양 도구 & 사역 자료</p>
+                  </div>
+                </div>
+                <p className="text-sm text-navy-700 leading-relaxed mb-4 flex-1">
+                  사역자를 위한 본문 연구, 설교 작성, 주일학교 자료 등 AI 목양 도구와 기독교 사역 굿즈를 만나보세요.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {['AI 목양도구', '설교 자료', '성경 연구', '사역 굿즈'].map((tag) => (
+                    <span key={tag} className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <a
+                  href="https://smartstore.naver.com/homeggmi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all mt-auto"
+                >
+                  <Store className="w-4 h-4" />
+                  스토어 바로가기
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
 
             {/* 거창한벙커 */}
-            <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
               <div className="aspect-[4/3] overflow-hidden bg-amber-50">
                 <img
                   src="/can.jpg"
@@ -192,7 +234,7 @@ export default function QtShopPage() {
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="p-6">
+              <div className="p-6 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                     <Coffee className="w-5 h-5" />
@@ -202,7 +244,7 @@ export default function QtShopPage() {
                     <p className="text-xs text-navy-600">레터링 수제캔커피</p>
                   </div>
                 </div>
-                <p className="text-sm text-navy-700 leading-relaxed mb-4">
+                <p className="text-sm text-navy-700 leading-relaxed mb-4 flex-1">
                   감사와 응원의 메시지를 레터링으로 담아 선물하는 수제 캔커피 스토어.
                   하나하나 수작업으로 제작되어 마음이 그대로 전해집니다.
                 </p>
@@ -217,7 +259,7 @@ export default function QtShopPage() {
                   href="https://smartstore.naver.com/geochangbunker/products/4551068056"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all"
+                  className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all mt-auto"
                 >
                   <Store className="w-4 h-4" />
                   스토어 바로가기
@@ -227,7 +269,7 @@ export default function QtShopPage() {
             </div>
 
             {/* 프레시 네이쳐 */}
-            <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
               <div className="aspect-[4/3] overflow-hidden bg-green-50">
                 <img
                   src="/fluit.png"
@@ -235,7 +277,7 @@ export default function QtShopPage() {
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="p-6">
+              <div className="p-6 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
                     <Apple className="w-5 h-5" />
@@ -245,7 +287,7 @@ export default function QtShopPage() {
                     <p className="text-xs text-navy-600">신선한 과일 전문</p>
                   </div>
                 </div>
-                <p className="text-sm text-navy-700 leading-relaxed mb-4">
+                <p className="text-sm text-navy-700 leading-relaxed mb-4 flex-1">
                   국내산 제철 과일부터 엄선된 수입과일까지 모든 과일을 합리적인 가격에 만나보세요.
                   교회 모임과 행사를 신선한 과일로 풍성하게 채워보세요.
                 </p>
@@ -260,7 +302,7 @@ export default function QtShopPage() {
                   href="https://smartstore.naver.com/roaster"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all"
+                  className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all mt-auto"
                 >
                   <Store className="w-4 h-4" />
                   스토어 바로가기

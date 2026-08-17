@@ -208,9 +208,63 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
 
-            {/* Partner 1: 거창한벙커 */}
+            {/* Partner 1: 벙커 목양 (homeggmi) */}
+            <div className="bg-white rounded-3xl overflow-hidden border border-warm-200/80 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <div className="relative aspect-[16/10] overflow-hidden bg-indigo-50">
+                  <img
+                    src="https://shop-phinf.pstatic.net/20260411_223/1775881239679sDjsp_JPEG/110014173773828944_267216174.jpg?type=o1000"
+                    alt="벙커 목양 공식 스마트스토어"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-indigo-600 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-xs flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI 목양도구 & 사역자료
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-8 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-100/80 text-indigo-700 flex items-center justify-center font-bold text-lg shrink-0">
+                      ✨
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-navy-950">벙커 목양</h3>
+                      <p className="text-xs text-navy-500">사역자를 위한 AI 목양도구 & 굿즈 스토어</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-navy-700 leading-relaxed">
+                    사역자를 위한 본문 연구, 설교 작성, 주일학교 자료 등 AI 목양 도구와 기독교 사역 굿즈를 공식 스마트스토어에서 만나보세요.
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {['AI 목양도구', '설교 자료', '성경 연구', '사역 굿즈'].map((tag) => (
+                      <span key={tag} className="text-[11px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200/60 px-2.5 py-1 rounded-lg">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-8 pt-0">
+                <a
+                  href="https://smartstore.naver.com/homeggmi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-button transition-all"
+                >
+                  <Store className="w-4 h-4" />
+                  스토어에서 구경 & 구매하기
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Partner 2: 거창한벙커 */}
             <div className="bg-white rounded-3xl overflow-hidden border border-warm-200/80 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
               <div>
                 <div className="relative aspect-[16/10] overflow-hidden bg-amber-50">
@@ -264,7 +318,7 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Partner 2: 프레시 네이쳐 */}
+            {/* Partner 3: 프레시 네이쳐 */}
             <div className="bg-white rounded-3xl overflow-hidden border border-warm-200/80 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
               <div>
                 <div className="relative aspect-[16/10] overflow-hidden bg-green-50">
