@@ -71,11 +71,19 @@ export default function SettingsPage() {
     setProcessing(true)
     setMessage(null)
     try {
+      // 1. 클라우드 Supabase DB에서 내 모든 설교, 시리즈, 강해, 큐티 데이터 일괄 삭제
+      const res = await fetch('/api/user/reset-all', { method: 'POST' })
+      const resData = await res.json()
+      if (!resData.success) {
+        throw new Error(resData.error || 'DB 초기화에 실패했습니다.')
+      }
+
+      // 2. 로컬 브라우저 캐시 삭제
       clearAllLocalData()
-      await signOut()
-      router.push('/login')
+      setMessage({ type: 'ok', text: '내 모든 설교, 강해, 시리즈 및 연구 데이터가 DB에서 완벽하게 초기화되었습니다.' })
     } catch (e: any) {
       setMessage({ type: 'error', text: e?.message || '초기화 중 오류가 발생했습니다.' })
+    } finally {
       setProcessing(false)
       setConfirming(null)
     }
