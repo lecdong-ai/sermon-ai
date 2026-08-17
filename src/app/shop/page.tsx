@@ -187,7 +187,7 @@ export default function ShopPage() {
             <div className="bg-white rounded-2xl overflow-hidden border border-warm-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
               <div className="aspect-[4/3] overflow-hidden bg-indigo-50">
                 <img
-                  src="https://shop-phinf.pstatic.net/20260411_223/1775881239679sDjsp_JPEG/110014173773828944_267216174.jpg?type=o1000"
+                  src="/main.jpg"
                   alt="벙커 목양 굿노트 말씀 다이어리 & 디지털 플래너"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
