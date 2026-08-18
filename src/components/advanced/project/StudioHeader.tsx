@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { X, Save, Loader2, BookOpen, Clock, FileText, History, BarChart2, Play, Download, Printer, Eye, Edit3 } from 'lucide-react'
+import { X, Save, Loader2, BookOpen, Clock, FileText, History, BarChart2, Play, Download, Printer, Eye, Edit3, Sparkles } from 'lucide-react'
 import type { JohnManuscriptData } from '@/lib/advanced/johnManuscriptData'
 
 // Save indicator is isolated to prevent flickering
@@ -43,6 +43,7 @@ interface Props {
   onExport: () => void
   onPrint: () => void
   onSave: () => void
+  onRewrite: () => void
   onClose: () => void
   isSaving: boolean
   lastSaved: string | null
@@ -61,6 +62,7 @@ export default memo(function StudioHeader({
   onExport,
   onPrint,
   onSave,
+  onRewrite,
   onClose,
   isSaving,
   lastSaved,
@@ -103,6 +105,14 @@ export default memo(function StudioHeader({
         >
           <BarChart2 className="w-4 h-4" />
           AI 진단
+        </button>
+        <button
+          onClick={onRewrite}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25 border border-cyan-400/20 shrink-0"
+          aria-label="안티그래비티 원고 재가공"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">안티그래비티</span>
         </button>
 
         <div className="w-px h-4 bg-white/10" />

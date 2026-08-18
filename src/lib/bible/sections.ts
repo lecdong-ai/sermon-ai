@@ -661,6 +661,33 @@ export const BIBLE_SECTIONS: Record<string, Record<number, BibleSection[]>> = {
       { startVerse: 1, endVerse: 19, title: '예수의 예루살렘 입성' },
       { startVerse: 20, endVerse: 50, title: '죽음의 때가 가까우니' },
     ],
+    13: [
+      { startVerse: 1, endVerse: 38, title: '제자들의 발을 씻기시고 새 계명을 주시다' },
+    ],
+    14: [
+      { startVerse: 1, endVerse: 31, title: '길이요 진리요 생명이신 예수' },
+    ],
+    15: [
+      { startVerse: 1, endVerse: 27, title: '참포도나무이신 예수와 사랑의 계명' },
+    ],
+    16: [
+      { startVerse: 1, endVerse: 33, title: '성령의 사역과 세상에서의 환난' },
+    ],
+    17: [
+      { startVerse: 1, endVerse: 26, title: '대제사장 예수의 기도' },
+    ],
+    18: [
+      { startVerse: 1, endVerse: 40, title: '예수의 체포와 심문' },
+    ],
+    19: [
+      { startVerse: 1, endVerse: 42, title: '십자가에 못 박히시고 장사되시다' },
+    ],
+    20: [
+      { startVerse: 1, endVerse: 31, title: '부활하신 예수와 제자들' },
+    ],
+    21: [
+      { startVerse: 1, endVerse: 25, title: '갈릴리에서 제자들을 회복하시다' },
+    ],
   },
 
   // ====== 출애굽기 ======

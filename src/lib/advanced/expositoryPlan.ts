@@ -1,3 +1,5 @@
+import type { ExpositoryModelId } from './expositoryModels'
+
 export interface ExpositoryUnit {
   order: number
   title: string
@@ -18,5 +20,7 @@ export interface ExpositoryPlan {
   seriesTitle: string
   bookTheme: string
   canonicalFlow: string
+  model?: ExpositoryModelId
+  modelLabel?: string
   units: ExpositoryUnit[]
 }

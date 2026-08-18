@@ -6,6 +6,7 @@ import { BIBLE_BOOKS, type BibleBook } from '@/lib/advanced/bibleBooks'
 import { getSectionsInRange } from '@/lib/bible/sections'
 import { SYSTEM_PROMPT } from '@/lib/ai/prompts/expositoryPlan'
 import type { ExpositoryPlan, ExpositoryUnit } from '@/lib/advanced/expositoryPlan'
+import { getExpositoryModel, getRecommendedTargetCount, type ExpositoryModelId } from '@/lib/advanced/expositoryModels'
 
 let _openai: OpenAI | null = null
 
@@ -34,7 +35,7 @@ function buildPassage(book: BibleBook, startChapter: number, startVerse: number,
   return `${book.abbr} ${startChapter}:${startVerse}-${endChapter}:${endVerse}`
 }
 
-function createBaseUnits(book: BibleBook, targetCount: number): ExpositoryUnit[] {
+function getNaturalSections(book: BibleBook) {
   const sections = getSectionsInRange(book.abbr, 1, 1, book.chapters, 999)
   const byChapter = new Map<number, Array<{ startVerse: number; endVerse: number; title: string }>>()
 
@@ -47,7 +48,7 @@ function createBaseUnits(book: BibleBook, targetCount: number): ExpositoryUnit[]
       : [{ startVerse: 1, endVerse: 999, title: `${chapter}장 본문` }])
   }
 
-  const natural = Array.from(byChapter.entries()).flatMap(([chapter, chapterSections]) =>
+  return Array.from(byChapter.entries()).flatMap(([chapter, chapterSections]) =>
     chapterSections.map(section => ({
       startChapter: chapter,
       startVerse: section.startVerse,
@@ -56,13 +57,23 @@ function createBaseUnits(book: BibleBook, targetCount: number): ExpositoryUnit[]
       title: section.title,
     })),
   )
+}
+
+function createBaseUnits(book: BibleBook, targetCount: number): ExpositoryUnit[] {
+  const natural = getNaturalSections(book)
 
   const count = Math.min(Math.max(targetCount, 1), natural.length)
-  const groupSize = Math.ceil(natural.length / count)
   const units: ExpositoryUnit[] = []
 
-  for (let index = 0; index < natural.length; index += groupSize) {
-    const group = natural.slice(index, index + groupSize)
+  // 단순히 고정 크기로 묶으면 목표 회차보다 훨씬 적은 설교가 생깁니다.
+  // 나머지 본문 단위를 앞쪽부터 하나씩 배분해 목표 회차를 정확히 맞춥니다.
+  let cursor = 0
+  for (let unitIndex = 0; unitIndex < count; unitIndex++) {
+    const remainingSections = natural.length - cursor
+    const remainingUnits = count - unitIndex
+    const groupLength = Math.ceil(remainingSections / remainingUnits)
+    const group = natural.slice(cursor, cursor + groupLength)
+    cursor += groupLength
     const first = group[0]
     const last = group[group.length - 1]
     units.push({
@@ -90,17 +101,35 @@ function parseJson(content: string): any {
   return JSON.parse(cleaned.slice(start, end + 1))
 }
 
-async function enrichPlan(book: BibleBook, units: ExpositoryUnit[]): Promise<Pick<ExpositoryPlan, 'seriesTitle' | 'bookTheme' | 'canonicalFlow' | 'units'>> {
+async function enrichPlan(book: BibleBook, units: ExpositoryUnit[], modelId?: string): Promise<Pick<ExpositoryPlan, 'seriesTitle' | 'bookTheme' | 'canonicalFlow' | 'units'>> {
   const source = units.map(unit => ({
     order: unit.order,
     passage: unit.passage,
     sectionTitles: unit.sectionTitles,
   }))
 
+  const stylePrompts: Record<string, string> = {
+    lloyd_jones: `[강해 스타일: 마틴 로이드 존스 (Deep Exposition)]
+- 본문 구절 하나하나의 신학적 깊이와 구속사적 의미를 촘촘히 짚어냅니다.
+- 인간의 전적 부패와 하나님의 영광스러운 은혜의 조명을 극대화하여 깊이 있는 강해 대지를 작성하세요.`,
+    park_youngsun: `[강해 스타일: 박영선 목사 (Pastoral Depth)]
+- 하나님의 절대 주권과 그분이 성도를 삶의 현실 속에서 어떻게 인격적으로 빚어가시는가(신앙의 빚어짐)에 집중합니다.
+- 본문의 신학적 뼈대 위에 목양적 성숙과 영적 자람을 이끄는 강해 개요를 작성하세요.`,
+    john_piper: `[강해 스타일: 존 파이퍼 (Verse-by-Verse Passion)]
+- 본문의 명확한 문맥과 '하나님을 최고로 기뻐하는 복음의 열정'을 일깨우는 중심 메시지를 작성합니다.
+- 성경 텍스트 본문 원문에 충실한 강해 포인트를 작성하세요.`,
+    practical: `[강해 스타일: 옥한흠 목사 (Practical Expository)]
+- 성도들의 실제 삶과 교회 현장에 직결되는 선명한 적용과 헌신을 이끌어냅니다.
+- 명쾌한 대지 구조와 현대적인 복음적 적용점을 강해 포인트로 작성하세요.`,
+  }
+
+  const selectedModel = getExpositoryModel(modelId)
+  const selectedStylePrompt = stylePrompts[selectedModel.styleKey]
+
   const response = await getOpenai().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: `${SYSTEM_PROMPT}\n\n${selectedStylePrompt}` },
       {
         role: 'user',
         content: [
@@ -132,7 +161,8 @@ async function enrichPlan(book: BibleBook, units: ExpositoryUnit[]): Promise<Pic
   }
 }
 
-function makeFallbackPlan(book: BibleBook, units: ExpositoryUnit[]): ExpositoryPlan {
+function makeFallbackPlan(book: BibleBook, units: ExpositoryUnit[], modelId?: string): ExpositoryPlan {
+  const model = getExpositoryModel(modelId)
   return {
     book: book.name,
     bookAbbr: book.abbr,
@@ -140,11 +170,14 @@ function makeFallbackPlan(book: BibleBook, units: ExpositoryUnit[]): ExpositoryP
     seriesTitle: `${book.name} 강해`,
     bookTheme: `${book.name}을 처음부터 끝까지 본문의 흐름에 따라 읽으며, 그 안에서 하나님이 누구시며 무엇을 행하시는지를 살핍니다. 각 본문 단위의 죄와 인간의 무능을 정직하게 드러내고, 본문에 근거한 복음과 은혜로 연결합니다.`,
     canonicalFlow: `${book.name}의 첫 본문에서 마지막 본문까지 순서대로 진행합니다. 각 설교는 앞뒤 문맥과 성경 전체의 구속사적 흐름 안에서 본문을 해석합니다.`,
+    model: model.id,
+    modelLabel: model.label,
     units,
   }
 }
 
-function normalizePlan(book: BibleBook, raw: Pick<ExpositoryPlan, 'seriesTitle' | 'bookTheme' | 'canonicalFlow' | 'units'>, baseUnits: ExpositoryUnit[]): ExpositoryPlan {
+function normalizePlan(book: BibleBook, raw: Pick<ExpositoryPlan, 'seriesTitle' | 'bookTheme' | 'canonicalFlow' | 'units'>, baseUnits: ExpositoryUnit[], modelId: ExpositoryModelId): ExpositoryPlan {
+  const model = getExpositoryModel(modelId)
   return {
     book: book.name,
     bookAbbr: book.abbr,
@@ -152,6 +185,8 @@ function normalizePlan(book: BibleBook, raw: Pick<ExpositoryPlan, 'seriesTitle' 
     seriesTitle: raw.seriesTitle,
     bookTheme: raw.bookTheme,
     canonicalFlow: raw.canonicalFlow,
+    model: model.id,
+    modelLabel: model.label,
     units: baseUnits.map((unit, index) => ({
       ...unit,
       title: raw.units[index]?.title || unit.title,
@@ -248,6 +283,8 @@ async function createSermonSeries(request: NextRequest, userId: string, body: an
           book: book.name,
           order: unit.order,
           total: plan.units.length,
+          model: plan.model,
+          modelLabel: plan.modelLabel,
           bookTheme: plan.bookTheme,
           canonicalFlow: plan.canonicalFlow,
           focus: unit.focus,
@@ -289,14 +326,19 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = checkOpenAIRateLimit(request, user.id, { max: 5, windowSec: 60 })
     if (rateLimitResponse) return rateLimitResponse
 
-    const targetCount = Math.max(1, Math.min(72, Number(body.targetCount) || 24))
+    const model = getExpositoryModel(body.model)
+    const naturalSectionCount = getNaturalSections(book).length
+    const requestedTarget = Number(body.targetCount)
+    const targetCount = Number.isFinite(requestedTarget) && requestedTarget > 0
+      ? Math.max(1, Math.min(72, requestedTarget))
+      : getRecommendedTargetCount(naturalSectionCount, model.id)
     const baseUnits = createBaseUnits(book, targetCount)
     let plan: ExpositoryPlan
     try {
-      plan = normalizePlan(book, await enrichPlan(book, baseUnits), baseUnits)
+      plan = normalizePlan(book, await enrichPlan(book, baseUnits, model.id), baseUnits, model.id)
     } catch (error) {
       console.error('[expository-plan] AI enrichment failed, using base plan:', error)
-      plan = makeFallbackPlan(book, baseUnits)
+      plan = makeFallbackPlan(book, baseUnits, model.id)
     }
 
     return NextResponse.json({ success: true, data: plan })

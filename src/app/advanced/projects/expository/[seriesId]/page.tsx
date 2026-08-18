@@ -12,8 +12,9 @@ interface ExpositorySermon {
   status: string
   expositoryPlan?: {
       book?: string
-      order?: number
-      total?: number
+       order?: number
+       total?: number
+       modelLabel?: string
       bookTheme?: string
       canonicalFlow?: string
       focus?: string
@@ -47,9 +48,27 @@ export default function ExpositorySeriesPage() {
       .finally(() => setLoading(false))
   }, [seriesId])
 
+  const ordered = useMemo(() => [...sermons].sort((a, b) => (a.expositoryPlan?.order || 0) - (b.expositoryPlan?.order || 0)), [sermons])
+  const firstPlan = ordered[0]?.expositoryPlan
+  const completed = ordered.filter(sermon => sermon.status === 'completed').length
   const nextUpSermon = useMemo(() => {
     return ordered.find(s => s.status !== 'completed') || ordered[0]
   }, [ordered])
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-full"><Loader2 className="w-7 h-7 text-indigo-400 animate-spin" /></div>
+  }
+
+  if (error || ordered.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full px-6">
+        <div className="text-center">
+          <p className="text-sm text-red-300 font-bold mb-3">{error || '강해 프로젝트를 찾을 수 없습니다.'}</p>
+          <button onClick={() => router.push('/advanced/projects')} className="text-xs text-indigo-300 hover:text-white font-bold">프로젝트 목록으로 돌아가기</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-full pb-20">
@@ -62,7 +81,7 @@ export default function ExpositorySeriesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2"><BookMarked className="w-4 h-4 text-amber-400" /><span className="text-[10px] text-amber-400/70 uppercase tracking-widest font-extrabold">Expository Bible Project</span></div>
               <h1 className="text-2xl font-black text-white">{firstPlan?.book || '성경 한 권'} 강해 프로젝트</h1>
-              <p className="text-[12px] text-slate-500 mt-1">처음부터 끝까지 본문 순서대로 진행하는 스마트 강해 로드맵</p>
+              <p className="text-[12px] text-slate-500 mt-1">처음부터 끝까지 본문 순서대로 진행하는 스마트 강해 로드맵{firstPlan?.modelLabel ? ` · ${firstPlan.modelLabel}` : ''}</p>
             </div>
             <div className="text-right shrink-0">
               <p className="text-2xl text-white font-black">{completed}<span className="text-sm text-slate-500">/{ordered.length}</span></p>

@@ -8,6 +8,7 @@ import { getVersions, saveVersion, restoreVersion, type ManuscriptVersion } from
 import ManuscriptDiagnosis from './ManuscriptDiagnosis'
 import PracticeMode from './PracticeMode'
 import StudioHeader from './StudioHeader'
+import AntigravityRewritePanel from './AntigravityRewritePanel'
 
 interface Props {
   manuscript: JohnManuscriptData
@@ -31,6 +32,7 @@ export default function ManuscriptStudio({
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const [sidebarTab, setSidebarTab] = useState<'versions' | 'diagnosis' | null>(null)
   const [showPractice, setShowPractice] = useState(false)
+  const [showAntigravity, setShowAntigravity] = useState(false)
   const [weavingRefId, setWeavingRefId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
   const [versions, setVersions] = useState<ManuscriptVersion[]>([])
@@ -127,6 +129,7 @@ export default function ManuscriptStudio({
   const toggleVersions = useCallback(() => setSidebarTab(prev => prev === 'versions' ? null : 'versions'), [])
   const toggleDiagnosis = useCallback(() => setSidebarTab(prev => prev === 'diagnosis' ? null : 'diagnosis'), [])
   const openPractice = useCallback(() => setShowPractice(true), [])
+  const openAntigravity = useCallback(() => setShowAntigravity(true), [])
 
   const handlePrint = useCallback(() => {
     const e = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -223,6 +226,7 @@ export default function ManuscriptStudio({
         onToggleVersions={toggleVersions}
         onToggleDiagnosis={toggleDiagnosis}
         onPractice={openPractice}
+        onRewrite={openAntigravity}
         onExport={handleExport}
         onPrint={handlePrint}
         onSave={() => handleSave()}
@@ -459,6 +463,14 @@ export default function ManuscriptStudio({
         <PracticeMode
           manuscript={localManuscript}
           onClose={() => setShowPractice(false)}
+        />
+      )}
+
+      {showAntigravity && (
+        <AntigravityRewritePanel
+          manuscript={localManuscript}
+          projectId={projectId}
+          onClose={() => setShowAntigravity(false)}
         />
       )}
     </div>

@@ -21,6 +21,7 @@ import { SYSTEM_PROMPT as REFERENCE_PROMPT } from '@/lib/ai/prompts/reference'
 import { SYSTEM_PROMPT as MANUSCRIPT_DIAGNOSIS_PROMPT } from '@/lib/ai/prompts/manuscript-diagnosis'
 import { SYSTEM_PROMPT as REFERENCE_WEAVE_PROMPT } from '@/lib/ai/prompts/referenceWeave'
 import { SYSTEM_PROMPT as COMMENTARY_TO_SECTION_PROMPT } from '@/lib/ai/prompts/commentaryToSection'
+import { SYSTEM_PROMPT as ANTIGRAVITY_REWRITER_PROMPT } from '@/lib/ai/prompts/antigravityRewriter'
 import {
   SYSTEM_PROMPT_SPLIT,
   SYSTEM_PROMPT_DRAFT,
@@ -134,6 +135,7 @@ JSON 배열만 반환. 마크다운, 설명, 주석 일체 없이.
   'manuscript-diagnosis': MANUSCRIPT_DIAGNOSIS_PROMPT,
   'reference-weave': REFERENCE_WEAVE_PROMPT,
   'commentary-to-section': COMMENTARY_TO_SECTION_PROMPT,
+  'antigravity-rewrite': ANTIGRAVITY_REWRITER_PROMPT,
   'memo-insight': `# 성경 해석 원칙 (모든 분석에 적용)
 1. 성경은 하나님의 영감을 받은 신뢰할 수 있는 말씀임을 전제한다.
 2. 본문은 문맥 안에서 해석하며, 본문이 실제로 말하는 뜻을 우선 파악한다.
@@ -522,6 +524,11 @@ export async function POST(request: NextRequest) {
     // QT 타입은 관리자만 접근 가능
     if (type.startsWith('qt-') && !(await isAdmin(user.id))) {
       return NextResponse.json({ success: false, error: '관리자만 접근할 수 있습니다.' }, { status: 403 })
+    }
+
+    if (type === 'antigravity-rewrite') {
+      const rateLimitResponse = checkOpenAIRateLimit(request, user.id, { max: 3, windowSec: 60 })
+      if (rateLimitResponse) return rateLimitResponse
     }
 
     // 다중 본문 fallback 지원용 변수
@@ -1033,6 +1040,46 @@ ${data.coreMessage ? `Core message: ${data.coreMessage}` : ''}${multiPassageText
       model = 'gpt-4o-mini'
       maxTokens = 1000
       temperature = 0.7
+    } else if (type === 'antigravity-rewrite') {
+      const { title, passage, coreMessage, sections, referenceNotes, illustrationNotes } = data
+      const safeSections = Array.isArray(sections) ? sections : []
+      const fullText = safeSections
+        .map((section: any) => `[${section.label || '섹션'}]${section.passage ? ` (${section.passage})` : ''}\n${section.content || ''}`)
+        .join('\n\n')
+      const referenceText = Array.isArray(referenceNotes) && referenceNotes.length > 0
+        ? referenceNotes.map((note: any) => `- ${note.title || '참고 메모'}: ${note.content || ''}`).join('\n')
+        : '(참고 메모 없음)'
+      const illustrationText = Array.isArray(illustrationNotes) && illustrationNotes.length > 0
+        ? illustrationNotes.map((note: any) => `- ${note.title || '예화 메모'}: ${note.content || ''}`).join('\n')
+        : '(예화 메모 없음)'
+
+      if (!fullText.trim()) {
+        return NextResponse.json({ success: false, error: '재가공할 원고 내용이 없습니다.' }, { status: 400 })
+      }
+      if (fullText.length > 60000) {
+        return NextResponse.json({ success: false, error: '원고가 너무 깁니다. 60,000자 이하로 줄인 뒤 다시 시도해주세요.' }, { status: 413 })
+      }
+
+      userText = `다음 설교 원고를 위의 Antigravity 규칙에 따라 재구성하세요.
+
+## 원고 정보
+- 제목: ${title || '(제목 없음)'}
+- 본문: ${passage || '(본문 없음)'}
+- 중심 메시지: ${coreMessage || '(중심 메시지 없음)'}
+
+## 원고 전문
+${fullText}
+
+## 참고 메모
+${referenceText}
+
+## 예화 메모
+${illustrationText}
+
+원고의 핵심 메시지와 본문 근거를 빠짐없이 보존하고, 지정된 출력 마크다운 구조에 맞춰 완성된 시나리오만 출력하세요.`
+      maxTokens = 7000
+      temperature = 0.7
+      frequencyPenalty = 0.15
     } else if (type === 'suggest-titles') {
       // 다중 본문 지원 (하위 호환: 단일 book/chapter/verse도 받음)
       const { passages, passage, book, chapter, verseStart, verseEnd, audience, season, sermonType, additionalContext } = data
@@ -1544,17 +1591,20 @@ ${currentContent || ''}
     let output = res.choices[0]?.message?.content || ''
 
     // Extract JSON robustly — handle both {} objects and [] arrays
+    const isPlainTextType = type === 'antigravity-rewrite'
     const isArrayType = type === 'suggest-titles' || type === 'illustration' || type === 'reference'
     const openChar = isArrayType ? '[' : '{'
     const closeChar = isArrayType ? ']' : '}'
     // Improved JSON extraction: find first { and last }
-    const firstOpen = output.indexOf(openChar)
-    const lastClose = output.lastIndexOf(closeChar)
-    if (firstOpen !== -1 && lastClose > firstOpen) {
-      output = output.slice(firstOpen, lastClose + 1)
-    } else {
-      // Fallback to markdown removal
-      output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
+    if (!isPlainTextType) {
+      const firstOpen = output.indexOf(openChar)
+      const lastClose = output.lastIndexOf(closeChar)
+      if (firstOpen !== -1 && lastClose > firstOpen) {
+        output = output.slice(firstOpen, lastClose + 1)
+      } else {
+        // Fallback to markdown removal
+        output = output.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim()
+      }
     }
 
     if ((type === 'bible-study' || type === 'bible-study-core' || type === 'bible-study-translation' || type === 'bible-study-multi' || type === 'suggest-titles' || type === 'outline' || type === 'application' || type === 'application-direction' || type === 'application-generate' || type === 'core-message' || type === 'delivery' || type === 'illustration' || type === 'reference' || type === 'manuscript-diagnosis' || type === 'greek-words-analyze' || type === 'qt-reshape-day') && output) {

@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, BookMarked, BookOpen, Calendar, Check, ChevronRight,
-  Layers, Loader2, Sparkles, Wand2,
+  Layers, Loader2, Wand2,
 } from 'lucide-react'
 import { BIBLE_BOOKS, getBooksByTestament, type BibleBook } from '@/lib/advanced/bibleBooks'
 import type { ExpositoryPlan } from '@/lib/advanced/expositoryPlan'
+import { EXPOSITORY_MODELS, type ExpositoryModelId } from '@/lib/advanced/expositoryModels'
 
-const TARGET_COUNTS = [12, 24, 36, 52]
 const SERMON_TYPES = ['주일예배', '수요예배', '금요기도회', '새벽기도회', '특별집회']
 const AUDIENCES = ['장년', '청년', '학생', '전체', '혼합']
 const SEASONS = ['일반주일', '사순절', '부활절', '성령강림절', '추수감사절', '대림절', '성탄절']
@@ -30,7 +30,7 @@ export default function ExpositoryProjectPage() {
   const router = useRouter()
   const [testament, setTestament] = useState<'OT' | 'NT'>('NT')
   const [book, setBook] = useState<BibleBook | null>(null)
-  const [targetCount, setTargetCount] = useState(24)
+  const [model, setModel] = useState<ExpositoryModelId>('pastoral')
   const [startDate, setStartDate] = useState('')
   const [intervalDays, setIntervalDays] = useState(7)
   const [seriesTitle, setSeriesTitle] = useState('')
@@ -58,7 +58,7 @@ export default function ExpositoryProjectPage() {
       const response = await fetch('/api/advanced/expository-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book: book.id, targetCount }),
+        body: JSON.stringify({ book: book.id, model }),
       })
       const json = await response.json()
       if (!response.ok || !json.success) throw new Error(json.error || '강해 계획 생성에 실패했습니다.')
@@ -160,21 +160,25 @@ export default function ExpositoryProjectPage() {
               )}
             </div>
 
-            <div className="space-y-3 border-t border-white/5 pt-5">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">2 · 강해 속도</p>
-              <div className="grid grid-cols-2 gap-2">
-                {TARGET_COUNTS.map(count => (
-                  <button
-                    key={count}
-                    onClick={() => { setTargetCount(count); setPlan(null) }}
-                    className={`px-3 py-2 rounded-xl border text-left transition-all ${targetCount === count ? 'bg-amber-500/15 border-amber-400/40 text-amber-200' : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white'}`}
-                  >
-                    <span className="block text-[12px] font-bold">약 {count}편</span>
-                    <span className="block text-[9px] text-slate-600 mt-0.5">본문 단위에 맞춰 조정</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-slate-600 leading-relaxed">AI가 성경책의 소제목과 문맥을 기준으로 단위를 묶습니다. 단순히 장 수를 나누지 않고 본문 흐름을 우선합니다.</p>
+             <div className="space-y-3 border-t border-white/5 pt-5">
+               <div className="flex items-center justify-between gap-2">
+                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">2 · 강해 모델</p>
+                 <span className="text-[9px] text-indigo-300/70 font-bold">회차 자동 산정</span>
+               </div>
+               <div className="space-y-2">
+                 {EXPOSITORY_MODELS.map(item => (
+                   <button
+                     key={item.id}
+                     onClick={() => { setModel(item.id); setPlan(null) }}
+                     className={`w-full px-3 py-2.5 rounded-xl border text-left transition-all ${model === item.id ? 'bg-amber-500/15 border-amber-400/40 text-amber-200' : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white'}`}
+                   >
+                     <span className="block text-[12px] font-bold">{item.label}</span>
+                     <span className="block text-[9px] text-slate-500 mt-0.5">{item.reference}</span>
+                     <span className="block text-[10px] text-slate-600 mt-1 leading-relaxed">{item.description}</span>
+                   </button>
+                 ))}
+               </div>
+               <p className="text-[10px] text-slate-600 leading-relaxed">실제 강해 회차는 목회자와 교회의 일정에 따라 달라집니다. 이 모델은 특정 목회자의 회차를 복제하지 않고, 선택한 책의 소제목 밀도와 본문 흐름을 반영해 권장 회차를 계산합니다.</p>
             </div>
 
             <button
@@ -213,7 +217,7 @@ export default function ExpositoryProjectPage() {
                 <div className="p-6 border-b border-white/5 bg-gradient-to-br from-indigo-500/10 via-transparent to-amber-500/5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] text-amber-300/80 font-extrabold uppercase tracking-widest mb-2">{plan.book} · {plan.units.length}편</p>
+                       <p className="text-[10px] text-amber-300/80 font-extrabold uppercase tracking-widest mb-2">{plan.book} · {plan.units.length}편 · {plan.modelLabel || '본문 중심 강해'}</p>
                       <h2 className="text-lg font-black text-white">{plan.seriesTitle}</h2>
                     </div>
                     <Check className="w-5 h-5 text-emerald-400 shrink-0" />
