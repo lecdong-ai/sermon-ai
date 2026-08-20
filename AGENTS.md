@@ -48,21 +48,29 @@
 - **자동 반영**: 개별 페이지 컴포넌트 디자인 변경 + 팩 구성(포함/제외/순서) 변경 모두 양쪽 자동 반영. 미동기화 유일 지점 = themeColor (wizard는 `#4F7796` 고정, /diary는 수채화 테마 선택)
 - **build**: 성공 ✅ | 아직 커밋 안 됨
 
+## Phase 5 — 강해 모델 선택 + 안티그래비티 원고 재가공
+- **강해 모델 3종**: `src/lib/advanced/expositoryModels.ts` 신규 — pastoral(박영선), deep(로이드존스), textual(파이퍼), sectionsPerSermon 기반 자동 회차 산정
+- **expository-plan API**: targetCount 수동 입력 제거, 모델별 스타일 프롬프트 주입, plan에 model/modelLabel 저장
+- **시리즈 페이지**: 헤더에 modelLabel 표시, 로딩/에러 상태, 정렬 순서 기반 완료 카운트
+- **AntigravityRewritePanel**: `src/components/advanced/project/` 신규 — 원고 재구성 (제목/본문/중심메시지 보존, 3회/분 rate limit, 6만자 제한), StudioHeader에 "안티그래비티" 버튼
+- **요한복음 13-21장 소제목 섹션 추가** (`src/lib/bible/sections.ts`)
+- **build**: 성공 ✅ | 커밋: `6ce3126` | push 완료 → Vercel auto-deploy
+
 ## Active / Blocked
-- **Active**: QtDiaryPackViewer 프리셋 리팩터 (빌드 성공, 미커밋)
+- **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. `bunker.ai.kr/advanced/qt` → 큐티 + 묵상 팩 미리보기로 100소원 제거·순서 확인 (로컬 검증 완료, 배포 대기)
-2. (선택) themeColor 동기화: wizard에서 /diary 수채화 테마 연동 or 테마 선택 UI
-3. 레거시 "큐티만" 경로 `coverMainTitle`이 "September Bunker 목양 월간 Q.T"로 바뀜 (기존 한글) — 한글 유지 원하면 coverMainTitle만 한글 monthName 별도 처리
-4. 커밋 + push → Vercel auto-deploy
+1. 배포 확인: `bunker.ai.kr/advanced/projects/expository` 모델 선택 UI + 시리즈 페이지 modelLabel
+2. `bunker.ai.kr/advanced/qt` → 큐티 + 묵상 팩 미리보기 확인 (100소원 제거·순서)
+3. (선택) themeColor 동기화: wizard에서 /diary 수채화 테마 연동 or 테마 선택 UI
+4. 레거시 "큐티만" 경로 `coverMainTitle` 한글 유지 여부 결정
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
 - **Vercel 프로젝트**: `sermon-dashboard` (prj_PDAy19aQvpFcRZXYULDyiovljsE2) — `bunker.ai.kr`
 - **GitHub**: `lecdong-ai/sermon-ai` (monorepo, main 브랜치)
-- **현재 HEAD**: `96cf9b3`
+- **현재 HEAD**: `6ce3126`
 - **구 Vercel 프로젝트** (삭제 예정):
   - `church-school` (prj_bpDO10wPvg1V9G3oDoe8vkZ6Ro6f)
   - `qt-archive` (prj_ZBOh0L7lMGM5LzYs7QGF5CLfvN5l)
