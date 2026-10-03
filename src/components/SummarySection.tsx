@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useMemo } from 'react'
 import { FileDown } from 'lucide-react'
 import SectionCard from './SectionCard'
 import type { Summary } from '@/types'
+import { formatSummaryForNotion } from '@/lib/notionClipboard'
 
 interface Props {
   data: Summary
@@ -164,11 +165,17 @@ export default function SummarySection({ data }: Props) {
     }
   }, [data])
 
+  const notionData = useMemo(
+    () => formatSummaryForNotion(data.central_topic || '설교 요약', data.passage_text, data),
+    [data]
+  )
+
   return (
     <SectionCard
       title="설교 요약"
       emoji="📄"
       copyText={fullText}
+      notionData={notionData}
       action={
         <button
           onClick={handleDownloadPdf}

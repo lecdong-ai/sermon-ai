@@ -17,6 +17,10 @@ import {
   Plus, Music2, Search, Star, Trash2, ArrowLeft, Home
 } from 'lucide-react'
 import Link from 'next/link'
+import NotionCopyButton from '@/components/NotionCopyButton'
+import { formatContiForNotion } from '@/lib/notionClipboard'
+import { loadMockContiDetail } from '@/lib/conti/mockStorage'
+import { getSampleConti } from '@/lib/conti/samples'
 
 interface PageClientProps {
   initialContis: ContiSet[]
@@ -396,28 +400,44 @@ export default function ContiPageClient({
                               {formatDate(conti.date)}
                             </p>
                           </button>
-                          <div className="flex items-center justify-end gap-1 px-4 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleTogglePin(conti.id) }}
-                              className={`p-1 rounded hover:bg-white/10 transition-colors ${
-                                isPinned ? 'text-amber-400' : 'text-slate-600 hover:text-amber-300'
-                              }`}
-                              title={isPinned ? '핀 해제' : '핀 고정'}
-                            >
-                              <Star className={`w-3 h-3 ${isPinned ? 'fill-amber-400' : ''}`} />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (window.confirm(`"${conti.title}" 콘티를 삭제할까요?`)) {
-                                  handleDeleteConti(conti.id)
-                                }
-                              }}
-                              className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-red-400 transition-colors"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
+                          <div className="flex items-center justify-between px-3.5 pb-2.5 pt-2 border-t border-white/5 text-[11px]">
+                            <div className="flex items-center gap-1 text-slate-400 truncate text-[10px] min-w-0 mr-2">
+                              <span>🏛️</span>
+                              <span className="font-bold text-indigo-400">🌿 AREAS</span>
+                              <span className="text-slate-600">&gt;</span>
+                              <span className="truncate text-slate-300">찬양 콘티</span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <NotionCopyButton
+                                data={() => {
+                                  const detail = loadMockContiDetail(conti.id) || getSampleConti(conti.id)
+                                  return formatContiForNotion(conti, detail?.items || [])
+                                }}
+                                variant="compact"
+                                className="text-[10px] py-0.5 px-2 bg-white/5 hover:bg-white/15 text-slate-200 border-white/10"
+                              />
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleTogglePin(conti.id) }}
+                                className={`p-1 rounded hover:bg-white/10 transition-colors ${
+                                  isPinned ? 'text-amber-400' : 'text-slate-500 hover:text-amber-300'
+                                }`}
+                                title={isPinned ? '핀 해제' : '핀 고정'}
+                              >
+                                <Star className={`w-3.5 h-3.5 ${isPinned ? 'fill-amber-400' : ''}`} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (window.confirm(`"${conti.title}" 콘티를 삭제할까요?`)) {
+                                    handleDeleteConti(conti.id)
+                                  }
+                                }}
+                                className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-colors"
+                                title="삭제"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )

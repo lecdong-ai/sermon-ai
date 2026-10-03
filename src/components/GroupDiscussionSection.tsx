@@ -9,6 +9,7 @@ import {
   FileDown
 } from 'lucide-react'
 import type { GroupDiscussion, AgeGroupMaterial } from '@/types'
+import { formatGroupDiscussionForNotion } from '@/lib/notionClipboard'
 
 const AGE_GROUPS: {
   key: keyof Pick<GroupDiscussion, 'teens' | 'twentiesThirties' | 'forties' | 'fiftiesSixties' | 'seventiesPlus'>
@@ -287,10 +288,16 @@ export default function GroupDiscussionSection({ data, passageText }: Props) {
     }
   }, [data, passageText])
 
+  const notionData = useCallback(
+    () => formatGroupDiscussionForNotion(data.title, passageText, data),
+    [data, passageText]
+  )
+
   return (
     <SectionCard
       title="소그룹 나눔 자료"
       emoji="💬"
+      notionData={notionData}
       action={
         <Link
           href="/study-guide"

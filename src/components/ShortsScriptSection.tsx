@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import SectionCard from './SectionCard'
+import { formatScriptForNotion } from '@/lib/notionClipboard'
 
 interface Props {
   data: string
@@ -21,9 +23,10 @@ function splitSubtitle(text: string): { subtitle: string; body: string } | null 
 
 export default function ShortsScriptSection({ data }: Props) {
   const paragraphs = data.split('\n\n').filter(Boolean)
+  const notionData = useMemo(() => formatScriptForNotion('유튜브 쇼츠 대본', data, true), [data])
 
   return (
-    <SectionCard title="유튜브 쇼츠대본" emoji="📱" copyText={data}>
+    <SectionCard title="유튜브 쇼츠대본" emoji="📱" copyText={data} notionData={notionData}>
       <div className="space-y-4">
         {paragraphs.map((p, i) => {
           const lines = p.split('\n').filter(Boolean)

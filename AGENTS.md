@@ -56,6 +56,21 @@
 - **요한복음 13-21장 소제목 섹션 추가** (`src/lib/bible/sections.ts`)
 - **build**: 성공 ✅ | 커밋: `6ce3126` | push 완료 → Vercel auto-deploy
 
+## Phase 6 — 사역자 세컨드 브레인(Notion PARA) 1:1 결합 및 노션 리치 복사
+- **Notion 클립보드 유틸리티**: `src/lib/notionClipboard.ts` 신규 — `ClipboardItem` API 기반 `text/html` + `text/plain` 동시 기록. 노션 인식용 콜아웃(Callout), 토글/인용, 구분선, 불릿 리스트 자동 변환 지원.
+- **도메인별 1:1 PARA 포맷터**:
+  - 설교 요약 → `📚 RESOURCES > 설교 아카이브 & 성경 본문 주석 DB`
+  - 소그룹 나눔 질문 → `📚 RESOURCES > 소그룹 성경나눔 & 구역공과 DB`
+  - 카드뉴스 기획안 → `📚 RESOURCES > 교회 SNS & 미디어 콘텐츠 아카이브`
+  - 유튜브 설교/쇼츠 대본 → `📚 RESOURCES > 영상 설교 & 유튜브 미디어 대본 DB`
+  - 예배 PPT 슬라이드 → `📚 RESOURCES > 예배 & 강의 PPT 템플릿 보관소`
+  - 교회학교 공지문 (4종) → `🎯 PROJECTS > 부서 공지 & 발송 관리 DB`
+  - 찬양 콘티 → `🌿 AREAS > 찬양 사역팀 & 주간 콘티 허브`
+- **UI 컴포넌트**: `src/components/NotionCopyButton.tsx` 신규 — 모노크롬 뱃지, 컴팩트 버튼, 와이드 매핑 안내 배너 3가지 변형 지원 + Mac/Win 단축키(Cmd+V / Ctrl+V) 자동 감지 + 복사 완료 시 전역 토스트 알림.
+- **SectionCard 통합**: `src/components/SectionCard.tsx`에 `notionData` 속성 추가하여 설교 6종 가공 데이터 섹션 전체에 1초 복사 버튼 및 하단 세컨드 브레인 매핑 가이드 자동 적용.
+- **공지문 & 찬양 콘티 결합**: `notice-writer` 각 시안 카드 및 `conti` 콘티 카드/시트 에디터에 노션 복사 & 매핑 UI 연동 완료.
+- **build**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음

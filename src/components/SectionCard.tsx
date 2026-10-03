@@ -2,6 +2,8 @@
 
 import { Copy, Check } from 'lucide-react'
 import { useState, memo } from 'react'
+import type { NotionBlockData } from '@/lib/notionClipboard'
+import NotionCopyButton from './NotionCopyButton'
 
 interface Props {
   title: string
@@ -10,9 +12,20 @@ interface Props {
   copyText?: string
   action?: React.ReactNode
   className?: string
+  notionData?: NotionBlockData | (() => NotionBlockData)
+  showNotionBanner?: boolean
 }
 
-export default memo(function SectionCard({ title, emoji, children, copyText, action, className = '' }: Props) {
+export default memo(function SectionCard({
+  title,
+  emoji,
+  children,
+  copyText,
+  action,
+  className = '',
+  notionData,
+  showNotionBanner = true,
+}: Props) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -29,12 +42,17 @@ export default memo(function SectionCard({ title, emoji, children, copyText, act
       className={`rounded-xl border border-[#e4e2dd] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] animate-in ${className}`}
     >
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e4e2dd]/60 bg-[#fdfcf9]">
-        <h3 className="text-[15px] font-bold text-[#2c2a29]">
-          {emoji ? <span className="mr-1.5">{emoji}</span> : null}
-          {title}
-        </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="text-[15px] font-bold text-[#2c2a29] truncate">
+            {emoji ? <span className="mr-1.5">{emoji}</span> : null}
+            {title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           {action}
+          {notionData && (
+            <NotionCopyButton data={notionData} variant="compact" />
+          )}
           {copyText && (
             <button
               onClick={handleCopy}
@@ -57,7 +75,11 @@ export default memo(function SectionCard({ title, emoji, children, copyText, act
       </div>
       <div className="p-5">
         {children}
+        {notionData && showNotionBanner && (
+          <NotionCopyButton data={notionData} variant="banner" />
+        )}
       </div>
     </section>
   )
 })
+

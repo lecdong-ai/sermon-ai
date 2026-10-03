@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import SectionCard from './SectionCard'
 import { ExternalLink, FileDown, Loader2, AlertCircle, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PPTData, PPTShare } from '@/types'
+import { formatPptForNotion } from '@/lib/notionClipboard'
 import { PPT_THEME_KEYS, PPT_THEME_META } from '@/lib/pptTheme'
 import type { PPTThemeKey } from '@/lib/pptTheme'
 
@@ -104,10 +105,13 @@ export default function PPTSection({ data, sermonId }: Props) {
     apply: 'text-emerald-800',
   }
 
+  const notionData = useMemo(() => formatPptForNotion('예배/강의 PPT 슬라이드', data), [data])
+
   return (
     <SectionCard
       title="PPT 개요"
       emoji="📊"
+      notionData={notionData}
       action={
         <div className="flex items-center gap-2">
           <button

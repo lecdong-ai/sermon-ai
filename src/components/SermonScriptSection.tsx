@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import SectionCard from './SectionCard'
 import { FileDown } from 'lucide-react'
+import { formatScriptForNotion } from '@/lib/notionClipboard'
 
 interface Props {
   data: string
@@ -40,8 +41,16 @@ export default function SermonScriptSection({ data }: Props) {
 
   const SECTION_HEADERS = /^(서론|본론|결론\/적용|결론|적용)\s*\n/
 
+  const notionData = useMemo(() => formatScriptForNotion('유튜브 설교 대본', data, false), [data])
+
   return (
-    <SectionCard title="유튜브 설교대본" emoji="🎙️" copyText={data} action={<button onClick={() => downloadPdf(contentRef.current)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"><FileDown className="w-3.5 h-3.5" /><span className="font-medium">PDF</span></button>}>
+    <SectionCard
+      title="유튜브 설교대본"
+      emoji="🎙️"
+      copyText={data}
+      notionData={notionData}
+      action={<button onClick={() => downloadPdf(contentRef.current)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] text-[#8b95a1] hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"><FileDown className="w-3.5 h-3.5" /><span className="font-medium">PDF</span></button>}
+    >
       <div ref={contentRef} className="space-y-5">
         {paragraphs.map((p, i) => {
           const cleaned = p.replace(SECTION_HEADERS, '')

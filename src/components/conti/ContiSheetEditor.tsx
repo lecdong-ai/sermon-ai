@@ -10,6 +10,8 @@ import {
   FolderOpen, Plus, Trash2, Scissors,
   LayoutGrid, Type, Music,
 } from 'lucide-react'
+import NotionCopyButton from '@/components/NotionCopyButton'
+import { formatContiForNotion } from '@/lib/notionClipboard'
 
 interface Props {
   conti: ContiSet
@@ -605,6 +607,13 @@ export default function ContiSheetEditor({ conti, items, onClose }: Props) {
               <RotateCcw className="w-3 h-3" />
             </button>
           </div>
+
+          {/* 노션 세컨드 브레인 복사 */}
+          <NotionCopyButton
+            data={() => formatContiForNotion(conti, items)}
+            variant="compact"
+            className="bg-white/10 hover:bg-white/15 text-white border-white/20 text-[11px] py-1.5 px-3"
+          />
 
           {/* PDF */}
           <button

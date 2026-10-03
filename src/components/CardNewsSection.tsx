@@ -4,6 +4,7 @@ import { useState, useRef, useMemo, useCallback } from 'react'
 import SectionCard from './SectionCard'
 import { ChevronLeft, ChevronRight, Download, FileText, Palette } from 'lucide-react'
 import type { CardNews } from '@/types'
+import { formatCardNewsForNotion } from '@/lib/notionClipboard'
 
 interface Props {
   data: CardNews
@@ -203,10 +204,13 @@ export default function CardNewsSection({ data }: Props) {
   const badgeClass = th.badges[label] || th.badges['본문']
   const bodyBg = th.bodyBg[label] || th.bodyBg['본문']
 
+  const notionData = useMemo(() => formatCardNewsForNotion(data.title || '카드뉴스 기획안', data), [data])
+
   return (
     <SectionCard
       title="카드뉴스"
       emoji="🎴"
+      notionData={notionData}
       action={
         <div className="flex items-center gap-1.5">
           <button

@@ -9,6 +9,8 @@ import {
 import { SITUATIONS, TARGETS, TONES } from '@/data/school/notice-templates';
 import { useAuth } from '@/components/AuthProvider';
 import { redirectToMainLogin } from '@/lib/school/auth-redirect';
+import NotionCopyButton from '@/components/NotionCopyButton';
+import { formatNoticeForNotion } from '@/lib/notionClipboard';
 
 interface GeneratedResults {
   version1: string;
@@ -440,6 +442,35 @@ export default function NoticeWriterPage() {
             {isCopied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clipboard className="w-3.5 h-3.5" />}
             <span>{isCopied ? '복사됨' : '복사'}</span>
           </button>
+        </div>
+
+        {/* 🏛️ 사역자 세컨드 브레인 매핑 가이드 바 */}
+        <div className="px-3.5 py-2.5 bg-gradient-to-r from-[#fbfbfa] to-[#f7f6f3] border-t border-slate-200/70 flex items-center justify-between gap-2 text-[11px]">
+          <div className="flex items-center gap-1.5 text-[#5a5652] truncate">
+            <span>🏛️</span>
+            <span className="font-semibold text-[#191711] hidden sm:inline">세컨드 브레인:</span>
+            <span className="font-bold text-[#2eaadc]">🎯 PROJECTS</span>
+            <span className="text-[#999]">&gt;</span>
+            <span className="truncate font-medium text-[#37352f]">부서 공지 &amp; 발송 관리 DB</span>
+          </div>
+          <NotionCopyButton
+            data={() => {
+              const sitLabel = SITUATIONS.find(s => s.value === situation)?.label || '공지';
+              const tgtLabel = TARGETS.find(t => t.value === target)?.label || '대상';
+              const toneLabel = TONES.find(t => t.value === tone)?.label || '어조';
+              return formatNoticeForNotion({
+                title: `${sitLabel} - ${tgtLabel}`,
+                versionTitle: title,
+                versionTag: badge,
+                content: content || '',
+                situation: sitLabel,
+                target: tgtLabel,
+                tone: toneLabel,
+              });
+            }}
+            variant="compact"
+            className="text-[11px] py-1 px-2.5 shrink-0 bg-white"
+          />
         </div>
       </div>
     );
