@@ -92,12 +92,12 @@ export default function NotionCopyButton({
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-[#0c7792]" />
-              <span className="text-[#0c7792] font-semibold">노션 복사됨!</span>
+              <span className="text-[#0c7792] font-semibold">노션 서식 복사됨!</span>
             </>
           ) : (
             <>
               <span className="text-[12px] leading-none">🏛️</span>
-              <span className="font-medium text-[#37352f]">노션 전용 복사</span>
+              <span className="font-medium text-[#37352f]">노션 서식으로 복사</span>
             </>
           )}
         </button>
@@ -182,7 +182,7 @@ export default function NotionCopyButton({
           ) : (
             <>
               <span className="text-[12px]">🏛️</span>
-              <span>노션 1초 복사</span>
+              <span>노션 서식으로 복사</span>
             </>
           )}
         </button>
