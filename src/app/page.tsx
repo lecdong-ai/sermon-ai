@@ -59,9 +59,9 @@ export default function HomePage() {
 
           {/* Sincere Human Headline */}
           <div className="space-y-4">
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] text-white">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.22] text-white">
               말씀을 연구하고 영혼을 돌보는 일에만,<br />
-              <span className="text-amber-300/95 font-serif font-normal italic">
+              <span className="bg-gradient-to-r from-amber-200 via-amber-300 to-amber-100 bg-clip-text text-transparent font-extrabold">
                 온전히 마음을 쏟으실 수 있도록.
               </span>
             </h1>
@@ -551,7 +551,7 @@ export default function HomePage() {
             <span className="text-xs font-bold text-amber-300 tracking-wider uppercase">
               WHY WE SERVE THE CHURCH
             </span>
-            <h2 className="text-2xl sm:text-4xl font-serif font-bold text-white leading-snug">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-snug">
               &ldquo;기술은 결코 성령의 감동과<br className="hidden sm:inline" />
               목회자의 눈물을 대신할 수 없습니다.&rdquo;
             </h2>
@@ -825,7 +825,7 @@ export default function HomePage() {
             <Church className="w-6 h-6" />
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-serif font-bold text-white leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
             오늘도 묵묵히 사역의 자리를 지키시는<br />
             당신의 수고를 깊이 응원합니다.
           </h2>
