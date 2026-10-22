@@ -116,11 +116,8 @@ export const BUNKER_NOTION_TEMPLATES: NotionTemplateItem[] = [
   },
 ];
 
-const CATEGORIES = ['전체', '통합 시스템', '설교·묵상', '교회학교', '행정·미디어'];
-
 export default function QtTemplatesLoungePage() {
   const [templates] = useState<NotionTemplateItem[]>(BUNKER_NOTION_TEMPLATES);
-  const [selectedCategory, setSelectedCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [likes, setLikes] = useState(528);
   const [isLiked, setIsLiked] = useState(false);
@@ -149,12 +146,13 @@ export default function QtTemplatesLoungePage() {
   const flagship = templates.find((t) => t.isFlagship) || templates[0];
 
   const filteredTemplates = templates.filter((tpl) => {
-    const matchCategory = selectedCategory === '전체' || tpl.category === selectedCategory;
-    const matchSearch =
-      tpl.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tpl.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCategory && matchSearch;
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      tpl.title.toLowerCase().includes(query) ||
+      tpl.subtitle.toLowerCase().includes(query) ||
+      tpl.tags.some((t) => t.toLowerCase().includes(query))
+    );
   });
 
   return (
@@ -323,10 +321,10 @@ export default function QtTemplatesLoungePage() {
       <section className="py-16 md:py-24 bg-surface">
         <div className="container-custom max-w-6xl space-y-10">
 
-          {/* Section Header & Filters */}
+          {/* Section Header */}
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div className="space-y-1.5">
                 <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
                   <Database className="w-4 h-4" />
                   <span>NOTION TEMPLATES LINEUP</span>
@@ -340,44 +338,25 @@ export default function QtTemplatesLoungePage() {
               </div>
 
               {/* Search Bar */}
-              <div className="relative w-full md:w-72 shrink-0">
+              <div className="relative w-full sm:w-72 shrink-0">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-400" />
                 <input
                   type="text"
                   placeholder="템플릿 제목 또는 태그 검색..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-8 py-2.5 rounded-2xl bg-white border border-warm-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                  className="w-full pl-10 pr-8 py-2.5 rounded-2xl bg-white border border-warm-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-xs"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-navy-400 hover:text-navy-700"
+                    aria-label="검색어 지우기"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
-            </div>
-
-            {/* Category Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
-              {CATEGORIES.map((cat) => {
-                const isSelected = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold shrink-0 transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-navy-950 text-white shadow-md shadow-navy-950/20 scale-[1.02]'
-                        : 'bg-warm-100/70 text-navy-600 hover:bg-warm-200/80 hover:text-navy-900'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
             </div>
           </div>
 
