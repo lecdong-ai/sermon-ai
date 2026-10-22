@@ -209,16 +209,16 @@ export default function QtTemplatesLoungePage() {
       {/* ════════════════════════════════════════════
           2. FLAGSHIP MASTER SHOWCASE (사역자 세컨드 브레인 집중 배너)
          ════════════════════════════════════════════ */}
-      <section className="py-12 md:py-16 bg-surface border-b border-border/50">
-        <div className="container-custom max-w-6xl space-y-6">
+      <section className="py-8 md:py-10 bg-surface border-b border-border/50">
+        <div className="container-custom max-w-6xl space-y-4">
 
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
                 <Crown className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                 <span>OFFICIAL FLAGSHIP 01</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-navy-950">
+              <h2 className="text-xl sm:text-2xl font-black text-navy-950">
                 대표 템플릿 · 사역자 세컨드 브레인
               </h2>
             </div>
@@ -229,31 +229,31 @@ export default function QtTemplatesLoungePage() {
           </div>
 
           {/* Flagship Card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1020] via-[#111827] to-[#1E293B] text-white p-7 sm:p-10 md:p-12 border border-indigo-500/30 shadow-2xl shadow-indigo-950/40">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1020] via-[#111827] to-[#1E293B] text-white p-6 sm:p-8 md:p-10 border border-indigo-500/30 shadow-2xl shadow-indigo-950/40">
             {/* Ambient Lighting */}
             <div className="absolute -top-32 -right-32 w-[420px] h-[420px] bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-32 -left-32 w-[420px] h-[420px] bg-gradient-to-tr from-amber-500/15 to-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
               
               {/* Left Content */}
-              <div className="lg:col-span-7 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-xs font-black tracking-wider">
+              <div className="lg:col-span-7 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-xs font-black tracking-wider">
                   <Crown className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
                   <span>{flagship.badge}</span>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight tracking-tight">
+                <div className="space-y-2">
+                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
                     {flagship.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-slate-300 leading-normal font-normal">
                     {flagship.description}
                   </p>
                 </div>
 
                 {/* 4 Feature Badges */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   {flagship.features.map((feat, idx) => (
                     <div key={idx} className="flex items-center gap-2 bg-white/[0.06] border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -264,42 +264,42 @@ export default function QtTemplatesLoungePage() {
               </div>
 
               {/* Right Dual Action Buttons */}
-              <div className="lg:col-span-5 bg-white/[0.06] border border-white/15 backdrop-blur-xl rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-xl">
-                <div className="space-y-2.5">
+              <div className="lg:col-span-5 bg-white/[0.06] border border-white/15 backdrop-blur-xl rounded-2xl p-5 sm:p-7 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-300">누적 이용 현황</span>
                     <span className="text-amber-300 font-extrabold flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 fill-amber-300" /> 평점 5.0 / 5.0
                     </span>
                   </div>
-                  <p className="text-sm font-bold text-white">
+                  <p className="text-xs sm:text-sm font-semibold text-white/95 leading-snug">
                     별도의 회원가입 없이 누구나 즉시 <br className="hidden sm:inline" />
                     노션에 복제하여 전용 웹도구와 함께 사용하세요.
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {/* 1. 템플릿 다운로드 버튼 */}
                   <a
                     href={flagship.downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-all group"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all group"
                   >
-                    <Download className="w-5 h-5 text-emerald-100 group-hover:-translate-y-0.5 transition-transform" />
+                    <Download className="w-4 h-4 text-emerald-100 group-hover:-translate-y-0.5 transition-transform" />
                     <span>템플릿 무료 다운로드 (노션 복제)</span>
-                    <ArrowUpRight className="w-4 h-4 text-emerald-200 opacity-80" />
+                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-200 opacity-80" />
                   </a>
 
                   {/* 2. 전용 웹사이트 연결 버튼 */}
                   {flagship.webAppUrl && (
                     <Link
                       href={flagship.webAppUrl}
-                      className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-600/35 active:scale-[0.98] transition-all group"
+                      className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/35 active:scale-[0.98] transition-all group"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform duration-300" />
                       <span>{flagship.webAppLabel || '전용 웹사이트 바로가기'}</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   )}
                 </div>
@@ -318,24 +318,23 @@ export default function QtTemplatesLoungePage() {
       {/* ════════════════════════════════════════════
           3. NOTION TEMPLATES CATALOG (향후 템플릿 지속 업로드 공간)
          ════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 bg-surface">
-        <div className="container-custom max-w-6xl space-y-10">
+      <section className="py-8 md:py-12 bg-surface">
+        <div className="container-custom max-w-6xl space-y-6 md:space-y-8">
 
           {/* Section Header */}
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
-                  <Database className="w-4 h-4" />
-                  <span>NOTION TEMPLATES LINEUP</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-navy-950">
-                  노션 사역 템플릿 전체 라인업
-                </h3>
-                <p className="text-xs sm:text-sm text-navy-600 font-normal">
-                  직접 검증하고 제작한 템플릿들이 순차적으로 이곳에 업로드됩니다.
-                </p>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
+                <Database className="w-4 h-4" />
+                <span>NOTION TEMPLATES LINEUP</span>
               </div>
+              <h3 className="text-xl sm:text-2xl font-black text-navy-950">
+                노션 사역 템플릿 전체 라인업
+              </h3>
+              <p className="text-xs sm:text-sm text-navy-600 font-normal leading-normal">
+                직접 검증하고 제작한 템플릿들이 순차적으로 이곳에 업로드됩니다.
+              </p>
+            </div>
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-72 shrink-0">
@@ -358,7 +357,6 @@ export default function QtTemplatesLoungePage() {
                 )}
               </div>
             </div>
-          </div>
 
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
@@ -423,7 +421,7 @@ export default function QtTemplatesLoungePage() {
                       {tpl.subtitle}
                     </p>
 
-                    <p className="text-xs text-navy-600 leading-relaxed font-normal mb-4 line-clamp-3">
+                    <p className="text-xs text-navy-600 leading-normal font-normal mb-3 line-clamp-3">
                       {tpl.description}
                     </p>
 
