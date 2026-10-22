@@ -5,8 +5,12 @@ import Link from 'next/link';
 import {
   Plus, Search, ExternalLink, Heart, Sparkles,
   Copy, Check, Share2, Layers, Filter, CheckCircle2,
-  X, User, Layout, MessageCircle, Download, Award, Star, Flame
+  X, User, Layout, MessageCircle, Download, Award, Star, Flame,
+  Crown, Zap, ArrowUpRight, ShieldCheck, FileText, Bot
 } from 'lucide-react';
+
+const OFFICIAL_MSB_NOTION_URL = 'https://lava-child-76b.notion.site/Ministry-Second-Brain-PARA-faa57f770752494db4bf529eaf689998';
+const OFFICIAL_MSB_WEB_URL = process.env.NEXT_PUBLIC_NOTION_APP_URL || 'https://notion.bunker.ai.kr';
 
 interface TemplateItem {
   id: string;
@@ -20,6 +24,8 @@ interface TemplateItem {
   features: string[];
   tags: string[];
   link: string;
+  appUrl?: string;
+  isOfficial?: boolean;
   likes: number;
   downloads: number;
   isUserAdded?: boolean;
@@ -27,6 +33,24 @@ interface TemplateItem {
 }
 
 const INITIAL_TEMPLATES: TemplateItem[] = [
+  {
+    id: 'official-second-brain',
+    title: '사역자 세컨드 브레인 (Ministry Second Brain | PARA)',
+    author: 'Bunker 목양 x 사역연구소',
+    role: '공식 마스터',
+    church: '100% 무료 나눔',
+    category: '부서 운영',
+    type: 'Notion',
+    description: '노션 템플릿과 전용 AI 웹 도구가 실시간 결합된 목회자·교사 전용 PARA 올인원 사역 시스템입니다.',
+    features: ['노션 서식 보존 1:1 리치 클립보드', 'AI 사역 기획실 & 설교 원고 연동', '교회학교 행사 접수 & 공지문 생성기'],
+    tags: ['사역자 세컨드브레인', 'PARA 시스템', 'AI 기획실', '공지문 작성기', '100% 무료'],
+    link: OFFICIAL_MSB_NOTION_URL,
+    appUrl: OFFICIAL_MSB_WEB_URL,
+    likes: 384,
+    downloads: 1250,
+    isOfficial: true,
+    createdAt: '공식 추천',
+  },
   {
     id: '1',
     title: '교회학교 통합 운영 대시보드 템플릿',
@@ -331,6 +355,99 @@ export default function QtTemplatesLoungePage() {
       <section className="py-12 md:py-20">
         <div className="container-custom max-w-6xl space-y-8">
 
+          {/* ─── Bunker Official Featured Banner ─── */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1020] via-[#111827] to-[#1E293B] text-white p-6 sm:p-8 md:p-10 border border-indigo-500/30 shadow-2xl shadow-indigo-950/30">
+            {/* Ambient Glow */}
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Content */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/15 border border-amber-300/30 text-amber-300 text-xs font-black tracking-wide">
+                  <Crown className="w-4 h-4 fill-amber-300 text-amber-300" />
+                  <span>BUNKER OFFICIAL · 100% 영구 무료 공유</span>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                    사역자 세컨드 브레인 <br />
+                    <span className="bg-gradient-to-r from-amber-300 via-rose-300 to-indigo-300 bg-clip-text text-transparent">
+                      노션 템플릿 & AI 사역 웹 도구
+                    </span>
+                  </h2>
+                  <p className="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed font-medium">
+                    설교 준비, 교회학교 운영, 행사 관리, 부서 공지문 작성까지 — 노션과 1:1로 결합되어 마우스 복사 한 번으로 노션에 서식 그대로 붙여넣는 전용 AI 웹 도구와 노션 템플릿을 무료로 사용하세요.
+                  </p>
+                </div>
+
+                {/* 4 Core Features */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="font-semibold">노션 리치 클립보드 (서식 100% 보존)</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <Bot className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <span className="font-semibold">AI 사역 기획실 & 설교 자동 연동</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <FileText className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span className="font-semibold">공지문 & 사역 서식 스마트 작성기</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="font-semibold">교회학교 모바일 행사 접수 관리</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right CTA Box */}
+              <div className="lg:col-span-5 bg-white/5 border border-white/15 backdrop-blur-md rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-bold text-slate-300">솔루션 상태</span>
+                    <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      즉시 무료 이용 가능
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-white">
+                    별도의 회원가입이나 비용 결제 없이 <br className="hidden sm:inline" />
+                    누구나 즉시 복제하여 사용하실 수 있습니다.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-2">
+                  <a
+                    href={OFFICIAL_MSB_WEB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-sm shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition-all"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>전용 AI 웹 솔루션 열기</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+
+                  <a
+                    href={OFFICIAL_MSB_NOTION_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#202534] hover:bg-[#2b3346] text-slate-200 hover:text-white font-bold text-xs border border-white/10 active:scale-[0.98] transition-all"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>노션 템플릿 바로 복제하기 (Notion 원본)</span>
+                  </a>
+                </div>
+
+                <p className="text-[11px] text-slate-400 text-center leading-tight">
+                  🎁 한국 교회를 섬기는 모든 사역자분들을 위해 100% 무료로 배포됩니다.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {filteredTemplates.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl border border-warm-200 space-y-4">
               <div className="w-16 h-16 rounded-full bg-warm-100 flex items-center justify-center mx-auto text-navy-400 text-2xl">
@@ -356,12 +473,17 @@ export default function QtTemplatesLoungePage() {
                       tpl.isUserAdded ? 'border-amber-300 ring-2 ring-amber-400/30' : 'border-warm-200/80'
                     }`}
                   >
-                    {/* User Added Ribbon Badge */}
-                    {tpl.isUserAdded && (
+                    {/* User Added / Official Ribbon Badge */}
+                    {tpl.isOfficial ? (
+                      <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-600 via-indigo-500 to-amber-500 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-xs tracking-wider flex items-center gap-1">
+                        <Crown className="w-3 h-3 fill-amber-300 text-amber-300" />
+                        <span>BUNKER 공식</span>
+                      </div>
+                    ) : tpl.isUserAdded ? (
                       <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-xs tracking-wider animate-pulse">
                         NEW 나눔 템플릿 ✨
                       </div>
-                    )}
+                    ) : null}
 
                     <div>
                       {/* Author Header */}
@@ -437,6 +559,19 @@ export default function QtTemplatesLoungePage() {
                           <span>{tpl.downloads}회 복제</span>
                         </div>
                       </div>
+
+                      {tpl.appUrl && (
+                        <a
+                          href={tpl.appUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl font-black text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all mb-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>전용 AI 웹 솔루션 열기</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </a>
+                      )}
 
                       <a
                         href={tpl.link}
