@@ -85,14 +85,23 @@
 - **서브도메인 정리**: `notion.bunker.ai.kr` 완전 제거 및 단일 도메인(`bunker.ai.kr/notion`) 일원화로 추가 비용 및 관리 부담 $0.
 - **build/typecheck**: 성공 ✅
 
+## Phase 8 — 메인 랜딩 페이지(/) 인간미 & 고품격 리디자인
+- **AI 클리셰 제거**: 사이버펑크 네온 글로우(`glow-text-neon`, `bg-grid-tech`), 보라-핑크 그라디언트 난무, 이모지 남발, 가짜 통계/후기를 전면 제거.
+- **사람의 온기와 목회적 진정성 회복**:
+  - 서재의 촛불처럼 따뜻한 앰비언트(`bg-[#0A0E1A]` + 은은한 앰버/아이보리 텍스트 계층).
+  - 목회자의 고뇌를 위로하는 진솔한 카피라이팅 ("말씀을 연구하고 영혼을 돌보는 일에만 온전히 마음을 쏟으실 수 있도록").
+- **인터랙티브 라이브 사역 데스크톱(Live Ministry Desk)**:
+  - 5대 핵심 사역 워크플로우를 실제 화면 그대로 경험할 수 있는 인터랙티브 탭 쇼케이스(설교 연구 & 6종 가공, 사역자 세컨드 브레인, 주일학교 카카오톡 공지문, 세대별 매일 큐티, 예배 찬양 콘티 & 16:9 PPT).
+- **진심 어린 사역 선언 & FAQ**: "기술은 결코 성령의 감동과 목회자의 눈물을 대신할 수 없습니다" 선언 및 100% 영구 무료 철학 명시.
+- **build/typecheck**: 성공 ✅ | 커밋: `e5a00b8` | push 완료 → Vercel auto-deploy
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. 로컬 확인: `http://localhost:3000/qt/templates` (다운로드/웹사이트 듀얼 버튼 및 카탈로그)
-2. 로컬 확인: `http://localhost:3000/notion` (헤더 없는 풀스크린 사역자 세컨드 브레인 스튜디오)
-3. git commit & push → Vercel 자동 배포 트리거
+1. 로컬 확인: `http://localhost:3000/` (새로워진 온기 있는 메인 랜딩 페이지)
+2. 실서버 확인: `https://bunker.ai.kr/` (Vercel 자동 배포 반영)
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
