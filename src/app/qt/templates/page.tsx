@@ -3,773 +3,582 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Plus, Search, ExternalLink, Heart, Sparkles,
-  Copy, Check, Share2, Layers, Filter, CheckCircle2,
-  X, User, Layout, MessageCircle, Download, Award, Star, Flame,
-  Crown, Zap, ArrowUpRight, ShieldCheck, FileText, Bot
+  Download, ExternalLink, Sparkles, Heart, Crown,
+  Zap, Bot, FileText, ShieldCheck, CheckCircle2,
+  ArrowUpRight, Share2, Star, Check, Layers,
+  Database, Bookmark, ArrowRight, Layout, Users,
+  Music, BookOpen, Clock, Plus, Filter, Search, X
 } from 'lucide-react';
 
 const OFFICIAL_MSB_NOTION_URL = 'https://lava-child-76b.notion.site/Ministry-Second-Brain-PARA-faa57f770752494db4bf529eaf689998';
-const OFFICIAL_MSB_WEB_URL = process.env.NEXT_PUBLIC_NOTION_APP_URL || 'https://notion.bunker.ai.kr';
 
-interface TemplateItem {
+export interface NotionTemplateItem {
   id: string;
   title: string;
-  author: string;
-  role: string;
-  church: string;
-  category: string;
-  type: 'Notion' | 'PPT' | 'Excel' | 'PDF';
+  subtitle: string;
   description: string;
+  category: '통합 시스템' | '설교·묵상' | '교회학교' | '행정·미디어';
+  status: 'published' | 'coming_soon';
+  badge?: string;
+  icon: string;
   features: string[];
   tags: string[];
-  link: string;
-  appUrl?: string;
-  isOfficial?: boolean;
-  likes: number;
-  downloads: number;
-  isUserAdded?: boolean;
-  createdAt: string;
+  downloadUrl?: string;
+  webAppUrl?: string;
+  webAppLabel?: string;
+  stats?: {
+    downloads?: string;
+    rating?: string;
+  };
+  isFlagship?: boolean;
 }
 
-const INITIAL_TEMPLATES: TemplateItem[] = [
+// 앞으로 새 템플릿을 제작할 때 이 배열에 객체만 추가하면 카드와 상세 정보가 자동으로 생성됩니다.
+export const BUNKER_NOTION_TEMPLATES: NotionTemplateItem[] = [
   {
-    id: 'official-second-brain',
-    title: '사역자 세컨드 브레인 (Ministry Second Brain | PARA)',
-    author: 'Bunker 목양 x 사역연구소',
-    role: '공식 마스터',
-    church: '100% 무료 나눔',
-    category: '부서 운영',
-    type: 'Notion',
-    description: '노션 템플릿과 전용 AI 웹 도구가 실시간 결합된 목회자·교사 전용 PARA 올인원 사역 시스템입니다.',
-    features: ['노션 서식 보존 1:1 리치 클립보드', 'AI 사역 기획실 & 설교 원고 연동', '교회학교 행사 접수 & 공지문 생성기'],
-    tags: ['사역자 세컨드브레인', 'PARA 시스템', 'AI 기획실', '공지문 작성기', '100% 무료'],
-    link: OFFICIAL_MSB_NOTION_URL,
-    appUrl: OFFICIAL_MSB_WEB_URL,
-    likes: 384,
-    downloads: 1250,
-    isOfficial: true,
-    createdAt: '공식 추천',
+    id: 'ministry-second-brain',
+    title: '사역자 세컨드 브레인 (Ministry Second Brain)',
+    subtitle: 'PARA 시스템과 AI 사역 도구가 1:1로 결합된 올인원 마스터 워크스페이스',
+    description: '설교 준비부터 부서 출석 통계, 주간 공지문 발송, 찬양 콘티까지 — 노션에 마우스 복사 한 번으로 서식 그대로 붙여넣는 전용 AI 웹 도구와 노션 템플릿이 결합된 한국 교회 목회자·교사 전용 시스템입니다.',
+    category: '통합 시스템',
+    status: 'published',
+    badge: 'BUNKER 플래그십 마스터',
+    icon: '⚡',
+    features: [
+      '노션 서식 100% 보존 리치 클립보드',
+      'AI 사역 기획실 & 설교 원고 연동',
+      '교회학교 4대 부서 맞춤 공지문 작성기',
+      '모바일 행사 접수 & 실시간 출석 체크'
+    ],
+    tags: ['PARA 시스템', 'AI 사역 도구', '설교 아카이브', '부서 공지문', '100% 무료'],
+    downloadUrl: OFFICIAL_MSB_NOTION_URL,
+    webAppUrl: '/notion',
+    webAppLabel: '전용 웹사이트 바로가기',
+    stats: {
+      downloads: '1,250+',
+      rating: '5.0'
+    },
+    isFlagship: true,
   },
   {
-    id: '1',
-    title: '교회학교 통합 운영 대시보드 템플릿',
-    author: '이동헌 목사',
-    role: '총괄 목사',
-    church: 'Bunker 목양',
-    category: '부서 운영',
-    type: 'Notion',
-    description: '교사 명단, 주간 출석 체크, 부서 행사 일정, 공지사항을 한눈에 관리하는 노션 종합 대시보드입니다.',
-    features: ['주간 출석률 자동 통계', '교사 업무 분담 표', '행사 준비물 체크리스트'],
-    tags: ['교사 관리', '출석 데이터', '행사 일정', '부서 공지'],
-    link: 'https://www.notion.so/templates',
-    likes: 128,
-    downloads: 452,
-    createdAt: '2026.07.20',
+    id: 'sermon-expository-vault',
+    title: '성경 66권 강해 설교 연구 & 주석 보관함',
+    subtitle: '박영선·로이드존스·파이퍼 강해 모델 및 성경 권별 체계적 설교 아카이빙',
+    description: '구약과 신약 66권 본문별, 절기별, 시리즈별로 지난 설교 원고와 아웃라인, 성경 주석을 체계적으로 분류하고 축적하는 강해 설교 전용 노션 템플릿입니다.',
+    category: '설교·묵상',
+    status: 'coming_soon',
+    badge: '차기 제작 템플릿',
+    icon: '📖',
+    features: [
+      '성경 66권 권별·장별 데이터베이스',
+      '강해 모델(목회적·교리적·본문 중심) 아웃라인 서식',
+      '설교 예화 및 헬라어·히브리어 원문 주석 태깅'
+    ],
+    tags: ['강해 설교', '성경 66권', '설교 아웃라인', '본문 주석', '원고 보관함'],
+    webAppUrl: '/',
+    webAppLabel: 'AI 설교 연구실 연동',
   },
   {
-    id: '2',
-    title: '매일 큐티 & 묵상일지 노션 템플릿',
-    author: '김은혜 전도사',
-    role: '어린이부 전도사',
-    church: '꿈미교회',
-    category: '묵상·큐티',
-    type: 'Notion',
-    description: '유치부부터 장년까지, 매일의 말씀 묵상과 깨달음, 개인 기도제목을 축적하는 묵상일지 데이터베이스입니다.',
-    features: ['본문 및 관찰/적용 구분', '기도 응답 기록장', '월별 묵상 회고'],
-    tags: ['매일 큐티', '묵상 노트', '기도제목', '성경 구절'],
-    link: 'https://www.notion.so/templates',
-    likes: 95,
-    downloads: 310,
-    createdAt: '2026.07.21',
+    id: 'church-school-care-hub',
+    title: '교회학교 통합 운영 & 학생 심방 케어 노트',
+    subtitle: '학생 1:1 기도제목, 분반 공과 피드백, 교사 업무분담 종합 대시보드',
+    description: '매주 주일 출석률 자동 집계부터 학생별 상담·심방 일지, 분반 교사 회의록을 공유하고 기도제목을 동역하는 교회학교 전용 종합 관리 템플릿입니다.',
+    category: '교회학교',
+    status: 'coming_soon',
+    badge: '차기 제작 템플릿',
+    icon: '🎒',
+    features: [
+      '주간 출석률 & 장기 결석자 자동 알림 뷰',
+      '학생별 1:1 심방 케어 및 기도 응답 일지',
+      '교사 주간 회의록 & 다음 주 안건 트래커'
+    ],
+    tags: ['교회학교', '출석 통계', '심방 케어', '교사 회의록', '학생 관리'],
+    webAppUrl: '/school/notice-writer',
+    webAppLabel: '부서 공지문 작성기 연동',
   },
   {
-    id: '3',
-    title: '수련회 & 여름성경학교 기획 노션 템플릿',
-    author: '박사랑 교사',
-    role: '초등부 부장교사',
-    church: '빛과소금교회',
-    category: '행사·수련회',
-    type: 'Notion',
-    description: '여름성경학교, 전교인 수련회의 타임테이블, 예산 편성, 조별 편성표, 준비물을 원스톱으로 관리합니다.',
-    features: ['시간대별 프로그램표', '지출 및 예산 자동합계', '준비물 수량 체크'],
-    tags: ['수련회', '여름성경학교', '예산 관리', '조별 편성'],
-    link: 'https://www.notion.so/templates',
-    likes: 84,
-    downloads: 275,
-    createdAt: '2026.07.22',
-  },
-  {
-    id: '4',
-    title: '성경 권별 설교 원고 보관함 템플릿',
-    author: '최믿음 목사',
-    role: '담임 목사',
-    church: '은혜교회',
-    category: '설교 연구',
-    type: 'Notion',
-    description: '성경 66권 본문별, 절기별, 설교 제목별로 지난 설교 원고와 아웃라인을 체계적으로 정리하는 노션 템플릿입니다.',
-    features: ['성경 권별 필터링', '관련 예화 태그 시스템', '설교 시리즈 그룹화'],
-    tags: ['설교 아웃라인', '본문 분류', '예화 보관함', '절기 설교'],
-    link: 'https://www.notion.so/templates',
-    likes: 112,
-    downloads: 390,
-    createdAt: '2026.07.18',
-  },
-  {
-    id: '5',
-    title: '주보 & 카드뉴스 기획 마스터 템플릿',
-    author: '정지혜 전도사',
-    role: '미디어 담당',
-    church: '사랑의교회',
-    category: '디자인·PPT',
-    type: 'Notion',
-    description: '주간 교회 소식, 예배 안내 문안, 절기별 이미지 아카이브를 팀원들과 함께 편집하는 디자인 기획 템플릿입니다.',
-    features: ['주차별 소식 카테고리', '이미지 자산 보관함', '문안 검수 체크표'],
-    tags: ['주보 기획', '카드뉴스', '이미지 아카이브', '절기 문안'],
-    link: 'https://www.notion.so/templates',
-    likes: 76,
-    downloads: 215,
-    createdAt: '2026.07.19',
-  },
-  {
-    id: '6',
-    title: '교사 회의록 & 기도제목 나눔 템플릿',
-    author: '한샘 교사',
-    role: '청소년부 교사',
-    church: '온누리교회',
-    category: '부서 운영',
-    type: 'Notion',
-    description: '매주 주일 교사 회의 내용을 기록하고 학생별 기도제목을 교사들이 동시 업데이트하는 공유 템플릿입니다.',
-    features: ['주차별 회의록 작성', '학생별 1:1 기도제목', '다음 주 안건 공유'],
-    tags: ['교사 회의록', '기도제목', '학생 케어', '청소년부'],
-    link: 'https://www.notion.so/templates',
-    likes: 63,
-    downloads: 180,
-    createdAt: '2026.07.23',
+    id: 'worship-conti-master',
+    title: '예배 찬양팀 주간 콘티 & 송폼 아카이브',
+    subtitle: '절기별 찬양 선곡, 조옮김(Key), 악보 링크 및 팀원 주간 공유 시스템',
+    description: '예배 주제와 본문에 맞는 찬양 곡을 데이터베이스화하고, 주간 콘티 시트와 송폼을 작성하여 찬양팀원들에게 1초 만에 공유하는 워십 미니스트리 템플릿입니다.',
+    category: '행정·미디어',
+    status: 'coming_soon',
+    badge: '차기 제작 템플릿',
+    icon: '🎵',
+    features: [
+      '찬양 곡별 Key(조), 박자, 주제별 태그 검색',
+      '주간 콘티 시트 에디터 & 송폼 가이드',
+      '유튜브 음원 및 악보 클라우드 링크 보관함'
+    ],
+    tags: ['찬양 콘티', '예배 기획', '송폼 아카이브', '찬양팀 공유'],
+    webAppUrl: '/school/conti',
+    webAppLabel: '찬양 콘티 에디터 연동',
   },
 ];
 
-const CATEGORIES = ['전체', '부서 운영', '묵상·큐티', '행사·수련회', '설교 연구', '디자인·PPT'];
+const CATEGORIES = ['전체', '통합 시스템', '설교·묵상', '교회학교', '행정·미디어'];
 
 export default function QtTemplatesLoungePage() {
-  const [templates, setTemplates] = useState<TemplateItem[]>(INITIAL_TEMPLATES);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [templates] = useState<NotionTemplateItem[]>(BUNKER_NOTION_TEMPLATES);
   const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [likes, setLikes] = useState(528);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isCopiedLink, setIsCopiedLink] = useState(false);
 
-  // 모달 상태 및 새 템플릿 폼
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    role: '사역자',
-    church: '',
-    category: '부서 운영',
-    type: 'Notion' as const,
-    description: '',
-    features: '',
-    tags: '',
-    link: '',
-  });
-
-  const handleLike = (id: string) => {
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      const isLiked = next.has(id);
-      if (isLiked) {
-        next.delete(id);
-        setTemplates((tpls) =>
-          tpls.map((t) => (t.id === id ? { ...t, likes: t.likes - 1 } : t))
-        );
-      } else {
-        next.add(id);
-        setTemplates((tpls) =>
-          tpls.map((t) => (t.id === id ? { ...t, likes: t.likes + 1 } : t))
-        );
-      }
-      return next;
-    });
+  const handleLike = () => {
+    if (isLiked) {
+      setLikes((prev) => prev - 1);
+      setIsLiked(false);
+    } else {
+      setLikes((prev) => prev + 1);
+      setIsLiked(true);
+    }
   };
 
-  const handleCopyLink = async (id: string, link: string) => {
+  const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(link);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2500);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        setIsCopiedLink(true);
+        setTimeout(() => setIsCopiedLink(false), 2500);
+      }
     } catch {}
   };
 
-  const handleSubmitNewTemplate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || !formData.author || !formData.link) {
-      alert('템플릿 제목, 제작자 이름, 템플릿 링크는 필수 입력 항목입니다.');
-      return;
-    }
-
-    const newItem: TemplateItem = {
-      id: Date.now().toString(),
-      title: formData.title,
-      author: formData.author,
-      role: formData.role || '사역자',
-      church: formData.church || '한국교회',
-      category: formData.category,
-      type: formData.type,
-      description: formData.description || '사역 현장을 위해 공유된 소중한 템플릿입니다.',
-      features: formData.features
-        ? formData.features.split(',').map((s) => s.trim())
-        : ['사역 효율성 향상', '1-클릭 노션 복제', '무료 나눔'],
-      tags: formData.tags
-        ? formData.tags.split(',').map((s) => s.trim())
-        : ['사역 템플릿', '노션', '무료 나눔'],
-      link: formData.link.startsWith('http') ? formData.link : `https://${formData.link}`,
-      likes: 1,
-      downloads: 1,
-      isUserAdded: true,
-      createdAt: '방금 전',
-    };
-
-    setTemplates([newItem, ...templates]);
-    setIsModalOpen(false);
-    setFormData({
-      title: '',
-      author: '',
-      role: '사역자',
-      church: '',
-      category: '부서 운영',
-      type: 'Notion',
-      description: '',
-      features: '',
-      tags: '',
-      link: '',
-    });
-    alert('🎉 축하합니다! 템플릿 나눔이 성공적으로 등록되었습니다.');
-  };
+  const flagship = templates.find((t) => t.isFlagship) || templates[0];
 
   const filteredTemplates = templates.filter((tpl) => {
     const matchCategory = selectedCategory === '전체' || tpl.category === selectedCategory;
     const matchSearch =
       tpl.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tpl.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tpl.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCategory && matchSearch;
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent-soft selection:text-accent">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-indigo-500/20 selection:text-indigo-600">
 
       {/* ════════════════════════════════════════════
-          1. HERO SECTION
+          1. HERO SECTION (다크 럭셔리 네이비 테마)
          ════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-20 border-b border-border/60 bg-surface/50">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-indigo-100/40 blur-3xl -z-10 opacity-70 pointer-events-none" />
+      <section className="relative overflow-hidden pt-16 pb-20 md:pt-28 md:pb-28 bg-[#070B16] text-white border-b border-indigo-950/60">
+        {/* Ambient Meshes */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[520px] bg-gradient-to-tr from-indigo-600/25 via-purple-600/20 to-amber-500/15 blur-3xl -z-10 pointer-events-none opacity-90" />
+        <div className="absolute -top-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-        <div className="container-custom max-w-5xl text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200/70 text-amber-800 text-xs md:text-sm font-bold shadow-2xs animate-fade-in">
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            <span>전국 사역자들의 지혜가 모이는 오픈 템플릿 라운지 🎁</span>
+        <div className="container-custom max-w-5xl text-center space-y-7">
+          {/* Top Badge */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/10 border border-white/15 text-indigo-200 text-xs md:text-sm font-black shadow-lg backdrop-blur-md animate-fade-in">
+            <Crown className="w-4 h-4 fill-amber-300 text-amber-300" />
+            <span className="tracking-wide">BUNKER OFFICIAL NOTION STUDIO · 100% 영구 무료</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-navy-950 leading-[1.15] tracking-tight">
-            사역자가 만들고 나눕니다<br />
-            <span className="bg-gradient-to-r from-amber-600 via-rose-600 to-indigo-600 bg-clip-text text-transparent">함께 세우는 사역 템플릿</span>
+          {/* Main Title */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.12] tracking-tight">
+            사역의 품격을 높이는<br />
+            <span className="bg-gradient-to-r from-amber-300 via-rose-300 to-indigo-300 bg-clip-text text-transparent">
+              공식 노션 템플릿 아카이브
+            </span>
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-navy-600 max-w-2xl mx-auto leading-relaxed font-medium">
-            목회자, 전도사, 교회학교 선생님들이 직접 만든 노션·PPT 템플릿을 자유롭게 나누고 가져가세요.<br className="hidden sm:inline" />
-            여러분의 작은 아이디어 하나가 한국 교회의 사역을 함께 세웁니다.
+          {/* Subtitle */}
+          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+            Bunker 목양 연구소에서 직접 기획·제작한 공식 노션 템플릿 라인업입니다.<br className="hidden sm:inline" />
+            현장에 꼭 필요한 검증된 템플릿을 지속적으로 개발하여 무료로 업로드합니다.
           </p>
 
-          <div className="pt-4 flex flex-wrap justify-center items-center gap-3">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-rose-500 hover:bg-rose-600 active:scale-[0.98] text-white font-extrabold px-7 py-3.5 rounded-2xl text-sm md:text-base shadow-md shadow-rose-500/20 transition-all"
-            >
-              <Plus className="w-5 h-5 stroke-[3]" />
-              내 템플릿 나눔하기
-            </button>
-            <a
-              href="#lounge"
-              className="inline-flex items-center gap-2 bg-white hover:bg-warm-50 active:scale-[0.98] text-navy-900 font-extrabold px-7 py-3.5 rounded-2xl text-sm md:text-base border border-warm-300 transition-all"
-            >
-              <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-              인기 템플릿 탐색 ({templates.length})
-            </a>
+          {/* Quick Stats */}
+          <div className="pt-3 flex flex-wrap justify-center items-center gap-6 sm:gap-10 text-xs sm:text-sm text-slate-300 font-semibold">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>100% 영구 무료 공유</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>전용 AI 웹 스튜디오 실시간 연동</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-indigo-400" />
+              <span>지속적인 신규 템플릿 업데이트</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════
-          2. FILTER & SEARCH BAR
+          2. FLAGSHIP MASTER SHOWCASE (사역자 세컨드 브레인 집중 배너)
          ════════════════════════════════════════════ */}
-      <section id="lounge" className="py-8 bg-surface border-b border-border/60 sticky top-16 z-30 backdrop-blur-md bg-opacity-95">
-        <div className="container-custom max-w-6xl space-y-4">
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            
-            {/* Category Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto scrollbar-hide py-1">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold shrink-0 transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-navy-950 text-white shadow-xs'
-                      : 'bg-warm-100/80 text-navy-700 hover:bg-warm-200/70'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+      <section className="py-12 md:py-16 bg-surface border-b border-border/50">
+        <div className="container-custom max-w-6xl space-y-6">
 
-            {/* Search Bar */}
-            <div className="relative w-full md:w-72 shrink-0">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-400" />
-              <input
-                type="text"
-                placeholder="템플릿, 제작자, 태그 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-2xl bg-white border border-warm-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-rose-400/50 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-navy-400 hover:text-navy-700 text-xs"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
+                <Crown className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                <span>OFFICIAL FLAGSHIP 01</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-navy-950">
+                대표 템플릿 · 사역자 세컨드 브레인
+              </h2>
             </div>
-
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              즉시 다운로드 가능
+            </span>
           </div>
 
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════
-          3. TEMPLATES GRID
-         ════════════════════════════════════════════ */}
-      <section className="py-12 md:py-20">
-        <div className="container-custom max-w-6xl space-y-8">
-
-          {/* ─── Bunker Official Featured Banner ─── */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1020] via-[#111827] to-[#1E293B] text-white p-6 sm:p-8 md:p-10 border border-indigo-500/30 shadow-2xl shadow-indigo-950/30">
-            {/* Ambient Glow */}
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          {/* Flagship Card */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1020] via-[#111827] to-[#1E293B] text-white p-7 sm:p-10 md:p-12 border border-indigo-500/30 shadow-2xl shadow-indigo-950/40">
+            {/* Ambient Lighting */}
+            <div className="absolute -top-32 -right-32 w-[420px] h-[420px] bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-32 -left-32 w-[420px] h-[420px] bg-gradient-to-tr from-amber-500/15 to-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
               {/* Left Content */}
-              <div className="lg:col-span-7 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/15 border border-amber-300/30 text-amber-300 text-xs font-black tracking-wide">
-                  <Crown className="w-4 h-4 fill-amber-300 text-amber-300" />
-                  <span>BUNKER OFFICIAL · 100% 영구 무료 공유</span>
+              <div className="lg:col-span-7 space-y-5">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-xs font-black tracking-wider">
+                  <Crown className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                  <span>{flagship.badge}</span>
                 </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-                    사역자 세컨드 브레인 <br />
-                    <span className="bg-gradient-to-r from-amber-300 via-rose-300 to-indigo-300 bg-clip-text text-transparent">
-                      노션 템플릿 & AI 사역 웹 도구
-                    </span>
-                  </h2>
-                  <p className="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed font-medium">
-                    설교 준비, 교회학교 운영, 행사 관리, 부서 공지문 작성까지 — 노션과 1:1로 결합되어 마우스 복사 한 번으로 노션에 서식 그대로 붙여넣는 전용 AI 웹 도구와 노션 템플릿을 무료로 사용하세요.
+                <div className="space-y-3">
+                  <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight tracking-tight">
+                    {flagship.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                    {flagship.description}
                   </p>
                 </div>
 
-                {/* 4 Core Features */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
-                    <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="font-semibold">노션 리치 클립보드 (서식 100% 보존)</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
-                    <Bot className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span className="font-semibold">AI 사역 기획실 & 설교 자동 연동</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
-                    <FileText className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span className="font-semibold">공지문 & 사역 서식 스마트 작성기</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="font-semibold">교회학교 모바일 행사 접수 관리</span>
-                  </div>
+                {/* 4 Feature Badges */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {flagship.features.map((feat, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-white/[0.06] border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="font-semibold truncate">{feat}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Right CTA Box */}
-              <div className="lg:col-span-5 bg-white/5 border border-white/15 backdrop-blur-md rounded-2xl p-6 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-bold text-slate-300">솔루션 상태</span>
-                    <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      즉시 무료 이용 가능
+              {/* Right Dual Action Buttons */}
+              <div className="lg:col-span-5 bg-white/[0.06] border border-white/15 backdrop-blur-xl rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-xl">
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-300">누적 이용 현황</span>
+                    <span className="text-amber-300 font-extrabold flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 fill-amber-300" /> 평점 5.0 / 5.0
                     </span>
                   </div>
                   <p className="text-sm font-bold text-white">
-                    별도의 회원가입이나 비용 결제 없이 <br className="hidden sm:inline" />
-                    누구나 즉시 복제하여 사용하실 수 있습니다.
+                    별도의 회원가입 없이 누구나 즉시 <br className="hidden sm:inline" />
+                    노션에 복제하여 전용 웹도구와 함께 사용하세요.
                   </p>
                 </div>
 
-                <div className="space-y-2.5 pt-2">
+                <div className="space-y-3">
+                  {/* 1. 템플릿 다운로드 버튼 */}
                   <a
-                    href={OFFICIAL_MSB_WEB_URL}
+                    href={flagship.downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-sm shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition-all"
+                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-all group"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>전용 AI 웹 솔루션 열기</span>
-                    <ArrowUpRight className="w-4 h-4" />
+                    <Download className="w-5 h-5 text-emerald-100 group-hover:-translate-y-0.5 transition-transform" />
+                    <span>템플릿 무료 다운로드 (노션 복제)</span>
+                    <ArrowUpRight className="w-4 h-4 text-emerald-200 opacity-80" />
                   </a>
 
-                  <a
-                    href={OFFICIAL_MSB_NOTION_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#202534] hover:bg-[#2b3346] text-slate-200 hover:text-white font-bold text-xs border border-white/10 active:scale-[0.98] transition-all"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>노션 템플릿 바로 복제하기 (Notion 원본)</span>
-                  </a>
+                  {/* 2. 전용 웹사이트 연결 버튼 */}
+                  {flagship.webAppUrl && (
+                    <Link
+                      href={flagship.webAppUrl}
+                      className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-600/35 active:scale-[0.98] transition-all group"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform duration-300" />
+                      <span>{flagship.webAppLabel || '전용 웹사이트 바로가기'}</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  )}
                 </div>
 
-                <p className="text-[11px] text-slate-400 text-center leading-tight">
-                  🎁 한국 교회를 섬기는 모든 사역자분들을 위해 100% 무료로 배포됩니다.
+                <p className="text-[11px] text-slate-400 text-center leading-normal">
+                  🎁 한국 교회를 섬기는 100% 영구 무료 배포 프로젝트입니다.
                 </p>
               </div>
+
             </div>
           </div>
-
-          {filteredTemplates.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-warm-200 space-y-4">
-              <div className="w-16 h-16 rounded-full bg-warm-100 flex items-center justify-center mx-auto text-navy-400 text-2xl">
-                🔍
-              </div>
-              <p className="text-base font-bold text-navy-800">검색 조건에 맞는 템플릿이 없습니다.</p>
-              <button
-                onClick={() => { setSearchQuery(''); setSelectedCategory('전체'); }}
-                className="text-xs text-rose-600 font-bold underline"
-              >
-                전체 목록으로 돌아가기
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-              {filteredTemplates.map((tpl) => {
-                const isLiked = likedIds.has(tpl.id);
-
-                return (
-                  <div
-                    key={tpl.id}
-                    className={`bg-white rounded-3xl p-6 border shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${
-                      tpl.isUserAdded ? 'border-amber-300 ring-2 ring-amber-400/30' : 'border-warm-200/80'
-                    }`}
-                  >
-                    {/* User Added / Official Ribbon Badge */}
-                    {tpl.isOfficial ? (
-                      <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-600 via-indigo-500 to-amber-500 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-xs tracking-wider flex items-center gap-1">
-                        <Crown className="w-3 h-3 fill-amber-300 text-amber-300" />
-                        <span>BUNKER 공식</span>
-                      </div>
-                    ) : tpl.isUserAdded ? (
-                      <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-xs tracking-wider animate-pulse">
-                        NEW 나눔 템플릿 ✨
-                      </div>
-                    ) : null}
-
-                    <div>
-                      {/* Author Header */}
-                      <div className="flex items-center justify-between gap-2 mb-4 pt-1">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-warm-100 flex items-center justify-center text-navy-700 font-bold text-xs border border-warm-200 shrink-0">
-                            {tpl.author.substring(0, 1)}
-                          </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-navy-950 flex items-center gap-1">
-                              <span>{tpl.author}</span>
-                              <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/80 font-bold">
-                                {tpl.role}
-                              </span>
-                            </p>
-                            <p className="text-[11px] text-navy-500 font-medium">{tpl.church} · {tpl.createdAt}</p>
-                          </div>
-                        </div>
-
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#37352f] text-white shrink-0">
-                          {tpl.type}
-                        </span>
-                      </div>
-
-                      {/* Title & Description */}
-                      <div className="space-y-2 mb-4">
-                        <h3 className="text-lg font-extrabold text-navy-950 group-hover:text-rose-600 transition-colors leading-snug">
-                          {tpl.title}
-                        </h3>
-                        <p className="text-xs text-navy-600 leading-relaxed line-clamp-2 font-medium">
-                          {tpl.description}
-                        </p>
-                      </div>
-
-                      {/* Features */}
-                      <div className="bg-warm-50/80 p-3 rounded-2xl border border-warm-100 space-y-1 mb-4">
-                        {tpl.features.slice(0, 3).map((feat, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 text-[11px] text-navy-600 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span className="truncate">{feat}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1 mb-5">
-                        {tpl.tags.map((tag) => (
-                          <span key={tag} className="text-[10px] font-medium text-navy-500 bg-warm-100 px-2 py-0.5 rounded-md">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Footer Actions */}
-                    <div className="pt-4 border-t border-warm-100 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-navy-500 font-bold mb-2">
-                        <button
-                          type="button"
-                          onClick={() => handleLike(tpl.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all ${
-                            isLiked
-                              ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                              : 'hover:bg-warm-100 text-navy-600'
-                          }`}
-                        >
-                          <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
-                          <span>{tpl.likes}</span>
-                        </button>
-
-                        <div className="flex items-center gap-1 text-[11px] text-navy-400">
-                          <Download className="w-3.5 h-3.5" />
-                          <span>{tpl.downloads}회 복제</span>
-                        </div>
-                      </div>
-
-                      {tpl.appUrl && (
-                        <a
-                          href={tpl.appUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl font-black text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all mb-1.5"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                          <span>전용 AI 웹 솔루션 열기</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-
-                      <a
-                        href={tpl.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-extrabold text-xs bg-[#37352f] hover:bg-[#201f1c] text-white shadow-button transition-all"
-                      >
-                        <span>노션 템플릿 복제하기</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-          )}
 
         </div>
       </section>
 
       {/* ════════════════════════════════════════════
-          4. SHARE MODAL (템플릿 나눔 모달)
+          3. NOTION TEMPLATES CATALOG (향후 템플릿 지속 업로드 공간)
          ════════════════════════════════════════════ */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-warm-200 relative max-h-[90vh] overflow-y-auto">
-            
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-warm-100 text-navy-400 hover:text-navy-700 transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      <section className="py-16 md:py-24 bg-surface">
+        <div className="container-custom max-w-6xl space-y-10">
 
-            <div className="space-y-2 mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">
-                <Sparkles className="w-3.5 h-3.5 text-rose-600" />
-                템플릿 나눔 등록
+          {/* Section Header & Filters */}
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-wider">
+                  <Database className="w-4 h-4" />
+                  <span>NOTION TEMPLATES LINEUP</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-navy-950">
+                  노션 사역 템플릿 전체 라인업
+                </h3>
+                <p className="text-xs sm:text-sm text-navy-600 font-normal">
+                  직접 검증하고 제작한 템플릿들이 순차적으로 이곳에 업로드됩니다.
+                </p>
               </div>
-              <h2 className="text-2xl font-black text-navy-950">
-                직접 만든 템플릿을 나누어 주세요 🎁
-              </h2>
-              <p className="text-xs text-navy-500 leading-relaxed">
-                전국 사역자들과 나누고 싶은 노션 링크나 템플릿 정보를 등록해 주시면 자유롭게 공유됩니다.
-              </p>
+
+              {/* Search Bar */}
+              <div className="relative w-full md:w-72 shrink-0">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-400" />
+                <input
+                  type="text"
+                  placeholder="템플릿 제목 또는 태그 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-8 py-2.5 rounded-2xl bg-white border border-warm-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-navy-400 hover:text-navy-700"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            <form onSubmit={handleSubmitNewTemplate} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-navy-800 mb-1">
-                  템플릿 제목 <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="예: 교회학교 주간 출석 & 교사 업무 종합 노션 템플릿"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-navy-800 mb-1">
-                    제작자 성함 <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="예: 김은혜"
-                    value={formData.author}
-                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-navy-800 mb-1">직분/역할</label>
-                  <input
-                    type="text"
-                    placeholder="예: 전도사 / 교사"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-navy-800 mb-1">소속 교회</label>
-                  <input
-                    type="text"
-                    placeholder="예: 꿈미교회"
-                    value={formData.church}
-                    onChange={(e) => setFormData({ ...formData, church: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-navy-800 mb-1">카테고리</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none bg-white"
+            {/* Category Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+              {CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold shrink-0 transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-navy-950 text-white shadow-md shadow-navy-950/20 scale-[1.02]'
+                        : 'bg-warm-100/70 text-navy-600 hover:bg-warm-200/80 hover:text-navy-900'
+                    }`}
                   >
-                    {CATEGORIES.filter((c) => c !== '전체').map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy-800 mb-1">
-                  노션 / 파일 링크 URL <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="https://www.notion.so/..."
-                  value={formData.link}
-                  onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy-800 mb-1">템플릿 소개 및 활용 팁</label>
-                <textarea
-                  rows={3}
-                  placeholder="템플릿에 포함된 주요 기능이나 사역 현장에서 활용하는 팁을 간단히 적어주세요."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy-800 mb-1">핵심 기능 (쉼표로 구분)</label>
-                <input
-                  type="text"
-                  placeholder="출석 자동통계, 회의록 서식, 업무분담"
-                  value={formData.features}
-                  onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-warm-200 text-xs font-medium focus:ring-2 focus:ring-rose-400/50 outline-none"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-warm-200 text-xs font-bold text-navy-600 hover:bg-warm-100 transition-all"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-extrabold shadow-md shadow-rose-500/20 transition-all"
-                >
-                  템플릿 나눔 등록하기 ✨
-                </button>
-              </div>
-            </form>
-
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Templates Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {filteredTemplates.map((tpl) => {
+              const isAvailable = tpl.status === 'published';
+
+              return (
+                <div
+                  key={tpl.id}
+                  className={`bg-white rounded-3xl p-7 sm:p-8 border transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${
+                    tpl.isFlagship
+                      ? 'border-indigo-300 shadow-lg hover:shadow-2xl hover:-translate-y-1 bg-gradient-to-b from-white via-indigo-50/20 to-white'
+                      : isAvailable
+                      ? 'border-warm-200 shadow-sm hover:shadow-xl hover:-translate-y-1'
+                      : 'border-warm-200/70 shadow-2xs hover:shadow-md bg-warm-50/30'
+                  }`}
+                >
+                  {/* Status Ribbon Badge */}
+                  <div className="absolute top-0 right-0">
+                    {tpl.isFlagship ? (
+                      <span className="inline-flex items-center gap-1 bg-gradient-to-l from-indigo-600 to-amber-500 text-white text-[10px] font-black px-4 py-1 rounded-bl-2xl shadow-xs">
+                        <Crown className="w-3 h-3 fill-amber-300" />
+                        FLAGSHIP 1호
+                      </span>
+                    ) : isAvailable ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-600 text-white text-[10px] font-black px-4 py-1 rounded-bl-2xl shadow-xs">
+                        다운로드 가능
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-warm-200 text-navy-600 text-[10px] font-black px-3.5 py-1 rounded-bl-2xl">
+                        <Clock className="w-3 h-3" />
+                        제작 중 (출시 예정)
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    {/* Header */}
+                    <div className="flex items-center gap-3.5 mb-4 pt-1">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
+                        tpl.isFlagship
+                          ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-md'
+                          : isAvailable
+                          ? 'bg-warm-100 text-navy-900 border border-warm-200'
+                          : 'bg-warm-100/60 text-navy-400 border border-warm-200/60'
+                      }`}>
+                        {tpl.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-warm-100 text-navy-700">
+                            {tpl.category}
+                          </span>
+                        </div>
+                        <h4 className="text-lg sm:text-xl font-extrabold text-navy-950 mt-1 leading-snug">
+                          {tpl.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-rose-600 font-bold mb-2">
+                      {tpl.subtitle}
+                    </p>
+
+                    <p className="text-xs text-navy-600 leading-relaxed font-normal mb-4 line-clamp-3">
+                      {tpl.description}
+                    </p>
+
+                    {/* Features List */}
+                    <div className="bg-warm-50/80 p-3.5 rounded-2xl border border-warm-100 space-y-1.5 mb-5">
+                      {tpl.features.map((feat, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-[11px] text-navy-700 font-medium">
+                          <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${isAvailable ? 'text-emerald-600' : 'text-navy-400'}`} />
+                          <span className="truncate">{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1.5 mb-6">
+                      {tpl.tags.map((tag) => (
+                        <span key={tag} className="text-[10px] font-medium text-navy-500 bg-warm-100 px-2 py-0.5 rounded-md">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dual Action Buttons */}
+                  <div className="pt-4 border-t border-warm-100 space-y-2">
+                    {isAvailable && tpl.downloadUrl ? (
+                      <div className="space-y-2">
+                        {/* 1. 템플릿 다운로드 버튼 */}
+                        <a
+                          href={tpl.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>템플릿 무료 다운로드 (노션 복제)</span>
+                          <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
+                        </a>
+
+                        {/* 2. 전용 웹사이트 연결 버튼 */}
+                        {tpl.webAppUrl && (
+                          <Link
+                            href={tpl.webAppUrl}
+                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-warm-100 hover:bg-navy-950 text-navy-800 hover:text-white border border-warm-200/80 font-bold text-xs active:scale-[0.98] transition-all"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{tpl.webAppLabel || '전용 웹사이트 바로가기'}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="w-full py-3 rounded-2xl bg-warm-100/80 text-navy-400 font-bold text-xs text-center border border-warm-200/70 flex items-center justify-center gap-2">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>정성껏 제작 중입니다 · 곧 출시됩니다</span>
+                        </div>
+
+                        {tpl.webAppUrl && (
+                          <Link
+                            href={tpl.webAppUrl}
+                            className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-2xl bg-white hover:bg-warm-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-all"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                            <span>{tpl.webAppLabel} (먼저 체험하기)</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Future Template Roadmap Notice Banner */}
+          <div className="p-8 rounded-3xl bg-gradient-to-r from-warm-100/70 via-indigo-50/50 to-warm-100/70 border border-warm-200 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto text-xl shadow-xs border border-warm-200">
+              💡
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-lg font-black text-navy-950">
+                원하시는 사역 템플릿이 있으신가요?
+              </h4>
+              <p className="text-xs sm:text-sm text-navy-600 max-w-lg mx-auto">
+                Bunker 목양 연구소는 현장 사역자들의 의견을 반영하여 실무에 즉시 쓰이는 노션 템플릿과 AI 웹 도구를 계속해서 추가 제작하고 있습니다.
+              </p>
+            </div>
+          </div>
+
         </div>
-      )}
+      </section>
 
       {/* ════════════════════════════════════════════
-          5. BOTTOM CTA
+          4. BOTTOM CTA
          ════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 bg-navy-950 text-white relative overflow-hidden">
+      <section className="py-20 md:py-28 bg-[#0B1020] text-white relative overflow-hidden">
         <div className="container-custom max-w-3xl relative z-10 text-center space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
-            <Heart className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            함께 세우는 사역 공동체
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-300/30">
+            <Heart className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+            한국 교회를 섬기는 100% 무료 나눔
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
-            당신의 사역 템플릿 하나가<br />
-            <span className="text-amber-400">전국 작은 교회의 힘이 됩니다</span>
+            지금 사역자 세컨드 브레인으로<br />
+            <span className="text-amber-400">사역의 품격을 한 단계 높여보세요</span>
           </h2>
 
-          <p className="text-xs sm:text-sm md:text-base text-navy-300 max-w-lg mx-auto leading-relaxed">
-            지금 사역 현장에서 직접 만드신 템플릿이 있다면 언제든지 나눔터에 자랑해 주세요!
+          <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
+            비용이나 회원가입 부담 없이 언제든 자유롭게 템플릿을 다운로드하고 전용 웹사이트를 이용하세요.
           </p>
 
-          <div className="pt-4 flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white font-extrabold px-7 py-3.5 rounded-2xl text-sm sm:text-base shadow-lg shadow-rose-500/20 transition-all"
+          <div className="pt-4 flex flex-wrap justify-center gap-3.5">
+            <a
+              href={flagship.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-all"
             >
-              <Plus className="w-5 h-5 stroke-[3]" />
-              지금 내 템플릿 나눔하기
-            </button>
+              <Download className="w-4 h-4" />
+              <span>템플릿 무료 다운로드</span>
+              <ArrowUpRight className="w-4 h-4 opacity-80" />
+            </a>
+
+            <Link
+              href={flagship.webAppUrl || '/notion'}
+              className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black text-sm sm:text-base shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>전용 웹사이트 바로가기</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

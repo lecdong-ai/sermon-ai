@@ -71,21 +71,37 @@
 - **공지문 & 찬양 콘티 결합**: `notice-writer` 각 시안 카드 및 `conti` 콘티 카드/시트 에디터에 노션 복사 & 매핑 UI 연동 완료.
 - **build**: 성공 ✅
 
+## Phase 7 — 사역자 세컨드 브레인(261003) 단일 배포 통합 & 템플릿 스튜디오 리뉴얼
+- **Vite 앱(261003) 코드 통합**: `261003/src` 전체(컴포넌트 19종, 데이터, 유틸리티, `App.css`, `index.css`)를 `src/components/second-brain/`으로 이식. 의존성(`three`, `canvas-confetti`) 설치 완료.
+- **`/notion` 전용 라우트 생성**: `src/app/notion/page.tsx`에서 `dynamic(() => import('@/components/second-brain/App'), { ssr: false })`로 안전하게 클라이언트 마운트 (Three.js WebGL, 캔버스, localStorage 호환).
+- **독립 풀스크린 & 비로그인 허용**:
+  - `SiteHeader.tsx`: `/notion`에서 글로벌 헤더 숨김 처리 및 `MainWrapper` 상단 패딩(`pt-16`) 제거 → `http://localhost:5173/`과 동일한 풀스크린 뷰 제공.
+  - `MessageButton.tsx`: `/notion`에서 플로팅 문의 버튼 숨김.
+  - `middleware.ts`: `publicRoutes`, `publicPrefixes`, `publicPatterns`에 `/notion` 등록으로 비로그인 무제한 이용 보장.
+- **템플릿 라운지(`/qt/templates`) 리뉴얼**:
+  - 기존 더미 템플릿 삭제 및 1호 플래그십 '사역자 세컨드 브레인' 단독 피처링.
+  - 템플릿별 듀얼 액션 버튼 제공: **[📥 템플릿 다운로드 (노션 복제)]** + **[🌐 전용 웹사이트 바로가기 (`/notion`)]**.
+  - 향후 신규 노션 템플릿 지속 제작/업로드가 가능한 모듈형 카탈로그 구조(`BUNKER_NOTION_TEMPLATES`) 구축 (카테고리 필터, 검색, 차기 로드맵 티저).
+- **서브도메인 정리**: `notion.bunker.ai.kr` 완전 제거 및 단일 도메인(`bunker.ai.kr/notion`) 일원화로 추가 비용 및 관리 부담 $0.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. 배포 확인: `bunker.ai.kr/advanced/projects/expository` 모델 선택 UI + 시리즈 페이지 modelLabel
-2. `bunker.ai.kr/advanced/qt` → 큐티 + 묵상 팩 미리보기 확인 (100소원 제거·순서)
-3. (선택) themeColor 동기화: wizard에서 /diary 수채화 테마 연동 or 테마 선택 UI
-4. 레거시 "큐티만" 경로 `coverMainTitle` 한글 유지 여부 결정
+1. 로컬 확인: `http://localhost:3000/qt/templates` (다운로드/웹사이트 듀얼 버튼 및 카탈로그)
+2. 로컬 확인: `http://localhost:3000/notion` (헤더 없는 풀스크린 사역자 세컨드 브레인 스튜디오)
+3. git commit & push → Vercel 자동 배포 트리거
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
 - **Vercel 프로젝트**: `sermon-dashboard` (prj_PDAy19aQvpFcRZXYULDyiovljsE2) — `bunker.ai.kr`
 - **GitHub**: `lecdong-ai/sermon-ai` (monorepo, main 브랜치)
-- **현재 HEAD**: `6ce3126`
-- **구 Vercel 프로젝트** (삭제 예정):
-  - `church-school` (prj_bpDO10wPvg1V9G3oDoe8vkZ6Ro6f)
-  - `qt-archive` (prj_ZBOh0L7lMGM5LzYs7QGF5CLfvN5l)
+- **단일 배포 서브 서비스**:
+  - 큐티 아카이브: `/qt`
+  - 노션 템플릿 라운지: `/qt/templates`
+  - 사역자 세컨드 브레인: `/notion`
+  - 교회학교 & 공지문: `/school`
+  - AI 설교 연구실: `/workspace`, `/advanced`
+

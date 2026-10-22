@@ -12,7 +12,8 @@ export default function SiteHeader() {
   const isConti = pathname.startsWith('/conti')
   const isShopOrPricing = pathname.startsWith('/shop') || pathname.startsWith('/support') || pathname.endsWith('/pricing')
   const isSchool = pathname.startsWith('/school') && !pathname.endsWith('/pricing')
-  const showHeader = isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
+  const isNotion = pathname.startsWith('/notion')
+  const showHeader = (isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)) && !isNotion
 
   if (!showHeader) return null
 
@@ -28,5 +29,6 @@ export function useShowSiteHeader(): boolean {
   const isConti = pathname.startsWith('/conti')
   const isShopOrPricing = pathname.startsWith('/shop') || pathname.startsWith('/support') || pathname.endsWith('/pricing')
   const isSchool = pathname.startsWith('/school') && !pathname.endsWith('/pricing')
-  return isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)
+  const isNotion = pathname.startsWith('/notion')
+  return (isShopOrPricing || !(isDashboard || isAdmin || isAdvanced || isIntro || isConti || isSchool)) && !isNotion
 }

@@ -244,8 +244,10 @@ export default function MessageButton() {
 
   const charCount = message.length
 
-  // 관리자 페이지에서는 버튼 자체를 숨김
-  if (isAdminRoute) return null
+  const isNotionRoute = pathname?.startsWith('/notion')
+
+  // 관리자 페이지 및 세컨드 브레인(/notion)에서는 버튼 자체를 숨김
+  if (isAdminRoute || isNotionRoute) return null
 
   return (
     <>
