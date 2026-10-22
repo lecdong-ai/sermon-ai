@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
 import { useAuth } from '@/components/AuthProvider';
+import AnimatedSacredBackground from '@/components/AnimatedSacredBackground';
 
 export default function HomePage() {
   const router = useRouter();
@@ -36,7 +37,9 @@ export default function HomePage() {
   const isLoggedIn = !loading && !!user;
 
   return (
-    <div className="min-h-screen bg-[#0A0E1A] text-slate-100 font-sans selection:bg-amber-400/20 selection:text-amber-200">
+    <div className="relative min-h-screen text-slate-100 font-sans selection:bg-amber-400/20 selection:text-amber-200">
+      {/* 🌟 살아 움직이는 오로라 & 은은한 빛가루 파티클 애니메이션 배경 */}
+      <AnimatedSacredBackground />
 
       {/* ════════════════════════════════════════════════════════════
           1. HERO SECTION (목회자의 고뇌를 품은 온기 있는 첫인상)
@@ -122,7 +125,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           2. LIVE MINISTRY DESK (실제 사역 데스크탑 인터랙티브 쇼케이스)
          ════════════════════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 bg-[#080C16] border-b border-white/[0.06]">
+      <section className="py-16 md:py-24 bg-[#080C16]/65 backdrop-blur-md border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-10">
 
           <div className="text-center space-y-2.5 max-w-2xl mx-auto">
@@ -541,7 +544,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           3. OUR PHILOSOPHY & MANIFESTO (진심 어린 사역 선언문)
          ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 md:py-28 bg-[#0A0E1A] relative border-b border-white/[0.06]">
+      <section className="py-20 md:py-28 bg-[#0A0E1A]/40 backdrop-blur-sm relative border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 text-center space-y-12">
           
           <div className="space-y-4">
@@ -597,7 +600,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           4. WHO CAN BENEFIT (공동체 구성원별 안내)
          ════════════════════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 bg-[#080C16] border-b border-white/[0.06]">
+      <section className="py-16 md:py-24 bg-[#080C16]/65 backdrop-blur-md border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-10">
 
           <div className="text-center space-y-2 max-w-xl mx-auto">
@@ -711,7 +714,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           5. INSTANT SERMON EXPERIMENT SANDBOX (즉시 체험존)
          ════════════════════════════════════════════════════════════ */}
-      <section id="demo-upload" className="py-20 md:py-28 bg-[#0A0E1A] border-b border-white/[0.06]">
+      <section id="demo-upload" className="py-20 md:py-28 bg-[#0A0E1A]/40 backdrop-blur-sm border-b border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center space-y-8">
           
           <div className="space-y-3">
@@ -762,7 +765,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           6. FAQ (사역자들의 솔직한 궁금증)
          ════════════════════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 bg-[#080C16] border-b border-white/[0.06]">
+      <section className="py-16 md:py-24 bg-[#080C16]/65 backdrop-blur-md border-b border-white/[0.06]">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 space-y-8 text-left">
           
           <div className="text-center space-y-2">
@@ -816,7 +819,7 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           7. GENTLE CLOSING (따뜻한 마무리와 초대)
          ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 md:py-28 bg-[#0A0E1A] text-center">
+      <section className="py-20 md:py-28 bg-[#0A0E1A]/40 backdrop-blur-sm text-center">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 space-y-6">
           <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center mx-auto text-amber-300">
             <Church className="w-6 h-6" />
