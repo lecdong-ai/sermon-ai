@@ -142,13 +142,22 @@
   - **딥 스페이스 캔버스**: `#0B0D14` 베이스 + 24px 도트 그리드 배경.
 - **build/typecheck**: 성공 ✅
 
+## Phase 15 — 설정 페이지(/advanced/settings) 전체 초기화 기능 고도화 및 버그 수정
+- **클라우드 DB 대상 테이블 확장 및 오타 수정**:
+  - `src/app/api/user/reset-all/route.ts`: 존재하지 않던 `conti` 테이블명 오류 수정 ➔ `conti_sets`(아이템 cascade), `conti_songs` 및 큐티 생성 이력 `qt_history`까지 확실하게 삭제 처리.
+  - 설교(`sermons`), 시리즈(`series`), 강해(`study_guides`), 큐티(`qt_archive`), 찬양 콘티(`conti_sets`, `conti_songs`), 큐티 이력(`qt_history`)을 Supabase DB에서 완전 삭제. (연구 노트 `insights` 및 인증 토큰 보존).
+- **로컬 스토리지 정리 및 자동 새로고침**:
+  - `src/app/advanced/settings/page.tsx`: 초기화 완료 시 1.5초 후 `window.location.reload()` 자동 트리거하여 브라우저 인메모리 캐시까지 즉각 리셋.
+  - UI 카드 제목을 `클라우드 DB & 로컬 전체 초기화`로 명확화하고, 2단계 클릭 안내 문구 제공.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. 로컬 확인: `http://localhost:3001/advanced/graph` (전체 지식 그래프 옵시디언 뷰)
-2. 실서버 확인: `https://bunker.ai.kr/advanced/graph`
+1. 로컬 확인: `http://localhost:3001/advanced/settings`
+2. 실서버 확인: `https://bunker.ai.kr/advanced/settings`
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
