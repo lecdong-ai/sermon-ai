@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     if (studyErr) console.error('study_guides delete error:', studyErr)
 
-    // 4. 내 모든 큐티 아카이브(qt_archive) 삭제
+    // 4. 내 모든 큐티 아카이브(qt_archive) 및 생성 기록(qt_history) 삭제
     const { error: qtErr } = await supabaseAdmin
       .from('qt_archive')
       .delete()
@@ -43,17 +43,31 @@ export async function POST(request: NextRequest) {
 
     if (qtErr) console.error('qt_archive delete error:', qtErr)
 
-    // 5. 내 모든 콘티(conti) 삭제
-    const { error: contiErr } = await supabaseAdmin
-      .from('conti')
+    const { error: qtHistErr } = await supabaseAdmin
+      .from('qt_history')
       .delete()
       .eq('user_id', userId)
 
-    if (contiErr) console.error('conti delete error:', contiErr)
+    if (qtHistErr) console.error('qt_history delete error:', qtHistErr)
+
+    // 5. 내 모든 찬양 콘티(conti_sets) 및 등록 곡(conti_songs) 삭제
+    const { error: contiSetsErr } = await supabaseAdmin
+      .from('conti_sets')
+      .delete()
+      .eq('user_id', userId)
+
+    if (contiSetsErr) console.error('conti_sets delete error:', contiSetsErr)
+
+    const { error: contiSongsErr } = await supabaseAdmin
+      .from('conti_songs')
+      .delete()
+      .eq('user_id', userId)
+
+    if (contiSongsErr) console.error('conti_songs delete error:', contiSongsErr)
 
     return NextResponse.json({
       success: true,
-      message: '모든 설교, 시리즈, 연구 가이드, 큐티 자료가 성공적으로 초기화되었습니다.',
+      message: '모든 설교, 시리즈, 연구 가이드, 큐티, 찬양 콘티 자료가 성공적으로 초기화되었습니다.',
     })
   } catch (err: any) {
     console.error('POST /api/user/reset-all error:', err)

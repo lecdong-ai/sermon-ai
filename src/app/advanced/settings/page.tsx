@@ -80,7 +80,10 @@ export default function SettingsPage() {
 
       // 2. 로컬 브라우저 캐시 삭제
       clearAllLocalData()
-      setMessage({ type: 'ok', text: '내 모든 설교, 강해, 시리즈 및 연구 데이터가 DB에서 완벽하게 초기화되었습니다.' })
+      setMessage({ type: 'ok', text: '내 모든 설교, 강해, 시리즈, 큐티, 찬양 콘티 및 로컬 캐시가 성공적으로 초기화되었습니다. 잠시 후 새로고침됩니다...' })
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (e: any) {
       setMessage({ type: 'error', text: e?.message || '초기화 중 오류가 발생했습니다.' })
     } finally {
@@ -126,8 +129,8 @@ export default function SettingsPage() {
         <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl p-5">
           <h2 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">로컬 데이터 초기화</h2>
           <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-            이 브라우저에 저장된 모든 로컬 데이터(연구 노트, 설교 준비, 원고, 커스텀 프로젝트, SermonLoom, Wizard 초안)를 삭제합니다.
-            Supabase 서버에 저장된 데이터는 유지됩니다.
+            이 브라우저에 저장된 모든 로컬 데이터(연구 노트 임시본, 설교 준비, 원고, 커스텀 프로젝트, SermonLoom, Wizard 초안)를 삭제합니다.
+            Supabase 서버에 저장된 데이터는 그대로 유지됩니다.
           </p>
           <button
             onClick={handleClearLocalStorage}
@@ -144,10 +147,11 @@ export default function SettingsPage() {
 
         {/* Full Reset */}
         <div className="bg-[#0a0e1a] border border-red-500/20 rounded-2xl p-5">
-          <h2 className="text-[10px] font-semibold text-red-400 uppercase tracking-widest mb-2">전체 초기화 및 로그아웃</h2>
+          <h2 className="text-[10px] font-semibold text-red-400 uppercase tracking-widest mb-2">클라우드 DB & 로컬 전체 초기화</h2>
           <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-            모든 로컬 데이터를 삭제하고 로그아웃합니다.
-            Supabase 서버에 저장된 연구 노트는 유지됩니다.
+            클라우드 Supabase DB에 저장된 내 모든 설교, 시리즈, 성경 한권강해, 큐티, 찬양 콘티와 브라우저 로컬 캐시를 완전히 삭제합니다.
+            <br />
+            <span className="text-slate-500 text-[11px]">※ Supabase 서버에 저장된 연구 노트와 계정 로그인 세션은 유지됩니다.</span>
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -165,7 +169,7 @@ export default function SettingsPage() {
               onClick={handleSignOut}
               className="text-xs px-4 py-2 rounded-xl font-medium bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 hover:text-white transition-all"
             >
-              로그아웃만
+              로그아웃
             </button>
           </div>
         </div>
