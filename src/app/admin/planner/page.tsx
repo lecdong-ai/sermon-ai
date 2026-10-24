@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, RefreshCw, ExternalLink, Shield, BookOpen } from 'lucide-react'
+import { ChevronLeft, RefreshCw, ExternalLink, Shield, BookOpen, GraduationCap } from 'lucide-react'
 
 export default function AdminPlannerPage() {
   const [iframeKey, setIframeKey] = useState(0)
@@ -38,7 +38,18 @@ export default function AdminPlannerPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          {/* 교회학교 사역 센터 연계 바로가기 */}
+          <Link
+            href="/school"
+            target="_blank"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 text-xs font-semibold border border-emerald-500/25 transition-all hover:scale-[1.02]"
+            title="온라인 학생 명렬부·출석·알림장 사역 센터 (새 탭)"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
+            <span>교회학교 사역 센터 ↗</span>
+          </Link>
+
           <button
             onClick={handleRefresh}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-medium border border-white/5 transition-colors"
