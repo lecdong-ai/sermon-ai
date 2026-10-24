@@ -133,13 +133,22 @@
   - **Obsidian Dark Void Canvas**: `#0B0D14` 다크 베이스 + 미세한 Dot Grid 배경 패턴 + 우측 상단 `⚡` 재배치(Reheat) 및 노드 카운트 바.
 - **build/typecheck**: 성공 ✅
 
+## Phase 14 — 전체 지식 그래프(/advanced/graph) 옵시디언(Obsidian) 스타일 적용
+- **전체 지식 그래프 페이지(`src/app/advanced/graph/page.tsx`) 동기화**:
+  - `NODE_COLORS`를 옵시디언 파스텔 네온 색상표(에메랄드, 앰버, 라벤더, 스카이블루, 로즈, 인디고)로 통일.
+  - **Luminescent Pip Nodes**: 노드 기본 반지름을 4.5px ~ 9.5px의 섬세한 점(Pip) 형태로 축소하고, 발광 앰비언트 글로우 레이어(`r * 2.4`) 및 네온 펄스 적용.
+  - **호버 실시간 딥 디밍(Deep Dimming)**: 노드에 마우스를 올리면 연결된 관계선(1.6px 네온 스트로크 + 라벨)과 이웃 노드만 선명하게 빛나고, 비연결 요소는 투명도 0.04(선) 및 0.12(노드)로 자동 딤 처리.
+  - **옵시디언 인라인 타이포그래피**: 노드 우측에 9.5px Pretendard 폰트 + 다크 외곽선(`stroke="#0B0D14"`, `paintOrder="stroke"`)으로 노드 겹침 없이 선명하게 표시.
+  - **딥 스페이스 캔버스**: `#0B0D14` 베이스 + 24px 도트 그리드 배경.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. 로컬 확인: `http://localhost:3000/` (새로워진 온기 있는 메인 랜딩 페이지)
-2. 실서버 확인: `https://bunker.ai.kr/` (Vercel 자동 배포 반영)
+1. 로컬 확인: `http://localhost:3001/advanced/graph` (전체 지식 그래프 옵시디언 뷰)
+2. 실서버 확인: `https://bunker.ai.kr/advanced/graph`
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)

@@ -22,12 +22,12 @@ export interface GraphEdge {
 }
 
 export const NODE_COLORS: Record<NodeType, string> = {
-  sermon: '#10B981',
-  passage: '#F59E0B',
-  theme: '#8B5CF6',
-  word: '#3B82F6',
-  note: '#F43F5E',
-  series: '#06B6D4',
+  sermon: '#34D399',
+  passage: '#FBBF24',
+  theme: '#A78BFA',
+  word: '#38BDF8',
+  note: '#FB7185',
+  series: '#818CF8',
 }
 
 export const NODE_COLORS_BG: Record<NodeType, string> = {

@@ -1083,56 +1083,59 @@ const GraphCanvas = ({
 
   const resetView = () => setViewTransform({ x: 0, y: 0, scale: 1 })
 
+  // Active focus: hovered node takes precedence or fallback to selected node
+  const activeFocusId = hoveredNodeId || selectedNodeId
+  const activeNeighborSet = useMemo(() => {
+    if (!activeFocusId) return new Set<string>()
+    const set = new Set<string>()
+    edges.forEach(edge => {
+      if (edge.source === activeFocusId) set.add(edge.target)
+      if (edge.target === activeFocusId) set.add(edge.source)
+    })
+    return set
+  }, [activeFocusId, edges])
+
   const edgeOpacity = (edge: GraphEdge) => {
-    if (hoveredEdge === `${edge.source}-${edge.target}`) return 0.85
-    if (!selectedNodeId) return isDark ? 0.12 : 0.1
-    return edge.source === selectedNodeId || edge.target === selectedNodeId ? 0.6 : 0.04
+    if (hoveredEdge === `${edge.source}-${edge.target}`) return 0.95
+    if (!activeFocusId) return isDark ? 0.22 : 0.25
+    const isConnected = edge.source === activeFocusId || edge.target === activeFocusId
+    return isConnected ? 0.95 : 0.04
   }
 
   const nodeOpacity = (nodeId: string) => {
-    if (!selectedNodeId) return 1
-    if (nodeId === selectedNodeId) return 1
-    return neighborIds.has(nodeId) ? 0.85 : 0.2
+    if (!activeFocusId) return 1
+    if (nodeId === activeFocusId) return 1
+    return activeNeighborSet.has(nodeId) ? 0.95 : 0.12
   }
 
   const nodeRadius = (node: GraphNode) => {
-    const base = node.size * 4
-    const s = (nodeId: string) => {
-      if (!selectedNodeId) return 1
-      if (nodeId === selectedNodeId) return 1.25
-      return neighborIds.has(nodeId) ? 1.08 : 0.7
-    }
-    return base * s(node.id)
-  }
-
-  const labelSize = (nodeId: string) => {
-    if (!selectedNodeId) return 9.5
-    if (nodeId === selectedNodeId) return 11.5
-    return neighborIds.has(nodeId) ? 9.5 : 8.5
+    // Obsidian: delicate small luminescent pips
+    const conn = node.connectionCount || 1
+    const base = Math.max(4.5, Math.min(10, 4.5 + conn * 0.7))
+    if (node.id === activeFocusId) return base * 1.35
+    if (activeNeighborSet.has(node.id)) return base * 1.15
+    return base
   }
 
   const isDark = theme === 'dark'
-  const bgClass = isDark ? 'bg-[#0d0d12]' : 'bg-paper-50/30'
-  const edgeColor = isDark ? '#4a4a5a' : '#9CA3AF'
-  const edgeHighlight = isDark ? '#10B981' : '#059669'
-  const labelColor = isDark ? '#a0a0b0' : '#374151'
-  const labelColorDim = isDark ? '#555566' : '#9CA3AF'
+  const bgClass = isDark ? 'bg-[#0B0D14]' : 'bg-[#F9FAFB]'
+  const edgeColor = isDark ? '#374151' : '#9CA3AF'
+  const edgeHighlight = isDark ? '#34D399' : '#059669'
   const nodeFill = (node: GraphNode) => {
-    if (node.id === selectedNodeId) return isDark ? '#065F46' : '#047857'
-    return NODE_COLORS[node.type]
+    return NODE_COLORS[node.type] || '#A78BFA'
   }
 
   return (
     <div ref={containerRef} className={`flex-1 overflow-hidden ${bgClass} relative`}>
-      {/* Dot grid background */}
+      {/* Obsidian dot grid background */}
       <svg width="0" height="0" className="absolute">
         <defs>
-          <pattern id={`dotGrid-${theme}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.5" fill={isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'} />
+          <pattern id={`dotGrid-${theme}`} x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.75" fill={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'} />
           </pattern>
         </defs>
       </svg>
-      <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.5' fill='${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}'/%3E%3C/svg%3E")` }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.75' fill='${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}'/%3E%3C/svg%3E")` }} />
       <svg ref={svgRef} viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"
         className="w-full h-full cursor-grab active:cursor-grabbing relative z-10"
         onMouseDown={handleMouseDown}
@@ -1142,17 +1145,17 @@ const GraphCanvas = ({
         onWheel={handleWheel}
       >
         <defs>
-          <filter id={`nodeGlow-${theme}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id={`obsidianGlow-${theme}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <filter id={`nodeGlowStrong-${theme}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
+          <filter id={`obsidianNeonGlow-${theme}`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
             <feComponentTransfer in="blur" result="glow">
-              <feFuncA type="linear" slope="0.4" />
+              <feFuncA type="linear" slope="0.8" />
             </feComponentTransfer>
             <feMerge>
               <feMergeNode in="glow" />
@@ -1161,31 +1164,38 @@ const GraphCanvas = ({
           </filter>
         </defs>
         <g transform={`translate(${viewTransform.x}, ${viewTransform.y}) scale(${viewTransform.scale})`}>
-          {/* Edges */}
+          {/* Obsidian Filament Edges */}
           {edges.map(edge => {
             const s = positions[edge.source], t = positions[edge.target]
             if (!s || !t) return null
             const edgeKey = `${edge.source}-${edge.target}`
             const isHighlighted = hoveredEdge === edgeKey
-            const isSelected = selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)
+            const isConnected = activeFocusId && (edge.source === activeFocusId || edge.target === activeFocusId)
             const edgeTypeStyle = EDGE_STYLES[edge.type || 'other']
-            const baseStroke = isSelected ? edgeHighlight : (isDark ? edgeTypeStyle.color : edgeTypeStyle.color)
+            const strokeColor = isConnected
+              ? (isDark ? '#34D399' : '#059669')
+              : (isDark ? (edgeTypeStyle?.color || edgeColor) : (edgeTypeStyle?.color || edgeColor))
+            const strokeWidth = isConnected ? 1.6 : (isHighlighted ? 1.4 : 0.75)
+            const op = edgeOpacity(edge)
+
             return (
               <g key={edgeKey}>
                 <line x1={s.x} y1={s.y} x2={t.x} y2={t.y}
-                  stroke={baseStroke}
-                  strokeWidth={isHighlighted ? Math.max(1.0, edge.weight * 1.4) : Math.max(0.4, edge.weight * 0.6)}
-                  opacity={edgeOpacity(edge)}
-                  className="transition-all duration-300"
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  opacity={op}
+                  className="transition-all duration-200"
                   style={{ cursor: 'pointer' }}
+                  filter={isConnected ? `url(#obsidianNeonGlow-${theme})` : undefined}
                   onMouseEnter={() => setHoveredEdge(edgeKey)}
                   onMouseLeave={() => setHoveredEdge(null)} />
-                {/* Edge label on hover */}
-                {isHighlighted && (
-                  <text x={(s.x + t.x) / 2} y={(s.y + t.y) / 2 - 6}
-                    textAnchor="middle" fill={isDark ? '#c0c0d0' : '#374151'} fontSize={8}
-                    className="pointer-events-none select-none"
-                    style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}>
+                {/* Edge label on hover or connected */}
+                {(isHighlighted || (isConnected && edge.label)) && op > 0.3 && (
+                  <text x={(s.x + t.x) / 2} y={(s.y + t.y) / 2 - 4}
+                    textAnchor="middle" fill={isDark ? '#E5E7EB' : '#374151'} fontSize={8}
+                    stroke={isDark ? '#0B0D14' : '#FFFFFF'} strokeWidth={2.5} paintOrder="stroke"
+                    className="pointer-events-none select-none font-medium"
+                    style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif' }}>
                     {edge.label}
                   </text>
                 )}
@@ -1193,13 +1203,14 @@ const GraphCanvas = ({
             )
           })}
 
-          {/* Nodes */}
+          {/* Obsidian Luminescent Nodes */}
           {nodes.map(node => {
             const pos = positions[node.id]
             if (!pos) return null
             const r = nodeRadius(node)
             const isSelected = node.id === selectedNodeId
             const isHovered = node.id === hoveredNodeId
+            const isFocused = node.id === activeFocusId
             const opacity = nodeOpacity(node.id)
             const fill = nodeFill(node)
 
@@ -1209,70 +1220,82 @@ const GraphCanvas = ({
                 onMouseEnter={() => onHoverNode(node.id)}
                 onMouseLeave={() => onHoverNode(null)}
                 style={{ cursor: 'pointer' }}
-                className="transition-opacity duration-300"
+                className="transition-opacity duration-200"
                 opacity={opacity}
               >
+                {/* Selected pulse ripple */}
                 {isSelected && (
-                  <circle cx={pos.x} cy={pos.y} r={r + 5} fill="none"
-                    stroke={isDark ? '#10B981' : '#059669'} strokeWidth={1} opacity={0.3}>
-                    <animate attributeName="r" values={`${r + 5};${r + 9};${r + 5}`} dur="3s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite" />
-                  </circle>
-                )}
-                {/* "NEW" pulse for recently-created nodes (within 5 min) */}
-                {isRecentNode(node) && (
-                  <circle cx={pos.x} cy={pos.y} r={r + 3} fill="none"
+                  <circle cx={pos.x} cy={pos.y} r={r + 6} fill="none"
                     stroke={fill} strokeWidth={1.5} opacity={0.6}>
-                    <animate attributeName="r" values={`${r + 3};${r + 10};${r + 3}`} dur="2.5s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.6;0;0.6" dur="2.5s" repeatCount="indefinite" />
+                    <animate attributeName="r" values={`${r + 4};${r + 14};${r + 4}`} dur="2.4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2.4s" repeatCount="indefinite" />
                   </circle>
                 )}
-                {/* Glow layer - floating effect */}
-                <circle cx={pos.x} cy={pos.y} r={r * 1.6} fill={fill} opacity={isDark ? 0.08 : 0.06}
-                  filter={`url(#nodeGlow-${theme})`} />
+                {/* Recent created node indicator */}
+                {isRecentNode(node) && (
+                  <circle cx={pos.x} cy={pos.y} r={r + 4} fill="none"
+                    stroke={fill} strokeWidth={1} opacity={0.8}>
+                    <animate attributeName="r" values={`${r + 4};${r + 10};${r + 4}`} dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
+                  </circle>
+                )}
+
+                {/* Ambient Aura Glow */}
+                <circle cx={pos.x} cy={pos.y} r={r * 2.4} fill={fill}
+                  opacity={isFocused ? 0.45 : (isDark ? 0.16 : 0.12)}
+                  filter={`url(#obsidianGlow-${theme})`} />
+
+                {/* Core Luminescent Pip */}
                 <circle cx={pos.x} cy={pos.y} r={r} fill={fill}
-                  stroke={isHovered ? (isDark ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.8)') : 'none'}
-                  strokeWidth={isHovered ? 1.5 : 0}
-                  filter={isSelected ? `url(#nodeGlowStrong-${theme})` : undefined} />
-                <text x={pos.x} y={pos.y + r + labelSize(node.id) + 4}
-                  textAnchor="middle" fill={labelColor}
-                  fontSize={labelSize(node.id)} fontWeight={isSelected ? '600' : '400'}
-                  className="pointer-events-none select-none transition-all duration-300"
-                  style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}
+                  stroke={isFocused ? '#FFFFFF' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)')}
+                  strokeWidth={isFocused ? 1.5 : 0.75}
+                  filter={isFocused ? `url(#obsidianNeonGlow-${theme})` : undefined} />
+
+                {/* Obsidian Inline Typography Label */}
+                <text
+                  x={pos.x + r + 5}
+                  y={pos.y + 3.5}
+                  textAnchor="start"
+                  fill={isDark ? (isFocused ? '#FFFFFF' : '#D1D5DB') : (isFocused ? '#111827' : '#374151')}
+                  stroke={isDark ? '#0B0D14' : '#FFFFFF'}
+                  strokeWidth={3}
+                  paintOrder="stroke"
+                  fontSize={isFocused ? 11 : 9.5}
+                  fontWeight={isFocused ? 600 : 500}
+                  className="pointer-events-none select-none transition-all duration-200"
+                  style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif' }}
                 >
-                  {node.label.length > 10 ? node.label.slice(0, 10) + '…' : node.label}
+                  {node.label}
                 </text>
-                {(isSelected || isHovered) && (
-                  <text x={pos.x} y={pos.y + r + labelSize(node.id) + 16}
-                    textAnchor="middle" fill={labelColorDim} fontSize={8}
-                    className="pointer-events-none select-none">
+
+                {/* Subtitle pill when hovered or selected */}
+                {(isHovered || isSelected) && node.subtitle && (
+                  <text
+                    x={pos.x + r + 5}
+                    y={pos.y + 16}
+                    textAnchor="start"
+                    fill={isDark ? '#9CA3AF' : '#6B7280'}
+                    stroke={isDark ? '#0B0D14' : '#FFFFFF'}
+                    strokeWidth={2.5}
+                    paintOrder="stroke"
+                    fontSize={8}
+                    className="pointer-events-none select-none"
+                    style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif' }}
+                  >
                     {node.subtitle}
                   </text>
                 )}
-                {/* Connection count badge */}
-                {(node.connectionCount || 0) > 1 && (
+
+                {/* Small connection count badge for high degree nodes */}
+                {(node.connectionCount || 0) > 3 && (
                   <g pointerEvents="none">
-                    <circle cx={pos.x + r * 0.7} cy={pos.y - r * 0.7} r={r * 0.35}
-                      fill={isDark ? '#1a1a2e' : '#fff'} stroke={fill} strokeWidth={1} />
-                    <text x={pos.x + r * 0.7} y={pos.y - r * 0.7 + 3}
+                    <circle cx={pos.x - r * 0.7} cy={pos.y - r * 0.7} r={r * 0.45}
+                      fill={isDark ? '#111827' : '#FFFFFF'} stroke={fill} strokeWidth={1} />
+                    <text x={pos.x - r * 0.7} y={pos.y - r * 0.7 + 2.5}
                       textAnchor="middle" fill={fill}
-                      fontSize={Math.max(8, r * 0.4)} fontWeight="700"
-                      style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}>
+                      fontSize={Math.max(6.5, r * 0.55)} fontWeight="700"
+                      style={{ fontFamily: 'Pretendard, -apple-system, sans-serif' }}>
                       {node.connectionCount}
-                    </text>
-                  </g>
-                )}
-                {/* "NEW" badge for recently-created nodes */}
-                {isRecentNode(node) && (
-                  <g pointerEvents="none">
-                    <rect x={pos.x - r * 0.6} y={pos.y - r - 12} width={r * 1.2} height={r * 0.55}
-                      rx={r * 0.275} fill={fill} />
-                    <text x={pos.x} y={pos.y - r - 12 + r * 0.4}
-                      textAnchor="middle" fill="#fff"
-                      fontSize={Math.max(7, r * 0.32)} fontWeight="800"
-                      letterSpacing="0.5"
-                      style={{ fontFamily: 'var(--font-noto-sans-kr), sans-serif' }}>
-                      NEW
                     </text>
                   </g>
                 )}
