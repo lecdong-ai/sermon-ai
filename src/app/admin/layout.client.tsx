@@ -58,6 +58,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAdminUser) return null
 
+  // 성경통독 플래너(/admin/planner)는 전체화면 스튜디오 모드로 렌더링
+  if (pathname === '/admin/planner') {
+    return <div className="w-screen h-screen overflow-hidden bg-[#04060f] text-slate-200">{children}</div>
+  }
+
   return (
     <div className="min-h-screen bg-[#04060f] text-slate-200">
       {/* ─── 상단 바 ─── */}
