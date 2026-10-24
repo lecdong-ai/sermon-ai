@@ -2,8 +2,15 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/support', '/pricing', '/school/pricing', '/school/mypage', '/shop', '/notion']
-const publicPrefixes = ['/api/auth', '/school/api/events', '/api/qt-suggest', '/notion']
-const publicPatterns = [/^\/school\/events\/[^/]+$/, /^\/school\/events\/[^/]+\/complete$/, /^\/school\/events\/[^/]+\/checkin$/, /^\/qt(?:\/(?!admin).*)?$/, /^\/notion(?:\/.*)?$/]
+const publicPrefixes = ['/api/auth', '/school/api/events', '/api/qt-suggest', '/notion', '/admin-planner', '/fonts']
+const publicPatterns = [
+  /^\/school\/events\/[^/]+$/,
+  /^\/school\/events\/[^/]+\/complete$/,
+  /^\/school\/events\/[^/]+\/checkin$/,
+  /^\/qt(?:\/(?!admin).*)?$/,
+  /^\/notion(?:\/.*)?$/,
+  /^\/admin-planner(?:\/.*)?$/,
+]
 
 const hasSupabaseConfig = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -96,5 +103,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|admin-planner|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|otf|mjs|js|css)$).*)'],
 }
