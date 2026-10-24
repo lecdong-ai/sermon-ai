@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const publicRoutes = ['/', '/login', '/auth/callback', '/auth/reset-password', '/support', '/pricing', '/school/pricing', '/school/mypage', '/shop', '/notion']
-const publicPrefixes = ['/api/auth', '/school/api/events', '/api/qt-suggest', '/notion', '/admin-planner', '/fonts']
+const publicPrefixes = ['/api/auth', '/school/api/events', '/api/qt-suggest', '/notion', '/admin-planner', '/fonts', '/api/admin/planner']
 const publicPatterns = [
   /^\/school\/events\/[^/]+$/,
   /^\/school\/events\/[^/]+\/complete$/,

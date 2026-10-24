@@ -118,6 +118,12 @@
   - `[📖 30일 큐티북 마스터]`: 30일 큐티북 전자동 출판
 - **build/typecheck**: 성공 ✅
 
+## Phase 12 — 플래너 스튜디오 AI 엔진 서버 프록시화 (OpenAI 401 원천 해결)
+- **클라이언트 401 원인 규명**: 플래너 스튜디오 번들이 브라우저 `localStorage`('diary_openai_api_key')에 저장되어 있던 구버전/만료된 API 키(`...hHMA`)로 `api.openai.com`을 직접 호출하여 401 오류 발생.
+- **서버 프록시 API 구축**: `src/app/api/admin/planner/ai/route.ts` 신설 — 서버의 유효한 `OPENAI_API_KEY`로 `gpt-4o-mini` 안전 프록시 호출.
+- **번들 패치**: `public/admin-planner/assets/index-Bp9Nu-QR.js`의 AI 마인드셋 & 큐티북 AI 생성 호출을 `/api/admin/planner/ai`로 연결하여 사용자가 브라우저에 API 키를 입력하지 않아도 100% 자동 생성되도록 개선.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
