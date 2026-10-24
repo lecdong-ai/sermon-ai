@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import {
   LayoutDashboard, Users, Inbox, Search, ChevronDown,
-  Shield, Home, ChevronLeft,
+  Shield, Home, ChevronLeft, BookOpen,
 } from 'lucide-react'
 import NotificationDropdown from '@/components/admin/NotificationDropdown'
 
@@ -14,6 +14,7 @@ const ADMIN_MENUS = [
   { key: 'overview', label: '대시보드', icon: LayoutDashboard, href: '/admin' },
   { key: 'users', label: '회원 관리', icon: Users, href: '/admin/users' },
   { key: 'messages', label: '메시지', icon: Inbox, href: '/admin/messages' },
+  { key: 'planner', label: '성경통독 플래너', icon: BookOpen, href: '/admin/planner' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
