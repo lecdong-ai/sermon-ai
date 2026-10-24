@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     // Build a combined extra string from structured fields for AI prompts
     const extra = [childName, teacherName, date, place, notes].filter(Boolean).join(', ') || '';
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
     
     // API 키 미작동 시 룰 베이스 고품질 폴백 작동
     if (!apiKey) {
@@ -100,7 +100,68 @@ export async function POST(req: Request) {
     const tgtKorean = TARGET_MAP[target] || target;
     const toneKorean = TONE_MAP[tone] || tone;
 
-    // Gemini API 호출 시도
+    // OpenAI (gpt-4o-mini) 호출
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content: `당신은 교회학교 사역자(전도사, 부장교사)를 돕는 친절하고 전문적인 AI 행정 비서입니다.
+실제 교회 현장에서 바로 복사하여 발송할 수 있는 자연스럽고 은혜로운 한국어 공지문 4가지 버전(짧은 문자형, 카톡 공지형, 상세 안내형, 리마인드형)을 작성해주세요.
+
+[주의사항]
+- 지나치게 기계적인 번역투나 상투적인 어조를 피하고, 교회학교 현장 정서에 맞는 다정하고 따뜻한 표현을 활용하세요.
+- 4가지 결과 유형의 특징:
+  1. version1 (짧은 문자형): 80~120자 내외의 깔끔한 SMS 전송용.
+  2. version2 (카톡 공지형): 이모티콘과 가독성 높은 줄바꿈이 가미된 친교 소통형.
+  3. version3 (상세 안내형): 일시, 장소, 지참물, 상세 설명이 번호 목록으로 정리된 공식 안내문 형태.
+  4. version4 (리마인드형): 행사 하루 전 또는 출발 전 최종 체크리스트와 은혜를 되새기는 격려 알림 형태.
+
+출력은 반드시 JSON 형식으로만 작성하세요. 다른 사족 없이 아래 스키마를 준수하세요:
+{
+  "version1": "짧은 문자형 공지문 (줄바꿈은 \\n 사용)",
+  "version2": "카톡 공지형 공지문 (줄바꿈은 \\n 사용)",
+  "version3": "상세 안내형 공지문 (줄바꿈은 \\n 사용)",
+  "version4": "리마인드형 공지문 (줄바꿈은 \\n 사용)"
+}`
+              },
+              {
+                role: 'user',
+                content: `상황: ${sitKorean}, 대상: ${tgtKorean}, 말투/톤: ${toneKorean}
+추가 기입 정보: ${extra || '(없음)'}
+자녀 이름: ${childName || '(미기입)'}
+사역자/교사 이름: ${teacherName || '(미기입)'}
+일시: ${date || '(미기입)'}
+장소: ${place || '(미기입)'}
+특이사항: ${notes || '(없음)'}`
+              }
+            ]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content;
+          if (content) {
+            const parsed = JSON.parse(content);
+            return NextResponse.json({ success: true, ...parsed });
+          }
+        }
+      } catch (e) {
+        console.error('OpenAI (gpt-4o-mini) Error:', e);
+      }
+    }
+
+    // Gemini API 호출 폴백 (OpenAI 실패 또는 키 부재 시)
     if (process.env.GEMINI_API_KEY) {
       try {
         const response = await fetch(
@@ -134,8 +195,8 @@ export async function POST(req: Request) {
   3. version3 (상세 안내형): 일시, 장소, 지참물, 상세 설명이 번호 목록으로 정리된 공식 안내문 형태.
   4. version4 (리마인드형): 행사 하루 전 또는 출발 전 최종 체크리스트와 은혜를 되새기는 격려 알림 형태.
 
-출력은 반드시 JSON 형식으로만 작성하세요. 마크다운 코드블록이나 백틱(\`\`\`) 없이 순수 JSON만 반환해야 합니다. 다른 사족이나 설명 텍스트를 절대 붙이지 마세요.
-스키마는 다음과 같아야 합니다:
+출력은 반드시 JSON 형식으로만 작성하세요. 마크다운 코드블록이나 백틱(\`\`\`) 없이 순수 JSON만 반환해야 합니다.
+스키마:
 {
   "version1": "짧은 문자형 공지문 (줄바꿈은 \\n 사용)",
   "version2": "카톡 공지형 공지문 (줄바꿈은 \\n 사용)",
@@ -163,57 +224,6 @@ export async function POST(req: Request) {
         }
       } catch (e) {
         console.error('Gemini API Error:', e);
-      }
-    }
-
-    // OpenAI API 호출 시도
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            response_format: { type: 'json_object' },
-            messages: [
-              {
-                role: 'system',
-                content: `당신은 교회학교 사역자를 돕는 스마트하고 따뜻한 AI 비서입니다.
-실제 교회 부서에서 바로 복사하여 발송할 수 있도록 수준 높은 4종 공지문(짧은 문자형, 카톡 공지형, 상세 안내형, 리마인드형)을 자연스럽게 한국어로 작성해야 합니다.
-반드시 아래 형태의 JSON 객체로만 응답하세요:
-{
-  "version1": "짧은 문자형 본문",
-  "version2": "카톡 공지형 본문",
-  "version3": "상세 안내형 본문",
-  "version4": "리마인드형 본문"
-}`
-              },
-              {
-                role: 'user',
-                content: `상황: ${sitKorean}, 대상: ${tgtKorean}, 톤: ${toneKorean}
-자녀 이름: ${childName || '(미기입)'}
-사역자/교사 이름: ${teacherName || '(미기입)'}
-일시: ${date || '(미기입)'}
-장소: ${place || '(미기입)'}
-특이사항: ${notes || '(없음)'}`
-              }
-            ]
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const content = data.choices?.[0]?.message?.content;
-          if (content) {
-            const parsed = JSON.parse(content);
-            return NextResponse.json({ success: true, ...parsed });
-          }
-        }
-      } catch (e) {
-        console.error('OpenAI API Error:', e);
       }
     }
 

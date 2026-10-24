@@ -9,7 +9,7 @@ import {
   Presentation, Music2, Layers, ShieldCheck, Clock, Quote,
   MessageSquare, ChevronRight, Check, LayoutDashboard, Star,
   FileText, Smartphone, Crown, Church, HelpCircle, X,
-  GraduationCap, Copy, Share2
+  GraduationCap, Copy, Share2, BookMarked
 } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
 import { useAuth } from '@/components/AuthProvider';
@@ -869,74 +869,74 @@ export default function HomePage() {
             </div>
             <p className="text-xs text-slate-400 mb-5">필요하신 사역 공간을 선택하세요</p>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Link
-                href="/workspace"
+                href="/dashboard"
                 onClick={() => setShowDashboardModal(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-indigo-500/30 hover:bg-white/[0.07] transition-all"
               >
-                <div className="w-9 h-9 rounded-lg bg-indigo-600/30 text-indigo-300 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md">
+                  <LayoutDashboard className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">말씀 연구실 & 설교 가공</h5>
-                  <p className="text-[10px] text-slate-400">설교 원고 분석 및 6종 양육 자료</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">설교 대시보드</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">설교 원고 분석 · 소그룹 · 6종 가공</p>
                 </div>
               </Link>
 
               <Link
-                href="/notion"
+                href="/advanced"
                 onClick={() => setShowDashboardModal(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-purple-500/30 hover:bg-white/[0.07] transition-all"
               >
-                <div className="w-9 h-9 rounded-lg bg-amber-600/30 text-amber-300 flex items-center justify-center">
-                  <Crown className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0 shadow-md">
+                  <ScrollText className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">사역자 세컨드 브레인</h5>
-                  <p className="text-[10px] text-slate-400">PARA 마스터 노션 워크스페이스</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">말씀 연구실</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">설교 프로젝트 · 본문 연구 · 원맥 파악</p>
                 </div>
               </Link>
 
               <Link
                 href="/school"
                 onClick={() => setShowDashboardModal(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-emerald-500/30 hover:bg-white/[0.07] transition-all"
               >
-                <div className="w-9 h-9 rounded-lg bg-emerald-600/30 text-emerald-300 flex items-center justify-center">
-                  <GraduationCap className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-md">
+                  <GraduationCap className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">교회학교 솔루션</h5>
-                  <p className="text-[10px] text-slate-400">학부모 공지문 & 수련회 체크인</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">교회학교 솔루션</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">공지문 작성기 · 행사 모바일 체크인</p>
                 </div>
               </Link>
 
               <Link
                 href="/qt"
                 onClick={() => setShowDashboardModal(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-amber-500/30 hover:bg-white/[0.07] transition-all"
               >
-                <div className="w-9 h-9 rounded-lg bg-rose-600/30 text-rose-300 flex items-center justify-center">
-                  <Heart className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-md">
+                  <BookMarked className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">세대별 매일 큐티</h5>
-                  <p className="text-[10px] text-slate-400">가정 식탁 나눔 & 은혜 나눔 카드</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">큐티 아카이브</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">세대별 매일 묵상 · 나눔 카드</p>
                 </div>
               </Link>
 
               <Link
-                href="/school/ppt-studio"
+                href="/conti"
                 onClick={() => setShowDashboardModal(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+                className="group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:border-blue-500/30 hover:bg-white/[0.07] transition-all"
               >
-                <div className="w-9 h-9 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center">
-                  <Presentation className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md">
+                  <Music2 className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">PPT 스튜디오 & 예배 콘티</h5>
-                  <p className="text-[10px] text-slate-400">예배 찬양 슬라이드 및 콘티 관리</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">예배 콘티</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">찬양 콘티 구성 · 악보집 관리</p>
                 </div>
               </Link>
             </div>

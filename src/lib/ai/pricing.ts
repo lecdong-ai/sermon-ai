@@ -1,8 +1,7 @@
 // AI 모델별 가격 (per 1M tokens, USD)
 // OpenAI 공식 가격표 기준 — 가격 변동 시 여기만 업데이트
 export const PRICING = {
-  'gpt-4o-mini':  { input: 0.15, output: 0.60 },
-  'gpt-4o-mini': { input: 0.25, output: 2.00 },
+  'gpt-4o-mini': { input: 0.15, output: 0.60 },
 } as const
 
 export type ModelKey = keyof typeof PRICING
