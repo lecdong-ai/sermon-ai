@@ -101,6 +101,16 @@
 - **메인 사역 공간 모달 네비게이션 정비**: 대시보드, 말씀 연구실, 교회학교, 큐티 아카이브, 예배 콘티 5대 허브 라우팅 및 디자인 일치화.
 - **build**: 성공 ✅
 
+## Phase 10 — 성경통독 플래너 스튜디오(/admin/planner) 통합 & 갓생 다이어리 미리보기 최적화
+- **관리자 전용 스튜디오 탑바**: 기존 상단 버튼 겹침 및 프레임 갇힘 문제 해결, 40px 초슬림 일체형 스튜디오 탑바(`src/app/admin/planner/page.tsx`) 구축 ([← 관리자 센터], [새로고침], [새 탭 열기]).
+- **정적 에셋 404 및 미들웨어 307 인터셉트 해결**:
+  - `public/fonts/` (Pretendard TTF/OTF/WOFF2) 및 `public/face-circular.png` 루트 배치.
+  - `middleware.ts`: `publicPrefixes`에 `/fonts`, `/admin-planner` 추가 및 `matcher`에서 정적 확장자(`.mjs`, `.woff`, `.woff2`, `.ttf`, `.otf`, `.js`, `.css`) 제외.
+- **실시간 PDF 캔버스 렌더러 복구 & 갓생 다이어리 기본 모드 설정**:
+  - `public/admin-planner/assets/index-Bp9Nu-QR.js`: 폰트/에셋 로더 fallback 추가(절대경로 및 상대경로 동시 지원), 초기 실행 모드를 `diary`("📅 갓생 다이어리 & 플래너")로 기본화.
+  - 1:1 고해상도 벡터 PDF 미리보기가 지연/무한스피너 없이 즉시 렌더링되도록 최적화 완료.
+- **build/typecheck**: 성공 ✅ | 커밋: `ca2d50f` | push 완료 → Vercel auto-deploy
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
