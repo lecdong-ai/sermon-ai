@@ -124,6 +124,15 @@
 - **번들 패치**: `public/admin-planner/assets/index-Bp9Nu-QR.js`의 AI 마인드셋 & 큐티북 AI 생성 호출을 `/api/admin/planner/ai`로 연결하여 사용자가 브라우저에 API 키를 입력하지 않아도 100% 자동 생성되도록 개선.
 - **build/typecheck**: 성공 ✅
 
+## Phase 13 — 말씀연구실 지식 그래프 Obsidian(옵시디언) 스타일 전면 리디자인
+- **Obsidian 그래프 미학 이식 (`MinistryConstellation.tsx`)**:
+  - **Luminescent Pip Nodes**: 투박한 2D 구슬 형태를 걷어내고, 작고 영롱한 옵시디언 시그니처 발광 도트(`4.5px ~ 9.5px`)와 엠비언트 오라 글로우(`obsidianGlow`) 적용.
+  - **Obsidian Filament Edges & Deep Dimming**: 0.75px 가늘고 섬세한 거미줄 라인. 호버 시 해당 노드와 연결된 선들만 고유 네온 컬러로 발광하고, 비연결 노드/선은 90% 이상 어두워지는 딥 디밍(Deep Dimming) 신경망 효과 구현.
+  - **Inline Typography Labels**: 노드 옆에 10px 세련된 타이포그래피 라벨 상시 표시 및 다크 아웃라인 스트로크(`paintOrder="stroke"`)로 가독성 보장.
+  - **Interactive Drag & Elastic Physics**: D3 Force 기반 실시간 마우스 드래그 & 고무줄 탄성 복귀 인터랙션 탑재.
+  - **Obsidian Dark Void Canvas**: `#0B0D14` 다크 베이스 + 미세한 Dot Grid 배경 패턴 + 우측 상단 `⚡` 재배치(Reheat) 및 노드 카운트 바.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음

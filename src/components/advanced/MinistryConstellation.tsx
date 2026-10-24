@@ -6,7 +6,6 @@ import {
   type Simulation,
 } from 'd3-force'
 import { getCustomProjects } from '@/lib/advanced/customProjects'
-import { getStorageItem } from '@/lib/storage'
 import { readProjectCore } from '@/lib/advanced/projectStorage'
 
 interface GraphNode {
@@ -36,21 +35,23 @@ interface SimNode {
   refValue: string
   r: number
   recency: number
-  x?: number
-  y?: number
+  conns: number
+  x: number
+  y: number
   vx?: number
   vy?: number
   fx?: number | null
   fy?: number | null
 }
 
+// ─── Obsidian Knowledge Graph Color Palette ───
 const TYPE_COLOR: Record<string, string> = {
-  sermon: '#10B981',
-  passage: '#F59E0B',
-  theme: '#8B5CF6',
-  word: '#3B82F6',
-  note: '#F43F5E',
-  series: '#06B6D4',
+  sermon: '#34D399',  // Obsidian Emerald (설교)
+  passage: '#FBBF24', // Obsidian Amber/Gold (본문)
+  theme: '#A78BFA',   // Obsidian Lavender (주제)
+  word: '#38BDF8',    // Obsidian Cyan (원어)
+  note: '#FB7185',    // Obsidian Rose (통찰)
+  series: '#818CF8',  // Obsidian Indigo (시리즈)
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -67,7 +68,7 @@ interface MinistryConstellationProps {
   height?: number
 }
 
-export default function MinistryConstellation({ onSelectNode, height = 340 }: MinistryConstellationProps) {
+export default function MinistryConstellation({ onSelectNode, height = 360 }: MinistryConstellationProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const simRef = useRef<Simulation<SimNode, undefined> | null>(null)
@@ -76,6 +77,7 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
   const nodeMapRef = useRef<Map<string, SimNode>>(new Map())
   const animRef = useRef<number>(0)
   const sizeRef = useRef({ w: 800, h: height })
+  const dragNodeRef = useRef<SimNode | null>(null)
 
   const [allNodes, setAllNodes] = useState<GraphNode[]>([])
   const [allEdges, setAllEdges] = useState<GraphEdge[]>([])
@@ -101,23 +103,23 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     if (!el) return
     const ro = new ResizeObserver(() => {
       const rect = el.getBoundingClientRect()
-      const w = rect.width, h = rect.height
-      if (sizeRef.current.w !== w || sizeRef.current.h !== h) {
-        sizeRef.current = { w, h }
-        setSize({ w, h })
+      if (rect.width > 0 && rect.height > 0) {
+        sizeRef.current = { w: rect.width, h: rect.height }
+        setSize({ w: rect.width, h: rect.height })
       }
     })
     ro.observe(el)
     const rect = el.getBoundingClientRect()
-    sizeRef.current = { w: rect.width, h: rect.height }
-    setSize({ w: rect.width, h: rect.height })
+    if (rect.width > 0 && rect.height > 0) {
+      sizeRef.current = { w: rect.width, h: rect.height }
+      setSize({ w: rect.width, h: rect.height })
+    }
     return () => ro.disconnect()
   }, [])
 
   // Fetch graph data
   useEffect(() => {
-    let ac: AbortController | null = null
-    ac = new AbortController()
+    const ac = new AbortController()
     setLoading(true)
     Promise.all([
       fetch('/api/graph', { signal: ac.signal }).then(r => r.json()).catch(() => ({ success: false })),
@@ -154,7 +156,7 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
         }
       }
 
-      // localStorage projects — 진행 중 + 완료만 (보관 제외)
+      // localStorage projects
       const activeLocalProjects = customProjects.filter((p: any) => p.status !== 'archived')
       for (const p of activeLocalProjects) {
         const sid = `sermon-${p.id}`
@@ -176,7 +178,7 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
           addEdge(sid, tid, '관련', 1)
         }
 
-        // Prep + manuscript: unified read
+        // Prep + manuscript core
         const { prep: prepRaw, manuscript: msRaw } = readProjectCore(p.id)
         if (prepRaw) {
           if (!p.themeNames || p.themeNames.length === 0) {
@@ -207,26 +209,22 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
         }
       }
 
-      // Insights (통찰 노트) — 자동 추가
+      // Insights
       if (insightsJson?.success && Array.isArray(insightsJson.data)) {
         for (const insight of insightsJson.data) {
           if (!insight.id) continue
           const nid = `note-${insight.id}`
-          const typeColor = insight.type === 'word' ? '#F43F5E' : '#EC4899'
           addNode({
             id: nid,
             label: insight.title || '통찰',
             type: 'note',
             subtitle: insight.summary?.slice(0, 60) || '',
             detail: '',
-            size: insight.type === 'word' ? 5 : 4,
-            updatedAt: insight.updatedAt || insight.createdAt || '',
+            size: 3,
+            updatedAt: insight.updated_at || insight.created_at || '',
           })
-
-          // connections: word → note, sermon → note
-          const conns = Array.isArray(insight.connections) ? insight.connections : []
-          for (const c of conns) {
-            if (c?.type === 'word' && c.id) {
+          for (const c of (insight.connections || [])) {
+            if (c?.id && nodesMap.has(c.id)) {
               addEdge(c.id, nid, '통찰', 1)
             }
             if (c?.type === 'sermon' && c.id) {
@@ -241,10 +239,10 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     })
       .catch(() => {})
       .finally(() => setLoading(false))
-    return () => ac?.abort()
+    return () => ac.abort()
   }, [])
 
-  // Select top N nodes by connection count + recency
+  // Select top N nodes (Obsidian dense cluster: 26 nodes)
   const topNodes = useMemo(() => {
     if (allNodes.length === 0) return []
     const degree = new Map<string, number>()
@@ -258,11 +256,11 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
       const updatedT = new Date(n.updatedAt || 0).getTime()
       const ageDays = updatedT > 0 ? (now - updatedT) / (1000 * 60 * 60 * 24) : 999
       const recency = Math.max(0, 1 - ageDays / 90)
-      const score = conns * 2 + recency * 1
+      const score = conns * 2.2 + recency * 1.5
       return { n, conns, recency, score }
     })
     scored.sort((a, b) => b.score - a.score)
-    return scored.slice(0, 22).map((s) => ({ ...s.n, _conns: s.conns, _recency: s.recency }))
+    return scored.slice(0, 26).map((s) => ({ ...s.n, _conns: s.conns, _recency: s.recency }))
   }, [allNodes, allEdges])
 
   const topNodeIds = useMemo(() => new Set(topNodes.map((t) => t.id)), [topNodes])
@@ -270,13 +268,19 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     return allEdges.filter((e) => topNodeIds.has(e.source) && topNodeIds.has(e.target))
   }, [allEdges, topNodeIds])
 
-  const topNodeMap = useMemo(() => {
-    const m = new Map<string, GraphNode & { _conns: number; _recency: number }>()
-    topNodes.forEach((n: any) => m.set(n.id, n))
-    return m
-  }, [topNodes])
+  // Build Adjacency map for fast O(1) neighbor highlight
+  const adjMap = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    topEdges.forEach((e) => {
+      if (!map.has(e.source)) map.set(e.source, new Set())
+      if (!map.has(e.target)) map.set(e.target, new Set())
+      map.get(e.source)!.add(e.target)
+      map.get(e.target)!.add(e.source)
+    })
+    return map
+  }, [topEdges])
 
-  // Build simulation nodes
+  // D3 force simulation setup
   useEffect(() => {
     simRef.current?.stop()
     nodesRef.current = []
@@ -288,12 +292,15 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     const centerY = sizeRef.current.h / 2
 
     const now = Date.now()
-    const simNodes: SimNode[] = topNodes.map((n: any) => {
+    const simNodes: SimNode[] = topNodes.map((n: any, i) => {
       const updatedT = new Date(n.updatedAt || 0).getTime()
       const ageDays = updatedT > 0 ? (now - updatedT) / (1000 * 60 * 60 * 24) : 999
       const recency = Math.max(0, 1 - ageDays / 90)
       const conns = n._conns || 0
-      const r = 4 + Math.min(10, conns * 0.6) + recency * 3
+      // Obsidian pip radius: 4.5px ~ 9px
+      const r = Math.max(4.5, Math.min(9.5, 4.5 + conns * 0.75 + recency * 1.5))
+      const angle = (i / topNodes.length) * Math.PI * 2
+      const dist = 70 + (i % 3) * 35
       return {
         id: n.id,
         label: n.label,
@@ -303,8 +310,9 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
         refValue: getRefValue(n),
         r,
         recency,
-        x: centerX + (Math.random() - 0.5) * 100,
-        y: centerY + (Math.random() - 0.5) * 100,
+        conns,
+        x: centerX + Math.cos(angle) * dist + (Math.random() - 0.5) * 20,
+        y: centerY + Math.sin(angle) * dist + (Math.random() - 0.5) * 20,
         vx: 0,
         vy: 0,
         fx: null,
@@ -321,16 +329,17 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     edgesRef.current = simEdges
     nodeMapRef.current = nodeMap
 
+    // Obsidian Physics tuning: gentle repulsion, subtle center gravity, clear link distance
     const sim = forceSimulation<SimNode>(simNodes)
-      .force('charge', forceManyBody<SimNode>().strength(-180))
-      .force('center', forceCenter(centerX, centerY).strength(0.05))
+      .force('charge', forceManyBody<SimNode>().strength(-140))
+      .force('center', forceCenter(centerX, centerY).strength(0.04))
       .force('link', forceLink<SimNode, { source: string; target: string; weight: number }>(simEdges as any)
         .id((d: any) => d.id)
-        .distance(70)
-        .strength(0.4))
-      .force('collide', forceCollide<SimNode>().radius((d) => d.r + 6))
+        .distance(75)
+        .strength(0.35))
+      .force('collide', forceCollide<SimNode>().radius((d) => d.r + 14).strength(0.8))
       .alpha(0.9)
-      .alphaDecay(0.025)
+      .alphaDecay(0.02)
       .on('tick', () => setTick((t) => (t + 1) % 1000000))
 
     simRef.current = sim
@@ -338,22 +347,21 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     return () => { sim.stop() }
   }, [topNodes, topEdges, size.w, size.h])
 
-  // Floating animation
+  // Continuous micro-breathing (Obsidian organic life feel)
   useEffect(() => {
     let last = performance.now()
     const animate = (now: number) => {
-      const dt = Math.min(40, now - last) * 0.001
       last = now
-      const t = now * 0.001
+      const t = now * 0.0008
       nodesRef.current.forEach((n, i) => {
         if (n.fx !== null && n.fy !== null) return
+        if (dragNodeRef.current?.id === n.id) return
         const baseX = n.x || 0
         const baseY = n.y || 0
-        const phase = (i * 0.7) + (n.id.charCodeAt(0) % 5) * 0.3
-        const ampX = 1.2 + (n.recency * 1.5)
-        const ampY = 1.2 + (n.recency * 1.5)
-        n.x = baseX + Math.sin(t * 0.3 + phase) * ampX
-        n.y = baseY + Math.cos(t * 0.4 + phase * 1.1) * ampY
+        const phase = i * 0.85
+        const amp = 0.5 + (n.recency * 0.5)
+        n.x = baseX + Math.sin(t * 0.8 + phase) * amp * 0.3
+        n.y = baseY + Math.cos(t * 0.7 + phase * 1.2) * amp * 0.3
       })
       setTick((x) => (x + 1) % 1000000)
       animRef.current = requestAnimationFrame(animate)
@@ -362,23 +370,71 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
     return () => cancelAnimationFrame(animRef.current)
   }, [])
 
-  // Mouse handlers
+  // Restart physics on demand
+  const handleReheat = useCallback(() => {
+    if (!simRef.current) return
+    simRef.current.alpha(0.8).restart()
+  }, [])
+
+  // Interactive Drag & Hover Listeners
   useEffect(() => {
     const svg = svgRef.current
     if (!svg) return
-    const onMove = (e: MouseEvent) => {
-      const target = (e.target as Element).closest('[data-node-id]') as Element | null
+
+    let isDragging = false
+
+    const getSvgCoords = (e: MouseEvent) => {
       const rect = svg.getBoundingClientRect()
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    }
+
+    const onMouseDown = (e: MouseEvent) => {
+      const target = (e.target as Element).closest('[data-node-id]') as Element | null
+      if (!target) return
+      const id = target.getAttribute('data-node-id') || ''
+      const node = nodeMapRef.current.get(id)
+      if (!node) return
+
+      isDragging = true
+      dragNodeRef.current = node
+      const { x, y } = getSvgCoords(e)
+      node.fx = x
+      node.fy = y
+      simRef.current?.alpha(0.3).restart()
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      const { x, y } = getSvgCoords(e)
+
+      if (isDragging && dragNodeRef.current) {
+        dragNodeRef.current.fx = x
+        dragNodeRef.current.fy = y
+        simRef.current?.alpha(0.3).restart()
+        return
+      }
+
+      const target = (e.target as Element).closest('[data-node-id]') as Element | null
       if (target) {
         const id = target.getAttribute('data-node-id') || ''
         setHoveredId(id)
         const node = nodeMapRef.current.get(id)
-        if (node) setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top, node })
+        if (node) setTooltip({ x, y, node })
       } else {
         setHoveredId(null)
         setTooltip(null)
       }
     }
+
+    const onMouseUp = () => {
+      if (isDragging && dragNodeRef.current) {
+        dragNodeRef.current.fx = null
+        dragNodeRef.current.fy = null
+        dragNodeRef.current = null
+        isDragging = false
+        simRef.current?.alpha(0.2).restart()
+      }
+    }
+
     const onClick = (e: MouseEvent) => {
       const target = (e.target as Element).closest('[data-node-id]') as Element | null
       if (!target) return
@@ -388,204 +444,305 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
       setSelectedId(id)
       onSelectNode?.(node.refValue)
     }
-    const onLeave = () => { setHoveredId(null); setTooltip(null) }
-    svg.addEventListener('mousemove', onMove)
+
+    const onLeave = () => {
+      onMouseUp()
+      setHoveredId(null)
+      setTooltip(null)
+    }
+
+    svg.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
     svg.addEventListener('click', onClick)
     svg.addEventListener('mouseleave', onLeave)
+
     return () => {
-      svg.removeEventListener('mousemove', onMove)
+      svg.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
       svg.removeEventListener('click', onClick)
       svg.removeEventListener('mouseleave', onLeave)
     }
   }, [onSelectNode])
 
-  // Compute node opacity based on time scrub
+  // Time scrubber opacity
   const getNodeOpacity = useCallback((n: SimNode) => {
     if (!dateRange) return 1
     const updatedT = new Date(n.updatedAt || 0).getTime()
-    if (updatedT === 0) return 0.4
+    if (updatedT === 0) return 0.5
     const cutoff = dateRange.min + (dateRange.max - dateRange.min) * (timePos / 100)
     const baseOpacity = updatedT >= cutoff ? 1 : 0.15
-    return baseOpacity * (n.recency * 0.5 + 0.5)
+    return baseOpacity * (n.recency * 0.4 + 0.6)
   }, [dateRange, timePos])
 
-  const visibleNodeCount = useMemo(() => {
-    if (!dateRange) return nodesRef.current.length
-    const cutoff = dateRange.min + (dateRange.max - dateRange.min) * (timePos / 100)
-    return nodesRef.current.filter((n) => new Date(n.updatedAt || 0).getTime() >= cutoff).length
-  }, [timePos, dateRange, nodesRef.current.length])
+  // Active neighborhood calculation
+  const activeNeighbors = useMemo(() => {
+    if (!hoveredId) return null
+    const set = new Set<string>()
+    set.add(hoveredId)
+    const nbrs = adjMap.get(hoveredId)
+    if (nbrs) nbrs.forEach((id) => set.add(id))
+    return set
+  }, [hoveredId, adjMap])
 
   return (
     <div className="space-y-2">
+      {/* ─── Obsidian Knowledge Canvas Container ─── */}
       <div
         ref={containerRef}
-        className="relative rounded-3xl border border-white/5 bg-[#04060f]/60 overflow-hidden shadow-2xl"
+        className="relative rounded-3xl border border-white/10 bg-[#0B0D14] overflow-hidden shadow-2xl select-none"
         style={{ height }}
       >
-        {/* Background ambient glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl" />
+        {/* Obsidian subtle Dot Grid Background */}
+        <div className="absolute inset-0 pointer-events-none opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255, 255, 255, 0.25) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* Deep ambient nebula glows */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-emerald-500/10 blur-[90px]" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-purple-500/10 blur-[90px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[120px]" />
         </div>
 
         {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-indigo-500/30 border-t-indigo-400 animate-spin" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="w-6 h-6 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin" />
+            <span className="text-[11px] font-mono text-slate-400">지식 그래프 렌더링 중...</span>
           </div>
         ) : topNodes.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center px-6">
-              <div className="text-2xl mb-2">🌌</div>
-              <p className="text-xs text-slate-400 font-bold">아직 별이 없습니다</p>
-              <p className="text-[10px] text-slate-600 mt-1">설교·통찰·시리즈를 기록하면 별이 피어납니다</p>
+              <div className="w-10 h-10 mx-auto mb-2 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-lg">🕸️</div>
+              <p className="text-xs text-slate-300 font-bold">아직 연결된 지식 노드가 없습니다</p>
+              <p className="text-[10px] text-slate-500 mt-1">설교 연구를 시작하면 성경 본문과 신학 주제가 자동으로 연결됩니다</p>
             </div>
           </div>
         ) : null}
 
-        <svg ref={svgRef} width={size.w} height={size.h} className="block relative z-10">
+        {/* ─── SVG Canvas ─── */}
+        <svg ref={svgRef} width={size.w} height={size.h} className="block relative z-10 w-full h-full cursor-grab active:cursor-grabbing">
           <defs>
+            {/* Obsidian Luminescent Aura Glows */}
             {Object.entries(TYPE_COLOR).map(([t, c]) => (
-              <radialGradient key={t} id={`starGlow-${t}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={c} stopOpacity="1" />
-                <stop offset="40%" stopColor={c} stopOpacity="0.7" />
+              <radialGradient key={t} id={`obsidianGlow-${t}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={c} stopOpacity="0.8" />
+                <stop offset="45%" stopColor={c} stopOpacity="0.3" />
                 <stop offset="100%" stopColor={c} stopOpacity="0" />
               </radialGradient>
             ))}
+
+            {/* Neon Filter for active edges */}
+            <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
 
-          {/* Edges */}
-          <g>
+          {/* ─── Obsidian Filament Edges ─── */}
+          <g className="edges-layer">
             {edgesRef.current.map((e, i) => {
               const s = nodeMapRef.current.get(e.source)
               const t = nodeMapRef.current.get(e.target)
               if (!s || !t) return null
-              const opacity = (getNodeOpacity(s) + getNodeOpacity(t)) / 2
+
+              const isConnectedToHover = hoveredId && (e.source === hoveredId || e.target === hoveredId)
+              const isConnectedToSelected = selectedId && (e.source === selectedId || e.target === selectedId)
+              const isHighlight = isConnectedToHover || isConnectedToSelected
+
+              const sourceColor = TYPE_COLOR[s.type] || '#A5B4FC'
+              const timeOpacity = (getNodeOpacity(s) + getNodeOpacity(t)) / 2
+
+              // Dim non-connected edges deeply when hovering
+              let edgeOpacity = timeOpacity * 0.45
+              let strokeColor = 'rgba(255, 255, 255, 0.12)'
+              let strokeWidth = 0.75
+
+              if (isHighlight) {
+                edgeOpacity = 0.95
+                strokeColor = sourceColor
+                strokeWidth = 1.6
+              } else if (hoveredId || selectedId) {
+                edgeOpacity = 0.04
+              }
+
               return (
                 <line
-                  key={i}
-                  x1={s.x || 0}
-                  y1={s.y || 0}
-                  x2={t.x || 0}
-                  y2={t.y || 0}
-                  stroke="rgba(165, 180, 252, 0.18)"
-                  strokeWidth={0.6 + (e.weight || 1) * 0.3}
-                  opacity={opacity}
+                  key={`edge-${i}`}
+                  x1={s.x}
+                  y1={s.y}
+                  x2={t.x}
+                  y2={t.y}
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  opacity={edgeOpacity}
+                  filter={isHighlight ? 'url(#neonGlow)' : undefined}
+                  style={{ transition: 'opacity 180ms ease, stroke 180ms ease, stroke-width 180ms ease' }}
                 />
               )
             })}
           </g>
 
-          {/* Nodes */}
-          <g>
+          {/* ─── Obsidian Luminescent Nodes & Typography ─── */}
+          <g className="nodes-layer">
             {nodesRef.current.map((n) => {
-              const opacity = getNodeOpacity(n)
-              const color = TYPE_COLOR[n.type] || '#9ca3af'
+              const baseOpacity = getNodeOpacity(n)
+              const color = TYPE_COLOR[n.type] || '#9CA3AF'
               const isHover = hoveredId === n.id
               const isSelected = selectedId === n.id
-              const dim = hoveredId && !isHover ? 0.2 : 1
+              const isConnected = activeNeighbors ? activeNeighbors.has(n.id) : true
+
+              // Obsidian Deep Dimming on non-connected nodes
+              const nodeOpacity = baseOpacity * (isConnected ? 1 : 0.12)
+              const labelOpacity = isHover || isSelected ? 1 : (isConnected ? 0.75 : 0.08)
+
               return (
                 <g
                   key={n.id}
                   data-node-id={n.id}
-                  transform={`translate(${n.x || 0},${n.y || 0})`}
-                  style={{ cursor: 'pointer', opacity: opacity * dim, transition: 'opacity 200ms' }}
+                  transform={`translate(${n.x},${n.y})`}
+                  style={{ cursor: 'pointer', transition: 'opacity 180ms ease' }}
+                  opacity={nodeOpacity}
                 >
-                  {/* Glow halo for recent stars */}
-                  {n.recency > 0.5 && (
-                    <circle
-                      r={n.r * 2.8}
-                      fill={`url(#starGlow-${n.type})`}
-                      opacity={n.recency}
-                    >
-                      <animate
-                        attributeName="opacity"
-                        values={`${n.recency * 0.7};${n.recency * 1.1};${n.recency * 0.7}`}
-                        dur={`${3 + (n.id.charCodeAt(0) % 3)}s`}
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  )}
-                  {/* Pulse for selected */}
-                  {isSelected && (
-                    <circle r={n.r + 4} fill="none" stroke={color} strokeWidth={2.5} opacity={0.95}>
-                      <animate attributeName="r" from={n.r + 3} to={n.r + 14} dur="1.5s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" from="1" to="0" dur="1.5s" repeatCount="indefinite" />
-                    </circle>
-                  )}
-                  {/* Main star */}
+                  {/* Subtle Luminescent Aura Glow */}
                   <circle
-                    r={n.r * 1.15}
+                    r={n.r * 2.4}
+                    fill={`url(#obsidianGlow-${n.type})`}
+                    opacity={isHover || isSelected ? 0.9 : 0.35}
+                    style={{ transition: 'opacity 180ms ease' }}
+                  />
+
+                  {/* Selected / Hover Ring Animation */}
+                  {(isHover || isSelected) && (
+                    <circle
+                      r={n.r + 3.5}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth={1.5}
+                      strokeDasharray={isSelected ? '3 3' : undefined}
+                      opacity={0.9}
+                    />
+                  )}
+
+                  {/* Obsidian Core Dot */}
+                  <circle
+                    r={n.r}
                     fill={color}
                     fillOpacity={1}
-                    stroke={isHover || isSelected ? '#fff' : 'rgba(255,255,255,0.85)'}
-                    strokeWidth={isHover || isSelected ? 2.5 : 1.2}
+                    stroke="#FFFFFF"
+                    strokeWidth={isHover || isSelected ? 1.8 : 0.9}
+                    strokeOpacity={isHover || isSelected ? 1 : 0.4}
+                    style={{ transition: 'transform 180ms ease, stroke-width 180ms ease' }}
                   />
-                  <circle
-                    r={n.r * 0.45}
-                    fill="#fff"
-                    fillOpacity={0.9}
-                    cx={-n.r * 0.2}
-                    cy={-n.r * 0.2}
-                  />
+
+                  {/* Obsidian Inline Label with dark outline */}
+                  <text
+                    x={n.r + 6}
+                    y={3.5}
+                    fill={isHover || isSelected ? '#FFFFFF' : '#CBD5E1'}
+                    fontSize={10}
+                    fontWeight={isHover || isSelected ? 700 : 600}
+                    letterSpacing="-0.02em"
+                    paintOrder="stroke"
+                    stroke="#0B0D14"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={labelOpacity}
+                    style={{
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      transition: 'opacity 180ms ease, fill 180ms ease',
+                    }}
+                  >
+                    {n.label.length > 13 ? n.label.slice(0, 13) + '…' : n.label}
+                  </text>
                 </g>
               )
             })}
           </g>
         </svg>
 
-        {/* Tooltip */}
+        {/* ─── Obsidian Floating Tooltip ─── */}
         {tooltip && (
           <div
-            className="absolute pointer-events-none z-20 bg-[#0c1020]/95 backdrop-blur-md border border-white/15 rounded-lg px-3 py-2 shadow-2xl"
-            style={{ left: Math.min(tooltip.x + 12, size.w - 200), top: Math.min(tooltip.y + 12, size.h - 80) }}
+            className="absolute pointer-events-none z-30 bg-[#0E121E]/95 backdrop-blur-xl border border-white/15 rounded-xl px-3 py-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+            style={{
+              left: Math.min(tooltip.x + 14, size.w - 220),
+              top: Math.min(tooltip.y + 14, size.h - 90),
+              maxWidth: 220,
+            }}
           >
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: TYPE_COLOR[tooltip.node.type] }} />
-              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{TYPE_LABEL[tooltip.node.type] || tooltip.node.type}</span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.8 h-1.8 rounded-full" style={{ backgroundColor: TYPE_COLOR[tooltip.node.type] }} />
+                <span className="text-[9.5px] text-slate-400 font-extrabold uppercase tracking-wider">{TYPE_LABEL[tooltip.node.type] || tooltip.node.type}</span>
+              </div>
+              <span className="text-[8.5px] font-mono text-slate-500 font-semibold">{tooltip.node.conns}개 연결</span>
             </div>
-            <p className="text-[11px] text-slate-100 font-bold leading-snug mt-0.5 max-w-[180px]">{tooltip.node.label}</p>
+            <p className="text-[11.5px] text-white font-bold leading-tight mt-1 truncate">{tooltip.node.label}</p>
             {tooltip.node.subtitle && (
-              <p className="text-[10px] text-slate-500 mt-0.5 max-w-[180px] truncate">{tooltip.node.subtitle}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5 truncate">{tooltip.node.subtitle}</p>
             )}
-            <p className="text-[9px] text-indigo-400 mt-1 font-bold">클릭하여 필터 →</p>
+            <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-white/5 text-[9px] text-emerald-400 font-bold">
+              <span>클릭하여 관련 말씀 필터링</span>
+              <span>→</span>
+            </div>
           </div>
         )}
 
-        {/* Stats overlay (top right) */}
-        <div className="absolute top-3 right-3 flex items-center gap-2 text-[10px] text-slate-500 font-bold bg-[#070a16]/80 px-3 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{visibleNodeCount}개 별</span>
-          <span className="text-slate-700">·</span>
-          <span>{edgesRef.current.length}개 연결</span>
+        {/* ─── Obsidian Minimal Top-Right Control Bar ─── */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold bg-[#0E121E]/80 px-2.5 py-1 rounded-xl border border-white/10 backdrop-blur-md shadow-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{topNodes.length}개 노드</span>
+            </span>
+            <span className="text-white/20">·</span>
+            <span>{edgesRef.current.length}개 연결</span>
+          </div>
+
+          <button
+            onClick={handleReheat}
+            className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0E121E]/80 hover:bg-[#1A2035] text-slate-300 hover:text-white border border-white/10 backdrop-blur-md shadow-sm transition-all hover:scale-105 active:scale-95"
+            title="물리 시뮬레이션 재배치 (Reheat)"
+          >
+            <span className="text-xs">⚡</span>
+          </button>
         </div>
 
-        {/* Legend (bottom left) */}
-        <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 text-[9px] text-slate-500 font-bold bg-[#070a16]/80 px-2.5 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
+        {/* ─── Obsidian Minimal Bottom-Left Category Legend ─── */}
+        <div className="absolute bottom-3 left-3 flex items-center gap-2 flex-wrap text-[9.5px] text-slate-400 font-bold bg-[#0E121E]/80 px-3 py-1.5 rounded-xl border border-white/10 backdrop-blur-md shadow-sm z-20">
           {Object.entries(TYPE_COLOR).map(([t, c]) => (
-            <span key={t} className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c }} />
-              {TYPE_LABEL[t]}
+            <span key={t} className="flex items-center gap-1.2 hover:text-white transition-colors cursor-default">
+              <span className="w-1.8 h-1.8 rounded-full shadow-xs" style={{ backgroundColor: c }} />
+              <span>{TYPE_LABEL[t]}</span>
             </span>
           ))}
         </div>
       </div>
 
-      {/* Time scrub */}
+      {/* ─── Obsidian Time Scrubber (시간 흐름 탐색) ─── */}
       {dateRange && (
-        <div className="rounded-2xl border border-white/5 bg-[#04060f]/40 px-4 py-2.5">
+        <div className="rounded-2xl border border-white/10 bg-[#0B0D14]/80 px-4 py-2 backdrop-blur-md shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 shrink-0">
-              <span>⏱</span>
-              <span>시간</span>
+            <div className="flex items-center gap-1.5 text-[10.5px] font-extrabold text-slate-400 shrink-0">
+              <span className="text-xs">⏱</span>
+              <span>연대기 탐색</span>
             </div>
             <div className="flex-1 flex items-center gap-2">
-              <span className="text-[10px] text-slate-500 font-medium shrink-0 tabular-nums">
+              <span className="text-[10px] text-slate-400 font-mono font-medium shrink-0 tabular-nums">
                 {new Date(dateRange.min + (dateRange.max - dateRange.min) * (timePos / 100)).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short' })}
               </span>
               <div className="flex-1 relative h-1.5 group">
-                <div className="absolute inset-0 rounded-full bg-white/5" />
+                <div className="absolute inset-0 rounded-full bg-white/10" />
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-500/40 via-purple-500/40 to-emerald-500/40"
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500/50 via-purple-500/50 to-indigo-500/50"
                   style={{ width: `${timePos}%` }}
                 />
                 <input
@@ -597,25 +754,25 @@ export default function MinistryConstellation({ onSelectNode, height = 340 }: Mi
                   className="absolute inset-0 w-full opacity-0 cursor-pointer"
                 />
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 shadow-md pointer-events-none"
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 shadow-md pointer-events-none transition-transform group-hover:scale-125"
                   style={{ left: `calc(${timePos}% - 6px)` }}
                 />
               </div>
-              <span className="text-[10px] text-slate-300 font-bold shrink-0 tabular-nums">오늘</span>
+              <span className="text-[10px] text-emerald-400 font-bold shrink-0 tabular-nums">오늘</span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               {timePos < 100 && (
                 <button
                   onClick={() => setTimePos(100)}
-                  className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold px-2 py-0.5 rounded hover:bg-indigo-500/10"
+                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold px-2 py-0.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
                 >
-                  ↻ 초기화
+                  ↻ 오늘로 리셋
                 </button>
               )}
               {selectedId && (
                 <button
                   onClick={() => { setSelectedId(null); onSelectNode?.('') }}
-                  className="text-[10px] text-slate-500 hover:text-slate-300 font-bold px-2 py-0.5 rounded hover:bg-white/5"
+                  className="text-[10px] text-slate-400 hover:text-slate-200 font-bold px-2 py-0.5 rounded-lg hover:bg-white/5 transition-colors"
                 >
                   ✕ 선택 해제
                 </button>
