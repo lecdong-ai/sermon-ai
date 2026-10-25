@@ -151,13 +151,27 @@
   - UI 카드 제목을 `클라우드 DB & 로컬 전체 초기화`로 명확화하고, 2단계 클릭 안내 문구 제공.
 - **build/typecheck**: 성공 ✅
 
+## Phase 16 — 성경통독 플래너 스튜디오(/admin/planner) 인덱스 탭 돌출 버그 및 내비게이션/헤더 수정
+- **독립 마스터 섹션 인덱스 탭 돌출(너비 확장) 버그 원천 해결**:
+  - `drawPhysicalStationeryTabs` (`core.ts`): 독립 마스터 섹션(`GUIDE`, `INDEX`, `YEAR`, `PLAN`, `GOALS`, `TRACK`, `NOTE`, `COVER` 등)에서는 개별 월 탭(예: 26년 10월)이 `active: true`로 동시 활성화되어 너비가 +2.2mm 튀어나오는 중복 돌출 현상 방지 (`isMasterStandalone` 가드 추가).
+  - 설명페이지(`GUIDE`)에서는 오직 `GUIDE` 탭만, 성경통독표(`TRACK`)에서는 오직 `TRACK` 탭만 단독 활성화되도록 정상화.
+- **설명페이지(가이드 Part 2) Weekly 플래너 점프 혼선 제거**:
+  - `drawMasterGuideSpreadPart2` (`guide.ts`): 2단계 낮 3분 루틴 설명 카드에서 특정 월(10월) 1주차로 강제 텔레포트시키던 하이퍼링크를 제거하고, 본문 텍스트 안내("우측 상단 WEEK 탭 활용")와 일치하도록 정돈된 시각 안내 뱃지(`✦ WEEK 플래너`)로 변경.
+- **성경통독표(Tracker) 상단 연도 동적 기간 표기**:
+  - `drawBibleTrackerOt1PageSpread`, `drawBibleTrackerOt2PageSpread` (`bible-tracker.ts`): 하드코딩된 `2026` 단일 연도 대신 플래너 전 기간을 포괄하는 동적 연도 범위(`${yearBadgeText} · BIBLE TRACKER`, 예: `2026–2027 · BIBLE TRACKER`)로 변경하여 다년도/15개월 통독 레이스에서 연도 혼선 완벽 해소.
+- **월간 성경읽기표(bibleplan) props 연동 & TRACK 분리**:
+  - `drawBiblePlanPageSpread` (`bible.ts`): `props.year`/`props.month`를 정상 반영하도록 수정하고 `activeSection`을 `PLAN`으로 지정하여 통독표(`TRACK`)와 탭 활성화 충돌 분리.
+- **Vite 번들 재빌드 & 배포 동기화**:
+  - `npm --prefix diary run build` 실행 완료 및 번들 에셋 `public/admin-planner/`에 최신 배포.
+- **build/typecheck**: 성공 ✅
+
 ## Active / Blocked
 - **Active**: 없음
 - **Blocked**: 없음
 
 ## Next Steps
-1. 로컬 확인: `http://localhost:3001/advanced/settings`
-2. 실서버 확인: `https://bunker.ai.kr/advanced/settings`
+1. 로컬 확인: `http://localhost:3001/admin/planner`
+2. 실서버 확인: `https://bunker.ai.kr/admin/planner`
 
 ## Critical Context
 - **Supabase**: `xtknqtdidyujuamskbpo.supabase.co` (유일 survivior)
