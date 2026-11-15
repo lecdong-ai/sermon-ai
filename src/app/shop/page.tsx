@@ -6,7 +6,10 @@ import {
   ShoppingBag, ArrowRight, Coffee, Apple, Sparkles,
   Store, Heart, Star, HandHeart, Copy, Check,
   ChevronDown, ChevronUp, HelpCircle, CheckCircle2,
+  ClipboardList, ExternalLink, Package, BookOpen,
 } from 'lucide-react';
+
+const PREP_GUIDE_BLOG_URL = 'https://blog.naver.com/heebee';
 
 const FAQS = [
   {
@@ -320,6 +323,148 @@ export default function ShopPage() {
             </p>
           </div>
 
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          3-1. 사역 준비물 장보기 가이드 (블로그 경유)
+         ════════════════════════════════════════════ */}
+      <section className="py-16 md:py-20 bg-white border-b border-warm-200/60">
+        <div className="container-custom max-w-5xl space-y-10">
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-mint-50 text-mint-700 text-xs font-bold border border-mint-200">
+              <ClipboardList className="w-4 h-4 text-mint-600" />
+              <span>사역 준비물 장보기 가이드</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-black text-navy-950">
+              어차피 교회에서 살 물건, <span className="text-mint-600">준비 가이드</span>부터
+            </h2>
+            <p className="text-xs sm:text-sm text-navy-600 max-w-xl mx-auto leading-relaxed">
+              인원별 수량 표와 체크리스트는 무료로 바로 인쇄하시고, 실제 구매 추천은 정리된 블로그 글에서 확인하세요.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 카드 1: 주일학교·수련회 간식 */}
+            <div className="bg-warm-50 rounded-3xl p-6 border border-warm-200 flex flex-col justify-between space-y-5">
+              <div className="space-y-2.5">
+                <div className="w-10 h-10 rounded-xl bg-mint-50 border border-mint-200 text-mint-600 flex items-center justify-center">
+                  <Package className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold text-navy-950">주일학교·수련회 간식</h3>
+                <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
+                  15명~50명 인원별 100개입 박스 수 계산과 개별포장·알레르기 체크리스트를 바로 뽑아 씁니다.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5 pt-2">
+                <Link
+                  href="/ready"
+                  className="btn-primary w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4"
+                >
+                  <ClipboardList className="w-4 h-4 shrink-0" />
+                  <span>분량표 &amp; 체크리스트 인쇄</span>
+                </Link>
+                {PREP_GUIDE_BLOG_URL.trim() ? (
+                  <a
+                    href={PREP_GUIDE_BLOG_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-outline w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4 bg-white"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>추천 간식 블로그 보기</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="btn-outline w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4 bg-white opacity-50 cursor-not-allowed"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>추천 간식 블로그 보기</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 카드 2: 부서 비품·행사 문구 */}
+            <div className="bg-warm-50 rounded-3xl p-6 border border-warm-200 flex flex-col justify-between space-y-5">
+              <div className="space-y-2.5">
+                <div className="w-10 h-10 rounded-xl bg-mint-50 border border-mint-200 text-mint-600 flex items-center justify-center">
+                  <ClipboardList className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold text-navy-950">부서 비품·행사 문구</h3>
+                <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
+                  성경학교·수련회 때마다 늘 모자라는 네임택, 지퍼백, 라벨지, 보드마카 묶음 기준을 정리했습니다.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5 pt-2">
+                {PREP_GUIDE_BLOG_URL.trim() ? (
+                  <a
+                    href={PREP_GUIDE_BLOG_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>비품 추천 블로그 보기</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="btn-secondary w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4 opacity-50 cursor-not-allowed"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>비품 추천 블로그 보기</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 카드 3: 목회자 서재·설교 준비 */}
+            <div className="bg-warm-50 rounded-3xl p-6 border border-warm-200 flex flex-col justify-between space-y-5">
+              <div className="space-y-2.5">
+                <div className="w-10 h-10 rounded-xl bg-mint-50 border border-mint-200 text-mint-600 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold text-navy-950">목회자 서재·설교 준비</h3>
+                <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
+                  강대상 클릭커, 성경 필사 펜, 북스탠드 등 현장에서 오래 쓰기 좋은 실사용 리뷰를 모았습니다.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5 pt-2">
+                {PREP_GUIDE_BLOG_URL.trim() ? (
+                  <a
+                    href={PREP_GUIDE_BLOG_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>서재 추천 블로그 보기</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="btn-secondary w-full inline-flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 px-4 opacity-50 cursor-not-allowed"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>서재 추천 블로그 보기</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 삭제 금지: 파트너스 고지 */}
+          <p className="text-center text-xs text-navy-400 leading-relaxed">
+            쿠팡 상품 링크가 포함된 블로그 글로 연결됩니다. 해당 글에는 파트너스 고지가 표시되어 있으며, 수수료가 발생할 수 있습니다.
+          </p>
         </div>
       </section>
 

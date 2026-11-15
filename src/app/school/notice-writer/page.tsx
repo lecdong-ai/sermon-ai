@@ -746,6 +746,24 @@ export default function NoticeWriterPage() {
                   </button>
                 </div>
 
+                {/* 행사 준비물 체크리스트 연결 */}
+                <div className="bg-warm-50 rounded-2xl p-4 border border-warm-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-navy-950">
+                      분반 간식·행사 준비물도 함께 챙기시나요?
+                    </p>
+                    <p className="text-[11px] text-navy-500">
+                      인원별 간식 분량표와 현장 체크리스트를 A4 1장으로 바로 인쇄할 수 있습니다.
+                    </p>
+                  </div>
+                  <Link
+                    href="/ready"
+                    className="btn-secondary btn-xs w-full sm:w-auto inline-flex items-center justify-center gap-1.5 shrink-0 px-4 py-2.5"
+                  >
+                    <span>준비물 체크리스트 뽑기</span>
+                  </Link>
+                </div>
+
                 {/* History */}
                 {showHistory && (
                   <div className="bg-white rounded-2xl border border-warm-200 p-4 space-y-3">

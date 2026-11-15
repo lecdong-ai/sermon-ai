@@ -5,7 +5,10 @@ import Link from 'next/link';
 import {
   Heart, ShoppingBag, ArrowRight, Coffee, Apple, Sparkles,
   HandHeart, Store, Copy, Check, ChevronRight,
+  ClipboardList, ExternalLink,
 } from 'lucide-react';
+
+const SUPPORT_PREP_BLOG_URL = 'https://blog.naver.com/heebee';
 
 export default function SupportPage() {
   const [copied, setCopied] = useState(false);
@@ -209,6 +212,64 @@ export default function SupportPage() {
               <ChevronRight className="w-4 h-4" />
               아래로 내리면 직접 후원하기도 있어요
               <ChevronRight className="w-4 h-4" />
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          2-1. 돈 안 내는 후원 — 사역 준비물 장보기
+         ════════════════════════════════════════════ */}
+      <section className="bg-warm-50/70 pb-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-warm-200 shadow-card space-y-5">
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint-50 text-mint-700 border border-mint-200 text-xs font-bold">
+                <ClipboardList className="w-3.5 h-3.5" />
+                <span>부담 없는 사역 동참</span>
+              </span>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-navy-900">
+                후원금 0원으로도 Bunker를 지킬 수 있습니다
+              </h3>
+              <p className="text-sm text-navy-600 leading-relaxed">
+                평소 교회에서 쓰시는 간식·비품을 아래 가이드 글을 통해 장보시면, 추가 비용 없이 판매 수수료 일부가 AI·서버 유지비로 자동 환원됩니다.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Link
+                href="/ready"
+                className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm px-5 py-3"
+              >
+                <ClipboardList className="w-4 h-4 shrink-0" />
+                <span>행사 준비물 체크리스트 (/ready)</span>
+              </Link>
+              {SUPPORT_PREP_BLOG_URL.trim() ? (
+                <a
+                  href={SUPPORT_PREP_BLOG_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm px-5 py-3"
+                >
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                  <span>사역 준비물 블로그 보기</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm px-5 py-3 opacity-50 cursor-not-allowed"
+                >
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                  <span>사역 준비물 블로그 보기</span>
+                </button>
+              )}
+            </div>
+
+            {/* 삭제 금지: 파트너스 고지 */}
+            <p className="text-xs text-navy-400 leading-relaxed pt-2 border-t border-warm-100">
+              쿠팡 상품 링크가 포함된 블로그 글로 연결됩니다. 해당 글에는 파트너스 고지가 표시되어 있으며, 수수료가 발생할 수 있습니다.
             </p>
           </div>
         </div>

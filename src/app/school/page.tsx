@@ -8,6 +8,7 @@ import {
   ChevronDown, UserCheck, GraduationCap, Handshake, Bell, Wand2,
   QrCode, Layers, PenLine,
 } from 'lucide-react';
+import PrepCorner from '@/components/PrepCorner';
 
 /* ════════════════════════════════════════════
    애니메이션 컴포넌트
@@ -557,6 +558,21 @@ export default function SchoolHomePage() {
               </div>
             ))}
           </RevealStagger>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+         6-1. 행사 준비물 코너 (무료)
+         ════════════════════════════════════════════ */}
+      <section className="section bg-warm-50 border-t border-warm-200/70">
+        <div className="container-custom max-w-4xl mx-auto">
+          <Reveal>
+            <PrepCorner
+              blogReviewUrl="https://blog.naver.com/heebee"
+              noticeToolUrl="/school/notice-writer"
+              pdfUrl="/ready"
+            />
+          </Reveal>
         </div>
       </section>
 
